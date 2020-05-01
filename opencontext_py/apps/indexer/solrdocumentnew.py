@@ -34,7 +34,7 @@ def get_solr_predicate_type_string(
 ):
     '''
     Defines whether our dynamic solr fields names for
-    predicates end with ___pred_id, ___pred_numeric, etc.
+    predicates end with ___pred_id, ___pred_double, etc.
     
     :param str predicate_type: String data-type used by Open
         Context
@@ -47,8 +47,12 @@ def get_solr_predicate_type_string(
         string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING.copy()
     if predicate_type in ['@id', 'id', 'types', False]:
         return prefix + 'id'
-    elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-        return prefix + 'numeric'
+    elif predicate_type == 'xsd:boolean':
+        return prefix + 'bool'
+    elif predicate_type == 'xsd:integer':
+        return prefix + 'int'
+    elif predicate_type == 'xsd:double':
+        return prefix + 'double'
     elif predicate_type == 'xsd:string':
         return prefix + 'string'
     elif predicate_type == 'xsd:date':
@@ -113,7 +117,9 @@ def make_entity_string_for_solr(
     )
     if isinstance(uri_parsed, dict):
         id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
-    slug = solr_doc_prefix + slug
+    # NOTE: The '-' character is reserved in Solr, so we need to replace
+    # it with a '_' character in order to do prefix queries on the slugs.
+    slug = solr_doc_prefix + slug.replace('-', '_')
     return solr_value_delim.join(
         [slug, type, id_part, label]
     )
@@ -129,6 +135,13 @@ uuid = '9095FCBB-35A8-452E-64A3-B8D52A0B2DB3'
 sd_obj = SolrDocumentNew(uuid)
 sd_obj.make_solr_doc()
 sd_obj.fields
+
+# Example item with a boolean field
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
+uuid_m = '000DF962-E653-4125-CD0D-7C948C41EC4E'
+sd_obj_m = SolrDocumentNew(uuid_m)
+sd_obj_m.make_solr_doc()
+sd_obj_m.fields
 
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
 # Example with missing predicate
@@ -212,7 +225,16 @@ uuid_l = 'b8cec4d8-0926-4c38-836b-91a94920d5c1'
 sd_obj_l = SolrDocumentNew(uuid_l)
 sd_obj_l.make_solr_doc()
 sd_obj_l.fields
+
     '''
+
+
+    # DO_LEGACY_FQ adds solr fields specifically for filter queries
+    # that only contain slug values. These solr fields end with "_fq".
+    # We're in the process of deprecating these, since they do not
+    # offer any evidence of better filtering performance and probably
+    # bloat our solr index. 
+    DO_LEGACY_FQ = False
 
     # the list below defines predicates used for
     # semantic equivalence in indexing
@@ -283,7 +305,7 @@ sd_obj_l.fields
     ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
     ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
     EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
-    FILE_SIZE_SOLR = 'filesize' + SOLR_VALUE_DELIM + 'pred_numeric'
+    FILE_SIZE_SOLR = 'filesize'
     FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
     RELATED_SOLR_DOC_PREFIX = 'rel--'
 
@@ -301,19 +323,19 @@ sd_obj_l.fields
     # work.
     HUMAN_REMAINS_FIELD_VALUES = [
         # Classified with Open Context's class-uri of oc-gen:cat-human-bone.
-        ('{}obj_all___oc_gen_subjects___pred_id_fq', 'oc-gen-cat-human-bone'),
+        ('{}obj_all___oc_gen_subjects___pred_id_fq', 'oc_gen_cat_human_bone'),
         
         # Has biological taxonomy of homo sapiens in EOl or GBIF.
-        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'eol-p-327955'),
-        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'gbif-sp-2436436'),
+        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'eol_p_327955'),
+        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'gbif_sp_2436436'),
         
         # Has specific metadata about human remains assigned to the record.
         # Human-remains (archaeology)
-        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh92003545'),
+        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh92003545'),
         # Human skeleton
-        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh85062895'),
+        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh85062895'),
         # Burial
-        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh85018080'),
+        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh85018080'),
     ]
     
     
@@ -327,7 +349,7 @@ sd_obj_l.fields
         # slug values only. These fields seem to only bloat the
         # solr index and do not seem to improve performace, so we
         # are in the process of deprecating them.
-        self.do_legacy_id_fq = False
+        self.do_legacy_id_fq = self.DO_LEGACY_FQ
 
         # Are we doing a related document? Related documents are
         # made to add extra metadata to a solr document. Typically
@@ -380,7 +402,7 @@ sd_obj_l.fields
     def _make_entity_string_for_solr_value(self, slug, type, id, label):
         """Make a solr value for an object item."""
         return make_entity_string_for_solr(
-            slug,
+            self._convert_slug_to_solr(slug),
             type,
             id,
             label,
@@ -413,7 +435,8 @@ sd_obj_l.fields
     def _make_slug_type_uri_label(self):
         """Makes a slug_type_uri_label field for solr """
         parts = [
-            self.oc_item.json_ld['slug']
+            # Make sure '-' characters are OK for solr.
+            self._convert_slug_to_solr(self.oc_item.json_ld['slug'])
         ]
         if self.oc_item.manifest.item_type == 'predicates':
             if self.oc_item.json_ld['oc-gen:data-type']:
@@ -869,12 +892,38 @@ sd_obj_l.fields
                         errors='surrogateescape'
                     )
                     self.fields[solr_field_name].append(str(act_str))
-        elif solr_pred_type == 'numeric':
+        elif solr_pred_type in ['int', 'double', 'numeric']:
             # Add numeric literal values ot the solr_field_name in the
             # solr document.
             for val_obj in pred_value_objects:
                 self.fields['text'] += str(val_obj) + ' \n'
+                # Now make sure this validates as a number.
+                try:
+                    val_obj = float(val_obj)
+                except:
+                    val_obj = None
+                if val_obj is not None and solr_pred_type == 'int':
+                    try:
+                        val_obj = int(val_obj)
+                    except:
+                        val_obj = None
+                if val_obj is None:
+                    # Skip, this does not validate so do not add to the
+                    # solr field.
+                    continue
                 self.fields[solr_field_name].append(val_obj)
+        elif solr_pred_type == 'bool':
+            # Add date literal values ot the solr_field_name in the
+            # solr document.
+            for val_obj in pred_value_objects:
+                bool_val = None
+                if not val_obj or val_obj == 0:
+                    bool_val = False
+                elif val_obj or val_obj == 1:
+                    bool_val = True
+                if bool_val is not None:
+                    self.fields[solr_field_name].append(bool_val) 
+                self.fields['text'] += str(bool_val) + ' \n'
         elif solr_pred_type == 'date':
             # Add date literal values ot the solr_field_name in the
             # solr document.
@@ -945,6 +994,7 @@ sd_obj_l.fields
         # the pred_key and making a dictionary object of this metadata.
         predicate = self.proj_graph_obj.lookup_predicate(pred_key)
         if not predicate:
+            print('Cannot find predicate: {}'.format(pred_key))
             # The predicate does not seem to exist. Skip out.
             return None
         if not 'uuid' in predicate or not predicate.get('slug'):
@@ -1378,23 +1428,44 @@ sd_obj_l.fields
                 )
             )
         chrono_tile = ChronoTile()
-        if 'form_use_life_chrono_tile' not in self.fields:
-            self.fields['form_use_life_chrono_tile'] = []
-        if 'form_use_life_chrono_earliest' not in self.fields:
-                self.fields['form_use_life_chrono_earliest'] = []
-        if 'form_use_life_chrono_latest' not in self.fields:
-            self.fields['form_use_life_chrono_latest'] = []
+        chrono_fields = [
+            'form_use_life_chrono_tile',
+            'form_use_life_chrono_earliest',
+            'form_use_life_chrono_latest',
+            'form_use_life_chrono_point',
+        ]
+        # Start lists for each of the chronological fields.
+        for field in chrono_fields:
+            if field in self.fields:
+                continue
+            self.fields[field] = []
+        
+        # Add the chrono-tile field. This is a string of numbers that
+        # encode a hierarchy of start and end dates, allowing for 
+        # clustering and searching of similar time spans.
         self.fields['form_use_life_chrono_tile'].append(
             chrono_tile.encode_path_from_bce_ce(
                 date_start, date_stop, '10M-'
             )
         )
+
+        # Below we store numeric time spans, with start and stop
+        # dates.
         self.fields['form_use_life_chrono_earliest'].append(
             date_start
         )
         self.fields['form_use_life_chrono_latest'].append(
             date_stop
         )
+        # Strictly speaking, the point field here is redundant, 
+        # but I want to experiment with it because it encapsulates
+        # start and stop values together (like the chrono_tile).
+        # It's useful to see if Solr can aggregate these for useful
+        # faceting.
+        self.fields['form_use_life_chrono_point'].append(
+            '{},{}'.format(date_start, date_stop)
+        )
+
 
     def _add_predicates_types_chrono(self):
         """Adds chronological information for predicates or types items"""
@@ -1512,6 +1583,7 @@ sd_obj_l.fields
                 continue
             size = float(file_item['dcat:size'])
             if size > self.fields[self.FILE_SIZE_SOLR]:
+                # The biggest filesize gets indexed.
                 self.fields[self.FILE_SIZE_SOLR] = size
     
     def _flag_human_remains_legacy_id_fq(self):
@@ -1767,5 +1839,3 @@ sd_obj_l.fields
         self._add_dublin_core()
         # Make sure the text field is valid for Solr
         self.ensure_text_ok()
-        
-    

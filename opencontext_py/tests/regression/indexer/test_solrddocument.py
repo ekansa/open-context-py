@@ -49,13 +49,13 @@ def test_subjects_bone():
         return None
     sd_obj.make_solr_doc()
     assert sd_obj.fields['uuid'] == uuid
-    assert sd_obj.fields['slug_type_uri_label'] == '1-dt05-1590___id___/subjects/9095FCBB-35A8-452E-64A3-B8D52A0B2DB3___DT05-1590'
+    assert sd_obj.fields['slug_type_uri_label'] == '1_dt05_1590___id___/subjects/9095FCBB-35A8-452E-64A3-B8D52A0B2DB3___DT05-1590'
     assert sd_obj.fields['item_type'] == 'subjects'
     checks = [
-        ('1-domuztepe-excavations', 'obj_all___project_id', ),
-        ('1-domuztepe', 'obj_all___context_id', ),
-        ('oc-gen-cat-animal-bone', 'obj_all___oc_gen_subjects___pred_id', ),
-        ('obo-uberon-0001448', 'obj_all___oc_zoo_has_anat_id___pred_id', ),
+        ('1_domuztepe_excavations', 'obj_all___project_id', ),
+        ('1_domuztepe', 'obj_all___context_id', ),
+        ('oc_gen_cat_animal_bone', 'obj_all___oc_gen_subjects___pred_id', ),
+        ('obo_uberon_0001448', 'obj_all___oc_zoo_has_anat_id___pred_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
 
@@ -71,13 +71,13 @@ def test_subjects_coin():
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'subjects'
     assert sd_obj.fields['image_media_count'] > 1
-    assert 2.0 in sd_obj.fields['1_thickness___pred_numeric']
+    assert 2.0 in sd_obj.fields['1_thickness___pred_double']
     assert sd_obj.fields['image_media_count'] > 1
     checks = [
-        ('1-domuztepe-excavations', 'obj_all___project_id', ),
-        ('1-domuztepe', 'obj_all___context_id', ),
-        ('oc-gen-cat-coin', 'obj_all___oc_gen_subjects___pred_id', ),
-        ('ocre-ric-7-anch-87', 'nmo_hastypeseriesitem___pred_id', ),
+        ('1_domuztepe_excavations', 'obj_all___project_id', ),
+        ('1_domuztepe', 'obj_all___context_id', ),
+        ('oc_gen_cat_coin', 'obj_all___oc_gen_subjects___pred_id', ),
+        ('ocre_ric_7_anch_87', 'nmo_hastypeseriesitem___pred_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
 
@@ -85,7 +85,7 @@ def test_subjects_coin():
 @pytest.mark.django_db
 def test_predicates():
     """Tests solr_document creation on an example predicates item."""
-    uuid = '04909421-C28E-46AF-98FA-10F888B64A4D'
+    uuid = '04909421_C28E-46AF-98FA-10F888B64A4D'
     sd_obj = SolrDocument(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
@@ -93,7 +93,7 @@ def test_predicates():
     sd_obj.make_solr_doc()
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'predicates'
-    assert sd_obj.fields['slug_type_uri_label'] == '28-icp-ti___numeric___/predicates/04909421-C28E-46AF-98FA-10F888B64A4D___ICP - Ti'
+    assert sd_obj.fields['slug_type_uri_label'] == '28_icp-ti___double___/predicates/04909421-C28E-46AF-98FA-10F888B64A4D___ICP - Ti'
     assert sd_obj.fields['image_media_count'] == 0
     checks = [
         ('28-asian-stoneware-jars', 'obj_all___project_id', ),
@@ -114,11 +114,11 @@ def test_media_human_flag():
     assert sd_obj.fields['item_type'] == 'media'
     assert sd_obj.fields['human_remains'] > 0
     assert sd_obj.fields.get('mimetype___pred_id') == 'http://purl.org/NET/mediatypes/image/jpeg'
-    assert sd_obj.fields.get('filesize___pred_numeric') > 3000000.0
+    assert sd_obj.fields.get('filesize') > 3000000.0
     checks = [
-        ('1-domuztepe-excavations', 'obj_all___project_id', ),
-        ('1-domuztepe', 'obj_all___context_id', ),
-        ('oc-gen-cat-human-bone', 'rel__obj_all___oc_gen_subjects___pred_id', ),
+        ('1_domuztepe_excavations', 'obj_all___project_id', ),
+        ('1_domuztepe', 'obj_all___context_id', ),
+        ('oc_gen_cat_human_bone', 'rel__obj_all___oc_gen_subjects___pred_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)    
 
@@ -135,14 +135,14 @@ def test_documents():
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'documents'
     assert (sd_obj.fields['slug_type_uri_label'] 
-        == '24-jn-ii-1972-05-011-134-tesoro-18-northern-extensio___id___/documents/e4676e00-0b9f-40c7-9cb1-606965445056___JN II (1972-05-01):1-134; Tesoro 18 - Northern Extension - Pottery'
+        == '24_jn_ii_1972_05_011_134_tesoro_18_northern_extensio___id___/documents/e4676e00-0b9f-40c7-9cb1-606965445056___JN II (1972-05-01):1-134; Tesoro 18 - Northern Extension - Pottery'
     )
     assert sd_obj.fields['image_media_count'] > 10
     checks = [
-        ('24-murlo', 'obj_all___project_id', ),
-        ('24-poggio-civitate', 'obj_all___context_id', ),
-        ('oc-gen-cat-exc-unit', 'rel__obj_all___oc_gen_subjects___pred_id', ),
-        ('24-trench-book-entry', '24_document_type___pred_id', ),
+        ('24_murlo', 'obj_all___project_id', ),
+        ('24_poggio_civitate', 'obj_all___context_id', ),
+        ('oc_gen_cat_exc_unit', 'rel__obj_all___oc_gen_subjects___pred_id', ),
+        ('24_trench_book_entry', '24_document_type___pred_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
 
@@ -165,7 +165,7 @@ def test_projects():
     assert 'https://doi.org/10.6078/M7B56GNS' in sd_obj.fields['persistent_uri']
     assert 'https://doi.org/10.6078/M7B56GNS' in sd_obj.fields.get('object_uri')
     checks = [
-        ('42-pyla-koutsopetria-archaeological-project-i-pedestrian', 
+        ('42_pyla_koutsopetria_archaeological_project_i_pedestrian', 
         'obj_all___project_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
@@ -188,7 +188,7 @@ def test_projects_with_sub_projects():
     assert 'dc_terms_subject___pred_id' in sd_obj.fields
     assert 'https://doi.org/10.6078/M7N877Q0' in sd_obj.fields['persistent_uri']
     checks = [
-        ('52-coastal-state-site-data-for-sea-level-rise-modeling', 
+        ('52_coastal_state_site_data_for_sea_level_rise_modeling', 
         'obj_all___dc_terms_isreferencedby___pred_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
@@ -208,9 +208,9 @@ def test_projects_is_sub_project():
     assert not 'obj_all___context_id_fq' in sd_obj.fields
     assert not 'obj_all___context_id' in sd_obj.fields
     checks = [
-        ('52-digital-index-of-north-american-archaeology-dinaa', 
+        ('52_digital_index_of_north_american_archaeology_dinaa', 
         'root___project_id', ),
-        ('52-digital-index-of-north-american-archaeology-dinaa', 
+        ('52_digital_index_of_north_american_archaeology_dinaa', 
         'obj_all___project_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)

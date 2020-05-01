@@ -1,19 +1,18 @@
 import copy
 import json
 import logging
-import re
 import time
 from datetime import datetime
 from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 from opencontext_py.apps.searcher.new_solrsearcher import querymaker
+from opencontext_py.apps.searcher.new_solrsearcher import ranges
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 
@@ -47,33 +46,6 @@ class SearchSolr():
         if self.solr is None:
             self.solr = SolrConnection(False).connection
     
-    def finish_request(self, query):
-        """ Check solr query and put convenient format """
-        assert 'q' in query
-        compat_args(query)
-        query['wt'] = 'json'
-        return query
-    
-    def query_solr(self, query):
-        """ Connects to solr and runs a query"""
-        query = self.finish_request(query)
-        self.solr_connect()
-        url = urljoin(self.solr.base_url, 'select')
-        try:
-            http_response = self.solr.make_request.post(
-                url,
-                data=query,
-                timeout=240
-            )
-            self.solr_response = parse_response(http_response.content)
-        except Exception as error:
-            logger.error(
-                '[' + datetime.now().strftime('%x %X ')
-                + settings.TIME_ZONE + '] Error: '
-                + str(error)
-                + ' => Query: ' + str(query)
-            )
-        return self.solr_response
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
@@ -170,7 +142,178 @@ class SearchSolr():
             elif rows < 0:
                 rows = 0
             query['rows'] = rows
+        
+
+        # -------------------------------------------------------------
+        # SIMPLE, GENERAL METADATA RELATED FUNCTIONS
+        # -------------------------------------------------------------
+        for url_param, filter_query in configs.REL_MEDIA_EXISTS:
+            if not url_param in request_dict:
+                # This url_param is not part of the client request
+                # so don't add a solr filter query
+                continue
+            # Add this related media filter to the main query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict={'fq': [filter_query]},
+                main_query_dict=query,
+            )
+        
+        # Params: uuid, updated published processed here.
+        for url_param, solr_field in configs.SIMPLE_METADATA:
+            raw_value = utilities.get_request_param_value(
+                request_dict, 
+                param=url_param,
+                default=None,
+                as_list=False,
+                solr_escape=False,
+            )
+            if not raw_value:
+                # Skip, there's nothing to query for this
+                # url_param.
+                continue
+            query_dict = querymaker.get_simple_metadata_query_dict(
+                raw_value, 
+                solr_field
+            )
+            # Now add this simple metadata to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+        
+
+        # -------------------------------------------------------------
+        # ID RELATED Solr Search Params
+        # -------------------------------------------------------------
+        raw_identifier = utilities.get_request_param_value(
+            request_dict, 
+            param='id',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_identifier:
+            query_dict = querymaker.get_identifier_query_dict(raw_identifier)
+            # Now add results of this identifier to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+        
+        raw_object_uri = utilities.get_request_param_value(
+            request_dict, 
+            param='obj',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_object_uri:
+            query_dict = querymaker.get_object_uri_query_dict(raw_object_uri)
+            # Now add results of this object_uri to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
+
+        # -------------------------------------------------------------
+        # Item Type
+        # -------------------------------------------------------------
+        raw_item_type = utilities.get_request_param_value(
+            request_dict, 
+            param='type',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_item_type:
+            query_dict = querymaker.get_item_type_query_dict(raw_item_type)
+            # Now add results of this raw_item_type to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+        
+
+        # -------------------------------------------------------------
+        # GEO-SPACE AND TIME
+        # -------------------------------------------------------------
+        raw_disc_bbox = utilities.get_request_param_value(
+            request_dict, 
+            param='bbox',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_disc_bbox:
+            query_dict = querymaker.get_discovery_bbox_query_dict(
+                raw_disc_bbox
+            )
+            # Now add results of bounding box to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+        
+        raw_disc_geo = utilities.get_request_param_value(
+            request_dict, 
+            param='disc-geotile',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_disc_geo:
+            query_dict = querymaker.get_discovery_geotile_query_dict(
+                raw_disc_geo
+            )
+            # Now add results of disc-geotile to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
+        raw_chrono_tile = utilities.get_request_param_value(
+            request_dict, 
+            param='form-chronotile',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_chrono_tile:
+            query_dict = querymaker.get_form_use_life_chronotile_query_dict(
+                raw_chrono_tile
+            )
+            # Now add results of this form_use_life_chronotile 
+            # to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
+        # One or both of the form use life date limits can be None. 
+        query_dict = querymaker.get_form_use_life_span_query_dict(
+            form_start=utilities.get_request_param_value(
+                request_dict, 
+                param='form-start',
+                default=None,
+                as_list=False,
+                solr_escape=False,
+            ), 
+            form_stop=utilities.get_request_param_value(
+                request_dict, 
+                param='form-stop',
+                default=None,
+                as_list=False,
+                solr_escape=False,
+            ),
+        )
+        # Now add results of this raw_item_type to the over-all query.
+        query = utilities.combine_query_dict_lists(
+            part_query_dict=query_dict,
+            main_query_dict=query,
+        )
             
+
         # -------------------------------------------------------------
         # Spatial Context
         # -------------------------------------------------------------
@@ -184,19 +327,21 @@ class SearchSolr():
                     SolrDocument.ROOT_CONTEXT_SOLR,
                     query['facet.field'].copy()
                 )
-                query['fq'] += query_dict['fq']
-                query['facet.field'] += query_dict['facet.field']
+                query = utilities.combine_query_dict_lists(
+                    part_query_dict=query_dict,
+                    main_query_dict=query,
+                )
         
         # -------------------------------------------------------------
         # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
         # etc.). The following iterates through a loop of tuples that
-        # configure how differet GET parameters get processed by the
+        # configure how different GET parameters get processed by the
         # function:
         #
         # querymaker.get_general_hierarchic_paths_query_dict
         #
         # Note how the last element in each tuple "param_args" is used
-        # as for key-word arguments in the function.
+        # for key-word arguments in the function.
         # -------------------------------------------------------------
         for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
             raw_paths = utilities.get_request_param_value(
@@ -225,8 +370,72 @@ class SearchSolr():
                         remove_field,
                         query['facet.field'].copy()
                     )
+                
                 # Now add results of this raw_path to the over-all query.
-                query['fq'] += query_dict['fq']
-                query['facet.field'] += query_dict['facet.field']
-    
+                query = utilities.combine_query_dict_lists(
+                    part_query_dict=query_dict,
+                    main_query_dict=query,
+                )
+                
         return query
+    
+
+    def update_query_with_stats_prequery(self, query):
+        """Updates the main query dict if stats fields
+           need facet ranges defined. If so, sends off an
+           initial pre-query to solr.
+        """
+        # NOTE: This needs to happen at the end, after
+        # we have already defined a bunch of solr 
+        if not 'prequery-stats' in query:
+            return query
+        prestats_fields = query.get('prequery-stats', [])
+        query.pop('prequery-stats')
+        if not len(prestats_fields):
+            return query
+        self.solr_connect()
+        stats_query = ranges.compose_stats_query(
+            fq_list=query['fq'], 
+            stats_fields_list=prestats_fields, 
+            q=query['q']
+        )
+        stats_q_dict = ranges.stats_ranges_query_dict_via_solr(
+            stats_query=stats_query, 
+            solr=self.solr
+        )
+        query = utilities.combine_query_dict_lists(
+            part_query_dict=stats_q_dict,
+            main_query_dict=query,
+        )
+        return query
+    
+
+    def finish_query(self, query):
+        """ Check solr query and put convenient format """
+        assert 'q' in query
+        query = self.update_query_with_stats_prequery(query)
+        compat_args(query)
+        query['wt'] = 'json'
+        return query
+    
+
+    def query_solr(self, query):
+        """ Connects to solr and runs a query"""
+        query = self.finish_query(query)
+        self.solr_connect()
+        url = urljoin(self.solr.base_url, 'select')
+        try:
+            http_response = self.solr.make_request.post(
+                url,
+                data=query,
+                timeout=240
+            )
+            self.solr_response = parse_response(http_response.content)
+        except Exception as error:
+            logger.error(
+                '[' + datetime.now().strftime('%x %X ')
+                + settings.TIME_ZONE + '] Error: '
+                + str(error)
+                + ' => Query: ' + str(query)
+            )
+        return self.solr_response

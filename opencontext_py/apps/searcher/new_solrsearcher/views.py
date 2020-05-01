@@ -10,6 +10,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
+from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import SolrResult
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 from django.views.decorators.cache import cache_control
@@ -29,7 +30,21 @@ def process_solr_query(request_dict):
     # NOTE: For inital testing purposes, this only composes a
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
-    return search_solr.compose_query(request_dict)
+    query = search_solr.compose_query(request_dict)
+    query = search_solr.update_query_with_stats_prequery(
+        query
+    )
+    solr_response = search_solr.query_solr(query)
+    solr_result = SolrResult(
+        request_dict=request_dict,
+    )
+    solr_result.act_responses = ['metadata']
+    solr_result.create_result(
+        solr_json=solr_response
+    )
+    query['response'] = solr_result.json_ld
+    query['raw-solr-response'] = solr_response
+    return query
     
 
 @cache_control(no_cache=True)

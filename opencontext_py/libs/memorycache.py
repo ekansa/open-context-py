@@ -41,6 +41,7 @@ class MemoryCache():
         entity = Entity()
         entity.get_context = True
         entity.get_thumbnail = True
+        entity.get_ld_data_type = True
         found = entity.dereference(identifier)
         if not found:
             # case of linked data slugs

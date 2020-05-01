@@ -1,14 +1,17 @@
+import copy
+
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 
 
 class SortingOptions():
 
     """ Methods to show sorting options """
 
-    def __init__(self):
+    def __init__(self, base_search_url='/search/'):
         self.using_default_sorting = True
         self.current_sorting = []
         self.solr_sort_default = configs.SOLR_SORT_DEFAULT
@@ -16,16 +19,16 @@ class SortingOptions():
         self.field_sep = configs.REQUEST_PROP_HIERARCHY_DELIM
         self.request_solr_sort_mappings = configs.REQUEST_SOLR_SORT_MAPPINGS
         self.sort_links = []
-        
+        self.base_search_url = base_search_url
 
     def set_default_current_sorting(self):
         """ Makes a default current sorting list
         """
         current_sort_obj = LastUpdatedOrderedDict()
         current_sort_obj['id'] = '#current-sort-1'
-        current_sort_obj['type'] = 'oc-api:interest-score'
-        current_sort_obj['label'] = 'Interest score'
-        current_sort_obj['oc-api:sort-order'] = 'descending'
+        current_sort_obj['type'] = configs.SORT_DEFAULT_TYPE
+        current_sort_obj['label'] = configs.SORT_DEFAULT_LABEL
+        current_sort_obj['oc-api:sort-order'] = configs.SORT_DEFAULT_ORDER
         self.current_sorting.append(current_sort_obj)
 
 
@@ -137,8 +140,7 @@ class SortingOptions():
         )
         if not current_sort:
             # No sort indicated in the request, so use the default
-            return self.set_default_current_sorting(self)
-        
+            return self.set_default_current_sorting()
         # Iterate through a list of sorting arguments.
         for cur_field_raw in self.make_sort_args_list(current_sort):
             order = 'ascending'  # the default sort order
@@ -149,8 +151,8 @@ class SortingOptions():
                 if (len(cur_field_ex) == 2
                     and 'desc' in cur_field_ex[1]):
                     order = 'descending'
-            for check_sort in self.SORT_OPTIONS:
-                if not check_sort['value'] != cur_field:
+            for check_sort in configs.SORT_OPTIONS:
+                if check_sort['value'] != cur_field:
                     continue
                 self.using_default_sorting = False
                 current_index = len(self.current_sorting) + 1
@@ -166,8 +168,16 @@ class SortingOptions():
     def make_sort_links_list(self, request_dict):
         """ makes a list of the links for sort options
         """
-        if 'sort' in request_dict:
-            request_dict.pop('sort')
+
+        sort_links = []
+        
+        # Make a deep copy, because we're mutating the
+        # request_dict.
+        act_request_dict = copy.deepcopy(request_dict)
+        # Remove a sort or start parameter.
+        for param in ['sort', 'start']:
+            if param in act_request_dict:
+                act_request_dict.pop(param, None)
         
         order_opts = [
             {'key': 'asc',
@@ -176,7 +186,46 @@ class SortingOptions():
              'order': 'descending'}
         ]
         
-        for act_sort in self.SORT_OPTIONS:
-            if not act_sort.get('opt') or act_sort.get('value') is None:
+        for act_sort in configs.SORT_OPTIONS:
+            if not act_sort.get('opt'):
                 continue
-            
+            for order_opt in order_opts:
+                sl = SearchLinks(
+                    request_dict=act_request_dict,
+                    base_search_url=self.base_search_url
+                )
+                if act_sort.get('value') is None: 
+                    if order_opt['key'] == 'asc':
+                        # Skip the option of adding an ascending order sort
+                        # option if the act_sort value is None (the default sorting
+                        # option by interest score).
+                        continue
+                else:
+                    # Make sort links for this sort_option and
+                    # order_opt.
+                    act_sort_val = (
+                        act_sort['value'] 
+                        + self.request_sort_dir_delim
+                        + order_opt['key']
+                    )
+                    sl.add_param_value('sort', act_sort_val)
+                
+                urls = sl.make_urls_from_request_dict()
+                new_sort_obj = LastUpdatedOrderedDict()
+                new_sort_obj['id'] = urls['html']
+                new_sort_obj['json'] = urls['json']
+                new_sort_obj['type'] = act_sort['type']
+                new_sort_obj['label'] = act_sort['label']
+                new_sort_obj['oc-api:sort-order'] = order_opt['order']
+                in_active_list = False
+                for cur_act_sort in self.current_sorting:
+                    if (new_sort_obj['type'] == cur_act_sort['type']
+                        and new_sort_obj['oc-api:sort-order'] == cur_act_sort['oc-api:sort-order']):
+                        # the new_sort_obj option is ALREADY in use
+                        in_active_list = True
+                        break
+                if in_active_list is False:
+                    sort_links.append(new_sort_obj)
+        
+        # Return the sort option links
+        return sort_links

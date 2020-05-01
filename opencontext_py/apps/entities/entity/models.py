@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Count
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
@@ -48,9 +48,35 @@ class Entity():
         self.context = False
         self.get_context = False
         self.get_icon = False
+        self.get_ld_data_type = True
         self.icon = False
         self.ids_meta = False
         self.slug_uri = False
+
+    def get_linked_entity_data_type(self, ld_entity, db_save=True):
+        """Get the data type for a linked data property."""
+        if ld_entity.ent_type != 'property':
+            return False
+        # First find the predicates associated with this linked_entity. 
+        rel_preds = LinkAnnotation.objects.filter(
+            subject_type='predicates',
+            object_uri=ld_entity.uri
+        )
+        rel_pred_uuids = [la.subject for la in rel_preds]
+        data_type_dict = Predicate.objects.filter(
+            uuid__in=rel_pred_uuids
+        ).values('data_type').annotate(
+            total=Count('data_type')
+        ).order_by('-total').first()
+        if not data_type_dict:
+            return False
+        data_type = data_type_dict['data_type']
+        if db_save:
+            if not isinstance(ld_entity.localized_json, dict):
+                ld_entity.localized_json = {}    
+            ld_entity.localized_json['data_type'] = data_type
+            ld_entity.save()
+        return data_type
 
     def dereference_linked_data(self, identifier, link_entity_slug=None):
         """Dereferences a linked data entity (not part of an OC project)"""
@@ -72,7 +98,11 @@ class Entity():
         self.entity_type = ld_entity.ent_type
         self.vocab_uri = ld_entity.vocab_uri
         self.ld_object_ok = True
-        
+        if isinstance(ld_entity.localized_json, dict):
+            self.data_type = ld_entity.localized_json.get(
+                'data_type', False
+            )
+
         # Now get the vocabulary item.
         vocab_uris = [ld_entity.vocab_uri]
         vocab_uris.append(ld_entity.vocab_uri.replace('https://', 'http://'))
@@ -81,6 +111,13 @@ class Entity():
         if vocab_entity:
             self.vocabulary = vocab_entity.label
         
+        if (not self.data_type 
+            and self.get_ld_data_type 
+            and ld_entity.ent_type == 'property'):
+            # Get the data_type for the link entity via looking at the
+            # most common data_type for associated predicate items.
+            self.data_type = self.get_linked_entity_data_type(ld_entity)
+
         if not self.get_icon:
             # Do not bother adding an icon.
             return True
