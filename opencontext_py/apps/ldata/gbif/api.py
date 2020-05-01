@@ -6,12 +6,12 @@ from django.core.cache import caches
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 
-VOCAB_URI = 'http://gbif.org/species'
+
 JSON_BASE_URL = 'https://api.gbif.org/v1/species/{}'
 VERNACULAR_NAME_BASE_URL = 'http://api.gbif.org/v1/species/{}/vernacularNames'
 SLEEP_TIME = 0.25
+
 
 class gbifAPI():
     """ Interacts with the Global Biodiversity Information Facility (GBIF)
@@ -49,7 +49,10 @@ class gbifAPI():
         # We don't have it cached, so get it via HTTP request
         # then cache.
         obj = self.get_gbif_species_json_via_http(gbif_id)
-        cache.set(cache_key, obj)
+        try:
+            cache.set(cache_key, obj)
+        except:
+            pass
         return obj
 
 
@@ -59,11 +62,16 @@ class gbifAPI():
         return json_r.get('canonicalName')
 
 
-    def get_gbif_parent_key(self, gbif_id, use_cache=False):
+    def get_gbif_parent_key(
+        self, 
+        gbif_id, 
+        use_cache=False, 
+        no_parent_default=None
+    ):
         """Get the parent GBIF ID from the GBIF API for an ID"""
         json_r = self.get_gbif_species_json(gbif_id, use_cache=use_cache)
-        # Default to 0 to indicate no parent found in a check.
-        return json_r.get('parentKey', 0)
+        # Default to None to indicate no parent found in a check.
+        return json_r.get('parentKey', no_parent_default)
 
     
     def get_gbif_vernacular_name(self, gbif_id, lang_code='eng'):
