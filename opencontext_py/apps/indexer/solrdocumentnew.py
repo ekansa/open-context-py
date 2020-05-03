@@ -307,7 +307,7 @@ sd_obj_l.fields
     EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
     FILE_SIZE_SOLR = 'filesize'
     FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
-    RELATED_SOLR_DOC_PREFIX = 'rel--'
+    RELATED_SOLR_DOC_PREFIX = 'REL_'
 
 
     # Maximum depth of geotile zoom
