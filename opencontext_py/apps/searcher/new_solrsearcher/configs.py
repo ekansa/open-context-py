@@ -113,6 +113,29 @@ CHRONO_STATS_FIELDS =  [
 
 MEDIA_STATS_FIELDS = [SolrDocument.FILE_SIZE_SOLR]
 
+ALL_TYPES_STATS_FIELDS = (
+    GENERAL_STATS_FIELDS 
+    + CHRONO_STATS_FIELDS 
+    + MEDIA_STATS_FIELDS
+)
+
+ITEM_TYPE_STATS_FIELDS = {
+    'projects': GENERAL_STATS_FIELDS,
+    'subjects': (
+        GENERAL_STATS_FIELDS + CHRONO_STATS_FIELDS
+    ),
+    'documents': (
+        GENERAL_STATS_FIELDS + CHRONO_STATS_FIELDS
+    ),
+    'media': (
+        GENERAL_STATS_FIELDS 
+        + CHRONO_STATS_FIELDS 
+        + MEDIA_STATS_FIELDS
+    ),
+}
+
+
+
 LITERAL_DATA_TYPES = [
     'xsd:integer', 
     'xsd:double', 

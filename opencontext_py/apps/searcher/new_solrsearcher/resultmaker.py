@@ -6,6 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
@@ -217,10 +218,100 @@ class SolrResult():
         return self.id
 
 
+    def add_publishing_datetime_metadata(self, solr_json, default_to_current=True):
+        """Adds publishing modified and created metadata to the response JSON-LD"""
+        # NOTE: Solr already defaults to representing time in 
+        # ISO 8601, so we're just pulling the appropriate time
+        # info from the solr_json to metadata fields in our response
+        # JSON-LD.
+        meta_configs = [
+            (
+                # Last modified.
+                'dcmi:modified',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'updated',
+                    'max',
+                ],
+            ),
+            (
+                # Last published
+                'dcmi:created',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'published',
+                    'max',
+                ],
+            ),
+            (
+                # Earliest published
+                'oai-pmh:earliestDatestamp',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'published',
+                    'min',
+                ],
+            ),
+        ]
+        for json_ld_key, path_keys_list in meta_configs:
+            act_time = utilities.get_dict_path_value(
+                path_keys_list, 
+                solr_json
+            )
+            if not act_time:
+                # We could not find the time object.
+                if not default_to_current:
+                    # Skip, since we're not to default to 
+                    # the current time.
+                    continue
+                # Add ISO 8601 current time for the missing value.
+                act_time = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+            self.json_ld[json_ld_key] = act_time 
+
+
+    def add_form_use_life_date_range(self, solr_json, iso_year_format=True):
+        """Adds earliest and latest form-use-life dates"""
+        meta_configs = [
+            (
+                # Earliest date items formed, used, or alive.
+                'start',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'form_use_life_chrono_earliest',
+                    'min',
+                ],
+            ),
+            (
+                # Latest date items formed, used, or alive
+                'stop',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'form_use_life_chrono_latest',
+                    'max',
+                ],
+            ),
+        ]
+        for json_ld_key, path_keys_list in meta_configs:
+            act_date = utilities.get_dict_path_value(
+                path_keys_list, 
+                solr_json
+            )
+            if iso_year_format and act_date is not None:
+                act_date = ISOyears().make_iso_from_float(act_date)
+            self.json_ld[json_ld_key] = act_date
+
+
     def create_result(self, solr_json):
         """Creates a solr result"""
         if 'metadata' in self.act_responses:
             self.json_ld['id'] = self.make_response_id()
+            self.add_publishing_datetime_metadata(solr_json)
+            self.add_form_use_life_date_range(solr_json)
             self.add_paging_json(solr_json)
             self.add_sorting_json()
             self.add_filters_json()

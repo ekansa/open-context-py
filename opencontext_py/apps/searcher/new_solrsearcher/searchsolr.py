@@ -28,7 +28,7 @@ class SearchSolr():
         self.json_ld = None
         # Use the copy() method to make sure we don't mutate the configs!
         self.init_facet_fields = configs.DEFAULT_FACET_FIELDS.copy()
-        self.init_stats_fields = configs.GENERAL_STATS_FIELDS.copy()
+        self.init_stats_fields = configs.ALL_TYPES_STATS_FIELDS.copy()
         self.rows = configs.SOLR_DEFAULT_ROW_COUNT
         self.start = 0
         self.max_rows = configs.SOLR_MAX_RESULT_ROW_COUNT
