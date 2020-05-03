@@ -24,6 +24,7 @@ class SolrResult():
         self.json_ld = LastUpdatedOrderedDict()
         self.request_dict = copy.deepcopy(request_dict)
         self.base_search_url = base_search_url
+        self.id = None
         self.act_responses = []
 
     def _make_paging_links(self, start, rows, act_request_dict):
@@ -203,9 +204,23 @@ class SolrResult():
         return text_fields
 
 
+    def make_response_id(self):
+        """Makes the ID for the response JSON-LD"""
+        if self.id:
+            return self.id
+        sl = SearchLinks(
+            request_dict=self.request_dict,
+            base_search_url=self.base_search_url
+        )
+        urls = sl.make_urls_from_request_dict()
+        self.id = urls['html']
+        return self.id
+
+
     def create_result(self, solr_json):
         """Creates a solr result"""
         if 'metadata' in self.act_responses:
+            self.json_ld['id'] = self.make_response_id()
             self.add_paging_json(solr_json)
             self.add_sorting_json()
             self.add_filters_json()
