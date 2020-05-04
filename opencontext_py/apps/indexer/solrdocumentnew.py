@@ -705,7 +705,9 @@ sd_obj_l.fields
         solr_field_prefix = self._convert_slug_to_solr(
             self.solr_doc_prefix
         )
-        act_solr_field = solr_field_prefix + root_solr_field
+        if (len(solr_field_predix) 
+            and not root_solr_field.startswith(solr_field_prefix)):
+            act_solr_field = solr_field_prefix + root_solr_field
         # The all_obj_solr_field is defined for the solr field
         # at the root of this hierarchy. It will take values for
         # each item in the object value hierarchy, thereby
@@ -997,6 +999,11 @@ sd_obj_l.fields
             print('Cannot find predicate: {}'.format(pred_key))
             # The predicate does not seem to exist. Skip out.
             return None
+        
+        solr_field_prefix = self._convert_slug_to_solr(
+            self.solr_doc_prefix
+        )
+
         if not 'uuid' in predicate or not predicate.get('slug'):
             print('Wierd predicate: {}'.format(str(predicate)))
             hierarchy_items = []
@@ -1010,7 +1017,7 @@ sd_obj_l.fields
         # starting at the self.ROOT_PREDICATE_SOLR
         self._add_predicate_hierarchy(
             hierarchy_items,
-            self.ROOT_PREDICATE_SOLR
+            (solr_field_prefix + self.ROOT_PREDICATE_SOLR)
         )
         # Set up the solr field name for the predicate.
         solr_field_name = self._convert_slug_to_solr(
@@ -1111,6 +1118,9 @@ sd_obj_l.fields
         if not inferred_assertions:
             # No inferred assertions from liked data, so skip out.
             return None
+        solr_field_prefix = self._convert_slug_to_solr(
+            self.solr_doc_prefix
+        )
         for assertion in inferred_assertions:
             # Get any hierarchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hierarchy.
@@ -1121,7 +1131,7 @@ sd_obj_l.fields
             # starting at the self.ROOT_LINK_DATA_SOLR
             self._add_predicate_hierarchy(
                 pred_hierarchy_items,
-                self.ROOT_LINK_DATA_SOLR
+                (solr_field_prefix + self.ROOT_LINK_DATA_SOLR)
             )
             
             # Set up the solr field name for the link data predicate.
