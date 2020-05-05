@@ -414,14 +414,18 @@ sd_obj_l.fields
             solr_field = solr_doc_prefix + solr_field
         return self._convert_slug_to_solr(solr_field)
 
-    def _make_entity_string_for_solr_value(self, slug, type, id, label):
+    def _make_entity_string_for_solr_value(self, slug, type, id, label, add_solr_doc_prefix=True,):
         """Make a solr value for an object item."""
+        if add_solr_doc_prefix:
+            solr_doc_prefix = self.solr_doc_prefix
+        else:
+            solr_doc_prefix = ''
         return make_entity_string_for_solr(
             self._convert_slug_to_solr(slug),
             type,
             id,
             label,
-            solr_doc_prefix=self.solr_doc_prefix,
+            solr_doc_prefix=solr_doc_prefix,
             solr_value_delim=self.SOLR_VALUE_DELIM,
         )
 
@@ -586,7 +590,8 @@ sd_obj_l.fields
                 proj['slug'],
                 'id',
                 get_id(proj),
-                proj['label']
+                proj['label'],
+                add_solr_doc_prefix=False,
             )
             # The self.ALL_PROJECT_SOLR takes values for
             # each project item in project hierarchy, thereby
@@ -675,7 +680,8 @@ sd_obj_l.fields
                 context['slug'],
                 'id',
                 ('/subjects/' + context_uuid),
-                context['label']
+                context['label'],
+                add_solr_doc_prefix=False,
             )
             # The self.ALL_CONTEXT_SOLR takes values for
             # each context item in spatial context hierarchy, thereby
