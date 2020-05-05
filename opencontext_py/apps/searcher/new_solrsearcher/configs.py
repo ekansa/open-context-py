@@ -134,8 +134,6 @@ ITEM_TYPE_STATS_FIELDS = {
     ),
 }
 
-
-
 LITERAL_DATA_TYPES = [
     'xsd:integer', 
     'xsd:double', 
@@ -241,6 +239,11 @@ HIERARCHY_PARAM_TO_SOLR = [
     ),
 ]
 
+
+# Prefix on identifiers to that it is being referenced as a
+# related entity. The SOLR doc will have an underscore, but the public client
+# request will have "-" character.
+RELATED_ENTITY_ID_PREFIX = SolrDocument.RELATED_SOLR_DOC_PREFIX.replace('_', '-')
 
 
 

@@ -657,6 +657,18 @@ def get_general_hierarchic_path_query_dict(
             # not entities in the database)
             return query_dict
 
+        if not item_id:
+            # It is empty or not a string, so skip out.
+            return None
+
+        use_solr_rel_prefix = ''
+        if item_id.startswith(configs.RELATED_ENTITY_ID_PREFIX):
+            # Strip off the prefix. 
+            item_id = item_id[len(configs.RELATED_ENTITY_ID_PREFIX):]
+            use_solr_rel_prefix = SolrDocument.RELATED_SOLR_DOC_PREFIX
+            if obj_all_field_fq and not obj_all_field_fq.startswith(use_solr_rel_prefix):
+                obj_all_field_fq = use_solr_rel_prefix + obj_all_field_fq 
+
         item = m_cache.get_entity(item_id)
         if not item:
             # We don't recognize the first item, and it is not
@@ -686,6 +698,13 @@ def get_general_hierarchic_path_query_dict(
         if item.item_type == 'uri' and facet_field == SolrDocument.ROOT_PREDICATE_SOLR:
             facet_field = SolrDocument.ROOT_LINK_DATA_SOLR 
         
+
+        # Add the solr related prefix for related entity searches 
+        # and it not already used as a prefix.
+        if len(use_solr_rel_prefix) and not facet_field.startswith(
+            use_solr_rel_prefix):
+            facet_field = use_solr_rel_prefix + facet_field
+
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
@@ -704,8 +723,9 @@ def get_general_hierarchic_path_query_dict(
         # Make the query for the item and the solr field associated
         # with the item's immediate parent (or root, if it has no
         # parents). 
-        query_dict['fq'].append('{field_fq}:{item_slug}'.format(
+        query_dict['fq'].append('{field_fq}:{rel_prefix}{item_slug}'.format(
                 field_fq=field_fq,
+                rel_prefix=use_solr_rel_prefix,
                 item_slug=utilities.fq_slug_value_format(item.slug)
             )
         )
@@ -713,8 +733,9 @@ def get_general_hierarchic_path_query_dict(
         # associated with all items in the whole hierarchy for this
         # type of solr dynamic field. 
         if obj_all_field_fq:
-            query_dict['fq'].append('{field_fq}:{item_slug}'.format(
+            query_dict['fq'].append('{field_fq}:{rel_prefix}{item_slug}'.format(
                     field_fq=obj_all_field_fq,
+                    rel_prefix=use_solr_rel_prefix,
                     item_slug=utilities.fq_slug_value_format(item.slug)
                 )
             )
@@ -722,7 +743,8 @@ def get_general_hierarchic_path_query_dict(
         # that will be used to query child items in the next iteration
         # of this loop.
         facet_field = (
-            item.slug.replace('-', '_')
+            use_solr_rel_prefix
+            + item.slug.replace('-', '_')
             + SolrDocument.SOLR_VALUE_DELIM
             + attribute_field_part
             + field_suffix  
@@ -730,6 +752,7 @@ def get_general_hierarchic_path_query_dict(
         field_fq = facet_field
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
+        
         
         if ((getattr(item, 'item_type', None) == 'predicates')
             or (getattr(item, 'entity_type', None) == 'property')):
@@ -778,7 +801,8 @@ def get_general_hierarchic_path_query_dict(
                     facet_field = utilities.rename_solr_field_for_data_type(
                         attribute_item.data_type,
                         (
-                            item.slug.replace('-', '_')
+                            use_solr_rel_prefix
+                            + item.slug.replace('-', '_')
                             + SolrDocument.SOLR_VALUE_DELIM
                             + field_suffix
                         )  
@@ -795,7 +819,8 @@ def get_general_hierarchic_path_query_dict(
                 field_fq = utilities.rename_solr_field_for_data_type(
                     attribute_item.data_type,
                     (
-                        item.slug.replace('-', '_')
+                        + use_solr_rel_prefix
+                        + item.slug.replace('-', '_')
                         + SolrDocument.SOLR_VALUE_DELIM
                         + field_suffix
                     )  
@@ -825,7 +850,8 @@ def get_general_hierarchic_path_query_dict(
                 )
                 # Now also update the obj_all_field_fq
                 obj_all_field_fq = (
-                    'obj_all'
+                    use_solr_rel_prefix
+                    + 'obj_all'
                     + SolrDocument.SOLR_VALUE_DELIM
                     + attribute_field_part
                     + field_suffix
