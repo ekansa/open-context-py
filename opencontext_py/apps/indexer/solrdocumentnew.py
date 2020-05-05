@@ -119,7 +119,11 @@ def make_entity_string_for_solr(
         id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
     # NOTE: The '-' character is reserved in Solr, so we need to replace
     # it with a '_' character in order to do prefix queries on the slugs.
-    slug = solr_doc_prefix + slug.replace('-', '_')
+    if solr_doc_prefix:
+        solr_doc_prefix = solr_doc_prefix.replace('-', '_')
+        if not slug.startswith(solr_doc_prefix):
+            slug = solr_doc_prefix + slug 
+    slug = slug.replace('-', '_')
     return solr_value_delim.join(
         [slug, type, id_part, label]
     )
@@ -398,6 +402,17 @@ sd_obj_l.fields
         """Converts a slug to a solr style slug."""
         # slug = self.solr_doc_prefix + slug
         return slug.replace('-', '_')
+    
+    def _prefix_solr_field(self, solr_field):
+        """Makes a solr field, with a prefix if needed"""
+        if not len(self.solr_doc_prefix):
+            return self._convert_slug_to_solr(solr_field)
+        solr_doc_prefix = self._convert_slug_to_solr(
+            self.solr_doc_prefix
+        )
+        if not solr_field.startswith(solr_doc_prefix):
+            solr_field = solr_doc_prefix + solr_field
+        return self._convert_slug_to_solr(solr_field)
 
     def _make_entity_string_for_solr_value(self, slug, type, id, label):
         """Make a solr value for an object item."""
@@ -488,7 +503,8 @@ sd_obj_l.fields
             solr_id_field,
             concat_val,
             slug,
-            do_fq_only=False
+            do_fq_only=False,
+            add_solr_doc_prefix=True,
         ):
         """Adds values for an id field, and the associated slug
            value for the related _fq field
@@ -505,7 +521,15 @@ sd_obj_l.fields
 
         # Add the main solr id field if not present,
         # then append the concat_val
-        solr_id_field = self._convert_slug_to_solr(solr_id_field)
+        if add_solr_doc_prefix:
+            # A descriptive field (for props), not a context or
+            # a project field. So this can take a solr-doc prefix
+            # to indicate it is a related property.
+            solr_id_field = self._prefix_solr_field(solr_id_field)
+        else:
+            # No solr doc prefix. Not a related property.
+            solr_id_field = self._convert_slug_to_solr(solr_id_field)
+
         if do_fq_only is False and solr_id_field not in self.fields:
             self.fields[solr_id_field] = []
         if (do_fq_only is False and
@@ -574,14 +598,16 @@ sd_obj_l.fields
                 self.ALL_PROJECT_SOLR,
                 act_solr_value,
                 proj['slug'],
-                do_fq_only=True
+                do_fq_only=True,
+                add_solr_doc_prefix=False,
             )
             # Now add the current proj. to the solr field for the current
             # level of the project hierarchy.
             self._add_id_field_fq_field_values(
                 solr_field_name,
                 act_solr_value,
-                proj['slug']
+                proj['slug'],
+                add_solr_doc_prefix=False,
             )
             # Make the new solr_field_name for the next iteration of the loop.
             solr_field_name = (
@@ -661,7 +687,8 @@ sd_obj_l.fields
                 self.ALL_CONTEXT_SOLR,
                 act_solr_value,
                 context['slug'],
-                do_fq_only=True
+                do_fq_only=True,
+                add_solr_doc_prefix=False,
             )
             if index == 0:
                 # We are at the top of the spatial hierarchy
@@ -678,7 +705,8 @@ sd_obj_l.fields
             self._add_id_field_fq_field_values(
                 solr_context_field,
                 act_solr_value,
-                context['slug']
+                context['slug'],
+                add_solr_doc_prefix=False,
             )
 
     def _get_predicate_type_from_dict(self, predicate_dict):
@@ -702,12 +730,8 @@ sd_obj_l.fields
         # The act_solr_field starts at the solr field that is
         # for the root of the hierarchy, passed as an argument to
         # this function.
-        solr_field_prefix = self._convert_slug_to_solr(
-            self.solr_doc_prefix
-        )
-        if (len(solr_field_predix) 
-            and not root_solr_field.startswith(solr_field_prefix)):
-            act_solr_field = solr_field_prefix + root_solr_field
+        act_solr_field = self._prefix_solr_field(root_solr_field)
+        
         # The all_obj_solr_field is defined for the solr field
         # at the root of this hierarchy. It will take values for
         # each item in the object value hierarchy, thereby
@@ -716,12 +740,14 @@ sd_obj_l.fields
         # to know the full hierarchy path of parent items in order
         # to query for a given object value.
         all_obj_solr_field = (
-            solr_field_prefix +
             'obj_all' +
             self.SOLR_VALUE_DELIM +
             root_solr_field
         )
-        
+        all_obj_solr_field = self._prefix_solr_field(
+            all_obj_solr_field
+        )
+
         # Now iterate through the list of hierarchy items of
         # object values.
         for index, item in enumerate(hierarchy_items):
@@ -999,10 +1025,6 @@ sd_obj_l.fields
             print('Cannot find predicate: {}'.format(pred_key))
             # The predicate does not seem to exist. Skip out.
             return None
-        
-        solr_field_prefix = self._convert_slug_to_solr(
-            self.solr_doc_prefix
-        )
 
         if not 'uuid' in predicate or not predicate.get('slug'):
             print('Wierd predicate: {}'.format(str(predicate)))
@@ -1017,7 +1039,7 @@ sd_obj_l.fields
         # starting at the self.ROOT_PREDICATE_SOLR
         self._add_predicate_hierarchy(
             hierarchy_items,
-            (solr_field_prefix + self.ROOT_PREDICATE_SOLR)
+            self._prefix_solr_field(self.ROOT_PREDICATE_SOLR)
         )
         # Set up the solr field name for the predicate.
         solr_field_name = self._convert_slug_to_solr(
@@ -1026,6 +1048,11 @@ sd_obj_l.fields
                 predicate, prefix=(self.SOLR_VALUE_DELIM + 'pred_')
             )
         )
+
+        solr_field_name = self._prefix_solr_field(
+            solr_field_name
+        )
+
         # Make sure the solr_field_name is in the solr document's
         # dictionary of fields.
         if solr_field_name not in self.fields:
@@ -1118,9 +1145,7 @@ sd_obj_l.fields
         if not inferred_assertions:
             # No inferred assertions from liked data, so skip out.
             return None
-        solr_field_prefix = self._convert_slug_to_solr(
-            self.solr_doc_prefix
-        )
+        
         for assertion in inferred_assertions:
             # Get any hierarchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hierarchy.
@@ -1131,7 +1156,7 @@ sd_obj_l.fields
             # starting at the self.ROOT_LINK_DATA_SOLR
             self._add_predicate_hierarchy(
                 pred_hierarchy_items,
-                (solr_field_prefix + self.ROOT_LINK_DATA_SOLR)
+                self._prefix_solr_field(self.ROOT_LINK_DATA_SOLR)
             )
             
             # Set up the solr field name for the link data predicate.
@@ -1141,6 +1166,8 @@ sd_obj_l.fields
                     assertion, prefix=(self.SOLR_VALUE_DELIM + 'pred_')
                 )
             )
+
+            solr_field_name = self._prefix_solr_field(solr_field_name)
             # Make sure the solr_field_name is in the solr document's
             # dictionary of fields.
             if solr_field_name not in self.fields:
