@@ -217,6 +217,11 @@ class SearchFilters():
         ):
         """Looks up a entity item to add to an act_filter"""
         lookup_val = str(lookup_val)
+    
+        if lookup_val.startswith(configs.RELATED_ENTITY_ID_PREFIX):
+            # Strip off the prefix. 
+            lookup_val = lookup_val[len(configs.RELATED_ENTITY_ID_PREFIX):]
+            act_filter['oc-api:related-property'] = True
 
         # Map the lookup_val to a mapping dict
         if look_up_mapping_dict:
@@ -224,7 +229,7 @@ class SearchFilters():
                 lookup_val, 
                 lookup_val
             )
-        
+
         m_cache = MemoryCache()
         if is_spatial_context:
             item = m_cache.get_entity_by_context(lookup_val)
