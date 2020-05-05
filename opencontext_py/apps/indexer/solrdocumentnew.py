@@ -403,29 +403,43 @@ sd_obj_l.fields
         # slug = self.solr_doc_prefix + slug
         return slug.replace('-', '_')
     
-    def _prefix_solr_field(self, solr_field):
+    def _prefix_solr_field(self, solr_field, act_solr_doc_prefix=None):
         """Makes a solr field, with a prefix if needed"""
-        if not len(self.solr_doc_prefix):
+
+        if act_solr_doc_prefix is None and not len(self.solr_doc_prefix):
             return self._convert_slug_to_solr(solr_field)
-        solr_doc_prefix = self._convert_slug_to_solr(
-            self.solr_doc_prefix
+        
+        if act_solr_doc_prefix is None:
+            # The act_solr_prefix is not set, so default to the
+            # solr_doc_prefix for this class.
+            act_solr_doc_prefix = self.solr_doc_prefix
+
+        act_solr_doc_prefix = self._convert_slug_to_solr(
+            act_solr_doc_prefix
         )
-        if not solr_field.startswith(solr_doc_prefix):
-            solr_field = solr_doc_prefix + solr_field
+        if not solr_field.startswith(act_solr_doc_prefix):
+            solr_field = act_solr_doc_prefix + solr_field
         return self._convert_slug_to_solr(solr_field)
 
-    def _make_entity_string_for_solr_value(self, slug, type, id, label, add_solr_doc_prefix=True,):
+    def _make_entity_string_for_solr_value(
+        self, 
+        slug, 
+        type, 
+        id, 
+        label, 
+        act_solr_doc_prefix=None
+    ):
         """Make a solr value for an object item."""
-        if add_solr_doc_prefix:
-            solr_doc_prefix = self.solr_doc_prefix
-        else:
-            solr_doc_prefix = ''
+        if act_solr_doc_prefix is None:
+            # The act_solr_prefix is not set, so default to the
+            # solr_doc_prefix for this class.
+            act_solr_doc_prefix = self.solr_doc_prefix
         return make_entity_string_for_solr(
             self._convert_slug_to_solr(slug),
             type,
             id,
             label,
-            solr_doc_prefix=solr_doc_prefix,
+            solr_doc_prefix=act_solr_doc_prefix,
             solr_value_delim=self.SOLR_VALUE_DELIM,
         )
 
@@ -508,7 +522,7 @@ sd_obj_l.fields
             concat_val,
             slug,
             do_fq_only=False,
-            add_solr_doc_prefix=True,
+            act_solr_doc_prefix=None,
         ):
         """Adds values for an id field, and the associated slug
            value for the related _fq field
@@ -516,6 +530,11 @@ sd_obj_l.fields
         if (not isinstance(solr_id_field, str) or
             not isinstance(concat_val, str)):
             return None
+        
+        if act_solr_doc_prefix is None:
+            # The act_solr_prefix is not set, so default to the
+            # solr_doc_prefix for this class.
+            act_solr_doc_prefix = self.solr_doc_prefix
         
         # NOTE: do_fq_only is a legacy argument for this function
         # We will force it to be false if we're not making a solr
@@ -525,14 +544,17 @@ sd_obj_l.fields
 
         # Add the main solr id field if not present,
         # then append the concat_val
-        if add_solr_doc_prefix:
-            # A descriptive field (for props), not a context or
-            # a project field. So this can take a solr-doc prefix
-            # to indicate it is a related property.
-            solr_id_field = self._prefix_solr_field(solr_id_field)
-        else:
-            # No solr doc prefix. Not a related property.
-            solr_id_field = self._convert_slug_to_solr(solr_id_field)
+        
+        # A descriptive field (for props), not a context or
+        # a project field. So this can take a solr-doc prefix
+        # to indicate it is a related property.
+        solr_id_field = self._prefix_solr_field(
+            solr_id_field,
+            # The act_solr_doc_prefix can override the default for the
+            # solr_doc_prefix for the whole document object  
+            act_solr_doc_prefix=act_solr_doc_prefix
+        )
+        
 
         if do_fq_only is False and solr_id_field not in self.fields:
             self.fields[solr_id_field] = []
@@ -591,7 +613,7 @@ sd_obj_l.fields
                 'id',
                 get_id(proj),
                 proj['label'],
-                add_solr_doc_prefix=False,
+                act_solr_doc_prefix='', # No prefixing for projects!
             )
             # The self.ALL_PROJECT_SOLR takes values for
             # each project item in project hierarchy, thereby
@@ -604,7 +626,7 @@ sd_obj_l.fields
                 act_solr_value,
                 proj['slug'],
                 do_fq_only=True,
-                add_solr_doc_prefix=False,
+                act_solr_doc_prefix='', # No prefixing for projects!
             )
             # Now add the current proj. to the solr field for the current
             # level of the project hierarchy.
@@ -612,7 +634,7 @@ sd_obj_l.fields
                 solr_field_name,
                 act_solr_value,
                 proj['slug'],
-                add_solr_doc_prefix=False,
+                act_solr_doc_prefix='', # No prefixing for projects!
             )
             # Make the new solr_field_name for the next iteration of the loop.
             solr_field_name = (
@@ -681,7 +703,7 @@ sd_obj_l.fields
                 'id',
                 ('/subjects/' + context_uuid),
                 context['label'],
-                add_solr_doc_prefix=False,
+                act_solr_doc_prefix='', # No prefixing for contexts!
             )
             # The self.ALL_CONTEXT_SOLR takes values for
             # each context item in spatial context hierarchy, thereby
@@ -694,7 +716,7 @@ sd_obj_l.fields
                 act_solr_value,
                 context['slug'],
                 do_fq_only=True,
-                add_solr_doc_prefix=False,
+                act_solr_doc_prefix='', # No prefixing for contexts!
             )
             if index == 0:
                 # We are at the top of the spatial hierarchy
@@ -712,7 +734,7 @@ sd_obj_l.fields
                 solr_context_field,
                 act_solr_value,
                 context['slug'],
-                add_solr_doc_prefix=False,
+                act_solr_doc_prefix='', # No prefixing for contexts!
             )
 
     def _get_predicate_type_from_dict(self, predicate_dict):
