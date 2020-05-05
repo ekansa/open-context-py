@@ -27,7 +27,117 @@ class SolrResult():
         self.base_search_url = base_search_url
         self.id = None
         self.act_responses = []
+    
 
+    # -----------------------------------------------------------------
+    # Methods to make geneal response metadata
+    # -----------------------------------------------------------------
+    def make_response_id(self):
+        """Makes the ID for the response JSON-LD"""
+        # NOTE: The order of the URL parameters will be predicable
+        # to help normalize search IDs.
+        if self.id:
+            return self.id
+        sl = SearchLinks(
+            request_dict=self.request_dict,
+            base_search_url=self.base_search_url
+        )
+        urls = sl.make_urls_from_request_dict()
+        self.id = urls['html']
+        return self.id
+
+
+    def add_publishing_datetime_metadata(self, solr_json, default_to_current=True):
+        """Adds publishing modified and created metadata to the response JSON-LD"""
+        # NOTE: Solr already defaults to representing time in 
+        # ISO 8601, so we're just pulling the appropriate time
+        # info from the solr_json to metadata fields in our response
+        # JSON-LD.
+        meta_configs = [
+            (
+                # Last modified.
+                'dcmi:modified',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'updated',
+                    'max',
+                ],
+            ),
+            (
+                # Last published
+                'dcmi:created',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'published',
+                    'max',
+                ],
+            ),
+            (
+                # Earliest published
+                'oai-pmh:earliestDatestamp',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'published',
+                    'min',
+                ],
+            ),
+        ]
+        for json_ld_key, path_keys_list in meta_configs:
+            act_time = utilities.get_dict_path_value(
+                path_keys_list, 
+                solr_json
+            )
+            if not act_time:
+                # We could not find the time object.
+                if not default_to_current:
+                    # Skip, since we're not to default to 
+                    # the current time.
+                    continue
+                # Add ISO 8601 current time for the missing value.
+                act_time = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+            self.json_ld[json_ld_key] = act_time 
+
+
+    def add_form_use_life_date_range(self, solr_json, iso_year_format=True):
+        """Adds earliest and latest form-use-life dates"""
+        meta_configs = [
+            (
+                # Earliest date items formed, used, or alive.
+                'start',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'form_use_life_chrono_earliest',
+                    'min',
+                ],
+            ),
+            (
+                # Latest date items formed, used, or alive
+                'stop',
+                [
+                    'stats', 
+                    'stats_fields',
+                    'form_use_life_chrono_latest',
+                    'max',
+                ],
+            ),
+        ]
+        for json_ld_key, path_keys_list in meta_configs:
+            act_date = utilities.get_dict_path_value(
+                path_keys_list, 
+                solr_json
+            )
+            if iso_year_format and act_date is not None:
+                act_date = ISOyears().make_iso_from_float(act_date)
+            self.json_ld[json_ld_key] = act_date
+
+
+    # -----------------------------------------------------------------
+    # Methods to make links for paging + sorting navigation 
+    # -----------------------------------------------------------------
     def _make_paging_links(self, start, rows, act_request_dict):
         """Makes links for paging for start rows from a request dict"""
         start = str(int(start))
@@ -143,6 +253,9 @@ class SolrResult():
         self.json_ld['oc-api:has-sorting'] = sort_links
 
     
+    # -----------------------------------------------------------------
+    # Methods to make active filters with links to remove or broaden 
+    # -----------------------------------------------------------------
     def add_filters_json(self):
         """Adds JSON describing currently used query filters"""
         search_filters = SearchFilters(
@@ -203,107 +316,6 @@ class SolrResult():
         if len(text_fields):
             self.json_ld['oc-api:has-text-search'] = text_fields
         return text_fields
-
-
-    def make_response_id(self):
-        """Makes the ID for the response JSON-LD"""
-        if self.id:
-            return self.id
-        sl = SearchLinks(
-            request_dict=self.request_dict,
-            base_search_url=self.base_search_url
-        )
-        urls = sl.make_urls_from_request_dict()
-        self.id = urls['html']
-        return self.id
-
-
-    def add_publishing_datetime_metadata(self, solr_json, default_to_current=True):
-        """Adds publishing modified and created metadata to the response JSON-LD"""
-        # NOTE: Solr already defaults to representing time in 
-        # ISO 8601, so we're just pulling the appropriate time
-        # info from the solr_json to metadata fields in our response
-        # JSON-LD.
-        meta_configs = [
-            (
-                # Last modified.
-                'dcmi:modified',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'updated',
-                    'max',
-                ],
-            ),
-            (
-                # Last published
-                'dcmi:created',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'published',
-                    'max',
-                ],
-            ),
-            (
-                # Earliest published
-                'oai-pmh:earliestDatestamp',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'published',
-                    'min',
-                ],
-            ),
-        ]
-        for json_ld_key, path_keys_list in meta_configs:
-            act_time = utilities.get_dict_path_value(
-                path_keys_list, 
-                solr_json
-            )
-            if not act_time:
-                # We could not find the time object.
-                if not default_to_current:
-                    # Skip, since we're not to default to 
-                    # the current time.
-                    continue
-                # Add ISO 8601 current time for the missing value.
-                act_time = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-            self.json_ld[json_ld_key] = act_time 
-
-
-    def add_form_use_life_date_range(self, solr_json, iso_year_format=True):
-        """Adds earliest and latest form-use-life dates"""
-        meta_configs = [
-            (
-                # Earliest date items formed, used, or alive.
-                'start',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'form_use_life_chrono_earliest',
-                    'min',
-                ],
-            ),
-            (
-                # Latest date items formed, used, or alive
-                'stop',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'form_use_life_chrono_latest',
-                    'max',
-                ],
-            ),
-        ]
-        for json_ld_key, path_keys_list in meta_configs:
-            act_date = utilities.get_dict_path_value(
-                path_keys_list, 
-                solr_json
-            )
-            if iso_year_format and act_date is not None:
-                act_date = ISOyears().make_iso_from_float(act_date)
-            self.json_ld[json_ld_key] = act_date
 
 
     def create_result(self, solr_json):
