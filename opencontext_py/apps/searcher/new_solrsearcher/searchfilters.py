@@ -219,7 +219,8 @@ class SearchFilters():
         lookup_val = str(lookup_val)
     
         if lookup_val.startswith(configs.RELATED_ENTITY_ID_PREFIX):
-            # Strip off the prefix. 
+            # Strip off the related property prefix. Note that this
+            # is a related property.
             lookup_val = lookup_val[len(configs.RELATED_ENTITY_ID_PREFIX):]
             act_filter['oc-api:related-property'] = True
 
