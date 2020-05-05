@@ -249,12 +249,9 @@ class ReadProjectContextVocabGraph():
                     continue
                 # Start with a None assertion.
                 assertion = None
-                # We're ony going to use the first equivalent of a predicate
-                # otherwise this gets too complicated.
+                # Iterate through all the equivalent predicate objects.
                 for equiv_pred_obj in equiv_pred_objs:
-                    # equiv_pred_obj = equiv_pred_objs[0]
                     equiv_pred_uri = self.get_id_from_g_obj(equiv_pred_obj)
-                    print('checking: {}'.format(equiv_pred_uri))
                     # Inferred assertions will have unique LOD predicates, with
                     # one or more values. The unique_pred_assertions dict makes
                     # sure the LOD predicates are used only once.
