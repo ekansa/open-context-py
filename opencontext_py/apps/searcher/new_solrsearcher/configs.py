@@ -328,6 +328,7 @@ ITEM_TYPE_URI_MAPPINGS = {
 
 # Label for full-text search.
 FILTER_TEXT_SEARCH_TITLE = 'Current Text Search Filter'
+TEXT_URL_QUERY_TEMPLATE = '{search_term}'
 
 # Request parameters that do not describe filters,
 # so ignore them.
@@ -357,6 +358,7 @@ FILTER_PARAM_CONFIGS = {
         'oc-api:filter': 'Description',
         'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
         'is_spatial_context': False,
+        'label-prop-template': 'Search Term(s): \'{act_val}\'',
     },
     'dc-subject': {
         'oc-api:filter': 'Has subject metadata',

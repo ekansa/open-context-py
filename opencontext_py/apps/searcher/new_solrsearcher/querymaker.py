@@ -711,9 +711,10 @@ def get_general_hierarchic_path_query_dict(
         # If the item is a linked data entity, and we have a 
         # root field field defined for project specific predicates.
         # So, change the root solr field to be the linked data root.
-        if item.item_type == 'uri' and facet_field == SolrDocument.ROOT_PREDICATE_SOLR:
-            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR 
-        
+        if (item.item_type == 'uri' 
+           and facet_field == SolrDocument.ROOT_PREDICATE_SOLR):
+            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR
+
 
         # Add the solr related prefix for related entity searches 
         # and it not already used as a prefix.
@@ -844,7 +845,7 @@ def get_general_hierarchic_path_query_dict(
                 field_fq = utilities.rename_solr_field_for_data_type(
                     attribute_item.data_type,
                     (
-                        + use_solr_rel_prefix
+                        use_solr_rel_prefix
                         + item.slug.replace('-', '_')
                         + SolrDocument.SOLR_VALUE_DELIM
                         + field_suffix
