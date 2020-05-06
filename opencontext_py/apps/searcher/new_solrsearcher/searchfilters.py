@@ -268,8 +268,8 @@ class SearchFilters():
         if len(items) == 1:
             # We only have 1 item, so define it with a
             # URI and slug.
-            act_filter['rdfs:isDefinedBy'] = item[0].uri
-            act_filter['oc-api:filter-slug'] = item[0].slug
+            act_filter['rdfs:isDefinedBy'] = items[0].uri
+            act_filter['oc-api:filter-slug'] = items[0].slug
         
         return act_filter, item
 
