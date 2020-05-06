@@ -238,19 +238,39 @@ class SearchFilters():
             )
 
         m_cache = MemoryCache()
-        if is_spatial_context:
-            item = m_cache.get_entity_by_context(lookup_val)
-        else:
-            item = m_cache.get_entity(lookup_val)
-        if item:
-            act_filter['label'] = item.label
-            act_filter['rdfs:isDefinedBy'] = item.uri
-            act_filter['oc-api:filter-slug'] = item.slug
-        else:
-            act_filter['label'] = lookup_val.replace(
-                configs.REQUEST_OR_OPERATOR, 
-                ' OR '
+        items = []
+        if configs.REQUEST_OR_OPERATOR in lookup_val:
+            lookup_list = lookup_val.split(
+                configs.REQUEST_OR_OPERATOR
             )
+        else:
+            lookup_list = [lookup_val]
+        
+        for act_val in lookup_list:
+            if is_spatial_context:
+                item = m_cache.get_entity_by_context(act_val)
+            else:
+                item = m_cache.get_entity(act_val)
+            if not item:
+                continue
+            items.append(item)
+        
+        if not len(items):
+            # We didn't find any item entities, so return
+            # the lookup list as the label.
+            act_filter['label'] = ' OR '.join(lookup_list)
+            return act_filter, None
+        
+        # Use all the item labels to make a label.
+        item_labels = [item.label for item in items]   
+        act_filter['label'] = ' OR '.join(item_labels)
+
+        if len(items) == 1:
+            # We only have 1 item, so define it with a
+            # URI and slug.
+            act_filter['rdfs:isDefinedBy'] = item[0].uri
+            act_filter['oc-api:filter-slug'] = item[0].slug
+        
         return act_filter, item
 
     
@@ -377,7 +397,7 @@ class SearchFilters():
                             text_template_value = (
                                 act_full_path 
                                 + hierarchy_delim 
-                                + configs.TEXT_URL_QUERY_TEMPLATE
+                                + configs.URL_TEXT_QUERY_TEMPLATE
                             )
                     else:
                         # This is the a case of a search term, which is the child

@@ -328,7 +328,7 @@ ITEM_TYPE_URI_MAPPINGS = {
 
 # Label for full-text search.
 FILTER_TEXT_SEARCH_TITLE = 'Current Text Search Filter'
-TEXT_URL_QUERY_TEMPLATE = '{search_term}'
+URL_TEXT_QUERY_TEMPLATE = '{search_term}'
 
 # Request parameters that do not describe filters,
 # so ignore them.

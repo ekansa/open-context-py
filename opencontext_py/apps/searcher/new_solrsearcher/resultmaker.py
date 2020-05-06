@@ -291,7 +291,7 @@ class SolrResult():
             # make a template for keyword searches.
             sl.add_param_value(
                 'q', 
-                configs.TEXT_URL_QUERY_TEMPLATE
+                configs.URL_TEXT_QUERY_TEMPLATE
             )
             urls = sl.make_urls_from_request_dict()
             field['oc-api:template'] = urls['html']
@@ -303,7 +303,7 @@ class SolrResult():
             sl.replace_param_value(
                 'q',
                 match_old_value=raw_fulltext_search,
-                new_value=configs.TEXT_URL_QUERY_TEMPLATE
+                new_value=configs.URL_TEXT_QUERY_TEMPLATE
             )
             urls = sl.make_urls_from_request_dict()
             field['oc-api:template'] = urls['html']
