@@ -7,9 +7,14 @@ from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.isoyears import ISOyears
+
+from opencontext_py.apps.contexts.models import SearchContext
+
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
+# Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
 from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
@@ -19,15 +24,41 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 logger = logging.getLogger(__name__)
 
 
-class SolrResult():
+class ResultMaker():
 
     def __init__(self, request_dict=None, base_search_url='/search/'):
-        self.json_ld = LastUpdatedOrderedDict()
+        self.result = LastUpdatedOrderedDict()
         self.request_dict = copy.deepcopy(request_dict)
         self.base_search_url = base_search_url
         self.id = None
+        # The current filters URL is used to validate if a filter
+        # option is actual for a new search.
+        self.current_filters_url = self._set_current_filters_url()
         self.act_responses = []
     
+    
+    def _set_current_filters_url(self):
+        """Make a URL for the current filters, removed of all paging
+        and other irrelevant parameters.
+        """
+        # NOTE: we use the self.current_filters_url to determine if
+        # a given new filter url (say for a facet) is new (meaning if
+        # it actually changes search/query filters). If it is not new,
+        # then the result should not present the new filter url as
+        # a search option.
+        #
+        # NOTE: Since we generate search urls programatically via the
+        # SearchLinks class, we have a predictable order of parameters
+        # and values. This makes it possible to match url strings. 
+        sl = SearchLinks(
+            request_dict=copy.deepcopy(self.request_dict),
+            base_search_url=self.base_search_url
+        )
+        # Remove non search related params.
+        sl.remove_non_query_params() 
+        urls = sl.make_urls_from_request_dict()
+        self.current_filters_url = urls['html']
+        return self.current_filters_url
 
     # -----------------------------------------------------------------
     # Methods to make geneal response metadata
@@ -98,7 +129,7 @@ class SolrResult():
                     continue
                 # Add ISO 8601 current time for the missing value.
                 act_time = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-            self.json_ld[json_ld_key] = act_time 
+            self.result[json_ld_key] = act_time 
 
 
     def add_form_use_life_date_range(self, solr_json, iso_year_format=True):
@@ -132,7 +163,7 @@ class SolrResult():
             )
             if iso_year_format and act_date is not None:
                 act_date = ISOyears().make_iso_from_float(act_date)
-            self.json_ld[json_ld_key] = act_date
+            self.result[json_ld_key] = act_date
 
 
     # -----------------------------------------------------------------
@@ -186,9 +217,9 @@ class SolrResult():
         total_found = int(float(total_found))
         start = int(float(start))
         rows = int(float(rows))
-        self.json_ld['totalResults'] = total_found
-        self.json_ld['startIndex'] = start
-        self.json_ld['itemsPerPage'] = rows
+        self.result['totalResults'] = total_found
+        self.result['startIndex'] = start
+        self.result['itemsPerPage'] = rows
         
         # start off with a the request dict, then
         # remove 'start' and 'rows' parameters
@@ -205,8 +236,8 @@ class SolrResult():
                 rows=rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
             )
-            self.json_ld['first'] = links['html']
-            self.json_ld['first-json'] = links['json']
+            self.result['first'] = links['html']
+            self.result['first-json'] = links['json']
         if start >= rows:
             # add a previous page link
             links = self._make_paging_links(
@@ -214,8 +245,8 @@ class SolrResult():
                 rows=rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
             )
-            self.json_ld['previous'] = links['html']
-            self.json_ld['previous-json'] = links['json']
+            self.result['previous'] = links['html']
+            self.result['previous-json'] = links['json']
         if start + rows < total_found:
             # add a next page link
             print('Here: {}'.format(str(act_request_dict)))
@@ -224,8 +255,8 @@ class SolrResult():
                 rows=rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
             )
-            self.json_ld['next'] = links['html']
-            self.json_ld['next-json'] = links['json']
+            self.result['next'] = links['html']
+            self.result['next-json'] = links['json']
         num_pages = round(total_found / rows, 0)
         if num_pages * rows >= total_found:
             num_pages -= 1
@@ -235,8 +266,8 @@ class SolrResult():
             rows=rows,
             act_request_dict=copy.deepcopy(act_request_dict)
         )
-        self.json_ld['last'] = links['html']
-        self.json_ld['last-json'] = links['json']
+        self.result['last'] = links['html']
+        self.result['last-json'] = links['json']
     
 
     def add_sorting_json(self):
@@ -246,11 +277,11 @@ class SolrResult():
         sort_opts = SortingOptions(base_search_url=self.base_search_url)
         sort_opts.make_current_sorting_list(act_request_dict)
         # Add objects describing the currently active sorting.
-        self.json_ld['oc-api:active-sorting'] = sort_opts.current_sorting
+        self.result['oc-api:active-sorting'] = sort_opts.current_sorting
         act_request_dict = copy.deepcopy(self.request_dict)
         sort_links = sort_opts.make_sort_links_list(act_request_dict)
         # Add objects describing other sort options available.
-        self.json_ld['oc-api:has-sorting'] = sort_links
+        self.result['oc-api:has-sorting'] = sort_links
 
     
     # -----------------------------------------------------------------
@@ -263,7 +294,7 @@ class SolrResult():
         )
         filters = search_filters.add_filters_json(self.request_dict)
         if len(filters) > 0:
-            self.json_ld['oc-api:active-filters'] = filters
+            self.result['oc-api:active-filters'] = filters
 
 
     def add_text_fields(self):
@@ -275,6 +306,8 @@ class SolrResult():
             request_dict=act_request_dict,
             base_search_url=self.base_search_url
         )
+        # Remove non search related params.
+        sl.remove_non_query_params()
         raw_fulltext_search = utilities.get_request_param_value(
             act_request_dict, 
             param='q',
@@ -315,20 +348,67 @@ class SolrResult():
 
         # Add the text fields if they exist.
         if len(text_fields):
-            self.json_ld['oc-api:has-text-search'] = text_fields
-        return text_fields
+            self.result['oc-api:has-text-search'] = text_fields
+        return text_fields 
+
+
+    def _add_facet_dict_to_facets_list(self, facet_dict):
+        """Adds a facet_dict to the response facet list"""
+        if not facet_dict:
+            # Not a facet result to add.
+            return None
+        if not "oc-api:has-facets" in self.result:
+            # We don't have a facet list yet, so make it.
+            self.result["oc-api:has-facets"] = []
+
+        self.result["oc-api:has-facets"].append(facet_dict)
+
+
+    def add_rel_media_facets(self, solr_json):
+        """Adds facets that are not entities in hierarchies"""
+        facets_nonpath = ResultFacetsNonPath(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        )
+        rel_media_facet_dict = facets_nonpath.make_related_media_facets(
+            solr_json
+        )
+        self._add_facet_dict_to_facets_list(rel_media_facet_dict)
+
 
 
     def create_result(self, solr_json):
-        """Creates a solr result"""
+        """Creates a search result for a client based on a solr_json 
+        response.
+        """
+
+        if set(self.act_responses).intersection(
+            set(configs.RESPONSE_TYPES_JSON_LD_CONTEXT)):
+            # The list of act_responses includes an
+            # element that requires a JSON-LD
+            # context object in the response to the client.
+            search_context_obj = SearchContext()
+            self.result['@context'] = [
+                search_context_obj.id,
+                search_context_obj.geo_json_context
+            ]
+
         if 'metadata' in self.act_responses:
-            self.json_ld['id'] = self.make_response_id()
+            # Add search metadata to the response to the client.
+            self.result['id'] = self.make_response_id()
             self.add_publishing_datetime_metadata(solr_json)
             self.add_form_use_life_date_range(solr_json)
+            # The paging function below provides the count of 
+            # search results
             self.add_paging_json(solr_json)
             self.add_sorting_json()
             self.add_filters_json()
             self.add_text_fields()
+        
+        if 'other-facet' in self.act_responses:
+            # Add facets for non-hierarchy related entities
+            self.add_rel_media_facets(solr_json) 
 
 
 
