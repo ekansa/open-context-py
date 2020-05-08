@@ -9,8 +9,9 @@ from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
+from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
-from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import SolrResult
+from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 from django.views.decorators.cache import cache_control
@@ -35,14 +36,15 @@ def process_solr_query(request_dict):
         query
     )
     solr_response = search_solr.query_solr(query)
-    solr_result = SolrResult(
+    result_maker = ResultMaker(
         request_dict=request_dict,
+        base_search_url='/query/',
     )
-    solr_result.act_responses = ['metadata']
-    solr_result.create_result(
+    result_maker.act_responses = configs.RESPONSE_DEFAULT_TYPES
+    result_maker.create_result(
         solr_json=solr_response
     )
-    query['response'] = solr_result.json_ld
+    query['response'] = result_maker.result
     query['raw-solr-response'] = solr_response
     return query
     
