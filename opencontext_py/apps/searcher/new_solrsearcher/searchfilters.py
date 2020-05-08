@@ -118,6 +118,10 @@ class SearchFilters():
             request_dict=act_request_dict,
             base_search_url=self.base_search_url
         )
+
+        # Remove non search related params.
+        sl.remove_non_query_params()
+        
         sl.replace_param_value(
             param_key,
             match_old_value=match_old_value,
