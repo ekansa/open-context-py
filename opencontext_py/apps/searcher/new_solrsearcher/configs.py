@@ -256,7 +256,6 @@ SOLR_SORT_DEFAULT = 'interest_score desc'
 SORT_NEW_URL_IGNORE_PARAMS = [
     'geodeep',
     'chronodeep',
-    'rows',
     'start'
 ]
 
@@ -322,9 +321,6 @@ ITEM_TYPE_URI_MAPPINGS = {
 # ---------------------------------------------------------------------
 # Configs for current search/query filters
 # ---------------------------------------------------------------------
-
-
-
 
 # Label for full-text search.
 FILTER_TEXT_SEARCH_TITLE = 'Current Text Search Filter'
@@ -440,4 +436,72 @@ FILTER_PARAM_CONFIGS = {
         'oc-api:filter': 'Has related media',
         'label': 'Linked to documents', 
     },
+}
+
+
+# ---------------------------------------------------------------------
+# Configs for the search/query response JSON
+# ---------------------------------------------------------------------
+
+# The response to a search can include different types of search 
+# results. Below lists the default types included unless otherwise
+# specified.
+RESPONSE_DEFAULT_TYPES = [
+    'context',
+    'metadata',
+    'other-facet',
+    'prop-facet',
+    'geo-facet',
+    'geo-record',
+]
+
+
+# These response types get JSON-LD context objects
+RESPONSE_TYPES_JSON_LD_CONTEXT = [
+    'context',
+    'geo-facet',
+    'geo-project',
+    'geo-record',
+]
+
+# Parameters to ignore / remove for generating new search
+# query urls. This is for URLS to remove or broaden existing filters,
+# more making templates for text searches, and for making facet
+# query URLS.
+QUERY_NEW_URL_IGNORE_PARAMS = SORT_NEW_URL_IGNORE_PARAMS + ['sort']
+
+
+# ---------------------------------------------------------------------
+# Configs to process facets from the solr-response JSON
+# ---------------------------------------------------------------------
+
+# This lists the keys for finding facets in the JSON solr response 
+# dict. 
+FACETS_SOLR_ROOT_PATH_KEYS = [
+    'facet_counts',
+    'facet_fields',
+]
+
+
+# Configs for faceting on links to related media of different types.
+FACETS_RELATED_MEDIA = {
+    'id': '#related-media',
+    'label': 'Has Related Media',
+    'oc-api:has-rel-media-options': [
+        {
+            'label': 'Linked with images',
+            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['image_media_count']),
+            'param_key': 'images',
+        },
+        {
+            'label': 'Linked with media (non-image)',
+            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['other_binary_media_count']),
+            'param_key': 'other-media',
+        },
+        {
+            'label': 'Linked with documents',
+            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['document_count']),
+            'param_key': 'documents',
+        },
+    ],
 }
