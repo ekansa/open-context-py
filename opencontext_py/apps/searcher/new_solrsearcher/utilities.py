@@ -479,6 +479,50 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
     return act_obj
 
 
+def get_facet_value_count_tuples(solr_facet_value_count_list):
+    """Gets facet values and counts from a list solr facet value count list
+
+    :param list solr_facet_value_count_list: List of facet values and
+        counts that alternate. This is how the SOLR json response provides
+        facet values and counts, and it is a little inconvenient, so to
+        make it easier to use, this function returns the same information
+        in a list of (facet_value, count) tuples.
+    """
+    facet_value_count_tuples = []
+    for i in range(0, len(solr_facet_value_count_list), 2):
+        facet_value = solr_facet_value_count_list[i]
+        facet_count = solr_facet_value_count_list[(i + 1)]
+        facet_value_count_tuples.append(
+            (facet_value, facet_count,)  # tuple representation
+        )
+    return facet_value_count_tuples
+
+
+def get_path_facet_value_count_tuples(
+    path_keys_list, 
+    solr_response_dict, 
+    default=[]
+):
+    """Gets a list of facet value, count tuples form a solr response
+
+    :param list path_keys_list: List of keys to identify the facet field
+        and get facet values and counts
+    :param dict solr_response_dict: Dictionary generated from a solr
+        JSON response
+    """
+    solr_facet_value_count_list = get_dict_path_value(
+        path_keys_list, 
+        solr_response_dict, 
+        default=None
+    )
+    if not isinstance(solr_facet_value_count_list, list):
+        # We didn't find the expected list, so return None.
+        return default
+    # Transform SOLR's weird response list into a list of solr
+    # (facet_value, facet_count,) tuples.
+    return get_facet_value_count_tuples(solr_facet_value_count_list)
+
+
 # ---------------------------------------------------------------------
 # Date-Time Related Functions
 # ---------------------------------------------------------------------
