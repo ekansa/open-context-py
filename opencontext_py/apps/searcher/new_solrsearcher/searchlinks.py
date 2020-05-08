@@ -26,6 +26,19 @@ class SearchLinks():
         self.request_dict = copy.deepcopy(request_dict)
         self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
     
+    
+    def remove_non_query_params(
+        self, 
+        remove_params=configs.QUERY_NEW_URL_IGNORE_PARAMS
+    ):
+        """Removes params that are not relevant to query filters"""
+        for param in remove_params:
+            if not param in self.request_dict:
+                continue
+            self.request_dict.pop(param, None)
+        return self.request_dict
+
+
     def make_url_from_request_dict(
         self,
         base_request_url=None,
