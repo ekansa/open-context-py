@@ -15,6 +15,7 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 # Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
+from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
 from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
@@ -26,7 +27,12 @@ logger = logging.getLogger(__name__)
 
 class ResultMaker():
 
-    def __init__(self, request_dict=None, base_search_url='/search/'):
+    def __init__(
+        self, 
+        request_dict=None, 
+        facet_fields_to_client_request={},
+        base_search_url='/search/'
+    ):
         self.result = LastUpdatedOrderedDict()
         self.request_dict = copy.deepcopy(request_dict)
         self.base_search_url = base_search_url
@@ -34,6 +40,10 @@ class ResultMaker():
         # The current filters URL is used to validate if a filter
         # option is actual for a new search.
         self.current_filters_url = self._set_current_filters_url()
+        # Dictionary of keyed by facet fields that are derived from the
+        # raw request paths provided by clients. This dictionary makes
+        # it easier to generate links for different facet options.
+        self.facet_fields_to_client_request = facet_fields_to_client_request
         self.act_responses = []
     
     
@@ -59,6 +69,7 @@ class ResultMaker():
         urls = sl.make_urls_from_request_dict()
         self.current_filters_url = urls['html']
         return self.current_filters_url
+
 
     # -----------------------------------------------------------------
     # Methods to make geneal response metadata
@@ -352,20 +363,47 @@ class ResultMaker():
         return text_fields 
 
 
-    def _add_facet_dict_to_facets_list(self, facet_dict):
+    # -----------------------------------------------------------------
+    # Methods for adding search facets with links for filtering options
+    # -----------------------------------------------------------------
+    def _add_facet_dict_to_facets_list(
+        self,
+        facet_dict,
+        facet_type_key="oc-api:has-facets",
+    ):
         """Adds a facet_dict to the response facet list"""
         if not facet_dict:
             # Not a facet result to add.
             return None
+        if not facet_type_key in self.result:
+            # We don't have a facet list yet, so make it.
+            self.result[facet_type_key] = []
+
+        self.result[facet_type_key].append(facet_dict)
+
+
+    def add_standard_facets(self, solr_json):
+        """Adds facets for entities that maybe in hierarchies"""
+        facets_standard = ResultFacetsStandard(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            facet_fields_to_client_request=self.facet_fields_to_client_request,
+            base_search_url=self.base_search_url,
+        ) 
+        facets = facets_standard.get_facets_and_options(
+            solr_json
+        )
+        if not len(facets):
+            # Skip out, we found no facets.
+            return None
         if not "oc-api:has-facets" in self.result:
             # We don't have a facet list yet, so make it.
             self.result["oc-api:has-facets"] = []
-
-        self.result["oc-api:has-facets"].append(facet_dict)
+        self.result["oc-api:has-facets"] += facets
 
 
     def add_rel_media_facets(self, solr_json):
-        """Adds facets that are not entities in hierarchies"""
+        """Adds facets that indicated records with links to media"""
         facets_nonpath = ResultFacetsNonPath(
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
@@ -374,10 +412,16 @@ class ResultMaker():
         rel_media_facet_dict = facets_nonpath.make_related_media_facets(
             solr_json
         )
-        self._add_facet_dict_to_facets_list(rel_media_facet_dict)
+        self._add_facet_dict_to_facets_list(
+            rel_media_facet_dict,
+            facet_type_key="oc-api:has-facets"
+        )
 
 
-
+    # -----------------------------------------------------------------
+    # The main method to make the client response result from a 
+    # solr response json dict.
+    # -----------------------------------------------------------------
     def create_result(self, solr_json):
         """Creates a search result for a client based on a solr_json 
         response.
@@ -406,11 +450,13 @@ class ResultMaker():
             self.add_filters_json()
             self.add_text_fields()
         
-        if 'other-facet' in self.act_responses:
-            # Add facets for non-hierarchy related entities
-            self.add_rel_media_facets(solr_json) 
+        if 'prop-facet' in self.act_responses:
+            # Add the "standard" facets (for entities, often in hierarchies)
+            self.add_standard_facets(solr_json) 
+            # Add related media facet options
+            self.add_rel_media_facets(solr_json)
 
-
+        
 
 
     
