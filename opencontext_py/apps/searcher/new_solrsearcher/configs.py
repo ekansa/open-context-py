@@ -148,7 +148,7 @@ LITERAL_DATA_TYPES = [
 # NOTE: There are several parameters that clients can use to make GET
 # requests over the Web that need to be processed with hierarchically
 # fields and values in solr. The following list of tuples configures
-# how different URL parameters from Web GET requsests get translated
+# how different URL parameters from Web GET requests get translated
 # to solr via the querymaker.get_general_hierarchic_paths_query_dict
 # function. The tuple is organized as so:
 #
@@ -449,16 +449,18 @@ FILTER_PARAM_CONFIGS = {
 RESPONSE_DEFAULT_TYPES = [
     'context',
     'metadata',
-    'other-facet',
-    'prop-facet',
+    'chrono-facet',
+    # 'geo-feature',
     'geo-facet',
     'geo-record',
+    'prop-facet',
 ]
 
 
 # These response types get JSON-LD context objects
 RESPONSE_TYPES_JSON_LD_CONTEXT = [
     'context',
+    'chrono-facet',
     'geo-facet',
     'geo-project',
     'geo-record',
@@ -505,3 +507,103 @@ FACETS_RELATED_MEDIA = {
         },
     ],
 }
+
+
+FACETS_CONTEXT_SUFFIX = (
+    SolrDocument.SOLR_VALUE_DELIM + SolrDocument.FIELD_SUFFIX_CONTEXT
+)
+FACETS_PROP_SUFFIX = (
+    SolrDocument.SOLR_VALUE_DELIM + SolrDocument.FIELD_SUFFIX_PREDICATE
+)
+FACETS_PROJ_SUFFIX = (
+    SolrDocument.SOLR_VALUE_DELIM + SolrDocument.FIELD_SUFFIX_PROJECT
+)
+
+# Facet configuration for standard fields, identified as standard by
+# their suffix. Each tuple means:
+#
+# (solr_field_suffix, request_param, hierarchy_delim, facet_type)
+#
+FACETS_STANDARD = [
+    (
+        FACETS_CONTEXT_SUFFIX, 
+        'path', 
+        REQUEST_CONTEXT_HIERARCHY_DELIM, 
+        'oc-api:facet-context',
+        'Context',
+    ),
+    (
+        FACETS_PROP_SUFFIX, 
+        'prop', 
+        REQUEST_PROP_HIERARCHY_DELIM, 
+        'oc-api:facet-prop',
+        'Description',
+    ),
+    (
+        FACETS_PROJ_SUFFIX, 
+        'proj', 
+        REQUEST_PROP_HIERARCHY_DELIM, 
+        'oc-api:facet-project',
+        'Project',
+    ),
+]
+
+# Facet metadata for standard root fields.
+FACET_STANDARD_ROOT_FIELDS = {
+    SolrDocument.ROOT_CONTEXT_SOLR: {
+        "id": "#facet-context",
+        "rdfs:isDefinedBy": "oc-api:facet-context",
+        "label": "Context",
+        "type": "oc-api:facet-context",
+    },
+    SolrDocument.ROOT_PREDICATE_SOLR: {
+        "id": "#facet-prop-var",
+        "rdfs:isDefinedBy": "oc-api:facet-prop-var",
+        "label": "Descriptions (Project Defined)",
+        "type": "oc-api:facet-prop",
+    },
+    SolrDocument.ROOT_LINK_DATA_SOLR: {
+        "id": "#facet-prop-ld",
+        "rdfs:isDefinedBy": "oc-api:facet-prop-ld",
+        "label": "Descriptions (Common Standards)",
+        "type": "oc-api:facet-prop",
+    },
+    SolrDocument.ROOT_PROJECT_SOLR: {
+        "id": "#facet-project",
+        "rdfs:isDefinedBy": "oc-api:facet-project",
+        "label": "Project",
+        "type": "oc-api:facet-project",
+    },
+    (
+        SolrDocument.RELATED_SOLR_DOC_PREFIX 
+        + SolrDocument.ROOT_PREDICATE_SOLR
+    ): {
+        "id": "#facet-rel-prop-var",
+        "rdfs:isDefinedBy": "oc-api:facet-rel-prop-var",
+        "label": "Related Descriptions (Project Defined)",
+        "type": "oc-api:facet-prop",
+        "oc-api:related-property": True,
+    },
+    (
+        SolrDocument.RELATED_SOLR_DOC_PREFIX 
+        + SolrDocument.ROOT_LINK_DATA_SOLR
+    ): {
+        "id": "#facet-rel-prop-ld",
+        "rdfs:isDefinedBy": "oc-api:facet-rel-prop-ld",
+        "label": "Related Descriptions (Common Standards)",
+        "type": "oc-api:facet-prop",
+        "oc-api:related-property": True,
+    },
+}
+
+
+# Mappings between Solr field data types and facet options lists
+FACETS_DATA_TYPE_OPTIONS_LISTS = { 
+    'id': 'oc-api:has-id-options',
+    'bool': 'oc-api:has-boolean-options',
+    'int': 'oc-api:has-integer-options',
+    'double': 'oc-api:has-float-options',
+    'date': 'oc-api:has-date-options',
+    'string': 'oc-api:has-text-options',
+}
+
