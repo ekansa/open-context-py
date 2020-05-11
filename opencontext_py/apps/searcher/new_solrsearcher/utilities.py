@@ -479,6 +479,49 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
     return act_obj
 
 
+# ---------------------------------------------------------------------
+# Solr Response (JSON) Object Related Functions
+# ---------------------------------------------------------------------
+def parse_solr_encoded_entity_str(
+    entity_str,
+    base_url='', 
+    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM
+):
+    """Parses an entity string encoded for solr"""
+    
+    # NOTE: This is reverse of the function:
+    # SolrDocument.make_entity_string_for_solr
+    if not solr_value_delim in entity_str:
+        return None
+    
+    parts = entity_str.split(solr_value_delim)
+    if len(parts) < 4:
+        # Not a valid encoding so skip.
+        return None
+    
+    if len(parts) == 5 and parts[3] != parts[4]:
+        alt_label = parts[4]
+    else:
+        alt_label = None
+
+    if (parts[2].startswith('http://') 
+        or parts[2].startswith('https://')):
+        # We already have a full url.
+        uri = parts[2]
+    else:
+        # Use the base url to make a full url.
+        uri = base_url + parts[2]
+    
+    # Return a dictionary of the parsed entity.
+    return {
+        'slug': parts[0].replace('_', '-'),
+        'data_type': parts[1],
+        'uri': uri,
+        'label': parts[3],
+        'alt_label': alt_label,
+    }
+
+
 def get_facet_value_count_tuples(solr_facet_value_count_list):
     """Gets facet values and counts from a list solr facet value count list
 
