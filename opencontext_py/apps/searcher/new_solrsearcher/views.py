@@ -31,6 +31,7 @@ def process_solr_query(request_dict):
     # NOTE: For inital testing purposes, this only composes a
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
+    search_solr.add_initial_facet_fields(request_dict)
     query = search_solr.compose_query(request_dict)
     query = search_solr.update_query_with_stats_prequery(
         query
@@ -38,12 +39,14 @@ def process_solr_query(request_dict):
     solr_response = search_solr.query_solr(query)
     result_maker = ResultMaker(
         request_dict=request_dict,
+        facet_fields_to_client_request=search_solr.facet_fields_to_client_request,
         base_search_url='/query/',
     )
     result_maker.act_responses = configs.RESPONSE_DEFAULT_TYPES
     result_maker.create_result(
         solr_json=solr_response
     )
+    query['facet-fields-to-client'] = result_maker.facet_fields_to_client_request
     query['response'] = result_maker.result
     query['raw-solr-response'] = solr_response
     return query
