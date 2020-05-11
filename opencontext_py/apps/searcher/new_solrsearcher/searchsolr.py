@@ -39,6 +39,10 @@ class SearchSolr():
         self.do_bot_limit = False
         self.solr_debug_query = 'false'
         self.solr_stats_query = 'true'
+        # Dictionary of keyed by facet fields that are derived from the
+        # raw request paths provided by clients. This dictionary makes
+        # it easier to generate links for different facet options.
+        self.facet_fields_to_client_request = {}
     
     
     def solr_connect(self):
@@ -46,6 +50,40 @@ class SearchSolr():
         if self.solr is None:
             self.solr = SolrConnection(False).connection
     
+    def add_initial_facet_fields(self, request_dict):
+        """Adds to initial facet field list based on request_dict"""
+        if 'proj' in request_dict:
+            self.init_facet_fields.append(
+                SolrDocument.ROOT_PREDICATE_SOLR
+            )
+    
+    def _associate_facet_field_with_client_request(
+        self, 
+        param, 
+        raw_path, 
+        query_dict
+    ):
+        """Associates a facet field with a client request."""
+        
+        # NOTE: Because there's some complex logic in how we determine
+        # facet fields from a client request, it is useful to store
+        # the associations for later use. The main later use will
+        # be the creation of links for different facet search options
+        # when we process a raw solr response into a result that we
+        # give to a client. This function stores the associations
+        # between solr facet fields and the URL parameters and values
+        # made by the requesting client.
+        
+        if not query_dict:
+            return None
+        for path_facet_field in query_dict.get('facet.field', []):
+            # Associate the facet field for this raw-path with the
+            # client request parameter and the raw path from the
+            # client.
+            self.facet_fields_to_client_request[path_facet_field] = {
+                param: raw_path
+            }
+
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
@@ -322,6 +360,14 @@ class SearchSolr():
                 request_dict['path']
             )
             if query_dict:
+
+                # Associate the facet fields with the client request param
+                # and param value.
+                self._associate_facet_field_with_client_request(
+                    param='path', 
+                    raw_path=request_dict['path'], 
+                    query_dict=query_dict
+                )
                 # Remove the default Root Solr facet field if it is there.
                 query['facet.field'] = utilities.safe_remove_item_from_list(
                     SolrDocument.ROOT_CONTEXT_SOLR,
@@ -364,6 +410,13 @@ class SearchSolr():
                     # We don't have a response for this query, so continue
                     # for now until we come up with error handling.
                     continue
+                # Associate the facet fields with the client request param
+                # and param value.
+                self._associate_facet_field_with_client_request(
+                    param=param, 
+                    raw_path=raw_path, 
+                    query_dict=query_dict
+                )
                 if remove_field:
                     # Remove a default facet field if it is there.
                     query['facet.field'] = utilities.safe_remove_item_from_list(
