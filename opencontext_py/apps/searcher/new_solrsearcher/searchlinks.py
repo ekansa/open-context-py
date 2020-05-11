@@ -17,6 +17,18 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 
+def get_path_value(request_dict, default=None):
+    """Gets the path value removed from a list"""
+    path = request_dict.get('path')
+    if not path:
+        return default
+    if isinstance(path, list):
+        # Normalize a path to be a single string value.
+        path = path[0]
+    return path
+
+
+
 class SearchLinks():
 
     def __init__(self, request_dict=None, base_search_url='/search/'):
@@ -55,11 +67,8 @@ class SearchLinks():
         if request_dict is None:
             request_dict = self.request_dict
 
-        path = request_dict.get('path')
+        path = get_path_value(request_dict)
         if path:
-            if isinstance(path, list):
-                # Normalize a path to be a single string value.
-                path = path[0]
             url += path.replace(' ', '+')
         if doc_extention:
             url += doc_extention
