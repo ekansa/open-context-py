@@ -87,6 +87,14 @@ def stats_ranges_query_dict_via_solr(
                 stats['max'], 
                 group_size
             )
+        elif solr_field_key.endswith('___pred_int'):
+            query_dict[fstart] = int(round(stats['min'], 0))
+            query_dict[fend] = int(round(stats['max'], 0))
+            query_dict[fgap] = int(round(((stats['max'] - stats['min']) / group_size), 0))
+            if query_dict[fgap] > stats['mean']:
+                query_dict[fgap] = int(round((stats['mean'] / 3), 0))
+            if query_dict[fgap] < 1:
+                query_dict[fgap] = 1
         else:
             query_dict[fstart] = stats['min']
             query_dict[fend] = stats['max']
