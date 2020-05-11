@@ -63,7 +63,7 @@ class ResultFacetsNonPath():
 
             sl.replace_param_value(
                 media_config['param_key'],
-                new_value=True,
+                new_value=1,
             ) 
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
