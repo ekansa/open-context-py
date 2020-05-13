@@ -76,13 +76,16 @@ class SearchSolr():
         
         if not query_dict:
             return None
-        for path_facet_field in query_dict.get('facet.field', []):
-            # Associate the facet field for this raw-path with the
-            # client request parameter and the raw path from the
-            # client.
-            self.facet_fields_to_client_request[path_facet_field] = {
-                param: raw_path
-            }
+        for key in ['prequery-stats', 'facet.field']:
+            for path_facet_field in query_dict.get(key, []):
+                # Associate the facet field for this raw-path with the
+                # client request parameter and the raw path from the
+                # client. This is also done with solr fields in the
+                # prequery-stats key, so as to associate range facets
+                # with raw paths.
+                self.facet_fields_to_client_request[path_facet_field] = {
+                    param: raw_path
+                }
 
 
     def compose_query(self, request_dict):
