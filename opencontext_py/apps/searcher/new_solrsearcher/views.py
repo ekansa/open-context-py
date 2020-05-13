@@ -28,7 +28,7 @@ def process_solr_query(request_dict):
         request object with client GET request parmaters.
     """
     
-    # NOTE: For inital testing purposes, this only composes a
+    # NOTE: For initial testing purposes, this only composes a
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
     search_solr.add_initial_facet_fields(request_dict)
