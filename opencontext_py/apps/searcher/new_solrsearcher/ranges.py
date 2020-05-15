@@ -101,4 +101,6 @@ def stats_ranges_query_dict_via_solr(
             query_dict[fgap] = ((stats['max'] - stats['min']) / group_size)
             if query_dict[fgap] > stats['mean']:
                 query_dict[fgap] = stats['mean'] / 3
+            if query_dict[fgap] == 0:
+                query_dict[fgap] = 0.001
     return query_dict

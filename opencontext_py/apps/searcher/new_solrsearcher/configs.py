@@ -453,6 +453,7 @@ RESPONSE_DEFAULT_TYPES = [
     # 'geo-feature',
     'geo-facet',
     'geo-record',
+    'prop-range',
     'prop-facet',
 ]
 
@@ -476,12 +477,21 @@ QUERY_NEW_URL_IGNORE_PARAMS = SORT_NEW_URL_IGNORE_PARAMS + ['sort']
 # ---------------------------------------------------------------------
 # Configs to process facets from the solr-response JSON
 # ---------------------------------------------------------------------
+STATS_FIELDS_PATH_KEYS = ['stats', 'stats_fields',]
+
 
 # This lists the keys for finding facets in the JSON solr response 
 # dict. 
 FACETS_SOLR_ROOT_PATH_KEYS = [
     'facet_counts',
     'facet_fields',
+]
+
+# This lists the keys for finding range facets in the JSON solr 
+# response.
+FACETS_RANGE_SOLR_ROOT_PATH_KEYS = [
+    'facet_counts',
+    'facet_ranges',
 ]
 
 

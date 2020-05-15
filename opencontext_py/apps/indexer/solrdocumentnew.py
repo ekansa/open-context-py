@@ -26,8 +26,63 @@ BAD_PREDICATE_TYPES_TO_STRING = [
     'False'
 ]
 
+PREDICATE_DATA_TYPE_TO_SOLR = {
+    '@id': 'id',
+    'id': 'id',
+    'types': 'id',
+    False: 'id',
+    'xsd:boolean': 'bool',
+    'xsd:integer': 'int',
+    'xsd:double': 'double',
+    'xsd:string': 'string',
+    'xsd:date': 'date',
+}
+
+SOLR_DATA_TYPE_TO_PREDICATE = {
+    'id': 'id',
+    'bool': 'xsd:boolean',
+    'int': 'xsd:integer',
+    'double': 'xsd:double',
+    'string': 'xsd:string',
+    'date': 'xsd:date',
+}
 
 def get_solr_predicate_type_string(
+    predicate_type,
+    prefix='',
+    string_default_pred_types=None,
+):
+    '''
+    Defines whether our dynamic solr fields names for
+    predicates end with ___pred_id, ___pred_double, etc.
+    
+    :param str predicate_type: String data-type used by Open
+        Context
+    :param str prefix: String prefix to append before the solr type
+    :param list string_default_pred_types: list of values that
+        default to string without triggering an exception.
+    '''
+    if not string_default_pred_types:
+        # If not set, use the default
+        string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING.copy()
+    
+    solr_data_type = PREDICATE_DATA_TYPE_TO_SOLR.get(
+        predicate_type
+    )
+    if solr_data_type:
+        # The happy option where we find a configured data type
+        return prefix + solr_data_type
+    
+    # Check a fallback to string.
+    if predicate_type in string_default_pred_types:
+        return prefix + 'string'
+    else:
+        raise Exception(
+            "Unknown predicate type: {}".format(predicate_type)
+        )
+
+
+def old_get_solr_predicate_type_string(
     predicate_type,
     prefix='',
     string_default_pred_types=None,
@@ -63,6 +118,7 @@ def get_solr_predicate_type_string(
         raise Exception(
             "Unknown predicate type: {}".format(predicate_type)
         )
+
 
 
 def general_get_jsonldish_entity_parents(identifier, add_original=True, is_project=False):

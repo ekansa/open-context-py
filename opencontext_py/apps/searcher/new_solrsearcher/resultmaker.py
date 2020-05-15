@@ -99,32 +99,17 @@ class ResultMaker():
             (
                 # Last modified.
                 'dcmi:modified',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'updated',
-                    'max',
-                ],
+                (configs.STATS_FIELDS_PATH_KEYS + ['updated', 'max',]),
             ),
             (
                 # Last published
                 'dcmi:created',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'published',
-                    'max',
-                ],
+                (configs.STATS_FIELDS_PATH_KEYS + ['published', 'max',]),
             ),
             (
                 # Earliest published
                 'oai-pmh:earliestDatestamp',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'published',
-                    'min',
-                ],
+                (configs.STATS_FIELDS_PATH_KEYS + ['published', 'min',]),
             ),
         ]
         for json_ld_key, path_keys_list in meta_configs:
@@ -382,6 +367,26 @@ class ResultMaker():
         self.result[facet_type_key].append(facet_dict)
 
 
+    def add_facet_ranges(self, solr_json):
+        """Adds facets for entities that maybe in hierarchies"""
+        facets_standard = ResultFacetsStandard(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            facet_fields_to_client_request=self.facet_fields_to_client_request,
+            base_search_url=self.base_search_url,
+        ) 
+        facet_ranges = facets_standard.get_facet_ranges_and_options(
+            solr_json
+        )
+        if not len(facet_ranges):
+            # Skip out, we found no facets.
+            return None
+        if not "oc-api:has-range-facets" in self.result:
+            # We don't have a facet list yet, so make it.
+            self.result["oc-api:has-range-facets"] = []
+        self.result["oc-api:has-range-facets"] += facet_ranges
+
+
     def add_standard_facets(self, solr_json):
         """Adds facets for entities that maybe in hierarchies"""
         facets_standard = ResultFacetsStandard(
@@ -450,6 +455,10 @@ class ResultMaker():
             self.add_filters_json()
             self.add_text_fields()
         
+        if 'prop-range' in self.act_responses:
+            # Add facet ranges to the result.
+            self.add_facet_ranges(solr_json)
+
         if 'prop-facet' in self.act_responses:
             # Add the "standard" facets (for entities, often in hierarchies)
             self.add_standard_facets(solr_json) 

@@ -8,6 +8,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
+    SOLR_DATA_TYPE_TO_PREDICATE,
     get_solr_predicate_type_string,
     SolrDocumentNew as SolrDocument,
 )
@@ -188,6 +189,30 @@ def rename_solr_field_for_data_type(data_type, solr_field):
         prefix=(general_part + '_')
     )
     return first_part + SolrDocument.SOLR_VALUE_DELIM + new_ending
+
+
+def get_data_type_for_solr_field(solr_field):
+    """Gets the data-type for a solr field
+
+    :param str solr_field: The solr field that we want to know
+        about its data type.
+    """
+    if not SolrDocument.SOLR_VALUE_DELIM in solr_field:
+        return None
+    parts = solr_field.split(SolrDocument.SOLR_VALUE_DELIM)
+    suffix_part = parts[-1]
+    if not '_' in suffix_part:
+        # We can't break apart the suffix to find the
+        # solr data type
+        return None
+    suffix_parts = suffix_part.split('_')
+    solr_data_type = suffix_parts[-1]
+
+    # Return the mapping between the solr_data_type part
+    # and the predicate data types.
+    return SOLR_DATA_TYPE_TO_PREDICATE.get(
+        solr_data_type
+    )
 
 
 def join_solr_query_terms(terms_list, operator='AND'):
@@ -522,6 +547,19 @@ def parse_solr_encoded_entity_str(
     }
 
 
+def get_rounding_level_from_float(float_val):
+    """Gets a data-type for a solr field"""
+    if not isinstance(float_val, float):
+        return None
+    val_str = str(float_val)
+    if not '.' in val_str:
+        # rounds to the 0th decimal
+        return 0
+    parts = val_str.split('.')
+    return len(parts[-1])
+
+
+
 def get_facet_value_count_tuples(solr_facet_value_count_list):
     """Gets facet values and counts from a list solr facet value count list
 
@@ -580,10 +618,14 @@ def date_convert(date_str):
     return date_str
 
 
+def datetime_to_solr_date_str(dt):
+    """Makes a solr date string form a datetime object"""
+    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 def convert_date_to_solr_date(date_str):
     """Converts a string for a date into a Solr formated datetime string """
     dt = date_convert(date_str)
-    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    return datetime_to_solr_date_str(dt)
 
 
 def make_human_readable_date(date_str):

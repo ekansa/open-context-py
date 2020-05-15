@@ -47,6 +47,7 @@ class ResultFacetsStandard():
         solr_facet_field_key,
         facet_type,
         facet_labeling,
+        range_data_type=None,
     ):
         """Makes the dict for a fact with id options."""
 
@@ -95,13 +96,21 @@ class ResultFacetsStandard():
             [item.slug for item in items]
          )
         facet = LastUpdatedOrderedDict()
+
+        if range_data_type is None:
+            id_prefix = 'facet'
+        else:
+            id_prefix = 'range-facet'
+
         if is_related:
-            facet['id'] = '#facet-{}{}'.format(
+            facet['id'] = '#{}-{}{}'.format(
+                id_prefix,
                 configs.RELATED_ENTITY_ID_PREFIX,
                 slugs_id
             )
         else:
-            facet['id'] = '#facet-{}'.format(
+            facet['id'] = '#{}-{}'.format(
+                id_prefix,
                 slugs_id
             )
         
@@ -114,6 +123,8 @@ class ResultFacetsStandard():
         facet['rdfs:isDefinedBy'] = items[0].uri
         facet['slug'] = items[0].slug
         facet['type'] = facet_type
+        if range_data_type:
+            facet['data-type'] = range_data_type
         if items[0].is_related:
             facet['oc-api:related-property'] = True
         return facet
@@ -212,12 +223,10 @@ class ResultFacetsStandard():
         """Adds options lists for different data types to a facet"""
         
         # Look up the client's request parameter and reqest 
-        param_key_val_dict = self.facet_fields_to_client_request.get(
+        param_key, match_old_value = self.facet_fields_to_client_request.get(
             solr_facet_field_key,
-            {param_key: None} # default parameter key with no matching value.
+            (param_key, None,) # default parameter key with no matching value.
         )
-        param_key = list(param_key_val_dict.keys())[0]
-        match_old_value = param_key_val_dict[param_key]
         for data_type, options_list_key in configs.FACETS_DATA_TYPE_OPTIONS_LISTS.items():
             options = self.add_options_list_for_data_type(
                 param_key,
@@ -293,4 +302,205 @@ class ResultFacetsStandard():
                 facets.append(facet)
         
         return facets
+    
+
+    def add_range_options_list(
+        self, 
+        param_key,
+        match_old_value,
+        data_type,
+        gap,  
+        options_tuples,
+        round_digits=None
+    ):
+        """Adds option dict object to a list based on data-type.
+        
+        :param str data_type: Solr data-type to match for inclusion
+            in the output options list.
+        :param list options_tuples: List of (facet_value, count) tuples
+        """
+        delim = configs.REQUEST_PROP_HIERARCHY_DELIM
+        options = []
+        for facet_value, count in options_tuples:
+            if count < 1:
+                # We don't make facet options for facet values with no
+                # records.
+                continue
+            label = facet_value
+            if data_type == 'xsd:integer':
+                min_value = int(round(float(facet_value),0))
+                max_value = min_value + gap
+            elif data_type == 'xsd:double':
+                if round_digits is not None:
+                    label = str(round(float(facet_value), round_digits))
+                min_value = float(facet_value)
+                max_value = float(min_value) + gap
+            elif data_type == 'xsd:date':
+                min_value = facet_value
+                max_value_dt = utilities.add_solr_gap_to_date(
+                    facet_value, 
+                    gap
+                )
+                max_value = utilities.datetime_to_solr_date_str(
+                    max_value_dt
+                )
+            else:
+                # Why are we even here then?
+                continue
+            
+            new_value = '[{} TO {}]'.format(
+                min_value, max_value
+            )
+
+            old_range_sep = delim + '['
+            if old_range_sep in match_old_value:
+                # Remove the part of the match_old_value that
+                # has the range query value.
+                old_parts = match_old_value.split(old_range_sep)
+                # The first part of the old_parts has the
+                # old range removed.
+                new_value = old_parts[0] + delim + new_value
+            elif match_old_value.endswith(delim):
+                new_value = match_old_value + new_value
+            else:
+                new_value = match_old_value + delim + new_value
+
+            sl = SearchLinks(
+                request_dict=copy.deepcopy(self.request_dict),
+                base_search_url=self.base_search_url
+            )
+            # Remove non search related params.
+            sl.remove_non_query_params()
+
+            # Update the request dict for this facet option.
+            sl.replace_param_value(
+                param_key,
+                match_old_value=match_old_value,
+                new_value=new_value,
+            )  
+            urls = sl.make_urls_from_request_dict()
+            if urls['html'] == self.current_filters_url:
+                # The new URL matches our current filter
+                # url, so don't add this facet option.
+                continue
+
+            option = LastUpdatedOrderedDict()
+            option['id'] = urls['html']
+            option['json'] = urls['json']
+            option['label'] = label
+            option['count'] = count
+            option['oc-api:min'] = min_value
+            option['oc-api:max'] = max_value
+            options.append(option)
+        return options
+
+
+    def get_facet_ranges_and_options(self, solr_json):
+        """Gets property range facets and options from solr response json"""
+        
+        facet_ranges = []
+        solr_facet_ranges_dict = utilities.get_dict_path_value(
+            configs.FACETS_RANGE_SOLR_ROOT_PATH_KEYS,
+            solr_json
+        )
+        if not solr_facet_ranges_dict:
+            # No facets ranges active, so skip out
+            return facet_ranges
+        
+        # Now get the related stats fields.
+        solr_stats_dict = utilities.get_dict_path_value(
+            configs.STATS_FIELDS_PATH_KEYS,
+            solr_json
+        )
+        if not solr_stats_dict:
+            # No solr stats. So skip out.
+            return None
+        
+        for (
+                solr_field_key, 
+                range_dict,
+            ) in solr_facet_ranges_dict.items():
+
+            # Look up the client's request parameter and reqest 
+            (
+                param_key, 
+                match_old_value,
+            ) = self.facet_fields_to_client_request.get(
+                solr_field_key,
+                ('prop', None,) # default parameter, matching value.
+            )
+            if not match_old_value:
+                # This should never happen, but we can't associate a
+                # this solr field with a client request param and value
+                continue
+
+            # Parse the solr field to get the data type
+            data_type = utilities.get_data_type_for_solr_field(
+                solr_field_key
+            )
+            if data_type not in [
+                    'xsd:integer', 
+                    'xsd:double', 
+                    'xsd:date',
+                ]:
+                # The data type for solr field is missing or
+                # is of a type that does not have ranges.
+                continue
+
+            stats_dict = solr_stats_dict.get(solr_field_key)
+            if not stats_dict:
+                # We can't find stats for this solr field
+                # that gave us ranges. Which should not happen, but
+                # it did, so skip.
+                continue
+
+            # Get the raw list of value counts
+            range_value_count_list = range_dict.get('counts', [])
+            # Make  list of the tuples for this solr facet field.
+            options_tuples = utilities.get_facet_value_count_tuples(
+                range_value_count_list
+            )
+            if not len(options_tuples):
+                # Skip, because we don't have any facet range options
+                continue
+            
+            facet_range = self.make_facet_dict_from_solr_field(
+                solr_field_key,
+                'oc-api:range-facet',
+                'Ranges',
+                range_data_type=data_type,
+            )
+            for key in ['min', 'max', 'mean', 'stddev']:
+                facet_range['oc-api:{}'.format(key)] = stats_dict[key]
+            for key in ['gap']:
+                facet_range['oc-api:{}'.format(key)] = range_dict[key]
+
+            round_digits = None
+            if data_type == 'xsd:double':
+                digits = [
+                    utilities.get_rounding_level_from_float(
+                        stats_dict[key]
+                    )
+                    for key in ['min', 'max']
+                ]
+                round_digits = max(digits)
+
+
+            # Now add the links do different options.
+            facet_range['oc-api:has-range-options'] = self.add_range_options_list(
+                param_key,
+                match_old_value,
+                data_type,
+                range_dict['gap'],  
+                options_tuples,
+                round_digits=round_digits,
+            )
+
+            facet_ranges.append(facet_range)
+
+        return facet_ranges
+            
+
+        
+            
 

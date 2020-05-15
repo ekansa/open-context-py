@@ -82,10 +82,11 @@ class SearchSolr():
                 # client request parameter and the raw path from the
                 # client. This is also done with solr fields in the
                 # prequery-stats key, so as to associate range facets
-                # with raw paths.
-                self.facet_fields_to_client_request[path_facet_field] = {
-                    param: raw_path
-                }
+                # with raw paths. The association is between a
+                # solr_field and a param, raw_path tuple.
+                self.facet_fields_to_client_request[path_facet_field] = (
+                    param, raw_path
+                )
 
 
     def compose_query(self, request_dict):
