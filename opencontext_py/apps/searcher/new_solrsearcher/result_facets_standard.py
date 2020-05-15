@@ -309,7 +309,7 @@ class ResultFacetsStandard():
         param_key,
         match_old_value,
         data_type,
-        gap,  
+        field_max_value,
         options_tuples,
         round_digits=None
     ):
@@ -321,49 +321,82 @@ class ResultFacetsStandard():
         """
         delim = configs.REQUEST_PROP_HIERARCHY_DELIM
         options = []
-        for facet_value, count in options_tuples:
+        options_length = len(options_tuples)
+        for i, option_tup in enumerate(options_tuples):
+            facet_value, count = option_tup
             if count < 1:
                 # We don't make facet options for facet values with no
                 # records.
                 continue
+
+            if (i + 1) == options_length:
+                max_value = field_max_value
+                # This indicates a less than or equal range
+                # for the max_value.
+                range_query_end = ']'
+            else:
+                # Get the first element of the next options
+                # tuple. That's the facet value for the
+                # next maximum value.
+                max_value = options_tuples[(i + 1)][0]
+                # This indicates a less than range for the
+                # max_value. We don't want to include
+                # values for the next facet.
+                range_query_end = '}'
+            
             label = facet_value
+            if round_digits is not None:
+                label = str(round(float(facet_value), round_digits))
+
             if data_type == 'xsd:integer':
                 min_value = int(round(float(facet_value),0))
-                max_value = min_value + gap
+                max_value = int(round(float(max_value),0))
             elif data_type == 'xsd:double':
                 if round_digits is not None:
                     label = str(round(float(facet_value), round_digits))
                 min_value = float(facet_value)
-                max_value = float(min_value) + gap
+                max_value = float(max_value)
             elif data_type == 'xsd:date':
                 min_value = facet_value
-                max_value_dt = utilities.add_solr_gap_to_date(
-                    facet_value, 
-                    gap
-                )
-                max_value = utilities.datetime_to_solr_date_str(
-                    max_value_dt
-                )
             else:
-                # Why are we even here then?
+                # How van we even be here with the wrong data-type?
                 continue
             
-            new_value = '[{} TO {}]'.format(
-                min_value, max_value
+
+            # Except for the last range query option, a
+            # range query is greater than or equal to the min_value
+            # and less than the max_value.
+            # 
+            # For the last range query option, the range query
+            # is greater than or equal to the min_value and less than
+            # or equal to the maximum value (thus, we include the
+            # max_value for the last, greatest facet option). 
+            range_query = '[{min_val} TO {max_val}{q_end}'.format(
+                min_val=min_value, 
+                max_val=max_value,
+                q_end=range_query_end,
             )
 
-            old_range_sep = delim + '['
-            if old_range_sep in match_old_value:
+            new_value = None
+            old_range_seps = [(delim + '['), (delim + '{')]
+            for old_range_sep in old_range_seps:
+                if not old_range_sep in match_old_value:
+                    continue
+                if new_value is not None:
+                    continue
                 # Remove the part of the match_old_value that
                 # has the range query value.
                 old_parts = match_old_value.split(old_range_sep)
                 # The first part of the old_parts has the
                 # old range removed.
-                new_value = old_parts[0] + delim + new_value
-            elif match_old_value.endswith(delim):
-                new_value = match_old_value + new_value
-            else:
-                new_value = match_old_value + delim + new_value
+                new_value = old_parts[0] + delim + range_query
+            
+            if new_value is None:
+                # No old range query to replace.
+                if match_old_value.endswith(delim):
+                    new_value = match_old_value + range_query
+                else:
+                    new_value = match_old_value + delim + range_query
 
             sl = SearchLinks(
                 request_dict=copy.deepcopy(self.request_dict),
@@ -491,7 +524,7 @@ class ResultFacetsStandard():
                 param_key,
                 match_old_value,
                 data_type,
-                range_dict['gap'],  
+                stats_dict['max'],  
                 options_tuples,
                 round_digits=round_digits,
             )

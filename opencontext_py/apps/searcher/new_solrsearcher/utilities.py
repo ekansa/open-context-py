@@ -560,7 +560,7 @@ def get_rounding_level_from_float(float_val):
 
 
 
-def get_facet_value_count_tuples(solr_facet_value_count_list):
+def get_facet_value_count_tuples(solr_facet_value_count_list, no_zeros=True):
     """Gets facet values and counts from a list solr facet value count list
 
     :param list solr_facet_value_count_list: List of facet values and
@@ -573,6 +573,9 @@ def get_facet_value_count_tuples(solr_facet_value_count_list):
     for i in range(0, len(solr_facet_value_count_list), 2):
         facet_value = solr_facet_value_count_list[i]
         facet_count = solr_facet_value_count_list[(i + 1)]
+        if no_zeros and facet_count == 0:
+            # Remove facet counts of zero.
+            continue
         facet_value_count_tuples.append(
             (facet_value, facet_count,)  # tuple representation
         )
