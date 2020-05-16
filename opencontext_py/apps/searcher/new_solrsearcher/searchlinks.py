@@ -149,6 +149,7 @@ class SearchLinks():
         param,
         match_old_value=None,
         new_value=None,
+        add_to_param_list=False,
     ):
         """Replaces a request parameter value in a request object"""
         if param is None:
@@ -167,8 +168,23 @@ class SearchLinks():
         if match_old_value is None and new_value is None:
             self.request_dict.pop(param, None)
             return self.request_dict
-        if match_old_value is None and new_value is not None:
+        if (not add_to_param_list 
+            and match_old_value is None 
+            and new_value is not None):
+            # Replace the entire param with the new value.
             self.request_dict[param] = new_value
+            return self.request_dict
+        if (add_to_param_list 
+            and match_old_value is None 
+            and new_value is not None):
+            # Add to the list of existing values for this
+            # parameter.
+            all_param_vals = self.request_dict[param]
+            if not isinstance(all_param_vals, list):
+                all_param_vals = [all_param_vals]
+            if new_value not in all_param_vals:
+                all_param_vals.append(new_value)
+            self.request_dict[param] = all_param_vals
             return self.request_dict
         exist_param_values = utilities.get_request_param_value(
             request_dict=self.request_dict, 

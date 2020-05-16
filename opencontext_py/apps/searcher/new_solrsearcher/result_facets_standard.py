@@ -188,11 +188,22 @@ class ResultFacetsStandard():
             # Remove non search related params.
             sl.remove_non_query_params()
 
+            if param_key == 'prop':
+                # Prop can be a list. If the match_old_value is None
+                # then we add to new_value to the existing list of 
+                # all prop parameter values.
+                add_to_param_list = True
+            else:
+                # All the other param_key's can only take a single
+                # value.
+                add_to_param_list = False
+
             # Update the request dict for this facet option.
             sl.replace_param_value(
                 param_key,
                 match_old_value=match_old_value,
                 new_value=new_value,
+                add_to_param_list=add_to_param_list,
             )  
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
