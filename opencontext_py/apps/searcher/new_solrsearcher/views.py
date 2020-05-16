@@ -9,8 +9,9 @@ from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
+from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
-from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import SolrResult
+from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 from django.views.decorators.cache import cache_control
@@ -27,22 +28,26 @@ def process_solr_query(request_dict):
         request object with client GET request parmaters.
     """
     
-    # NOTE: For inital testing purposes, this only composes a
+    # NOTE: For initial testing purposes, this only composes a
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
+    search_solr.add_initial_facet_fields(request_dict)
     query = search_solr.compose_query(request_dict)
     query = search_solr.update_query_with_stats_prequery(
         query
     )
     solr_response = search_solr.query_solr(query)
-    solr_result = SolrResult(
+    result_maker = ResultMaker(
         request_dict=request_dict,
+        facet_fields_to_client_request=search_solr.facet_fields_to_client_request,
+        base_search_url='/query/',
     )
-    solr_result.act_responses = ['metadata']
-    solr_result.create_result(
+    result_maker.act_responses = configs.RESPONSE_DEFAULT_TYPES
+    result_maker.create_result(
         solr_json=solr_response
     )
-    query['response'] = solr_result.json_ld
+    query['facet-fields-to-client'] = result_maker.facet_fields_to_client_request
+    query['response'] = result_maker.result
     query['raw-solr-response'] = solr_response
     return query
     

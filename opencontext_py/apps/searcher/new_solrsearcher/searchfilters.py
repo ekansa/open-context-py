@@ -108,7 +108,8 @@ class SearchFilters():
         match_old_value,
         new_value,
         act_filter, 
-        request_dict
+        request_dict,
+        make_text_template=False,
     ):
         """Adds links to an active filter"""
         act_request_dict = copy.deepcopy(request_dict)
@@ -117,12 +118,21 @@ class SearchFilters():
             request_dict=act_request_dict,
             base_search_url=self.base_search_url
         )
+
+        # Remove non search related params.
+        sl.remove_non_query_params()
+        
         sl.replace_param_value(
             param_key,
             match_old_value=match_old_value,
             new_value=new_value,
         ) 
         urls = sl.make_urls_from_request_dict()
+        if make_text_template:
+            # Make template for a text search
+            act_filter['oc-api:template'] = urls['html']
+            act_filter['oc-api:template-json'] = urls['json']
+            return act_filter
         if new_value is None:
             # If the new_value is None, then we're completely
             # removing the search filter.
@@ -217,6 +227,12 @@ class SearchFilters():
         ):
         """Looks up a entity item to add to an act_filter"""
         lookup_val = str(lookup_val)
+    
+        if lookup_val.startswith(configs.RELATED_ENTITY_ID_PREFIX):
+            # Strip off the related property prefix. Note that this
+            # is a related property.
+            lookup_val = lookup_val[len(configs.RELATED_ENTITY_ID_PREFIX):]
+            act_filter['oc-api:related-property'] = True
 
         # Map the lookup_val to a mapping dict
         if look_up_mapping_dict:
@@ -224,21 +240,41 @@ class SearchFilters():
                 lookup_val, 
                 lookup_val
             )
-        
+
         m_cache = MemoryCache()
-        if is_spatial_context:
-            item = m_cache.get_entity_by_context(lookup_val)
-        else:
-            item = m_cache.get_entity(lookup_val)
-        if item:
-            act_filter['label'] = item.label
-            act_filter['rdfs:isDefinedBy'] = item.uri
-            act_filter['oc-api:filter-slug'] = item.slug
-        else:
-            act_filter['label'] = lookup_val.replace(
-                configs.REQUEST_OR_OPERATOR, 
-                ' OR '
+        items = []
+        if configs.REQUEST_OR_OPERATOR in lookup_val:
+            lookup_list = lookup_val.split(
+                configs.REQUEST_OR_OPERATOR
             )
+        else:
+            lookup_list = [lookup_val]
+        
+        for act_val in lookup_list:
+            if is_spatial_context:
+                item = m_cache.get_entity_by_context(act_val)
+            else:
+                item = m_cache.get_entity(act_val)
+            if not item:
+                continue
+            items.append(item)
+        
+        if not len(items):
+            # We didn't find any item entities, so return
+            # the lookup list as the label.
+            act_filter['label'] = ' OR '.join(lookup_list)
+            return act_filter, None
+        
+        # Use all the item labels to make a label.
+        item_labels = [item.label for item in items]   
+        act_filter['label'] = ' OR '.join(item_labels)
+
+        if len(items) == 1:
+            # We only have 1 item, so define it with a
+            # URI and slug.
+            act_filter['rdfs:isDefinedBy'] = items[0].uri
+            act_filter['oc-api:filter-slug'] = items[0].slug
+        
         return act_filter, item
 
     
@@ -291,6 +327,12 @@ class SearchFilters():
                     hierarchy_vals = [param_val]
                 
                 parent_path_vals = []
+                
+                # This gets set in the event that we have a
+                # property with a string data type. It is used to make
+                # a search template for that string.
+                text_template_value = None
+
                 for act_val in hierarchy_vals:
                     act_val = urlunquote_plus(act_val)
                     parent_path_vals.append(act_val)
@@ -329,7 +371,7 @@ class SearchFilters():
                     # The filter-group helps to group together all of the
                     # levels of the hierarchy_vals.
                     act_filter['oc-api:filter-group'] = param_val
-
+                    
                     if param_key == "path":
                         # Look up item entity for spatial context
                         # path items by the current path, which will
@@ -340,18 +382,52 @@ class SearchFilters():
                         # the current act_val.
                         item_lookup_val = act_val
                     
-                    act_filter, item = self.add_entity_item_to_act_filter(
-                        item_lookup_val,
-                        act_filter,
-                        is_spatial_context=param_config.get(
-                            'is_spatial_context', 
-                            False
-                        ),
-                        look_up_mapping_dict=param_config.get(
-                            'look_up_mapping_dict'
-                        ),
-                    )
-                    
+                    if text_template_value is None:
+                        # Do not do this for the string value of a string
+                        # type property
+                        act_filter, item = self.add_entity_item_to_act_filter(
+                            item_lookup_val,
+                            act_filter,
+                            is_spatial_context=param_config.get(
+                                'is_spatial_context', 
+                                False
+                            ),
+                            look_up_mapping_dict=param_config.get(
+                                'look_up_mapping_dict'
+                            ),
+                        )
+                        if item and getattr(item, 'data_type') == 'xsd:string':
+                            act_search_term = None
+                            text_template_value = (
+                                act_full_path 
+                                + hierarchy_delim 
+                                + configs.URL_TEXT_QUERY_TEMPLATE
+                            )
+                    else:
+                        # This is the a case of a search term, which is the child
+                        # of a descriptive property of data_type xsd:string.
+                        act_search_term = item_lookup_val
+                        act_filter['label'] = item_lookup_val
+                        if param_config.get('label-prop-template'):
+                            # Use a configured tem
+                            act_filter['label'] = param_config['label-prop-template'].format(
+                                act_val=item_lookup_val
+                            )
+
+                    # Add text field templates
+                    if text_template_value is not None:
+                        # Add some special keys and values relating to text
+                        # searches.
+                        act_filter["oc-api:search-term"] = act_search_term
+                        act_filter = self.add_links_to_act_filter(
+                            param_key, 
+                            match_old_value=param_val,
+                            new_value=text_template_value,
+                            act_filter=act_filter, 
+                            request_dict=request_dict,
+                            make_text_template=True,
+                        )
+
                     # Add the totally remove filter links
                     act_filter = self.add_links_to_act_filter(
                         param_key, 

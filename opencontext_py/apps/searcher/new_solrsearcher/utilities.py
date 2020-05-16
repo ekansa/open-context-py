@@ -8,6 +8,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
+    SOLR_DATA_TYPE_TO_PREDICATE,
     get_solr_predicate_type_string,
     SolrDocumentNew as SolrDocument,
 )
@@ -188,6 +189,30 @@ def rename_solr_field_for_data_type(data_type, solr_field):
         prefix=(general_part + '_')
     )
     return first_part + SolrDocument.SOLR_VALUE_DELIM + new_ending
+
+
+def get_data_type_for_solr_field(solr_field):
+    """Gets the data-type for a solr field
+
+    :param str solr_field: The solr field that we want to know
+        about its data type.
+    """
+    if not SolrDocument.SOLR_VALUE_DELIM in solr_field:
+        return None
+    parts = solr_field.split(SolrDocument.SOLR_VALUE_DELIM)
+    suffix_part = parts[-1]
+    if not '_' in suffix_part:
+        # We can't break apart the suffix to find the
+        # solr data type
+        return None
+    suffix_parts = suffix_part.split('_')
+    solr_data_type = suffix_parts[-1]
+
+    # Return the mapping between the solr_data_type part
+    # and the predicate data types.
+    return SOLR_DATA_TYPE_TO_PREDICATE.get(
+        solr_data_type
+    )
 
 
 def join_solr_query_terms(terms_list, operator='AND'):
@@ -480,6 +505,109 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
 
 
 # ---------------------------------------------------------------------
+# Solr Response (JSON) Object Related Functions
+# ---------------------------------------------------------------------
+def parse_solr_encoded_entity_str(
+    entity_str,
+    base_url='', 
+    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM
+):
+    """Parses an entity string encoded for solr"""
+    
+    # NOTE: This is reverse of the function:
+    # SolrDocument.make_entity_string_for_solr
+    if not solr_value_delim in entity_str:
+        return None
+    
+    parts = entity_str.split(solr_value_delim)
+    if len(parts) < 4:
+        # Not a valid encoding so skip.
+        return None
+    
+    if len(parts) == 5 and parts[3] != parts[4]:
+        alt_label = parts[4]
+    else:
+        alt_label = None
+
+    if (parts[2].startswith('http://') 
+        or parts[2].startswith('https://')):
+        # We already have a full url.
+        uri = parts[2]
+    else:
+        # Use the base url to make a full url.
+        uri = base_url + parts[2]
+    
+    # Return a dictionary of the parsed entity.
+    return {
+        'slug': parts[0].replace('_', '-'),
+        'data_type': parts[1],
+        'uri': uri,
+        'label': parts[3],
+        'alt_label': alt_label,
+    }
+
+
+def get_rounding_level_from_float(float_val):
+    """Gets a data-type for a solr field"""
+    if not isinstance(float_val, float):
+        return None
+    val_str = str(float_val)
+    if not '.' in val_str:
+        # rounds to the 0th decimal
+        return 0
+    parts = val_str.split('.')
+    return len(parts[-1])
+
+
+
+def get_facet_value_count_tuples(solr_facet_value_count_list, no_zeros=True):
+    """Gets facet values and counts from a list solr facet value count list
+
+    :param list solr_facet_value_count_list: List of facet values and
+        counts that alternate. This is how the SOLR json response provides
+        facet values and counts, and it is a little inconvenient, so to
+        make it easier to use, this function returns the same information
+        in a list of (facet_value, count) tuples.
+    """
+    facet_value_count_tuples = []
+    for i in range(0, len(solr_facet_value_count_list), 2):
+        facet_value = solr_facet_value_count_list[i]
+        facet_count = solr_facet_value_count_list[(i + 1)]
+        if no_zeros and facet_count == 0:
+            # Remove facet counts of zero.
+            continue
+        facet_value_count_tuples.append(
+            (facet_value, facet_count,)  # tuple representation
+        )
+    return facet_value_count_tuples
+
+
+def get_path_facet_value_count_tuples(
+    path_keys_list, 
+    solr_response_dict, 
+    default=[]
+):
+    """Gets a list of facet value, count tuples form a solr response
+
+    :param list path_keys_list: List of keys to identify the facet field
+        and get facet values and counts
+    :param dict solr_response_dict: Dictionary generated from a solr
+        JSON response
+    """
+    solr_facet_value_count_list = get_dict_path_value(
+        path_keys_list, 
+        solr_response_dict, 
+        default=None
+    )
+    if not isinstance(solr_facet_value_count_list, list):
+        # We didn't find the expected list, so return None.
+        return default
+    # Transform SOLR's weird response list into a list of solr
+    # (facet_value, facet_count,) tuples.
+    return get_facet_value_count_tuples(solr_facet_value_count_list)
+
+
+# ---------------------------------------------------------------------
 # Date-Time Related Functions
 # ---------------------------------------------------------------------
 def date_convert(date_str):
@@ -493,10 +621,14 @@ def date_convert(date_str):
     return date_str
 
 
+def datetime_to_solr_date_str(dt):
+    """Makes a solr date string form a datetime object"""
+    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 def convert_date_to_solr_date(date_str):
     """Converts a string for a date into a Solr formated datetime string """
     dt = date_convert(date_str)
-    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    return datetime_to_solr_date_str(dt)
 
 
 def make_human_readable_date(date_str):

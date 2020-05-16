@@ -565,6 +565,15 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
     return query_dict
 
 
+def add_rel_prefix_if_needed(str_value, prefix=""):
+    """Adds a related prefix if not present"""
+    if not isinstance(str_value, str) or not len(prefix):
+        return str_value
+    if str_value.startswith(prefix):
+        return str_value
+    return prefix + str_value
+
+
 def get_general_hierarchic_path_query_dict(
     path_list,
     root_field,
@@ -632,6 +641,9 @@ def get_general_hierarchic_path_query_dict(
     # attributes, not the more specific, rarely used attributes that
     # are stored in the database.
     attribute_item = None
+
+    # Default to no solr related prefix
+    use_solr_rel_prefix = ''
     
     last_path_index = len(path_list) -1 
     for path_index, item_id in enumerate(path_list):
@@ -657,6 +669,22 @@ def get_general_hierarchic_path_query_dict(
             # not entities in the database)
             return query_dict
 
+        if not item_id:
+            # It is empty or not a string, so skip out.
+            return None
+
+        use_solr_rel_prefix = ''
+        if item_id.startswith(configs.RELATED_ENTITY_ID_PREFIX):
+            # Strip off the prefix. 
+            item_id = item_id[len(configs.RELATED_ENTITY_ID_PREFIX):]
+            use_solr_rel_prefix = SolrDocument.RELATED_SOLR_DOC_PREFIX
+        
+        # Add the solr-rel prefix if needed.
+        obj_all_field_fq = add_rel_prefix_if_needed(
+            obj_all_field_fq, 
+            prefix=use_solr_rel_prefix
+        )
+        
         item = m_cache.get_entity(item_id)
         if not item:
             # We don't recognize the first item, and it is not
@@ -683,9 +711,19 @@ def get_general_hierarchic_path_query_dict(
         # If the item is a linked data entity, and we have a 
         # root field field defined for project specific predicates.
         # So, change the root solr field to be the linked data root.
-        if item.item_type == 'uri' and facet_field == SolrDocument.ROOT_PREDICATE_SOLR:
-            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR 
-        
+        if (item.item_type == 'uri' 
+           and facet_field == SolrDocument.ROOT_PREDICATE_SOLR):
+            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR
+
+
+        # Add the solr related prefix for related entity searches 
+        # and it not already used as a prefix.
+        # Add the solr-rel prefix if needed.
+        facet_field = add_rel_prefix_if_needed(
+            facet_field, 
+            prefix=use_solr_rel_prefix
+        )
+
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
@@ -703,10 +741,15 @@ def get_general_hierarchic_path_query_dict(
         
         # Make the query for the item and the solr field associated
         # with the item's immediate parent (or root, if it has no
-        # parents). 
+        # parents).
+        fq_item_slug = add_rel_prefix_if_needed( 
+            utilities.fq_slug_value_format(item.slug),
+            prefix=use_solr_rel_prefix
+        )
+
         query_dict['fq'].append('{field_fq}:{item_slug}'.format(
                 field_fq=field_fq,
-                item_slug=utilities.fq_slug_value_format(item.slug)
+                item_slug=fq_item_slug
             )
         )
         # Now make the query for the item and the solr field
@@ -715,7 +758,7 @@ def get_general_hierarchic_path_query_dict(
         if obj_all_field_fq:
             query_dict['fq'].append('{field_fq}:{item_slug}'.format(
                     field_fq=obj_all_field_fq,
-                    item_slug=utilities.fq_slug_value_format(item.slug)
+                    item_slug=fq_item_slug
                 )
             )
         # Use the current item as the basis for the next solr_field
@@ -727,9 +770,15 @@ def get_general_hierarchic_path_query_dict(
             + attribute_field_part
             + field_suffix  
         )
+        facet_field = add_rel_prefix_if_needed(
+            facet_field, 
+            prefix=use_solr_rel_prefix
+        )
+
         field_fq = facet_field
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
+        
         
         if ((getattr(item, 'item_type', None) == 'predicates')
             or (getattr(item, 'entity_type', None) == 'property')):
@@ -778,7 +827,8 @@ def get_general_hierarchic_path_query_dict(
                     facet_field = utilities.rename_solr_field_for_data_type(
                         attribute_item.data_type,
                         (
-                            item.slug.replace('-', '_')
+                            use_solr_rel_prefix
+                            + item.slug.replace('-', '_')
                             + SolrDocument.SOLR_VALUE_DELIM
                             + field_suffix
                         )  
@@ -795,7 +845,8 @@ def get_general_hierarchic_path_query_dict(
                 field_fq = utilities.rename_solr_field_for_data_type(
                     attribute_item.data_type,
                     (
-                        item.slug.replace('-', '_')
+                        use_solr_rel_prefix
+                        + item.slug.replace('-', '_')
                         + SolrDocument.SOLR_VALUE_DELIM
                         + field_suffix
                     )  
@@ -823,6 +874,11 @@ def get_general_hierarchic_path_query_dict(
                     attribute_item.slug.replace('-', '_')
                     + SolrDocument.SOLR_VALUE_DELIM
                 )
+
+                attribute_field_part = add_rel_prefix_if_needed(
+                    attribute_field_part, 
+                    prefix=use_solr_rel_prefix
+                )
                 # Now also update the obj_all_field_fq
                 obj_all_field_fq = (
                     'obj_all'
@@ -830,6 +886,10 @@ def get_general_hierarchic_path_query_dict(
                     + attribute_field_part
                     + field_suffix
                     + fq_solr_field_suffix 
+                )
+                obj_all_field_fq = add_rel_prefix_if_needed(
+                    obj_all_field_fq, 
+                    prefix=use_solr_rel_prefix
                 )
             
 

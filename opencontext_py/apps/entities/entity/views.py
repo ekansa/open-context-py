@@ -15,7 +15,9 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
+
 from opencontext_py.apps.ocitems.ocitem.views import items_graph
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 
 # These views display an HTML form for classifying import fields,
@@ -372,4 +374,17 @@ def proxy_header(request, target_url):
 def items_json(request, identifier):
     # testing for using the new Open Context OCitem generator
     # that better integrates caching
+    if request.GET.get('response') == 'solr':
+        sd_obj = SolrDocument(identifier)
+        sd_obj.solr_doc_prefix = request.GET.get('rel-prefix', '')
+        sd_obj.make_solr_doc()
+        json_output = json.dumps(
+            sd_obj.fields,
+            indent=4,
+            ensure_ascii=False
+        )
+        return HttpResponse(
+            json_output,
+            content_type='application/json; charset=utf8'
+        )
     return items_graph(request, identifier, return_media='application/ld+json')

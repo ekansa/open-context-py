@@ -17,6 +17,18 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 
+def get_path_value(request_dict, default=None):
+    """Gets the path value removed from a list"""
+    path = request_dict.get('path')
+    if not path:
+        return default
+    if isinstance(path, list):
+        # Normalize a path to be a single string value.
+        path = path[0]
+    return path
+
+
+
 class SearchLinks():
 
     def __init__(self, request_dict=None, base_search_url='/search/'):
@@ -26,6 +38,19 @@ class SearchLinks():
         self.request_dict = copy.deepcopy(request_dict)
         self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
     
+    
+    def remove_non_query_params(
+        self, 
+        remove_params=configs.QUERY_NEW_URL_IGNORE_PARAMS
+    ):
+        """Removes params that are not relevant to query filters"""
+        for param in remove_params:
+            if not param in self.request_dict:
+                continue
+            self.request_dict.pop(param, None)
+        return self.request_dict
+
+
     def make_url_from_request_dict(
         self,
         base_request_url=None,
@@ -42,11 +67,8 @@ class SearchLinks():
         if request_dict is None:
             request_dict = self.request_dict
 
-        path = request_dict.get('path')
+        path = get_path_value(request_dict)
         if path:
-            if isinstance(path, list):
-                # Normalize a path to be a single string value.
-                path = path[0]
             url += path.replace(' ', '+')
         if doc_extention:
             url += doc_extention
@@ -127,6 +149,7 @@ class SearchLinks():
         param,
         match_old_value=None,
         new_value=None,
+        add_to_param_list=False,
     ):
         """Replaces a request parameter value in a request object"""
         if param is None:
@@ -145,8 +168,23 @@ class SearchLinks():
         if match_old_value is None and new_value is None:
             self.request_dict.pop(param, None)
             return self.request_dict
-        if match_old_value is None and new_value is not None:
+        if (not add_to_param_list 
+            and match_old_value is None 
+            and new_value is not None):
+            # Replace the entire param with the new value.
             self.request_dict[param] = new_value
+            return self.request_dict
+        if (add_to_param_list 
+            and match_old_value is None 
+            and new_value is not None):
+            # Add to the list of existing values for this
+            # parameter.
+            all_param_vals = self.request_dict[param]
+            if not isinstance(all_param_vals, list):
+                all_param_vals = [all_param_vals]
+            if new_value not in all_param_vals:
+                all_param_vals.append(new_value)
+            self.request_dict[param] = all_param_vals
             return self.request_dict
         exist_param_values = utilities.get_request_param_value(
             request_dict=self.request_dict, 

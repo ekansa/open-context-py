@@ -28,7 +28,7 @@ class SearchSolr():
         self.json_ld = None
         # Use the copy() method to make sure we don't mutate the configs!
         self.init_facet_fields = configs.DEFAULT_FACET_FIELDS.copy()
-        self.init_stats_fields = configs.GENERAL_STATS_FIELDS.copy()
+        self.init_stats_fields = configs.ALL_TYPES_STATS_FIELDS.copy()
         self.rows = configs.SOLR_DEFAULT_ROW_COUNT
         self.start = 0
         self.max_rows = configs.SOLR_MAX_RESULT_ROW_COUNT
@@ -39,6 +39,10 @@ class SearchSolr():
         self.do_bot_limit = False
         self.solr_debug_query = 'false'
         self.solr_stats_query = 'true'
+        # Dictionary of keyed by facet fields that are derived from the
+        # raw request paths provided by clients. This dictionary makes
+        # it easier to generate links for different facet options.
+        self.facet_fields_to_client_request = {}
     
     
     def solr_connect(self):
@@ -46,6 +50,44 @@ class SearchSolr():
         if self.solr is None:
             self.solr = SolrConnection(False).connection
     
+    def add_initial_facet_fields(self, request_dict):
+        """Adds to initial facet field list based on request_dict"""
+        if 'proj' in request_dict:
+            self.init_facet_fields.append(
+                SolrDocument.ROOT_PREDICATE_SOLR
+            )
+    
+    def _associate_facet_field_with_client_request(
+        self, 
+        param, 
+        raw_path, 
+        query_dict
+    ):
+        """Associates a facet field with a client request."""
+        
+        # NOTE: Because there's some complex logic in how we determine
+        # facet fields from a client request, it is useful to store
+        # the associations for later use. The main later use will
+        # be the creation of links for different facet search options
+        # when we process a raw solr response into a result that we
+        # give to a client. This function stores the associations
+        # between solr facet fields and the URL parameters and values
+        # made by the requesting client.
+        
+        if not query_dict:
+            return None
+        for key in ['prequery-stats', 'facet.field']:
+            for path_facet_field in query_dict.get(key, []):
+                # Associate the facet field for this raw-path with the
+                # client request parameter and the raw path from the
+                # client. This is also done with solr fields in the
+                # prequery-stats key, so as to associate range facets
+                # with raw paths. The association is between a
+                # solr_field and a param, raw_path tuple.
+                self.facet_fields_to_client_request[path_facet_field] = (
+                    param, raw_path
+                )
+
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
@@ -322,6 +364,14 @@ class SearchSolr():
                 request_dict['path']
             )
             if query_dict:
+
+                # Associate the facet fields with the client request param
+                # and param value.
+                self._associate_facet_field_with_client_request(
+                    param='path', 
+                    raw_path=request_dict['path'], 
+                    query_dict=query_dict
+                )
                 # Remove the default Root Solr facet field if it is there.
                 query['facet.field'] = utilities.safe_remove_item_from_list(
                     SolrDocument.ROOT_CONTEXT_SOLR,
@@ -364,6 +414,13 @@ class SearchSolr():
                     # We don't have a response for this query, so continue
                     # for now until we come up with error handling.
                     continue
+                # Associate the facet fields with the client request param
+                # and param value.
+                self._associate_facet_field_with_client_request(
+                    param=param, 
+                    raw_path=raw_path, 
+                    query_dict=query_dict
+                )
                 if remove_field:
                     # Remove a default facet field if it is there.
                     query['facet.field'] = utilities.safe_remove_item_from_list(
