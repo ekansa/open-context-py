@@ -134,22 +134,22 @@ class ResultMaker():
             (
                 # Earliest date items formed, used, or alive.
                 'start',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'form_use_life_chrono_earliest',
-                    'min',
-                ],
+                (
+                    configs.STATS_FIELDS_PATH_KEYS + [
+                        'form_use_life_chrono_earliest',
+                        'min',
+                    ]
+                ),
             ),
             (
                 # Latest date items formed, used, or alive
                 'stop',
-                [
-                    'stats', 
-                    'stats_fields',
-                    'form_use_life_chrono_latest',
-                    'max',
-                ],
+                (
+                    configs.STATS_FIELDS_PATH_KEYS + [
+                        'form_use_life_chrono_latest',
+                        'max',
+                    ]
+                )
             ),
         ]
         for json_ld_key, path_keys_list in meta_configs:
@@ -368,7 +368,7 @@ class ResultMaker():
 
 
     def add_facet_ranges(self, solr_json):
-        """Adds facets for entities that maybe in hierarchies"""
+        """Adds facets ranges for integer, double and date data types."""
         facets_standard = ResultFacetsStandard(
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
