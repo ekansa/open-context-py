@@ -407,6 +407,22 @@ class ResultMaker():
         self.result["oc-api:has-facets"] += facets
 
 
+    def add_item_type_facets(self, solr_json):
+        """Adds facets that indicated records with links to media"""
+        facets_nonpath = ResultFacetsNonPath(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        )
+        item_type_facet_dict = facets_nonpath.make_item_type_facets(
+            solr_json
+        )
+        self._add_facet_dict_to_facets_list(
+            item_type_facet_dict,
+            facet_type_key="oc-api:has-facets"
+        )
+
+
     def add_rel_media_facets(self, solr_json):
         """Adds facets that indicated records with links to media"""
         facets_nonpath = ResultFacetsNonPath(
@@ -461,7 +477,9 @@ class ResultMaker():
 
         if 'prop-facet' in self.act_responses:
             # Add the "standard" facets (for entities, often in hierarchies)
-            self.add_standard_facets(solr_json) 
+            self.add_standard_facets(solr_json)
+            # Add the item-type facets
+            self.add_item_type_facets(solr_json) 
             # Add related media facet options
             self.add_rel_media_facets(solr_json)
 

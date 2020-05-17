@@ -32,6 +32,7 @@ def process_solr_query(request_dict):
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
     search_solr.add_initial_facet_fields(request_dict)
+    search_solr.init_facet_fields.append('item_type')
     query = search_solr.compose_query(request_dict)
     query = search_solr.update_query_with_stats_prequery(
         query

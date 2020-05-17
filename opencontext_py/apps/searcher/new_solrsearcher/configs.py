@@ -295,26 +295,57 @@ REQUEST_SOLR_SORT_MAPPINGS = {
 # Configs for making solr queries
 # ---------------------------------------------------------------------
 # Main item-types mapped to their slugs to get solr-facet field prefix
+ITEM_TYPE_MAPPINGS = {
+    'subjects': {
+        'rdfs:isDefinedBy': 'oc-gen:subjects',
+        'label': 'Subjects',
+        'slug': 'oc-gen-subjects',
+    },
+    'media': {
+        'rdfs:isDefinedBy': 'oc-gen:media',
+        'label': 'Media',
+        'slug': 'oc-gen-media',
+    },
+    'documents': {
+        'rdfs:isDefinedBy': 'oc-gen:documents',
+        'label': 'Documents',
+        'slug':'oc-gen-documents',
+    },
+    'persons': {
+        'rdfs:isDefinedBy': 'oc-gen:persons',
+        'label': 'Persons or organizations',
+        'slug': 'oc-gen-persons',
+    },
+    'projects': {
+        'rdfs:isDefinedBy': 'oc-gen:projects',
+        'label': 'Projects',
+        'slug': 'oc-gen-projects',
+    },
+    'types': {
+        'rdfs:isDefinedBy': 'oc-gen:types',
+        'label': 'Descriptive Types',
+        'slug': 'oc-gen-types',
+    },
+    'predicates': {
+        'rdfs:isDefinedBy': 'oc-gen:predicates',
+        'label': 'Predicates or properties',
+        'slug': 'oc-gen-predicates',
+    },
+    'tables': {
+        'rdfs:isDefinedBy': 'oc-gen:tables',
+        'label': 'Data tables',
+        'slug': 'oc-gen-tables',
+    },
+}
+
 ITEM_TYPE_SLUG_MAPPINGS = {
-    'subjects': 'oc-gen-subjects',
-    'media': 'oc-gen-media',
-    'documents': 'oc-gen-documents',
-    'persons': 'oc-gen-persons',
-    'projects': 'oc-gen-projects',
-    'types': 'oc-gen-types',
-    'predicates': 'oc-gen-predicates',
-    'tables': 'oc-gen-tables',
+    key: t_dict['slug'] 
+    for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
 ITEM_TYPE_URI_MAPPINGS = {
-    'subjects': 'oc-gen:subjects',
-    'media': 'oc-gen:media',
-    'documents': 'oc-gen:documents',
-    'persons': 'oc-gen:persons',
-    'projects': 'oc-gen:projects',
-    'types': 'oc-gen:types',
-    'predicates': 'oc-gen:predicates',
-    'tables': 'oc-gen:tables',
+    key: t_dict['rdfs:isDefinedBy'] 
+    for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
 
@@ -493,6 +524,16 @@ FACETS_RANGE_SOLR_ROOT_PATH_KEYS = [
     'facet_counts',
     'facet_ranges',
 ]
+
+# Facets for item_type
+FACETS_ITEM_TYPE = {
+    'id': '#facet-item-type',
+    'rdfs:isDefinedBy': 'oc-api:facet-item-type',
+    'label': 'Open Context Type',
+    'data-type': 'id',
+    'type': 'oc-api:facet-item-type',
+    'oc-api:has-id-options': [],
+}
 
 
 # Configs for faceting on links to related media of different types.
