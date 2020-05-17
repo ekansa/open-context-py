@@ -38,6 +38,8 @@ class ImportFields():
             # print('Refine schema is OK')
             new_fields = []
             for col_index, col in self.refine_schema.items():
+                col['name'] = col['name'][:199]
+                col['originalName'] = col['originalName'][:199]
                 imp_f = ImportField()
                 imp_f.project_uuid = self.project_uuid
                 imp_f.source_id = self.source_id
@@ -48,9 +50,11 @@ class ImportFields():
                 imp_f.ref_name = col['name']
                 imp_f.ref_orig_name = col['originalName']
                 imp_f.unique_count = 0
-                imp_f = self.check_for_updated_field(imp_f,
-                                                     col['name'],
-                                                     col['originalName'])
+                imp_f = self.check_for_updated_field(
+                    imp_f,
+                    col['name'],
+                     col['originalName']
+                )
                 imp_f = kobo_fields.classify_if_kobofield(imp_f)
                 new_fields.append(imp_f)
             # Now that we've got likely related UUIDs, let's delete the old
