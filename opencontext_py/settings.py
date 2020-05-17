@@ -386,6 +386,12 @@ USE_TZ = True
 # ----------------------------
 IMPORT_BATCH_SIZE = 500  # number of records to import in 1 batch
 
+# Use the normal dict get method, because we don't need to throw
+# an error if this secret does not exist.
+REFINE_URL = secrets.get(
+    'REFINE_URL', 
+    'http://127.0.0.1:3333', # The default.
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/

@@ -1,5 +1,8 @@
 import json
 import requests
+
+from django.conf import settings
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.records.models import ImportCell
@@ -13,7 +16,7 @@ class RefineAPI():
         self.refine_model = False
         self.col_schema = False
         self.json_r = False
-        self.refine_base_url = self.DEFAULT_REFINE_BASE_URL
+        self.refine_base_url = settings.REFINE_URL
         self.refine_project = str(refine_project)
         self.source_id = self.convert_refine_to_source_id(refine_project)
         self.row_request_limit = 500
@@ -157,6 +160,8 @@ class RefineAPI():
         gets project metadata from refine
         """
         url = self.refine_base_url + '/command/core/get-all-project-metadata'
+
+        print('Looking for refine projects at: {}'.format(url))
         try:
             r = requests.get(url, timeout=240)
             r.raise_for_status()
