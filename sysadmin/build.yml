@@ -25,7 +25,7 @@
 
     # using https://github.com/rdhyee/ansible-python
     # forked from https://github.com/whiskerlabs/ansible-python
-    python_version: 3.7.4
+    python_version: 3.7.7
     python_bin: /usr/bin
     python_pip_version: 19.1.1
     python_upgrade_packaging_tools: false
@@ -159,6 +159,7 @@
 
     # # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
     - role: geerlingguy.solr
+      solr_version: "7.7.3"
 
     - role: DavidWittman.redis
       redis_version: 3.0.7
