@@ -14,6 +14,7 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 
 # Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher.result_facets_chronology import ResultFacetsChronology
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
 from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
@@ -387,6 +388,22 @@ class ResultMaker():
         self.result["oc-api:has-range-facets"] += facet_ranges
 
 
+    def add_chronology_facets(self, solr_json):
+        """Adds facets chronological tile"""
+        facets_chrono = ResultFacetsChronology(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        ) 
+        chrono_options = facets_chrono.make_chronology_facet_options(
+            solr_json
+        )
+        if chrono_options is None or not len(chrono_options):
+            # Skip out, we found no chronological options
+            return None
+        self.result["oc-api:has-form-use-life-ranges"] = chrono_options
+
+
     def add_standard_facets(self, solr_json):
         """Adds facets for entities that maybe in hierarchies"""
         facets_standard = ResultFacetsStandard(
@@ -471,6 +488,10 @@ class ResultMaker():
             self.add_filters_json()
             self.add_text_fields()
         
+        if 'chrono-facet' in self.act_responses:
+            # Add facet options for chronology tiles (time spans)
+            self.add_chronology_facets(solr_json)
+
         if 'prop-range' in self.act_responses:
             # Add facet ranges to the result.
             self.add_facet_ranges(solr_json)
