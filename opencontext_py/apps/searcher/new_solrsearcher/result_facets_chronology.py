@@ -36,7 +36,6 @@ class ResultFacetsChronology():
         self.max_tile_count = 30
         self.max_depth = ChronoTile.MAX_TILE_DEPTH
         self.limiting_tile = None
-        self.ok_for_suggested_tile_depth = True
         self.min_date = None  # bce / ce
         self.max_date = None  # bce / ce
         self.exclude_before = None  # bce / ce
