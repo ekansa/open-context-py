@@ -734,9 +734,9 @@ def get_aggregation_depth_to_group_paths(
     of hiearchic path strings.
 
     :param int max_groups: The maximum number of groups wanted.
-    :param int max_depth: The default depth (the max)
     :param list paths: A list of hiearchically encoded string values
         that we want to group together.
+    :param int max_depth: The default depth (the max)
     """
 
     # NOTE: Geospatial points and chronological time-spans
