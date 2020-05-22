@@ -52,7 +52,10 @@ class ResultFacetsNonPath():
         # Iterate through tuples of item_type counts
         options = []
         for facet_value, count in options_tuples:
-            type_dict = configs.ITEM_TYPE_MAPPINGS.get(
+            # The get_item_type_dict should return the
+            # type_dict for slugs, full uris, prefixed URIs
+            # or lower-case item types.
+            type_dict = utilities.get_item_type_dict(
                 facet_value
             )
             if not type_dict:
