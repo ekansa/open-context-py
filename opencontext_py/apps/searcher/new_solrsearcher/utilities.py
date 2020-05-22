@@ -400,7 +400,7 @@ def get_request_param_value(
     require_float=False,
     require_int=False,
 ):
-    """ Return a list, str, float, or int (dependig on args) from a
+    """ Return a list, str, float, or int (depending on args) from a
         request dict:
     
     :param dict request_dict: The dictionary of keyed by client
@@ -725,6 +725,46 @@ def add_solr_gap_to_date(date_val, solr_gap):
 # ---------------------------------------------------------------------
 # GEOSPATIAL AND TIME FUNCTIONS
 # ---------------------------------------------------------------------
+def get_aggregation_depth_to_group_paths( 
+    max_groups,
+    paths,
+    max_depth=None
+):
+    """Gets the number of characters needed to group a list
+    of hiearchic path strings.
+
+    :param int max_groups: The maximum number of groups wanted.
+    :param int max_depth: The default depth (the max)
+    :param list paths: A list of hiearchically encoded string values
+        that we want to group together.
+    """
+
+    # NOTE: Geospatial points and chronological time-spans
+    # can be prepresented as hierarchic paths of strings. This
+    # function is used to help determine the level depth of
+    # aggregation needed to group these stings into a max number
+    # of groups or less.
+
+    if max_depth is None:
+        # We're assuming that all the paths are strings of the
+        # same length.
+        max_depth = len(paths[0])
+
+    if len(paths) <= max_groups:
+        return max_depth
+    
+    keep_looping = True
+    agg_depth = max_depth
+    while keep_looping and agg_depth > 0:
+        agg_depth -= 1
+        agg_paths = [p[:agg_depth] for p in paths]
+        agg_count = len(set(agg_paths))
+        if agg_count <= max_groups:
+            keep_looping = False
+            return agg_depth
+    return agg_depth
+
+
 def validate_geo_coordinate(coordinate, coord_type):
     """Validates a geo-spatial coordinate """
     try:

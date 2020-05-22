@@ -184,6 +184,70 @@ TESTS_ITEM_TYPE_KEYS = [
 ]
 
 
+# List of tests for to look at the aggregation depth needed to return
+# the number of max_groups or less of a list of hierarchic encoded
+# string values.
+TESTS_AGG_DEPTHS = [
+    ( 
+        8,  # max_groups
+        [
+            '01000',
+            '01001',
+            '01002',
+            '01003',
+            '01010',
+            '01011',
+            '01012',
+            '01013',
+        ],  # list of path strings
+        5,  # expected aggregation depth returned
+    ),
+    ( 
+        6, 
+        [
+            '01000',
+            '01001',
+            '01002',
+            '01003',
+            '01010',
+            '01011',
+            '01012',
+            '01013',
+        ],
+        4,
+    ),
+    ( 
+        2, 
+        [
+            '01000',
+            '01001',
+            '01002',
+            '01003',
+            '01010',
+            '01011',
+            '01012',
+            '01013',
+        ],
+        4,
+    ),
+    ( 
+        2, 
+        [
+            '01000',
+            '01001',
+            '01002',
+            '01003',
+            '01010',
+            '01011',
+            '01012',
+            '01013',
+            '01020',
+        ],
+        3,
+    ),
+
+]
+
 def test_infer_multiple_or_hierarchy_paths():
     """Tests creation of multiple hierarchy paths inferred from OR operators"""
     for raw_path, exp_paths, hierarchy_delim, or_delim in TESTS_MULTIPLE_OR_PATHS:
@@ -225,3 +289,14 @@ def test_get_item_type_dict():
             test_key
         )
         assert test_result == expected
+
+
+def test_get_aggregation_depth_to_group_paths():
+    """Tests get_aggregation_depth_to_group_paths function"""
+    for max_groups, paths, expected_depth in TESTS_AGG_DEPTHS:
+        test_depth = utilities.get_aggregation_depth_to_group_paths(
+            max_groups,
+            paths,
+        )
+        assert test_depth == expected_depth
+
