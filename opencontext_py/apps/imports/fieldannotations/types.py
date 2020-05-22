@@ -27,7 +27,21 @@ class ProcessTypes():
     to describe it
 
 from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
-source_id = 'ref:1903543025071'
+source_id = 'ref:2507935910502'
+configs = [
+    (14, 'd4dee6d6-669f-411a-8cfe-3fe95c1c164e', 15,), # class
+    (17, '55ea97cc-7107-4dee-b44b-24e424e6a81d', 18,), # order
+    (20, '6df0dc1e-2cd4-4eec-8c99-3e5b948e201a', 21,), # family
+    (23, '5a6e1877-1054-4fa0-890e-a8a5bbc0ab0d', 24,), # genus
+    (25, 'e9caff7a-d01c-411e-bacf-eba2b32608c4', 26,), # element
+]
+rel_pred = 'skos:closeMatch'
+for type_f, pred_uuid, le_f in configs:
+    pt = ProcessTypes(source_id)
+    pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
+
+
+
 pred_uuid = 'c01b2f13-8c6f-4fca-8a47-50e573dd01d0'  # Materials 1
 type_f = 17
 rel_pred = 'skos:exactMatch'
