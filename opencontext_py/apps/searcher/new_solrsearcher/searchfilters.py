@@ -188,7 +188,7 @@ class SearchFilters():
        
         elif param_key == 'form-chronotile':
             chrono = ChronoTile()
-            dates = chrono.decode_path_dates(all_vals[0])
+            dates = chrono.decode_path_dates(act_val)
             if isinstance(dates, dict):
                 act_filter['label'] = 'Time range: {} to {}'.format(
                     dates['earliest_bce'],
