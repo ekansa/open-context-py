@@ -1,11 +1,14 @@
 import pytest
 import logging
+
+from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
+
 
 logger = logging.getLogger("tests-unit-logger")
 
 
-TESTS_MUTIPLE_OR_PATHS = [
+TESTS_MULTIPLE_OR_PATHS = [
     # Tuples of test cases, with input strings and expected output lists:
     #
     # (raw_path, expected_paths_list, hiearchy_delim, or_delim,),
@@ -144,10 +147,46 @@ TESTS_URL_OPTIONS = [
     ),
 ]
 
+TESTS_ITEM_TYPE_KEYS = [
+    # Tuple is as follows:
+    # (input_key, expected_output,)
+    (
+        None, None,
+    ),
+    (
+        'foo', None,
+    ),
+    (
+        'subjects', configs.ITEM_TYPE_MAPPINGS['subjects'],
+    ),
+    (
+        'oc-gen-media', configs.ITEM_TYPE_MAPPINGS['media'],
+    ),
+    (
+        'oc-gen:media', configs.ITEM_TYPE_MAPPINGS['media'],
+    ),
+    (
+        'https://opencontext.org/vocabularies/oc-general/media', 
+        configs.ITEM_TYPE_MAPPINGS['media'],
+    ),
+    (
+        'http://opencontext.org/vocabularies/oc-general/media', 
+        configs.ITEM_TYPE_MAPPINGS['media'],
+    ),
+    (
+        'http://opencontext.org/vocabularies/oc-general/persons/', 
+        configs.ITEM_TYPE_MAPPINGS['persons'],
+    ),
+    (
+        'https://opencontext.org/vocabularies/oc-general/persons/', 
+        configs.ITEM_TYPE_MAPPINGS['persons'],
+    ),
+]
+
 
 def test_infer_multiple_or_hierarchy_paths():
     """Tests creation of multiple hierarchy paths inferred from OR operators"""
-    for raw_path, exp_paths, hierarchy_delim, or_delim in TESTS_MUTIPLE_OR_PATHS:
+    for raw_path, exp_paths, hierarchy_delim, or_delim in TESTS_MULTIPLE_OR_PATHS:
         paths_list = utilities.infer_multiple_or_hierarchy_paths(
             raw_path,
             hierarchy_delim=hierarchy_delim,
@@ -177,4 +216,12 @@ def test_make_uri_equivalence_list():
             assert uri_list is None
             continue
         assert set(uri_list) == set(expected_list)
-    
+
+
+def test_get_item_type_dict():
+    """Tests get_item_type_dict function"""
+    for test_key, expected in TESTS_ITEM_TYPE_KEYS:
+        test_result = utilities.get_item_type_dict(
+            test_key
+        )
+        assert test_result == expected

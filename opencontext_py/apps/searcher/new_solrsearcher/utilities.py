@@ -13,6 +13,8 @@ from opencontext_py.apps.indexer.solrdocumentnew import (
     SolrDocumentNew as SolrDocument,
 )
 
+from opencontext_py.apps.searcher.new_solrsearcher import configs
+
 # ---------------------------------------------------------------------
 # This module contains general utility functions for the solr search
 # and query features.
@@ -92,6 +94,36 @@ def make_uri_equivalence_list(raw_term, alt_suffix="/"):
     return output_list
 
 
+def get_item_type_dict(raw_type_key):
+    """Gets an item_type dictionary object from a raw_type key"""
+    if not isinstance(raw_type_key, str):
+        return None
+    type_dict = configs.ITEM_TYPE_MAPPINGS.get(
+        raw_type_key
+    )
+    if type_dict is not None:
+        # The simplest, happiest scenario
+        return type_dict
+
+    type_keys = make_uri_equivalence_list(raw_type_key)
+    look_up_types = {
+        # Add to the lookup keyed by slug
+        type_dict['slug']: type_dict 
+        for key, type_dict in configs.ITEM_TYPE_MAPPINGS.items()
+    }
+    for _, type_dict in configs.ITEM_TYPE_MAPPINGS.items():
+        # Now add to the lookup keyed by the isDefinedBy value
+        look_up_types[type_dict['rdfs:isDefinedBy']] = type_dict
+    
+    for type_key in make_uri_equivalence_list(raw_type_key):
+        type_dict = look_up_types.get(type_key)
+        if type_dict is not None:
+            # We found it!
+            return type_dict
+    # We did not find a match for this key or any variant of it.
+    return None
+
+
 def infer_multiple_or_hierarchy_paths(
     raw_path,
     hierarchy_delim='/',
@@ -151,7 +183,6 @@ def infer_multiple_or_hierarchy_paths(
         return paths_as_lists
     # Default to returning the paths as strings.
     return paths_as_strs
-
 
 
 def get_path_depth(self, path, delimiter='/'):
