@@ -32,7 +32,8 @@ DEFAULT_FACET_FIELDS = [
     SolrDocument.ROOT_PROJECT_SOLR,
     'image_media_count',
     'other_binary_media_count',
-    'document_count'
+    'document_count',
+    'form_use_life_chrono_tile',
 ]
 
 PROJECT_FACET_FIELDS = [
@@ -60,6 +61,14 @@ ITEM_TYPE_FACETFIELDS = {
         'oc_gen_subjects___pred_id'
     ],
 }
+
+# Set facet limits for different solr fields. -1 indicates
+# no limit to the number of facets, which means the most
+# expensive.
+SOLR_FIELDS_FACET_LIMITS = [
+    ('form_use_life_chrono_tile', -1,),
+    ('discovery_geotile', -1,),
+]
 
 
 # Lists of tuples to configure filter queries that limit
