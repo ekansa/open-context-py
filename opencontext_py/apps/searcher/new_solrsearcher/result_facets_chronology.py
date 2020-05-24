@@ -32,8 +32,8 @@ class ResultFacetsChronology():
             current_filters_url = self.base_search_url
         self.current_filters_url = current_filters_url
         self.min_tile_depth = 12
-        self.aggregation_depth = 16
-        self.max_tile_count = 30
+        self.default_aggregation_depth = 16
+        self.default_max_tile_count = 30
         self.max_depth = ChronoTile.MAX_TILE_DEPTH
         self.limiting_tile = None
         self.min_date = None  # bce / ce
@@ -128,7 +128,7 @@ class ResultFacetsChronology():
             # return the 
             valid_tiles = [d['tile_key'] for d in valid_tile_dicts]
             deep = utilities.get_aggregation_depth_to_group_paths(
-                max_groups=self.max_tile_count,
+                max_groups=self.default_max_tile_count,
                 paths=valid_tiles,
                 max_depth=self.max_depth,
             )
@@ -137,7 +137,7 @@ class ResultFacetsChronology():
             deep = self.min_tile_depth
         if deep > self.max_depth:
             deep = self.max_depth
-        self.aggregation_depth = deep
+        self.default_aggregation_depth = deep
         return deep 
 
 
@@ -179,7 +179,7 @@ class ResultFacetsChronology():
         aggregate_tiles = {}
         for tile_dict in valid_tile_dicts:
             # Now aggregate the tiles.
-            trim_tile_key = tile_dict['tile_key'][:self.aggregation_depth]
+            trim_tile_key = tile_dict['tile_key'][:self.default_aggregation_depth]
             if trim_tile_key not in aggregate_tiles:
                 # Make the aggregate tile dictionary
                 # object.
