@@ -34,6 +34,8 @@ DEFAULT_FACET_FIELDS = [
     'other_binary_media_count',
     'document_count',
     'form_use_life_chrono_tile',
+    'discovery_geotile',
+    'disc_geosource',
 ]
 
 PROJECT_FACET_FIELDS = [
@@ -68,6 +70,7 @@ ITEM_TYPE_FACETFIELDS = {
 SOLR_FIELDS_FACET_LIMITS = [
     ('form_use_life_chrono_tile', -1,),
     ('discovery_geotile', -1,),
+    ('disc_geosource', -1,),
 ]
 
 
@@ -490,11 +493,11 @@ RESPONSE_DEFAULT_TYPES = [
     'context',
     'metadata',
     'chrono-facet',
-    # 'geo-feature',
-    'geo-facet',
-    'geo-record',
     'prop-range',
     'prop-facet',
+    'geo-facet',
+    # 'geo-feature',
+    'geo-record',
 ]
 
 
@@ -503,6 +506,7 @@ RESPONSE_TYPES_JSON_LD_CONTEXT = [
     'context',
     'chrono-facet',
     'geo-facet',
+    'geo-feature',
     'geo-project',
     'geo-record',
 ]

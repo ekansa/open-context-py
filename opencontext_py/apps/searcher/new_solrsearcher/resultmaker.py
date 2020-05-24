@@ -15,6 +15,7 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 # Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_chronology import ResultFacetsChronology
+from opencontext_py.apps.searcher.new_solrsearcher.result_facets_geo import ResultFacetsGeo
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
 from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
@@ -46,6 +47,8 @@ class ResultMaker():
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = facet_fields_to_client_request
         self.act_responses = []
+        self.min_date = None
+        self.max_date = None
     
     
     def _set_current_filters_url(self):
@@ -153,15 +156,20 @@ class ResultMaker():
                 )
             ),
         ]
+        all_dates = []
         for json_ld_key, path_keys_list in meta_configs:
             act_date = utilities.get_dict_path_value(
                 path_keys_list, 
                 solr_json
             )
+            all_dates.append(act_date)
             if iso_year_format and act_date is not None:
                 act_date = ISOyears().make_iso_from_float(act_date)
             self.result[json_ld_key] = act_date
 
+        # Set the query result minimum and maximum date range.
+        self.min_date = min(all_dates)
+        self.max_date = max(all_dates)
 
     # -----------------------------------------------------------------
     # Methods to make links for paging + sorting navigation 
@@ -389,7 +397,7 @@ class ResultMaker():
 
 
     def add_chronology_facets(self, solr_json):
-        """Adds facets chronological tile"""
+        """Adds facets for chronological tiles"""
         facets_chrono = ResultFacetsChronology(
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
@@ -402,6 +410,30 @@ class ResultMaker():
             # Skip out, we found no chronological options
             return None
         self.result["oc-api:has-form-use-life-ranges"] = chrono_options
+    
+
+    def add_geotile_facets(self, solr_json):
+        """Adds facets for geographic tiles"""
+        facets_geo = ResultFacetsGeo(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        ) 
+        facets_geo.min_date = self.min_date
+        facets_geo.max_date = self.max_date
+
+        # Make the tile facet options
+        geo_options = facets_geo.make_geotile_facet_options(
+            solr_json
+        )
+        if geo_options is None or not len(geo_options):
+            # Skip out, we found no chronological options
+            return None
+        self.result["type"] = "FeatureCollection"
+        if not "features" in self.result:
+            # We don't have a facet list yet, so make it.
+            self.result["features"] = []
+        self.result["features"] += geo_options
 
 
     def add_standard_facets(self, solr_json):
@@ -503,7 +535,10 @@ class ResultMaker():
             self.add_item_type_facets(solr_json) 
             # Add related media facet options
             self.add_rel_media_facets(solr_json)
-
+        
+        if 'geo-facet' in self.act_responses:
+            # Add the geographic tile facets.
+            self.add_geotile_facets(solr_json)
         
 
 
