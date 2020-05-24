@@ -1515,6 +1515,10 @@ sd_obj_l.fields
                     # We're missing data needed for a disc_geosource
                     # value, so skip.
                     continue
+
+                # Adds reference to the entity that has non-point
+                # geospatial data for this item. It can be a containing
+                # entity or the item getting indexed itself.
                 self.fields['disc_geosource'] = self._make_entity_string_for_solr_value(
                     ref_slug,
                     'id',
