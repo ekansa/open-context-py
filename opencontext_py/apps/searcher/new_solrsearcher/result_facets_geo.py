@@ -7,7 +7,11 @@ from django.conf import settings
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
+
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+
 
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
@@ -285,6 +289,139 @@ class ResultFacetsGeo():
             options.append(option)
 
         return options
+
+
+    def _make_cache_geospace_obj_dict(self, uuids):
+        """Make a dict of geospace objects keyed by uuid"""
+        uuids_for_qs = []
+        uuid_geo_dict = {}
+        for uuid in uuids:
+            cache_key = m_cache.make_cache_key(
+                prefix='geospace-obj',
+                identifier=uuid
+            )
+            geo_obj = m_cache.get_cache_object(
+                cache_key
+            )
+            if geo_obj is None:
+                uuids_for_qs.append(uuid)
+            else:
+                uuid_geo_dict[uuid] = geo_obj
         
+        if not len(uuids_for_qs):
+            # Found them all from the cache!
+            # Return without touching the database.
+            return uuid_geo_dict
+        
+        # Lookup the remaining geospace objects from a
+        # database query. We order by uuid then reverse
+        # of feature_id so that the lowest feature id is the
+        # thing that actually gets cached.
+        geospace_qs = Geospace.objects.filter(
+            uuid__in=uuids_for_qs,
+        ).exclude(
+            ftype='Point'
+        ).order_by('uuid', '-feature_id')
+        for geo_obj in geospace_qs:
+            cache_key = m_cache.make_cache_key(
+                prefix='geospace-obj',
+                identifier=str(geo_obj.uuid)
+            )
+            m_cache.save_cache_object(
+                cache_key, geo_obj
+            )
+            uuid_geo_dict[geo_obj.uuid] = geo_obj
+        
+        return uuid_geo_dict
+    
+
+    def _get_cache_contexts_dict(self, uuids):
+        """Make a dictionary that associates uuids to context paths"""
+        uuids_for_qs = []
+        uuid_context_dict = {}
+        for uuid in uuids:
+            cache_key = m_cache.make_cache_key(
+                prefix='context-path',
+                identifier=uuid
+            )
+            context_path = m_cache.get_cache_object(
+                cache_key
+            )
+            if context_path is None:
+                uuids_for_qs.append(uuid)
+            else:
+                uuid_context_dict[uuid] = context_path
+        
+        if not len(uuids_for_qs):
+            # Found them all from the cache!
+            # Return without touching the database.
+            return uuid_context_dict
+        
+        # Lookup the remaining geospace objects from a
+        # database query. We order by uuid then reverse
+        # of feature_id so that the lowest feature id is the
+        # thing that actually gets cached.
+        subject_qs = Subject.objects.filter(
+            uuid__in=uuids_for_qs,
+        )
+        for sub_obj in subject_qs:
+            cache_key = m_cache.make_cache_key(
+                prefix='context-path',
+                identifier=str(sub_obj.uuid)
+            )
+            m_cache.save_cache_object(
+                cache_key, 
+                sub_obj.context
+            )
+            uuid_context_dict[sub_obj.uuid] = sub_obj.context
+        
+        return uuid_context_dict
+
+
+    def _get_cache_geospace_qs(self, options_tuples):
+        """Gets geospace item query set from a list of options tuples"""
+        m_cache = MemoryCache()
+        uuids = []
+        parsed_solr_entities = {}
+        uuid_geo_dict = {}
+        for solr_entity_str, count in options_tuples:
+            parsed_entity = utilities.parse_solr_encoded_entity_str(
+                solr_entity_str
+            )
+            if not parsed_entity:
+                logger.warn(
+                    'Cannot parse entity from {}'.format(solr_entity_str)
+                )
+                continue
+            if not '/' in parsed_entity['uri']:
+                logger.warn(
+                    'Invalid uri from {}'.format(solr_entity_str)
+                )
+                continue
+            uri_parts = parsed_entity['uri'].split('/')
+            uuid = uri_parts[-1]
+            parsed_entity['uuid'] = uuid
+            uuids.append(uuid)
+        
+        # Make a dictionary of geospace objects keyed by uuid. This
+        # will hit the database in one query to get all geospace
+        # objects not present in the cache.
+        uuid_geo_dict = self._make_cache_geospace_obj_dict(uuids)
+        
+        # Now make the final 
+        geo_options = []
+        for solr_entity_str, count in options_tuples:
+            if solr_entity_str not in parsed_solr_entities:
+                # This solr_entity_str did not validate to extract a UUID.
+                continue
+            parsed_entity = parsed_solr_entities[solr_entity_str]
+            geo_obj = uuid_geo_dict[parsed_entity['uuid']]
+            if  geo_obj is None:
+                logger.warn('No geospace object for {}'.format(uuid))
+                continue
+            
+
+
+        return geo_options_tuples
 
 
