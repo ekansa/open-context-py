@@ -1,17 +1,20 @@
 import copy
+import json
 import logging
 
 from django.conf import settings
 
 
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.libs.validategeojson import ValidateGeoJson
+
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 
 from opencontext_py.apps.ocitems.geospace.models import Geospace
-
+from opencontext_py.apps.ocitems.subjects.models import Subject
 
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
@@ -149,6 +152,28 @@ class ResultFacetsGeo():
         return deep
 
 
+    def _add_when_object_to_feature_option(self, id_suffix, option):
+        """Adds a when object to a feature option"""
+        # Add some general chronology information to the
+            # geospatial tile. 
+        if (self.min_date is None
+            or self.max_date is None):
+            return option
+
+        when = LastUpdatedOrderedDict()
+        when['id'] = '#event-{}'.format(id_suffix)
+        when['type'] = 'oc-gen:formation-use-life'
+        # convert numeric to GeoJSON-LD ISO 8601
+        when['start'] = ISOyears().make_iso_from_float(
+            self.min_date
+        )
+        when['stop'] = ISOyears().make_iso_from_float(
+            self.max_date
+        )
+        option['when'] = when
+        return option
+
+
     def make_geotile_facet_options(self, solr_json):
         """Makes geographic tile facets from a solr_json response""" 
         geotile_path_keys = (
@@ -242,19 +267,10 @@ class ResultFacetsGeo():
 
             # Add some general chronology information to the
             # geospatial tile. 
-            if (self.min_date is not None
-               and self.max_date is not None):
-                when = LastUpdatedOrderedDict()
-                when['id'] = '#event-{}'.format(tile)
-                when['type'] = 'oc-gen:formation-use-life'
-                # convert numeric to GeoJSON-LD ISO 8601
-                when['start'] = ISOyears().make_iso_from_float(
-                    self.min_date
-                )
-                when['stop'] = ISOyears().make_iso_from_float(
-                    self.max_date
-                )
-                option['when'] = when
+            option = self._add_when_object_to_feature_option(
+                tile,
+                option,
+            )
             
             gm = GlobalMercator()
             if feature_type == 'Polygon':
@@ -293,6 +309,7 @@ class ResultFacetsGeo():
 
     def _make_cache_geospace_obj_dict(self, uuids):
         """Make a dict of geospace objects keyed by uuid"""
+        m_cache = MemoryCache()
         uuids_for_qs = []
         uuid_geo_dict = {}
         for uuid in uuids:
@@ -320,7 +337,7 @@ class ResultFacetsGeo():
         geospace_qs = Geospace.objects.filter(
             uuid__in=uuids_for_qs,
         ).exclude(
-            ftype='Point'
+            ftype__in=['Point', 'point']
         ).order_by('uuid', '-feature_id')
         for geo_obj in geospace_qs:
             cache_key = m_cache.make_cache_key(
@@ -337,6 +354,7 @@ class ResultFacetsGeo():
 
     def _get_cache_contexts_dict(self, uuids):
         """Make a dictionary that associates uuids to context paths"""
+        m_cache = MemoryCache()
         uuids_for_qs = []
         uuid_context_dict = {}
         for uuid in uuids:
@@ -378,15 +396,34 @@ class ResultFacetsGeo():
         return uuid_context_dict
 
 
-    def _get_cache_geospace_qs(self, options_tuples):
+    def make_geo_contained_in_facet_options(self, solr_json):
         """Gets geospace item query set from a list of options tuples"""
-        m_cache = MemoryCache()
+        geosource_path_keys = (
+            configs.FACETS_SOLR_ROOT_PATH_KEYS 
+            + ['disc_geosource']
+        )
+        geosource_val_count_list = utilities.get_dict_path_value(
+            geosource_path_keys,
+            solr_json,
+            default=[]
+        )
+        if not len(geosource_val_count_list):
+            return None
+        
+        # Make the list of tile, count tuples.
+        options_tuples = utilities.get_facet_value_count_tuples(
+            geosource_val_count_list
+        )
+        if not len(options_tuples):
+            return None
+
         uuids = []
         parsed_solr_entities = {}
         uuid_geo_dict = {}
         for solr_entity_str, count in options_tuples:
             parsed_entity = utilities.parse_solr_encoded_entity_str(
-                solr_entity_str
+                solr_entity_str,
+                base_url=self.base_url
             )
             if not parsed_entity:
                 logger.warn(
@@ -401,12 +438,18 @@ class ResultFacetsGeo():
             uri_parts = parsed_entity['uri'].split('/')
             uuid = uri_parts[-1]
             parsed_entity['uuid'] = uuid
+            parsed_solr_entities[solr_entity_str] = parsed_entity
             uuids.append(uuid)
         
         # Make a dictionary of geospace objects keyed by uuid. This
         # will hit the database in one query to get all geospace
         # objects not present in the cache.
         uuid_geo_dict = self._make_cache_geospace_obj_dict(uuids)
+
+        # Make a dict of context paths, keyed by uuid. This will also
+        # hit the database in only 1 query, for all context paths not
+        # already present in the cache.
+        uuid_context_dict = self._get_cache_contexts_dict(uuids)
         
         # Now make the final 
         geo_options = []
@@ -415,13 +458,84 @@ class ResultFacetsGeo():
                 # This solr_entity_str did not validate to extract a UUID.
                 continue
             parsed_entity = parsed_solr_entities[solr_entity_str]
-            geo_obj = uuid_geo_dict[parsed_entity['uuid']]
+            uuid = parsed_entity['uuid']
+            geo_obj = uuid_geo_dict.get(uuid)
             if  geo_obj is None:
                 logger.warn('No geospace object for {}'.format(uuid))
                 continue
+
+            context_path = uuid_context_dict.get(uuid)
+            if context_path is None:
+                logger.warn('No context path for {}'.format(uuid))
+                continue
             
+            sl = SearchLinks(
+                request_dict=copy.deepcopy(self.request_dict),
+                base_search_url=self.base_search_url
+            )
+            # Remove non search related params.
+            sl.remove_non_query_params()
+
+            # Update the request dict for this facet option.
+            sl.replace_param_value(
+                'path',
+                match_old_value=None,
+                new_value=context_path,
+            )  
+            urls = sl.make_urls_from_request_dict()
+
+            # NOTE: We're not checking if the URLs are the same
+            # as the current search URL, because part of the point
+            # of listing these features is for visualization display
+            # in the front end.
+
+            option = LastUpdatedOrderedDict()
+
+            # The fragment id in the URLs are so we don't have an
+            # ID collision with context facets.
+            option['id'] = urls['html'] + '#geo-in'
+            option['json'] = urls['json'] + '#geo-in'
+
+            option['count'] = count
+            option['type'] = 'Feature'
+            option['category'] = 'oc-api:geo-contained-in-feature'
+
+            # Add some general chronology information to the
+            # geospatial feature.
+            option = self._add_when_object_to_feature_option(
+                uuid,
+                option,
+            )
+
+            # Add the geometry from the geo_obj coordinates. First
+            # check to make sure they are OK with the the GeoJSON
+            # right-hand rule.
+            geometry = LastUpdatedOrderedDict()
+            geometry['id'] = '#geo-in-geom-{}'.format(uuid)
+            geometry['type'] =  geo_obj.ftype
+            coord_obj = json.loads(geo_obj.coordinates)
+            v_geojson = ValidateGeoJson()
+            coord_obj = v_geojson.fix_geometry_rings_dir(
+                geo_obj.ftype,
+                coord_obj
+            )
+            geometry['coordinates'] = coord_obj
+            option['geometry'] = geometry
 
 
-        return geo_options_tuples
+            properties = LastUpdatedOrderedDict()
+            properties['id'] = '#geo-in-props-{}'.format(uuid)
+            properties['href'] = option['id']
+            properties['item-href'] = parsed_entity['uri']
+            properties['label'] = context_path
+            properties['feature-type'] = 'containing-region'
+            properties['count'] = count
+            properties['early bce/ce'] = self.min_date
+            properties['late bce/ce'] = self.max_date
+            option['properties'] = properties
+            
+            geo_options.append(option)
+
+        return geo_options
 
 

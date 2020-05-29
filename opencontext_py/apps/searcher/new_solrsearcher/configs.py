@@ -496,7 +496,7 @@ RESPONSE_DEFAULT_TYPES = [
     'prop-range',
     'prop-facet',
     'geo-facet',
-    # 'geo-feature',
+    'geo-feature',
     'geo-record',
 ]
 

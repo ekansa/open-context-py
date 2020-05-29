@@ -412,6 +412,19 @@ class ResultMaker():
         self.result["oc-api:has-form-use-life-ranges"] = chrono_options
     
 
+    def _add_geojson_features_to_result(self, geo_features_list):
+        """Adds geojson features to the result """
+        if not isinstance(geo_features_list, list):
+            return None
+        if not len(geo_features_list):
+            return None
+        self.result["type"] = "FeatureCollection"
+        if not "features" in self.result:
+            # We don't have a facet list yet, so make it.
+            self.result["features"] = []
+        self.result["features"] += geo_features_list
+
+
     def add_geotile_facets(self, solr_json):
         """Adds facets for geographic tiles"""
         facets_geo = ResultFacetsGeo(
@@ -426,14 +439,28 @@ class ResultMaker():
         geo_options = facets_geo.make_geotile_facet_options(
             solr_json
         )
-        if geo_options is None or not len(geo_options):
-            # Skip out, we found no chronological options
-            return None
-        self.result["type"] = "FeatureCollection"
-        if not "features" in self.result:
-            # We don't have a facet list yet, so make it.
-            self.result["features"] = []
-        self.result["features"] += geo_options
+        self._add_geojson_features_to_result(
+            geo_options
+        )
+    
+
+    def add_geo_contained_in_facets(self, solr_json):
+        """Adds facets for geo features that contain query results"""
+        facets_geo = ResultFacetsGeo(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        ) 
+        facets_geo.min_date = self.min_date
+        facets_geo.max_date = self.max_date
+
+        # Make the tile facet options
+        geo_options = facets_geo.make_geo_contained_in_facet_options(
+            solr_json
+        )
+        self._add_geojson_features_to_result(
+            geo_options
+        )
 
 
     def add_standard_facets(self, solr_json):
@@ -540,7 +567,9 @@ class ResultMaker():
             # Add the geographic tile facets.
             self.add_geotile_facets(solr_json)
         
-
+        if 'geo-feature' in self.act_responses:
+            # Add the geographic tile facets.
+            self.add_geo_contained_in_facets(solr_json)
 
     
     
