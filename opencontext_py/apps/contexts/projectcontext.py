@@ -47,6 +47,7 @@ class ProjectContext():
         self.pred_sql_dict_list = None
         self.most_recent_date = None
         self.refresh_cache = False
+        self.uuids_for_queries = None
         if uuid is not None:
             if uuid is False or uuid == '0' or uuid == 'open-context':
                 self.uuid = '0'
@@ -395,13 +396,51 @@ class ProjectContext():
 
     def get_project_uuids(self):
         """Gets the uuids related to predicates and types"""
+        
+        if self.uuids_for_queries is not None:
+            return self.uuids_for_queries
+
         uuids =[
             self.uuid,
+            self.manifest.uuid,
             self.manifest.project_uuid,
             self.project_obj.uuid,
             self.project_obj.project_uuid,
         ]
-        return list(set(uuids))
+
+        uuids_for_sql = ', '.join(["'{}'".format(uuid) for uuid in uuids])
+
+        not_in_list = [
+            Assertion.PREDICATES_CONTAINS,
+            Assertion.PREDICATES_LINK,
+            Assertion.PREDICATES_NOTE
+        ]
+
+        # Now get all the project uuids for the assertions
+        # that describe items in this project.
+        filters = 'oc_manifest.uuid=oc_assertions.uuid AND '
+        filters += 'oc_manifest.project_uuid IN ({})'.format(
+            uuids_for_sql
+        )
+        a_proj_uuids = Assertion.objects.all().exclude(
+            # Exclude the very general, not so informative
+            # predicates to make this faster.
+            predicate_uuid__in=not_in_list,
+        ).order_by(
+            'project_uuid'
+        ).values_list(
+            'project_uuid', 
+            flat=True
+        ).distinct(
+            'project_uuid'
+        ).extra(
+            tables=['oc_manifest'], 
+            where=[filters]
+        )
+
+        uuids += [uuid for uuid in a_proj_uuids]
+        self.uuids_for_queries = list(set(uuids))
+        return self.uuids_for_queries
 
     def dereference_uuid_or_slug(self, uuid_or_slug):
         """ dereferences the uuid to make sure it is a project """
