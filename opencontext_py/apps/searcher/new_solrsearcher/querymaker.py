@@ -695,17 +695,19 @@ def get_general_hierarchic_path_query_dict(
         if item_parent and item_parent.get('slug'):
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
-            facet_field = (
-                # Use the most immediate parent item of the item entity
-                # to identify the solr field we need to query. That
-                # most immediate item is index -1 (because the item
-                # item entity itself is not included in this list, as
-                # specified by the add_original=False arg).
-                item_parent['slug'].replace('-', '_')
-                + SolrDocument.SOLR_VALUE_DELIM
-                + attribute_field_part
-                + field_suffix  
-            )
+            parent_slug_part =  item_parent['slug'].replace('-', '_')
+            if not attribute_field_part.startswith(parent_slug_part):
+                facet_field = (
+                    # Use the most immediate parent item of the item entity
+                    # to identify the solr field we need to query. That
+                    # most immediate item is index -1 (because the item
+                    # item entity itself is not included in this list, as
+                    # specified by the add_original=False arg).
+                    parent_slug_part
+                    + SolrDocument.SOLR_VALUE_DELIM
+                    + attribute_field_part
+                    + field_suffix  
+                )
 
         
         # If the item is a linked data entity, and we have a 
@@ -870,6 +872,12 @@ def get_general_hierarchic_path_query_dict(
                 and not attribute_field_part) ):
                 # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
+                print(
+                    'Here: {}, {}'.format(
+                        attribute_item.item_type,
+                        getattr(item, 'entity_type', None)
+                    )
+                )
                 attribute_field_part = (
                     attribute_item.slug.replace('-', '_')
                     + SolrDocument.SOLR_VALUE_DELIM
