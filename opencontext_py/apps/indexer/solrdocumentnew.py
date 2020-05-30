@@ -1057,6 +1057,9 @@ sd_obj_l.fields
     def _add_predicate_hierarchy(self, hierarchy_items, root_solr_field):
         """Adds a hierarchy of predicates to the solr doc."""
         last_item_index = len(hierarchy_items) - 1
+        solr_fields_values = []
+        pred_obj_all_field = None
+        attribute_field_part = ''
         for index, item in enumerate(hierarchy_items):
             if item['slug'] == 'link':
                 # Skip the standard link, we don't do
@@ -1064,7 +1067,7 @@ sd_obj_l.fields
                 continue
             if index < last_item_index:
                 # Add the label of the hierarchy item
-                # to the text field, to faciliate key-word searches.
+                # to the text field, to facilitate key-word searches.
                 self.fields['text'] += ' ' + str(item['label']) + ' '
             
             # Compose the solr value for the current parent item.
@@ -1085,9 +1088,52 @@ sd_obj_l.fields
                 # solr field name comes from the previous (parent)
                 # item in the hierarchy.
                 solr_field_name = self._convert_slug_to_solr(
-                     hierarchy_items[index - 1]['slug'] +
-                     self.SOLR_VALUE_DELIM + 'pred_id'
+                    hierarchy_items[index - 1]['slug']
+                    + attribute_field_part
+                    + self.SOLR_VALUE_DELIM 
+                    + 'pred_id'
                 )
+            
+            if attribute_field_part == '' and index > 0:
+                # The attriute field part will be made from the slug
+                # at the top of the hierarchy_items of predicates. 
+                # This makes querying logic easier and more consistent.
+                attribute_field_part = self._convert_slug_to_solr(
+                    self.SOLR_VALUE_DELIM
+                    +  hierarchy_items[0]['slug']
+                )
+
+            if not pred_obj_all_field and index > 0:
+                # The obj_all field will be made from the slug at the
+                # top of hierarchy_items of predicates. This makes
+                # querying logic easier and more consistent with
+                # properties and type hierarchies.
+                pred_obj_all_field = self._prefix_solr_field(
+                    self._convert_slug_to_solr(
+                        (
+                            'obj_all'
+                            + self.SOLR_VALUE_DELIM
+                            + hierarchy_items[0]['slug']
+                            + self.SOLR_VALUE_DELIM
+                            + 'pred_id'
+                        )
+                    )
+                )
+                if not pred_obj_all_field in self.fields:
+                    self.fields[pred_obj_all_field] = []
+            
+            if (pred_obj_all_field 
+               and not act_solr_value in self.fields[pred_obj_all_field]):
+                # Add the current act_solr_value to the list of obj_all
+                # for this field, if it does not already exist.
+                self.fields[pred_obj_all_field].append(act_solr_value)
+
+            # Add to the list of tuples of solr fields and
+            # values, which could be a useful output of this
+            # function.
+            solr_fields_values.append(
+                (solr_field_name, act_solr_value,)
+            )
             # Now add the predicate hierarchy item to the
             # appropriate solr doc fields.
             self._add_id_field_fq_field_values(
@@ -1095,6 +1141,7 @@ sd_obj_l.fields
                 act_solr_value,
                 item['slug']
             )
+        return solr_fields_values
 
     def _add_predicate_and_object_description(
             self,
@@ -1229,8 +1276,11 @@ sd_obj_l.fields
         if not inferred_assertions:
             # No inferred assertions from liked data, so skip out.
             return None
-        
+
         for assertion in inferred_assertions:
+
+            if False and assertion['type'] == 'xsd:double':
+                import pdb; pdb.set_trace()
             # Get any hierarchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hierarchy.
             pred_hierarchy_items = general_get_jsonldish_entity_parents(
@@ -1238,7 +1288,7 @@ sd_obj_l.fields
             )
             # This adds the parents of the link data predicate to the solr document,
             # starting at the self.ROOT_LINK_DATA_SOLR
-            self._add_predicate_hierarchy(
+            pred_hierarchy_fields_values = self._add_predicate_hierarchy(
                 pred_hierarchy_items,
                 self._prefix_solr_field(self.ROOT_LINK_DATA_SOLR)
             )
