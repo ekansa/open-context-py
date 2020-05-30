@@ -123,16 +123,19 @@ class OCitem():
         item_context_obj = ItemContext(False)
         context.append(item_context_obj.id)  # add the URI for the general item context
         context.append(item_context_obj.geo_json_context)  # add the URI for GeoJSON context
-        self.proj_context_json_ld = self.item_gen_cache.get_project_context(project_uuid,
-                                                                            self.assertion_hashes)
-        if '@id' in self.proj_context_json_ld:
-            proj_context_uri = self.proj_context_json_ld['@id']
-        elif 'id' in self.proj_context_json_ld:
-            proj_context_uri = self.proj_context_json_ld['id']
-        else:
-            proj_context_uri = None
-        if isinstance(proj_context_uri, str):
+        self.proj_context_json_ld = self.item_gen_cache.get_project_context(
+            project_uuid,
+            self.assertion_hashes
+        )
+        proj_context_uri = None
+        for id_key in ['@id', 'id']:
+            if not id_key in self.proj_context_json_ld:
+                continue
+            proj_context_uri = self.proj_context_json_ld[id_key]
+        
+        if proj_context_uri:
             context.append(proj_context_uri)  # add the URI for project context
+        
         self.json_ld['@context'] = context
     
     

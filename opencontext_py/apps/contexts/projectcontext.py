@@ -85,7 +85,7 @@ class ProjectContext():
             data annotations with database queries
         """
         if self.manifest is not False:
-            key = 'context-vocabs---' + self.manifest.project_uuid
+            key = 'context-vocabs---' + self.manifest.uuid
             fcache = FileCacheJSON()
             fcache.working_dir = 'contexts'
             if self.refresh_cache:
@@ -200,6 +200,9 @@ class ProjectContext():
         output = None
         if self.manifest is not False and self.pred_sql_dict_list is None:
             # security protection
+            uuids = self.get_project_uuids()
+            uuids_for_sql = ', '.join(["'{}'".format(uuid) for uuid in uuids])
+            print('uuids_for_sql: {}'.format(uuids_for_sql))
             not_in_list = [
                 Assertion.PREDICATES_CONTAINS,
                 Assertion.PREDICATES_LINK,
@@ -220,7 +223,7 @@ class ProjectContext():
                      'FROM oc_assertions AS ass '
                      'LEFT JOIN oc_manifest AS m ON ass.predicate_uuid = m.uuid '
                      'LEFT JOIN oc_predicates AS p ON ass.predicate_uuid = p.uuid '
-                     'WHERE ass.project_uuid = (%s) AND ' + not_in_sql + ' '
+                     'WHERE ass.project_uuid IN (' + uuids_for_sql + ') AND ' + not_in_sql + ' '
                      'GROUP BY ass.predicate_uuid, '
                      'm.label, '
                      'm.slug, '
@@ -229,7 +232,7 @@ class ProjectContext():
                      'p.data_type '
                      'ORDER BY p.data_type, m.slug, m.class_uri; ')
             cursor = connection.cursor()
-            cursor.execute(query, [self.manifest.uuid])
+            cursor.execute(query, [])
             rows = self.dictfetchall(cursor)
             self.pred_sql_dict_list = rows
         # now get predicates from the Open Context general vocabulary, if applicable
@@ -344,6 +347,8 @@ class ProjectContext():
         """
         output = None
         if self.manifest is not False:
+            uuids = self.get_project_uuids()
+            uuids_for_sql = ', '.join(["'{}'".format(uuid) for uuid in uuids])
             query = ('SELECT la.subject AS type_uuid, '
                      'la.predicate_uri AS predicate_uri, '
                      'la.object_uri AS object_uri, '
@@ -353,7 +358,7 @@ class ProjectContext():
                      'LEFT JOIN oc_manifest AS m ON la.subject = m.uuid '
                      'JOIN oc_assertions AS ass '
                      'ON ( la.subject = ass.object_uuid ) '
-                     'WHERE la.subject_type = \'types\' AND ass.project_uuid = (%s) '
+                     'WHERE la.subject_type = \'types\' AND ass.project_uuid IN (' + uuids_for_sql + ') '
                      'GROUP BY la.subject, '
                      'la.predicate_uri, '
                      'la.object_uri, '
@@ -361,7 +366,7 @@ class ProjectContext():
                      'm.slug '
                      'ORDER BY la.object_uri; ')
             cursor = connection.cursor()
-            cursor.execute(query, [self.manifest.uuid])
+            cursor.execute(query, [])
             rows = self.dictfetchall(cursor)
             output = rows
         return output
@@ -387,6 +392,16 @@ class ProjectContext():
             item['label'] = ent.label
             item['slug'] = ent.slug
         return item
+
+    def get_project_uuids(self):
+        """Gets the uuids related to predicates and types"""
+        uuids =[
+            self.uuid,
+            self.manifest.project_uuid,
+            self.project_obj.uuid,
+            self.project_obj.project_uuid,
+        ]
+        return list(set(uuids))
 
     def dereference_uuid_or_slug(self, uuid_or_slug):
         """ dereferences the uuid to make sure it is a project """
