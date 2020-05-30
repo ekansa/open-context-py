@@ -18,6 +18,10 @@ from opencontext_py.apps.searcher.new_solrsearcher.result_facets_chronology impo
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_geo import ResultFacetsGeo
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
+from opencontext_py.apps.searcher.new_solrsearcher.result_records import (
+    get_record_uuids_from_solr,
+    ResultRecords,
+)
 from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
@@ -162,11 +166,17 @@ class ResultMaker():
                 path_keys_list, 
                 solr_json
             )
+            if act_date is None:
+                # We don't have a date for this.
+                continue
             all_dates.append(act_date)
             if iso_year_format and act_date is not None:
                 act_date = ISOyears().make_iso_from_float(act_date)
             self.result[json_ld_key] = act_date
 
+        if not len(all_dates):
+            # We don't have dates, so skip out.
+            return None
         # Set the query result minimum and maximum date range.
         self.min_date = min(all_dates)
         self.max_date = max(all_dates)
@@ -515,6 +525,15 @@ class ResultMaker():
         )
 
 
+    def add_uuid_records(self, solr_json):
+        """Adds a simple list of uuids to the result"""
+        uuids = get_record_uuids_from_solr(solr_json)
+        if len(self.act_responses) == 1:
+            self.result = uuids
+        else:
+            self.result['uuids'] = uuids
+
+
     # -----------------------------------------------------------------
     # The main method to make the client response result from a 
     # solr response json dict.
@@ -571,5 +590,7 @@ class ResultMaker():
             # Add the geographic tile facets.
             self.add_geo_contained_in_facets(solr_json)
 
-    
+        if 'uuid' in self.act_responses:
+            # Adds a simple list of uuids to the result.
+            self.add_uuid_records(solr_json)
     
