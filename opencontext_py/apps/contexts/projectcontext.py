@@ -400,13 +400,19 @@ class ProjectContext():
         if self.uuids_for_queries is not None:
             return self.uuids_for_queries
 
-        uuids =[
+        uuids = [
             self.uuid,
             self.manifest.uuid,
             self.manifest.project_uuid,
-            self.project_obj.uuid,
-            self.project_obj.project_uuid,
         ]
+        if self.project_obj:
+            uuids += [
+                self.project_obj.uuid,
+                self.project_obj.project_uuid,
+            ]
+        else:
+            self.uuids_for_queries = list(set(uuids))
+            return self.uuids_for_queries
 
         uuids_for_sql = ', '.join(["'{}'".format(uuid) for uuid in uuids])
 
