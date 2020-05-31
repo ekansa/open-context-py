@@ -541,7 +541,8 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
 def parse_solr_encoded_entity_str(
     entity_str,
     base_url='', 
-    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM
+    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM,
+    solr_slug_format=False
 ):
     """Parses an entity string encoded for solr"""
     
@@ -569,13 +570,19 @@ def parse_solr_encoded_entity_str(
         uri = base_url + parts[2]
     
     # Return a dictionary of the parsed entity.
+    if not solr_slug_format:
+        slug = parts[0].replace('_', '-')
+    else:
+        slug = parts[0]
+
     return {
-        'slug': parts[0].replace('_', '-'),
+        'slug': slug,
         'data_type': parts[1],
         'uri': uri,
         'label': parts[3],
         'alt_label': alt_label,
     }
+
 
 
 def get_rounding_level_from_float(float_val):
