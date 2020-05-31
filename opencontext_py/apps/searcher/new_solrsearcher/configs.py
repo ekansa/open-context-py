@@ -35,7 +35,7 @@ DEFAULT_FACET_FIELDS = [
     'document_count',
     'form_use_life_chrono_tile',
     'discovery_geotile',
-    'disc_geosource',
+    # 'disc_geosource',
 ]
 
 PROJECT_FACET_FIELDS = [
@@ -523,7 +523,6 @@ QUERY_NEW_URL_IGNORE_PARAMS = SORT_NEW_URL_IGNORE_PARAMS + ['sort']
 # ---------------------------------------------------------------------
 STATS_FIELDS_PATH_KEYS = ['stats', 'stats_fields',]
 
-
 # This lists the keys for finding facets in the JSON solr response 
 # dict. 
 FACETS_SOLR_ROOT_PATH_KEYS = [
@@ -671,3 +670,12 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
     'string': 'oc-api:has-text-options',
 }
 
+
+
+# ---------------------------------------------------------------------
+# Configs to process records from the solr-response JSON
+# ---------------------------------------------------------------------
+RECORD_PATH_KEYS = ['response', 'docs',]
+
+# Delimiter for multiple values of a given attribute
+MULTI_VALUE_ATTRIBUTE_DELIM = '; '
