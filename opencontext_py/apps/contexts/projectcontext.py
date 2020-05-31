@@ -222,9 +222,10 @@ class ProjectContext():
                      'p.data_type AS data_type, '
                      'm.revised AS updated '
                      'FROM oc_assertions AS ass '
+                     'JOIN oc_manifest AS mm ON mm.uuid = ass.uuid '
                      'LEFT JOIN oc_manifest AS m ON ass.predicate_uuid = m.uuid '
                      'LEFT JOIN oc_predicates AS p ON ass.predicate_uuid = p.uuid '
-                     'WHERE ass.project_uuid IN (' + uuids_for_sql + ') AND ' + not_in_sql + ' '
+                     'WHERE mm.project_uuid IN (' + uuids_for_sql + ') AND ' + not_in_sql + ' '
                      'GROUP BY ass.predicate_uuid, '
                      'm.label, '
                      'm.slug, '
@@ -359,7 +360,8 @@ class ProjectContext():
                      'LEFT JOIN oc_manifest AS m ON la.subject = m.uuid '
                      'JOIN oc_assertions AS ass '
                      'ON ( la.subject = ass.object_uuid ) '
-                     'WHERE la.subject_type = \'types\' AND ass.project_uuid IN (' + uuids_for_sql + ') '
+                     'JOIN oc_manifest AS mm ON mm.uuid = ass.uuid '
+                     'WHERE la.subject_type = \'types\' AND mm.project_uuid IN (' + uuids_for_sql + ') '
                      'GROUP BY la.subject, '
                      'la.predicate_uri, '
                      'la.object_uri, '
@@ -402,49 +404,17 @@ class ProjectContext():
 
         uuids = [
             self.uuid,
-            self.manifest.uuid,
-            self.manifest.project_uuid,
         ]
+        if self.manifest:
+            uuids += [
+                self.manifest.uuid,
+                self.manifest.project_uuid,
+            ]
         if self.project_obj:
             uuids += [
                 self.project_obj.uuid,
                 self.project_obj.project_uuid,
             ]
-        else:
-            self.uuids_for_queries = list(set(uuids))
-            return self.uuids_for_queries
-
-        uuids_for_sql = ', '.join(["'{}'".format(uuid) for uuid in uuids])
-
-        not_in_list = [
-            Assertion.PREDICATES_CONTAINS,
-            Assertion.PREDICATES_LINK,
-            Assertion.PREDICATES_NOTE
-        ]
-
-        # Now get all the project uuids for the assertions
-        # that describe items in this project.
-        filters = 'oc_manifest.uuid=oc_assertions.uuid AND '
-        filters += 'oc_manifest.project_uuid IN ({})'.format(
-            uuids_for_sql
-        )
-        a_proj_uuids = Assertion.objects.all().exclude(
-            # Exclude the very general, not so informative
-            # predicates to make this faster.
-            predicate_uuid__in=not_in_list,
-        ).order_by(
-            'project_uuid'
-        ).values_list(
-            'project_uuid', 
-            flat=True
-        ).distinct(
-            'project_uuid'
-        ).extra(
-            tables=['oc_manifest'], 
-            where=[filters]
-        )
-
-        uuids += [uuid for uuid in a_proj_uuids]
         self.uuids_for_queries = list(set(uuids))
         return self.uuids_for_queries
 
