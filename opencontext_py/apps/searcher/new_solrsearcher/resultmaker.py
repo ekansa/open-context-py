@@ -51,9 +51,12 @@ class ResultMaker():
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = facet_fields_to_client_request
         self.act_responses = []
+        self.total_found = None
+        self.start = None
+        self.rows = None
         self.min_date = None
         self.max_date = None
-    
+        
     
     def _set_current_filters_url(self):
         """Make a URL for the current filters, removed of all paging
@@ -184,6 +187,43 @@ class ResultMaker():
     # -----------------------------------------------------------------
     # Methods to make links for paging + sorting navigation 
     # -----------------------------------------------------------------
+    def set_total_start_rows_attributes(self, solr_json):
+        """Sets the total_found, start, rows_attributes"""
+
+        if (self.total_found is not None
+            and self.start is not None
+            and self.rows is not None):
+            # Skip, we already did this.
+            return None
+
+        # The total found (numFound) is in the solr response.
+        total_found = utilities.get_dict_path_value(
+            ['response', 'numFound'],
+            solr_json
+        )
+
+        # Start and rows comes from the responseHeader
+        start = utilities.get_dict_path_value(
+            ['responseHeader', 'params', 'start'],
+            solr_json
+        )
+        rows = utilities.get_dict_path_value(
+            ['responseHeader', 'params', 'rows'],
+            solr_json
+        )
+        if (total_found is None
+            or start is None
+            or rows is None):
+            return None
+        
+        # Add number found, start index, paging
+        # information about this search result.
+        self.total_found = int(float(total_found))
+        self.start = int(float(start))
+        self.rows = int(float(rows))
+
+
+
     def _make_paging_links(self, start, rows, act_request_dict):
         """Makes links for paging for start rows from a request dict"""
         start = str(int(start))
@@ -207,35 +247,17 @@ class ResultMaker():
     def add_paging_json(self, solr_json):
         """ Adds JSON for paging through results """
         
-        # The total found (numFound) is in the solr response.
-        total_found = utilities.get_dict_path_value(
-            ['response', 'numFound'],
-            solr_json
-        )
+        self.set_total_start_rows_attributes(solr_json)
 
-        # Start and rows comes from the responseHeader
-        start = utilities.get_dict_path_value(
-            ['responseHeader', 'params', 'start'],
-            solr_json
-        )
-        rows = utilities.get_dict_path_value(
-            ['responseHeader', 'params', 'rows'],
-            solr_json
-        )
-        if (total_found is None
-            or start is None
-            or rows is None):
+        if (self.total_found is None
+            or self.start is None
+            or self.rows is None):
             return None
-        
-        # Add number found, start index, paging
-        # information about this search result.
-        total_found = int(float(total_found))
-        start = int(float(start))
-        rows = int(float(rows))
-        self.result['totalResults'] = total_found
-        self.result['startIndex'] = start
-        self.result['itemsPerPage'] = rows
-        
+
+        self.result['totalResults'] = self.total_found
+        self.result['startIndex'] = self.start
+        self.result['itemsPerPage'] = self.rows
+
         # start off with a the request dict, then
         # remove 'start' and 'rows' parameters
         act_request_dict = copy.deepcopy(self.request_dict)
@@ -245,40 +267,40 @@ class ResultMaker():
             act_request_dict.pop('rows', None)
 
         # add a first page link
-        if start > 0:
+        if self.start > 0:
             links = self._make_paging_links(
                 start=0,
-                rows=rows,
+                rows=self.rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
             )
             self.result['first'] = links['html']
             self.result['first-json'] = links['json']
-        if start >= rows:
+        if self.start >= self.rows:
             # add a previous page link
             links = self._make_paging_links(
-                start=(start - rows),
-                rows=rows,
+                start=(self.start - self.rows),
+                rows=self.rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
             )
             self.result['previous'] = links['html']
             self.result['previous-json'] = links['json']
-        if start + rows < total_found:
+        if self.start + self.rows < self.total_found:
             # add a next page link
             print('Here: {}'.format(str(act_request_dict)))
             links = self._make_paging_links(
-                start=(start + rows),
-                rows=rows,
+                start=(self.start + self.rows),
+                rows=self.rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
             )
             self.result['next'] = links['html']
             self.result['next-json'] = links['json']
-        num_pages = round(total_found / rows, 0)
-        if num_pages * rows >= total_found:
+        num_pages = round(self.total_found / self.rows, 0)
+        if num_pages * self.rows >= self.total_found:
             num_pages -= 1
         # add a last page link
         links = self._make_paging_links(
-            start=(num_pages * rows),
-            rows=rows,
+            start=(num_pages * self.rows),
+            rows=self.rows,
             act_request_dict=copy.deepcopy(act_request_dict)
         )
         self.result['last'] = links['html']
@@ -534,6 +556,30 @@ class ResultMaker():
             self.result['uuids'] = uuids
 
 
+    def add_geo_records(self, solr_json):
+        """Adds result record geojson features to the result"""
+        self.set_total_start_rows_attributes(solr_json)
+
+        if (self.total_found is None
+            or self.start is None
+            or self.rows is None):
+            return None
+
+        r_recs = ResultRecords(
+            total_found=self.total_found,
+            start=self.start,
+        )
+        
+        # Make geojson features for each individual search result
+        # record in the solr_json response.
+        geo_result_records = r_recs.make_geojson_records_from_solr(
+            solr_json
+        )
+        self._add_geojson_features_to_result(
+            geo_result_records
+        )
+
+
     # -----------------------------------------------------------------
     # The main method to make the client response result from a 
     # solr response json dict.
@@ -593,4 +639,9 @@ class ResultMaker():
         if 'uuid' in self.act_responses:
             # Adds a simple list of uuids to the result.
             self.add_uuid_records(solr_json)
+        
+        if 'geo-record' in self.act_responses:
+            # Adds geo-json expressed features for individual 
+            # result records
+            self.add_geo_records(solr_json)
     

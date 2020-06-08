@@ -110,6 +110,7 @@ ITEM_CAT_FIELDS = [
     'oc_gen_subjects___pred_id',
     'oc_gen_media___pred_id',
     'oc_gen_persons___pred_id',
+    'oc_gen_predicates___pred_id',
 ]
 
 REL_CAT_FACET_FIELDS = ['rel__oc_gen_subjects___pred_id']
@@ -153,6 +154,19 @@ LITERAL_DATA_TYPES = [
     'xsd:boolean', 
     'xsd:string',
 ]
+
+
+# Tags to use before and after the highlighted term to clearly set the
+# term off from surrounding text. These are for the internal solr query
+# and solr response
+QUERY_SNIPPET_HIGHLIGHT_TAG_PRE = '<h_l>'
+QUERY_SNIPPET_HIGHLIGHT_TAG_POST = '</h_l>'
+
+# Tags to use before and after the highlighted term to clearly set the
+# term off from surrounding text. These are for the highlighted text
+# for result records returned to the client.
+RECORD_SNIPPET_HIGHLIGHT_TAG_PRE = '<em class="snippet">'
+RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</em>'
 
 # ---------------------------------------------------------------------
 # Hierarchic parameters configs:

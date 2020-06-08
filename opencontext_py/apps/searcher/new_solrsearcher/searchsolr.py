@@ -146,6 +146,9 @@ class SearchSolr():
             query['q.op'] = 'AND'
             query['hl'] = 'true'  # search term highlighting
             query['hl.fl'] = 'text' # highlight the text field
+            query['hl.fragsize'] = 200
+            query['hl.simple.pre'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE
+            query['hl.simple.post'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST
             query['hl.q'] = 'text: {}'.format(solr_fulltext)
         
         # -------------------------------------------------------------
