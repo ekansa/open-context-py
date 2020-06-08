@@ -388,6 +388,8 @@ sd_obj_l.fields
         # Has biological taxonomy of homo sapiens in EOl or GBIF.
         ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'eol_p_327955'),
         ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'gbif_sp_2436436'),
+        ('{}obj_all___obo_foodon_00001303___pred_id_fq', 'eol_p_327955'),
+        ('{}obj_all___obo_foodon_00001303___pred_id_fq', 'gbif_sp_2436436'),
         
         # Has specific metadata about human remains assigned to the record.
         # Human-remains (archaeology)
@@ -396,6 +398,23 @@ sd_obj_l.fields
         ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh85062895'),
         # Burial
         ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh85018080'),
+
+        # Classified with Open Context's class-uri of oc-gen:cat-human-bone.
+        ('{}obj_all___oc_gen_subjects___pred_id', 'oc_gen_cat_human_bone'),
+        
+        # Has biological taxonomy of homo sapiens in EOl or GBIF.
+        ('{}obj_all___biol_term_hastaxonomy___pred_id', 'eol_p_327955'),
+        ('{}obj_all___biol_term_hastaxonomy___pred_id', 'gbif_sp_2436436'),
+        ('{}obj_all___obo_foodon_00001303___pred_id', 'eol_p_327955'),
+        ('{}obj_all___obo_foodon_00001303___pred_id', 'gbif_sp_2436436'),
+        
+        # Has specific metadata about human remains assigned to the record.
+        # Human-remains (archaeology)
+        ('{}obj_all___dc_terms_subject___pred_id', 'loc_sh_sh92003545'),
+        # Human skeleton
+        ('{}obj_all___dc_terms_subject___pred_id', 'loc_sh_sh85062895'),
+        # Burial
+        ('{}obj_all___dc_terms_subject___pred_id', 'loc_sh_sh85018080'),
     ]
     
     
