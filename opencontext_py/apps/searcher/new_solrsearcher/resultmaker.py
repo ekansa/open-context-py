@@ -20,6 +20,7 @@ from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import 
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
 from opencontext_py.apps.searcher.new_solrsearcher.result_records import (
     get_record_uuids_from_solr,
+    get_record_uris_from_solr,
     ResultRecords,
 )
 from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
@@ -50,13 +51,44 @@ class ResultMaker():
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = facet_fields_to_client_request
-        self.act_responses = []
+        # Set the act_response types to the default. The act_response
+        # lists the types of response objects to provide back to the client.
+        self.act_responses = configs.RESPONSE_DEFAULT_TYPES.copy()
+        # Override the default act_response list if the client asked.
+        self._set_client_response_types()
+        # These other attributes are record some state that needs to
+        # be widely shared in a number of methods.
         self.total_found = None
         self.start = None
         self.rows = None
         self.min_date = None
         self.max_date = None
+    
+
+    def _set_client_response_types(self):
+        """Sets the response type if specified by the client"""
+        raw_client_responses = utilities.get_request_param_value(
+            self.request_dict, 
+            param='response',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if not raw_client_responses:
+            # The client did not specify the response types. So
+            # don't change the default setting.
+            return None
         
+        # The client specified some response types, which can be
+        # comma seperated for multiple responses. We don't validate
+        # these because if we don't recognize a client specified
+        # response type, nothing will happen.
+        if ',' in raw_client_responses:
+            self.act_responses = raw_client_responses.split(',')
+        else:
+            self.act_responses = [raw_client_responses]
+        
+
     
     def _set_current_filters_url(self):
         """Make a URL for the current filters, removed of all paging
@@ -286,7 +318,6 @@ class ResultMaker():
             self.result['previous-json'] = links['json']
         if self.start + self.rows < self.total_found:
             # add a next page link
-            print('Here: {}'.format(str(act_request_dict)))
             links = self._make_paging_links(
                 start=(self.start + self.rows),
                 rows=self.rows,
@@ -556,6 +587,48 @@ class ResultMaker():
             self.result['uuids'] = uuids
 
 
+    def add_uri_records(self, solr_json):
+        """Adds a simple list of uuids to the result"""
+        uri_list = get_record_uris_from_solr(solr_json)
+        if len(self.act_responses) == 1:
+            self.result = uri_list
+            return None
+        if not len(uri_list):
+            return None
+        if not 'oc-api:has-results' in self.result:
+            self.result['oc-api:has-results'] = []
+        self.result['oc-api:has-results'] += uri_list
+    
+
+    def add_uri_meta_records(self, solr_json):
+        """Adds result record attribute metadata dicts to the result"""
+        self.set_total_start_rows_attributes(solr_json)
+
+        if (self.total_found is None
+            or self.start is None
+            or self.rows is None):
+            return None
+
+        r_recs = ResultRecords(
+            request_dict=self.request_dict,
+            total_found=self.total_found,
+            start=self.start,
+        )
+        
+        # Make metadata dict objects for each individual search result
+        # record in the solr_json response.
+        meta_result_records = r_recs.make_uri_meta_records_from_solr(
+            solr_json
+        )
+        if len(self.act_responses) == 1:
+            self.result = meta_result_records
+        if not len(meta_result_records):
+            return None
+        if not 'oc-api:has-results' in self.result:
+            self.result['oc-api:has-results'] = []
+        self.result['oc-api:has-results'] += meta_result_records
+
+
     def add_geo_records(self, solr_json):
         """Adds result record geojson features to the result"""
         self.set_total_start_rows_attributes(solr_json)
@@ -566,6 +639,7 @@ class ResultMaker():
             return None
 
         r_recs = ResultRecords(
+            request_dict=self.request_dict,
             total_found=self.total_found,
             start=self.start,
         )
@@ -640,8 +714,23 @@ class ResultMaker():
             # Adds a simple list of uuids to the result.
             self.add_uuid_records(solr_json)
         
+        if 'uri' in self.act_responses:
+            # Adds a simple list of uuids to the result.
+            self.add_uri_records(solr_json)
+        
+        if 'uri-meta' in self.act_responses:
+            # Adds uri-meta dictionary objects that provide
+            # record uri together with attribute metadata.
+            self.add_uri_meta_records(solr_json)
+        
         if 'geo-record' in self.act_responses:
             # Adds geo-json expressed features for individual 
             # result records
             self.add_geo_records(solr_json)
     
+        if 'solr' in self.act_responses:
+            # Adds the raw solr response to the result.
+            if len(self.act_responses) == 1:
+                self.result = solr_json
+            else:
+                self.result['solr'] = solr_json

@@ -58,6 +58,27 @@ def make_url_from_partial_url(
     return base_url + partial_url
 
 
+def get_record_uris_from_solr(solr_json):
+    """Gets a list of URIs from the solr json response"""
+    uri_list = []
+    doc_list = utilities.get_dict_path_value(
+        configs.RECORD_PATH_KEYS,
+        solr_json,
+        default=[]
+    )
+    for doc in doc_list:
+        if not doc.get('slug_type_uri_label'):
+            continue
+        item_dict = utilities.parse_solr_encoded_entity_str(
+            doc.get('slug_type_uri_label'),
+        )
+        uri = make_url_from_partial_url(
+            item_dict.get('uri', '')
+        )
+        uri_list.append(uri)
+    return uri_list
+
+
 def get_simple_hierarchy_items(solr_doc, all_obj_field, solr_slug_format=False):
     """Gets and parses simple (single path) solr entities from an
     'all-objects-field'
@@ -197,6 +218,33 @@ def get_uuid_from_entity_dict(
         return None
     uuid =  uri.split('/')[-1]
     return uuid
+
+
+def desolr_attribute_tuples_slugs(attribute_values_tuples):
+    """Switch attribute tuples slugs to the normal, not solr version"""
+    fixed_tuples = []
+    for pred_dict, vals in attribute_values_tuples:
+        if not pred_dict.get('slug'):
+            # This should not happen, but this check helps
+            # filter out bad data.
+            continue
+        # Replace underscore with a dash
+        pred_dict['slug'] = pred_dict['slug'].replace('_', '-')
+        fixed_vals = []
+        for val in vals:
+            if not isinstance(val, dict):
+                fixed_vals.append(val)
+                continue
+            if not val.get('slug'):
+                # Again, weird. Should have s slug so remove
+                # since it does not.
+                continue
+            val['slug'] = val['slug'].replace('_', '-')
+            fixed_vals.append(val)
+        fixed_tuples.append(
+            (pred_dict, fixed_vals,)
+        )
+    return fixed_tuples
 
 
 def get_attribute_tuples_string_pred_uuids(attribute_values_tuples):
@@ -342,15 +390,19 @@ class ResultRecord():
         self.projects = None
 
         # Linked data attributes
-        self.ld_attributes = None
+        self.ld_attributes = []
+        # Add a column for URIs to linked data attribute values.
+        self.add_ld_attrib_values_uris = True
         # Project-specific predicate attributes
-        self.pred_attributes = None
+        self.pred_attributes = []
+        # Add a column for URIs to project specific attribute values.
+        self.add_proj_attrib_values_uris = False
 
         # Flagged as relating to human remains
         self.human_remains_flagged = False
 
         # flatten list of an attribute values to single value
-        self.flatten_rec_attributes = None
+        self.flatten_attributes = False
 
         # Skip out if we don't have a solr_doc
         if not solr_doc:
@@ -583,6 +635,156 @@ class ResultRecord():
             coord_obj
         )
         self.geometry_coords = coord_obj
+    
+
+    def _make_client_attribute_vals(
+        self, 
+        properties, 
+        pred_key, 
+        raw_vals, 
+        add_uris=False
+        ):
+        """Makes attribute values for a client"""
+
+        # NOTE: There's some complexity in how we return a record's
+        # attribute values to a client. A given attribute can have
+        # multiple values, which complicates putting record data into
+        # a 'flat' structure like a data table or even a GIS. Therefor,
+        # Open Context let's clients request an option to 'flattten'
+        # multiple values into a single value, seperated by a
+        # delimiter. Also, this logical optionally lets Open Context
+        # add an additional attribute to provide the URI to values
+        # in cases where the values are URI identified entities.
+        vals = []
+        val_uris = []
+        if add_uris:
+            uri_key = '{} [URI]'.format(pred_key)
+        for val in raw_vals:
+            if isinstance(val, dict):
+                # Pull out the label and the uris.
+                vals.append(
+                    val.get('label')
+                )
+                uri = make_url_from_partial_url(val.get('uri'))
+                val_uris.append(uri)
+                continue
+            else:
+                # Not a dict, just a simple value.
+                vals.append(val)
+        
+        if not self.flatten_attributes:
+            # Simple case, return the vals as a list of vals.
+            properties[pred_key] = vals
+            if add_uris and len(val_uris):
+                # Add the URI to this property value
+                properties[uri_key] = val_uris
+            # We're done, skip everything in this function
+            # below.
+            return properties
+        
+        # This is for flattening multiple values for 
+        # record attributes.
+        if len(vals) == 1:
+            # Only 1 value, so just use it.
+            properties[pred_key] = vals[0]
+            if add_uris and len(val_uris):
+                # Add the URI to this property value
+                properties[uri_key] = val_uris[0]
+            # We're done, skip everything in this function
+            # below.
+            return properties
+        
+        # Multiple values, be sure to cast as string before
+        # concatenating.
+        properties[pred_key] = configs.MULTIVALUE_ATTRIB_RESP_DELIM.join(
+            [str(val) for val in vals]
+        )
+        if add_uris and len(val_uris):
+            # Add the URI to this property value
+            properties[uri_key] = configs.MULTIVALUE_ATTRIB_RESP_DELIM.join(
+                val_uris
+            )
+        return properties
+
+
+    def make_client_properties_dict(
+        self, 
+        id_value=None, 
+        feature_type=None,
+        add_lat_lon=False,
+        ):
+        """Makes a properties dict to return to a client
+        
+        :param str id_value: A string value for an id
+            key. This is mainly useful for JSON-LD outputs
+            where nodes should have identifiers.
+        """
+        properties = LastUpdatedOrderedDict()
+        if id_value:
+            properties['id'] = id_value
+        if feature_type:
+            properties['feature-type'] = feature_type
+        properties['uri'] = self.uri
+        properties['href'] = self.href
+        properties['citation uri'] = self.cite_uri
+        properties['label'] = self.label
+        properties['project label'] = self.project_label
+        properties['project href'] = self.project_href
+        properties['context label'] = self.context_label
+        properties['context href'] = self.context_href
+        if add_lat_lon:
+            properties['latitude'] = self.latitude
+            properties['longitude'] = self.longitude
+        properties['early bce/ce'] = self.early_date
+        properties['late bce/ce'] = self.late_date
+        properties['item category'] = self.category['label']
+        if self.snippet:
+            properties['snippet'] = self.snippet
+        
+
+        # Add linked data (standards) attributes if they exist.
+        for pred_dict, raw_vals in self.ld_attributes:
+            if not pred_dict.get('label') or not pred_dict.get('slug'):
+                # Something went wrong, no label or slug
+                # for the predicate.
+                continue
+            pred_key = pred_dict.get('label')
+            if pred_key in properties:
+                # Safety measure to make sure we have no collisions
+                # in attribute names.
+                pred_key = '{} [{}]'.format(
+                    pred_dict.get('label'),
+                    pred_dict.get('slug')
+                )
+            properties = self._make_client_attribute_vals(
+                properties, 
+                pred_key, 
+                raw_vals, 
+                add_uris=self.add_ld_attrib_values_uris,
+            )
+
+        # Add project-specific predicate attributes after
+        for pred_dict, raw_vals in self.pred_attributes:
+            if not pred_dict.get('label') or not pred_dict.get('slug'):
+                # Something went wrong, no label or slug
+                # for the predicate.
+                continue
+            pred_key = pred_dict.get('label')
+            if pred_key in properties:
+                # Safety measure to make sure we have no collisions
+                # in attribute names.
+                pred_key = '{} [{}]'.format(
+                    pred_dict.get('label'),
+                    pred_dict.get('slug')
+                )
+            properties = self._make_client_attribute_vals(
+                properties, 
+                pred_key, 
+                raw_vals, 
+                add_uris=self.add_proj_attrib_values_uris,
+            )
+        
+        return properties
 
 
     def make_geojson(self, record_index, total_found):
@@ -621,26 +823,15 @@ class ResultRecord():
         )
         geo_json['when'] = when
 
-        properties = LastUpdatedOrderedDict()
-        properties['id'] = '#rec-{}-of-{}'.format(
+        # Now add the properties dict to the GeoJSON
+        props_id_value = '#rec-{}-of-{}'.format(
             record_index, 
             total_found
         )
-        properties['feature-type'] = 'item record'
-        properties['uri'] = self.uri
-        properties['href'] = self.href
-        properties['citation uri'] = self.cite_uri
-        properties['label'] = self.label
-        properties['project label'] = self.project_label
-        properties['project href'] = self.project_href
-        properties['context label'] = self.context_label
-        properties['context href'] = self.context_href
-        properties['early bce/ce'] = self.early_date
-        properties['late bce/ce'] = self.late_date
-        properties['item category'] = self.category['label']
-        if self.snippet:
-            properties['snippet'] = self.snippet
-        geo_json['properties'] = properties
+        geo_json['properties'] = self.make_client_properties_dict(
+            id_value=props_id_value,
+            feature_type='item record'
+        )
 
         return geo_json
 
@@ -651,11 +842,110 @@ class ResultRecords():
 
     """ Methods to prepare result records """
 
-    def __init__(self, total_found=0, start=0):
+    def __init__(self, request_dict, total_found=0, start=0):
         rp = RootPath()
+        self.request_dict = copy.deepcopy(request_dict)
         self.base_url = rp.get_baseurl()
         self.total_found = total_found
         self.start = start
+        
+        # Flatten attributes into single value strings?
+        self.flatten_attributes = False
+        rec_flatten_attributes = utilities.get_request_param_value(
+            self.request_dict, 
+            param='flatten-attributes',
+            default=False,
+            as_list=False,
+            solr_escape=False,
+        )
+        if rec_flatten_attributes:
+            self.flatten_attributes = True
+        self.multivalue_attrib_resp_delim = configs.MULTIVALUE_ATTRIB_RESP_DELIM
+    
+
+    def _gather_requested_attrib_slugs(self):
+        """Make a list of requested attribute slugs"""
+        requested_attrib_slugs = []
+
+        # Get all of the prop parameter values requested
+        # by the client from the self.request_dict.
+        raw_props_paths = utilities.get_request_param_value(
+            self.request_dict, 
+            param='prop',
+            default=[],
+            as_list=True,
+            solr_escape=False,
+        )
+        for raw_prop_path in raw_props_paths:
+            # These can have OR conditions along with hierarchy
+            # delimiters, so split these appart to get a list of
+            # slugs.
+            paths_as_lists = utilities.infer_multiple_or_hierarchy_paths(
+                raw_prop_path,
+                hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
+                or_delim=configs.REQUEST_OR_OPERATOR
+            )
+            for path_list in paths_as_lists:
+                # Add the elements of this list to the list
+                # of requested_attrib_slugs. Some of these won't be
+                # 'property' (predicate) attributes, but that doesn't
+                # matter. It's OK to have some noise in the
+                # requested_attrib_slugs.
+                requested_attrib_slugs += path_list
+        
+        # De-duplicate the slugs in the requested_attrib_slugs.
+        requested_attrib_slugs = list(set(requested_attrib_slugs))
+
+        raw_attributes = utilities.get_request_param_value(
+            self.request_dict, 
+            param='attributes',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if not raw_attributes:
+            # The client did not request additional attributes.
+            return requested_attrib_slugs
+        
+        if configs.MULTIVALUE_ATTRIB_CLIENT_DELIM not in raw_attributes:
+            attrib_list = [raw_attributes]
+        else:
+            attrib_list = raw_attributes.split(
+                configs.MULTIVALUE_ATTRIB_CLIENT_DELIM
+            )
+        
+        # De-duplicate the slugs in the requested_attrib_slugs.
+        requested_attrib_slugs = list(
+            set(requested_attrib_slugs + attrib_list)
+        )
+        return requested_attrib_slugs
+
+
+    def _limit_attributes_by_request(
+        self, 
+        record_attributes, 
+        requested_attrib_slugs,
+        all_attribute_val=configs.REQUEST_ALL_ATTRIBUTES,
+        ):
+        """Limit the attributes for the records according to client request"""
+        if (set([configs.REQUEST_ALL_ATTRIBUTES, all_attribute_val])
+            & set(requested_attrib_slugs)):
+            # The client specified that all of the record attributes
+            # should be returned.
+            return record_attributes
+        
+        filtered_record_attributes = []
+        for pred_dict, vals in record_attributes:
+            if pred_dict.get('slug') not in requested_attrib_slugs:
+                # The slug for this predicate is NOT in the list
+                # of attributes specified by the client. So
+                # skip and don't add it to the new
+                # filtered_record_attributes list.
+                continue
+            filtered_record_attributes.append(
+                (pred_dict, vals,)
+            )
+        return filtered_record_attributes
 
 
     def _get_string_attribute_values(self, uuids, string_pred_uuids):
@@ -744,6 +1034,10 @@ class ResultRecords():
         if not len(doc_list):
             return records
         
+        # Gather the slugs for additional descriptive attributes
+        # that we will add to the result records.
+        requested_attrib_slugs = self._gather_requested_attrib_slugs()
+
         # Get the keyword search highlighting dict. Default
         # to an empty dict if there's no snippet highlighting.
         highlight_dict = solr_json.get('highlighting', {})
@@ -761,6 +1055,7 @@ class ResultRecords():
             # Create a result record object by processing the
             # solr_doc for the result item.
             rr = ResultRecord(solr_doc)
+            rr.flatten_attributes = self.flatten_attributes
             rr.add_snippet_content(highlight_dict)
 
             uuids.append(rr.uuid)
@@ -774,18 +1069,41 @@ class ResultRecords():
                 # to locate it.
                 geo_uuids.append(geo_uuid)
 
-            rr.ld_attributes = get_linked_data_attributes(
+            # Get all the linked data (standards) attributes
+            # for this record.
+            rec_ld_attributes = get_linked_data_attributes(
                 solr_doc
             )
-            rr.pred_attributes = get_predicate_attributes(
+            # Only add those linked data (standards) attributes
+            # that meet our limiting criteria.
+            rr.ld_attributes = self._limit_attributes_by_request(
+                desolr_attribute_tuples_slugs(rec_ld_attributes), 
+                requested_attrib_slugs,
+                all_attribute_val=configs.REQUEST_ALL_LD_ATTRIBUTES
+            )
+
+            # Get all of the project-specific predicate attributes
+            # for this result record.
+            rec_pred_attributes = get_predicate_attributes(
                 solr_doc
             )
-            records.append(rr)
+            # Only add those project-specific predicate attributes
+            # to the result record object that meet our limiting
+            # criteria.
+            rr.pred_attributes = self._limit_attributes_by_request(
+                desolr_attribute_tuples_slugs(rec_pred_attributes), 
+                requested_attrib_slugs,
+                all_attribute_val=configs.REQUEST_ALL_PROJ_ATTRIBUTES
+            )
+
             # Add to the list of string predicate uuids gathered
             # from the attributes describing this record.
             string_pred_uuids += get_attribute_tuples_string_pred_uuids(
                 rr.pred_attributes
             )
+
+            # Add the result record object to the list of records.
+            records.append(rr)
 
         # Remove the duplicates.
         string_pred_uuids = list(set(string_pred_uuids))
@@ -808,8 +1126,22 @@ class ResultRecords():
         return records
     
 
+    def make_uri_meta_records_from_solr(self, solr_json):
+        """Makes uri + metadata records from a solr result"""
+        # NOTE: This is basically the properties object of a GeoJSON
+        # record, but pulled out of the GeoJSON. It helps get 
+        records = self.make_records_from_solr(solr_json)
+        meta_result_records = []
+        for i, rr in enumerate(records, 1):
+            properties = rr.make_client_properties_dict(
+                add_lat_lon=True
+            )
+            meta_result_records.append(properties)
+        return meta_result_records
+
+
     def make_geojson_records_from_solr(self, solr_json):
-        """Makes geojson records from a a solr result"""
+        """Makes geojson records from a solr result"""
         records = self.make_records_from_solr(solr_json)
         features = []
         for i, rr in enumerate(records, 1):
