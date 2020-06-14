@@ -27,9 +27,6 @@ def process_solr_query(request_dict):
     :param dict request_dict: Dictionary derived from a solr
         request object with client GET request parmaters.
     """
-    
-    # NOTE: For initial testing purposes, this only composes a
-    # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
     search_solr.add_initial_facet_fields(request_dict)
     search_solr.init_facet_fields.append('item_type')
@@ -43,14 +40,10 @@ def process_solr_query(request_dict):
         facet_fields_to_client_request=search_solr.facet_fields_to_client_request,
         base_search_url='/query/',
     )
-    result_maker.act_responses = configs.RESPONSE_DEFAULT_TYPES
     result_maker.create_result(
         solr_json=solr_response
     )
-    query['facet-fields-to-client'] = result_maker.facet_fields_to_client_request
-    query['response'] = result_maker.result
-    query['raw-solr-response'] = solr_response
-    return query
+    return result_maker.result
     
 
 @cache_control(no_cache=True)
