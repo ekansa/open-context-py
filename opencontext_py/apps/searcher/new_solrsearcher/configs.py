@@ -514,7 +514,6 @@ RESPONSE_DEFAULT_TYPES = [
     'geo-record',
 ]
 
-
 # These response types get JSON-LD context objects
 RESPONSE_TYPES_JSON_LD_CONTEXT = [
     'context',
@@ -691,5 +690,20 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
 # ---------------------------------------------------------------------
 RECORD_PATH_KEYS = ['response', 'docs',]
 
-# Delimiter for multiple values of a given attribute
-MULTI_VALUE_ATTRIBUTE_DELIM = '; '
+# Delimiter for listing multiple attribute slugs in the client request
+MULTIVALUE_ATTRIB_CLIENT_DELIM = ','
+
+# Delimiter for multiple values of a given attribute in response to
+# the client.
+MULTIVALUE_ATTRIB_RESP_DELIM = '; '
+
+# Client request values for all attributes found on each record
+REQUEST_ALL_ATTRIBUTES = 'ALL-ATTRIBUTES'
+
+# Client request values for all linked-data (standards) attributes
+# on each record
+REQUEST_ALL_LD_ATTRIBUTES = 'ALL-STANDARD-LD'
+
+# Client request values for all project specific attributes
+# on each record
+REQUEST_ALL_PROJ_ATTRIBUTES ='ALL-PROJECT'
