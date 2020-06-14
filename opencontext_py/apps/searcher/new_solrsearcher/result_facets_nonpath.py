@@ -30,6 +30,71 @@ class ResultFacetsNonPath():
         self.current_filters_url = current_filters_url
     
 
+    def make_item_type_facets(self, solr_json):
+        """Makes item_type facets from a solr_json response""" 
+        item_type_path_keys = (
+            configs.FACETS_SOLR_ROOT_PATH_KEYS 
+            + ['item_type']
+        )
+        item_type_val_count_list = utilities.get_dict_path_value(
+            item_type_path_keys,
+            solr_json,
+            default=[]
+        )
+        if not len(item_type_val_count_list):
+            return None
+        options_tuples = utilities.get_facet_value_count_tuples(
+            item_type_val_count_list
+        )
+        if not len(options_tuples):
+            return None
+
+        # Iterate through tuples of item_type counts
+        options = []
+        for facet_value, count in options_tuples:
+            # The get_item_type_dict should return the
+            # type_dict for slugs, full uris, prefixed URIs
+            # or lower-case item types.
+            type_dict = utilities.get_item_type_dict(
+                facet_value
+            )
+            if not type_dict:
+                # Unrecognized item type. Skip.
+                continue
+            sl = SearchLinks(
+                request_dict=copy.deepcopy(self.request_dict),
+                base_search_url=self.base_search_url
+            )
+            # Remove non search related params.
+            sl.remove_non_query_params()
+
+            # Update the request dict for this facet option.
+            sl.replace_param_value(
+                'type',
+                match_old_value=None,
+                new_value=facet_value,
+            )  
+            urls = sl.make_urls_from_request_dict()
+            if urls['html'] == self.current_filters_url:
+                # The new URL matches our current filter
+                # url, so don't add this facet option.
+                continue
+
+            option = LastUpdatedOrderedDict()
+            option['id'] = urls['html']
+            option['json'] = urls['json']
+            for key, val in type_dict.items():
+                option[key] = val
+            options.append(option)
+        
+        if not len(options):
+            return None
+        
+        facet = configs.FACETS_ITEM_TYPE.copy()
+        facet['oc-api:has-id-options'] = options
+        return facet
+
+
     def make_related_media_facets(self, solr_json):
         """Makes related media facets from a solr_json response""" 
         options = []
@@ -88,6 +153,4 @@ class ResultFacetsNonPath():
         rel_media_facets['label'] = configs.FACETS_RELATED_MEDIA['label']
         rel_media_facets['oc-api:has-rel-media-options'] = options
         return rel_media_facets
-
-
 

@@ -13,6 +13,8 @@ from opencontext_py.apps.indexer.solrdocumentnew import (
     SolrDocumentNew as SolrDocument,
 )
 
+from opencontext_py.apps.searcher.new_solrsearcher import configs
+
 # ---------------------------------------------------------------------
 # This module contains general utility functions for the solr search
 # and query features.
@@ -92,6 +94,36 @@ def make_uri_equivalence_list(raw_term, alt_suffix="/"):
     return output_list
 
 
+def get_item_type_dict(raw_type_key):
+    """Gets an item_type dictionary object from a raw_type key"""
+    if not isinstance(raw_type_key, str):
+        return None
+    type_dict = configs.ITEM_TYPE_MAPPINGS.get(
+        raw_type_key
+    )
+    if type_dict is not None:
+        # The simplest, happiest scenario
+        return type_dict
+
+    type_keys = make_uri_equivalence_list(raw_type_key)
+    look_up_types = {
+        # Add to the lookup keyed by slug
+        type_dict['slug']: type_dict 
+        for key, type_dict in configs.ITEM_TYPE_MAPPINGS.items()
+    }
+    for _, type_dict in configs.ITEM_TYPE_MAPPINGS.items():
+        # Now add to the lookup keyed by the isDefinedBy value
+        look_up_types[type_dict['rdfs:isDefinedBy']] = type_dict
+    
+    for type_key in make_uri_equivalence_list(raw_type_key):
+        type_dict = look_up_types.get(type_key)
+        if type_dict is not None:
+            # We found it!
+            return type_dict
+    # We did not find a match for this key or any variant of it.
+    return None
+
+
 def infer_multiple_or_hierarchy_paths(
     raw_path,
     hierarchy_delim='/',
@@ -151,7 +183,6 @@ def infer_multiple_or_hierarchy_paths(
         return paths_as_lists
     # Default to returning the paths as strings.
     return paths_as_strs
-
 
 
 def get_path_depth(self, path, delimiter='/'):
@@ -369,7 +400,7 @@ def get_request_param_value(
     require_float=False,
     require_int=False,
 ):
-    """ Return a list, str, float, or int (dependig on args) from a
+    """ Return a list, str, float, or int (depending on args) from a
         request dict:
     
     :param dict request_dict: The dictionary of keyed by client
@@ -510,7 +541,8 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
 def parse_solr_encoded_entity_str(
     entity_str,
     base_url='', 
-    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM
+    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM,
+    solr_slug_format=False
 ):
     """Parses an entity string encoded for solr"""
     
@@ -538,13 +570,19 @@ def parse_solr_encoded_entity_str(
         uri = base_url + parts[2]
     
     # Return a dictionary of the parsed entity.
+    if not solr_slug_format:
+        slug = parts[0].replace('_', '-')
+    else:
+        slug = parts[0]
+
     return {
-        'slug': parts[0].replace('_', '-'),
+        'slug': slug,
         'data_type': parts[1],
         'uri': uri,
         'label': parts[3],
         'alt_label': alt_label,
     }
+
 
 
 def get_rounding_level_from_float(float_val):
@@ -694,6 +732,46 @@ def add_solr_gap_to_date(date_val, solr_gap):
 # ---------------------------------------------------------------------
 # GEOSPATIAL AND TIME FUNCTIONS
 # ---------------------------------------------------------------------
+def get_aggregation_depth_to_group_paths( 
+    max_groups,
+    paths,
+    max_depth=None
+):
+    """Gets the number of characters needed to group a list
+    of hiearchic path strings.
+
+    :param int max_groups: The maximum number of groups wanted.
+    :param list paths: A list of hiearchically encoded string values
+        that we want to group together.
+    :param int max_depth: The default depth (the max)
+    """
+
+    # NOTE: Geospatial points and chronological time-spans
+    # can be prepresented as hierarchic paths of strings. This
+    # function is used to help determine the level depth of
+    # aggregation needed to group these stings into a max number
+    # of groups or less.
+
+    if max_depth is None:
+        # We're assuming that all the paths are strings of the
+        # same length.
+        max_depth = len(paths[0])
+
+    if len(paths) <= max_groups:
+        return max_depth
+    
+    keep_looping = True
+    agg_depth = max_depth
+    while keep_looping and agg_depth > 0:
+        agg_depth -= 1
+        agg_paths = [p[:agg_depth] for p in paths]
+        agg_count = len(set(agg_paths))
+        if agg_count <= max_groups:
+            keep_looping = False
+            return agg_depth
+    return agg_depth
+
+
 def validate_geo_coordinate(coordinate, coord_type):
     """Validates a geo-spatial coordinate """
     try:

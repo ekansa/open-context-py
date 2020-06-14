@@ -11,7 +11,7 @@ from opencontext_py.apps.contexts.projectcontext import ProjectContext
 """    
 
 from opencontext_py.apps.contexts.manage import cache_projects_contexts
-cache_projects_contexts(True)  # Refrech cache of all project contexts
+cache_projects_contexts(True)  # Refresh cache of all project contexts
 
 import requests
 from opencontext_py.apps.contexts.manage import consolidate_contexts

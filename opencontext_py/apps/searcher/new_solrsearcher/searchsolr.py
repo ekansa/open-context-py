@@ -56,7 +56,7 @@ class SearchSolr():
             self.init_facet_fields.append(
                 SolrDocument.ROOT_PREDICATE_SOLR
             )
-    
+
     def _associate_facet_field_with_client_request(
         self, 
         param, 
@@ -146,6 +146,9 @@ class SearchSolr():
             query['q.op'] = 'AND'
             query['hl'] = 'true'  # search term highlighting
             query['hl.fl'] = 'text' # highlight the text field
+            query['hl.fragsize'] = 200
+            query['hl.simple.pre'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE
+            query['hl.simple.post'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST
             query['hl.q'] = 'text: {}'.format(solr_fulltext)
         
         # -------------------------------------------------------------
@@ -340,6 +343,7 @@ class SearchSolr():
                 default=None,
                 as_list=False,
                 solr_escape=False,
+                require_float=True,
             ), 
             form_stop=utilities.get_request_param_value(
                 request_dict, 
@@ -347,6 +351,7 @@ class SearchSolr():
                 default=None,
                 as_list=False,
                 solr_escape=False,
+                require_float=True,
             ),
         )
         # Now add results of this raw_item_type to the over-all query.
@@ -467,10 +472,23 @@ class SearchSolr():
         return query
     
 
+    def _set_solr_field_facet_limits(self, query):
+        """ Sets facet limits on configured facet fields"""
+        for facet_field, limit in configs.SOLR_FIELDS_FACET_LIMITS:
+            if not facet_field in query.get('facet.field', []):
+                # We could not find the facet field in the
+                # query facet fields, so skip.
+                continue
+            limit_key = 'f.{}.facet.limit'.format(facet_field)
+            query[limit_key] = limit
+        return query
+
+
     def finish_query(self, query):
         """ Check solr query and put convenient format """
         assert 'q' in query
         query = self.update_query_with_stats_prequery(query)
+        query = self._set_solr_field_facet_limits(query)
         compat_args(query)
         query['wt'] = 'json'
         return query

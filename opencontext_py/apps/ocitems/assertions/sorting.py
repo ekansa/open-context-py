@@ -6,6 +6,15 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 
 
+"""
+# Example use.
+from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
+asor = AssertionSorting()
+asor.sort_ranked_manifest_for_project('project uuid')
+
+"""
+
+
 class AssertionSorting():
     """ Class for managing sorting for asseritions based on rankings of types
     and manifest entities.

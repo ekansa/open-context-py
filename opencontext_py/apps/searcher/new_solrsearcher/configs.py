@@ -32,7 +32,10 @@ DEFAULT_FACET_FIELDS = [
     SolrDocument.ROOT_PROJECT_SOLR,
     'image_media_count',
     'other_binary_media_count',
-    'document_count'
+    'document_count',
+    'form_use_life_chrono_tile',
+    'discovery_geotile',
+    # 'disc_geosource',
 ]
 
 PROJECT_FACET_FIELDS = [
@@ -60,6 +63,15 @@ ITEM_TYPE_FACETFIELDS = {
         'oc_gen_subjects___pred_id'
     ],
 }
+
+# Set facet limits for different solr fields. -1 indicates
+# no limit to the number of facets, which means the most
+# expensive.
+SOLR_FIELDS_FACET_LIMITS = [
+    ('form_use_life_chrono_tile', -1,),
+    ('discovery_geotile', -1,),
+    ('disc_geosource', -1,),
+]
 
 
 # Lists of tuples to configure filter queries that limit
@@ -98,6 +110,7 @@ ITEM_CAT_FIELDS = [
     'oc_gen_subjects___pred_id',
     'oc_gen_media___pred_id',
     'oc_gen_persons___pred_id',
+    'oc_gen_predicates___pred_id',
 ]
 
 REL_CAT_FACET_FIELDS = ['rel__oc_gen_subjects___pred_id']
@@ -141,6 +154,19 @@ LITERAL_DATA_TYPES = [
     'xsd:boolean', 
     'xsd:string',
 ]
+
+
+# Tags to use before and after the highlighted term to clearly set the
+# term off from surrounding text. These are for the internal solr query
+# and solr response
+QUERY_SNIPPET_HIGHLIGHT_TAG_PRE = '<h_l>'
+QUERY_SNIPPET_HIGHLIGHT_TAG_POST = '</h_l>'
+
+# Tags to use before and after the highlighted term to clearly set the
+# term off from surrounding text. These are for the highlighted text
+# for result records returned to the client.
+RECORD_SNIPPET_HIGHLIGHT_TAG_PRE = '<em class="snippet">'
+RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</em>'
 
 # ---------------------------------------------------------------------
 # Hierarchic parameters configs:
@@ -295,26 +321,57 @@ REQUEST_SOLR_SORT_MAPPINGS = {
 # Configs for making solr queries
 # ---------------------------------------------------------------------
 # Main item-types mapped to their slugs to get solr-facet field prefix
+ITEM_TYPE_MAPPINGS = {
+    'subjects': {
+        'rdfs:isDefinedBy': 'oc-gen:subjects',
+        'label': 'Subjects',
+        'slug': 'oc-gen-subjects',
+    },
+    'media': {
+        'rdfs:isDefinedBy': 'oc-gen:media',
+        'label': 'Media',
+        'slug': 'oc-gen-media',
+    },
+    'documents': {
+        'rdfs:isDefinedBy': 'oc-gen:documents',
+        'label': 'Documents',
+        'slug':'oc-gen-documents',
+    },
+    'persons': {
+        'rdfs:isDefinedBy': 'oc-gen:persons',
+        'label': 'Persons or organizations',
+        'slug': 'oc-gen-persons',
+    },
+    'projects': {
+        'rdfs:isDefinedBy': 'oc-gen:projects',
+        'label': 'Projects',
+        'slug': 'oc-gen-projects',
+    },
+    'types': {
+        'rdfs:isDefinedBy': 'oc-gen:types',
+        'label': 'Descriptive Types',
+        'slug': 'oc-gen-types',
+    },
+    'predicates': {
+        'rdfs:isDefinedBy': 'oc-gen:predicates',
+        'label': 'Predicates or properties',
+        'slug': 'oc-gen-predicates',
+    },
+    'tables': {
+        'rdfs:isDefinedBy': 'oc-gen:tables',
+        'label': 'Data tables',
+        'slug': 'oc-gen-tables',
+    },
+}
+
 ITEM_TYPE_SLUG_MAPPINGS = {
-    'subjects': 'oc-gen-subjects',
-    'media': 'oc-gen-media',
-    'documents': 'oc-gen-documents',
-    'persons': 'oc-gen-persons',
-    'projects': 'oc-gen-projects',
-    'types': 'oc-gen-types',
-    'predicates': 'oc-gen-predicates',
-    'tables': 'oc-gen-tables',
+    key: t_dict['slug'] 
+    for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
 ITEM_TYPE_URI_MAPPINGS = {
-    'subjects': 'oc-gen:subjects',
-    'media': 'oc-gen:media',
-    'documents': 'oc-gen:documents',
-    'persons': 'oc-gen:persons',
-    'projects': 'oc-gen:projects',
-    'types': 'oc-gen:types',
-    'predicates': 'oc-gen:predicates',
-    'tables': 'oc-gen:tables',
+    key: t_dict['rdfs:isDefinedBy'] 
+    for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
 
@@ -450,19 +507,19 @@ RESPONSE_DEFAULT_TYPES = [
     'context',
     'metadata',
     'chrono-facet',
-    # 'geo-feature',
-    'geo-facet',
-    'geo-record',
     'prop-range',
     'prop-facet',
+    'geo-facet',
+    'geo-feature',
+    'geo-record',
 ]
-
 
 # These response types get JSON-LD context objects
 RESPONSE_TYPES_JSON_LD_CONTEXT = [
     'context',
     'chrono-facet',
     'geo-facet',
+    'geo-feature',
     'geo-project',
     'geo-record',
 ]
@@ -479,7 +536,6 @@ QUERY_NEW_URL_IGNORE_PARAMS = SORT_NEW_URL_IGNORE_PARAMS + ['sort']
 # ---------------------------------------------------------------------
 STATS_FIELDS_PATH_KEYS = ['stats', 'stats_fields',]
 
-
 # This lists the keys for finding facets in the JSON solr response 
 # dict. 
 FACETS_SOLR_ROOT_PATH_KEYS = [
@@ -493,6 +549,16 @@ FACETS_RANGE_SOLR_ROOT_PATH_KEYS = [
     'facet_counts',
     'facet_ranges',
 ]
+
+# Facets for item_type
+FACETS_ITEM_TYPE = {
+    'id': '#facet-item-type',
+    'rdfs:isDefinedBy': 'oc-api:facet-item-type',
+    'label': 'Open Context Type',
+    'data-type': 'id',
+    'type': 'oc-api:facet-item-type',
+    'oc-api:has-id-options': [],
+}
 
 
 # Configs for faceting on links to related media of different types.
@@ -617,3 +683,27 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
     'string': 'oc-api:has-text-options',
 }
 
+
+
+# ---------------------------------------------------------------------
+# Configs to process records from the solr-response JSON
+# ---------------------------------------------------------------------
+RECORD_PATH_KEYS = ['response', 'docs',]
+
+# Delimiter for listing multiple attribute slugs in the client request
+MULTIVALUE_ATTRIB_CLIENT_DELIM = ','
+
+# Delimiter for multiple values of a given attribute in response to
+# the client.
+MULTIVALUE_ATTRIB_RESP_DELIM = '; '
+
+# Client request values for all attributes found on each record
+REQUEST_ALL_ATTRIBUTES = 'ALL-ATTRIBUTES'
+
+# Client request values for all linked-data (standards) attributes
+# on each record
+REQUEST_ALL_LD_ATTRIBUTES = 'ALL-STANDARD-LD'
+
+# Client request values for all project specific attributes
+# on each record
+REQUEST_ALL_PROJ_ATTRIBUTES ='ALL-PROJECT'
