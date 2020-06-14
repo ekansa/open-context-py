@@ -795,12 +795,14 @@ def get_general_hierarchic_path_query_dict(
             # The current item is an attribute item, so copy it for
             # use as we continue to iterate through this path_list.
             attribute_item = item
-            print('attribute item {} is a {}, {}'.format(
-                    attribute_item.label,
-                    attribute_item.item_type, 
-                    attribute_item.data_type
+            if False:
+                # Keep for debugging but turn it off
+                print('attribute item {} is a {}, {}'.format(
+                        attribute_item.label,
+                        attribute_item.item_type, 
+                        attribute_item.data_type
+                    )
                 )
-            )
 
             if (getattr(attribute_item, 'data_type', None) 
                in configs.LITERAL_DATA_TYPES):
@@ -872,12 +874,14 @@ def get_general_hierarchic_path_query_dict(
                 and not attribute_field_part) ):
                 # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
-                print(
-                    'Here: {}, {}'.format(
-                        attribute_item.item_type,
-                        getattr(item, 'entity_type', None)
+                if False:
+                    # Keep for debugging, but turn it off.
+                    print(
+                        'Pred attribute: {}, {}'.format(
+                            attribute_item.item_type,
+                            getattr(item, 'entity_type', None)
+                        )
                     )
-                )
                 attribute_field_part = (
                     attribute_item.slug.replace('-', '_')
                     + SolrDocument.SOLR_VALUE_DELIM
