@@ -737,7 +737,8 @@ class ResultRecord():
             properties['longitude'] = self.longitude
         properties['early bce/ce'] = self.early_date
         properties['late bce/ce'] = self.late_date
-        properties['item category'] = self.category['label']
+        if self.category is not None:
+            properties['item category'] = self.category['label']
         if self.snippet:
             properties['snippet'] = self.snippet
         
@@ -808,20 +809,23 @@ class ResultRecord():
         geometry['coordinates'] = self.geometry_coords
         geo_json['geometry'] = geometry
 
-        when = LastUpdatedOrderedDict()
-        when['id'] = '#record-event-{}-of-{}'.format(
-            record_index, 
-            total_found
-        )
-        when['type'] = 'oc-gen:formation-use-life'
-        # convert numeric to GeoJSON-LD ISO 8601
-        when['start'] = ISOyears().make_iso_from_float(
-            self.early_date
-        )
-        when['stop'] = ISOyears().make_iso_from_float(
-            self.late_date
-        )
-        geo_json['when'] = when
+        if (self.early_date is not None 
+            and self.late_date is not None):
+            # If we have dates, add them.
+            when = LastUpdatedOrderedDict()
+            when['id'] = '#record-event-{}-of-{}'.format(
+                record_index, 
+                total_found
+            )
+            when['type'] = 'oc-gen:formation-use-life'
+            # convert numeric to GeoJSON-LD ISO 8601
+            when['start'] = ISOyears().make_iso_from_float(
+                self.early_date
+            )
+            when['stop'] = ISOyears().make_iso_from_float(
+                self.late_date
+            )
+            geo_json['when'] = when
 
         # Now add the properties dict to the GeoJSON
         props_id_value = '#rec-{}-of-{}'.format(
