@@ -622,6 +622,7 @@ class ResultMaker():
         )
         if len(self.act_responses) == 1:
             self.result = meta_result_records
+            return None
         if not len(meta_result_records):
             return None
         if not 'oc-api:has-results' in self.result:
