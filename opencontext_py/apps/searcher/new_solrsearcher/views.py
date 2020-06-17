@@ -10,9 +10,11 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher.template_prep import SearchTemplate
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
 from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
+
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -44,7 +46,28 @@ def process_solr_query(request_dict):
         solr_json=solr_response
     )
     return result_maker.result
-    
+
+
+def make_json_response(request, req_neg, response_dict):
+    """Makes a JSON response with content negotiation"""
+    json_output = json.dumps(response_dict, indent=4, ensure_ascii=False)
+    if 'callback' in request.GET:
+        # The JSON-P response
+        funct = request.GET['callback']
+        response = HttpResponse(
+            '{funct}({json_output});'.format(funct=funct,json_output=json_output),
+            content_type='application/javascript' + "; charset=utf8"
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+
+    response = HttpResponse(
+        json_output,
+        content_type=req_neg.use_response_type + "; charset=utf8"
+    )
+    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+    return response
+
 
 @cache_control(no_cache=True)
 def query_json(request, spatial_context=None):
@@ -75,20 +98,42 @@ def query_json(request, spatial_context=None):
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
     
-    json_output = json.dumps(response_dict, indent=4, ensure_ascii=False)
-    if 'callback' in request.GET:
-        # The JSON-P response
-        funct = request.GET['callback']
+    return make_json_response(request, req_neg, response_dict)
+
+
+@cache_control(no_cache=True)
+def query_html(request, spatial_context=None):
+    """HTML representation for searching Open Context """
+    
+    request_dict = utilities.make_request_obj_dict(
+        request, spatial_context=spatial_context
+    )
+    response_dict = process_solr_query(request_dict)
+    
+    req_neg = RequestNegotiation('text/html')
+    req_neg.supported_types = [
+        'application/json',
+        'application/ld+json',
+    ]
+    
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+
+    # Associate the request media type with the request so we can
+    # make sure that different representations of this resource get different
+    # cache responses.
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # Client wanted a mimetype we don't support
         response = HttpResponse(
-            '{funct}({json_output});'.format(funct=funct,json_output=json_output),
-            content_type='application/javascript' + "; charset=utf8"
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
         )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
+    
+    if req_neg.use_response_type.endswith('json'):
+        return make_json_response(request, req_neg, response_dict)
 
-    response = HttpResponse(
-        json_output,
-        content_type=req_neg.use_response_type + "; charset=utf8"
-    )
-    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
-    return response
+    
