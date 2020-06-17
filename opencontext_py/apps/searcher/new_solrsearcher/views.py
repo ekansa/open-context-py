@@ -15,7 +15,6 @@ from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
 from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
-
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 from django.views.decorators.cache import cache_page
@@ -136,4 +135,11 @@ def query_html(request, spatial_context=None):
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
 
-    
+    search_temp = SearchTemplate(response_dict)
+    context = {
+        'search': search_temp,
+    }
+    template = loader.get_template('search/view_new.html')
+    response = HttpResponse(template.render(context, request))
+    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+    return response

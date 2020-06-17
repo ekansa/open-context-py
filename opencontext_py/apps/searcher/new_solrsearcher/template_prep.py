@@ -24,4 +24,7 @@ class SearchTemplate():
         self.result = None
         if isinstance(result, dict):
             self.result = result
-    
+        self.json_result = {
+            key: str(val) 
+            for key, val in self.result.items()
+        }
