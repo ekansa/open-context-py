@@ -135,11 +135,14 @@ def query_html(request, spatial_context=None):
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
 
+    rp = RootPath()
     search_temp = SearchTemplate(response_dict)
     context = {
-        'search': search_temp,
+        'st': search_temp.result,
+        'base_url': rp.get_baseurl(),
+        'item_type': 'subjects',
     }
-    template = loader.get_template('search/view_new.html')
+    template = loader.get_template('search_new/view.html')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response

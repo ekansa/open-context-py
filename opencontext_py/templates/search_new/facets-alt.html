@@ -1,0 +1,61 @@
+
+{% if st.facets|length > 0 %}
+    {% for f_field in st.facets %}
+        <div class="panel-group" id="acc-{{ f_field.id }}">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {% if forloop.counter == 1 %} 
+                    <h4 class="panel-title"><a data-toggle="collapse" data-parent="#acc-{{ f_field.id }}" href="#panel-{{ f_field.id }}"><span class="glyphicon glyphicon-resize-vertical"></span>{{ f_field.label }}</a></h4>
+                    {%else%}
+                    <h4 class="panel-title"><a data-toggle="collapse" data-parent="#acc-{{ f_field.id }}" href="#panel-{{ f_field.id }}"><span class="glyphicon glyphicon-resize-vertical"></span>{{ f_field.label }}</a></h4>
+                    {%endif%}
+                </div>
+                {% if forloop.counter == 1 %} 
+                <div id="panel-{{ f_field.id }}" class="panel-collapse collapse in">
+                {%else%}
+                <div id="panel-{{ f_field.id }}" class="panel-collapse collapse">
+                {%endif%}
+                    <div class="panel-body">
+                    {% if f_field.id_options|length > 0 %}
+                        <h5>{{ f_field.type }} Classifications</h5>
+                        <ul class="list-group">
+                        {% for option in f_field.id_options %}
+                            <li class="list-group-item facet">
+                                <div class="row">
+                                    <div class="col-sm-9">
+                                    <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a>
+                                    </div>
+                                    <div class="col-sm-3">
+                                    <span class="badge">{{ option.count }}</span>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                        
+                    {%endif%}
+                    {% if f_field.numeric_options|length > 0 %}
+                        <h5>{{ f_field.type }} Numeric Fields</h5>
+                        <ul class="list-group">
+                        {% for option in f_field.numeric_options %}
+                            <li class="list-group-item facet">
+                                <div class="row">
+                                    <div class="col-sm-9">
+                                    <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a>
+                                    </div>
+                                    <div class="col-sm-3">
+                                    <span class="badge">{{ option.count }}</span>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {%endif%}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{%endif%}
+
+

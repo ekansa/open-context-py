@@ -1,0 +1,124 @@
+{% load humanize %}
+<tr>
+    <td>
+        <a href="{{ geo_rec.href }}" target="_blank">{{ geo_rec.label }}</a>
+    </td>
+    <td>
+        {{ geo_rec.project }}
+    </td>
+    <td>
+        {% if geo_rec.context != False %}
+        {{ geo_rec.context }}
+        {%elif geo_rec.item_type != 'projects' %}
+        {{ geo_rec.project }}
+        {%else%}
+        
+        {%endif%}
+        {% if geo_rec.snippet != False %}
+            <p>
+                <small>...{% autoescape off %}{{ geo_rec.snippet }}{% endautoescape %}...</small>
+            </p>
+        {%endif%}
+    </td>
+    <td>
+        {% if geo_rec.category != False %}
+        {{ geo_rec.category }}
+        {%else%}
+        Open Context '{{ geo_rec.item_type }}'
+        {%endif%}
+    </td>
+    <td>
+        {% if geo_rec.early_bce_ce != False %}
+        {% if geo_rec.early_suffix != False %}
+        {{ geo_rec.early_bce_ce|intcomma }} {{ geo_rec.early_suffix }}
+        {%else%}
+        {{ geo_rec.early_bce_ce }}
+        {%endif%}
+        {%else%}
+        Not given
+        {%endif%}
+    </td>
+    <td>
+        {% if geo_rec.late_bce_ce != False %}
+        {% if geo_rec.late_suffix != False %}
+        {{ geo_rec.late_bce_ce|intcomma }} {{ geo_rec.late_suffix }}
+        {%else%}
+        {{ geo_rec.late_bce_ce }}
+        {%endif%}
+        {%else%}
+        Not given
+        {%endif%}
+    </td>
+    <td>
+        {% if geo_rec.human_remains_flag and geo_rec.thumbnail != False %}
+            {% if human_remains_ok or request.session.human_remains_ok %}
+            <div class="alert alert-warning human-warning" role="alert" style="display: none;">
+                <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span> Record of human remains or burial. Click
+                <a onclick="humanRemains.toggle_opt_in();">here</a> to OK viewing such records.
+            </div>
+                
+                {%  if geo_rec.icon_thumbnail %}
+                
+                <div class="human-remains-div" style="max-width: 120px; padding-right:2px;">
+                    <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                        <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                    </a>
+                </div>
+                
+                {%else%}
+                
+                <div class="human-remains-div">
+                    <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                        <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                    </a>
+                </div>
+                    
+                {%endif%}
+                
+            {%else%}
+            
+            <div class="alert alert-warning human-warning" role="alert">
+                <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span> Record of human remains or burial. Click
+                <a onclick="humanRemains.toggle_opt_in();">here</a> to OK viewing such records.
+            </div>
+        
+                {%  if geo_rec.icon_thumbnail %}
+                
+                <div style="max-width: 120px; padding-right:2px; display: none;">
+                    <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                        <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                    </a>
+                </div>
+                
+                {%else%}
+                
+                <div class="human-remains-div" style="display: none;">
+                    <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                        <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                    </a>
+                </div>
+                
+                {%endif%}
+            {%endif%}
+            
+        {%else%}
+            {% if geo_rec.thumbnail != False %}
+                {%  if geo_rec.icon_thumbnail %}
+                
+                <div style="max-width: 120px; padding-right:2px;">
+                    <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                        <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                    </a>
+                </div>
+                
+                {%else%}
+                
+                <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                    <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                </a>
+                {%endif%}
+            {%endif%}
+        {%endif%}
+        
+    </td>
+</tr>
