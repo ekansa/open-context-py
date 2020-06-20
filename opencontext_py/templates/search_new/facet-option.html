@@ -10,7 +10,7 @@
                 <a class="f-op-l-{{ field_id }}-{{ op_type }}" id="{{ dom_id }}" href="{{ href }}" data-count="{{ opt_count }}">{{ label }}</a>
             </div>
             <div class="col-xs-2">
-                {% if defined_by != False %}
+                {% if defined_by %}
                 <a href="{{ defined_by }}" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
                 {%endif%}
             </div>

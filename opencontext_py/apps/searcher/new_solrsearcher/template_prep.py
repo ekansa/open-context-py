@@ -1,4 +1,5 @@
 import copy
+import itertools
 import json
 import logging
 import re
@@ -11,6 +12,9 @@ from django.conf import settings
 
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+
+from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 
@@ -28,6 +32,7 @@ class SearchTemplate():
     ]
 
     DEFAULT_FILTER_GROUP_DELIM = ' :: '
+
     FILTER_GROUP_DELIMS = {
         'Context': ' / ',
     }
@@ -100,8 +105,134 @@ class SearchTemplate():
         result['active_filters_grouped'] =  grouped_filters
         return result
     
+
+    def _is_uri_in_uri_list(self, uri, uri_list):
+        """Checks if a URI is in a list of URIs"""
+        # NOTE: This is slightly complicated by the possibility
+        # of HTTP or HTTPS uri variants.
+        check_uri_list = utilities.make_alternative_prefix_list(uri)
+        # Get the alternate HTTP, HTTPs variant of each item in the
+        # uri_list. That becomes the big_uri_list
+        big_uri_list = []
+        for act_uri in uri_list:
+            big_uri_list += utilities.make_alternative_prefix_list(
+                act_uri
+            )
+        # T/F is there an intersection between the uris in these lists?
+        return (set(check_uri_list) & set(big_uri_list))
+
+
+    def _is_uri_prefix_match(self, uris_for_prefix, uri):
+        """Checks to see if two uris have matching prefixes"""
+        # Get the alternate HTTP, HTTPs variant of each item in the
+        # uri_list. That becomes the big_uri_list
+        big_prefix_list = []
+        for act_uri in uris_for_prefix:
+            big_prefix_list += utilities.make_alternative_prefix_list(
+                act_uri
+            )
+
+        uri_list = utilities.make_alternative_prefix_list(uri)
+        for uri_prefix, uri_check in itertools.product(
+            big_prefix_list, uri_list):
+            if uri_check.startswith(uri_prefix):
+                return True
+        return False
+
+
+    def _group_facet_options(self, dom_id_prefix, raw_options_list):
+        """Groups facet options into groups of related uris"""
+        # NOTE: Open Context indexes records described by a number of
+        # URI identified (Linked Data) attributes. This method groups
+        # together facet search options that share a common namespace.
+        all_grouped_options = []
+        all_grouped_uris = []
+        for group_uris, group_head in configs.FACET_OPT_ORDERED_SUB_HEADINGS:
+            group_opts = []
+            for i, f_opt in enumerate(raw_options_list, 1):
+                f_opt['dom_id'] = '{}-option-{}'.format(dom_id_prefix, i)
+                opt_uri = f_opt.get('rdfs:isDefinedBy')
+                if not opt_uri and not group_uris:
+                    # This does not have URI identifier, 
+                    # and goes into the catch-all other category.
+                    group_opts.append(f_opt)
+                    all_grouped_uris.append(opt_uri)
+                    continue
+                if not opt_uri or opt_uri in all_grouped_uris:
+                    # There's no URI or we already grouped this,
+                    # so skip.
+                    continue
+                if self._is_uri_in_uri_list(
+                    opt_uri,
+                    configs.FACET_OPT_HIDE_URI_MAPS):
+                    # This uri is configured for hiding,
+                    # so skip out and don't add to the
+                    # list
+                    all_grouped_uris.append(opt_uri)
+                    continue
+                if not group_uris:
+                    # This is the catch-all other category.
+                    group_opts.append(f_opt)
+                    all_grouped_uris.append(opt_uri)
+                    continue
+                if not self._is_uri_prefix_match(group_uris, opt_uri):
+                    # This opt_uri does not belong to this
+                    # group, so continue and do nothing.
+                    continue
+                # We're at the point where the opt_uri has
+                # been found to belong to this particular group.
+                group_opts.append(f_opt)
+                all_grouped_uris.append(opt_uri)
+            
+            print('{} has {}'.format(group_head, len(group_opts)))
+            if not len(group_opts):
+                # We didn't find options belonging to this
+                # group, so continue
+                continue
+            
+            all_grouped_options.append(
+                {
+                    'opt_group_label': group_head,
+                    'options': group_opts,
+                }
+            )
+
+        if len(all_grouped_options) == 1:
+            # There's only one group, so no need to have a label.
+            all_grouped_options[0]['opt_group_label'] = None
+
+        return all_grouped_options
+
+
+    def _prep_facet_options_lists(self, result):
+        """Prepares facet options lists for easier templating"""
+        if not result.get('oc-api:has-facets'):
+            # No facets, so nothing to change here.
+            return result
+        for f_field in result['oc-api:has-facets']:
+            f_field['id'] = f_field['id'].lstrip('#')
+            option_types = LastUpdatedOrderedDict()
+            for opt_type, options_list_key in configs.FACETS_DATA_TYPE_OPTIONS_LISTS.items():
+                if not f_field.get(options_list_key):
+                    # This facet field does not have facet options for this datatype
+                    continue
+                option_types[opt_type] = {
+                    'temp_id': '{}-{}'.format(
+                        f_field['id'],
+                        opt_type
+                    ),
+                    'grp_options': self._group_facet_options(
+                        f_field['id'],
+                        f_field.get(options_list_key)
+                    ),
+                }
+            f_field['option_types'] = option_types
+        return result
+
+    
     def make_result_template_ready(self, result):
         """Makes a result dict ready for use in a template"""
         result = self._prep_filter_groups(result)
+        result = self._prep_facet_options_lists(result)
         result = self._make_template_ready_dict_obj(result)
         return result
