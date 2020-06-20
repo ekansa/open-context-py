@@ -59,10 +59,8 @@
                             {% with opt_count=option.count %}
                             {% with defined_by=option.rdfs__isdefinedby %}
                             {% with l_count=forloop.counter %}
-                            {% with field_id=f_field.id %}
-                            {% with op_type=op_type %}
+                            {% with field_temp_id=op_obj.temp_id %}
                             {% include './facet-option.html' %}
-                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}

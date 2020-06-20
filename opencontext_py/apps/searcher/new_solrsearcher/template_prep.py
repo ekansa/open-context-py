@@ -125,7 +125,9 @@ class SearchTemplate():
     def _is_uri_prefix_match(self, uris_for_prefix, uri):
         """Checks to see if two uris have matching prefixes"""
         # Get the alternate HTTP, HTTPs variant of each item in the
-        # uri_list. That becomes the big_uri_list
+        # uri_list. That becomes the big_prefix_list. We then
+        # checkout a cross-product of these two lists to see if
+        # any uri starts with one of the prefixes.
         big_prefix_list = []
         for act_uri in uris_for_prefix:
             big_prefix_list += utilities.make_alternative_prefix_list(
@@ -184,7 +186,6 @@ class SearchTemplate():
                 group_opts.append(f_opt)
                 all_grouped_uris.append(opt_uri)
             
-            print('{} has {}'.format(group_head, len(group_opts)))
             if not len(group_opts):
                 # We didn't find options belonging to this
                 # group, so continue
