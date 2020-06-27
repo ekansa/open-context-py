@@ -40,6 +40,12 @@ def make_alternative_prefix_list(raw_term, alt_prefixes=('http://', 'https://',)
     """Makes list where a string does and does not end with a suffix"""
     if not isinstance(raw_term, str):
         return None
+    if (not raw_term.startswith('http://') 
+        and not raw_term.startswith('https://')
+        and ':' in raw_term):
+        full_uri = URImanagement.convert_prefix_to_full_uri(raw_term)
+        if full_uri:
+            raw_term = full_uri
     alt_term = None
     if raw_term.startswith(alt_prefixes[0]):
         alt_term = alt_prefixes[1] + raw_term[len(alt_prefixes[0]):]
