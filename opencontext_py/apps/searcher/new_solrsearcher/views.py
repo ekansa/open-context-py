@@ -140,9 +140,10 @@ def query_html(request, spatial_context=None):
     context = {
         'st': search_temp.result,
         'base_url': rp.get_baseurl(),
-        'item_type': 'subjects',
+        'api_url': search_temp.result['id'],
+        'configs': configs,
     }
-    template = loader.get_template('search_new/view.html')
+    template = loader.get_template('search_vue/view.html')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response

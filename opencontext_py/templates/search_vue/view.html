@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    {% include './head.html' %}
+     <body>
+          {% include './filters.html' %}
+          <div id="app">
+               <div class="container-fluid">
+                    <h1>[[ message ]]</h1>
+                    <div v-if="result">
+                         <h2>[[ result['totalResults'] ]]</h2>
+                         <br/>
+                         <br/>
+                         <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
+                    </div>
+               </div>
+          </div>
+
+          <script type="text/javascript">
+             var base_url = '{{ base_url|safe }}';
+
+             function abs_to_rel_url(url){
+               if (url.startsWith(base_url)) {
+                    return url.slice(base_url.length);
+               } else {
+                    return url;
+               }
+             }
+             var api_url = abs_to_rel_url('{{ api_url|safe }}');
+
+             const routes = [{path: api_url}];
+             const router = new VueRouter({
+               mode: 'history',
+               routes: routes
+             });
+
+             var vm = new Vue({
+               router: router,
+               delimiters: ['[[', ']]'],
+               el: '#app',
+               data: {
+                 message: 'Open Context Search Result',
+                 current_route: window.location.href,
+                 result: null,
+                 group_filters: [],
+               },
+               created(){
+                    this.fetch_oc_api();
+               },
+               watch: {
+                    // call again the method if the route changes
+                    '$route': 'fetch_oc_api'
+               },
+               methods: {
+                    fetch_oc_api: function (){
+                         this.error = null;
+                         this.loading = true;
+                         fetch(
+                              this.$route.fullPath,
+                              {
+                                   headers:{
+                                        'Accept': 'application/json',
+                                   }
+                              }
+                         )
+                         .then(this.loading = false)
+                         .then(response => response.json())
+                         .then(json => {
+                              this.result = json
+                         })
+                    }
+               },
+               computed: {
+                    grouped_filters: function () {
+                         // `this` points to the vm instance
+                         return group_filters(this.result);
+                    },
+                    current_view: function () {
+                         return routes[this.current_route]
+                    }
+               },
+               components: {
+                    'all-filters': all_filters,
+                    // 'filter-item': filter_item
+               }
+               
+             }).$mount('#app');
+          </script>
+     </body>
+</html>

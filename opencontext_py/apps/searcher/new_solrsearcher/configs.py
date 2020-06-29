@@ -716,6 +716,14 @@ REQUEST_ALL_PROJ_ATTRIBUTES ='ALL-PROJECT'
 # ---------------------------------------------------------------------
 # Configs for front-end (HTML) organization of search facets
 # ---------------------------------------------------------------------
+FILTER_HIERARCHY_DEFAULT_DELIM = ' :: '
+
+# Dictionary keyed by 'oc-api:filter' for delimiters of broader filters
+# in a hierarchy.
+FILTER_HIERARCHY_DELIMS = {
+    'Context': ' / ',
+}
+
 FACET_OPT_SUB_HEADING_DEFAULT = (None, 'Other Attributes',)
 
 FACET_OPT_ORDERED_SUB_HEADINGS = [
@@ -797,3 +805,5 @@ FACET_OPT_HIDE_URI_MAPS = [
 FACET_OPT_HIDE_URI_PREFIX_MAPS = [
             
 ]
+
+
