@@ -136,7 +136,7 @@ def query_html(request, spatial_context=None):
         return make_json_response(request, req_neg, response_dict)
 
     rp = RootPath()
-    search_temp = SearchTemplate(response_dict)
+    search_temp = SearchTemplate(response_dict.copy())
     context = {
         'st': search_temp.result,
         'base_url': rp.get_baseurl(),
