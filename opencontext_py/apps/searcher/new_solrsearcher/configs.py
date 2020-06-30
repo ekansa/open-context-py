@@ -724,7 +724,7 @@ FILTER_HIERARCHY_DELIMS = {
     'Context': ' / ',
 }
 
-FACET_OPT_SUB_HEADING_DEFAULT = (None, 'Other Attributes',)
+FACET_OPT_SUB_HEADING_DEFAULT = ([], 'Other Attributes',)
 
 FACET_OPT_ORDERED_SUB_HEADINGS = [
     (
@@ -783,6 +783,13 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
         '(Deprecated) Biological',
     ),
     FACET_OPT_SUB_HEADING_DEFAULT,
+]
+
+# This is the above list, but as dicts not tuples for easier use
+# in javascript.
+FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = [
+    {'uris':uri_list, 'label': label} 
+    for uri_list, label in FACET_OPT_ORDERED_SUB_HEADINGS
 ]
 
 FACET_OPT_SUB_HEADING_URI_MAPS = {

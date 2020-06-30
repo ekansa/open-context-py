@@ -4,6 +4,7 @@
     {% include './head.html' %}
      <body>
           {% include './filters.html' %}
+          {% include './facets.html' %}
           <div id="main">
                <div class="container-fluid">
                     {% with page_label='' %}
@@ -16,7 +17,7 @@
                     {% endwith %}
 
                     <div id="app">
-                         <div class="row">
+                         <div class="row" v-if="result">
                              <div class="col-sm-8">
                                  <div class="panel panel-default">
                                      <div class="panel-heading">
@@ -45,7 +46,7 @@
                                  
                              </div>
                          
-                         <div class="row">
+                         <div class="row" v-if="result">
                              <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
                                  
                              </div>

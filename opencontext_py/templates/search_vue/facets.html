@@ -1,0 +1,29 @@
+{% load humanize %}
+
+
+<template id="all-facets-template">
+
+</template>
+
+
+
+<script type="text/javascript">
+
+// Passed from the Django template
+var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
+var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
+
+var all_facets = Vue.component(
+    'all-facets',
+    {
+        delimiters: ['[[', ']]'],
+        props: [],
+        template: '#all-facets-template',
+        components: {
+            // 'filter-item': filter_item
+        }
+    }
+);
+
+
+</script>
