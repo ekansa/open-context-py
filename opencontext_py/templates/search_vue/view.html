@@ -4,15 +4,53 @@
     {% include './head.html' %}
      <body>
           {% include './filters.html' %}
-          <div id="app">
+          <div id="main">
                <div class="container-fluid">
-                    <h1>[[ message ]]</h1>
-                    <div v-if="result">
-                         <h2>[[ result['totalResults'] ]]</h2>
-                         <br/>
-                         <br/>
-                         <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
-                    </div>
+                    {% with page_label='' %}
+                    {% include 'header.html' %}
+                    {% endwith %}
+                    {% with nav_items=st.nav_items %}
+                    {% with act_nav='browse' %}
+                    {% include 'navbar.html' %}
+                    {% endwith %}
+                    {% endwith %}
+
+                    <div id="app">
+                         <div class="row">
+                             <div class="col-sm-8">
+                                 <div class="panel panel-default">
+                                     <div class="panel-heading">
+                                         <div class="row">
+                                             <div class="col-sm-6">
+                                                 <h3 class="panel-title"><span id="map-title">Map</span></h3>
+                                             </div>
+                                             <div class="col-sm-1" id="map-title-suffix">
+                                             </div>
+                                             <div class="col-sm-1">
+                                             </div>
+                                             <div class="col-sm-4 text-right" id="map-title-num">
+                                                 <h3 class="panel-title">[[ result['totalResults'] ]] Records</h3>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div class="panel-body" id="map" style="min-height: 600px;">
+                                            
+                                     </div>
+                                 </div>  
+                             
+                             </div>
+                             <div class="col-sm-4">
+                                 
+                                   <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
+                                 
+                             </div>
+                         
+                         <div class="row">
+                             <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
+                                 
+                             </div>
+                         </div>
+                     </div>
                </div>
           </div>
 
@@ -40,7 +78,6 @@
                el: '#app',
                data: {
                  message: 'Open Context Search Result',
-                 current_route: window.location.href,
                  result: null,
                  group_filters: [],
                },
@@ -72,16 +109,13 @@
                },
                computed: {
                     grouped_filters: function () {
-                         // `this` points to the vm instance
+                         // Group individual, hierarchy related 
+                         // filters returned from the API 
                          return group_filters(this.result);
-                    },
-                    current_view: function () {
-                         return routes[this.current_route]
                     }
                },
                components: {
                     'all-filters': all_filters,
-                    // 'filter-item': filter_item
                }
                
              }).$mount('#app');
