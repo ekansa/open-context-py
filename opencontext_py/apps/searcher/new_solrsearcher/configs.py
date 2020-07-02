@@ -791,6 +791,11 @@ FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = [
     {'uris':uri_list, 'label': label} 
     for uri_list, label in FACET_OPT_ORDERED_SUB_HEADINGS
 ]
+FACETS_OPTIONS_LISTS_AND_DATA_TYPES = [
+    {'data_type': k, 'list_key': v} 
+    for k,v in FACETS_DATA_TYPE_OPTIONS_LISTS.items()
+] 
+
 
 FACET_OPT_SUB_HEADING_URI_MAPS = {
     'http://purl.obolibrary.org/obo/FOODON_00001303': 'Standard Biological',

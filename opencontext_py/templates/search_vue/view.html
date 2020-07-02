@@ -44,6 +44,8 @@
                                  
                                    <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
                                  
+                                   <all-facets v-bind:facets_and_options="facets_and_options"></all-facets>
+
                              </div>
                          
                          <div class="row" v-if="result">
@@ -56,15 +58,41 @@
           </div>
 
           <script type="text/javascript">
-             var base_url = '{{ base_url|safe }}';
-
-             function abs_to_rel_url(url){
-               if (url.startsWith(base_url)) {
-                    return url.slice(base_url.length);
-               } else {
-                    return url;
+               var base_url = '{{ base_url|safe }}';
+             
+               // Move these someplace else.
+               function remove_prefix(str, prefix){
+                    if(str.startsWith(prefix)){
+                         return str.slice(prefix.length);
+                    } else {
+                         return str;
+                    }
                }
-             }
+
+               function abs_to_rel_url(url){
+                    return remove_prefix(url, base_url);
+               }
+               function make_url_variants(url){
+                    var urls = [url];
+                    var prefixes = [
+                         {f: 'http://', r: 'https://'},
+                         {f: 'https://', r: 'http://'},
+                         {f: 'oc-gen:', r: 'http://opencontext.org/'},
+                         {f: 'http://', r: 'https://'}, // for https variants of OC.
+                    ];
+                    for(let prefix_conf of prefixes){
+                         var new_url = url;
+                         if(url.startsWith(prefix_conf.f)){
+                              new_url = prefix_conf.r + remove_prefix(url, prefix_conf.f);
+                         }
+                         if(urls.indexOf(new_url) >= 0 ){
+                              continue;
+                         }
+                         urls.push(new_url);
+                    }
+                    return urls;
+               }
+
              var api_url = abs_to_rel_url('{{ api_url|safe }}');
 
              const routes = [{path: api_url}];
@@ -80,7 +108,6 @@
                data: {
                  message: 'Open Context Search Result',
                  result: null,
-                 group_filters: [],
                },
                created(){
                     this.fetch_oc_api();
@@ -113,10 +140,16 @@
                          // Group individual, hierarchy related 
                          // filters returned from the API 
                          return group_filters(this.result);
+                    },
+                    facets_and_options: function() {
+                         // Group facet fields and options
+                         // returned from the API
+                         return prepare_facets_and_options(this.result);
                     }
                },
                components: {
                     'all-filters': all_filters,
+                    'all-facets': all_facets,
                }
                
              }).$mount('#app');

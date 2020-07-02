@@ -2,7 +2,11 @@
 
 
 <template id="all-facets-template">
-
+<div v-if="facets_and_options">
+    <div v-if="facets_and_options.length">
+        <h3>We see [[facets_and_options.length]] facets</h3>
+    </div>
+</div>
 </template>
 
 
@@ -12,12 +16,13 @@
 // Passed from the Django template
 var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
 var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
+var FACETS_OPTIONS_LISTS_AND_DATA_TYPES = {{ configs.FACETS_OPTIONS_LISTS_AND_DATA_TYPES|safe }};
 
 var all_facets = Vue.component(
     'all-facets',
     {
         delimiters: ['[[', ']]'],
-        props: [],
+        props: ['facets_and_options'],
         template: '#all-facets-template',
         components: {
             // 'filter-item': filter_item
@@ -25,5 +30,155 @@ var all_facets = Vue.component(
     }
 );
 
+function make_all_url_variants(uri_list){
+    // Makes a list of all variants for uris in a list
+    var big_uri_list = [];
+    for (let act_uri of uri_list){
+        var act_uris = make_url_variants(act_uri);
+        for(let new_uri of act_uris){
+            if(big_uri_list.indexOf(new_uri) >= 0 ){
+                continue;
+            } else {
+                big_uri_list.push(new_uri);
+            }
+        }
+    }
+    return big_uri_list;
+}
+
+function is_uri_in_uri_list(uri, uri_list){
+    // Checks if a URI is in a list of URIs
+    var check_uri_list = make_url_variants(uri);
+    // Get the alternate HTTP, HTTPs variant of each item in the
+    // uri_list. That becomes the big_uri_list
+    var big_uri_list = make_all_url_variants(uri_list);
+    for (let check_uri of check_uri_list){
+        if(big_uri_list.indexOf(check_uri) >= 0){
+            // We found what we want. Skip out.
+            return true;
+        }
+    }
+    // No match.
+    return false;
+}
+
+function is_uri_in_prefix_match_list(uri, uri_prefix_list){
+    // Checks if a URI is in a list of URIs
+    var check_uri_list = make_url_variants(uri);
+    // Get the alternate HTTP, HTTPs variant of each item in the
+    // uri_list. That becomes the big_uri_list
+    var big_prefix_list = make_all_url_variants(uri_prefix_list);
+    for (let check_uri of check_uri_list){
+        for(let prefix_uri of big_prefix_list){
+            if(check_uri.startsWith(prefix_uri)){
+                // We found a matching prefix.
+                return true;
+            }
+        }
+    }
+    // No match.
+    return false;
+}
+
+
+function prep_id_media_options(dom_id_prefix, raw_options_list){
+    // Prepares facet options, grouped by configured vocabs / namespaces
+    var all_grouped_options = [];
+    var all_grouped_uris = [];
+    for(let group_config of FACET_OPT_ORDERED_SUB_HEADINGS_DICTS){
+        var group_opts = [];
+        var i = 0;
+        for(let f_opt of raw_options_list){
+            i +=1;
+            f_opt['dom_id'] = `${dom_id_prefix}-option-${i}`;
+            var opt_uri = i;
+            if ('rdfs:isDefinedBy' in f_opt){
+                opt_uri = f_opt['rdfs:isDefinedBy'];
+            }
+            if (opt_uri === i && group_config.uris.length == 0){
+                // No uri identifier, and the group has no
+                // prefix uris so put into the catch-all.
+                group_opts.push(f_opt);
+                all_grouped_uris.push(opt_uri);
+                continue;
+            }
+            if (opt_uri === i || all_grouped_uris.indexOf(opt_uri) >= 0 ){
+                // There's no opt_uri or we've already dealt with it.
+                continue;
+            }
+            if (is_uri_in_uri_list(opt_uri, FACET_OPT_HIDE_URI_MAPS)){
+                // This uri is configured for hiding.
+                all_grouped_uris.push(opt_uri);
+                continue;
+            }
+            if (group_config.uris.length == 0){
+                // No prefixes configured, so put it into the catch-all 
+                group_opts.push(f_opt);
+                all_grouped_uris.push(opt_uri);
+                continue;
+            }
+            if (!(is_uri_in_prefix_match_list(opt_uri, group_config.uris))){
+                // This uri is not in the group prefix match, so
+                // don't do anything with it.
+                continue;
+            }
+            // We're at the point where the opt_uri has
+            // been found to belong to this particular group.
+            group_opts.push(f_opt);
+            all_grouped_uris.push(opt_uri);
+        }
+
+        if(group_opts.length == 0){
+            // We didn't find any options for this group, so
+            // just continue.
+            continue;
+        }
+        group_config['options'] = group_opts;
+        all_grouped_options.push(group_config);
+    }
+    if (all_grouped_options.length == 0){
+        // Only one group, so remove the label
+        all_grouped_options[0]['label'] = null;
+    }
+    return all_grouped_options;
+}
+
+function prepare_facets_and_options(result){
+    // Prepares facet options lists for templates
+    var facets_and_options = []; //main output.
+    if (!('oc-api:has-facets' in result)){
+        // Nothing to do, so skip out.
+        return facets_and_options;
+    }
+    for (let f_field of result['oc-api:has-facets']){
+        f_field['id'] = remove_prefix(f_field['id'], '#');
+        f_field['data_types_opt_lists'] = [];
+        for (let opts_conf of FACETS_OPTIONS_LISTS_AND_DATA_TYPES) {
+            if (!(opts_conf.list_key in f_field)){
+                // Nothing to do, so keep on looping to check for other kinds of
+                // options lists.
+                continue;
+            }
+            var all_grouped_options = [];
+            if(opts_conf.data_type == 'id' || opts_conf.data_type == 'media'){
+                all_grouped_options = prep_id_media_options(
+                    f_field['id'], 
+                    f_field[opts_conf.list_key]
+                );
+            }
+            else{
+                all_grouped_options.push({
+                    'label': null,
+                    'options': f_field[opts_conf.list_key]
+                });
+            }
+            opts_conf['grouped_options'] = all_grouped_options;
+            f_field['data_types_opt_lists'].push(opts_conf);
+            f_field[opts_conf.list_key] = 'moved';
+        }
+        facets_and_options.push(f_field);
+    }
+    return facets_and_options;
+}
 
 </script>
