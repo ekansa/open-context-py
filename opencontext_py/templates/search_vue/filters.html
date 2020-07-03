@@ -33,7 +33,7 @@
                 <div class="container-fluid small">
                 <filter-item
                     v-for="(filter_group, index) in grouped_filters"
-                    v-bind:key="filter_group.remove_href"
+                    v-bind:key="filter_group.key"
                     v-bind:filter_group="filter_group"
                     v-bind:index="index"
                 ></filter-item>
@@ -80,7 +80,7 @@
 var DEFAULT_FILTER_GROUP_DELIM = '{{ configs.FILTER_HIERARCHY_DEFAULT_DELIM }}';
 var FILTER_HIERARCHY_DELIMS = {{ configs.FILTER_HIERARCHY_DELIMS|safe }} ;
 
-var filter_item = Vue.component(
+var vc_filter_item = Vue.component(
     'filter-item',
     {
         delimiters: ['[[', ']]'],
@@ -88,14 +88,14 @@ var filter_item = Vue.component(
         template: '#filter-item-template',
     }
 );
-var all_filters = Vue.component(
+var vc_all_filters = Vue.component(
     'all-filters',
     {
         delimiters: ['[[', ']]'],
         props: ['grouped_filters'],
         template: '#filter-list-template',
         components: {
-            'filter-item': filter_item
+            'filter-item': vc_filter_item
         }
     }
 );
@@ -127,12 +127,14 @@ function group_filters(result){
             }
             temp_groups[group_key] = {
                 'label': raw_filter['oc-api:filter'],
+                'key': abs_to_rel_url(raw_filter['oc-api:remove']),
                 'remove_href': abs_to_rel_url(raw_filter['oc-api:remove']),
                 'path_delim': path_delim,
                 'filters': []
             };
         }
         if(('oc-api:broaden' in raw_filter)){
+            raw_filter['key'] =  abs_to_rel_url(raw_filter['oc-api:broaden']);
             raw_filter['oc-api:broaden'] =  abs_to_rel_url(raw_filter['oc-api:broaden']);
         }
         temp_groups[group_key]['filters'].push(raw_filter);

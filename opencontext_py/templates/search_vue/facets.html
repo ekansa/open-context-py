@@ -4,9 +4,63 @@
 <template id="all-facets-template">
 <div v-if="facets_and_options">
     <div v-if="facets_and_options.length">
-        <h3>We see [[facets_and_options.length]] facets</h3>
+        <h3>Filtering Options</h3>
+        <div class="panel-group" id="acc-facets">
+            <facet-data-types-options
+                v-for="(facet_data_types_options, index) in facets_and_options"
+                v-bind:key="facet_data_types_options.key"
+                v-bind:facet_id="facet_data_types_options.id"
+                v-bind:facet_label="facet_data_types_options.label"
+                v-bind:facet_data_types_options="facet_data_types_options"
+                v-bind:index="index">
+            </facet-data-types-options>
+        </div>
     </div>
 </div>
+</template>
+
+<template id="facet-data-types-options-template">
+<div>
+    <data-type-options
+        v-for="(data_type_options, index) in facet_data_types_options.data_types_opt_lists"
+        v-bind:key="data_type_options.key" 
+        v-bind:dom_key="data_type_options.key"
+        v-bind:facet_id="facet_id"
+        v-bind:facet_label="facet_label"
+        v-bind:data_type="data_type_options.data_type"
+        v-bind:options="data_type_options.options"
+        v-bind:index="index">
+    </data-type-options>
+</div>
+</template>
+
+<template id="data-type-options-template">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="pull-right panel-title" :id="[[dom_key]]">
+                <a class="or-options-toggle" :id="'opts-show-' + [[dom_key]]"
+                   title="Select multiple options">
+                    <span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>
+                </a>
+                <a style="display:none;" :id="'opts-do-' + [[dom_key]]"
+                   class="text-primary"
+                   title="Search selected options">
+                    <span class="glyphicon glyphicon-search text-primary" aria-hidden="true"></span>
+                </a>
+            </h4>
+            <h4 class="panel-title">
+                <a class="text-left" data-toggle="collapse" data-parent="#acc-facets" :href="'#panel-' + [[dom_key]]">
+                    <span class="glyphicon glyphicon-resize-vertical"></span>
+                    [[facet_label]]
+                </a>
+            </h4>
+        </div>
+        <div :id="'panel-' + [[dom_key]]" class="panel-collapse collapse in">
+            <ul class="list-group f-opt-list" :id="'s-ops-'+ [[dom_key]]">
+                
+            </ul>
+        </div>
+    </div>
 </template>
 
 
@@ -18,14 +72,38 @@ var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
 var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
 var FACETS_OPTIONS_LISTS_AND_DATA_TYPES = {{ configs.FACETS_OPTIONS_LISTS_AND_DATA_TYPES|safe }};
 
-var all_facets = Vue.component(
+
+var vc_data_type_options = Vue.component(
+    'data-type-options',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['dom_key', 'facet_id', 'facet_label', 'data_type', 'options', 'index'],
+        template: '#data-type-options-template',
+        components: {
+        
+        }
+    }
+);
+
+var vc_facet_data_types_options = Vue.component(
+    'facet-data-types-options',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['facet_id', 'facet_label', 'facet_data_types_options', 'index'],
+        template: '#facet-data-types-options-template',
+        components: {
+            'data-type-options': vc_data_type_options,
+        }
+    }
+);
+var vc_all_facets = Vue.component(
     'all-facets',
     {
         delimiters: ['[[', ']]'],
         props: ['facets_and_options'],
         template: '#all-facets-template',
         components: {
-            // 'filter-item': filter_item
+            'facet-data-types-options': vc_facet_data_types_options,
         }
     }
 );
@@ -80,6 +158,22 @@ function is_uri_in_prefix_match_list(uri, uri_prefix_list){
     return false;
 }
 
+function prepare_option(dom_id_prefix, i, f_opt){
+    f_opt['key'] = `${dom_id_prefix}-option-${i}`;
+    f_opt['dom_id'] = `${dom_id_prefix}-option-${i}`;
+    return f_opt;
+}
+
+function prepare_options_list(dom_id_prefix, raw_options_list){
+    var prepare_options = [];
+    var i = 0;
+    for(let f_opt of raw_options_list){
+        i +=1;
+        f_opt = prepare_option(dom_id_prefix, i, f_opt);
+        prepare_options.push(f_opt);
+    }
+    return prepare_options;
+}
 
 function prep_id_media_options(dom_id_prefix, raw_options_list){
     // Prepares facet options, grouped by configured vocabs / namespaces
@@ -90,8 +184,8 @@ function prep_id_media_options(dom_id_prefix, raw_options_list){
         var i = 0;
         for(let f_opt of raw_options_list){
             i +=1;
-            f_opt['dom_id'] = `${dom_id_prefix}-option-${i}`;
             var opt_uri = i;
+            f_opt = prepare_option(dom_id_prefix, i, f_opt);
             if ('rdfs:isDefinedBy' in f_opt){
                 opt_uri = f_opt['rdfs:isDefinedBy'];
             }
@@ -134,6 +228,7 @@ function prep_id_media_options(dom_id_prefix, raw_options_list){
             continue;
         }
         group_config['options'] = group_opts;
+        group_config['key'] = `${dom_id_prefix}-grp-${all_grouped_options.length + 1}`;
         all_grouped_options.push(group_config);
     }
     if (all_grouped_options.length == 0){
@@ -152,6 +247,7 @@ function prepare_facets_and_options(result){
     }
     for (let f_field of result['oc-api:has-facets']){
         f_field['id'] = remove_prefix(f_field['id'], '#');
+        f_field['key'] = f_field['id'];
         f_field['data_types_opt_lists'] = [];
         for (let opts_conf of FACETS_OPTIONS_LISTS_AND_DATA_TYPES) {
             if (!(opts_conf.list_key in f_field)){
@@ -169,7 +265,12 @@ function prepare_facets_and_options(result){
             else{
                 all_grouped_options.push({
                     'label': null,
-                    'options': f_field[opts_conf.list_key]
+                    'key': `${f_field['id']}-grp-1`,
+                    'options': f_field[
+                        prepare_options_list(
+                            f_field['id'], 
+                            opts_conf.list_key
+                        )]
                 });
             }
             opts_conf['grouped_options'] = all_grouped_options;
