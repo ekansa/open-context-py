@@ -44,7 +44,7 @@
                                  
                                    <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
                                  
-                                   <all-facets v-bind:facets_and_options="facets_and_options"></all-facets>
+                                   <all-facets v-bind:facets_dtypes_groups_opts="facets_dtypes_groups_opts"></all-facets>
 
                              </div>
                          
@@ -141,10 +141,10 @@
                          // filters returned from the API 
                          return group_filters(this.result);
                     },
-                    facets_and_options: function() {
+                    facets_dtypes_groups_opts: function() {
                          // Group facet fields and options
                          // returned from the API
-                         return prepare_facets_and_options(this.result);
+                         return prepare_facets_dtypes_groups_opts(this.result);
                     }
                },
                components: {
