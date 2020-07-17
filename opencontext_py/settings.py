@@ -49,6 +49,17 @@ SOLR_HOST = get_secret('SOLR_HOST')
 SOLR_PORT = get_secret('SOLR_PORT')
 SOLR_COLLECTION = get_secret('SOLR_COLLECTION')
 
+# Testing (for new indices) solr connection
+if 'SOLR_HOST_TEST' in secrets:
+    SOLR_HOST_TEST = get_secret('SOLR_HOST_TEST')
+    SOLR_PORT_TEST = get_secret('SOLR_PORT_TEST')
+    SOLR_COLLECTION_TEST = get_secret('SOLR_COLLECTION_TEST')
+else:
+    # Default to the normal solr connection
+    SOLR_HOST_TEST = SOLR_HOST
+    SOLR_PORT_TEST = SOLR_PORT_TEST
+    SOLR_COLLECTION_TEST = SOLR_COLLECTION_TEST
+
 # SECURITY WARNING: don't run with debug turned on in production!
 if get_secret('DEBUG') == 1:
     DEBUG = True

@@ -7,6 +7,9 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 # with solr search / query features.
 # ---------------------------------------------------------------------
 
+# If this is True, we're using a test solr instance, if False, we
+# connect to the default solr server.
+USE_TEST_SOLR_CONNECTION = True
 
 REQUEST_CONTEXT_HIERARCHY_DELIM = '/'
 REQUEST_PROP_HIERARCHY_DELIM = '---'

@@ -5,7 +5,6 @@ from django.http import HttpResponse, Http404
 
 from django.template import RequestContext, loader
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 

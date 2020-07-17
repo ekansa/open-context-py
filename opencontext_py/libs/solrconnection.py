@@ -14,7 +14,7 @@ class SolrConnection():
                  solr_host=settings.SOLR_HOST,
                  solr_port=settings.SOLR_PORT,
                  solr_collection=settings.SOLR_COLLECTION):
-        if 'http://' not in solr_host and 'https://' not in solr_host:
+        if not solr_host.startswith('http://') and not solr_host.startswith('https://'):
             # forgiving of configurations
             solr_host = 'http://' + solr_host
         self.session = requests.Session()
