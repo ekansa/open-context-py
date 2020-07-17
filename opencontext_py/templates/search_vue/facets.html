@@ -88,20 +88,10 @@
 
 <template id="facets-xfacet-xdtype-xgroup-xopt-template">
     <li v-bind:class="get_class()">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-xs-7 f-opt-label">
-                    <router-link :to="option.id" :id="option.dom_key" :class="'f-op-l' + option.dom_key" :title="'Filter by: ' + option.label" >[[option.label]]</router-link>
-                </div>
-                <div class="col-xs-2">
-    
-                    <a v-if="option['rdfs:isDefinedBy']" :href="option['rdfs:isDefinedBy']" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
-                </div>
-                <div class="col-xs-3 f-count">
-                    <span class="badge">[[option.count]]</span>
-                </div>
-            </div>
-        </div>
+        <router-link :to="option.id" :id="option.dom_key" :class="'f-op-l' + option.dom_key" :title="'Filter by: ' + option.label" >[[option.label]]</router-link>
+        <a v-if="option['rdfs:isDefinedBy']" :href="option['rdfs:isDefinedBy']" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
+                
+        <span class="badge badge-secondary badge-pill">[[option.count]]</span>
     </li>
 </template>
 
@@ -123,10 +113,10 @@ var vc_xfacet_xdtype_xgroup_xopt = Vue.component(
         methods: {
             get_class: function (){
                 if(this.index > 0){
-                    return 'list-group-item f-opt';
+                    return 'list-group-item d-flex justify-content-between align-items-center';
                 }
                 else{
-                    return 'list-group-item f-opt-top';
+                    return 'list-group-item d-flex justify-content-between align-items-center';
                 }
             }
         },
