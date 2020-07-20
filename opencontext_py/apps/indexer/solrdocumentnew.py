@@ -1272,6 +1272,27 @@ sd_obj_l.fields
                     pred_key,
                     pred_value_objects
                 )
+    
+    def _is_object_linked_data(self, 
+        object_uri, 
+        allowed_oc_types=['persons', 'vocabularies', 'tables']):
+        """Checks if an object_uri is linked data or an allowed Open Context item_type"""
+        if not object_uri:
+            # Not an object URI so return false.
+            return False
+        # Attempt to parse the object_uri as an OC uri.
+        oc_dict = URImanagement.get_uuid_from_oc_uri(
+            object_uri, 
+            return_type=True
+        )
+        if not oc_dict:
+            # Not an Open Context URI, which makes the object_uri
+            # outside linked data.
+            return True
+        if oc_dict['item_type'] in allowed_oc_types:
+            # It is an Open Context URI, but of an allowed type
+            return True
+        return False
 
     def _add_object_uri(self, object_uri):
         """ Processes object URIs for inferred linked object entities"""
@@ -1280,6 +1301,10 @@ sd_obj_l.fields
         # indexed by solr).
         if not object_uri or not object_uri.startswith('http'):
             # We don't have an object_uri to add.
+            return None
+        if not self._is_object_linked_data(object_uri):
+            # This is not an object_uri for something that we
+            # want to index as linked data.
             return None
         if 'object_uri' not in self.fields:
             self.fields['object_uri'] = []
@@ -1333,8 +1358,18 @@ sd_obj_l.fields
             # Add the dicts of linked data entity objects
             # together with the list of object literal values to make
             # a consoloidated linked data object list.
-            ld_object_list = [obj for _, obj in assertion['ld_objects'].items()]
-            ld_object_list += [obj for _, obj in assertion['oc_objects'].items()]
+            ld_object_list = [
+                obj for _, obj in assertion['ld_objects'].items()
+                # Limit adding objs to those that we want to treat as
+                # linked data.
+                if self._is_object_linked_data(obj.get('id'))
+            ]
+            ld_object_list += [
+                obj for _, obj in assertion['oc_objects'].items()
+                # Limit adding objs to those that we want to treat as
+                # linked data.
+                if self._is_object_linked_data(obj.get('id'))
+            ]
             ld_object_list += assertion['literals']
             
             # Add the predicate label to the text string to help

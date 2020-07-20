@@ -43,6 +43,7 @@ def process_solr_query(request_dict):
     result_maker.create_result(
         solr_json=solr_response
     )
+    result_maker.result['query'] = query
     return result_maker.result
 
 
@@ -106,7 +107,7 @@ def query_html(request, spatial_context=None):
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
-    response_dict = process_solr_query(request_dict)
+    response_dict = process_solr_query(request_dict.copy())
     
     req_neg = RequestNegotiation('text/html')
     req_neg.supported_types = [
@@ -135,11 +136,13 @@ def query_html(request, spatial_context=None):
         return make_json_response(request, req_neg, response_dict)
 
     rp = RootPath()
-    search_temp = SearchTemplate(response_dict.copy())
+    # Disable the search template and just use vue with the JSON
+    # API.
+    # search_temp = SearchTemplate(response_dict.copy())
     context = {
-        'st': search_temp.result,
+        'st': response_dict.copy(),
         'base_url': rp.get_baseurl(),
-        'api_url': search_temp.result['id'],
+        'api_url': response_dict.get('id'),
         'configs': configs,
     }
     template = loader.get_template('search_vue/view.html')
