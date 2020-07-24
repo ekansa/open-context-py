@@ -214,21 +214,25 @@ class CandidateMedia():
             self.label = imp_cell_obj.record
         if self.label is not False:
             match_found = self.match_against_manifest(self.label)
+            print('Found media item by label: {} {}'.format(self.label, match_found))
             if match_found is False:
                 # create new subject, manifest objects. Need new UUID, since we can't assume
                 # the fl_uuid for the ImportCell reflects unique entities in a field, since
                 # uniqueness depends on context (values in other cells)
+                sup_metadata = None
+                if self.metadata_obj is not None:
+                    sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
+                                                                    imp_cell_obj.row_num)
+                    meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+                    if isinstance(meta_uuid, str):
+                        # use the uuid in the metadata!
+                        print('Found media label: {} has import specified uuid: {}'.format(self.label, meta_uuid))
+                        self.uuid = meta_uuid
                 if self.mint_new_entity_ok:
                     self.new_entity = True
-                    sup_metadata = None
-                    self.uuid = GenUUID.uuid4()
-                    if self.metadata_obj is not None:
-                        sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
-                                                                      imp_cell_obj.row_num)
-                        meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
-                        if isinstance(meta_uuid, str):
-                            # use the uuid in the metadata!
-                            self.uuid = meta_uuid
+                    if not sup_metadata or not self.uuid:
+                        # Not found via sup_metadata
+                        self.uuid = GenUUID.uuid4()
                     self.create_media_item(sup_metadata)
         self.update_import_cell_uuid()
 
