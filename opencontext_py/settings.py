@@ -191,8 +191,9 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
     
-    # Save this for later.
-    # 'opencontext_py.apps.ocitems.newmanifest',
+    # Save this for later. This is for experimental
+    # work refactoring the postgres schema
+    # 'opencontext_py.apps.all_items',
     
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.events',
