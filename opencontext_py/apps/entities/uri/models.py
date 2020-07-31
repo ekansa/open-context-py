@@ -32,18 +32,35 @@ class URImanagement():
 
     def get_uuid_from_oc_uri(uri, return_type=False):
         """ Gets a UUID and, if wanted item type from an Open Context URI """
+        if not isinstance(uri, str):
+            return False
         http_start = settings.CANONICAL_HOST.replace('https://', 'http://')
         https_start = settings.CANONICAL_HOST.replace('http://', 'https://')
-        if not (uri.startswith(http_start) or
-                uri.startswith(https_start)):
+        if not uri.startswith(http_start) and not uri.startswith(https_start):
+            # We're not in the Open context domain. So no UUID to be had.
             return False
+        if uri.endswith('/'):
+            # Trim off a tailing suffix
+            uri = uri[0:-1]
         uri_parts = uri.split('/')
-        uuid = uri_parts[(len(uri_parts) - 1)]
-        item_type = uri_parts[(len(uri_parts) - 2)]
-        if(item_type in (item[0] for item in settings.ITEM_TYPES)):
+        if len(uri_parts) < 5:
+            # Not an Open Context URI. Wrong number of parts.
+            return False
+        item_type = uri_parts[3]
+        if item_type == 'vocabularies' or len(uri_parts) > 5:
+            # No UUID for this, it is from an item type that does not
+            # have our normal identifier.
+            return False
+        else:
+            uuid = uri_parts[4]
+        item_types = [t for t, _ in settings.ITEM_TYPES]
+        if item_type not in item_types:
+            # This is not an Open Context item type
+            return False
             # Checks to make sure the item is an OC item type
-            if return_type:
-                return {'item_type': item_type, 'uuid': uuid}
+        if return_type:
+            return {'item_type': item_type, 'uuid': uuid}
+        else:
             return uuid
 
     def make_oc_uri(uuid_or_slug, item_type, do_cannonical=True, do_https=False):

@@ -358,7 +358,8 @@ class ResultMaker():
     def add_filters_json(self):
         """Adds JSON describing currently used query filters"""
         search_filters = SearchFilters(
-            base_search_url=self.base_search_url
+            base_search_url=self.base_search_url,
+            current_filters_url=self.current_filters_url,
         )
         filters = search_filters.add_filters_json(self.request_dict)
         if len(filters) > 0:

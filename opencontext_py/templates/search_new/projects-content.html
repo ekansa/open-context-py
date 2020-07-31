@@ -1,0 +1,55 @@
+{% load humanize %}
+<div id="search-content">
+    <div class="row">
+        <div class="col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h3 class="panel-title"><span id="map-title">Map</span></h3>
+                        </div>
+                        <div class="col-sm-1" id="map-title-suffix">
+                        </div>
+                        <div class="col-sm-1">
+                        </div>
+                        <div class="col-sm-4 text-right" id="map-title-num">
+                            <h3 class="panel-title">{{ st.total_count|intcomma }} projects</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="main-map" id="home-map" style="min-height: 500px;"> </div>
+            </div>  
+        </div>
+        <div class="col-sm-4">
+            {% include 'search/text-search.html' %}
+            {% include 'search/filters.html' %}
+            {% include 'search/facets.html' %}
+        </div>
+    <div class="row" style="margin-bottom: -15px;">
+        <div class="col-sm-8">
+            
+        </div>
+        <div class="col-sm-4" style="padding-right: 30px; text-align: right;">
+            <!-- {% include 'search/paging.html' %} -->
+        </div>
+    </div>
+    <div class="row" style="padding-top: 0px;">
+        <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
+            {% include 'search/projects-records.html' %}
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        <!--
+            var base_url = "{{ base_url }}";
+            var project_map = new project_map("home-map", "{{ json_url }}");
+            project_map.map.show_time_ranges = false; // don't show time ranges in the popup
+            project_map.map.show_browse_count = false; // don't show counts for browse option in popup
+            project_map.map.color_list = ['#0088CC',
+                                          '#6E5FCC',
+                                          '#002A66'];
+            project_map.map.get_geojson();
+        -->
+    </script>
+    
+</div>

@@ -1,0 +1,153 @@
+{% load humanize %}
+
+
+<template id="filter-list-template">
+<div v-if="grouped_filters">
+    <div class="panel-group" id="acc-filters" v-if="!grouped_filters.length">
+        <div class="panel panel-info">
+            <div class="panel-heading"> 
+                <h4 class="panel-title">
+                    Search Filters
+                </h4>
+            </div>
+            <div id="panel-filters" class="panel">
+                <div class="panel-body small">
+                    Collection is not filtered. Select query options below.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-group" id="acc-filters" v-if="grouped_filters.length">
+        <div class="panel panel-info">
+            <div class="panel-heading"> 
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#acc-filters" href="#panel-filters">
+                        <span class="glyphicon glyphicon-resize-vertical"></span>
+                        Applied Filters
+                    </a>
+                </h4>
+            </div>
+             
+            <div id="panel-filters" class="panel-collapse collapse in">
+                <div class="container-fluid small">
+                <filter-item
+                    v-for="(filter_group, index) in grouped_filters"
+                    v-bind:key="filter_group.key"
+                    v-bind:filter_group="filter_group"
+                    v-bind:index="index"
+                ></filter-item>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</template>
+
+
+<template id="filter-item-template">
+<div>
+    <div class="row act-filter-type">
+        <div class="col-xs-12">
+            <strong>[[ filter_group.label ]]</strong>
+        </div>
+    </div>
+    <div class="row act-filter-val-row">
+        <div class="col-xs-1">
+            <a title="Remove this filter" :href="filter_group.remove_href">
+
+                <img alt="remove icon" style="height: 0.8em; padding-bottom:0.1em; padding-right:0.1em; fill:#007bff;"
+                    src="/static/bootstrap-vue/bootstrap/bootstrap-icons/x-circle-fill.svg"
+                />
+            </a>
+        </div>
+        <div class="col-xs-10 act-filter-val" v-for="(filter, index) in filter_group.filters">
+            <span v-if="index != 0">[[filter_group.path_delim]]</span>
+            <!-- 
+                <a :title="'Broaden to all: ' + filter.label" :href="filter['oc-api:broaden']">[[filter.label]]</a>
+            -->
+
+            <router-link v-if="filter['oc-api:broaden']" :title="'Broaden to all: ' + filter.label" :to="filter['oc-api:broaden']">[[filter.label]]</router-link>
+            <span v-if="!filter['oc-api:broaden']">[[filter.label]]</span>
+        </div>
+        <div class="col-xs-1">
+        </div>
+    </div>
+</div>
+</template>
+
+
+<script type="text/javascript">
+
+// Passed from the Django template
+var DEFAULT_FILTER_GROUP_DELIM = '{{ configs.FILTER_HIERARCHY_DEFAULT_DELIM }}';
+var FILTER_HIERARCHY_DELIMS = {{ configs.FILTER_HIERARCHY_DELIMS|safe }} ;
+
+var vc_filter_item = Vue.component(
+    'filter-item',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['filter_group', 'index'],
+        template: '#filter-item-template',
+    }
+);
+var vc_all_filters = Vue.component(
+    'all-filters',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['grouped_filters'],
+        template: '#filter-list-template',
+        components: {
+            'filter-item': vc_filter_item
+        }
+    }
+);
+
+
+
+function group_filters(result){
+    console.log(result);
+    var grouped_filters = []; //main output.
+    var group_keys = []; //used for ordering filter groups predictably
+    var temp_groups = {}; //used for grouping filters togther.
+    if (!('oc-api:active-filters' in result)){
+        return grouped_filters;
+    }
+    for (let raw_filter of result['oc-api:active-filters']){
+        console.log(raw_filter);
+        var group_key = null;
+        if (!('oc-api:filter-group' in raw_filter)){
+            group_key = raw_filter['id'];
+        }
+        else{
+            group_key = raw_filter['oc-api:filter-group'];
+        }
+        if(!(group_key in temp_groups)){
+            group_keys.push(group_key);
+            var path_delim = DEFAULT_FILTER_GROUP_DELIM;
+            if((raw_filter['oc-api:filter'] in FILTER_HIERARCHY_DELIMS)){
+                path_delim = FILTER_HIERARCHY_DELIMS[raw_filter['oc-api:filter']];
+            }
+            temp_groups[group_key] = {
+                'label': raw_filter['oc-api:filter'],
+                'key': abs_to_rel_url(raw_filter['oc-api:remove']),
+                'remove_href': abs_to_rel_url(raw_filter['oc-api:remove']),
+                'path_delim': path_delim,
+                'filters': []
+            };
+        }
+        if(('oc-api:broaden' in raw_filter)){
+            raw_filter['key'] =  abs_to_rel_url(raw_filter['oc-api:broaden']);
+            raw_filter['oc-api:broaden'] =  abs_to_rel_url(raw_filter['oc-api:broaden']);
+        }
+        temp_groups[group_key]['filters'].push(raw_filter);
+    }
+    // Order by the order of group_keys list.
+    for (let group_key of group_keys){
+        var filter_group = temp_groups[group_key];
+        grouped_filters.push(filter_group);
+    }
+    return grouped_filters;
+}
+
+</script>

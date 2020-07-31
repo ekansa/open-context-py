@@ -37,54 +37,50 @@ class BinaryFiles():
         file_name = None
         slug = man_obj.slug
         file_uri = self.get_archive_fileuri(json_ld)
-        if isinstance(file_uri, str):
-            # we have a file
-            if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
-                # get a local copy of the file, not a remote copy
-                file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
-                if 'https://' in self.remote_uri_sub:
-                    # so we also replace the https or http version of the remote with a local
-                    alt_remote_sub = self.remote_uri_sub.replace('https://', 'http://')
-                    file_uri = file_uri.replace(alt_remote_sub, self.local_uri_sub)
-            if '.' in file_uri:
-                file_ex = file_uri.split('.')
-                file_name = slug + '.' + file_ex[-1]
-            else:
-                file_name = slug
-            file_ok = self.get_cache_remote_file_content(file_name, file_uri)
-            if file_ok is False:
-                file_name = False
-                error_msg = 'UUID: ' + man_obj.uuid + ' file_uri: ' + file_uri
-                error_msg += ' file caching error.'
-                self.errors.append(error_msg)
+        if not file_uri:
+            import pdb; pdb.set_trace()
+            print('Cannot find a file_uri in {} [{}]'.format(man_obj.label, man_obj.uuid))
+            return None
+        # We found a file uri.
+        if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
+            # get a local copy of the file, not a remote copy
+            file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
+            if 'https://' in self.remote_uri_sub:
+                # so we also replace the https or http version of the remote with a local
+                alt_remote_sub = self.remote_uri_sub.replace('https://', 'http://')
+                file_uri = file_uri.replace(alt_remote_sub, self.local_uri_sub)
+        if '.' in file_uri:
+            file_ex = file_uri.split('.')
+            file_name = slug + '.' + file_ex[-1]
+        else:
+            file_name = slug
+        file_ok = self.get_cache_remote_file_content(file_name, file_uri)
+        if not file_ok:
+            file_name = False
+            error_msg = 'UUID: ' + man_obj.uuid + ' file_uri: ' + file_uri
+            error_msg += ' file caching error.'
+            self.errors.append(error_msg)
         return file_name
             
     def get_full_fileuri(self, json_ld):
         """ gets the full file uri """
-        file_uri = None
-        if 'oc-gen:has-files' in json_ld:
-            for f_obj in json_ld['oc-gen:has-files']:
-                if f_obj['type'] == 'oc-gen:fullfile':
-                    file_uri = f_obj['id']
-                    break
-        return file_uri
+        if not 'oc-gen:has-files' in json_ld:
+            return None
+        for f_obj in json_ld['oc-gen:has-files']:
+            if f_obj['type'] == 'oc-gen:fullfile':
+                return f_obj['id']
+        return None
     
     def get_archive_fileuri(self, json_ld):
         """ gets the full file uri """
-        file_uri = None
-        if 'oc-gen:has-files' in json_ld:
+        if not 'oc-gen:has-files' in json_ld:
+            return None
+        if self.pref_tiff_archive:
             for f_obj in json_ld['oc-gen:has-files']:
-                if self.pref_tiff_archive:
-                    if f_obj['type'] == 'oc-gen:archive':
-                        file_uri = f_obj['id']
-                        break
-            if file_uri is None:
-                # no TIFF archive file found, so use the full-file
-                for f_obj in json_ld['oc-gen:has-files']:
-                    if f_obj['type'] == 'oc-gen:fullfile':
-                        file_uri = f_obj['id']
-                        break
-        return file_uri
+                if f_obj['type'] == 'oc-gen:archive':
+                    return f_obj['id']
+        # no TIFF archive file found, so use the full-file
+        return self.get_full_fileuri(json_ld)
                 
     def get_cache_remote_file_content(self, file_name, file_uri, act_dir=None):
         """ either uses an HTTP request to get a remote file

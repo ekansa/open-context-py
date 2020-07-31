@@ -1,0 +1,95 @@
+
+{% if st.oc_api__has_text_search|length > 0 %}
+    <div class="panel-group" id="acc-text-search">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                {% if st.oc_api__has_text_search|length > 1 %}
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#acc-text-search" href="#panel-textsearch">
+                        <span class="glyphicon glyphicon-resize-vertical"></span>
+                        Text Search Options
+                    </a>
+                </h4>
+                {%else%}
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#acc-text-search" href="#panel-textsearch">
+                        <span class="glyphicon glyphicon-resize-vertical"></span>
+                        {{ st.oc_api__has_text_search.0.label }}
+                        {% if item_type == 'subjects' %}
+                        (Data Records)
+                        {%elif item_type == 'media' %}
+                        (Media)
+                        {%elif item_type == 'projects' %}
+                        (Projects)
+                        {%else%}
+                        
+                        {%endif%}
+                    </a>
+                </h4>
+                {%endif%}
+            </div>
+            <div id="panel-textsearch" class="panel-collapse collapse in">
+                <div class="panel-body">
+                {% if st.oc_api__has_text_search|length > 1 %}
+                {% for ts_opt in st.oc_api__has_text_search %}    
+                    <div class="form-group">
+                        <label for="input-{{ ts_opt.id }}">{{ ts_opt.label }}</label>
+                        <div class="input-group">
+                            <input title="Further filter by text search" type="text" class="form-control" id="input-{{ ts_opt.id }}" placeholder="{% if ts_opt.term != False %}{{ ts_opt.term }}{%else%}Search within these items...{%endif%}" onkeypress="entercheck(event, this)" />
+                            <span class="input-group-btn">
+                                <button id="bttn-{{ ts_opt.id }}" class="btn btn-default" type="button" onclick="javascript:tsearch('{{ ts_opt.id }}');" title="Request this text filter">
+                                    <span class="glyphicon glyphicon-zoom-in "></span>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %} 
+                {%else%}
+                <div class="input-group">
+                    <input id="href-{{ st.oc_api__has_text_search.0.id }}" type="hidden" value="{{ st.oc_api__has_text_search.0.href }}" />
+                    <input title="Further filter by text search" type="text" class="form-control" id="input-{{ st.oc_api__has_text_search.0.id }}" placeholder="{% if st.oc_api__has_text_search.0.term != False %}{{ st.oc_api__has_text_search.0.term }}{%else%}Search within these items...{%endif%}" onkeypress="entercheck(event, this)"/>
+                    <span class="input-group-btn">
+                        <button id="bttn-{{ st.oc_api__has_text_search.0.id }}" class="btn btn-default" type="button" onclick="javascript:tsearch('{{ st.oc_api__has_text_search.0.id }}');" title="Request this text filter">
+                            <span class="glyphicon glyphicon-zoom-in"></span>
+                        </button>
+                    </span>
+                </div>
+                {%endif%}
+                </div>
+            </div>
+        </div>
+        
+        
+        <script type="text/javascript">
+            <!--
+            function entercheck(event, dom){
+                if (event.which == 13 || event.keyCode == 13){
+                    var ts_id = dom.id.replace("input-", "");
+                    tsearch(ts_id);
+                }
+            }
+            function tsearch(ts_id){
+                var input_id = 'input-' + ts_id;
+                var href_id = 'href-' + ts_id;
+                var searchterm = false;
+                var href = false;
+                if (document.getElementById(input_id)) {
+                    searchterm = encodeURIComponent(document.getElementById(input_id).value);
+                    if (searchterm.length < 1) {
+                        searchterm = false;
+                    }
+                }
+                if (document.getElementById(href_id)) {
+                    href = document.getElementById(href_id).value;
+                }
+                if (href != false && searchterm != false) {
+                    var url = href.replace("{SearchTerm}", searchterm);
+                    window.location = url;
+                }
+            }
+            -->
+        </script>
+    </div>
+{%endif%}
+
+

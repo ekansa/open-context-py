@@ -153,7 +153,7 @@ class SearchLinks():
     ):
         """Replaces a request parameter value in a request object"""
         if param is None:
-            return None     
+            return None
         if not self.request_dict:
             self.request_dict = {}
         if not param in self.request_dict:

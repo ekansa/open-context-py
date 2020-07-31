@@ -7,6 +7,9 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 # with solr search / query features.
 # ---------------------------------------------------------------------
 
+# If this is True, we're using a test solr instance, if False, we
+# connect to the default solr server.
+USE_TEST_SOLR_CONNECTION = True
 
 REQUEST_CONTEXT_HIERARCHY_DELIM = '/'
 REQUEST_PROP_HIERARCHY_DELIM = '---'
@@ -681,6 +684,9 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
     'double': 'oc-api:has-float-options',
     'date': 'oc-api:has-date-options',
     'string': 'oc-api:has-text-options',
+    # This is not a data-type, but is convenient to include
+    # here to assist in HTML templating.
+    'media': 'oc-api:has-rel-media-options',
 }
 
 
@@ -707,3 +713,112 @@ REQUEST_ALL_LD_ATTRIBUTES = 'ALL-STANDARD-LD'
 # Client request values for all project specific attributes
 # on each record
 REQUEST_ALL_PROJ_ATTRIBUTES ='ALL-PROJECT'
+
+
+
+# ---------------------------------------------------------------------
+# Configs for front-end (HTML) organization of search facets
+# ---------------------------------------------------------------------
+FILTER_HIERARCHY_DEFAULT_DELIM = ' :: '
+
+# Dictionary keyed by 'oc-api:filter' for delimiters of broader filters
+# in a hierarchy.
+FILTER_HIERARCHY_DELIMS = {
+    'Context': ' / ',
+}
+
+FACET_OPT_SUB_HEADING_DEFAULT = ([], 'Other Attributes',)
+
+FACET_OPT_ORDERED_SUB_HEADINGS = [
+    (
+        ['http://opencontext.org/vocabularies/dinaa/'], 
+        'N. American Site (DINAA)',
+    ),
+    (
+        ['http://purl.obolibrary.org/obo/FOODON_00001303'], 
+        'Standard Biological',
+    ),
+    (
+        ['http://opencontext.org/vocabularies/open-context-zooarch/'],
+        'Standard Zooarchaeological',
+    ),
+    (
+        ['http://erlangen-crm.org/'], 
+        'Standard Cultural (CIDOC-CRM)',
+    ),
+    (
+        [
+            'http://purl.org/dc/terms/references',
+            'http://purl.org/dc/terms/isReferencedBy',
+        ],
+        'Cross-References',
+    ),
+    (
+        ['http://id.loc.gov/authorities/subjects/'],
+        'Library of Congress (LoC)',
+    ),
+    (
+        ['http://vocab.getty.edu/aat/'], 
+        'Getty Art and Architecture Thesaurus',
+    ),
+    (   
+        ['http://collection.britishmuseum.org'],
+        'British Museum Terms',
+    ),
+    (   
+        ['http://geonames.org/'], 
+        'Geonames (Gazetteer)',
+    ),
+    (   
+        ['http://pleiades.stoa.org/'], 
+        'Pleiades (Ancient Places Gazetteer)',
+    ),
+    (
+        ['http://levantineceramics.org/wares/'], 
+        'Levantine Ceramics Wares',
+    ),
+    (
+        ['http://wikipedia.org/'],
+        'Wikipedia Topics',
+    ),
+    (   
+        ['http://purl.org/NET/biol/ns#term_hasTaxonomy'],
+        '(Deprecated) Biological',
+    ),
+    FACET_OPT_SUB_HEADING_DEFAULT,
+]
+
+# This is the above list, but as dicts not tuples for easier use
+# in javascript.
+FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = [
+    {'uris':uri_list, 'label': label} 
+    for uri_list, label in FACET_OPT_ORDERED_SUB_HEADINGS
+]
+FACETS_OPTIONS_LISTS_AND_DATA_TYPES = [
+    {'data_type': k, 'list_key': v} 
+    for k,v in FACETS_DATA_TYPE_OPTIONS_LISTS.items()
+] 
+
+
+FACET_OPT_SUB_HEADING_URI_MAPS = {
+    'http://purl.obolibrary.org/obo/FOODON_00001303': 'Standard Biological',
+    'http://purl.org/NET/biol/ns#term_hasTaxonomy': '(Deprecated) Biological',
+    'http://purl.org/dc/terms/references': 'Cross-References',
+    'http://purl.org/dc/terms/isReferencedBy': 'Cross-References',
+}
+
+FACET_OPT_HIDE_URI_MAPS = [
+    'http://purl.org/NET/biol/ns#term_hasTaxonomy',
+    'http://www.w3.org/2004/02/skos/core#closeMatch',
+    'http://purl.org/dc/terms/subject',
+    'http://www.wikidata.org/wiki/Q247204',
+    'http://www.w3.org/2004/02/skos/core#related',
+    'http://purl.org/dc/terms/isPartOf',
+    'http://purl.org/dc/terms/hasPart'
+]
+
+FACET_OPT_HIDE_URI_PREFIX_MAPS = [
+            
+]
+
+

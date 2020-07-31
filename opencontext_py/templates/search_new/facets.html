@@ -1,0 +1,89 @@
+{% load humanize %}
+{% if st.oc_api__has_facets|length > 0 %}
+    <h3>Filtering Options</h3>
+    <div class="panel-group" id="acc-facets">
+    {% for f_field in st.oc_api__has_facets %}
+        {% for op_type, op_obj in f_field.option_types.items %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="pull-right panel-title" id="opts-control-{{ op_obj.temp_id }}">
+                        <a class="or-options-toggle" id="opts-show-{{ op_obj.temp_id }}"
+                           onclick="oc_facets.show_options('{{ f_field.id }}', '{{ op_type }}');" title="Select multiple options">
+                            <span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>
+                        </a>
+                        <a style="display:none;" id="opts-do-{{ op_obj.temp_id }}"
+                           class="text-primary"
+                           onclick="oc_facets.search_options('{{ f_field.id }}', '{{ op_type }}');" title="Search selected options">
+                            <span class="glyphicon glyphicon-search text-primary" aria-hidden="true"></span>
+                        </a>
+                    </h4>
+                    <h4 class="panel-title">
+                        <a class="text-left" data-toggle="collapse" data-parent="#acc-facets" href="#panel-{{ op_obj.temp_id }}">
+                            <span class="glyphicon glyphicon-resize-vertical"></span>
+                            {% if op_type == 'numeric' %}
+                                Numeric {{ f_field.label }}
+                            {% elif op_type == 'bool' %}
+                                Boolean (True/False) {{ f_field.label }}
+                            {% elif op_type == 'int' %}
+                                Integer {{ f_field.label }}
+                            {% elif op_type == 'double' %}
+                                Decimal {{ f_field.label }}
+                            {% elif op_type == 'date' %}
+                                Date {{ f_field.label }}
+                            {% elif op_type == 'string' %}
+                                Text {{ f_field.label }}
+                            {% else %}
+                                {{ f_field.label }}
+                            {%endif%}
+                        </a>
+                    </h4>
+                </div>
+                {% if forloop.counter == 1 and f_field.facet_field_index == 1 %} 
+                <div id="panel-{{ op_obj.temp_id }}" class="panel-collapse collapse in">
+                {%else%}
+                <div id="panel-{{ op_obj.temp_id }}" class="panel-collapse collapse">
+                {%endif%}
+                    <div id="all-m-ops-{{ op_obj.temp_id }}"></div>
+                    <ul class="list-group f-opt-list" id="s-ops-{{ op_obj.temp_id }}">
+                    {% if op_type in 'id,media' and op_obj.grp_options|length > 0 %} 
+                    {% for grp_opts_dict in op_obj.grp_options %}
+                        {% if grp_opts_dict.opt_group_label %}
+                        <li class="list-group-item list-group-item-info f-sub-group">
+                            <small><strong>{{  grp_opts_dict.opt_group_label }}</strong></small>
+                        </li>
+                        {% endif %}
+                        {% for option in grp_opts_dict.options %}
+                            {% with dom_id=option.dom_id %}
+                            {% with href=option.id %}
+                            {% with label=option.label %}
+                            {% with opt_count=option.count %}
+                            {% with defined_by=option.rdfs__isdefinedby %}
+                            {% with l_count=forloop.counter %}
+                            {% with field_temp_id=op_obj.temp_id %}
+                            {% include './facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                        {% endfor %}
+                    {% endfor %}
+                    {% endif %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+    </div>
+            
+    <script type="text/javascript" src="{{ base_url }}/static/oc/js/apis/opencontext-facets.js"></script>
+    <script>
+        var oc_facets = new OpenContextFacetsAPI();
+    </script>       
+            
+            
+{%endif%}
+
+

@@ -1,0 +1,22 @@
+{% load humanize %}
+{% if l_count == 1 %}
+<li class="list-group-item f-opt-top">
+{%else%}
+<li class="list-group-item f-opt">
+{%endif%}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-7 f-opt-label">
+                <a class="f-op-l-{{ field_temp_id }}" id="{{ dom_id }}" href="{{ href }}" data-count="{{ opt_count }}">{{ label }}</a>
+            </div>
+            <div class="col-xs-2">
+                {% if defined_by %}
+                <a href="{{ defined_by }}" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
+                {%endif%}
+            </div>
+            <div class="col-xs-3 f-count">
+                <span class="badge">{{ opt_count|intcomma }}</span>
+            </div>
+        </div>
+    </div>
+</li>

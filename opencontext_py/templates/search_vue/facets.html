@@ -1,0 +1,364 @@
+{% load humanize %}
+
+
+<template id="all-facets-template">
+<div v-if="facets_dtypes_groups_opts">
+    <div v-if="facets_dtypes_groups_opts.length">
+        <h3>Filtering Options</h3>
+        <div class="panel-group" id="acc-facets">
+            <facets-xfacet-dtypes-groups-opts
+                v-for="(xfacet_dtypes_groups_opts, index) in facets_dtypes_groups_opts"
+                v-bind:key="xfacet_dtypes_groups_opts.key"
+                v-bind:facet_id="xfacet_dtypes_groups_opts.id"
+                v-bind:facet_label="xfacet_dtypes_groups_opts.label"
+                v-bind:xfacet_dtypes_groups_opts="xfacet_dtypes_groups_opts"
+                v-bind:index="index">
+            </facets-xfacet-dtypes-groups-opts>
+        </div>
+    </div>
+</div>
+</template>
+
+<template id="facets-xfacet-dtypes-groups-opts-template">
+<div>
+    <facets-xfacet-xdtype-groups-opts
+        v-for="(xfacet_xdtype_groups_opts, index) in xfacet_dtypes_groups_opts.dtypes_groups_opts"
+        v-bind:key="xfacet_xdtype_groups_opts.key"
+        v-bind:dom_key="xfacet_xdtype_groups_opts.key"
+        v-bind:facet_id="facet_id"
+        v-bind:facet_label="facet_label"
+        v-bind:xfacet_xdtype_groups_opts="xfacet_xdtype_groups_opts"
+        v-bind:index="index">
+    </facets-xfacet-xdtype-groups-opts>
+</div>
+</template>
+
+<template id="facets-xfacet-xdtype-groups-opts-template">
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4 class="pull-right panel-title" :id="dom_key">
+            <a class="or-options-toggle" :id="'opts-show-' + dom_key"
+                title="Select multiple options">
+                <span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>
+            </a>
+            <a style="display:none;" :id="'opts-do-' + dom_key"
+                class="text-primary"
+                title="Search selected options">
+                <span class="glyphicon glyphicon-search text-primary" aria-hidden="true"></span>
+            </a>
+        </h4>
+        <h4 class="panel-title">
+            <a class="text-left" data-toggle="collapse" data-parent="#acc-facets" :href="'#panel-' + dom_key">
+                <span class="glyphicon glyphicon-resize-vertical"></span>
+                [[facet_label]]
+            </a>
+        </h4>
+    </div>
+    <div :id="'panel-' + [[dom_key]]" class="panel-collapse collapse in">
+        <ul class="list-group f-opt-list" :id="'s-ops-'+ [[dom_key]]">
+        <facets-xfacet-xdtype-xgroup-opts
+            v-for="(xfacet_xdtype_xgroup_opts, index) in xfacet_xdtype_groups_opts.groups_opts"
+            v-bind:key="xfacet_xdtype_xgroup_opts.key"
+            v-bind:dom_key="xfacet_xdtype_xgroup_opts.key"
+            v-bind:facet_id="facet_id"
+            v-bind:facet_label="facet_label"
+            v-bind:xfacet_xdtype_xgroup_opts="xfacet_xdtype_xgroup_opts"
+            v-bind:index="index">
+        </facets-xfacet-xdtype-xgroup-opts>
+        </ul>
+    </div>
+</div>
+</template>
+
+<template id="facets-xfacet-xdtype-xgroup-opts-template">
+    <div>
+        <li v-if="xfacet_xdtype_xgroup_opts.label" class="list-group-item list-group-item-info f-sub-group">
+            <small><strong>[[xfacet_xdtype_xgroup_opts.label]]</strong></small>
+        </li>
+        <facets-xfacet-xdtype-xgroup-xopt
+            v-for="(xfacet_xdtype_xgroup_xopt, index) in xfacet_xdtype_xgroup_opts.options"
+            v-bind:key="xfacet_xdtype_xgroup_xopt.key"
+            v-bind:dom_key="xfacet_xdtype_xgroup_xopt.key"
+            v-bind:option="xfacet_xdtype_xgroup_xopt"
+            v-bind:index="index">
+
+        </facets-xfacet-xdtype-xgroup-xopt>
+    </div>
+</template>
+
+<template id="facets-xfacet-xdtype-xgroup-xopt-template">
+    <li v-bind:class="get_class()">
+        <router-link :to="option.id" :id="option.dom_key" :class="'f-op-l' + option.dom_key" :title="'Filter by: ' + option.label" >[[option.label]]</router-link>
+        <a v-if="option['rdfs:isDefinedBy']" :href="option['rdfs:isDefinedBy']" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
+                
+        <span class="badge badge-secondary badge-pill">[[option.count]]</span>
+    </li>
+</template>
+
+
+
+<script type="text/javascript">
+
+// Passed from the Django template
+var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
+var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
+var FACETS_OPTIONS_LISTS_AND_DATA_TYPES = {{ configs.FACETS_OPTIONS_LISTS_AND_DATA_TYPES|safe }};
+
+var vc_xfacet_xdtype_xgroup_xopt = Vue.component(
+    'facets-xfacet-xdtype-xgroup-xopt',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['dom_key', 'option', 'index'],
+        template: '#facets-xfacet-xdtype-xgroup-xopt-template',
+        methods: {
+            get_class: function (){
+                if(this.index > 0){
+                    return 'list-group-item d-flex justify-content-between align-items-center';
+                }
+                else{
+                    return 'list-group-item d-flex justify-content-between align-items-center';
+                }
+            }
+        },
+        components: {
+            
+        }
+    }
+);
+
+var vc_xfacet_xdtype_xgroup_opts = Vue.component(
+    'facets-xfacet-xdtype-xgroup-opts',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['facet_id', 'facet_label', 'dom_key', 'xfacet_xdtype_xgroup_opts', 'index'],
+        template: '#facets-xfacet-xdtype-xgroup-opts-template',
+        components: {
+            'facets-xfacet-xdtype-xgroup-xopt': vc_xfacet_xdtype_xgroup_xopt,
+        }
+    }
+);
+
+var vc_xfacet_xdtype_groups_opts = Vue.component(
+    'facets-xfacet-xdtype-groups-opts',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['facet_id', 'facet_label', 'dom_key', 'xfacet_xdtype_groups_opts'],
+        template: '#facets-xfacet-xdtype-groups-opts-template',
+        components: {
+            'facets-xfacet-xdtype-xgroup-opts': vc_xfacet_xdtype_xgroup_opts,
+        }
+    }
+);
+
+var vc_xfacet_dtypes_groups_opts = Vue.component(
+    'facets-xfacet-dtypes-groups-opts',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['facet_id', 'facet_label', 'xfacet_dtypes_groups_opts'],
+        template: '#facets-xfacet-dtypes-groups-opts-template',
+        components: {
+            'facets-xfacet-xdtype-groups-opts': vc_xfacet_xdtype_groups_opts,
+        }
+    }
+);
+
+var vc_all_facets = Vue.component(
+    'all-facets',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['facets_dtypes_groups_opts'],
+        template: '#all-facets-template',
+        components: {
+            'facets-xfacet-dtypes-groups-opts': vc_xfacet_dtypes_groups_opts,
+        }
+    }
+);
+
+function make_all_url_variants(uri_list){
+    // Makes a list of all variants for uris in a list
+    var big_uri_list = [];
+    for (let act_uri of uri_list){
+        var act_uris = make_url_variants(act_uri);
+        for(let new_uri of act_uris){
+            if(big_uri_list.indexOf(new_uri) >= 0 ){
+                continue;
+            } else {
+                big_uri_list.push(new_uri);
+            }
+        }
+    }
+    return big_uri_list;
+}
+
+function is_uri_in_uri_list(uri, uri_list){
+    // Checks if a URI is in a list of URIs
+    var check_uri_list = make_url_variants(uri);
+    // Get the alternate HTTP, HTTPs variant of each item in the
+    // uri_list. That becomes the big_uri_list
+    var big_uri_list = make_all_url_variants(uri_list);
+    for (let check_uri of check_uri_list){
+        if(big_uri_list.indexOf(check_uri) >= 0){
+            // We found what we want. Skip out.
+            return true;
+        }
+    }
+    // No match.
+    return false;
+}
+
+function is_uri_in_prefix_match_list(uri, uri_prefix_list){
+    // Checks if a URI is in a list of URIs
+    var check_uri_list = make_url_variants(uri);
+    // Get the alternate HTTP, HTTPs variant of each item in the
+    // uri_list. That becomes the big_uri_list
+    var big_prefix_list = make_all_url_variants(uri_prefix_list);
+    for (let check_uri of check_uri_list){
+        for(let prefix_uri of big_prefix_list){
+            if(check_uri.startsWith(prefix_uri)){
+                // We found a matching prefix.
+                return true;
+            }
+        }
+    }
+    // No match.
+    return false;
+}
+
+function prepare_option(prefix, i, f_opt){
+    f_opt['key'] = `${prefix}-option-${i}`;
+    f_opt['dom_id'] = `${prefix}-option-${i}`;
+    f_opt['id'] = abs_to_rel_url(f_opt['id']);
+    return f_opt;
+}
+
+function prepare_options_list(dom_id_prefix, raw_options_list){
+    var prepare_options = [];
+    var i = 0;
+    for(let f_opt of raw_options_list){
+        i +=1;
+        f_opt = prepare_option(dom_id_prefix, i, f_opt);
+        prepare_options.push(f_opt);
+    }
+    return prepare_options;
+}
+
+function prep_id_media_options(dom_id_prefix, raw_options_list){
+    // Prepares facet options, grouped by configured vocabs / namespaces
+    var groups_opts = [];
+    var all_grouped_uris = [];
+    for(let group_config of FACET_OPT_ORDERED_SUB_HEADINGS_DICTS){
+        var act_group = {
+            'label': group_config.label,
+            'key': `${dom_id_prefix}-grp-${(groups_opts.length + 1)}`,
+            'options': [],
+        }
+        var i = 0;
+        for(let f_opt of raw_options_list){
+            i +=1;
+            var opt_uri = i;
+            f_opt = prepare_option(dom_id_prefix, i, f_opt);
+            if ('rdfs:isDefinedBy' in f_opt){
+                opt_uri = f_opt['rdfs:isDefinedBy'];
+            }
+            if (opt_uri === i && group_config.uris.length == 0){
+                // No uri identifier, and the group has no
+                // prefix uris so put into the catch-all.
+                act_group.options.push(f_opt);
+                all_grouped_uris.push(opt_uri);
+                continue;
+            }
+            if (opt_uri === i || all_grouped_uris.indexOf(opt_uri) >= 0 ){
+                // There's no opt_uri or we've already dealt with it.
+                continue;
+            }
+            if (is_uri_in_uri_list(opt_uri, FACET_OPT_HIDE_URI_MAPS)){
+                // This uri is configured for hiding.
+                all_grouped_uris.push(opt_uri);
+                continue;
+            }
+            if (group_config.uris.length == 0){
+                // No prefixes configured, so put it into the catch-all 
+                act_group.options.push(f_opt);
+                all_grouped_uris.push(opt_uri);
+                continue;
+            }
+            if (!(is_uri_in_prefix_match_list(opt_uri, group_config.uris))){
+                // This uri is not in the group prefix match, so
+                // don't do anything with it.
+                continue;
+            }
+            // We're at the point where the opt_uri has
+            // been found to belong to this particular group.
+            act_group.options.push(f_opt);
+            all_grouped_uris.push(opt_uri);
+        }
+
+        if(act_group.options.length === 0){
+            // We didn't find any options for this group, so
+            // just continue.
+            continue;
+        }
+        groups_opts.push(act_group);
+    }
+    if (groups_opts.length === 1){
+        // Only one group, so remove the label
+        groups_opts[0]['label'] = null;
+    }
+    return groups_opts;
+}
+
+function prepare_facets_dtypes_groups_opts(result){
+    // Prepares facet options lists for templates
+    var facets_dtypes_groups_opts = []; //main output.
+    if (!('oc-api:has-facets' in result)){
+        // Nothing to do, so skip out.
+        return facets_dtypes_groups_opts;
+    }
+    for (let f_field of result['oc-api:has-facets']){
+        f_field['id'] = remove_prefix(f_field['id'], '#');
+        f_field['key'] = f_field['id'];
+        f_field['dtypes_groups_opts'] = [];
+        for (let opts_conf of FACETS_OPTIONS_LISTS_AND_DATA_TYPES) {
+            if (!(opts_conf.list_key in f_field)){
+                // Nothing to do, so keep on looping to check for other kinds of
+                // options lists.
+                continue;
+            }
+
+            var act_options_list = f_field[opts_conf.list_key];
+            // Copy the opts_conf into act_dtype_groups_opts
+            var act_dtype_groups_opts = {
+                'data_type': opts_conf.data_type,
+                'key': `${f_field['id']}-dtype-${opts_conf.data_type}`,
+                'groups_opts': null,
+            };
+        
+            if(opts_conf.data_type == 'id' || opts_conf.data_type == 'media'){
+                act_dtype_groups_opts['groups_opts'] = prep_id_media_options(
+                    act_dtype_groups_opts.key, 
+                    act_options_list
+                );
+            }
+            else{
+                act_dtype_groups_opts['groups_opts'] = [
+                    // Only 1, un labeled group for non id or media type facet
+                    // options.
+                    {
+                        'label': null,
+                        'key': `${act_dtype_groups_opts.key}-grp-1`,
+                        'options': prepare_options_list(
+                            act_dtype_groups_opts.key, 
+                            act_options_list
+                        )
+                    }
+                ];
+            }
+            f_field['dtypes_groups_opts'].push(act_dtype_groups_opts);
+            f_field[opts_conf.list_key] = 'moved';
+        }
+        facets_dtypes_groups_opts.push(f_field);
+    }
+    return facets_dtypes_groups_opts;
+}
+
+</script>

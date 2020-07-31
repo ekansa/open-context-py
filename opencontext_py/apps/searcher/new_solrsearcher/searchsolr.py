@@ -47,7 +47,20 @@ class SearchSolr():
     
     def solr_connect(self):
         """ Connects to solr """
-        if self.solr is None:
+        if self.solr is not None:
+            # We are already connected, so skip connecting.
+            return None
+
+        if configs.USE_TEST_SOLR_CONNECTION:
+            # Connect to the testing solr server
+            self.solr = SolrConnection(
+                exit_on_error=False,
+                solr_host=settings.SOLR_HOST_TEST,
+                solr_port=settings.SOLR_PORT_TEST,
+                solr_collection=settings.SOLR_COLLECTION_TEST
+            ).connection
+        else:
+            # Connect to the default solr server
             self.solr = SolrConnection(False).connection
     
     def add_initial_facet_fields(self, request_dict):

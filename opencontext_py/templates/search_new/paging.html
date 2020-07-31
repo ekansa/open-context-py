@@ -1,0 +1,97 @@
+    <ul class="pagination navbar-nav navbar-right" >
+        
+        {% if st.paging.first is False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-step-backward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.first }}">
+                <span class="glyphicon glyphicon-step-backward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+        
+        {% if st.paging.previous is False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-backward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.previous }}">
+                <span class="glyphicon glyphicon-backward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+    
+        {% if st.paging.next is False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-forward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.next }}">
+                <span class="glyphicon glyphicon-forward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+    
+        {% if st.paging.last is False or st.paging.next is False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-step-forward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.last }}">
+                <span class="glyphicon glyphicon-step-forward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+        <li role="presentation" class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown"
+               href="#"
+               role="button" aria-haspopup="true"
+               title="Options to search sort results"
+               aria-expanded="false">
+                <span class="glyphicon glyphicon-sort-by-attributes" aria-hidden="true"></span> Sort<span class="caret"></span>
+                <ul class="dropdown-menu">
+                {% for sort_obt in st.sort_options %}
+                    <li>
+                        <a href="{{ sort_obt.id }}"
+                           title="Sort results by {{ sort_obt.label }}, {{ sort_obt.order }}"
+                        >{{ sort_obt.label }}, {{ sort_obt.order }}
+                        </a>
+                    </li>
+                {% endfor %}
+                    <li role="separator" class="divider"></li>
+                    <li class="disabled bg-info">
+                        <span style="margin-left: 10px;">Current Sort: {{ st.active_sort.label }}, {{ st.active_sort.order }}</span>
+                    </li>
+                </ul>
+        </li>
+        {% if csv_downloader %}
+        <li title="Export a data table or GIS file">
+            <span>
+            <a href="javascript:CSVexporter.show_interface();">
+                <span class="glyphicon glyphicon-cloud-download"></span>
+            </a>
+            </span>
+        </li>        
+        {%endif%} 
+    </ul>

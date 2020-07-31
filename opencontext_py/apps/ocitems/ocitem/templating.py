@@ -467,28 +467,32 @@ class TemplateItem():
             needed for user inferface
         """
         rp = RootPath()
-        if('@graph' in json_ld):
-            for g_anno in json_ld['@graph']:
-                identifier = False
-                if('@id' in g_anno):
-                    identifier = g_anno['@id']
-                elif('id' in g_anno):
-                    identifier = g_anno['id']
-                if('oc-gen:' in identifier):
-                    meta = {}
-                    if('label' in g_anno):
-                        meta['typelabel'] = g_anno['label']
-                    if('oc-gen:hasIcon' in g_anno):
-                        meta['icon'] = rp.convert_to_https(g_anno['oc-gen:hasIcon'][0]['id'])
-                    self.class_type_metadata[identifier] = meta
-        if 'category' in json_ld:
-            item_cat_labels = []
-            for cat in json_ld['category']:
-                self.item_category_uri = cat
-                if cat in self.class_type_metadata:
-                    item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
-                    if 'icon' in self.class_type_metadata[cat]:
-                        self.item_category_icon = self.class_type_metadata[cat]['icon'] 
+        for g_anno in json_ld.get('@graph', []):
+            identifier = g_anno.get(
+                '@id',
+                g_anno.get('id', False)
+            )
+            if not identifier:
+                continue
+            if identifier.startswith('oc-gen:'):
+                meta = {
+                    'typelabel': g_anno.get('label', ''),
+                    'icon': rp.convert_to_https(
+                        g_anno.get(
+                            'oc-gen:hasIcon',
+                            [{'id': ''}],
+                        )[0]['id']
+                    )
+                }
+                self.class_type_metadata[identifier] = meta
+        # Get the labels for the various categories.
+        item_cat_labels = []
+        for cat in json_ld.get('category', []):
+            self.item_category_uri = cat
+            if cat in self.class_type_metadata:
+                item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
+                if 'icon' in self.class_type_metadata[cat]:
+                    self.item_category_icon = self.class_type_metadata[cat]['icon'] 
             self.item_category_label = ', '.join(item_cat_labels)
         if self.item_category_label is False:
             # make sure the item has category label, if needed get from settings nav_items

@@ -38,7 +38,18 @@ def stats_ranges_query_dict_via_solr(
     """
     if not solr:
         # Connect to solr.
-        solr = SolrConnection(False).connection
+        if configs.USE_TEST_SOLR_CONNECTION:
+            # Connect to the testing solr server
+            solr = SolrConnection(
+                exit_on_error=False,
+                solr_host=settings.SOLR_HOST_TEST,
+                solr_port=settings.SOLR_PORT_TEST,
+                solr_collection=settings.SOLR_COLLECTION_TEST
+            ).connection
+        else:
+            # Connect to the default solr server
+            solr = SolrConnection(False).connection
+
     response = solr.search(**stats_query)  # execute solr query
     solr_json = response.raw_content
     if not isinstance(solr_json, dict):

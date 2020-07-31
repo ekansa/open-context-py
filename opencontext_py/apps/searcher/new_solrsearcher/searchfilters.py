@@ -94,11 +94,17 @@ def make_bbox_filter_label(raw_disc_bbox):
 
 class SearchFilters():
 
-    def __init__(self, request_dict=None, base_search_url='/search/'):
+    def __init__(
+        self, 
+        request_dict=None, 
+        current_filters_url=None, 
+        base_search_url='/search/'
+    ):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.base_search_url = base_search_url
         self.request_dict = copy.deepcopy(request_dict)
+        self.current_filters_url = current_filters_url
         self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
 
 
@@ -132,6 +138,10 @@ class SearchFilters():
             # Make template for a text search
             act_filter['oc-api:template'] = urls['html']
             act_filter['oc-api:template-json'] = urls['json']
+            return act_filter
+        if urls['html'] == self.current_filters_url:
+            # The urls don't actually change state, so don't
+            # add new remove or broaden links, and skip out.
             return act_filter
         if new_value is None:
             # If the new_value is None, then we're completely
@@ -322,7 +332,13 @@ class SearchFilters():
             for param_val in param_vals:
                 
                 if (hierarchy_delim and hierarchy_delim in param_val):
-                    hierarchy_vals = param_val.split(hierarchy_delim)
+                    # NOTE: Sometimes we may get a param_val that
+                    # has a trailing hierarchy delim. This will result in weird
+                    # behavior. So we make a splitting_param_val that trims
+                    # off any trailing delimiter.
+                    splitting_param_val = param_val.lstrip(hierarchy_delim)
+                    splitting_param_val = splitting_param_val.rstrip(hierarchy_delim)
+                    hierarchy_vals = splitting_param_val.split(hierarchy_delim)
                 else:
                     hierarchy_vals = [param_val]
                 
