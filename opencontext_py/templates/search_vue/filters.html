@@ -55,7 +55,10 @@
     <div class="row act-filter-val-row">
         <div class="col-xs-1">
             <a title="Remove this filter" :href="filter_group.remove_href">
-                <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+
+                <img alt="remove icon" style="height: 0.8em; padding-bottom:0.1em; padding-right:0.1em; fill:#007bff;"
+                    src="/static/bootstrap-vue/bootstrap/bootstrap-icons/x-circle-fill.svg"
+                />
             </a>
         </div>
         <div class="col-xs-10 act-filter-val" v-for="(filter, index) in filter_group.filters">
