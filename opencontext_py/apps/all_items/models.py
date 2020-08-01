@@ -11,6 +11,7 @@ from unidecode import unidecode
 
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.exceptions import ObjectDoesNotExist
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 
@@ -65,21 +66,21 @@ class AllManifest(models.Model):
         'self', 
         db_column='publisher_uuid', 
         related_name='+', 
-        on_delete=models.PROTECT, 
+        on_delete=models.CASCADE, 
         null=True
     )
     project = models.ForeignKey(
         'self', 
         db_column='project_uuid', 
         related_name='+', 
-        on_delete=models.PROTECT, 
+        on_delete=models.CASCADE, 
         null=True
     )
     item_class = models.ForeignKey(
         'self',
         db_column='item_class_uuid', 
         related_name='+', 
-        on_delete=models.PROTECT, 
+        on_delete=models.CASCADE, 
         null=True
     )
     source_id = models.CharField(max_length=50, db_index=True)
@@ -88,12 +89,12 @@ class AllManifest(models.Model):
     slug = models.SlugField(max_length=70, unique=True)
     label = models.CharField(max_length=200)
     sort = models.SlugField(max_length=70, db_index=True)
-    views = models.IntegerField()
+    views = models.IntegerField(default=0)
     indexed = models.DateTimeField(blank=True, null=True)
     vcontrol = models.DateTimeField(blank=True, null=True)
     archived = models.DateTimeField(blank=True, null=True)
-    published = models.DateTimeField(db_index=True)
-    revised = models.DateTimeField(db_index=True)
+    published = models.DateTimeField(db_index=True, null=True)
+    revised = models.DateTimeField(db_index=True, auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     # Note the URI will strip the https:// or http://.
     uri = models.CharField(max_length=300, unique=True)
@@ -107,7 +108,7 @@ class AllManifest(models.Model):
         'self', 
         db_column='context_uuid', 
         related_name='+', 
-        on_delete=models.PROTECT, 
+        on_delete=models.CASCADE, 
         blank=True, 
         null=True
     )
@@ -118,7 +119,7 @@ class AllManifest(models.Model):
     meta_json = JSONField(default=dict)
 
     def clean_label(self, label, item_type='subjects'):
-        label = label.trim()
+        label = label.strip()
         if item_type == 'subjects':
             # So as not to screw up depth of contexts.
             label = label.replace('/', '--')
@@ -129,7 +130,7 @@ class AllManifest(models.Model):
     def clean_uri(self, uri):
         if not uri:
             return None
-        uri = uri.trim()
+        uri = uri.strip()
         # Trim off the http: or https: prefix.
         for prefix in ['http://', 'https://']:
             if not uri.startswith(prefix):
@@ -147,14 +148,21 @@ class AllManifest(models.Model):
         Creates a hash-id to insure context dependent uniqueness
         """
         hash_obj = hashlib.sha1()
+        project_uuid = None
+        context_uuid = None
+        if self.project:
+            project_uuid = self.project.uuid
+        if self.context:
+            context_uuid = self.context.uuid
         concat_string = "{} {} {} {} {} {}".format(
-            self.project_uuid,
-            self.context_uuid,
+            project_uuid,
+            context_uuid,
             self.item_type,
             self.data_type,
             self.label,
             self.path
         )
+        concat_string = concat_string.strip()
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
@@ -167,12 +175,35 @@ class AllManifest(models.Model):
         # This is not a valid option
         return False
 
+    def dereference_keys(self):
+        """Looks up references to keys"""
+        try:
+            self.publisher = self.publisher
+        except ObjectDoesNotExist:
+            self.publisher = None
+        try:
+            self.project = self.project
+        except ObjectDoesNotExist:
+            self.project = None
+        try:
+            self.item_class = self.item_class
+        except ObjectDoesNotExist:
+            self.item_class= None
+        try:
+            self.context = self.context
+        except ObjectDoesNotExist:
+            self.context = None
+
     def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique string for a project
         """
         self.label = self.clean_label(self.label, self.item_type)
         self.uri = self.clean_uri(self.uri)
+
+        # Dereferences keys:
+        self.dereference_keys()
+
         self.hash_id = self.make_hash_id()
         # Make sure the item_type is valid.
         self.validate_from_list(
@@ -215,6 +246,7 @@ class AllString(models.Model):
         """
         creates the hash-id on saving to insure a unique string for a project
         """
+        self.content = self.content.strip()
         self.hash_id = self.make_hash_id()
         super(AllString, self).save(*args, **kwargs)
 
@@ -355,7 +387,7 @@ class AllHistory(models.Model):
     subject = models.ForeignKey(
         AllManifest, 
         db_column='subject_uuid', 
-        related_name='subject_uuid', 
+        related_name='+', 
         on_delete=models.CASCADE
     )
     updated = models.DateTimeField(auto_now=True)

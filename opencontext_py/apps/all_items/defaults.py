@@ -39,9 +39,9 @@ CC_VOCAB_UUID = 'b40364f0-292c-4da0-92c2-784ad12d4612'
 DEFAULT_MANIFESTS = [
     {
         'uuid': OPEN_CONTEXT_PROJ_UUID,
-        'publisher_uuid': OPEN_CONTEXT_PUB_UUID,
-        'project_uuid': OPEN_CONTEXT_PROJ_UUID,
-        'item_class': None,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': None,
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'projects',
         'data_type': 'id',
@@ -50,14 +50,14 @@ DEFAULT_MANIFESTS = [
         'sort': '',
         'views': 0,
         'uri': 'opecontext.org/projects/open-context',
-        'context_uuid': OPEN_CONTEXT_PROJ_UUID,
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
         'identifiers': ['0'],
     },
     {
         'uuid': OPEN_CONTEXT_PUB_UUID,
-        'publisher': OPEN_CONTEXT_PUB_UUID,
-        'project': OPEN_CONTEXT_PROJ_UUID,
-        'item_class': None,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': None,
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'publishers',
         'data_type': 'id',
@@ -69,9 +69,9 @@ DEFAULT_MANIFESTS = [
     },
     {
         'uuid': OC_GEN_VOCAB_UUID,
-        'publisher': OPEN_CONTEXT_PUB_UUID,
-        'project': OPEN_CONTEXT_PROJ_UUID,
-        'item_class': None,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': None,
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'vocabularies',
         'data_type': 'id',
@@ -87,9 +87,9 @@ DEFAULT_MANIFESTS = [
     },
     {
         'uuid': DEFAULT_OBS_UUID,
-        'publisher': OPEN_CONTEXT_PUB_UUID,
-        'project': OPEN_CONTEXT_PROJ_UUID,
-        'item_class': None,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': None,
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'observations',
         'data_type': 'id',
@@ -102,13 +102,13 @@ DEFAULT_MANIFESTS = [
     },
     {
         'uuid': DEFAULT_ATTRIBUTE_GROUP_UUID,
-        'publisher': OPEN_CONTEXT_PUB_UUID,
-        'project': OPEN_CONTEXT_PROJ_UUID,
-        'item_class': None,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': None,
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'attribute-groups',
         'data_type': 'id',
-        'slug': 'oc-default-obs',
+        'slug': 'oc-default-attrib-group',
         'label': 'Default (Single) Attribute Group',
         'sort': '',
         'views': 0,
@@ -117,10 +117,49 @@ DEFAULT_MANIFESTS = [
 ]
 
 def load_default_manifest(dict_list=DEFAULT_MANIFESTS):
+    fk_fields = ['publisher_id', 'project_id', 'item_class_id', 'context_id']
     for man_dict in dict_list:
         uuid = man_dict['uuid']
         m, _ = AllManifest.objects.get_or_create(
             uuid=uuid,
             defaults=man_dict
         )
-        print('Item {}, {} ready'.format(m.uuid, m.label))
+        print('Item {}, {} created.'.format(m.uuid, m.label))
+    
+    for man_dict in dict_list:
+        uuid = man_dict['uuid']
+        m = AllManifest.objects.get(uuid=uuid)
+        for fk_field in fk_fields:
+            fk_val = man_dict.get(fk_field)
+            if not fk_val:
+                # This foreign key field is not set
+                continue
+            setattr(m, fk_field, fk_val)
+
+        print('Updating related for {}'.format(m.label))
+        m.save()
+
+
+
+def load_default_manifest_new(dict_list=DEFAULT_MANIFESTS):
+    fk_fields = ['publisher', 'project', 'item_class_id', 'context_id']
+    for man_dict in dict_list:
+        uuid = man_dict['uuid']
+        # Make the fist pass at saving items, 
+        first_dict = {k:v for k, v in man_dict.items() if k not in fk_fields}
+        m, _ = AllManifest.objects.get_or_create(
+            uuid=uuid,
+            defaults=first_dict
+        )
+        print('Item {}, {} created.'.format(m.uuid, m.label))
+    
+    for man_dict in dict_list:
+        uuid = man_dict['uuid']
+        m = AllManifest.objects.get(uuid=uuid)
+        for fk_field in fk_fields:
+            fk_val = man_dict.get(fk_field)
+            if not fk_val:
+                # This foreign key field is not set
+                continue
+            setattr(m, fk_field, fk_val)
+            m.save()

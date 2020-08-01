@@ -193,7 +193,7 @@ INSTALLED_APPS = (
     
     # Save this for later. This is for experimental
     # work refactoring the postgres schema
-    # 'opencontext_py.apps.all_items',
+    'opencontext_py.apps.all_items',
     
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.events',
