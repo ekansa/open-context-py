@@ -9,6 +9,8 @@ from datetime import datetime
 from math import pow
 from unidecode import unidecode
 
+from django.core.cache import caches
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,78 +19,284 @@ from django.utils import timezone
 
 from django.conf import settings
 
+
+from opencontext_py.apps.all_items import configs
+
+DEFAULT_LABEL_SORT_LEN = 6
+
+
+# ---------------------------------------------------------------------
+#  Functions used with the Manifest Model
+# ---------------------------------------------------------------------
+def prepend_zeros(sort, digit_length=DEFAULT_LABEL_SORT_LEN):
+    """ prepends zeros if too short """
+    sort = str(sort)
+    while len(sort) < digit_length:
+        sort = '0' + sort
+    return sort
+
+
+def sort_digits(index, digit_length=DEFAULT_LABEL_SORT_LEN):
+    """ Makes a 3 digit sort friendly string from an index """
+    if index >= pow(10, digit_length):
+        index = pow(10, digit_length) - 1
+    return prepend_zeros(str(index), digit_length)
+
+
+def make_label_sort_val(raw_label):
+    """Extract a sortable value"""
+    raw_label = unidecode(str(raw_label))
+    sort_label = ''
+    prev_type = None
+    for act_char in raw_label:
+        char_val = ord(act_char)
+        if char_val >= 49 and char_val <= 57:
+            act_type = 'number'
+        elif char_val >= 65 and char_val <= 122:
+            act_type = 'letter'
+        else:
+            act_type = None
+        if act_type and prev_type:
+            if act_type != prev_type:
+                act_char = '-' + act_char
+        sort_label += act_char
+        prev_type = act_type
+    # Split the label by different delims.
+    label_parts = re.split(
+        ':|\ |\.|\,|\;|\-|\(|\)|\_|\[|\]|\/',
+        sort_label
+    )
+    sorts = []
+    for part in label_parts:
+        if not len(part):
+            # Skip, the part has nothing in it.
+            continue
+        if part.isdigit():
+            # A numeric part
+            num_part = int(float(part))
+            part_sort = sort_digits(num_part)
+            sorts.append(part_sort)
+            # Continue, we're done with sorting
+            # this part.
+            continue
+
+        # The part is a string, so process as
+        # string
+        part = unidecode(part)
+        part = re.sub(r'\W+', '', part)
+        try:
+            roman_num = roman.fromRoman(part)
+        except:
+            roman_num = None
+        if roman_num:
+            part_sort = sort_digits(roman_num)
+            sorts.append(part_sort)
+            # Continue, we're done with sorting
+            # this part.
+            continue
+        part_sort_parts = []
+        for act_char in part:
+            char_val = ord(act_char) - 48
+            if char_val > 9:
+                act_part_sort_part = sort_digits(char_val, 3)
+            else:
+                act_part_sort_part = str(char_val)
+            part_sort_parts.append(act_part_sort_part)
+        # Now bring together the part_sort_parts
+        part_sort = ''.join(part_sort_parts)
+        sorts.append(part_sort)
+    # Now do the final  
+    final_sort = []
+    for sort_part in sorts:
+        sort_part = str(sort_part)
+        if len(sort_part) > DEFAULT_LABEL_SORT_LEN:
+            sort_part = sort_part[:DEFAULT_LABEL_SORT_LEN]
+        elif len(sort_part) < DEFAULT_LABEL_SORT_LEN:
+            sort_part = prepend_zeros(
+                sort_part, 
+                DEFAULT_LABEL_SORT_LEN
+            )
+        final_sort.append(sort_part)
+    if not len(final_sort):
+        final_sort.append(prepend_zeros(0, DEFAULT_LABEL_SORT_LEN))
+    return '-'.join(final_sort)
+
+
+def get_project_short_id(project_id, not_found_default=0):
+    """Get a project short id """
+    # Get the project id
+    proj = None
+    if project_id:
+        proj = AllManifest.objects.filter(uuid=project_id).first()
+    if proj:
+        return proj.meta_json.get('short_id', not_found_default)
+    return not_found_default
+
+
+def make_sort_label(label, item_type, project_id, item_type_list):
+    """Makes a sort value for a record as a numeric string"""
+    sort_parts = []
+    if item_type not in item_type_list: 
+        item_type_num = len(item_type_list)
+    else:
+        item_type_num = item_type_list.index(item_type)
+    sort_parts.append(
+        prepend_zeros(item_type_num, 2)
+    )
+    project_short_id = get_project_short_id(project_id)
+    sort_parts.append(
+        prepend_zeros(project_short_id, 4)
+    )
+    sort_parts.append(
+        make_label_sort_val(label)
+    )
+    final_sort = '-'.join(sort_parts)
+    return final_sort
+
+
+def make_slug_from_label(label, project_id):
+    """Makes a slug from a label for a project item"""
+    label = label.strip()
+    label = label.replace('_', ' ')
+    raw_slug = slugify(unidecode(label[:60]))
+    project_sort_id = get_project_short_id(project_id)
+    if raw_slug == '-' or not len(raw_slug):
+        # Slugs are not a dash or are empty
+        raw_slug = 'x'
+    raw_slug = str(project_sort_id) + '-' + raw_slug
+    return raw_slug
+
+
+def make_slug_from_uri(uri):
+    """Makes a slug from a label for a project item"""
+    uri = AllManifest.clean_uri(uri)
+
+    # Remove any www. prefix to a URI.
+    for bad_prefix in ['www.']:
+        if not uri.startswith(bad_prefix):
+            continue
+        uri = uri[len(bad_prefix):]
+    
+    # Now look for uri_roots to convert to a slug prefix based on
+    # configuration.
+    for uri_root, slug_prefix in configs.LINKED_DATA_URI_PREFIX_TO_SLUGS.items():
+        if not uri.startswith(uri_root):
+            continue
+        # Replace the uri_root with the slug prefix.
+        uri = slug_prefix + uri[len(uri_root):]
+        break
+    
+    replaces = [
+        ('/', '-',),
+        ('.', '-',),
+        ('#', '-'),
+        ('%20', '-'),
+        ('q=', '-'),
+        ('+', '-'),
+        ('_', '-'),
+    ]
+    for f, r in replaces:
+        uri = uri.replace(f, r)
+    raw_slug = slugify(unidecode(uri[:55]))
+
+    # Slugs can't have more than 1 dash characters
+    raw_slug = re.sub(r'([-]){2,}', r'--', raw_slug)
+    return raw_slug
+
+
+def make_manifest_slug(label, item_type, uri, project_id):
+    """Makes a sort value for a record as a numeric string"""
+    if item_type in configs.OC_ITEM_TYPES:
+        # The item_type is in the type that has the
+        # project_short_id as a slug prefix.
+        raw_slug = make_slug_from_label(label, project_id)
+
+    if item_type in configs.URI_ITEM_TYPES:
+        # Check for a publisher specific config for
+        # this kind of item type.
+        raw_slug = make_slug_from_uri(uri)
+
+    # Make sure no triple dashes, conflicts with solr hierarchy
+    # delims.
+    raw_slug = raw_slug.replace('---', '--')
+    keep_trimming = True
+    while keep_trimming and len(raw_slug):
+        if raw_slug.endswith('-'):
+            # slugs don't end with dashes
+            raw_slug = raw_slug[:-1]
+        else:
+            keep_trimming = False
+            break
+    
+    if raw_slug == '-' or not len(raw_slug):
+        # Slugs are not a dash or are empty
+        raw_slug = 'x'
+
+    # Slugs can't have more than 1 dash characters
+    slug_prefix = re.sub(r'([-]){2,}', r'-', raw_slug)
+    q_slug = slug_prefix
+
+    # Check to see if this slug is in use.
+    m_slug = AllManifest.objects.filter(
+        slug=q_slug
+    ).first()
+    if not m_slug:
+        # This slug is not yet used, so skip out.
+        return q_slug
+    # Make a prefix based on the length the number of
+    # slugs.
+    m_slug_count = AllManifest.objects.filter(
+        slug__startswith=slug_prefix
+    ).count()
+    return '{}-{}'.format(
+        slug_prefix,
+        (m_slug_count + 1) 
+    )
+
+
+
 # Manifest provides basic item metadata for all open context items that get a URI
 @reversion.register  # records in this model under version control
 class AllManifest(models.Model):
 
-    # Item types with UUIDs as the main identifier for Open Context.
-    UUID_ITEM_TYPES = [
-        'subjects',
-        'media',
-        'documents',
-        'projects', 
-        'persons',
-        'types',
-        'predicates',
-        'tables',
+    OK_FOR_MISSING_REFS = [
+        configs.OPEN_CONTEXT_PROJ_UUID, 
+        configs.OPEN_CONTEXT_PUB_UUID,
+        configs.OC_GEN_VOCAB_UUID,
+        configs.DEFAULT_CLASS_UUID,
     ]
 
-    # Item types that are not resolvable on their own (they are nodes
-    # in some context of another item type)
-    NODE_ITEM_TYPES = [
-        'observations',
-        'attribute-groups',
-    ]
-
-    # Item type with full URIs as the main identifer.
-    URI_ITEM_TYPES = [
-        'vocabularies',
-        'publishers',
-        'class', # A classification type
-        'property', # An attribute or linking relation.
-        'uri',  # Usually for an instance.
-    ]
-
-    ITEM_TYPES = UUID_ITEM_TYPES + NODE_ITEM_TYPES + URI_ITEM_TYPES
-
-    DATA_TYPES = [
-        'id',
-        'group',
-        'xsd:boolean',
-        'xsd:date',
-        'xsd:double',
-        'xsd:integer',
-        'xsd:string',
-    ]
-
-    uuid = models.UUIDField(primary_key=True, default=GenUUID.uuid4, editable=True)
+    uuid = models.UUIDField(primary_key=True, editable=True)
     publisher = models.ForeignKey(
         'self', 
         db_column='publisher_uuid', 
         related_name='+', 
         on_delete=models.CASCADE, 
-        null=True
+        null=True,
+        default=configs.OPEN_CONTEXT_PUB_UUID,
     )
     project = models.ForeignKey(
         'self', 
         db_column='project_uuid', 
         related_name='+', 
         on_delete=models.CASCADE, 
-        null=True
+        null=True,
+        default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     item_class = models.ForeignKey(
         'self',
         db_column='item_class_uuid', 
         related_name='+', 
         on_delete=models.CASCADE, 
-        null=True
+        null=True,
+        default=configs.DEFAULT_CLASS_UUID,
     )
     source_id = models.CharField(max_length=50, db_index=True)
     item_type = models.CharField(max_length=50)
     data_type = models.CharField(max_length=50, default='id')
     slug = models.SlugField(max_length=70, unique=True)
     label = models.CharField(max_length=200)
-    sort = models.SlugField(max_length=70, db_index=True)
+    sort = models.SlugField(max_length=100, db_index=True)
     views = models.IntegerField(default=0)
     indexed = models.DateTimeField(blank=True, null=True)
     vcontrol = models.DateTimeField(blank=True, null=True)
@@ -100,22 +308,33 @@ class AllManifest(models.Model):
     uri = models.CharField(max_length=300, unique=True)
     # Preferred key when used in JSON-LD.
     item_key = models.CharField(max_length=300, blank=True, null=True)
+    # A list of other identifiers (especially legacy ids from prior
+    # versions of Open Context)
     identifiers = ArrayField(models.CharField(max_length=200), blank=True, null=True)
     # Hash ID has special logic to ensure context dependent uniqueness
     # especially based on the contents of the context field.
     hash_id = models.CharField(max_length=50, unique=True)
+    # Context is needed in entity reconciliation, to help determine if
+    # a labeled entity is unique within the scope of a given context. 
+    # Also for URI identified linked-data entities (typically published
+    # by sources outside of Open Context, a context is used to note
+    # the vocabulary (name-space) that owns / contains a URI identified
+    # entity.
     context = models.ForeignKey(
         'self', 
         db_column='context_uuid', 
         related_name='+', 
         on_delete=models.CASCADE, 
         blank=True, 
-        null=True
+        null=True,
+        default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
-    path = models.CharField(max_length=500, db_index=True)
+    # A path is a string / text representation of an entity in a context
+    # defined hierarchy. It is used especially for lookups and entity
+    # reconciliation of subjects item_types.
+    path = models.CharField(max_length=500, db_index=True, blank=True, null=True)
     # Meta_json is where we store occasionally used attributes, such
-    # as multi-lingual localization values or some metadata about
-    # data loading, etc.
+    # as metadata about projects, persons, languages, etc.
     meta_json = JSONField(default=dict)
 
     def clean_label(self, label, item_type='subjects'):
@@ -135,36 +354,78 @@ class AllManifest(models.Model):
         for prefix in ['http://', 'https://']:
             if not uri.startswith(prefix):
                 continue
-            uri = self.uri[len(prefix):]
+            uri = uri[len(prefix):]
         # Remove trailing suffixes that have no meaning.
-        for suffix in ['/', '#']:
+        for suffix in ['.html', '/', '#']:
             if not uri.endswith(suffix):
                 continue
-            uri = self.uri[0:-1]
+            uri = uri[0:-(len(suffix))]
         return uri
 
-    def make_hash_id(self):
+    def make_hash_id(
+        self, 
+        item_type, 
+        data_type, 
+        label, 
+        uri=None, 
+        path='', 
+        project_uuid=configs.OPEN_CONTEXT_PROJ_UUID, 
+        context_uuid=configs.OPEN_CONTEXT_PROJ_UUID,
+    ):
         """
-        Creates a hash-id to insure context dependent uniqueness
+        Creates a hash-id to ensure context dependent uniqueness
         """
         hash_obj = hashlib.sha1()
-        project_uuid = None
-        context_uuid = None
+        if item_type in configs.URI_ITEM_TYPES:
+            concat_string = "{} {} {} {} {} {}".format(
+                project_uuid,
+                context_uuid,
+                item_type,
+                data_type,
+                label,
+                str(uri),
+            )
+        else:
+            concat_string = "{} {} {} {} {} {}".format(
+                project_uuid,
+                context_uuid,
+                item_type,
+                data_type,
+                label,
+                path
+            )
+        concat_string = concat_string.strip()
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+    
+    def make_hash_id_for_self(self):
+        """Makes a hash-id to ensure context dependent uniqueness of this obj"""
+        project_uuid = configs.OPEN_CONTEXT_PROJ_UUID
+        context_uuid = configs.OPEN_CONTEXT_PROJ_UUID
         if self.project:
             project_uuid = self.project.uuid
         if self.context:
             context_uuid = self.context.uuid
-        concat_string = "{} {} {} {} {} {}".format(
-            project_uuid,
-            context_uuid,
-            self.item_type,
-            self.data_type,
-            self.label,
-            self.path
+        path = ''
+        if self.path:
+            path = self.path
+        return self.make_hash_id(
+            item_type=self.item_type,
+            data_type=self.data_type,
+            label=self.label,
+            uri=self.uri,
+            path=path,
+            project_uuid=project_uuid,
+            context_uuid=context_uuid,
         )
-        concat_string = concat_string.strip()
-        hash_obj.update(concat_string.encode('utf-8'))
-        return hash_obj.hexdigest()
+
+    def validate_project(self):
+        """Checks to make sure a project is actually a project"""
+        if self.uuid in self.OK_FOR_MISSING_REFS:
+            # Skip this validation because we have
+            # a special uuid.
+            return True
+        assert self.project.item_type == 'projects'
 
     def validate_from_list(self, option, options, raise_on_error=True):
         if option in options:
@@ -177,6 +438,15 @@ class AllManifest(models.Model):
 
     def dereference_keys(self):
         """Looks up references to keys"""
+        if self.uuid not in self.OK_FOR_MISSING_REFS:
+            # Skip out. A manifest object for
+            # every uuid except those listed above in
+            # ok_for_missing_refs needs to have references to
+            # manifest objects that actually exist.
+            return None
+        
+        # This is a special case for the ok_for_missing_refs
+        # list above.
         try:
             self.publisher = self.publisher
         except ObjectDoesNotExist:
@@ -193,6 +463,113 @@ class AllManifest(models.Model):
             self.context = self.context
         except ObjectDoesNotExist:
             self.context = None
+    
+    def make_slug_and_sort(self):
+        """Make slug and sorting values"""
+        # Make the slug and sorting
+        if self.project:
+            project_id = self.project.uuid
+        else:
+            project_id = None
+
+        if not self.slug:
+            # Generate the item's slug.
+            self.slug = make_manifest_slug(
+                self.label, 
+                self.item_type,
+                self.uri, 
+                project_id,
+            )
+
+        # Make the item's sorting.
+        sort = make_sort_label(
+            self.label, 
+            self.item_type, 
+            project_id, 
+            item_type_list=configs.ITEM_TYPES
+        )
+        self.sort = sort[:100]
+    
+    def primary_key_create(
+        self,
+        item_type,
+        project_id=None, 
+        context_id=None,
+        uri=None,
+    ):
+        """Make a primary key, sometimes deterministically depending on the item_type"""
+
+        if (item_type in configs.OC_ITEM_TYPES 
+            or project_id is None
+            or context_id is None):
+            # Do not make a deterministic uuid because these are for
+            # formal public publication of items where we have an expectation
+            # globally unique identifiers.
+            return str(GenUUID.uuid4())
+
+        if item_type in configs.NODE_ITEM_TYPES:
+            # Because this is generated randomly, node item types won't
+            # have predictable uuids. Only the first part of the uuid will
+            # be predictable.
+            hash_val = str(GenUUID.uuid4())
+        else:
+            # This will make a predictable uuid. 
+            hash_val = self.clean_uri(uri)
+
+        # NOTE: Everything in this function below is for deterministically
+        # making a uuid based on the uri, the project_id or the context id.
+        hash_obj = hashlib.sha1()
+        hash_obj.update(hash_val.encode('utf-8'))
+        hash_id =  hash_obj.hexdigest()
+        # Now convert that hash into a uuid. Note, we're only using
+        # the first 32 characters. This should still be enough to have
+        # really, really high certainty we won't have hash-collisions on
+        # data that should not be considered unique. If we run into a problem
+        # we can always override this.
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+
+        # Make the first part from the project uuid.
+        project_id = str(project_id)
+        uuid_prefix = project_id.split('-')[0]
+
+        if item_type in configs.URI_CONTEXT_PREFIX_ITEM_TYPES:
+            # Make the first part from the context uuid
+            context_id = str(context_id)
+            # Grab the second part of the context.
+            context_parts = context_id.split('-')
+            # project-context-uri_parts...
+            uuid = '-'.join(
+                [
+                    uuid_prefix, 
+                    context_parts[1],
+                    new_parts[2],
+                    new_parts[3],
+                    new_parts[4],
+                ]
+            )
+        else:
+            # project-uri_parts...
+            uuid = '-'.join(
+                ([uuid_prefix] + new_parts[1:])
+            )
+        return uuid
+
+
+    def primary_key_create_for_self(self):
+        """Makes a primary key using a prefix from the subject"""
+        if self.uuid:
+            # One is already defined, so skip this step.
+            return self.uuid
+        return self.primary_key_create(
+            item_type=self.item_type,
+            project_id=self.project.uuid, 
+            context_id=self.context.uuid,
+            uri=self.uri,
+        )
+        
 
     def save(self, *args, **kwargs):
         """
@@ -204,61 +581,411 @@ class AllManifest(models.Model):
         # Dereferences keys:
         self.dereference_keys()
 
-        self.hash_id = self.make_hash_id()
+        # Depending on the item type, make a random, semi-random,
+        # or totally predicable uuid for this manifest obj.
+        self.uuid = self.primary_key_create_for_self()
+
+        # Make sure the project is actually a project
+        self.validate_project()
+
+        self.hash_id = self.make_hash_id_for_self()
         # Make sure the item_type is valid.
         self.validate_from_list(
-            self.item_type, self.ITEM_TYPES
-
+            self.item_type, configs.ITEM_TYPES
         )
         # Make sure the data_type is valid.
         self.validate_from_list(
-            self.data_type, self.DATA_TYPES
-
+            self.data_type, configs.DATA_TYPES
         )
+        # Make the slug and sort values.
+        self.make_slug_and_sort()
         super(AllManifest, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_all_manifest'
-        unique_together = (("item_type", "slug"),)
+
 
 
 # OCstring stores string content, with each string unique to a project
 @reversion.register  # records in this model under version control
 class AllString(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=GenUUID.uuid4, editable=True)
+    uuid = models.UUIDField(primary_key=True, editable=True)
     hash_id = models.CharField(max_length=50, unique=True)
-    project = models.ForeignKey(AllManifest, on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        AllManifest,
+        db_column='project_uuid', 
+        related_name='+', 
+        on_delete=models.CASCADE
+    )
     source_id = models.CharField(max_length=50, db_index=True)
+    # Note for multilingual text, choose the main language.
+    language =  models.ForeignKey(
+        AllManifest,
+        db_column='language_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT, 
+        default=configs.DEFAULT_LANG_UUID
+    )
     updated = models.DateTimeField(auto_now=True)
     content = models.TextField()
     meta_json = JSONField(default=dict)
 
-    def make_hash_id(self):
+    def validate_project(self):
+        """Checks to make sure a project is actually a project"""
+        assert self.project.item_type == 'projects'
+
+    def validate_language(self):
+        """Checks to make sure a language is actually a language"""
+        assert self.language.item_type == 'languages'
+
+    def make_hash_id(
+        self, 
+        project_id, 
+        content, 
+        language_id=configs.DEFAULT_LANG_UUID
+    ):
         """
-        creates a hash-id to insure unique combinations of project_uuids and content
+        Creates a hash-id to insure unique content for a project and language
         """
         hash_obj = hashlib.sha1()
-        concat_string = self.project_uuid + " " + self.content
+        concat_string = " ".join(
+            [
+                str(project_id),
+                str(language_id),
+                content.strip(),
+            ]
+        )
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
+    
+    def primary_key_create(
+        self, 
+        project_id, 
+        content, 
+        language_id=configs.DEFAULT_LANG_UUID
+    ):
+        """Deterministically make a primary key using a prefix from the project"""
+
+        # Make the first part from the subject's uuid.
+        project_id = str(project_id)
+        uuid_prefix = project_id.split('-')[0]
+
+        # Make a hash for this Assertion based on all those parts
+        # that need to be unique.
+        hash_id = self.make_hash_id(
+            project_id=project_id,
+            content=content,
+            language_id=language_id,
+        )
+        # Now convert that hash into a uuid. Note, we're only using
+        # the first 32 characters. This should still be enough to have
+        # really, really high certainty we won't have hash-collisions on
+        # data that should not be considered unique. If we run into a problem
+        # we can always override this.
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([uuid_prefix] + new_parts[1:])
+        )
+        return uuid
+    
+    def primary_key_create_for_self(self):
+        """Makes a primary key using a prefix from the subject"""
+        if self.uuid:
+            # One is already defined, so skip this step.
+            return self.uuid
+        return self. primary_key_create(
+            project_id=self.project.uuid,
+            content=self.content,
+            language_id=self.language.uuid,
+        )
 
     def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique string for a project
         """
+        self.validate_project()
+        self.validate_language()
         self.content = self.content.strip()
-        self.hash_id = self.make_hash_id()
+        self.hash_id = self.make_hash_id(
+            project_id=self.project.uuid,
+            content=self.content,
+            language_id=self.language.uuid,
+        )
+        self.uuid = self.primary_key_create_for_self()
         super(AllString, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_all_strings'
+        unique_together = (
+            (
+                "project", 
+                "language",
+                "content"
+            ),
+        )
+
+
+
+
+# ---------------------------------------------------------------------
+#  Functions used with the Assertion Model
+# ---------------------------------------------------------------------
+def get_immediate_concept_parent_objs_db(child_obj):
+    """Get the immediate parents of a child manifest object using DB"""
+    subj_super_qs = AllAssertion.filter(
+        object=child_obj,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ,
+    )
+    subj_subord_qs = AllAssertion.filter(
+        subject=child_obj,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
+    )
+    all_parents = [a.subject for a in subj_super_qs]
+    all_parents += [a.object for a in subj_subord_qs if a.object not in all_parents]
+    return all_parents
+
+def get_immediate_concept_children_objs_db(parent_obj):
+    """Get the immediate children of a parent manifest object using DB"""
+    subj_super_qs = AllAssertion.filter(
+        subject=parent_obj,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ,
+    )
+    subj_subord_qs = AllAssertion.filter(
+        object=parent_obj,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
+    )
+    all_children = [a.object for a in subj_super_qs]
+    all_children += [a.subject for a in subj_subord_qs if a.subject not in all_children]
+    return all_children
+
+def get_immediate_context_parent_obj_db(child_obj):
+    """Get the immediate (spatial) context parent of a child_obj"""
+    return AllAssertion.objects.filter(
+        predicate_id=configs.PREDICATE_CONTAINS_UUID,
+        object=child_obj
+    ).first()
+
+def get_immediate_context_children_objs_db(parent_obj):
+    """Get the immediate (spatial) context children of a parent_obj"""
+    return [
+        a.object 
+        for a in AllAssertion.objects.filter(
+            subject=parent_obj,
+            predicate_id=configs.PREDICATE_CONTAINS_UUID,
+        )
+    ]
+
+def get_immediate_concept_parent_obs(child_obj, use_cache=True):
+    """Get the immediate parents of a child manifest object"""
+    if not use_cache:
+        return get_immediate_concept_parent_objs_db(child_obj)
+    cache_key = f'concept-parents-{child_obj.uuid}'
+    cache = caches['memory']
+    all_parents = cache.get(cache_key)
+    if all_parents is not None:
+        return all_parents
+    # We don't have this cached yet, so get the result from
+    # the cache.
+    all_parents = get_immediate_concept_parent_objs_db(child_obj)
+    try:
+        cache.set(cache_key, all_parents)
+    except:
+        pass
+    return all_parents
+
+def get_immediate_concept_children_obs(parent_obj, use_cache=True):
+    """Get the immediate children of a parent manifest object"""
+    if not use_cache:
+        return get_immediate_concept_children_objs_db(parent_obj)
+    cache_key = f'concept-children-{parent_obj.uuid}'
+    cache = caches['memory']
+    all_children = cache.get(cache_key)
+    if all_children is not None:
+        return all_children
+    # We don't have this cached yet, so get the result from
+    # the cache.
+    all_children = get_immediate_concept_children_objs_db(parent_obj)
+    try:
+        cache.set(cache_key, all_children)
+    except:
+        pass
+    return all_children
+
+def get_immediate_context_parent_obj(child_obj, use_cache=True):
+    """Get the immediate parents of a child manifest object"""
+    if not use_cache:
+        return get_immediate_context_parent_obj_db(child_obj)
+    cache_key = f'context-parent-{child_obj.uuid}'
+    cache = caches['memory']
+    parent_obj = cache.get(cache_key)
+    if parent_obj is not None:
+        return parent_obj
+    # We don't have this cached yet, so get the result from
+    # the cache.
+    parent_obj = get_immediate_concept_parent_objs_db(child_obj)
+    try:
+        cache.set(cache_key, parent_obj)
+    except:
+        pass
+    return parent_obj
+
+def get_immediate_context_children_obs(parent_obj, use_cache=True):
+    """Get the immediate children of a parent manifest object"""
+    if not use_cache:
+        return get_immediate_context_children_objs_db(parent_obj)
+    cache_key = f'context-children-{parent_obj.uuid}'
+    cache = caches['memory']
+    all_children = cache.get(cache_key)
+    if all_children is not None:
+        return all_children
+    # We don't have this cached yet, so get the result from
+    # the cache.
+    all_children = get_immediate_context_children_objs_db(parent_obj)
+    try:
+        cache.set(cache_key, all_children)
+    except:
+        pass
+    return all_children
+
+
+def validate_context_assertion(
+    subject_obj, 
+    object_obj,
+    max_depth=100
+):
+    """Validates a spatial context assertion"""
+    if subject_obj.item_type != "subjects":
+        # Spatial context must be between 2
+        # subjects items.
+        raise ValueError(
+            f'Subject must be item_type="subjects", not '
+            f'{subject_obj.item_type} for {subject_obj.uuid}
+        )
+    if object_obj.item_type != "subjects":
+        # Spatial context must be between 2
+        # subjects items.
+        raise ValueError(
+            f'Object must be item_type="subjects", not '
+            f'{object_obj.item_type} for {object_obj.uuid}
+        )
+    obj_parent = get_immediate_context_parent_obj(
+        child_obj=object_obj, 
+        use_cache=False
+    )
+    if obj_parent and obj_parent != subject_obj:
+        # The child object already has a parent, and
+        # we allow only 1 parent.
+        raise ValueError(
+            f'Object {object_obj.uuid} already contained in '
+            f'{obj_parent.label} {obj_parent.uuid}'
+        )
+    subj_parent = subject_obj
+    i = 0
+    while i <= max_depth and subj_parent is not None:
+        i += 1
+        subj_parent = get_immediate_context_parent_obj(
+            child_obj=subj_parent, 
+            use_cache=False
+        )
+        if subj_parent == object_obj:
+            raise ValueError(
+                'Circular containment error. '
+                f'(Child) object {object_obj.uuid} is a '
+                f'parent object for {subject_obj.uuid}'
+            )
+    if i > max_depth:
+        raise ValueError(
+            f'Parent object {subject_obj.uuid} too deep in hierarchy'
+        )
+    print(
+        f'Context containment OK: '
+        f'{subject_obj.uuid}: {subject_obj.label} -> contains -> '
+        f'{object_obj.uuid}: {object_obj.label}'
+    )
+    return True
+
+
+def validate_hierarchy_assertion(
+    subject_obj, 
+    predicate_obj, 
+    object_obj,
+    max_depth=100
+):
+    """Validates an assertion about a hierarchy relationship"""
+    predicate_uuid = str(predicate_obj.uuid)
+    check_preds = (
+        [configs.PREDICATE_CONTAINS_UUID]
+        + configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ
+        + configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
+    )
+    if predicate_uuid not in check_preds:
+        # Valid, not a hierarchy relationship that we
+        # need to check
+        return True
+
+    if subject_obj == object_obj:
+        raise ValueError(
+            'An item cannot have a hierarchy relation '
+            'to itself.'
+        )
+
+    if predicate_uuid == configs.PREDICATE_CONTAINS_UUID:
+        # Do a special spatial context check.
+        return validate_context_assertion(
+            subject_obj, 
+            object_obj,
+            max_depth=max_depth
+        )
+    
+    # Everything below is to validate concept hierarchies.
+    if predicate_uuid in configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ:
+        parent_obj = object_obj
+        child_obj = subject_obj
+    else:
+        parent_obj = subject_obj
+        child_obj = object_obj
+    
+    check_objs = [parent_obj]
+    i = 0
+    while i <= max_depth and len(check_objs):
+        i += 1
+        new_check_objs = []
+        for check_obj in check_objs:
+            new_check_objs += get_immediate_concept_parent_obs(
+                child_obj=check_obj, 
+                use_cache=False
+            )
+        check_objs = list(set(new_check_objs)) 
+        for check_obj in check_objs:
+            if check_obj == child_obj:
+                raise ValueError(
+                'Circular hierarchy error. '
+                f'(Child) object {child_obj.uuid} is a '
+                f'parent object for {parent_obj.uuid}'
+            )
+    if i > max_depth:
+        raise ValueError(
+            f'Parent object {parent_obj.uuid} too deep in hierarchy'
+        )
+
+    print(
+        f'Concept hierarchy OK: '
+        f'{parent_obj.uuid}: {parent_obj.label} -> has child -> '
+        f'{child_obj.uuid}: {child_obj.label}'
+    )
+    return True
+
 
 
 # AllAssertion stores data about "assertions" made about and using items in the AllManifest
 # model. It's a very schema-free / graph like model for representing relationships and
 # attributes of items from different sources. But it is not a triple store because we
-# have several metadata attributes (publisher, project, observation, attribute_group, etc)
-# that 
+# have several metadata attributes (publisher, project, observation, event, 
+# attribute_group, etc.) that provide additional context to make things hopefully
+# easier to manage. 
 @reversion.register  # records in this model under version control
 class AllAssertion(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
@@ -267,14 +994,14 @@ class AllAssertion(models.Model):
         db_column='publisher_uuid',
         related_name='+', 
         on_delete=models.PROTECT, 
-        null=True
+        default=configs.OPEN_CONTEXT_PUB_UUID,
     )
     project = models.ForeignKey(
         AllManifest, 
         db_column='project_uuid', 
         related_name='+', 
         on_delete=models.PROTECT, 
-        null=True
+        default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     source_id = models.CharField(max_length=50, db_index=True)
     subject = models.ForeignKey(
@@ -287,16 +1014,26 @@ class AllAssertion(models.Model):
         AllManifest,  
         db_column='observation_uuid', 
         related_name='+', 
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        default=configs.DEFAULT_OBS_UUID,
     )
-    obs_sort = models.IntegerField()
+    obs_sort = models.IntegerField(default=1)
+    event = models.ForeignKey(
+        AllManifest,  
+        db_column='event_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT,
+        default=configs.DEFAULT_EVENT_UUID,
+    )
+    event_sort = models.IntegerField(default=1)
     attribute_group = models.ForeignKey(
         AllManifest, 
         db_column='attribute_group_uuid', 
         related_name='+', 
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        default=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
     )
-    attribute_group_sort = models.IntegerField()
+    attribute_group_sort = models.IntegerField(default=1)
     predicate = models.ForeignKey(
         AllManifest, 
         db_column='predicate_uuid',
@@ -305,54 +1042,216 @@ class AllAssertion(models.Model):
     )
     sort = models.DecimalField(
         max_digits=8, 
-        decimal_places=3
+        decimal_places=3,
+        default=0,
     )
     visible = models.BooleanField(default=True)
     # Estimated probability for an assertion 
-    # (with 1 as 100% certain, .001 for very uncertain), 0 for not determined.
+    # (with 1 as 100% certain, .001 for very uncertain), null for not determined.
     certainty = models.DecimalField(max_digits=4, decimal_places=3, blank=True, null=True)
     object = models.ForeignKey(
         AllManifest, 
         db_column='object_uuid', 
         related_name='+', 
         on_delete=models.CASCADE, 
-        blank=True, 
-        null=True
+        default=configs.DEFAULT_NULL_OBJECT_UUID,
     )
     obj_string = models.ForeignKey(
         AllString, 
         db_column='obj_string_uuid', 
         related_name='+', 
         on_delete=models.CASCADE, 
-        blank=True, 
-        null=True
+        default=configs.DEFAULT_NULL_STRING_UUID,
     )
-    obj_boolean = models.BooleanField(blank=True, null=True)
-    obj_integer = models.BigIntegerField(blank=True, null=True)
-    obj_double = models.DecimalField(max_digits=19, decimal_places=10, blank=True)
-    obj_datetime = models.DateTimeField(blank=True, null=True)
-    created = models.DateTimeField()
+    obj_boolean = models.BooleanField(null=True)
+    obj_integer = models.BigIntegerField(null=True)
+    obj_double = models.DecimalField(max_digits=19, decimal_places=10, null=True)
+    obj_datetime = models.DateTimeField(null=True)
+    created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
 
-    def primary_key_create(self):
+    def validate_project(self):
+        """Checks to make sure a project is actually a project"""
+        assert self.project.item_type == 'projects'
+
+    def validate_node_refs(self):
+        """Validates references to 'node' manifest objects"""
+        assert self.observation.item_type == 'observations'
+        assert self.event.item_type == 'events'
+        assert self.attribute_group.item_type == 'attribute-groups'
+    
+    def validate_predicate(self):
+        """Validates predicate is an OK type to be a predicate"""
+        assert (
+            self.predicate.item_type in ['predicates', 'property']
+        )
+    
+    def validate_predicate_objects(self):
+        """Validates that predicates have objects of the correct type"""
+        object_expectations = [
+            (
+                (self.object.uuid == GenUUID.UUID(str(configs.DEFAULT_NULL_OBJECT_UUID))),
+                (self.predicate.data_type == 'id'),
+            ),
+            (
+                (self.obj_string.uuid == GenUUID.UUID(str(configs.DEFAULT_NULL_STRING_UUID))), 
+                (self.predicate.data_type == 'xsd:string'),
+            ),
+            (
+                (self.obj_boolean is None),
+                (self.predicate.data_type == 'xsd:boolean'),
+            ),
+            (
+                (self.obj_integer is None),
+                (self.predicate.data_type == 'xsd:integer'),
+            ),
+            (
+                (self.obj_double is None),
+                (self.predicate.data_type == 'xsd:double'),
+            ),
+            (
+                (self.obj_datetime is None),
+                (self.predicate.data_type == 'xsd:date'),
+            ),
+        ]
+        for data_type_is_none, should_exist in object_expectations:
+            if should_exist:
+                assert not data_type_is_none
+            else:
+                assert data_type_is_none
+    
+    def make_hash_id(
+        self, 
+        subject_id,
+        predicate_id,
+        object_id=None,
+        obj_string_id=None,
+        obj_boolean=None,
+        obj_integer=None,
+        obj_double=None,
+        obj_datetime=None,
+        observation_id=configs.DEFAULT_OBS_UUID,
+        event_id=configs.DEFAULT_EVENT_UUID,
+        attribute_group_id=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+    ):
+        """Makes a hash_id for an assertion"""
+        hash_obj = hashlib.sha1()
+        concat_string = " ".join(
+            [
+                str(subject_id),
+                str(observation_id),
+                str(event_id),
+                str(attribute_group_id),
+                str(predicate_id),
+                str(object_id),
+                str(obj_string_id),
+                str(obj_boolean),
+                str(obj_integer),
+                str(obj_double),
+                str(obj_datetime),
+            ]
+        )
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+    
+    def primary_key_create(
+        self, 
+        subject_id,
+        predicate_id,
+        object_id=None,
+        obj_string_id=None,
+        obj_boolean=None,
+        obj_integer=None,
+        obj_double=None,
+        obj_datetime=None,
+        observation_id=configs.DEFAULT_OBS_UUID,
+        event_id=configs.DEFAULT_EVENT_UUID,
+        attribute_group_id=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+    ):
+        """Deterministically make a primary key using a prefix from the subject"""
+
+        # Make the first part from the subject's uuid.
+        subject_id = str(subject_id)
+        uuid_prefix = subject_id.split('-')[0]
+
+        # Make a hash for this Assertion based on all those parts
+        # that need to be unique.
+        hash_id = self.make_hash_id(
+            subject_id=subject_id,
+            predicate_id=predicate_id,
+            object_id=object_id,
+            obj_string_id=obj_string_id,
+            obj_boolean=obj_boolean,
+            obj_integer=obj_integer,
+            obj_double=obj_double,
+            obj_datetime=obj_datetime,
+            observation_id=observation_id,
+            event_id=event_id,
+            attribute_group_id=attribute_group_id
+        )
+        # Now convert that hash into a uuid. Note, we're only using
+        # the first 32 characters. This should still be enough to have
+        # really, really high certainty we won't have hash-collisions on
+        # data that should not be considered unique. If we run into a problem
+        # we can always override this.
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([uuid_prefix] + new_parts[1:])
+        )
+        return uuid
+
+    def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
+            # One is already defined, so skip this step.
             return self.uuid
-        subject_uuid = str(self.subject_uuid)
-        subject_prefix = subject_uuid.split('-')[0]
-        new_uuid = str(GenGenUUID.uuid4())
-        new_parts = new_uuid.split('-')
-        self.uuid = '-'.join(
-            ([subject_prefix] + new_parts[1:])
+
+        object_id = None
+        obj_string_id = None,
+        if self.object is not None:
+            object_id = self.object.uuid
+        if self.obj_string is not None:
+            obj_string_id = self.obj_string.uuid
+
+        self.uuid = self.primary_key_create(
+            subject_id=self.subject.uuid,
+            predicate_id=self.predicate.uuid,
+            object_id=object_id,
+            obj_string_id=obj_string_id,
+            obj_boolean=self.obj_boolean,
+            obj_integer=self.obj_integer,
+            obj_double=self.obj_double,
+            obj_datetime=self.obj_datetime,
+            observation_id=self.observation.uuid,
+            event_id=self.event.uuid,
+            attribute_group_id=self.attribute_group.uuid
         )
+        return self.uuid 
 
     def save(self, *args, **kwargs):
         """
-        creates the hash-id on saving to insure a unique string for a project
+        Creates the hash-id on saving to insure a unique string for a project
         """
-        self.uuid = self.primary_key_create()
-        self.hash_id = self.make_hash_id()
+        self.uuid = self.primary_key_create_for_self()
+        # Make sure the project is really a project.
+        self.validate_project()
+        # Make sure that nodes in this assertion have the expected item_types.
+        self.validate_node_refs()
+        # Make sure the predicate is a predicate or property item_type
+        self.validate_predicate()
+        # Make sure that the data_type expected of the predicate is enforced.
+        self.validate_predicate_objects()
+        # Make sure hierarchy assertions are valid, not circular
+        validate_hierarchy_assertion(
+            subject_obj=self.subject, 
+            predicate_obj=self.predicate, 
+            object_obj=self.object,
+        )
+
         super(AllAssertion, self).save(*args, **kwargs)
 
     class Meta:
@@ -360,7 +1259,8 @@ class AllAssertion(models.Model):
         unique_together = (
             (
                 "subject", 
-                "observation", 
+                "observation",
+                "event",
                 "attribute_group",
                 "predicate",
                 "object", 
@@ -371,6 +1271,9 @@ class AllAssertion(models.Model):
                 "obj_datetime"
             ),
         )
+        ordering = ["subject", "obs_sort", "event_sort", "attribute_group_sort", "sort"]
+
+
 
 # Records a hash history of an item for use in version control.
 @reversion.register  # records in this model under version control
@@ -384,24 +1287,28 @@ class AllHistory(models.Model):
         on_delete=models.PROTECT, 
         null=True
     )
-    subject = models.ForeignKey(
+    item = models.ForeignKey(
         AllManifest, 
-        db_column='subject_uuid', 
+        db_column='item_uuid', 
         related_name='+', 
         on_delete=models.CASCADE
     )
     updated = models.DateTimeField(auto_now=True)
 
+    def validate_project(self):
+        """Checks to make sure a project is actually a project"""
+        assert self.project.item_type == 'projects'
+
     def primary_key_create(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
             return self.uuid
-        subject_uuid = str(self.subject_uuid)
-        subject_prefix = subject_uuid.split('-')[0]
-        new_uuid = str(GenGenUUID.uuid4())
+        item_uuid = str(self.item.uuid)
+        item_prefix = item_uuid.split('-')[0]
+        new_uuid = str(GenUUID.uuid4())
         new_parts = new_uuid.split('-')
         self.uuid = '-'.join(
-            ([subject_prefix] + new_parts[1:])
+            ([item_prefix] + new_parts[1:])
         )
 
     def save(self, *args, **kwargs):
@@ -410,6 +1317,8 @@ class AllHistory(models.Model):
         of the subject uuid
         """
         self.uuid = self.primary_key_create()
+        # Make sure the project is really a project.
+        self.validate_project()
         super(AllHistory, self).save(*args, **kwargs)
 
     class Meta:
