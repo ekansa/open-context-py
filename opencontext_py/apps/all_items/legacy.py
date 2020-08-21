@@ -34,6 +34,9 @@ INSTANCE_URIS = [
     'geonames.org',
     'core.tdar.org/browse/site-name/',
     'pleiades.stoa.org/places/',
+    'scholarworks.sfasu.edu/ita/',
+    'www.jstor.org/stable/',
+    'www.federalregister.gov/documents/',
 ]
 
 REPLACE_URIS = {
