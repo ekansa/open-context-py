@@ -29,8 +29,8 @@ def add_string_assertion_simple(
     subject_obj,
     predicate_id, 
     str_content,
-    project_id=None,
     publisher_id=None,
+    project_id=None,
     source_id=None,
     observation_id=configs.DEFAULT_OBS_UUID,
     event_id=configs.DEFAULT_EVENT_UUID,
@@ -98,4 +98,5 @@ def add_string_assertion_simple(
         f'-> {ass_obj.obj_string.content} [{ass_obj.obj_string.uuid}]'
     )
     print('-'*72)
+
 
