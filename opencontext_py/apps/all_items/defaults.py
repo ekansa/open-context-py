@@ -1272,7 +1272,7 @@ DEFAULT_MANIFESTS = [
         'item_class_id': DEFAULT_CLASS_UUID,
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'property',
-        'data_type': 'id',
+        'data_type': 'xsd:string',
         'slug': 'rdfs-comment',
         'label': 'Has comment',
         'item_key': 'rdfs:comment',
@@ -1596,6 +1596,19 @@ DEFAULT_MANIFESTS = [
         'slug': 'cidoc-crm-p2-has-type',
         'label': 'Has type',
         'uri': 'http://erlangen-crm.org/current/P2_has_type',
+        'context_id': CIDOC_VOCAB_UUID,
+    },
+    {
+        'uuid': PREDICATE_CIDOC_HAS_UNIT_UUID,
+        'publisher_id': CIDOC_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'property',
+        'data_type': 'id',
+        'slug': 'cidoc-crm-p91-has-unit',
+        'label': 'Has unit (of measurement)',
+        'uri': 'http://erlangen-crm.org/current/P91_has_unit',
         'context_id': CIDOC_VOCAB_UUID,
     },
     # GeoJSON - LD
@@ -1956,6 +1969,279 @@ DEFAULT_MANIFESTS = [
             'iso_639_3_code': 'zho',
         }
     },
+    # Units of Measurement
+    {
+        'uuid': UNITS_CENTIMETER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-cm',
+        'label': 'Centimeter',
+        'uri': 'www.wikidata.org/wiki/Q174728',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'cm',
+        }
+    },
+    {
+        'uuid': UNITS_COUNTING_MEASURE_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-counting-measure',
+        'label': 'Counting measure',
+        'uri': 'www.wikidata.org/wiki/Q247204',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:integer',
+            'symbol': 'count',
+        }
+    },
+    {
+        'uuid': UNITS_DEGREE_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-degree',
+        'label': 'Degree',
+        'uri': 'www.wikidata.org/wiki/Q28390',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': '°',
+        }
+    },
+    {
+        'uuid': UNITS_FOOT_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-foot',
+        'label': 'Foot (length)',
+        'uri': 'www.wikidata.org/wiki/Q3710',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'ft',
+        }
+    },
+    {
+        'uuid': UNITS_GRAM_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-gram',
+        'label': 'Gram',
+        'uri': 'www.wikidata.org/wiki/Q41803',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'g',
+        }
+    },
+    {
+        'uuid': UNITS_HECTARE_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-hectare',
+        'label': 'Hectare',
+        'uri': 'www.wikidata.org/wiki/Q35852',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'ha',
+        }
+    },
+    {
+        'uuid': UNITS_KILOGRAM_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-kilogram',
+        'label': 'Kilogram',
+        'uri': 'www.wikidata.org/wiki/Q11570',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'kg',
+        }
+    },
+    {
+        'uuid': UNITS_KILOMETER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-kilometer',
+        'label': 'Kilometer',
+        'uri': 'www.wikidata.org/wiki/Q828224',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'km',
+        }
+    },
+    {
+        'uuid': UNITS_LITER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-liter',
+        'label': 'Liter',
+        'uri': 'www.wikidata.org/wiki/Q11582',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'l',
+        }
+    },
+    {
+        'uuid': UNITS_METER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-meter',
+        'label': 'Meter',
+        'uri': 'www.wikidata.org/wiki/Q11573',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'm',
+        }
+    },
+    {
+        'uuid': UNITS_METRIC_TON_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-tonne',
+        'label': 'Tonne (metric ton)',
+        'uri': 'www.wikidata.org/wiki/Q191118',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 't',
+        }
+    },
+    {
+        'uuid': UNITS_MICROGRAM_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-microgram',
+        'label': 'Microgram',
+        'uri': 'www.wikidata.org/wiki/Q1645498',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'µg',
+        }
+    },
+    {
+        'uuid': UNITS_MILLIGRAM_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-milligram',
+        'label': 'Milligram',
+        'uri': 'www.wikidata.org/wiki/Q3241121',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'mg',
+        }
+    },
+    {
+        'uuid': UNITS_MILLILITER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-milliliter',
+        'label': 'Milliliter',
+        'uri': 'www.wikidata.org/wiki/Q2332346',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'mL',
+        }
+    },
+    {
+        'uuid': UNITS_MILLIMETER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-millimeter',
+        'label': 'Millimeter',
+        'uri': 'www.wikidata.org/wiki/Q174789',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': 'mm',
+        }
+    },
+    {
+        'uuid': UNITS_SQUAREMETER_UUID,
+        'publisher_id': WIKIPEDIA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'units',
+        'data_type': 'id',
+        'slug': 'units-square-meter',
+        'label': 'Square Meter',
+        'uri': 'www.wikidata.org/wiki/Q25343',
+        'context_id': WIKIDATA_VOCAB_UUID,
+        'meta_json': {
+            'data_type': 'xsd:double',
+            'symbol': '㎡',
+        }
+    },
 ]
 
 
@@ -1988,7 +2274,7 @@ def verify_manifest_uuids(dict_list=DEFAULT_MANIFESTS):
         if not is_valid_uuid(uuid):
             raise ValueError(f'Not a valid config uuid: {uuid}')
         if not is_valid_uuid(ex_uuid):
-            raise ValueError(f'Not a valid geerated uuid: {ex_uuid}')
+            raise ValueError(f'Not a valid generated uuid: {ex_uuid}')
         if ex_uuid == uuid:
             continue
         print(f'{uri} should have {ex_uuid}')

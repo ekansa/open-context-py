@@ -2,7 +2,9 @@
 from django.conf import settings
 
 
-# project prefix: 252e7a5f-
+# Maximum depth of all Open Context hierarchies
+# This is insanely high, but sets a hard-limit against infinite recursion.
+MAX_HIERARCHY_DEPTH = 100
 
 
 # ---------------------------------------------------------------------
@@ -31,6 +33,7 @@ URI_CONTEXT_PREFIX_ITEM_TYPES = [
     'languages', # Called as a type to make string modeling easier.
     'class', # A classification type
     'property', # An attribute or linking relation.
+    'units', # For a unit of measurement.
     'uri',  # Usually for an instance.
 ]
 
@@ -71,7 +74,7 @@ DATA_TYPES = [
 MANIFEST_META_JSON_KEYS = {
     # Tuple is as follows:
     # (limit_to_item_type, key, value object type)
-    (None, 'skos_alt_label', int,),
+    (None, 'skos_alt_label', str,),
 
     # Projects related metadata keys.
     ('projects', 'short_id', int,),
@@ -92,6 +95,10 @@ MANIFEST_META_JSON_KEYS = {
     ('languages', 'label_localized', str,),
     ('languages', 'script_code', str,),
     ('languages', 'iso_639_3_code', str,),
+
+    # Units
+    ('units', 'data_type', str,),
+    ('units', 'symbol', str,),
 }
 
 
@@ -384,6 +391,7 @@ CIDOC_PUB_UUID = 'ab03a6b8-f87b-4cfa-8b08-7a68be7b61ef'
 CIDOC_VOCAB_UUID =  '00000000-798b-aa74-20d9-96d2bba09865'
 PREDICATE_CIDOC_CONSISTS_OF_UUID = '00000000-798b-ac05-70c4-1762c7ad066e'
 PREDICATE_CIDOC_HAS_TYPE_UUID = '00000000-798b-37da-99aa-704b3f50c62f'
+PREDICATE_CIDOC_HAS_UNIT_UUID = '00000000-798b-85cc-1bc4-172732da72bf'
 
 # GeoJSON
 GEOJSON_PUB_UUID = '8b217b00-c204-4b00-af05-acb6d62691dd'
@@ -426,5 +434,21 @@ LANG_ZH_UUID = '00000000-75e9-6824-9448-fee92cff43b9'  # Chinese
 # Default language to be English, overwrite this to change.
 DEFAULT_LANG_UUID = LANG_EN_UUID
 
-
-
+# Units of Measurement (Use Wikidata for URIs for Units of Measurement)
+# NOTE - Expand on these as needed. 
+UNITS_CENTIMETER_UUID = '00000000-75e9-092a-9afa-b9d6227ea8ea'
+UNITS_COUNTING_MEASURE_UUID = '00000000-75e9-0f41-d9ef-29a517f44b06'
+UNITS_DEGREE_UUID = '00000000-75e9-a86f-981d-73f03c797b21'
+UNITS_FOOT_UUID = '00000000-75e9-2995-79d7-995113a4dc8e'
+UNITS_GRAM_UUID = '00000000-75e9-b5a4-0273-adfe75dacd0c'
+UNITS_HECTARE_UUID = '00000000-75e9-9348-46a3-ce508a6b1dc6'
+UNITS_KILOGRAM_UUID = '00000000-75e9-a03d-3e8c-4d27830f7b11'
+UNITS_KILOMETER_UUID = '00000000-75e9-6e82-d4b3-cd85c42f97f5'
+UNITS_LITER_UUID = '00000000-75e9-bf7b-5ae0-d6b021365b43'
+UNITS_METER_UUID = '00000000-75e9-0e4b-1650-809b6a9d5294'
+UNITS_METRIC_TON_UUID = '00000000-75e9-b158-42cf-069ce8d5c638'
+UNITS_MICROGRAM_UUID ='00000000-75e9-51f3-29b8-86cf873bc790'
+UNITS_MILLIGRAM_UUID = '00000000-75e9-63c7-ee9f-3526f846159c'
+UNITS_MILLILITER_UUID = '00000000-75e9-e55c-6b90-f7630eb8fb11'
+UNITS_MILLIMETER_UUID = '00000000-75e9-5503-d05c-c90f3da8f4b5'
+UNITS_SQUAREMETER_UUID = '00000000-75e9-c8ae-b57c-0ab952428987'
