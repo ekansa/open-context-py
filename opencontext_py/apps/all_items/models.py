@@ -169,7 +169,7 @@ def make_slug_from_label(label, project_id):
 
 def make_slug_from_uri(uri):
     """Makes a slug from a label for a project item"""
-    uri = AllManifest.clean_uri(uri)
+    uri = AllManifest().clean_uri(uri)
 
     # Remove any www. prefix to a URI.
     for bad_prefix in ['www.']:
@@ -735,11 +735,11 @@ class AllString(models.Model):
 # ---------------------------------------------------------------------
 def get_immediate_concept_parent_objs_db(child_obj):
     """Get the immediate parents of a child manifest object using DB"""
-    subj_super_qs = AllAssertion.filter(
+    subj_super_qs = AllAssertion.objects.filter(
         object=child_obj,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ,
     )
-    subj_subord_qs = AllAssertion.filter(
+    subj_subord_qs = AllAssertion.objects.filter(
         subject=child_obj,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
     )
@@ -749,11 +749,11 @@ def get_immediate_concept_parent_objs_db(child_obj):
 
 def get_immediate_concept_children_objs_db(parent_obj):
     """Get the immediate children of a parent manifest object using DB"""
-    subj_super_qs = AllAssertion.filter(
+    subj_super_qs = AllAssertion.objects.filter(
         subject=parent_obj,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ,
     )
-    subj_subord_qs = AllAssertion.filter(
+    subj_subord_qs = AllAssertion.objects.filter(
         object=parent_obj,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
     )
@@ -851,10 +851,41 @@ def get_immediate_context_children_obs(parent_obj, use_cache=True):
     return all_children
 
 
+def check_if_obj_is_concept_parent(
+    is_a_parent_obj, 
+    of_obj, 
+    use_cache=True, 
+    max_depth=configs.MAX_HIERARCHY_DEPTH
+):
+    """Checks if is_a_parent_obj is a parent of the of_obj"""
+    check_objs = [of_obj]
+    i = 0
+    while i <= max_depth and len(check_objs):
+        i += 1
+        parent_objs = []
+        for check_obj in check_objs:
+            # Add to the list of all the parents.
+            parent_objs += get_immediate_concept_parent_obs(
+                child_obj=check_obj, 
+                use_cache=use_cache
+            )
+        # Consolidate so to parent objs are unique.
+        check_objs = list(set(parent_objs)) 
+        for check_obj in check_objs:
+            if check_obj == is_a_parent_obj:
+               return True
+    
+    if i > max_depth:
+        raise ValueError(
+            f'Object {child_obj.uuid} too deep in hierarchy'
+        )
+    return False
+
+
 def validate_context_assertion(
     subject_obj, 
     object_obj,
-    max_depth=100
+    max_depth=configs.MAX_HIERARCHY_DEPTH
 ):
     """Validates a spatial context assertion"""
     if subject_obj.item_type != "subjects":
@@ -862,14 +893,14 @@ def validate_context_assertion(
         # subjects items.
         raise ValueError(
             f'Subject must be item_type="subjects", not '
-            f'{subject_obj.item_type} for {subject_obj.uuid}
+            f'{subject_obj.item_type} for {subject_obj.uuid}'
         )
     if object_obj.item_type != "subjects":
         # Spatial context must be between 2
         # subjects items.
         raise ValueError(
             f'Object must be item_type="subjects", not '
-            f'{object_obj.item_type} for {object_obj.uuid}
+            f'{object_obj.item_type} for {object_obj.uuid}'
         )
     obj_parent = get_immediate_context_parent_obj(
         child_obj=object_obj, 
@@ -912,7 +943,8 @@ def validate_hierarchy_assertion(
     subject_obj, 
     predicate_obj, 
     object_obj,
-    max_depth=100
+    max_depth=configs.MAX_HIERARCHY_DEPTH,
+    use_cache=False,
 ):
     """Validates an assertion about a hierarchy relationship"""
     predicate_uuid = str(predicate_obj.uuid)
@@ -928,8 +960,7 @@ def validate_hierarchy_assertion(
 
     if subject_obj == object_obj:
         raise ValueError(
-            'An item cannot have a hierarchy relation '
-            'to itself.'
+            'An item cannot have a hierarchy relation to itself.'
         )
 
     if predicate_uuid == configs.PREDICATE_CONTAINS_UUID:
@@ -942,33 +973,28 @@ def validate_hierarchy_assertion(
     
     # Everything below is to validate concept hierarchies.
     if predicate_uuid in configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ:
+        # The subject item is subordinate to the object (parent) item.
         parent_obj = object_obj
         child_obj = subject_obj
     else:
+        # The object item is subordinate to the subject (parent) item.
         parent_obj = subject_obj
         child_obj = object_obj
     
-    check_objs = [parent_obj]
-    i = 0
-    while i <= max_depth and len(check_objs):
-        i += 1
-        new_check_objs = []
-        for check_obj in check_objs:
-            new_check_objs += get_immediate_concept_parent_obs(
-                child_obj=check_obj, 
-                use_cache=False
-            )
-        check_objs = list(set(new_check_objs)) 
-        for check_obj in check_objs:
-            if check_obj == child_obj:
-                raise ValueError(
-                'Circular hierarchy error. '
-                f'(Child) object {child_obj.uuid} is a '
-                f'parent object for {parent_obj.uuid}'
-            )
-    if i > max_depth:
+    # Check to see if this would be a circular hierarchy. A circular
+    # hierarchy would happen if the child_obj happens to be a 
+    # parent concept of the parent_obj.
+    is_circular = check_if_obj_is_concept_parent(
+        is_a_parent_obj=child_obj, 
+        of_obj=parent_obj, 
+        use_cache=use_cache, 
+        max_depth= max_depth
+    )
+    if is_circular: 
         raise ValueError(
-            f'Parent object {parent_obj.uuid} too deep in hierarchy'
+            'Circular hierarchy error. '
+            f'(Child) object {child_obj.uuid} is a '
+            f'parent object for {parent_obj.uuid}'
         )
 
     print(
@@ -979,6 +1005,17 @@ def validate_hierarchy_assertion(
     return True
 
 
+def validate_has_unit_assertion(predicate_obj, object_obj):
+    """Checks that the object of a cidoc-crm:P91_has_unit is a unit"""
+    if str(predicate_obj.uuid) != configs.PREDICATE_CIDOC_HAS_UNIT_UUID:
+        # Not a cidoc-crm:P91_has_unit assertion, so skip this
+        # validation check.
+        return True
+    if object_obj.item_type != 'units':
+        raise ValueError(
+            f'Object {child_obj.label} ({child_obj.uuid}) has item_type of '
+            f'"{ object_obj.item_type}"" not "units".'
+        )
 
 # AllAssertion stores data about "assertions" made about and using items in the AllManifest
 # model. It's a very schema-free / graph like model for representing relationships and
@@ -1083,8 +1120,19 @@ class AllAssertion(models.Model):
     
     def validate_predicate(self):
         """Validates predicate is an OK type to be a predicate"""
+        # NOTE: For the purposes of this validation, a 
+        # an item_type='class' item can act as a predicate (attribute) to make
+        # it easier to represent measurements, which are defined as classes
+        # in the CIDOC-CRM (see: http://erlangen-crm.org/current/E54_Dimension )
+        # In this case, an assertion using a predicate object that is a 
+        # measurement class would be read something like:
+        # 
+        # subject -> has_measurement::dimension::has-value -> 1.1
+        #
+        # where the has_measurement::dimension::has-value is all implied by
+        # within the predicate object of this assertion.
         assert (
-            self.predicate.item_type in ['predicates', 'property']
+            self.predicate.item_type in ['predicates', 'property', 'class']
         )
     
     def validate_predicate_objects(self):
@@ -1250,6 +1298,11 @@ class AllAssertion(models.Model):
             subject_obj=self.subject, 
             predicate_obj=self.predicate, 
             object_obj=self.object,
+        )
+        # Make sure assertions about units of measure are valid.
+        validate_has_unit_assertion(
+            predicate_obj=self.predicate,
+            object_obj=self.object
         )
 
         super(AllAssertion, self).save(*args, **kwargs)
