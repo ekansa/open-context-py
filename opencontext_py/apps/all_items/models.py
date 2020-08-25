@@ -924,8 +924,8 @@ def validate_context_assertion(
         if subj_parent == object_obj:
             raise ValueError(
                 'Circular containment error. '
-                f'(Child) object {object_obj.uuid} is a '
-                f'parent object for {subject_obj.uuid}'
+                f'(Child) object {object_obj.uuid}: {object_obj.label} is a '
+                f'parent object for {subject_obj.uuid}: {subject_obj.label}'
             )
     if i > max_depth:
         raise ValueError(
@@ -993,8 +993,8 @@ def validate_hierarchy_assertion(
     if is_circular: 
         raise ValueError(
             'Circular hierarchy error. '
-            f'(Child) object {child_obj.uuid} is a '
-            f'parent object for {parent_obj.uuid}'
+            f'(Child) object {child_obj.uuid}: {child_obj.label} is a '
+            f'parent object for {parent_obj.uuid}: {parent_obj.label}'
         )
 
     print(
