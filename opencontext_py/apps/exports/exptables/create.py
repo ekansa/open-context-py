@@ -45,10 +45,67 @@ for source_ids, class_uris, table_id, label in tabs:
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.expfields.models import ExpField
-rem_tabs = ['9e88ebc8-fea3-41c7-b520-1500f378dbae', '119df385-2779-4bf0-9cc2-c3ba6ce2964a']
+rem_tabs = ['3f315237-38d3-4131-a2b8-666ddec68d7c']
 ExpTable.objects.filter(table_id__in=rem_tabs).delete()
 ExpField.objects.filter(table_id__in=rem_tabs).delete()
 ExpCell.objects.filter(table_id__in=rem_tabs).delete()
+
+
+
+# New showing custom list of UUIDs and observation limits
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+
+source_id = 'ref:2215688392416'
+project_uuid = '01d79ce4-43fb-4eca-9119-0cd505b1972a'
+uuids = Assertion.objects.filter(
+    source_id=source_id,
+    project_uuid=project_uuid,
+).distinct('uuid').values_list('uuid', flat=True)
+
+
+from opencontext_py.apps.exports.exptables.create import ExpTabCreate
+extab_c = ExpTabCreate()
+extab_c.table_id = '3f315237-38d3-4131-a2b8-666ddec68d7'
+extab_c.uuid_list = uuids
+extab_c.label = 'Data Table of Pınarbaşı Bird Remains Measurements'
+extab_c.include_equiv_ld_literals = False
+extab_c.include_ld_source_values = False
+extab_c.numeric_fields_last = False
+extab_c.project_uuids = [project_uuid]
+extab_c.class_uris = ['oc-gen:cat-animal-bone']
+extab_c.obs_limits = [2] # Limit to the assertions from obs 2
+extab_c.first_add_predicate_uuids = [
+    'f21cf62d-b25f-41ac-8f89-0b427d736ac6',
+    '5c7ca9c1-af27-488d-9ca8-ee2fc5be7a48',
+]
+extab_c.last_add_predicate_uuids = [
+    '32d26999-e6f0-4dff-885f-52f957aaa815',
+]
+extab_c.create_table()
+
+
+from opencontext_py.apps.exports.exptables.create import ExpTabCreate
+extab_c = ExpTabCreate()
+extab_c.label = 'Data Table of Pınarbaşı Bird Remains Primary Descriptions'
+extab_c.include_equiv_ld_literals = False
+extab_c.include_ld_source_values = False
+extab_c.numeric_fields_last = False
+extab_c.project_uuids = [project_uuid]
+extab_c.class_uris = ['oc-gen:cat-animal-bone']
+extab_c.obs_limits = [1] # Limit to the assertions from obs 2
+extab_c.first_add_predicate_uuids = [
+    'f21cf62d-b25f-41ac-8f89-0b427d736ac6',
+    '5c7ca9c1-af27-488d-9ca8-ee2fc5be7a48',
+]
+extab_c.last_add_predicate_uuids = [
+    '32d26999-e6f0-4dff-885f-52f957aaa815',
+]
+extab_c.create_table()
+
+
+
+
+
 
 from opencontext_py.apps.exports.exptables.create import ExpTabCreate
 extab_c = ExpTabCreate()
@@ -97,9 +154,15 @@ extab_c.create_table()
         self.source_ids = []
         self.context_path = None
         self.uuid_list = []
+        self.obs_limits = []
+        self.numeric_fields_last = False
+        self.first_add_predicate_uuids = [] # Add these predicates first
+        self.last_add_predicate_uuids = [] # Add these predicates last
 
     def make_uuid_list_for_table(self):
         """ makes a uuid list for items in the table """
+        if self.uuid_list:
+            return self.uuid_list
         args = {}
         sub_args = {}
         args['class_uri__in'] = self.class_uris
@@ -149,6 +212,10 @@ extab_c.create_table()
             ctab.include_equiv_ld_literals = self.include_equiv_ld_literals
             ctab.boolean_multiple_ld_fields = self.boolean_multiple_ld_fields   # single field for LD fields
             ctab.source_field_label_suffix = self.source_field_label_suffix  # blank suffix for source data field names
+            ctab.obs_limits = self.obs_limits
+            ctab.numeric_fields_last = self.numeric_fields_last
+            ctab.first_add_predicate_uuids = self.first_add_predicate_uuids
+            ctab.last_add_predicate_uuids = self.last_add_predicate_uuids
             ctab.prep_default_fields()
             ctab.uuidlist = self.uuid_list
             ctab.process_uuid_list(self.uuid_list)

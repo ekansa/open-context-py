@@ -1,7 +1,8 @@
+import copy
 import datetime
 import json
 from django.db import models
-from django.db.models import Avg, Max, Min
+from django.db.models import Avg, Max, Min, Q
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.expfields.models import ExpField
@@ -81,6 +82,8 @@ class Create():
         self.dc_creator_ids = {}  # dict with ID keys and counts of dc-terms:creator
         self.uuidlist = []
         self.parents = {}  # dict of uuids for parent entities to keep them in memory
+        self.first_add_predicate_uuids = [] # Add these predicates first
+        self.last_add_predicate_uuids = [] # Add these predicates last
 
     def prep_default_fields(self):
         """ Prepares initial set of default fields for export tables """
@@ -293,17 +296,38 @@ class Create():
         temp_predicate_uuids = LastUpdatedOrderedDict()
         max_count = 1  #  useful for sorting
         for uuid in uuids:
-            if limit_obs:
-                pred_uuids = Assertion.objects\
-                                      .values_list('predicate_uuid', flat=True)\
-                                      .filter(uuid=uuid,
-                                              obs_num__in=self.obs_limits)\
-                                      .order_by('obs_num', 'sort')
-            else:
-                pred_uuids = Assertion.objects\
-                                      .values_list('predicate_uuid', flat=True)\
-                                      .filter(uuid=uuid)\
-                                      .order_by('obs_num', 'sort')
+            first_preds = []
+            if self.first_add_predicate_uuids:
+                first_preds = Assertion.objects.filter(
+                    uuid=uuid,
+                    predicate_uuid__in=self.first_add_predicate_uuids,
+                ).values_list('predicate_uuid', flat=True)
+            last_preds = []
+            if self.last_add_predicate_uuids:
+                last_preds = Assertion.objects.filter(
+                    uuid=uuid,
+                    predicate_uuid__in=self.last_add_predicate_uuids,
+                ).values_list('predicate_uuid', flat=True)
+            
+            # Get this item's predicates.
+            item_pred_uuids = Assertion.objects.values_list(
+                'predicate_uuid', 
+                flat=True
+            ).filter(
+                uuid=uuid,
+            ).order_by(
+                'obs_num', 
+                'sort'
+            )
+            if limit_obs or self.obs_limits:
+                # Limit by obs number
+                item_pred_uuids = item_pred_uuids.filter(obs_num__in=self.obs_limits)
+           
+            # Now add the first, item and last predicates together.
+            pred_uuids = [p for p in first_preds]
+            pred_uuids += [p for p in item_pred_uuids if p not in pred_uuids]
+            pred_uuids += [p for p in last_preds if p not in pred_uuids]
+
             item_preds = LastUpdatedOrderedDict()
             for pred_uuid in pred_uuids:
                 # make sure we can dereference the predicate
@@ -319,17 +343,24 @@ class Create():
                     pred_label = self.deref_entity_label(pred_uuid)
                     pred_type = self.entities[pred_uuid].data_type
                     pred_sort = self.entities[pred_uuid].sort
-                    if pred_sort is False:
-                        pred_sort = 10000 # default to putting this at the end
-                    # print('Type {} sort to {}'.format(pred_label, pred_type))
-                    self.numeric_fields_last = True
+                    if not pred_sort and pred_uuid in pred_uuids:
+                        pred_sort = pred_uuids.index(pred_uuid)
+                    if not pred_sort:
+                        pred_sort = len(pred_uuids) + 10 # put it at the end.
+                    if pred_uuid not in self.first_add_predicate_uuids:
+                        pred_sort = pred_sort + len(self.first_add_predicate_uuids) * 10
+                    if pred_uuid in self.last_add_predicate_uuids:
+                        pred_sort += len(pred_uuids) * 2 # put it at the end.
+                    
                     if self.numeric_fields_last and pred_type in ['xsd:integer', 'xsd:double']:
                         pred_sort += 1000
                         # print('Changing {} sort to {}'.format(pred_label, pred_sort))
-                    temp_predicate_uuids[pred_uuid] = {'count': count,
-                                                       'sort': pred_sort,
-                                                       'label': pred_label,
-                                                       'type': pred_type}
+                    temp_predicate_uuids[pred_uuid] = {
+                        'count': count,
+                        'sort': pred_sort,
+                        'label': pred_label,
+                        'type': pred_type
+                    }
                 else:
                     if max_count < count:
                         max_count = count
@@ -440,12 +471,15 @@ class Create():
             Otherwise, this returns false.
         """
         output = False
-        if self.boolean_multiple_ld_fields is not False:
-            if pred_ld_equiv_uri in self.ld_predicates:
-                for predicate_uuid in self.ld_predicates[pred_ld_equiv_uri]['uuids']:
-                    if predicate_uuid in self.predicate_uuids:
-                        if self.predicate_uuids[predicate_uuid]['count'] > 1:
-                            output = True
+        if not self.boolean_multiple_ld_fields:
+            return False
+        if not pred_ld_equiv_uri in self.ld_predicates:
+            return False
+        for predicate_uuid in self.ld_predicates[pred_ld_equiv_uri]['uuids']:
+            if not predicate_uuid in self.predicate_uuids:
+                continue
+            if self.predicate_uuids[predicate_uuid]['count'] > 1:
+                output = True
         return output
 
     def save_source_fields(self):
@@ -466,16 +500,47 @@ class Create():
             rows = UUIDsRowsExportTable(self.table_id).rows
             for row in rows:
                 if limit_obs:
-                    item_data = Assertion.objects.filter(uuid=row['uuid'],
-                                                         predicate_uuid__in=pred_uuid_list,
-                                                         obs_num__in=self.obs_limits)
+                    main_term = {
+                        'uuid': row['uuid'],
+                        'predicate_uuid__in': pred_uuid_list,
+                        'obs_num__in': self.obs_limits,
+                    }
+                    # Make the term for any first predicates,
+                    # default to the main term for no
+                    # first predicates.
+                    first_term = main_term.copy()
+                    if self.first_add_predicate_uuids:
+                        first_term = {
+                            'uuid': row['uuid'],
+                            'predicate_uuid__in': self.first_add_predicate_uuids
+                        }
+                    # Make the term for any last predicates,
+                    # default to the main term for no
+                    # last predicates.
+                    last_term = main_term.copy()
+                    if self.last_add_predicate_uuids:
+                        last_term = {
+                            'uuid': row['uuid'],
+                            'predicate_uuid__in': self.last_add_predicate_uuids
+                        }
+                    
+                    item_data = Assertion.objects.filter(
+                        Q(**main_term) 
+                        | Q(**first_term) 
+                        | Q(**last_term)
+                    )
                 else:
-                    item_data = Assertion.objects.filter(uuid=row['uuid'],
-                                                         predicate_uuid__in=pred_uuid_list)
-                if len(item_data) > 0:
-                    self.add_source_cells(row['uuid'],
-                                          row['row_num'],
-                                          item_data)
+                    item_data = Assertion.objects.filter(
+                        uuid=row['uuid'],
+                        predicate_uuid__in=pred_uuid_list
+                )
+                if not len(item_data):
+                    continue
+                self.add_source_cells(
+                    row['uuid'],
+                    row['row_num'],
+                    item_data
+                )
 
     def add_source_cells(self, uuid, row_num, item_data):
         """ Adds source data records for an assertion """
