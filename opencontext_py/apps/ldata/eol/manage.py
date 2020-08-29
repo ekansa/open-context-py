@@ -58,15 +58,13 @@ class EOLmanage():
         """
         label = False
         eol_api = eolAPI()
-        eol_data = eol_api.get_basic_json_for_eol_uri(eol_uri)
-        if isinstance(eol_data, dict):
-            print('Reading data...')
-            if 'scientificName' in eol_data:
-                label = eol_data['scientificName']
+        labels = eol_api.get_labels_for_uri(eol_uri)
+        if isinstance(labels, dict):
+            label = labels['label']
+            print(f'Read data for {eol_uri} -> {label}')
         else:
-            print('Failed to read data: ' + str(eol_data))
-        if label is not False:
-            print('Saving data for: ' + str(label) + ' (' + eol_uri + ')')
+            print(f'Failed to read data: {eol_uri}')
+        if label:
             le = LinkEntity()
             le.uri = eol_uri
             le.label = label

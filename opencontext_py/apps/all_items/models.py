@@ -3,15 +3,20 @@ import pytz
 import time
 import re
 import roman
+import requests
 import reversion  # version control object
 import uuid as GenUUID
+
 from datetime import datetime
 from math import pow
+from time import sleep
 from unidecode import unidecode
 
 from django.core.cache import caches
 
 from django.db import models
+from django.db.models import Q
+
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.defaultfilters import slugify
@@ -24,6 +29,51 @@ from opencontext_py.apps.all_items import configs
 
 DEFAULT_LABEL_SORT_LEN = 6
 
+# ---------------------------------------------------------------------
+# Generally used validation functions
+# ---------------------------------------------------------------------
+def validate_related_manifest_item_type(
+    man_obj, 
+    allowed_types, 
+    obj_role, 
+    raise_on_fail=True
+):
+    if not isinstance(allowed_types, list):
+        allowed_types = [allowed_types]
+    if man_obj.item_type in allowed_types:
+        return True
+    if raise_on_fail:
+        raise ValueError(
+            f'{obj_role} has item_type {man_obj.item_type} '
+            f'but must be: {str(allowed_types)}'
+        )
+    return False
+
+def validate_related_project(project_obj, raise_on_fail=True):
+    return validate_related_manifest_item_type(
+        man_obj=project_obj, 
+        allowed_types=['projects'], 
+        obj_role='project',
+        raise_on_fail=raise_on_fail
+    )
+
+def web_protocol_check(uri):
+    """Checks if a URI responds to https:// or http://"""
+    sleep(0.25)
+    protocols = ['https://', 'http://',]
+    for protocol in protocols:
+        check_uri = protocol + AllManifest().clean_uri(uri)
+        try:
+            r = requests.head(check_uri)
+            if (
+                (r.status_code == requests.codes.ok) 
+                or
+                (r.status_code >= 300 and r.status_code <= 310)
+            ):
+                return check_uri
+        except:
+            pass
+    return uri
 
 # ---------------------------------------------------------------------
 #  Functions used with the Manifest Model
@@ -204,6 +254,11 @@ def make_slug_from_uri(uri):
     return raw_slug
 
 
+def make_uri_for_oc_item_types(uuid, item_type):
+    if item_type not in configs.OC_ITEM_TYPES:
+        return None
+    return f'{configs.OC_URI_ROOT}/{item_type}/{uuid}'
+
 def make_manifest_slug(label, item_type, uri, project_id):
     """Makes a sort value for a record as a numeric string"""
     if item_type in configs.OC_ITEM_TYPES:
@@ -308,9 +363,6 @@ class AllManifest(models.Model):
     uri = models.CharField(max_length=300, unique=True)
     # Preferred key when used in JSON-LD.
     item_key = models.CharField(max_length=300, blank=True, null=True)
-    # A list of other identifiers (especially legacy ids from prior
-    # versions of Open Context)
-    identifiers = ArrayField(models.CharField(max_length=200), blank=True, null=True)
     # Hash ID has special logic to ensure context dependent uniqueness
     # especially based on the contents of the context field.
     hash_id = models.CharField(max_length=50, unique=True)
@@ -377,22 +429,26 @@ class AllManifest(models.Model):
         """
         hash_obj = hashlib.sha1()
         if item_type in configs.URI_ITEM_TYPES:
-            concat_string = "{} {} {} {} {} {}".format(
-                project_uuid,
-                context_uuid,
-                item_type,
-                data_type,
-                label,
-                str(uri),
+            concat_string = ' '.join(
+                [
+                    str(project_uuid),
+                    str(context_uuid),
+                    str(item_type),
+                    str(data_type),
+                    str(label),
+                    str(uri),
+                ]
             )
         else:
-            concat_string = "{} {} {} {} {} {}".format(
-                project_uuid,
-                context_uuid,
-                item_type,
-                data_type,
-                label,
-                path
+            concat_string = ' '.join(
+                [
+                    str(project_uuid),
+                    str(context_uuid),
+                    str(item_type),
+                    str(data_type),
+                    str(label),
+                    str(path),
+                ]
             )
         concat_string = concat_string.strip()
         hash_obj.update(concat_string.encode('utf-8'))
@@ -425,7 +481,8 @@ class AllManifest(models.Model):
             # Skip this validation because we have
             # a special uuid.
             return True
-        assert self.project.item_type == 'projects'
+        # For most cases, check that this a project.
+        return validate_related_project(project_obj=self.project)
 
     def validate_from_list(self, option, options, raise_on_error=True):
         if option in options:
@@ -585,6 +642,13 @@ class AllManifest(models.Model):
         # or totally predicable uuid for this manifest obj.
         self.uuid = self.primary_key_create_for_self()
 
+        # Make the URI for Open Context item types.
+        if self.uri is None and self.item_type in configs.OC_ITEM_TYPES:
+            self.uri = make_uri_for_oc_item_types(
+                self.uuid, 
+                self.item_type
+            )
+
         # Make sure the project is actually a project
         self.validate_project()
 
@@ -629,14 +693,6 @@ class AllString(models.Model):
     updated = models.DateTimeField(auto_now=True)
     content = models.TextField()
     meta_json = JSONField(default=dict)
-
-    def validate_project(self):
-        """Checks to make sure a project is actually a project"""
-        assert self.project.item_type == 'projects'
-
-    def validate_language(self):
-        """Checks to make sure a language is actually a language"""
-        assert self.language.item_type == 'languages'
 
     def make_hash_id(
         self, 
@@ -706,8 +762,15 @@ class AllString(models.Model):
         """
         creates the hash-id on saving to insure a unique string for a project
         """
-        self.validate_project()
-        self.validate_language()
+        # Make sure the project is really a project.
+        validate_related_project(project_obj=self.project)
+        # Make sure the language has the right
+        # manifest object item_type
+        validate_related_manifest_item_type(
+            man_obj=self.language,
+            allowed_types=['languages'],
+            obj_role='language'
+        )
         self.content = self.content.strip()
         self.hash_id = self.make_hash_id(
             project_id=self.project.uuid,
@@ -737,7 +800,10 @@ def get_immediate_concept_parent_objs_db(child_obj):
     """Get the immediate parents of a child manifest object using DB"""
     subj_super_qs = AllAssertion.objects.filter(
         object=child_obj,
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ,
+        predicate_id__in=(
+            configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
+            + configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
+        ),
     )
     subj_subord_qs = AllAssertion.objects.filter(
         subject=child_obj,
@@ -751,7 +817,10 @@ def get_immediate_concept_children_objs_db(parent_obj):
     """Get the immediate children of a parent manifest object using DB"""
     subj_super_qs = AllAssertion.objects.filter(
         subject=parent_obj,
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ,
+        predicate_id__in=(
+            configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
+            + configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
+        ),
     )
     subj_subord_qs = AllAssertion.objects.filter(
         object=parent_obj,
@@ -882,12 +951,8 @@ def check_if_obj_is_concept_parent(
     return False
 
 
-def validate_context_assertion(
-    subject_obj, 
-    object_obj,
-    max_depth=configs.MAX_HIERARCHY_DEPTH
-):
-    """Validates a spatial context assertion"""
+def validate_context_subject_objects(subject_obj, object_obj):
+    """Validates the correct item-types for context relations"""
     if subject_obj.item_type != "subjects":
         # Spatial context must be between 2
         # subjects items.
@@ -902,6 +967,17 @@ def validate_context_assertion(
             f'Object must be item_type="subjects", not '
             f'{object_obj.item_type} for {object_obj.uuid}'
         )
+    return True
+
+
+def validate_context_assertion(
+    subject_obj, 
+    object_obj,
+    max_depth=configs.MAX_HIERARCHY_DEPTH
+):
+    """Validates a spatial context assertion"""
+    validate_context_subject_objects(subject_obj, object_obj)
+
     obj_parent = get_immediate_context_parent_obj(
         child_obj=object_obj, 
         use_cache=False
@@ -947,9 +1023,13 @@ def validate_hierarchy_assertion(
     use_cache=False,
 ):
     """Validates an assertion about a hierarchy relationship"""
+    subjects_preds = [
+        configs.PREDICATE_CONTAINS_UUID,
+        configs.PREDICATE_ALSO_CONTAINS_UUID,
+    ]
     predicate_uuid = str(predicate_obj.uuid)
     check_preds = (
-        [configs.PREDICATE_CONTAINS_UUID]
+        configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
         + configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ
         + configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
     )
@@ -963,11 +1043,16 @@ def validate_hierarchy_assertion(
             'An item cannot have a hierarchy relation to itself.'
         )
 
+    if predicate_uuid in configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ:
+        # Spatial context relations only allowed between item_type 'subjects'
+        validate_context_subject_objects(subject_obj, object_obj)
+    
     if predicate_uuid == configs.PREDICATE_CONTAINS_UUID:
         # Do a special spatial context check.
         return validate_context_assertion(
             subject_obj, 
             object_obj,
+            predicate_uuid=predicate_uuid,
             max_depth=max_depth
         )
     
@@ -978,6 +1063,8 @@ def validate_hierarchy_assertion(
         child_obj = subject_obj
     else:
         # The object item is subordinate to the subject (parent) item.
+        # This will also apply for checking assertions about the
+        # secondary spatial context PREDICATE_ALSO_CONTAINS_UUID
         parent_obj = subject_obj
         child_obj = object_obj
     
@@ -1108,15 +1195,19 @@ class AllAssertion(models.Model):
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
 
-    def validate_project(self):
-        """Checks to make sure a project is actually a project"""
-        assert self.project.item_type == 'projects'
-
     def validate_node_refs(self):
         """Validates references to 'node' manifest objects"""
-        assert self.observation.item_type == 'observations'
-        assert self.event.item_type == 'events'
-        assert self.attribute_group.item_type == 'attribute-groups'
+        checks = [
+            (self.observation, ['observations'], 'observation',),
+            (self.event, ['events'], 'event',),
+            (self.attribute_group, ['attribute-groups'], 'attribute_group',),
+        ]
+        for relate_obj, allowed_types, obj_role in checks:
+            validate_related_manifest_item_type(
+                man_obj=relate_obj,
+                allowed_types=allowed_types,
+                obj_role=obj_role
+            )
     
     def validate_predicate(self):
         """Validates predicate is an OK type to be a predicate"""
@@ -1131,8 +1222,10 @@ class AllAssertion(models.Model):
         #
         # where the has_measurement::dimension::has-value is all implied by
         # within the predicate object of this assertion.
-        assert (
-            self.predicate.item_type in ['predicates', 'property', 'class']
+        validate_related_manifest_item_type(
+            man_obj=self.predicate,
+            allowed_types= ['predicates', 'property', 'class'],
+            obj_role='predicate',
         )
     
     def validate_predicate_objects(self):
@@ -1284,13 +1377,14 @@ class AllAssertion(models.Model):
         """
         Creates the hash-id on saving to insure a unique string for a project
         """
-        self.uuid = self.primary_key_create_for_self()
         # Make sure the project is really a project.
-        self.validate_project()
+        validate_related_project(project_obj=self.project)
         # Make sure that nodes in this assertion have the expected item_types.
         self.validate_node_refs()
         # Make sure the predicate is a predicate or property item_type
         self.validate_predicate()
+
+        self.uuid = self.primary_key_create_for_self()
         # Make sure that the data_type expected of the predicate is enforced.
         self.validate_predicate_objects()
         # Make sure hierarchy assertions are valid, not circular
@@ -1328,6 +1422,236 @@ class AllAssertion(models.Model):
 
 
 
+# ---------------------------------------------------------------------
+# Functions for Resources
+# ---------------------------------------------------------------------
+def validate_resourcetype_id(resourcetype_id, raise_on_fail=True):
+    """Validates the resource type against a configured list of valid class entities"""
+    resourcetype_id = str(resourcetype_id)
+    if resourcetype_id in configs.OC_RESOURCE_TYPES_UUIDS:
+        return True
+    if not raise_on_fail:
+        return False
+    raise ValueError(
+        f'Resourcetype {resourcetype_id} not in valid list: {str(configs.OC_RESOURCE_TYPES_UUIDS)}'
+    )
+
+def get_media_type_obj(uri, raw_media_type):
+    """Gets a media-type manifest object"""
+    media_type_qs = AllManifest.objects.filter(
+        item_type='media-types'
+    )
+    if raw_media_type:
+        media_type_obj = media_type_qs.filter(
+                Q(meta_json__template=raw_media_type)
+                | 
+                Q(item_key=f'media-type:{raw_media_type}')
+            ).first()
+        return media_type_obj
+
+    # Guess by file extension. We can add to this as needed,
+    # but for now, we're only guessing media type of Nexus
+    # 3D format file extensions.
+    guesses = [
+        ('nxs', configs.MEDIA_NEXUS_3D_NXS_UUID, ),
+        ('nxz', configs.MEDIA_NEXUS_3D_NXZ_UUID, ),
+    ]
+    uri = uri.lower()
+    for extension, uuid in guesses:
+        if not uri.endswith(f'.{extension}'):
+            continue
+        # Return the media_object for this extention
+        return media_type_qs.filter(
+            uuid=uuid
+        ).first()
+    return None
+
+
+
+def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='https://'):
+    """Gets header information about a web resource"""
+    sleep(0.3)
+    output = {}
+    try:
+        raw_media_type = None
+        uri = AllManifest().clean_uri(uri)
+        uri = protocol + uri
+        r = requests.head(uri)
+        if (
+            (r.status_code == requests.codes.ok) 
+            or
+            (redirect_ok and r.status_code >= 300 and r.status_code <= 310)
+        ):
+            if r.headers.get('Content-Length'):
+                output['filesize'] = int(r.headers['Content-Length'])
+            if r.headers.get('Content-Type'):
+                raw_media_type = r.headers['Content-Type']
+                if ':' in raw_media_type:
+                    raw_media_type = raw_media_type.split(':')[-1].strip()
+            output['mediatype'] = get_media_type_obj(uri, raw_media_type)
+    except:
+        pass
+    
+    if retry and not output.get('filesize'):
+        output = get_web_resource_head_info(
+            uri,
+            redirect_ok=redirect_ok,
+            retry= False
+        )
+        if not output.get('filesize'):
+            # Now try again without the https.
+            output = get_web_resource_head_info(
+                uri,
+                redirect_ok=redirect_ok,
+                retry= False,
+                protocol='http://'
+            )
+    return output
+
+
+# Records files (usually media files, like images, but )
+@reversion.register  # records in this model under version control
+class AllResource(models.Model):
+    uuid = models.UUIDField(primary_key=True, editable=True)
+    item = models.ForeignKey(
+        AllManifest, 
+        db_column='item_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT
+    )
+    project = models.ForeignKey(
+        AllManifest, 
+        db_column='project_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT, 
+    )
+    resourcetype = models.ForeignKey(
+        AllManifest, 
+        db_column='resourcetype_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT,
+    )
+    mediatype = models.ForeignKey(
+        AllManifest, 
+        db_column='mediatype_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT, 
+        null=True
+    )
+    source_id = models.CharField(max_length=50, db_index=True)
+    uri = models.CharField(max_length=400)
+    sha256_checksum = models.CharField(max_length=200, null=True)
+    filesize = models.DecimalField(max_digits=19, decimal_places=3, null=True)
+    rank = models.IntegerField(default=0)
+    is_static = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    meta_json = JSONField(default=dict)
+
+    def make_hash_id(
+        self, 
+        item_id,
+        resourcetype_id,
+        rank=0,
+    ):
+        """Makes a hash_id for an assertion"""
+        hash_obj = hashlib.sha1()
+        concat_string = " ".join(
+            [
+                str(item_id),
+                str(resourcetype_id),
+                str(rank),
+            ]
+        )
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def primary_key_create(self, item_id, resourcetype_id, rank=0):
+        """Makes a primary key using a prefix from the item"""
+        item_uuid = str(item_id)
+        item_prefix = item_uuid.split('-')[0]
+        
+        hash_id = self.make_hash_id(
+            item_id=item_id,
+            resourcetype_id=resourcetype_id,
+            rank=rank,
+        )
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([item_prefix] + new_parts[1:])
+        )
+        return uuid
+
+    def primary_key_create_for_self(self):
+        """Makes a primary key using a prefix from the item"""
+        if self.uuid:
+            # One is already defined, so skip this step.
+            return self.uuid
+        return self.primary_key_create(
+            item_id=self.item.uuid,
+            resourcetype_id=self.resourcetype.uuid,
+            rank=self.rank
+        )
+
+    def save(self, *args, **kwargs):
+        """
+        Makes the primary key sorted for the first part
+        of the item uuid
+        """
+        self.uuid = self.primary_key_create_for_self()
+        self.uri = AllManifest().clean_uri(self.uri)
+        # Make sure the project is really a project.
+        validate_related_project(project_obj=self.project)
+        # Make sure the associated item has the right types
+        validate_related_manifest_item_type(
+            man_obj=self.item,
+            allowed_types=['media', 'uri',],
+            obj_role='item'
+        )
+        # Make sure the resource type is in a pre-configured
+        # list of valid resource types.
+        validate_resourcetype_id(
+            resourcetype_id=self.resourcetype.uuid
+        )
+        
+        # Make an HTTP head request to get filesize and/or
+        # mediatype if missing.
+        head = None
+        if not self.filesize or not self.mediatype:
+            head = get_web_resource_head_info(
+                self.uri
+            )
+        if head is not None and not self.filesize:
+            self.filesize = head.get('filesize')
+        if head is not None and not self.mediatype:
+            self.mediatype = head.get('mediatype')
+
+        # If given, make sure the item mimetype
+        # has the correct manifest item_type.
+        if self.mediatype:
+            validate_related_manifest_item_type(
+                man_obj=self.mediatype,
+                allowed_types=['media-types'],
+                obj_role='mediatype'
+            )
+
+        super(AllResource, self).save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'oc_all_resources'
+        unique_together = (
+            (
+                "item", 
+                "resourcetype",
+                "rank",
+            ),
+        )
+        ordering = ["item", "rank", "resourcetype",]
+
+
 # Records a hash history of an item for use in version control.
 @reversion.register  # records in this model under version control
 class AllHistory(models.Model):
@@ -1348,20 +1672,27 @@ class AllHistory(models.Model):
     )
     updated = models.DateTimeField(auto_now=True)
 
-    def validate_project(self):
-        """Checks to make sure a project is actually a project"""
-        assert self.project.item_type == 'projects'
+    def primary_key_create(self, item_id, hash_item):
+        """Makes a primary key using a prefix from the item"""
+        item_uuid = str(item_id)
+        item_prefix = item_uuid.split('-')[0]
+        
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_item[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([item_prefix] + new_parts[1:])
+        )
+        return uuid
 
-    def primary_key_create(self):
+    def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
             return self.uuid
-        item_uuid = str(self.item.uuid)
-        item_prefix = item_uuid.split('-')[0]
-        new_uuid = str(GenUUID.uuid4())
-        new_parts = new_uuid.split('-')
-        self.uuid = '-'.join(
-            ([item_prefix] + new_parts[1:])
+        return self.primary_key_create(
+            item_id=self.item.uuid, 
+            hash_item=self.hash_item,
         )
 
     def save(self, *args, **kwargs):
@@ -1369,10 +1700,113 @@ class AllHistory(models.Model):
         Makes the primary key sorted for the first part
         of the subject uuid
         """
-        self.uuid = self.primary_key_create()
+        self.uuid = self.primary_key_create_for_self()
         # Make sure the project is really a project.
-        self.validate_project()
+        validate_related_project(project_obj=self.project)
+        # Make sure the item has the right
+        # manifest object item_type (open context items)
+        validate_related_manifest_item_type(
+            man_obj=self.item,
+            allowed_types=configs.OC_ITEM_TYPES,
+            obj_role='item'
+        )
         super(AllHistory, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_all_history'
+        ordering = ["item", "updated",]
+
+
+# Records identifiers associated with oc_items.
+@reversion.register  # records in this model under version control
+class AllIdentifier(models.Model):
+    uuid = models.UUIDField(primary_key=True, editable=True)
+    item = models.ForeignKey(
+        AllManifest, 
+        db_column='item_uuid', 
+        related_name='+', 
+        on_delete=models.CASCADE
+    )
+    scheme = models.CharField(max_length=10)
+    rank = models.IntegerField(default=0)
+    id =  models.CharField(max_length=300)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    meta_json = JSONField(default=dict)
+
+    def make_hash_id(self, item_id, scheme, rank=0):
+        """Makes a hash_id for an assertion"""
+        hash_obj = hashlib.sha1()
+        concat_string = " ".join(
+            [
+                str(item_id),
+                str(scheme),
+                str(rank),
+            ]
+        )
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def primary_key_create(self, item_id, scheme, rank=0):
+        """Makes a primary key using a prefix from the item"""
+        item_uuid = str(item_id)
+        item_prefix = item_uuid.split('-')[0]
+        
+        hash_id = self.make_hash_id(
+            item_id=item_id,
+            scheme=scheme,
+            rank=rank,
+        )
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([item_prefix] + new_parts[1:])
+        )
+        return uuid
+
+    def primary_key_create_for_self(self):
+        """Makes a primary key using a prefix from the item"""
+        if self.uuid:
+            # One is already defined, so skip this step.
+            return self.uuid
+        return self.primary_key_create(
+            item_id=self.item.uuid,
+            scheme=self.scheme,
+            rank=self.rank
+        )
+
+    def save(self, *args, **kwargs):
+        """
+        Makes the primary key sorted for the first part
+        of the subject uuid
+        """
+        self.uuid = self.primary_key_create_for_self()
+        if self.scheme not in configs.IDENTIFIER_SCHEMES:
+            raise ValueError(
+                f'ID scheme {self.scheme} not in {str(configs.IDENTIFIER_SCHEMES)}'
+            )
+        # Make sure the item has the right
+        # manifest object item_type (open context items)
+        validate_related_manifest_item_type(
+            man_obj=self.item,
+            allowed_types=configs.OC_ITEM_TYPES,
+            obj_role='item'
+        )
+        super(AllIdentifier, self).save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'oc_all_identifiers'
+        unique_together = (
+            (
+                "item", 
+                "scheme",
+                "rank",
+            ),
+            (
+                "scheme",
+                "id",
+            ),
+        )
+        ordering = ["item", "rank", "scheme",]

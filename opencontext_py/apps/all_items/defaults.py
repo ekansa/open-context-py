@@ -7,12 +7,17 @@ from opencontext_py.apps.all_items.models import (
     AllString,
     AllAssertion,
     AllHistory,
+    AllResource,
+    AllIdentifier,
 )
 
 """
+# NOTE: This is how these defaults get checked and loaded.
+
 from opencontext_py.apps.all_items.defaults import (
     load_default_entities,
     verify_manifest_uuids,
+    tabula_rasa,  # Deletes everything in the new schema tables.
 )
 verify_manifest_uuids()
 load_default_entities()
@@ -24,6 +29,19 @@ DEFAULT_STRINGS = [
         'uuid': DEFAULT_NULL_STRING_UUID,
         'project_id': OPEN_CONTEXT_PROJ_UUID,
         'content': '',
+    },
+]
+
+DEFAULT_IDENTIFIERS = [
+    {
+        'item_id': OPEN_CONTEXT_PROJ_UUID,
+        'scheme': 'oc-old',
+        'id': '0',
+    },
+    {
+        'item_id': PREDICATE_LINK_UUID,
+        'scheme': 'oc-old',
+        'id': 'oc-3',
     },
 ]
 
@@ -44,7 +62,6 @@ DEFAULT_MANIFESTS = [
         'label': 'Open Context',
         'uri': 'opecontext.org/projects/open-context',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
-        'identifiers': ['0'],
         'meta_json': {
             'short_id': 0,
         }
@@ -74,9 +91,9 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general',
         'item_key': 'oc-gen',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
-        'identifiers': [
-            'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/oc-general.owl'
-        ],
+        'meta_json': {
+            'vocab_file_uri': 'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/oc-general.owl',
+        },
     },
     # Default Open Context Class
     {
@@ -105,9 +122,9 @@ DEFAULT_MANIFESTS = [
         'label': 'Digital Index of North American Archaeology (DINAA) Vocabulary',
         'uri': 'http://opencontext.org/vocabularies/dinaa',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
-        'identifiers': [
-            'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/dinaa-alt.owl'
-        ],
+        'meta_json': {
+            'vocab_file_uri': 'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/dinaa-alt.owl'
+        },
     },
     {
         'uuid': OCZOO_VOCAB_UUID,
@@ -121,9 +138,9 @@ DEFAULT_MANIFESTS = [
         'label': 'Open Context Zooarchaeology Annotations',
         'uri': 'http://opencontext.org/vocabularies/open-context-zooarch',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
-        'identifiers': [
-            'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/zooarchaeology-alt.owl'
-        ],
+        'meta_json': {
+            'vocab_file_uri': 'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/zooarchaeology-alt.owl'
+        },
     },
     # Default Open Context Assertion Node entities
     {
@@ -219,6 +236,20 @@ DEFAULT_MANIFESTS = [
         'context_id': OC_GEN_VOCAB_UUID,
     },
     {
+        'uuid': PREDICATE_ALSO_CONTAINS_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'predicates',
+        'data_type': 'id',
+        'slug': 'oc-gen-also-contains',
+        'label': 'Also contains (additional spatial context)',
+        'item_key': 'oc-gen:also-contains',
+        'uri': 'opencontext.org/vocabularies/oc-general/also-contains',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
         'uuid': PREDICATE_LINK_UUID,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
         'project_id': OPEN_CONTEXT_PROJ_UUID,
@@ -230,9 +261,6 @@ DEFAULT_MANIFESTS = [
         'label': 'Links',
         'item_key': 'oc-gen:links',
         'uri': 'opencontext.org/vocabularies/oc-general/links',
-        'identifiers': [
-            'oc-3',
-        ],
         'context_id': OC_GEN_VOCAB_UUID,
     },
     {
@@ -303,6 +331,471 @@ DEFAULT_MANIFESTS = [
         'item_key': 'oc-gen:has-technique',
         'uri': 'opencontext.org/vocabularies/oc-general/has-technique',
         'context_id': OC_GEN_VOCAB_UUID,
+    },
+    # Standard classes to describe resources in Open Context
+    {
+        'uuid': OC_RESOURCE_FULLFILE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-fullfile',
+        'label': 'Full (primary) file',
+        'item_key': 'oc-gen:fullfile',
+        'uri': 'opencontext.org/vocabularies/oc-general/fullfile',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_PREVIEW_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-preview',
+        'label': 'Preview file',
+        'item_key': 'oc-gen:preview',
+        'uri': 'opencontext.org/vocabularies/oc-general/preview',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_THUMBNAIL_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-thumbnail',
+        'label': 'Thumbnail file',
+        'item_key': 'oc-gen:thumbnail',
+        'uri': 'opencontext.org/vocabularies/oc-general/thumbnail',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_ICON_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-icon',
+        'label': 'Icon file',
+        'item_key': 'oc-gen:icon',
+        'uri': 'opencontext.org/vocabularies/oc-general/icon',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_HERO_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-hero',
+        'label': 'Banner ("hero") file',
+        'item_key': 'oc-gen:hero',
+        'uri': 'opencontext.org/vocabularies/oc-general/hero',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_IIIF_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-iiif',
+        'label': 'International Image Interoperability Framework (IIIF) Service',
+        'item_key': 'oc-gen:iiif',
+        'uri': 'opencontext.org/vocabularies/oc-general/iiif',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_ARCHIVE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-archive',
+        'label': 'Archival file',
+        'item_key': 'oc-gen:archive',
+        'uri': 'opencontext.org/vocabularies/oc-general/archive',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_IA_FULLFILE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-ia-fullfille',
+        'label': 'Internet Archive hosted full (primary) file',
+        'item_key': 'oc-gen:ia-fullfille',
+        'uri': 'opencontext.org/vocabularies/oc-general/ia-fullfille',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_X3DOM_MODEL_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-x3dom-model',
+        'label': 'X3DOM 3D Model',
+        'item_key': 'oc-gen:x3dom-model',
+        'uri': 'opencontext.org/vocabularies/oc-general/x3dom-model',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_X3DOM_TEXTURE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-x3dom-texture',
+        'label': 'X3DOM 3D Texture',
+        'item_key': 'oc-gen:x3dom-texture',
+        'uri': 'opencontext.org/vocabularies/oc-general/x3dom-texture',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_NEXUS_3D_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-nexus-3d',
+        'label': 'Nexus 3D model',
+        'item_key': 'oc-gen:nexus-3d',
+        'uri': 'opencontext.org/vocabularies/oc-general/nexus-3d',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_RESOURCE_SERVICE_API_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-service-api',
+        'label': 'Web-service or API',
+        'item_key': 'oc-gen:service-api',
+        'uri': 'opencontext.org/vocabularies/oc-general/service-api',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+
+
+    # Media Types, publisher, vocabularies and types.
+    # https://www.iana.org/assignments/media-types/
+    # W3C publisher and vocabularies
+    {
+        'uuid': IANA_PUB_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'publishers',
+        'data_type': 'id',
+        'slug': 'iana-org',
+        'label': 'Internet Assigned Numbers Authority (IANA)',
+        'uri': 'https://www.iana.org/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'vocabularies',
+        'data_type': 'id',
+        'slug': 'iana-media-types',
+        'label': 'Media Types',
+        'uri': 'https://www.iana.org/assignments/media-types/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': MEDIA_TYPE_CSV_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-csv',
+        'item_key':'media-type:text/csv',
+        'label': 'Comma Seperated Values (CSV)',
+        'uri': 'https://www.iana.org/assignments/media-types/text/csv',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'text/csv'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_GEO_JSON_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-geo-json',
+        'item_key':'media-type:application/geo+json',
+        'label': 'GeoJSON',
+        'uri': 'https://www.iana.org/assignments/media-types/application/geo+json',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/geo+json'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_GIF_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-gif',
+        'item_key':'media-type:image/gif',
+        'label': 'Image, GIF',
+        # NOTE: This is a bit of a fake URI.
+        'uri': 'https://www.iana.org/assignments/media-types/media-types.xhtml#image/gif',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'image/gif'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_JPEG_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-jpeg',
+        'item_key':'media-type:image/jpeg',
+        'label': 'Image, JPEG',
+        # NOTE: This is a bit of a fake URI.
+        'uri': 'https://www.iana.org/assignments/media-types/media-types.xhtml#image/jpeg',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'image/jpeg'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_JSON_LD_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-ld-json',
+        'item_key':'media-type:application/ld+json',
+        'label': 'JSON-LD',
+        'uri': 'https://www.iana.org/assignments/media-types/application/ld+json',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/ld+json'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_PDF_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-pdf',
+        'item_key':'media-type:application/pdf',
+        'label': 'Portable Document Format (PDF)',
+        'uri': 'https://www.iana.org/assignments/media-types/application/pdf',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/pdf'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_PNG_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-png',
+        'item_key':'media-type:image/png',
+        'label': 'Image, PNG',
+        'uri': 'https://www.iana.org/assignments/media-types/image/png',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'image/png'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_TIFF_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-tiff',
+        'item_key':'media-type:image/tiff',
+        'label': 'Image, TIFF',
+        'uri': 'https://www.iana.org/assignments/media-types/image/tiff',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'image/tiff'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_ZIP_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-zip',
+        'item_key':'media-type:application/zip',
+        'label': 'ZIP Compressed',
+        'uri': 'https://www.iana.org/assignments/media-types/application/zip',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/zip'
+        },
+    },
+    {
+        'uuid': VCG_ISTI_PUB_UUID,
+        'publisher_id': VCG_ISTI_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'publishers',
+        'data_type': 'id',
+        'slug': 'vcg-cnr-isti',
+        'label': 'Visual Computing Lab, CNR-ISTI',
+        'uri': 'http://vcg.isti.cnr.it/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': NEXUS_VCG_VOCAB_UUID,
+        'publisher_id': VCG_ISTI_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'vocabularies',
+        'data_type': 'id',
+        'slug': 'nexus-3d-tools',
+        'label': 'Nexus: Adaptive 3D',
+        'uri': 'http://vcg.isti.cnr.it/nexus/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': MEDIA_NEXUS_3D_NXS_UUID,
+        'publisher_id': VCG_ISTI_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'nexus-3d-nxs',
+        'item_key':'nexus:nxs',
+        'label': 'Nexus 3D format (nxs)',
+        # Not a real URI, since this isn't specifically
+        # addressable.
+        'uri': 'http://vcg.isti.cnr.it/nexus/#nxs',
+        'context_id': NEXUS_VCG_VOCAB_UUID,
+    },
+    {
+        'uuid': MEDIA_NEXUS_3D_NXZ_UUID,
+        'publisher_id': VCG_ISTI_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'nexus-3d-nxz',
+        'item_key':'nexus:nxz',
+        'label': 'Nexus compressed 3D format (nxz)',
+        # Not a real URI, since this isn't specifically
+        # addressable.
+        'uri': 'http://vcg.isti.cnr.it/nexus/#nxz',
+        'context_id': NEXUS_VCG_VOCAB_UUID,
+    },
+    {
+        'uuid': DEFAULT_PDF_ICON_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'uri',
+        'data_type': 'id',
+        'slug': 'oc-icons-pdf',
+        'label': 'PDF icon',
+        'uri': 'https://opencontext.org/static/oc/images/icons/pdf-noun-89522.png',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': DEFAULT_3D_ICON_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'uri',
+        'data_type': 'id',
+        'slug': 'oc-icons-3d',
+        'label': '3D icon',
+        'uri': 'https://opencontext.org/static/oc/images/icons/3d-noun-37529.png',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': DEFAULT_GIS_ICON_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'uri',
+        'data_type': 'id',
+        'slug': 'oc-icons-gis',
+        'label': 'GIS icon',
+        'uri': 'https://opencontext.org/static/oc/images/icons/gis-noun-14294.png',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': DEFAULT_RASTER_ICON_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'uri',
+        'data_type': 'id',
+        'slug': 'oc-icons-raster',
+        'label': 'Raster (GIS) icon',
+        'uri': 'https://opencontext.org/static/oc/images/icons/raster-small.png',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
     },
     # W3C publisher and vocabularies
     {
@@ -1544,6 +2037,24 @@ DEFAULT_MANIFESTS = [
         'label': 'Bibliographic Ontology',
         'uri': 'http://www.bibliontology.com/',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
+        'meta_json': {
+            'vocab_file_uri': 'http://purl.org/ontology/bibo/',
+        },
+    },
+    # NOTE: Yes, this is a deprecated property, but it is still
+    # useful for expressing the content of Open Context's documents items.
+    {
+        'uuid': PREDICATE_BIBO_CONTENT_UUID,
+        'publisher_id': BIBO_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'property',
+        'data_type': 'xsd:string',
+        'slug': 'bibo-content',
+        'label': 'Content',
+        'uri': 'http://purl.org/ontology/bibo/content',
+        'context_id': BIBO_VOCAB_UUID,
     },
     # CIDOC-CRM Ontology, publisher, and predicates
     {
@@ -1554,7 +2065,7 @@ DEFAULT_MANIFESTS = [
         'source_id': DEFAULT_SOURCE_ID,
         'item_type': 'publishers',
         'data_type': 'id',
-        'slug': 'cidoc-icon',
+        'slug': 'cidoc-icom',
         'label': 'International Committee for Documentation (ICOM)',
         'uri': 'http://cidoc.mini.icom.museum/',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
@@ -1571,6 +2082,9 @@ DEFAULT_MANIFESTS = [
         'label': 'CIDOC Conceptual Reference Model (CRM)',
         'uri': 'http://www.cidoc-crm.org/cidoc-crm/',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
+        'meta_json': {
+            'vocab_file_uri': 'http://erlangen-crm.org/current/',
+        },
     },
     {
         'uuid': PREDICATE_CIDOC_CONSISTS_OF_UUID,
@@ -1610,6 +2124,48 @@ DEFAULT_MANIFESTS = [
         'label': 'Has unit (of measurement)',
         'uri': 'http://erlangen-crm.org/current/P91_has_unit',
         'context_id': CIDOC_VOCAB_UUID,
+    },
+    {
+        'uuid': EH_PUB_UUID,
+        'publisher_id': EH_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'publishers',
+        'data_type': 'id',
+        'slug': 'english-heritage',
+        'label': 'English Heritage',
+        'uri': 'https://www.english-heritage.org.uk/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': CRMEH_VOCAB_UUID,
+        'publisher_id': EH_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'vocabularies',
+        'data_type': 'id',
+        'slug': 'crm-eh',
+        'label': 'English Heritage extensions to CIDOC CRM (CRMEH)',
+        'uri': 'http://purl.org/crmeh',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+        'meta_json': {
+            'vocab_file_uri': 'http://purl.org/crmeh',
+        },
+    },
+    {
+        'uuid': CLASS_CRMEH_AREA_OF_INVEST_UUID,
+        'publisher_id': EH_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'crm-eh-ehe0003-area-of-investigation',
+        'label': 'Area of Investigation',
+        'uri': 'http://purl.org/crmeh#EHE0003_AreaOfInvestigation',
+        'context_id': CRMEH_VOCAB_UUID,
     },
     # GeoJSON - LD
     {
@@ -2282,7 +2838,8 @@ def verify_manifest_uuids(dict_list=DEFAULT_MANIFESTS):
 
 def load_default_entities(
     man_dict_list=DEFAULT_MANIFESTS,
-    str_dict_list=DEFAULT_STRINGS
+    id_dict_list=DEFAULT_IDENTIFIERS,
+    str_dict_list=DEFAULT_STRINGS,
     ):
     """Loads default, required by Open Context """
     fk_fields = [
@@ -2314,6 +2871,21 @@ def load_default_entities(
         print(f'Updating related for {m.label}')
         m.save()
     
+    for id_dict in id_dict_list:
+        uuid = AllIdentifier().primary_key_create(
+            item_id=id_dict['item_id'],
+            scheme=id_dict['scheme'],
+        )
+        id_obj, _ = AllIdentifier.objects.get_or_create(
+            uuid=uuid,
+            defaults=id_dict
+        )
+        print(
+            f'ID obj {id_obj.uuid}: '
+            f'{id_obj.item.label} ({id_obj.item.uuid}) -> '
+            f'{id_obj.id} ({id_obj.scheme}) created '
+        )
+    
     for str_dict in str_dict_list:
         uuid = str_dict['uuid']
         if not is_valid_uuid(uuid):
@@ -2325,4 +2897,16 @@ def load_default_entities(
         print(
             f'String obj {str_obj.uuid}, "{str_obj.content}" created.'
         )
-        
+
+
+def tabula_rasa():
+    """Empties all the new schema tables of all content. Severe."""
+    models = [
+        AllString,
+        AllIdentifier,
+        AllResource,
+        AllHistory,
+        AllAssertion,
+        AllManifest,
+    ]
+    [m.objects.all().delete() for m in models]

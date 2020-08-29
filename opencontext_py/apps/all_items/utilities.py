@@ -38,7 +38,8 @@ def add_string_assertion_simple(
     language_id=configs.DEFAULT_LANG_UUID,
     replace_old_content=False):
     """Adds a string attribute assertion to a subject object"""
-
+    if not str_content:
+        return None
     if not project_id:
         project_id = subject_obj.project.uuid
     if not publisher_id:
@@ -50,10 +51,12 @@ def add_string_assertion_simple(
         uuid=AllString().primary_key_create(
             project_id=project_id,
             content=str_content,
+            language_id=language_id,
         ),
         defaults={
             'project_id': project_id,
             'source_id': source_id,
+            'language_id': language_id,
             'content': str_content
         }
     )

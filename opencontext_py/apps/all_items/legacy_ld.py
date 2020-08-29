@@ -9,10 +9,73 @@ from opencontext_py.apps.all_items.models import (
     AllString,
     AllAssertion,
     AllHistory,
+    AllResource,
+    AllIdentifier,
 )
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+
+
+"""
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+LinkAnnotation.objects.filter(object_uri='http://vocab.getty.edu/aat/30023').delete()
+
+obj_replace = [
+    (
+        'http://opencontext.org/vocabularies/open-context-zooarch/dist-f',
+        'http://opencontext.org/vocabularies/open-context-zooarch/dist-epi-fused',
+    ),
+    (
+        'http://opencontext.org/vocabularies/open-context-zooarch/dist-u',
+        'http://opencontext.org/vocabularies/open-context-zooarch/dist-epi-unfused',
+    ),
+    (
+        'http://opencontext.org/vocabularies/open-context-zooarch/dist-uf',
+        'http://opencontext.org/vocabularies/open-context-zooarch/dist-epi-fusing',
+    ),
+    (
+        'http://opencontext.org/vocabularies/open-context-zooarch/prox-f',
+        'http://opencontext.org/vocabularies/open-context-zooarch/prox-epi-fused',
+    ),
+    (
+        'http://opencontext.org/vocabularies/open-context-zooarch/prox-u',
+        'http://opencontext.org/vocabularies/open-context-zooarch/prox-epi-unfused',
+    ),
+    (
+        'http://opencontext.org/vocabularies/open-context-zooarch/prox-uf',
+        'http://opencontext.org/vocabularies/open-context-zooarch/prox-epi-fusing',
+    ),
+    (
+        'Nicomedia 9',
+        'http://numismatics.org/ocre/id/ric.7.nic.9',
+    ),
+    (
+        'RIC VIII Antioch 45',
+        'http://numismatics.org/ocre/id/ric.8.anch.45',
+    ),
+    (
+        'RIC VIII Antioch 55A',
+        'http://numismatics.org/ocre/id/ric.8.anch.55a',
+    ),
+]
+for f_uri, r_uri in obj_replace:
+    for la in LinkAnnotation.objects.filter(object_uri=f_uri):
+        la.pk = None
+        la.object_uri = r_uri
+        delete_bad = False
+        try:
+            la.save()
+        except:
+            delete_bad = True
+        if not delete_bad:
+            continue
+        print(f'Duplicate {la.subject} {la.predicate_uri} {la.object_uri}')
+    LinkAnnotation.objects.filter(object_uri=f_uri).delete()
+
+
+"""
+
 
 
 LEGACY_LINK_ENT_TYPES_ITEM_TYPES_MAPS = {
@@ -42,7 +105,9 @@ INSTANCE_URIS = [
 REPLACE_URIS = {
     ('www.worldcat.org', 'www.worldcat.org/oclc',),
     ('opencontext.org/about/concepts', 'opencontext.org/vocabularies/oc-general'),
+    ('bibo:status/forthcoming', '')
 }
+
 
 SOURCE_ID = 'legacy-linked-entity-migrate'
 
@@ -63,9 +128,10 @@ OC_ITEM_URI_STRS = [
 
 
 """
-from opencontext_py.apps.all_items.legacy import *
+from opencontext_py.apps.all_items.legacy_ld import *
 load_legacy_link_entities_vocabs()
 load_legacy_link_entities()
+missing_entities = migrate_legacy_link_annotations()
 """
 
 
@@ -162,12 +228,8 @@ def load_legacy_link_entity(old_le):
         'uri': uri,
         'context_id': context_id,
         'meta_json': {
-            'skos_alt_label': {
-                'en': [
-                    old_le.alt_label
-                ],
-            },
-        }
+            'migration': SOURCE_ID,
+        },
     }
     new_man_obj, _ = AllManifest.objects.get_or_create(
         uri=uri,
@@ -236,6 +298,7 @@ def get_man_obj_from_la(la_uri):
 def check_legacy_la_subjects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
     """Checks legacy subjects to makes sure they exist in the new manifest
     """
+    missing_entities = []
     la_qs = LinkAnnotation.objects.filter(subject_type='uri').distinct(
         'subject'
     ).order_by('subject').values_list('subject', flat=True)
@@ -248,6 +311,8 @@ def check_legacy_la_subjects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
     for old_entity_id in la_qs:
         new_man_obj = get_man_obj_from_la(la_uri=old_entity_id)
         if not new_man_obj:
+            if old_entity_id not in missing_entities:
+                missing_entities.append(old_entity_id)
             continue
         if print_found:
             print(
@@ -255,17 +320,21 @@ def check_legacy_la_subjects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
                 f'{new_man_obj.label}, {new_man_obj.uri} '
                 f'[{new_man_obj.uuid}]'
             )
+    return  missing_entities
 
 
 def check_legacy_la_predicates(print_found=False):
     """Checks legacy predicates to makes sure they exist in the new manifest
     """
+    missing_entities = []
     la_qs= LinkAnnotation.objects.all().distinct(
         'predicate_uri'
     ).order_by('predicate_uri').values_list('predicate_uri', flat=True)
     for old_entity_id in la_qs:
         new_man_obj = get_man_obj_from_la(la_uri=old_entity_id)
         if not new_man_obj:
+            if old_entity_id not in missing_entities:
+                missing_entities.append(old_entity_id)
             continue
         if print_found:
             print(
@@ -273,11 +342,13 @@ def check_legacy_la_predicates(print_found=False):
                 f'{new_man_obj.label}, {new_man_obj.uri} '
                 f'[{new_man_obj.uuid}]'
             )
+    return  missing_entities
 
 
 def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
     """Checks legacy objects to makes sure they exist in the new manifest
     """
+    missing_entities = []
     la_qs = LinkAnnotation.objects.all().distinct(
         'object_uri'
     ).order_by('object_uri').values_list('object_uri', flat=True)
@@ -290,6 +361,8 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
     for old_entity_id in la_qs:
         new_man_obj = get_man_obj_from_la(la_uri=old_entity_id)
         if not new_man_obj:
+            if old_entity_id not in missing_entities:
+                missing_entities.append(old_entity_id)
             continue
         if print_found:
             print(
@@ -297,11 +370,12 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
                 f'{new_man_obj.label}, {new_man_obj.uri} '
                 f'[{new_man_obj.uuid}]'
             )
-
+    return  missing_entities
 
 
 def migrate_legacy_link_annotations(project_uuid='0'):
     """Migrates legacy link annotations (limited to entities already in the manifest)"""
+    missing_entities = []
     legacy_new_project_uuids = {
         '0': configs.OPEN_CONTEXT_PROJ_UUID,
     }
@@ -319,6 +393,15 @@ def migrate_legacy_link_annotations(project_uuid='0'):
         pred_obj = get_man_obj_from_la(la.predicate_uri)
         obj_obj = get_man_obj_from_la(la.object_uri)
         if not subj_obj or not pred_obj or not obj_obj:
+            if not subj_obj and la.subject not in missing_entities:
+                missing_entities.append(la.subject)
+            if not pred_obj and la.predicate_uri not in missing_entities:
+                missing_entities.append(la.predicate_uri)
+            if not obj_obj and la.object_uri not in missing_entities:
+                missing_entities.append(la.object_uri)
+            continue
+        if subj_obj == obj_obj:
+            # No self assertions.
             continue
         if la.sort:
             sort = la.sort
@@ -340,6 +423,9 @@ def migrate_legacy_link_annotations(project_uuid='0'):
                 'predicate': pred_obj,
                 'sort': sort,
                 'object': obj_obj,
+                'meta_json': {
+                    'migration': SOURCE_ID,
+                },
             }
         )
         print(
@@ -349,3 +435,5 @@ def migrate_legacy_link_annotations(project_uuid='0'):
             f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
         )
         print('-'*72)
+    
+    return missing_entities

@@ -6,6 +6,8 @@ from django.conf import settings
 # This is insanely high, but sets a hard-limit against infinite recursion.
 MAX_HIERARCHY_DEPTH = 100
 
+# Open Context URI root
+OC_URI_ROOT = 'opencontext.org'
 
 # ---------------------------------------------------------------------
 # CONFIGS FOR ALL MANIFEST ITEMS
@@ -34,7 +36,8 @@ URI_CONTEXT_PREFIX_ITEM_TYPES = [
     'class', # A classification type
     'property', # An attribute or linking relation.
     'units', # For a unit of measurement.
-    'uri',  # Usually for an instance.
+    'uri',  # Usually for an instance, but also a file.
+    'media-types', # For describing a resource IANA media-type
 ]
 
 URI_ITEM_TYPES = (
@@ -52,6 +55,7 @@ NODE_ITEM_TYPES = [
     'events',
     'attribute-groups',
 ]
+
 
 # All the valid item types for the Manifest model. Note that
 # the ording is significant and use for sorting.
@@ -76,6 +80,8 @@ MANIFEST_META_JSON_KEYS = {
     # (limit_to_item_type, key, value object type)
     (None, 'skos_alt_label', str,),
 
+    ('vocabularies', 'vocab_file_uri', str,),
+
     # Projects related metadata keys.
     ('projects', 'short_id', int,),
     ('projects', 'edit_status', int,),
@@ -99,7 +105,18 @@ MANIFEST_META_JSON_KEYS = {
     # Units
     ('units', 'data_type', str,),
     ('units', 'symbol', str,),
+
+    # Media-types
+    ('media-types', 'template', str,),
 }
+
+# List of allowed identifer schemes.
+IDENTIFIER_SCHEMES = [
+    'doi',
+    'ark',
+    'orcid',
+    'oc-old',
+]
 
 
 # ---------------------------------------------------------------------
@@ -111,6 +128,10 @@ PREDICATE_PROJ_ROOT_UUID = '763af21e-dac1-49c0-b121-a420c37eaa0e'
 
 # Standard predicate for spatial containment; 'oc-gen:contains'
 PREDICATE_CONTAINS_UUID = 'a07cae41-d615-4ba2-9d81-c60045921b2e'
+
+# Predicate for secondary spatial containment, not used in entity
+# reconciliation, just for additional navigation between subjects items.
+PREDICATE_ALSO_CONTAINS_UUID = '996841cb-7a9b-406f-afb3-65b035ff4294'
 
 # Standard predicate for a generic link; 'oc-gen:links', 'oc-3'
 PREDICATE_LINK_UUID = '75427e34-475b-440d-abba-9f0e76100584'
@@ -132,6 +153,61 @@ PREDICATE_GEO_OVERLAY_UUID = '8084cd3e-008f-4fee-af32-a58040a5a716'
 PREDICATE_OC_HAS_ICON_UUID = '00000000-6e24-f67a-9c19-09c9e320443c'
 # OC-General Predicate 'Has technique'
 PREDICATE_OC_HAS_TECHNIQUE_UUID = '00000000-6e24-7a66-2fff-65ea5fabd642'
+
+# OC-General Resource Classes:
+OC_RESOURCE_FULLFILE_UUID = '00000000-6e24-dbd6-3608-9961b99c331b'
+OC_RESOURCE_PREVIEW_UUID = '00000000-6e24-ed5a-74cf-4512c48a3877'
+OC_RESOURCE_THUMBNAIL_UUID = '00000000-6e24-7e15-b886-83053750960a'
+OC_RESOURCE_ICON_UUID = '00000000-6e24-1633-88ea-7dd4f56e3861'
+OC_RESOURCE_HERO_UUID = '00000000-6e24-78a8-5818-1f300e0b6593'
+OC_RESOURCE_IIIF_UUID = '00000000-6e24-6c5b-fc2a-8f98d8e7da8d'
+OC_RESOURCE_ARCHIVE_UUID = '00000000-6e24-5cfe-2037-94227c186a67'
+OC_RESOURCE_IA_FULLFILE_UUID = '00000000-6e24-1123-1033-1143412da108'
+OC_RESOURCE_X3DOM_MODEL_UUID = '00000000-6e24-2a64-e1cd-25ad672e1109'
+OC_RESOURCE_X3DOM_TEXTURE_UUID = '00000000-6e24-7771-1a16-8138bb119c5d'
+OC_RESOURCE_NEXUS_3D_UUID = '00000000-6e24-072a-690e-1c0ec00eb451'
+OC_RESOURCE_SERVICE_API_UUID = '00000000-6e24-8b22-6ba6-ff76c2bb462c'
+
+# Valid resource type for the Resource Model.
+OC_RESOURCE_TYPES_UUIDS = [
+    OC_RESOURCE_FULLFILE_UUID,
+    OC_RESOURCE_PREVIEW_UUID,
+    OC_RESOURCE_THUMBNAIL_UUID,
+    OC_RESOURCE_ICON_UUID,
+    OC_RESOURCE_HERO_UUID,
+    OC_RESOURCE_IIIF_UUID,
+    OC_RESOURCE_ARCHIVE_UUID,
+    OC_RESOURCE_IA_FULLFILE_UUID,
+    OC_RESOURCE_X3DOM_MODEL_UUID,
+    OC_RESOURCE_X3DOM_TEXTURE_UUID,
+    OC_RESOURCE_NEXUS_3D_UUID,
+    OC_RESOURCE_SERVICE_API_UUID,
+]
+
+
+# Media-types related publisher, vocabularies, and types
+# See: https://www.iana.org/assignments/media-types/
+IANA_PUB_UUID = 'd6533f97-aa69-4a85-9c60-bba6a285b2a0'
+IANA_MEDIA_TYPE_VOCAB_UUID = '00000000-0ac6-2293-4914-37a37c86f907'
+
+# For the http://vcg.isti.cnr.it/, publisher of the Nexus 3D
+# format and libraries
+VCG_ISTI_PUB_UUID = 'd9d4b935-06d5-4882-9df3-1bbf75eca9c9'
+NEXUS_VCG_VOCAB_UUID = '00000000-1966-0da4-e469-b983bf4b2e74'
+MEDIA_NEXUS_3D_NXS_UUID = '00000000-1966-5a64-bd91-c1c84653f19d'
+MEDIA_NEXUS_3D_NXZ_UUID = '00000000-1966-d12c-bb2b-05187476019f'
+
+
+# Just configure the most common media types.
+MEDIA_TYPE_CSV_UUID = '00000000-0ac6-a124-3414-8f240c194694'
+MEDIA_TYPE_GEO_JSON_UUID = '00000000-0ac6-85d1-eaf2-84b7b625a21f'
+MEDIA_TYPE_GIF_UUID = '00000000-0ac6-1ec2-99e3-790cf759d996'
+MEDIA_TYPE_JPEG_UUID = '00000000-0ac6-b382-9dd2-f735a38ee3cd'
+MEDIA_TYPE_JSON_LD_UUID = '00000000-0ac6-32a2-9605-e49b9c940240'
+MEDIA_TYPE_PDF_UUID = '00000000-0ac6-f50e-6b61-c1ab05b95baf'
+MEDIA_TYPE_PNG_UUID = '00000000-0ac6-0c36-8f69-c656a6902c5d'
+MEDIA_TYPE_TIFF_UUID = '00000000-0ac6-b4a4-7975-f118650d6fff'
+MEDIA_TYPE_ZIP_UUID = '00000000-0ac6-2f70-6ab2-dfd44d6cbbc7'
 
 
 # Widely used SKOS predicates.
@@ -171,30 +247,6 @@ PREDICATE_RDFS_SEE_ALSO_UUID = '00000000-ec6e-3c6d-b85d-18ec2801c513'
 PREDICATE_VOID_DATADUMP_UUID = '00000000-0810-a9db-f11a-7f8304a114fb'
 
 
-# List of predicate uuids where the subject is roughly equivalent to the object
-PREDICATE_LIST_DBJ_EQUIV_OBJ = [
-    PREDICATE_OWL_SAME_AS_UUID,
-    PREDICATE_SKOS_EXACT_MATCH_UUID,
-    PREDICATE_SKOS_CLOSE_MATCH_UUID,
-]
-
-# List of predicate uuids where the subject is a child (subordinate)
-# of a parent (broader) object item.
-PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ = [
-    PREDICATE_SKOS_BROADER_UUID,
-    PREDICATE_SKOS_BROADER_TRANS_UUID,
-    PREDICATE_SKOS_BROAD_MATCH_UUID,
-    PREDICATE_RDFS_SUB_CLASS_OF_UUID,
-    PREDICATE_RDFS_SUB_PROP_OF_UUID,
-]
-
-# List of predicate uuids where the subject is a broader parent of
-# of a subordinate, child object item.
-PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ = [
-    PREDICATE_SKOS_NARROWER_UUID,
-    PREDICATE_SKOS_NARROWER_TRANS_UUID,
-    PREDICATE_SKOS_NARROW_MATCH_UUID,
-]
 
 
 
@@ -275,8 +327,12 @@ DEFAULT_OBS_UUID = '00000000-0000-0000-0000-000000000003'
 DEFAULT_EVENT_UUID = '00000000-0000-0000-0000-000000000004'
 DEFAULT_ATTRIBUTE_GROUP_UUID = '00000000-0000-0000-0000-000000000005'
 DEFAULT_NULL_OBJECT_UUID = '00000000-0000-0000-0000-000000000006'
-DEFAULT_NULL_STRING_UUID = '00000000-0000-0000-0000-000000000007'
+DEFAULT_NULL_STRING_UUID = '00000000-cdd8-bc9b-1985-c3babee8ea6c'
 
+DEFAULT_PDF_ICON_UUID = '00000000-0000-0000-0000-100000000000'
+DEFAULT_3D_ICON_UUID = '00000000-0000-0000-0000-100000000001'
+DEFAULT_GIS_ICON_UUID = '00000000-0000-0000-0000-100000000002'
+DEFAULT_RASTER_ICON_UUID = '00000000-0000-0000-0000-100000000003'
 
 # --------------------------------------------------------------------
 # 
@@ -385,6 +441,7 @@ ORCID_VOCAB_UUID = '00000000-7b24-5ac2-6dc9-9be294ae9bba'
 # BIBO Bibliographic ontology
 BIBO_PUB_UUID = 'fc7cda7c-da33-4a3c-bea6-8e309b79b533'
 BIBO_VOCAB_UUID = '00000000-11fc-1f89-4d9a-943fa4a4c7da'
+PREDICATE_BIBO_CONTENT_UUID = '00000000-11fc-e567-6593-b2cf0210a1e4'
 
 # CIDOC-CRM Ontonlogy
 CIDOC_PUB_UUID = 'ab03a6b8-f87b-4cfa-8b08-7a68be7b61ef'
@@ -392,6 +449,10 @@ CIDOC_VOCAB_UUID =  '00000000-798b-aa74-20d9-96d2bba09865'
 PREDICATE_CIDOC_CONSISTS_OF_UUID = '00000000-798b-ac05-70c4-1762c7ad066e'
 PREDICATE_CIDOC_HAS_TYPE_UUID = '00000000-798b-37da-99aa-704b3f50c62f'
 PREDICATE_CIDOC_HAS_UNIT_UUID = '00000000-798b-85cc-1bc4-172732da72bf'
+# CRM-EH (English Heritage CIDOC CRM Extentions)
+EH_PUB_UUID = '00462c87-720e-474b-9218-60fc11568513'
+CRMEH_VOCAB_UUID = '00000000-a352-78cb-4e05-e9f7138a1493'
+CLASS_CRMEH_AREA_OF_INVEST_UUID = '00000000-a352-82b6-15ec-78c4ad0924c4'
 
 # GeoJSON
 GEOJSON_PUB_UUID = '8b217b00-c204-4b00-af05-acb6d62691dd'
@@ -452,3 +513,39 @@ UNITS_MILLIGRAM_UUID = '00000000-75e9-63c7-ee9f-3526f846159c'
 UNITS_MILLILITER_UUID = '00000000-75e9-e55c-6b90-f7630eb8fb11'
 UNITS_MILLIMETER_UUID = '00000000-75e9-5503-d05c-c90f3da8f4b5'
 UNITS_SQUAREMETER_UUID = '00000000-75e9-c8ae-b57c-0ab952428987'
+
+
+# List of predicate uuids where the subject is roughly equivalent to the object
+PREDICATE_LIST_DBJ_EQUIV_OBJ = [
+    PREDICATE_OWL_SAME_AS_UUID,
+    PREDICATE_SKOS_EXACT_MATCH_UUID,
+    PREDICATE_SKOS_CLOSE_MATCH_UUID,
+]
+
+# List of predicate uuids where the subject is a child (subordinate)
+# of a parent (broader) object item.
+PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ = [
+    PREDICATE_SKOS_BROADER_UUID,
+    PREDICATE_SKOS_BROADER_TRANS_UUID,
+    PREDICATE_SKOS_BROAD_MATCH_UUID,
+    PREDICATE_RDFS_SUB_CLASS_OF_UUID,
+    PREDICATE_RDFS_SUB_PROP_OF_UUID,
+    PREDICATE_DCTERMS_IS_PART_OF_UUID,
+]
+
+# List of predicate uuids where the subject is a broader parent of
+# of a subordinate, child object item.
+PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ = [
+    PREDICATE_SKOS_NARROWER_UUID,
+    PREDICATE_SKOS_NARROWER_TRANS_UUID,
+    PREDICATE_SKOS_NARROW_MATCH_UUID,
+    PREDICATE_DCTERMS_HAS_PART_UUID,
+]
+
+# List of predicate uuids specific for spatial hierarchies where
+# the subject item is broader and contains the subordinate child
+# object item.
+PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ = [
+    PREDICATE_CONTAINS_UUID,
+    PREDICATE_ALSO_CONTAINS_UUID,
+]
