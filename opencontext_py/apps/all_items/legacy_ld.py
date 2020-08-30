@@ -11,6 +11,7 @@ from opencontext_py.apps.all_items.models import (
     AllHistory,
     AllResource,
     AllIdentifier,
+    AllSpaceTime,
 )
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity

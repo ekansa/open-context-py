@@ -9,6 +9,7 @@ from opencontext_py.apps.all_items.models import (
     AllHistory,
     AllResource,
     AllIdentifier,
+    AllSpaceTime,
 )
 
 """
@@ -499,6 +500,50 @@ DEFAULT_MANIFESTS = [
         'label': 'Web-service or API',
         'item_key': 'oc-gen:service-api',
         'uri': 'opencontext.org/vocabularies/oc-general/service-api',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+
+    # Event types.
+    {
+        'uuid': OC_EVENT_TYPE_GENERAL_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-general-time-space',
+        'label': 'General time and location',
+        'item_key': 'oc-gen:general-time-space',
+        'uri': 'opencontext.org/vocabularies/oc-general/general-time-space',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_EVENT_TYPE_CURRENT_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-current-location',
+        'label': '(More) current location',
+        'item_key': 'oc-gen:current-location',
+        'uri': 'opencontext.org/vocabularies/oc-general/current-location',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': OC_EVENT_TYPE_ORIGINS_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-origins-time-location',
+        'label': 'Origins time and location',
+        'item_key': 'oc-gen:origins-time-location',
+        'uri': 'opencontext.org/vocabularies/oc-general/origins-time-location',
         'context_id': OC_GEN_VOCAB_UUID,
     },
 

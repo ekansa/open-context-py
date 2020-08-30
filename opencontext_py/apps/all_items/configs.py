@@ -89,6 +89,24 @@ MANIFEST_META_JSON_KEYS = {
     ('projects', 'edit_group_id', int,),
     ('projects', 'geo_specificity', int,),
     ('projects', 'geo_note', str,),
+
+    ('subjects', 'edit_status', int,),
+    ('subjects', 'view_group_id', int,),
+    ('subjects', 'edit_group_id', int,),
+    ('subjects', 'geo_specificity', int,),
+    ('subjects', 'geo_note', str,),
+
+    ('media', 'edit_status', int,),
+    ('media', 'view_group_id', int,),
+    ('media', 'edit_group_id', int,),
+    
+    ('documents', 'edit_status', int,),
+    ('documents', 'view_group_id', int,),
+    ('documents', 'edit_group_id', int,),
+
+    ('tables', 'edit_status', int,),
+    ('tables', 'view_group_id', int,),
+    ('tables', 'edit_group_id', int,),
     
     # Persons related metadata keys.
     ('persons', 'combined_name', str,),
@@ -184,6 +202,19 @@ OC_RESOURCE_TYPES_UUIDS = [
     OC_RESOURCE_SERVICE_API_UUID,
 ]
 
+# OC-General default event type. This is essentially a vague
+# defined location of discovery/deposition, combined with
+# a vaguely specified time span for then something was 
+# formed, used, or was alive. More specific even types can be
+# modeled, but this default is necessarily unspecific and vague.
+OC_EVENT_TYPE_GENERAL_UUID = '00000000-6e24-336d-3531-54f40f2dcce0'
+OC_EVENT_TYPE_CURRENT_UUID = '00000000-6e24-eb5e-0cca-1ac8dc56c571'
+OC_EVENT_TYPE_ORIGINS_UUID = '00000000-6e24-d923-4de9-195609a19040'
+OC_EVENT_TYPE_UUIDS = [
+    OC_EVENT_TYPE_GENERAL_UUID,
+    OC_EVENT_TYPE_CURRENT_UUID,
+    OC_EVENT_TYPE_ORIGINS_UUID,
+]
 
 # Media-types related publisher, vocabularies, and types
 # See: https://www.iana.org/assignments/media-types/

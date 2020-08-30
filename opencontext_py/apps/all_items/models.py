@@ -672,6 +672,246 @@ class AllManifest(models.Model):
 
 # OCstring stores string content, with each string unique to a project
 @reversion.register  # records in this model under version control
+class AllSpaceTime(models.Model):
+    uuid = models.UUIDField(primary_key=True, editable=True)
+    publisher = models.ForeignKey(
+        AllManifest, 
+        db_column='publisher_uuid',
+        related_name='+', 
+        on_delete=models.PROTECT, 
+        default=configs.OPEN_CONTEXT_PUB_UUID,
+    )
+    project = models.ForeignKey(
+        AllManifest, 
+        db_column='project_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT, 
+        default=configs.OPEN_CONTEXT_PROJ_UUID,
+    )
+    source_id = models.CharField(max_length=50, db_index=True)
+    item = models.ForeignKey(
+        AllManifest, 
+        db_column='item_uuid', 
+        related_name='item_uuid', 
+        on_delete=models.CASCADE
+    )
+    event = models.ForeignKey(
+        AllManifest,  
+        db_column='event_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT,
+        default=configs.DEFAULT_EVENT_UUID,
+    )
+    # An integer ID, used for sorting, that is unique to the
+    # specific item.
+    feature_id = models.IntegerField()
+    # Describes the spatial component of this record. The event_class
+    # describes how the chronology and spatial information go together.
+    event_class = models.ForeignKey(
+        AllManifest,  
+        db_column='event_class_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT,
+        default=configs.OC_EVENT_TYPE_GENERAL_UUID,
+    )
+
+    # Time span information. 
+    earliest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    start = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    stop = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    latest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+
+    # Location information.
+    geometry_type = models.CharField(max_length=50, null=True)
+    latitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
+    longitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
+    geo_specificity = models.IntegerField(default=0, null=True)
+    geometry = JSONField(default=dict, null=True)
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    meta_json = JSONField(default=dict)
+
+    def validate_times(
+        self, 
+        earliest=None,
+        start=None,
+        stop=None,
+        latest=None,
+    ):
+        """
+        makes sure time data is properly validated
+        """
+        raw_time_list = [earliest, start, stop, latest]
+        time_list = list(
+            set([t for t in raw_time_list if t is not None])
+        )
+        if not len(time_list):
+            return (
+                None,
+                None,
+                None,
+                None,
+            )
+
+        # Sort the list, then fill in any blanks.
+        time_list.sort()
+        while len(time_list) < 4:
+            time_list.append(max(time_list))
+
+        return (
+            min(time_list),
+            time_list[1],
+            time_list[2],
+            max(time_list),
+        )
+    
+    def make_hash_id(
+        self, 
+        item_id,
+        event_id=configs.DEFAULT_EVENT_UUID,
+        event_class_id=configs.OC_EVENT_TYPE_GENERAL_UUID,
+        earliest=None,
+        start=None,
+        stop=None,
+        latest=None,
+        latitude=None,
+        longitude=None,
+        geometry=None,
+    ):
+        """Makes a hash_id for an assertion"""
+        earliest, start, stop, latest = self.validate_times(
+            earliest,
+            start,
+            stop,
+            latest,
+        )
+        hash_obj = hashlib.sha1()
+        concat_string = " ".join(
+            [
+                str(item_id),
+                str(event_id),
+                str(event_class_id),
+                str(earliest),
+                str(start),
+                str(stop),
+                str(latest),
+                str(latitude),
+                str(longitude),
+                str(geometry),
+            ]
+        )
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def primary_key_create(
+        self, 
+        item_id,
+        event_id=configs.DEFAULT_EVENT_UUID,
+        event_class_id=configs.OC_EVENT_TYPE_GENERAL_UUID,
+        earliest=None,
+        start=None,
+        stop=None,
+        latest=None,
+        latitude=None,
+        longitude=None,
+        geometry=None,
+    ):
+        """Makes a primary key using a prefix from the item"""
+        item_uuid = str(item_id)
+        item_prefix = item_uuid.split('-')[0]
+        
+        hash_id = self.make_hash_id(
+            item_id=item_id,
+            event_id=configs.DEFAULT_EVENT_UUID,
+            event_class_id=configs.OC_EVENT_TYPE_GENERAL_UUID,
+            earliest=None,
+            start=None,
+            stop=None,
+            latest=None,
+            latitude=None,
+            longitude=None,
+            geometry=None,
+        )
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([item_prefix] + new_parts[1:])
+        )
+        return uuid
+
+    def primary_key_create_for_self(self):
+        """Makes a primary key using a prefix from the item"""
+        if self.uuid:
+            # One is already defined, so skip this step.
+            return self.uuid
+        return self.primary_key_create(
+            item_id=self.item.uuid,
+            event_id=self.event.uuid,
+            event_class_id=self.event_class,
+            earliest=self.earliest,
+            start=self.start,
+            stop=self.stop,
+            latest=self.latest,
+            latitude=self.latitude,
+            longitude=self.longitude,
+            geometry=self.longitude,
+        )
+    
+    def save(self, *args, **kwargs):
+        """
+        creates the hash-id on saving to insure a unique event
+        """
+        self.earliest, self.start, self.stop, self.latest = self.validate_times(
+            self.earliest,
+            self.start,
+            self.stop,
+            self.latest,
+        )
+        # Make sure the project is really a project.
+        validate_related_project(project_obj=self.project)
+        # Projects, subjects, and types (for periods) can have time space information.
+        validate_related_manifest_item_type(
+            man_obj=self.item,
+            allowed_types= ['projects', 'subjects', 'types', 'uri', 'class'],
+            obj_role='item',
+        )
+
+        # Validate the event.
+        validate_related_manifest_item_type(
+            man_obj=self.event,
+            allowed_types=['events'],
+            obj_role='event',
+        )
+
+        # Validate the event type.
+        if str(self.event_class.uuid) not in configs.OC_EVENT_TYPE_UUIDS:
+            raise ValueError(
+                f'{self.event_class.label} is not in allowed event types '
+                f'must be: {str(configs.OC_EVENT_TYPE_UUIDS)}'
+            )
+
+        self.primary_key_create_for_self()
+        super(AllSpaceTime, self).save(*args, **kwargs)
+    
+    class Meta:
+        db_table = 'oc_all_spacetime'
+        unique_together = (
+            (
+                "item", 
+                "event",
+            ),
+            (
+                "item",
+                "feature_id",
+            ),
+        )
+        ordering = ["item", "feature_id",]
+
+# OCstring stores string content, with each string unique to a project
+@reversion.register  # records in this model under version control
 class AllString(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     hash_id = models.CharField(max_length=50, unique=True)
@@ -1436,6 +1676,7 @@ def validate_resourcetype_id(resourcetype_id, raise_on_fail=True):
         f'Resourcetype {resourcetype_id} not in valid list: {str(configs.OC_RESOURCE_TYPES_UUIDS)}'
     )
 
+
 def get_media_type_obj(uri, raw_media_type):
     """Gets a media-type manifest object"""
     media_type_qs = AllManifest.objects.filter(
@@ -1465,7 +1706,6 @@ def get_media_type_obj(uri, raw_media_type):
             uuid=uuid
         ).first()
     return None
-
 
 
 def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='https://'):
@@ -1656,29 +1896,24 @@ class AllResource(models.Model):
 @reversion.register  # records in this model under version control
 class AllHistory(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
-    hash_item = models.CharField(max_length=50, unique=True)
-    project = models.ForeignKey(
-        AllManifest, 
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
-        null=True
-    )
+    sha1_hash = models.CharField(max_length=50, unique=True)
     item = models.ForeignKey(
         AllManifest, 
         db_column='item_uuid', 
         related_name='+', 
         on_delete=models.CASCADE
     )
+    created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    meta_json = JSONField(default=dict)
 
-    def primary_key_create(self, item_id, hash_item):
+    def primary_key_create(self, item_id, sha1_hash):
         """Makes a primary key using a prefix from the item"""
         item_uuid = str(item_id)
         item_prefix = item_uuid.split('-')[0]
         
         uuid_from_hash_id = str(
-            GenUUID.UUID(hex=hash_item[:32])
+            GenUUID.UUID(hex=sha1_hash[:32])
         )
         new_parts = uuid_from_hash_id.split('-')
         uuid = '-'.join(
@@ -1687,12 +1922,12 @@ class AllHistory(models.Model):
         return uuid
 
     def primary_key_create_for_self(self):
-        """Makes a primary key using a prefix from the subject"""
+        """Makes a primary key using a prefix from the item"""
         if self.uuid:
             return self.uuid
         return self.primary_key_create(
             item_id=self.item.uuid, 
-            hash_item=self.hash_item,
+            sha1_hash=self.sha1_hash,
         )
 
     def save(self, *args, **kwargs):
@@ -1701,8 +1936,6 @@ class AllHistory(models.Model):
         of the subject uuid
         """
         self.uuid = self.primary_key_create_for_self()
-        # Make sure the project is really a project.
-        validate_related_project(project_obj=self.project)
         # Make sure the item has the right
         # manifest object item_type (open context items)
         validate_related_manifest_item_type(
