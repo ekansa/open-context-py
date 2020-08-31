@@ -46,6 +46,49 @@ DEFAULT_IDENTIFIERS = [
     },
 ]
 
+# Set up the basic spatial containment hierarchy.
+DEFAULT_ASSERTIONS = [
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': DEFAULT_SUBJECTS_ROOT_UUID,
+        'predicate_id': PREDICATE_CONTAINS_UUID,
+        'object_id': DEFAULT_SUBJECTS_AFRICA_UUID,
+    },
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': DEFAULT_SUBJECTS_ROOT_UUID ,
+        'predicate_id': PREDICATE_CONTAINS_UUID,
+        'object_id': DEFAULT_SUBJECTS_AMERICAS_UUID,
+    },
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': DEFAULT_SUBJECTS_ROOT_UUID,
+        'predicate_id': PREDICATE_CONTAINS_UUID,
+        'object_id': DEFAULT_SUBJECTS_ASIA_UUID,
+    },
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': DEFAULT_SUBJECTS_ROOT_UUID,
+        'predicate_id': PREDICATE_CONTAINS_UUID,
+        'object_id': DEFAULT_SUBJECTS_EUROPE_UUID,
+    },
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': DEFAULT_SUBJECTS_ROOT_UUID,
+        'predicate_id': PREDICATE_CONTAINS_UUID,
+        'object_id': DEFAULT_SUBJECTS_OCEANIA_UUID,
+    },
+]
 
 # These items are fundamental to load into the database as Manifest items
 # for Open Context to work at all.
@@ -206,6 +249,87 @@ DEFAULT_MANIFESTS = [
         'label': 'Default (Null) Attribute Object',
         'uri': 'opencontext.org/vocabularies/oc-general/object-null',
         'context_id': OC_GEN_VOCAB_UUID,
+    },
+    # Add the default (World) root subject item.
+    # Below is a simple hierarchy of world regions as defined by
+    # the United Nations, see: https://en.wikipedia.org/wiki/United_Nations_geoscheme
+    {
+        'uuid': DEFAULT_SUBJECTS_ROOT_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'subjects',
+        'data_type': 'id',
+        'slug': 'oc-world-root',
+        'label': 'World',
+        'path': 'World',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': DEFAULT_SUBJECTS_AFRICA_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'subjects',
+        'data_type': 'id',
+        'slug': 'oc-africa',
+        'label': 'Africa',
+        'path': 'World/Africa',
+        'context_id': DEFAULT_SUBJECTS_ROOT_UUID,
+    },
+    {
+        'uuid': DEFAULT_SUBJECTS_AMERICAS_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'subjects',
+        'data_type': 'id',
+        'slug': 'oc-americas',
+        'label': 'Americas',
+        'path': 'World/Americas',
+        'context_id': DEFAULT_SUBJECTS_ROOT_UUID,
+    },
+    {
+        'uuid': DEFAULT_SUBJECTS_ASIA_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'subjects',
+        'data_type': 'id',
+        'slug': 'oc-asia',
+        'label': 'Asia',
+        'path': 'World/Asia',
+        'context_id': DEFAULT_SUBJECTS_ROOT_UUID,
+    },
+    {
+        'uuid': DEFAULT_SUBJECTS_EUROPE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'subjects',
+        'data_type': 'id',
+        'slug': 'oc-europe',
+        'label': 'Europe',
+        'path': 'World/Europe',
+        'context_id': DEFAULT_SUBJECTS_ROOT_UUID,
+    },
+    {
+        'uuid': DEFAULT_SUBJECTS_OCEANIA_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'subjects',
+        'data_type': 'id',
+        'slug': 'oc-oceania',
+        'label': 'Oceania',
+        'path': 'World/Oceania',
+        'context_id': DEFAULT_SUBJECTS_ROOT_UUID,
     },
     # Open Context hard-coded, widely used predicates
     {
@@ -2861,7 +2985,7 @@ def verify_manifest_uuids(dict_list=DEFAULT_MANIFESTS):
     )
     for man_dict in dict_list:
         uuid = man_dict['uuid']
-        uri = man_dict['uri']
+        uri = man_dict.get('uri')
         if man_dict['item_type'] not in check_types:
             # Not an item type that has a 
             # deterministic uuid
@@ -2885,6 +3009,7 @@ def load_default_entities(
     man_dict_list=DEFAULT_MANIFESTS,
     id_dict_list=DEFAULT_IDENTIFIERS,
     str_dict_list=DEFAULT_STRINGS,
+    assert_dict_list=DEFAULT_ASSERTIONS,
     ):
     """Loads default, required by Open Context """
     fk_fields = [
@@ -2942,6 +3067,22 @@ def load_default_entities(
         print(
             f'String obj {str_obj.uuid}, "{str_obj.content}" created.'
         )
+    
+    for assert_dict in assert_dict_list:
+        ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(
+                subject_id=assert_dict['subject_id'],
+                predicate_id=assert_dict['predicate_id'],
+                object_id=assert_dict['object_id'],
+            ),
+            defaults=assert_dict
+        )
+        print(
+            f'Assertion {ass_obj.uuid}: '
+            f'is {ass_obj.subject.label} [{ass_obj.subject.uuid}]'
+            f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
+            f'-> {ass_obj.obj_string.content} [{ass_obj.obj_string.uuid}]'
+        )
 
 
 def tabula_rasa():
@@ -2953,5 +3094,6 @@ def tabula_rasa():
         AllHistory,
         AllAssertion,
         AllManifest,
+        AllSpaceTime,
     ]
     [m.objects.all().delete() for m in models]

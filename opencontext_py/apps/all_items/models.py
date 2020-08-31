@@ -643,7 +643,7 @@ class AllManifest(models.Model):
         self.uuid = self.primary_key_create_for_self()
 
         # Make the URI for Open Context item types.
-        if self.uri is None and self.item_type in configs.OC_ITEM_TYPES:
+        if self.item_type in configs.OC_ITEM_TYPES:
             self.uri = make_uri_for_oc_item_types(
                 self.uuid, 
                 self.item_type
@@ -914,7 +914,6 @@ class AllSpaceTime(models.Model):
 @reversion.register  # records in this model under version control
 class AllString(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
-    hash_id = models.CharField(max_length=50, unique=True)
     project = models.ForeignKey(
         AllManifest,
         db_column='project_uuid', 
@@ -936,29 +935,42 @@ class AllString(models.Model):
 
     def make_hash_id(
         self, 
-        project_id, 
-        content, 
-        language_id=configs.DEFAULT_LANG_UUID
+        project_id,
+        content='', 
+        language_id=configs.DEFAULT_LANG_UUID,
+        extra=[],
     ):
         """
         Creates a hash-id to insure unique content for a project and language
         """
         hash_obj = hashlib.sha1()
-        concat_string = " ".join(
-            [
+        if len(extra):
+            # Don't make a hash_id based on the
+            # content. Use the items listed in extra
+            # to help define the uniqueness and the ID for
+            # the string. This lets us make very targetted
+            # updates associated with just 1 assertion.
+            all_hash_items = (
+                [str(project_id), str(language_id)]
+                + [str(e) for e in extra]
+            )
+        else:
+            # This is less ideal, but still deterministic.
+            all_hash_items = [
                 str(project_id),
                 str(language_id),
                 content.strip(),
             ]
-        )
+        concat_string = " ".join(all_hash_items)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
     
     def primary_key_create(
         self, 
         project_id, 
-        content, 
-        language_id=configs.DEFAULT_LANG_UUID
+        content='',
+        language_id=configs.DEFAULT_LANG_UUID,
+        extra=[],
     ):
         """Deterministically make a primary key using a prefix from the project"""
 
@@ -972,6 +984,7 @@ class AllString(models.Model):
             project_id=project_id,
             content=content,
             language_id=language_id,
+            extra=extra,
         )
         # Now convert that hash into a uuid. Note, we're only using
         # the first 32 characters. This should still be enough to have
@@ -1012,23 +1025,11 @@ class AllString(models.Model):
             obj_role='language'
         )
         self.content = self.content.strip()
-        self.hash_id = self.make_hash_id(
-            project_id=self.project.uuid,
-            content=self.content,
-            language_id=self.language.uuid,
-        )
         self.uuid = self.primary_key_create_for_self()
         super(AllString, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_all_strings'
-        unique_together = (
-            (
-                "project", 
-                "language",
-                "content"
-            ),
-        )
 
 
 
@@ -1263,10 +1264,6 @@ def validate_hierarchy_assertion(
     use_cache=False,
 ):
     """Validates an assertion about a hierarchy relationship"""
-    subjects_preds = [
-        configs.PREDICATE_CONTAINS_UUID,
-        configs.PREDICATE_ALSO_CONTAINS_UUID,
-    ]
     predicate_uuid = str(predicate_obj.uuid)
     check_preds = (
         configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
@@ -1292,7 +1289,6 @@ def validate_hierarchy_assertion(
         return validate_context_assertion(
             subject_obj, 
             object_obj,
-            predicate_uuid=predicate_uuid,
             max_depth=max_depth
         )
     

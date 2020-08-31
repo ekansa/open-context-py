@@ -47,9 +47,18 @@ def add_string_assertion_simple(
     if not source_id:
         source_id = subject_obj.source_id
 
+    # There's no need to make a string totally unique in a project,
+    # because it complicates editing. So we add lots to the 'extra'
+    # argument so we can 
     str_obj, _ = AllString.objects.get_or_create(
         uuid=AllString().primary_key_create(
             project_id=project_id,
+            extra=[
+                str(subject_obj.uuid),
+                str(observation_id),
+                str(event_id),
+                str(attribute_group_id),
+            ],
             content=str_content,
             language_id=language_id,
         ),
