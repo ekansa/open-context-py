@@ -25,7 +25,6 @@ OC_ITEM_TYPES = [
     'predicates',
     'types',
     'persons',
-    'tables',
 ]
 
 # Item type with full URIs as the main identifer. These are for
@@ -141,31 +140,39 @@ IDENTIFIER_SCHEMES = [
 # CONFIGS FOR DEFAULT PREDICATES USED IN ASSERTIONS
 # ---------------------------------------------------------------------
 
+# Classes used with Open Context predicates items.
+CLASS_OC_VARIABLES_UUID = '00000000-6e24-4637-cc82-fb0add3bb01b'
+CLASS_OC_LINKS_UUID = '00000000-6e24-5e11-6d91-b097262f3f05'
+CLASS_LIST_OC_PREDICATES = [
+    CLASS_OC_VARIABLES_UUID,
+    CLASS_OC_LINKS_UUID,
+]
+
 # Standard predicate for project root children; 'oc-gen:contains-root'
-PREDICATE_PROJ_ROOT_UUID = '763af21e-dac1-49c0-b121-a420c37eaa0e'
+PREDICATE_PROJ_ROOT_UUID = 'c3a4bde8-2dc9-ac70-cf7b-42990fd662ab'
 
 # Standard predicate for spatial containment; 'oc-gen:contains'
-PREDICATE_CONTAINS_UUID = 'a07cae41-d615-4ba2-9d81-c60045921b2e'
+PREDICATE_CONTAINS_UUID = '92bf9b59-e5dd-c39a-3df6-e6ae0641d31d'
 
 # Predicate for secondary spatial containment, not used in entity
 # reconciliation, just for additional navigation between subjects items.
 PREDICATE_ALSO_CONTAINS_UUID = '996841cb-7a9b-406f-afb3-65b035ff4294'
 
 # Standard predicate for a generic link; 'oc-gen:links', 'oc-3'
-PREDICATE_LINK_UUID = '75427e34-475b-440d-abba-9f0e76100584'
+PREDICATE_LINK_UUID = '56359c84-b327-5474-f047-ffe38cbb27a9'
 
 # Standard predicate for a generic note; 'oc-gen:has-note'
-PREDICATE_NOTE_UUID = '9dddbdcb-02a3-4703-9fb3-cbdb3ca62e15'
+PREDICATE_NOTE_UUID = '5fa8fc75-74f8-725a-489d-b727c033d79c'
 
 # Standard predicate for a link relation that's from the object
 # use this to not make the subject too cluttered with visible links
 # this is provisional, I may decide this is stupid beyond hope;
 # 'oc-gen:is-linked-from'
-PREDICATE_LINKED_FROM_UUID = '8321ce74-0d14-4580-9862-fa0d604cc435'
+PREDICATE_LINKED_FROM_UUID = 'd881c51b-7e85-ef42-37b2-47dc97d4a53d'
 
 # Standard predicate for a link between an item and a geospatial bitmap image
 # 'oc-gen:has-geo-overlay'
-PREDICATE_GEO_OVERLAY_UUID = '8084cd3e-008f-4fee-af32-a58040a5a716'
+PREDICATE_GEO_OVERLAY_UUID = '6531aee0-c19d-630d-ed5e-d02c9ea92723'
 
 # OC-General Predicate 'Has icon'
 PREDICATE_OC_HAS_ICON_UUID = '00000000-6e24-f67a-9c19-09c9e320443c'
@@ -360,6 +367,9 @@ DEFAULT_ATTRIBUTE_GROUP_UUID = '00000000-0000-0000-0000-000000000005'
 DEFAULT_NULL_OBJECT_UUID = '00000000-0000-0000-0000-000000000006'
 DEFAULT_NULL_STRING_UUID = '00000000-cdd8-bc9b-1985-c3babee8ea6c'
 
+# ID for a the oc-gen:cat-region (region) subjects class
+CLASS_OC_REGION_UUID = '00000000-6e24-e55c-6c25-5d7204d9115c'
+
 # The root subject item (the World)
 DEFAULT_SUBJECTS_ROOT_UUID = 'fc8ff176-beb1-4aaa-896b-d5f49ede58c8'
 DEFAULT_SUBJECTS_AFRICA_UUID = '2334627d-5db7-4ff8-b61c-49f51aaaf9f8'
@@ -368,10 +378,38 @@ DEFAULT_SUBJECTS_ASIA_UUID = 'a6c5488c-98de-4e5a-9654-c1a2be698840'
 DEFAULT_SUBJECTS_EUROPE_UUID = '6cfc6541-b741-44c4-b9d1-d8d9601c5548'
 DEFAULT_SUBJECTS_OCEANIA_UUID = 'ac6ed144-5007-42bc-acee-a42197caa3da'
 
+# List of World regions. These are the highest level contexts.
+LIST_SUBJECTS_WORLD_REGIONS_UUIDS = [
+    DEFAULT_SUBJECTS_AFRICA_UUID,
+    DEFAULT_SUBJECTS_AMERICAS_UUID,
+    DEFAULT_SUBJECTS_ASIA_UUID,
+    DEFAULT_SUBJECTS_EUROPE_UUID,
+    DEFAULT_SUBJECTS_OCEANIA_UUID,
+]
+
 DEFAULT_PDF_ICON_UUID = '00000000-0000-0000-0000-100000000000'
 DEFAULT_3D_ICON_UUID = '00000000-0000-0000-0000-100000000001'
 DEFAULT_GIS_ICON_UUID = '00000000-0000-0000-0000-100000000002'
 DEFAULT_RASTER_ICON_UUID = '00000000-0000-0000-0000-100000000003'
+
+CLASS_OC_IMAGE_MEDIA = '00000000-6e24-dcc6-6bba-9fda0020066d'
+CLASS_OC_VIDEO_MEDIA = '00000000-6e24-86f1-36cd-8cad34f70b6b'
+CLASS_OC_DOCUMENT_MEDIA = '00000000-6e24-450b-f31d-a40eb0eb17a4'
+CLASS_OC_3D_MEDIA = '00000000-6e24-e162-4d23-95a790a799fd'
+CLASS_OC_DATATABLE_MEDIA = '00000000-6e24-e1e8-f0fe-e12bf8ac884f'
+CLASS_OC_GIS_MEDIA = '00000000-6e24-abd3-7e94-592f657943c0'
+CLASS_OC_VECTOR_GIS_MEDIA = '00000000-6e24-7e2d-cc5b-f6ef63cf0398'
+
+# List of allowed item_classes for item_type = 'media'
+CLASS_LIST_OC_MEDIA = [
+    CLASS_OC_IMAGE_MEDIA,
+    CLASS_OC_VIDEO_MEDIA,
+    CLASS_OC_DOCUMENT_MEDIA,
+    CLASS_OC_3D_MEDIA,
+    CLASS_OC_DATATABLE_MEDIA,
+    CLASS_OC_GIS_MEDIA,
+    CLASS_OC_VECTOR_GIS_MEDIA,
+]
 
 # --------------------------------------------------------------------
 # 
@@ -464,6 +502,13 @@ PREDICATE_FOAF_IMG_UUID = '00000000-546a-1309-223b-9c6a196b2da5'
 PREDICATE_FOAF_PRIMARY_TOPIC_OF_UUID = '00000000-546a-9655-f041-cc3f7f3257d3'
 # ---------------------------------------------------------------------
 
+# This is the last of classes allowed for item_type = 'persons' records.
+CLASS_LIST_OC_PERSONS = [
+    CLASS_FOAF_AGENT_UUID,
+    CLASS_FOAF_GROUP_UUID,
+    CLASS_FOAF_PERSON_UUID,
+    CLASS_FOAF_ORGANIZATION_UUID
+]
 
 # ---------------------------------------------------------------------
 # DBpedia

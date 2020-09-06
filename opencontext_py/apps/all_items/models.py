@@ -447,7 +447,6 @@ class AllManifest(models.Model):
                     str(item_type),
                     str(data_type),
                     str(label),
-                    str(path),
                 ]
             )
         concat_string = concat_string.strip()
@@ -615,6 +614,31 @@ class AllManifest(models.Model):
         return uuid
 
 
+    def validate_item_type_class_item(self, item_type, item_class_id, raise_on_fail=True):
+        """Validates class_item by item_type"""
+        class_configs = {
+            'predicates': configs.CLASS_LIST_OC_PREDICATES,
+            'persons': configs.CLASS_LIST_OC_PERSONS,
+            'media': configs.CLASS_LIST_OC_MEDIA,
+        }
+        if item_type not in class_configs:
+            # No configured item_class validation check for this item type.
+            return True
+        item_class_id = str(item_class_id)
+        allowed_class_ids = class_configs.get(item_type)
+        if item_class_id in allowed_class_ids:
+            # The item_class_id is in the expected allowed item_class ids
+            # for this item_type. Validates OK.
+            return True
+        if not raise_on_fail:
+            # We ran into a problem but don't want to raise an exception.
+            return False
+        raise ValueError(
+            f'{item_class_id} is not in allowed {item_type} item_class '
+            f'must be: {str(allowed_class_ids)}'
+        )
+
+
     def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
@@ -628,12 +652,35 @@ class AllManifest(models.Model):
         )
         
 
+    def make_subjects_path_and_validate(self):
+        """Makes a path for subjects items"""
+        if self.item_type != 'subjects':
+            return self.path
+        if str(self.uuid) == configs.DEFAULT_SUBJECTS_ROOT_UUID:
+            # We're at the "root", no path.
+            self.path = ''
+            return self.path
+        if str(self.uuid) in configs.LIST_SUBJECTS_WORLD_REGIONS_UUIDS:
+            self.path = self.label
+            return self.path
+        if self.context.item_type != 'subjects':
+            raise ValueError(
+                f'Context must have item_type="subjects" not {self.context.item_type}'
+            )
+        self.path = self.context.path + '/' + self.label
+        return self.path
+
+
     def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique string for a project
         """
         self.label = self.clean_label(self.label, self.item_type)
         self.uri = self.clean_uri(self.uri)
+
+        # Makes sure that subjects items have a path defined, and a
+        # context item of the correct type.
+        self.make_subjects_path_and_validate()
 
         # Dereferences keys:
         self.dereference_keys()
@@ -661,6 +708,16 @@ class AllManifest(models.Model):
         self.validate_from_list(
             self.data_type, configs.DATA_TYPES
         )
+        # Make sure predicates, persons, and media have an expected class
+        if self.source_id != configs.DEFAULT_SOURCE_ID:
+            item_class_id = None
+            if self.item_class:
+                item_class_id = self.item_class.uuid
+            # Only do this validation for non-default loads.
+            self.validate_item_type_class_item(
+                item_type=self.item_type, 
+                item_class_id=item_class_id
+            )
         # Make the slug and sort values.
         self.make_slug_and_sort()
         super(AllManifest, self).save(*args, **kwargs)
@@ -944,23 +1001,30 @@ class AllString(models.Model):
         Creates a hash-id to insure unique content for a project and language
         """
         hash_obj = hashlib.sha1()
+        all_hash_items = [str(project_id), str(language_id)]
         if len(extra):
             # Don't make a hash_id based on the
             # content. Use the items listed in extra
             # to help define the uniqueness and the ID for
             # the string. This lets us make very targetted
             # updates associated with just 1 assertion.
-            all_hash_items = (
-                [str(project_id), str(language_id)]
-                + [str(e) for e in extra]
-            )
-        else:
-            # This is less ideal, but still deterministic.
-            all_hash_items = [
-                str(project_id),
-                str(language_id),
-                content.strip(),
-            ]
+            all_hash_items += [str(e) for e in extra]
+        
+        # Sort all the elements of the list going
+        # get hashed. This keeps keep the logic used to generate
+        # a hash (and later uuid) inside the Strings model so it
+        # will be more consistent.
+        
+        # Remove duplicate elements from the hash.
+        all_hash_items = list(set(all_hash_items))
+        # Sort them for deterministic consistency.
+        all_hash_items.sort()
+
+        # Now add the content for hashing. All this makes it very
+        # possible to make a deterministic id, but one that's
+        # unlikely to ever be repeated within a project. 
+        all_hash_items.append(content.strip())
+
         concat_string = " ".join(all_hash_items)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
@@ -1024,7 +1088,7 @@ class AllString(models.Model):
             allowed_types=['languages'],
             obj_role='language'
         )
-        self.content = self.content.strip()
+        self.content = self.content.strip()    
         self.uuid = self.primary_key_create_for_self()
         super(AllString, self).save(*args, **kwargs)
 
@@ -1073,10 +1137,13 @@ def get_immediate_concept_children_objs_db(parent_obj):
 
 def get_immediate_context_parent_obj_db(child_obj):
     """Get the immediate (spatial) context parent of a child_obj"""
-    return AllAssertion.objects.filter(
+    p_assert = AllAssertion.objects.filter(
         predicate_id=configs.PREDICATE_CONTAINS_UUID,
         object=child_obj
     ).first()
+    if not p_assert:
+        return None
+    return p_assert.subject
 
 def get_immediate_context_children_objs_db(parent_obj):
     """Get the immediate (spatial) context children of a parent_obj"""

@@ -12,10 +12,37 @@ from opencontext_py.apps.all_items.models import (
 )
 
 
-def get_man_obj_from_uri(uri, filters=None, excludes=None):
+def uri_to_common_prefix(uri, uri_prefixes):
+    """Converts a uri to a common prefixed uri
+    
+    :param str uri: A uri string
+    :param dict uri_prefixes: A keyed by a root uri
+       prefix, and a value (ending in ":") for the abbreviated
+       namespace.
+    """
+    uri = AllManifest().clean_uri(uri)
+    common_prefix = None
+    for uri_prefix, ns_prefix in uri_prefixes.items():
+        uri_prefix = AllManifest().clean_uri(uri_prefix)
+        if not uri.startswith(uri_prefix):
+            continue
+        # Make sure that the ns_prefix ends wit a ':'
+        if ns_prefix[-1] != ':':
+            ns_prefix += ':'
+        common_prefix = ns_prefix + uri[len(uri_prefix):]
+    return common_prefix
+
+
+def get_man_obj_from_uri(uri, item_key=None, filters=None, excludes=None):
     """Gets a manifest object by uri"""
     uri = AllManifest().clean_uri(uri)
-    man_obj_qs = AllManifest.objects.filter(uri=uri)
+    if item_key:
+        man_obj_qs = AllManifest.objects.filter(
+           Q(uri=uri)
+           | Q(item_key=item_key)
+        )
+    else:
+        man_obj_qs = AllManifest.objects.filter(uri=uri)
     if filters:
         man_obj_qs = man_obj_qs.filter(**filters)
     if excludes:
@@ -36,6 +63,7 @@ def add_string_assertion_simple(
     event_id=configs.DEFAULT_EVENT_UUID,
     attribute_group_id=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
     language_id=configs.DEFAULT_LANG_UUID,
+    sort=0,
     replace_old_content=False):
     """Adds a string attribute assertion to a subject object"""
     if not str_content:
@@ -76,6 +104,7 @@ def add_string_assertion_simple(
             observation_id=observation_id,
             event_id=event_id,
             attribute_group_id=attribute_group_id,
+            sort=sort,
         ).exclude(
             obj_string=str_obj
         ).delete()
@@ -100,6 +129,7 @@ def add_string_assertion_simple(
             'observation_id': observation_id,
             'event_id': event_id,
             'attribute_group_id': attribute_group_id,
+            'sort': sort,
             'obj_string': str_obj,
         }
     )

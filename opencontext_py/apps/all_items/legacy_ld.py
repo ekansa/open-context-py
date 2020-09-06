@@ -14,6 +14,8 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 from opencontext_py.apps.all_items import utilities
+from opencontext_py.apps.all_items.legacy_all import update_old_id
+
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
@@ -109,6 +111,9 @@ REPLACE_URIS = {
     ('bibo:status/forthcoming', '')
 }
 
+URI_SLUG_MAPPINGS = {
+    'concordia.atlantides.org': 'concordia-vocab',
+}
 
 SOURCE_ID = 'legacy-linked-entity-migrate'
 
@@ -126,6 +131,20 @@ OC_ITEM_URI_STRS = [
     'opencontext.org/predicates/',
     'opencontext.org/tables/',
 ]
+
+
+URI_PREFIXES = {
+    'opencontext.org/vocabularies/oc-general/': 'oc-gen',
+    'opencontext.org/vocabularies/open-context-zooarch/': 'oc-zoo',
+    'opencontext.org/vocabularies/dinaa/': 'dinaa',
+    'purl.org/ontology/bibo': 'bibo',
+    'http://erlangen-crm.org/current/': 'cidoc-crm',
+    'http://purl.org/ontology/bibo/': 'bibo',
+    'https://www.w3.org/2000/01/rdf-schema': 'rdfs',
+    'http://www.w3.org/2004/02/skos/core': 'skos',
+    'https://www.w3.org/2002/07/owl': 'owl',
+    'http://purl.org/dc/terms/': 'dc-terms',
+}
 
 
 """
@@ -172,9 +191,14 @@ def load_legacy_link_entity(old_le):
         )
         return None
     # Check to see it this is already imported.
-    new_man_obj = AllManifest.objects.filter(
-        uri=uri
-    ).first()
+    item_key = utilities.uri_to_common_prefix(
+        uri,
+        uri_prefixes=URI_PREFIXES,
+    )
+    new_man_obj = utilities.get_man_obj_from_uri(
+        uri,
+        item_key=item_key,
+    )
     if new_man_obj:
         print(
             'Already have {}; {} at uri: {}'.format(
@@ -216,6 +240,8 @@ def load_legacy_link_entity(old_le):
                 # change to an instance item type.
                 item_type = 'uri'
 
+
+
     # Make a new manifest dictionary object.
     man_dict = {
         'publisher_id': publisher_id,
@@ -224,7 +250,8 @@ def load_legacy_link_entity(old_le):
         'source_id': SOURCE_ID,
         'item_type': item_type,
         'data_type': 'id',
-        'slug': old_le.slug,
+        # Default to the old slug, but use a mapping if existing.
+        'slug': URI_SLUG_MAPPINGS.get(uri, old_le.slug),
         'label': old_le.label,
         'uri': uri,
         'context_id': context_id,
@@ -281,17 +308,17 @@ def load_legacy_link_entities():
         load_legacy_link_entity(old_le)
 
 
-def get_man_obj_from_la(la_uri):
+def get_man_obj_from_la(la_identifier):
     """Checks if a legacy link entity URI is in the new manifest"""
     new_man_obj = AllManifest.objects.filter(
         Q(uri=AllManifest().clean_uri(
-                la_uri
+                la_identifier
             )
         ) 
-        | Q(item_key=la_uri)
+        | Q(item_key=la_identifier)
     ).first()
     if not new_man_obj:
-        print(f'Cannot find new manifest obj for entity {la_uri}')
+        print(f'Cannot find new manifest obj for entity {la_identifier}')
         return None
     return new_man_obj
 
@@ -376,19 +403,27 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
 
 def migrate_legacy_link_annotations(project_uuid='0'):
     """Migrates legacy link annotations (limited to entities already in the manifest)"""
+    
+    old_proj_id, new_proj_uuid = update_old_id(project_uuid)
+    new_proj_obj = AllManifest.objects.filter(uuid=new_proj_uuid).first()
+    if not new_proj_obj:
+        print(
+            f'Cannot migrate link annotations, missing project {project_uuid}'
+        )
+        return None
+
     missing_entities = []
-    legacy_new_project_uuids = {
-        '0': configs.OPEN_CONTEXT_PROJ_UUID,
-    }
+    
     la_qs = LinkAnnotation.objects.filter(
         subject_type='uri', 
-        project_uuid=project_uuid
+        project_uuid=old_proj_id
     ).order_by(
         'subject', 
         'predicate_uri', 
         'sort', 
         'object_uri'
     )
+
     for la in la_qs:
         subj_obj = get_man_obj_from_la(la.subject)
         pred_obj = get_man_obj_from_la(la.predicate_uri)
@@ -415,10 +450,7 @@ def migrate_legacy_link_annotations(project_uuid='0'):
                 object_id=obj_obj.uuid,
             ),
             defaults={
-                'project_id': legacy_new_project_uuids.get(
-                    la.project_uuid,
-                    configs.OPEN_CONTEXT_PROJ_UUID
-                ),
+                'project': new_proj_obj,
                 'source_id': SOURCE_ID,
                 'subject': subj_obj,
                 'predicate': pred_obj,

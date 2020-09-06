@@ -83,10 +83,10 @@ ITEM_TYPE_OWL_TYPE_URIS = {
 }
 
 URI_PREFIXES = {
-    'opencontext.org/vocabularies/oc-general/': 'oc-gen:',
-    'opencontext.org/vocabularies/open-context-zooarch/': 'oc-zoo:',
-    'opencontext.org/vocabularies/dinaa/': 'dinaa:',
-    'purl.org/ontology/bibo': 'bibo:',
+    'opencontext.org/vocabularies/oc-general/': 'oc-gen',
+    'opencontext.org/vocabularies/open-context-zooarch/': 'oc-zoo',
+    'opencontext.org/vocabularies/dinaa/': 'dinaa',
+    'purl.org/ontology/bibo': 'bibo',
 }
 
 CIDOC_P1_HAS_UNIT_URI = 'http://erlangen-crm.org/current/P91_has_unit'
@@ -294,6 +294,20 @@ class OwlVocabulary():
         return None
 
 
+    def get_man_obj_from_uri_or_key(self, uri, filters=None, excludes=None):
+        """Gets an manifest object from a URI or URI derived item_key"""
+        item_key = utilities.uri_to_common_prefix(
+            uri,
+            uri_prefixes=URI_PREFIXES,
+        )
+        return utilities.get_man_obj_from_uri(
+            uri,
+            item_key=item_key,
+            filters=filters,
+            excludes=excludes
+        )
+
+
     def update_graph_entity_types(self):
         """ updates the entity types (for class or property entities) """
         if not self.graph:
@@ -356,7 +370,7 @@ class OwlVocabulary():
         p = URIRef(CIDOC_P1_HAS_UNIT_URI)
         for _, _, o in self.graph.triples((s, p, None)):
             object_uri = o.__str__()
-            unit_object = utilities.get_man_obj_from_uri(
+            unit_object = self.get_man_obj_from_uri_or_key(
                 object_uri,
                 filters={'item_type': 'units'}
             )
@@ -374,7 +388,7 @@ class OwlVocabulary():
             subject_uri = s.__str__()  # get the URI of the subject as a string
             comment = o.__str__()  # get the comment from the object as a string
             
-            sub_obj = utilities.get_man_obj_from_uri(subject_uri)
+            sub_obj = self.get_man_obj_from_uri_or_key(subject_uri)
             if not sub_obj:
                 # We have yet to import this subject entity, so
                 # we can't talk about it yet.
@@ -402,10 +416,10 @@ class OwlVocabulary():
             subject_uri = s.__str__()  # get the URI of the subject as a string
             object_uri = o.__str__()  # get the URI of the object as a string
             
-            subj_obj = utilities.get_man_obj_from_uri(subject_uri)
+            subj_obj = self.get_man_obj_from_uri_or_key(subject_uri)
             if not subj_obj:
                 continue
-            unit_object = utilities.get_man_obj_from_uri(
+            unit_object = self.get_man_obj_from_uri_or_key(
                 object_uri,
                 filters={'item_type': 'units'}
             )
@@ -446,7 +460,7 @@ class OwlVocabulary():
             subject_uri = s.__str__()  # get the URI of the subject as a string
             object_uri = o.__str__()  # get the URI of the object as a string
             
-            subj_obj = utilities.get_man_obj_from_uri(subject_uri)
+            subj_obj = self.get_man_obj_from_uri_or_key(subject_uri)
             if not subj_obj:
                 continue
 
@@ -512,10 +526,10 @@ class OwlVocabulary():
                     # No hierarchy relations with yourself!
                     continue
 
-                subj_obj = utilities.get_man_obj_from_uri(subject_uri)
+                subj_obj = self.get_man_obj_from_uri_or_key(subject_uri)
                 if not subj_obj:
                     continue
-                obj_obj = utilities.get_man_obj_from_uri(object_uri)
+                obj_obj = self.get_man_obj_from_uri_or_key(object_uri)
                 if not obj_obj:
                     continue
                 if (subj_obj.item_type != ok_oc_item_type 
@@ -575,10 +589,10 @@ class OwlVocabulary():
         
         # Check to see if this item already exists as an Open Context
         # default.
-        default_man = AllManifest.objects.filter(
-            uri=uri,
-            source_id=configs.DEFAULT_SOURCE_ID
-        ).first()
+        default_man = self.get_man_obj_from_uri_or_key(
+            uri,
+            filters={'source_id': configs.DEFAULT_SOURCE_ID}
+        )
         if default_man:
             # Skip database edits / interactions with this, it is
             # an Open Context default item.
@@ -603,10 +617,12 @@ class OwlVocabulary():
             'uri': uri,
             'context': self.vocab_object,
         }
-        for uri_prefix, ns_prefix in URI_PREFIXES.items():
-            if not uri.startswith(uri_prefix):
-                continue
-            man_dict['item_key'] = ns_prefix + uri[len(uri_prefix):]
+        item_key = utilities.uri_to_common_prefix(
+            uri,
+            uri_prefixes=URI_PREFIXES,
+        )
+        if item_key:
+            man_dict['item_key'] = item_key
 
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uri=uri,
