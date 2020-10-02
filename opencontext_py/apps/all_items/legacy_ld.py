@@ -6,7 +6,6 @@ from django.db.models import Q
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
-    AllString,
     AllAssertion,
     AllHistory,
     AllResource,

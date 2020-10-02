@@ -4,7 +4,6 @@ import uuid as GenUUID
 from opencontext_py.apps.all_items.configs import *
 from opencontext_py.apps.all_items.models import (
     AllManifest,
-    AllString,
     AllAssertion,
     AllHistory,
     AllResource,
@@ -25,13 +24,6 @@ load_default_entities()
 
 """
 
-DEFAULT_STRINGS = [
-    {
-        'uuid': DEFAULT_NULL_STRING_UUID,
-        'project_id': OPEN_CONTEXT_PROJ_UUID,
-        'content': '',
-    },
-]
 
 DEFAULT_IDENTIFIERS = [
     {
@@ -805,6 +797,20 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/origins-time-location',
         'context_id': OC_GEN_VOCAB_UUID,
     },
+    {
+        'uuid': OC_EVENT_TYPE_COVERAGE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-geo-coverage',
+        'label': 'Geographic Coverage',
+        'item_key': 'oc-gen:geo-coverage',
+        'uri': 'opencontext.org/vocabularies/oc-general/geo-coverage',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
 
 
     # Media Types, publisher, vocabularies and types.
@@ -835,6 +841,23 @@ DEFAULT_MANIFESTS = [
         'label': 'Media Types',
         'uri': 'https://www.iana.org/assignments/media-types/',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': MEDIA_TYPE_ATOM_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-atom',
+        'item_key':'media-type:application/atom+xml',
+        'label': 'Atom (XML)',
+        'uri': 'https://www.iana.org/assignments/media-types/application/atom+xml',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/atom+xml'
+        },
     },
     {
         'uuid': MEDIA_TYPE_CSV_UUID,
@@ -907,6 +930,23 @@ DEFAULT_MANIFESTS = [
         },
     },
     {
+        'uuid': MEDIA_TYPE_JSON_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-json',
+        'item_key':'media-type:application/json',
+        'label': 'JSON',
+        'uri': 'https://www.iana.org/assignments/media-types/application/json',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/json'
+        },
+    },
+    {
         'uuid': MEDIA_TYPE_JSON_LD_UUID,
         'publisher_id': IANA_PUB_UUID,
         'project_id': OPEN_CONTEXT_PROJ_UUID,
@@ -958,6 +998,23 @@ DEFAULT_MANIFESTS = [
         },
     },
     {
+        'uuid': MEDIA_TYPE_RDF_XML_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-rdf-xml',
+        'item_key':'media-type:application/rdf+xml',
+        'label': 'RDF-XML',
+        'uri': 'https://www.iana.org/assignments/media-types/application/rdf+xml',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/rdf+xml'
+        },
+    },
+    {
         'uuid': MEDIA_TYPE_TIFF_UUID,
         'publisher_id': IANA_PUB_UUID,
         'project_id': OPEN_CONTEXT_PROJ_UUID,
@@ -972,6 +1029,23 @@ DEFAULT_MANIFESTS = [
         'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
         'meta_json': {
             'template': 'image/tiff'
+        },
+    },
+    {
+        'uuid': MEDIA_TYPE_XML_UUID,
+        'publisher_id': IANA_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'media-types',
+        'data_type': 'id',
+        'slug': 'media-type-xml',
+        'item_key':'media-type:application/xml',
+        'label': 'XML',
+        'uri': 'https://www.iana.org/assignments/media-types/application/xml',
+        'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
+        'meta_json': {
+            'template': 'application/xml'
         },
     },
     {
@@ -3143,7 +3217,6 @@ def verify_manifest_uuids(dict_list=DEFAULT_MANIFESTS):
 def load_default_entities(
     man_dict_list=DEFAULT_MANIFESTS,
     id_dict_list=DEFAULT_IDENTIFIERS,
-    str_dict_list=DEFAULT_STRINGS,
     assert_dict_list=DEFAULT_ASSERTIONS,
     ):
     """Loads default, required by Open Context """
@@ -3191,18 +3264,6 @@ def load_default_entities(
             f'{id_obj.id} ({id_obj.scheme}) created '
         )
     
-    for str_dict in str_dict_list:
-        uuid = str_dict['uuid']
-        if not is_valid_uuid(uuid):
-            raise ValueError(f'Not a valid config uuid: {uuid}')
-        str_obj, _ = AllString.objects.get_or_create(
-            uuid=uuid,
-            defaults=str_dict
-        )
-        print(
-            f'String obj {str_obj.uuid}, "{str_obj.content}" created.'
-        )
-    
     for assert_dict in assert_dict_list:
         ass_obj, _ = AllAssertion.objects.get_or_create(
             uuid=AllAssertion().primary_key_create(
@@ -3216,14 +3277,14 @@ def load_default_entities(
             f'Assertion {ass_obj.uuid}: '
             f'is {ass_obj.subject.label} [{ass_obj.subject.uuid}]'
             f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
-            f'-> {ass_obj.obj_string.content} [{ass_obj.obj_string.uuid}]'
+            f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
         )
 
 
 def tabula_rasa():
     """Empties all the new schema tables of all content. Severe."""
     models = [
-        AllString,
+        # AllString,
         AllIdentifier,
         AllResource,
         AllHistory,

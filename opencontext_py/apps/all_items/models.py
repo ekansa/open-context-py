@@ -27,6 +27,8 @@ from django.conf import settings
 
 from opencontext_py.apps.all_items import configs
 
+from opencontext_py.libs.validategeojson import ValidateGeoJson
+
 DEFAULT_LABEL_SORT_LEN = 6
 
 # ---------------------------------------------------------------------
@@ -255,21 +257,26 @@ def make_slug_from_uri(uri):
 
 
 def make_uri_for_oc_item_types(uuid, item_type):
-    if item_type not in configs.OC_ITEM_TYPES:
+    """Makes a URI for an item type if not provide yet"""
+    if item_type not in (
+        configs.OC_ITEM_TYPES + configs.NODE_ITEM_TYPES
+    ):
         return None
     return f'{configs.OC_URI_ROOT}/{item_type}/{uuid}'
 
 def make_manifest_slug(label, item_type, uri, project_id):
     """Makes a sort value for a record as a numeric string"""
-    if item_type in configs.OC_ITEM_TYPES:
-        # The item_type is in the type that has the
-        # project_short_id as a slug prefix.
-        raw_slug = make_slug_from_label(label, project_id)
-
+    
     if item_type in configs.URI_ITEM_TYPES:
         # Check for a publisher specific config for
         # this kind of item type.
         raw_slug = make_slug_from_uri(uri)
+    else:
+        # The item_type is in the type that has the
+        # project_short_id as a slug prefix. This is used
+        # for open context item types or item types for
+        # 'nodes' in assertions.
+        raw_slug = make_slug_from_label(label, project_id)
 
     # Make sure no triple dashes, conflicts with solr hierarchy
     # delims.
@@ -346,12 +353,12 @@ class AllManifest(models.Model):
         null=True,
         default=configs.DEFAULT_CLASS_UUID,
     )
-    source_id = models.CharField(max_length=50, db_index=True)
-    item_type = models.CharField(max_length=50)
-    data_type = models.CharField(max_length=50, default='id')
-    slug = models.SlugField(max_length=70, unique=True)
-    label = models.CharField(max_length=200)
-    sort = models.SlugField(max_length=100, db_index=True)
+    source_id = models.TextField(db_index=True)
+    item_type = models.TextField()
+    data_type = models.TextField(default='id')
+    slug = models.SlugField(max_length=200, unique=True)
+    label = models.TextField()
+    sort = models.SlugField(max_length=200, db_index=True)
     views = models.IntegerField(default=0)
     indexed = models.DateTimeField(blank=True, null=True)
     vcontrol = models.DateTimeField(blank=True, null=True)
@@ -360,12 +367,12 @@ class AllManifest(models.Model):
     revised = models.DateTimeField(db_index=True, auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     # Note the URI will strip the https:// or http://.
-    uri = models.CharField(max_length=300, unique=True)
+    uri = models.TextField(unique=True)
     # Preferred key when used in JSON-LD.
-    item_key = models.CharField(max_length=300, blank=True, null=True)
+    item_key = models.TextField(blank=True, null=True)
     # Hash ID has special logic to ensure context dependent uniqueness
     # especially based on the contents of the context field.
-    hash_id = models.CharField(max_length=50, unique=True)
+    hash_id = models.TextField(unique=True)
     # Context is needed in entity reconciliation, to help determine if
     # a labeled entity is unique within the scope of a given context. 
     # Also for URI identified linked-data entities (typically published
@@ -384,7 +391,7 @@ class AllManifest(models.Model):
     # A path is a string / text representation of an entity in a context
     # defined hierarchy. It is used especially for lookups and entity
     # reconciliation of subjects item_types.
-    path = models.CharField(max_length=500, db_index=True, blank=True, null=True)
+    path = models.TextField(db_index=True, blank=True, null=True)
     # Meta_json is where we store occasionally used attributes, such
     # as metadata about projects, persons, languages, etc.
     meta_json = JSONField(default=dict)
@@ -421,8 +428,8 @@ class AllManifest(models.Model):
         label, 
         uri=None, 
         path='', 
-        project_uuid=configs.OPEN_CONTEXT_PROJ_UUID, 
-        context_uuid=configs.OPEN_CONTEXT_PROJ_UUID,
+        project_id=configs.OPEN_CONTEXT_PROJ_UUID, 
+        context_id=configs.OPEN_CONTEXT_PROJ_UUID,
     ):
         """
         Creates a hash-id to ensure context dependent uniqueness
@@ -431,8 +438,8 @@ class AllManifest(models.Model):
         if item_type in configs.URI_ITEM_TYPES:
             concat_string = ' '.join(
                 [
-                    str(project_uuid),
-                    str(context_uuid),
+                    str(project_id),
+                    str(context_id),
                     str(item_type),
                     str(data_type),
                     str(label),
@@ -442,36 +449,49 @@ class AllManifest(models.Model):
         else:
             concat_string = ' '.join(
                 [
-                    str(project_uuid),
-                    str(context_uuid),
+                    str(project_id),
+                    str(context_id),
                     str(item_type),
                     str(data_type),
                     str(label),
                 ]
             )
+        if item_type in configs.NODE_ITEM_TYPES:
+            # So we can add node sorting value in
+            # cases where nodes may have the same
+            # label within a project.
+            concat_string += path
+
         concat_string = concat_string.strip()
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
     
     def make_hash_id_for_self(self):
         """Makes a hash-id to ensure context dependent uniqueness of this obj"""
-        project_uuid = configs.OPEN_CONTEXT_PROJ_UUID
-        context_uuid = configs.OPEN_CONTEXT_PROJ_UUID
+        project_id = configs.OPEN_CONTEXT_PROJ_UUID
+        context_id = configs.OPEN_CONTEXT_PROJ_UUID
         if self.project:
-            project_uuid = self.project.uuid
+            project_id = self.project.uuid
         if self.context:
-            context_uuid = self.context.uuid
+            context_id = self.context.uuid
         path = ''
         if self.path:
             path = self.path
+        if self.item_type in configs.NODE_ITEM_TYPES:
+            # Add the sort key from the meta_json 
+            # for node item types. This lets us have
+            # the same label for nodes that will
+            # may need different sort orders.
+            path += str(self.meta_json.get('sort', ''))
+
         return self.make_hash_id(
             item_type=self.item_type,
             data_type=self.data_type,
             label=self.label,
             uri=self.uri,
             path=path,
-            project_uuid=project_uuid,
-            context_uuid=context_uuid,
+            project_id=project_id,
+            context_id=context_id,
         )
 
     def validate_project(self):
@@ -690,7 +710,10 @@ class AllManifest(models.Model):
         self.uuid = self.primary_key_create_for_self()
 
         # Make the URI for Open Context item types.
-        if self.item_type in configs.OC_ITEM_TYPES:
+        if self.item_type in (
+            configs.OC_ITEM_TYPES
+            + configs.NODE_ITEM_TYPES
+        ):
             self.uri = make_uri_for_oc_item_types(
                 self.uuid, 
                 self.item_type
@@ -745,7 +768,7 @@ class AllSpaceTime(models.Model):
         on_delete=models.PROTECT, 
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
-    source_id = models.CharField(max_length=50, db_index=True)
+    source_id = models.TextField(db_index=True)
     item = models.ForeignKey(
         AllManifest, 
         db_column='item_uuid', 
@@ -761,7 +784,7 @@ class AllSpaceTime(models.Model):
     )
     # An integer ID, used for sorting, that is unique to the
     # specific item.
-    feature_id = models.IntegerField()
+    feature_id = models.IntegerField(default=1)
     # Describes the spatial component of this record. The event_class
     # describes how the chronology and spatial information go together.
     event_class = models.ForeignKey(
@@ -779,7 +802,7 @@ class AllSpaceTime(models.Model):
     latest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
 
     # Location information.
-    geometry_type = models.CharField(max_length=50, null=True)
+    geometry_type = models.TextField(null=True)
     latitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
     longitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
     geo_specificity = models.IntegerField(default=0, null=True)
@@ -844,20 +867,23 @@ class AllSpaceTime(models.Model):
             latest,
         )
         hash_obj = hashlib.sha1()
-        concat_string = " ".join(
-            [
-                str(item_id),
-                str(event_id),
-                str(event_class_id),
-                str(earliest),
-                str(start),
-                str(stop),
-                str(latest),
-                str(latitude),
-                str(longitude),
-                str(geometry),
+        concat_list = [
+            str(item_id),
+            str(event_id),
+            str(event_class_id),
+            str(earliest),
+            str(start),
+            str(stop),
+            str(latest),
+            str(latitude),
+            str(longitude),
+        ]
+        if isinstance(geometry, dict):
+            concat_list += [
+                str(geometry.get('type')),
+                str(geometry.get('coordinates')),
             ]
-        )
+        concat_string = " ".join(concat_list)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
@@ -917,9 +943,85 @@ class AllSpaceTime(models.Model):
             geometry=self.longitude,
         )
     
+    def determine_feature_id(self, item_id, exclude_uuid=None):
+        """Makes a feature if missing"""
+        f_id_qs = AllSpaceTime.objects.filter(
+            item_id=item_id,
+        )
+        if exclude_uuid:
+            # exclude a UUID from the query list.
+            f_id_qs = f_id_qs.exclude(uuid=exclude_uuid)
+        
+        # Now make a value_list for the feature id.
+        f_id_qs = f_id_qs.order_by(
+            'feature_id'
+        ).distinct(
+            'feature_id'
+        ).values_list('feature_id', flat=True)
+        f_ids = [id for id in f_id_qs]
+        if not len(f_ids):
+            return 1
+        return max(f_ids) + 1
+    
+    def determine_feature_id_for_self(self):
+        """Makes a feature if missing"""
+        if self.feature_id is not None:
+            return self.feature_id
+        return self.determine_feature_id(
+            item_id=self.item.uuid,
+            exclude_uuid=self.uuid,
+        )
+    
+    def validate_correct_geometry(self):
+        """Validates and corrects the geometry object"""
+        if not self.geometry_type:
+            # None of these other validations apply, because
+            # we do not have a geometry type specified.
+            return None
+        elif self.geometry_type == 'Point':
+            # Make the geometry object based on the lat, lon.
+            self.geometry = {
+                'type': self.geometry_type,
+                'coordinates':  [
+                    float(self.longitude), 
+                    float(self.latitude),
+                ],
+            }
+        else:
+            # Not a point, so do some more complex validation.
+            if self.geometry.get('type') != self.geometry_type:
+                raise ValueError(
+                    f'Geometry dict type { self.geometry.get("type") } must '
+                    f'agree with geometry_type {self.geometry_type}'
+                )
+            if not self.geometry.get('coordinates'):
+                raise ValueError(
+                    f'Geometry dict type { self.geometry.get("type") } must '
+                    'have coordinates'
+                )
+            # Make the coordinates have the correct GeoJSON ordering.
+            v_geojson = ValidateGeoJson()
+            self.geometry['coordinates'] = v_geojson.fix_geometry_rings_dir(
+                self.geometry_type,
+                self.geometry['coordinates']
+            )
+            if not isinstance(self.geometry.get('coordinates'), list):
+                raise ValueError(
+                    f'Geometry dict type { self.geometry.get("type") } must '
+                    'have a list of coordinates'
+                )
+        # Now validate that we actually have a latitude and longitude coordinate
+        # pair.
+        if self.longitude is None or self.latitude is None:
+            raise ValueError(
+                f'Geometry {self.geometry_type} must '
+                'have latitude and longitude coordinates.'
+            )
+
+
     def save(self, *args, **kwargs):
         """
-        creates the hash-id on saving to insure a unique event
+        Saves with validation checks.
         """
         self.earliest, self.start, self.stop, self.latest = self.validate_times(
             self.earliest,
@@ -932,7 +1034,7 @@ class AllSpaceTime(models.Model):
         # Projects, subjects, and types (for periods) can have time space information.
         validate_related_manifest_item_type(
             man_obj=self.item,
-            allowed_types= ['projects', 'subjects', 'types', 'uri', 'class'],
+            allowed_types= ['projects', 'subjects', 'media', 'types', 'uri', 'class'],
             obj_role='item',
         )
 
@@ -942,6 +1044,10 @@ class AllSpaceTime(models.Model):
             allowed_types=['events'],
             obj_role='event',
         )
+        
+        # Validates the geometry dict, make sure the coordinates are in the
+        # correct GeoJSON order.
+        self.validate_correct_geometry()
 
         # Validate the event type.
         if str(self.event_class.uuid) not in configs.OC_EVENT_TYPE_UUIDS:
@@ -951,6 +1057,7 @@ class AllSpaceTime(models.Model):
             )
 
         self.primary_key_create_for_self()
+        self.feature_id = self.determine_feature_id_for_self()
         super(AllSpaceTime, self).save(*args, **kwargs)
     
     class Meta:
@@ -966,134 +1073,6 @@ class AllSpaceTime(models.Model):
             ),
         )
         ordering = ["item", "feature_id",]
-
-# OCstring stores string content, with each string unique to a project
-@reversion.register  # records in this model under version control
-class AllString(models.Model):
-    uuid = models.UUIDField(primary_key=True, editable=True)
-    project = models.ForeignKey(
-        AllManifest,
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE
-    )
-    source_id = models.CharField(max_length=50, db_index=True)
-    # Note for multilingual text, choose the main language.
-    language =  models.ForeignKey(
-        AllManifest,
-        db_column='language_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
-        default=configs.DEFAULT_LANG_UUID
-    )
-    updated = models.DateTimeField(auto_now=True)
-    content = models.TextField()
-    meta_json = JSONField(default=dict)
-
-    def make_hash_id(
-        self, 
-        project_id,
-        content='', 
-        language_id=configs.DEFAULT_LANG_UUID,
-        extra=[],
-    ):
-        """
-        Creates a hash-id to insure unique content for a project and language
-        """
-        hash_obj = hashlib.sha1()
-        all_hash_items = [str(project_id), str(language_id)]
-        if len(extra):
-            # Don't make a hash_id based on the
-            # content. Use the items listed in extra
-            # to help define the uniqueness and the ID for
-            # the string. This lets us make very targetted
-            # updates associated with just 1 assertion.
-            all_hash_items += [str(e) for e in extra]
-        
-        # Sort all the elements of the list going
-        # get hashed. This keeps keep the logic used to generate
-        # a hash (and later uuid) inside the Strings model so it
-        # will be more consistent.
-        
-        # Remove duplicate elements from the hash.
-        all_hash_items = list(set(all_hash_items))
-        # Sort them for deterministic consistency.
-        all_hash_items.sort()
-
-        # Now add the content for hashing. All this makes it very
-        # possible to make a deterministic id, but one that's
-        # unlikely to ever be repeated within a project. 
-        all_hash_items.append(content.strip())
-
-        concat_string = " ".join(all_hash_items)
-        hash_obj.update(concat_string.encode('utf-8'))
-        return hash_obj.hexdigest()
-    
-    def primary_key_create(
-        self, 
-        project_id, 
-        content='',
-        language_id=configs.DEFAULT_LANG_UUID,
-        extra=[],
-    ):
-        """Deterministically make a primary key using a prefix from the project"""
-
-        # Make the first part from the subject's uuid.
-        project_id = str(project_id)
-        uuid_prefix = project_id.split('-')[0]
-
-        # Make a hash for this Assertion based on all those parts
-        # that need to be unique.
-        hash_id = self.make_hash_id(
-            project_id=project_id,
-            content=content,
-            language_id=language_id,
-            extra=extra,
-        )
-        # Now convert that hash into a uuid. Note, we're only using
-        # the first 32 characters. This should still be enough to have
-        # really, really high certainty we won't have hash-collisions on
-        # data that should not be considered unique. If we run into a problem
-        # we can always override this.
-        uuid_from_hash_id = str(
-            GenUUID.UUID(hex=hash_id[:32])
-        )
-        new_parts = uuid_from_hash_id.split('-')
-        uuid = '-'.join(
-            ([uuid_prefix] + new_parts[1:])
-        )
-        return uuid
-    
-    def primary_key_create_for_self(self):
-        """Makes a primary key using a prefix from the subject"""
-        if self.uuid:
-            # One is already defined, so skip this step.
-            return self.uuid
-        return self. primary_key_create(
-            project_id=self.project.uuid,
-            content=self.content,
-            language_id=self.language.uuid,
-        )
-
-    def save(self, *args, **kwargs):
-        """
-        creates the hash-id on saving to insure a unique string for a project
-        """
-        # Make sure the project is really a project.
-        validate_related_project(project_obj=self.project)
-        # Make sure the language has the right
-        # manifest object item_type
-        validate_related_manifest_item_type(
-            man_obj=self.language,
-            allowed_types=['languages'],
-            obj_role='language'
-        )
-        self.content = self.content.strip()    
-        self.uuid = self.primary_key_create_for_self()
-        super(AllString, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'oc_all_strings'
 
 
 
@@ -1430,7 +1409,7 @@ class AllAssertion(models.Model):
         on_delete=models.PROTECT, 
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
-    source_id = models.CharField(max_length=50, db_index=True)
+    source_id = models.TextField(db_index=True)
     subject = models.ForeignKey(
         AllManifest, 
         db_column='subject_uuid', 
@@ -1467,15 +1446,11 @@ class AllAssertion(models.Model):
         related_name='+', 
         on_delete=models.CASCADE
     )
-    sort = models.DecimalField(
-        max_digits=8, 
-        decimal_places=3,
-        default=0,
-    )
+    sort = models.FloatField(null=True, default=1)
     visible = models.BooleanField(default=True)
     # Estimated probability for an assertion 
     # (with 1 as 100% certain, .001 for very uncertain), null for not determined.
-    certainty = models.DecimalField(max_digits=4, decimal_places=3, blank=True, null=True)
+    certainty = models.FloatField(null=True)
     object = models.ForeignKey(
         AllManifest, 
         db_column='object_uuid', 
@@ -1483,13 +1458,15 @@ class AllAssertion(models.Model):
         on_delete=models.CASCADE, 
         default=configs.DEFAULT_NULL_OBJECT_UUID,
     )
-    obj_string = models.ForeignKey(
-        AllString, 
-        db_column='obj_string_uuid', 
+    language =  models.ForeignKey(
+        AllManifest,
+        db_column='language_uuid', 
         related_name='+', 
-        on_delete=models.CASCADE, 
-        default=configs.DEFAULT_NULL_STRING_UUID,
+        on_delete=models.PROTECT, 
+        default=configs.DEFAULT_LANG_UUID
     )
+    obj_string_hash = models.TextField()
+    obj_string = models.TextField(null=True)
     obj_boolean = models.BooleanField(null=True)
     obj_integer = models.BigIntegerField(null=True)
     obj_double = models.DecimalField(max_digits=19, decimal_places=10, null=True)
@@ -1504,6 +1481,7 @@ class AllAssertion(models.Model):
             (self.observation, ['observations'], 'observation',),
             (self.event, ['events'], 'event',),
             (self.attribute_group, ['attribute-groups'], 'attribute_group',),
+            (self.language, ['languages'], 'language',),
         ]
         for relate_obj, allowed_types, obj_role in checks:
             validate_related_manifest_item_type(
@@ -1539,7 +1517,7 @@ class AllAssertion(models.Model):
                 (self.predicate.data_type == 'id'),
             ),
             (
-                (self.obj_string.uuid == GenUUID.UUID(str(configs.DEFAULT_NULL_STRING_UUID))), 
+                (self.obj_string is None), 
                 (self.predicate.data_type == 'xsd:string'),
             ),
             (
@@ -1565,12 +1543,24 @@ class AllAssertion(models.Model):
             else:
                 assert data_type_is_none
     
+    def make_obj_string_hash(self, obj_string):
+        """Makes an object string hash value"""
+        if obj_string:
+            obj_string = obj_string.strip()
+            hash_obj = hashlib.sha1()
+            hash_obj.update(str(obj_string).encode('utf-8'))
+            return hash_obj.hexdigest()
+        else:
+            # No string value to hash, so return something
+            # small to be nice to our index.
+            return '0'
+
     def make_hash_id(
-        self, 
+        self,
         subject_id,
         predicate_id,
         object_id=None,
-        obj_string_id=None,
+        obj_string=None,
         obj_boolean=None,
         obj_integer=None,
         obj_double=None,
@@ -1578,8 +1568,12 @@ class AllAssertion(models.Model):
         observation_id=configs.DEFAULT_OBS_UUID,
         event_id=configs.DEFAULT_EVENT_UUID,
         attribute_group_id=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+        language_id=configs.DEFAULT_LANG_UUID,
     ):
         """Makes a hash_id for an assertion"""
+        if obj_string:
+            obj_string = obj_string.strip()
+
         hash_obj = hashlib.sha1()
         concat_string = " ".join(
             [
@@ -1589,7 +1583,8 @@ class AllAssertion(models.Model):
                 str(attribute_group_id),
                 str(predicate_id),
                 str(object_id),
-                str(obj_string_id),
+                str(language_id),
+                str(obj_string),
                 str(obj_boolean),
                 str(obj_integer),
                 str(obj_double),
@@ -1600,11 +1595,11 @@ class AllAssertion(models.Model):
         return hash_obj.hexdigest()
     
     def primary_key_create(
-        self, 
+        self,
         subject_id,
         predicate_id,
         object_id=None,
-        obj_string_id=None,
+        obj_string=None,
         obj_boolean=None,
         obj_integer=None,
         obj_double=None,
@@ -1612,6 +1607,7 @@ class AllAssertion(models.Model):
         observation_id=configs.DEFAULT_OBS_UUID,
         event_id=configs.DEFAULT_EVENT_UUID,
         attribute_group_id=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+        language_id=configs.DEFAULT_LANG_UUID,
     ):
         """Deterministically make a primary key using a prefix from the subject"""
 
@@ -1625,14 +1621,15 @@ class AllAssertion(models.Model):
             subject_id=subject_id,
             predicate_id=predicate_id,
             object_id=object_id,
-            obj_string_id=obj_string_id,
+            obj_string=obj_string,
             obj_boolean=obj_boolean,
             obj_integer=obj_integer,
             obj_double=obj_double,
             obj_datetime=obj_datetime,
             observation_id=observation_id,
             event_id=event_id,
-            attribute_group_id=attribute_group_id
+            attribute_group_id=attribute_group_id,
+            language_id=language_id,
         )
         # Now convert that hash into a uuid. Note, we're only using
         # the first 32 characters. This should still be enough to have
@@ -1655,24 +1652,22 @@ class AllAssertion(models.Model):
             return self.uuid
 
         object_id = None
-        obj_string_id = None,
         if self.object is not None:
             object_id = self.object.uuid
-        if self.obj_string is not None:
-            obj_string_id = self.obj_string.uuid
 
         self.uuid = self.primary_key_create(
             subject_id=self.subject.uuid,
             predicate_id=self.predicate.uuid,
             object_id=object_id,
-            obj_string_id=obj_string_id,
+            obj_string=self.obj_string,
             obj_boolean=self.obj_boolean,
             obj_integer=self.obj_integer,
             obj_double=self.obj_double,
             obj_datetime=self.obj_datetime,
             observation_id=self.observation.uuid,
             event_id=self.event.uuid,
-            attribute_group_id=self.attribute_group.uuid
+            attribute_group_id=self.attribute_group.uuid,
+            language_id=self.language.uuid,
         )
         return self.uuid 
 
@@ -1686,6 +1681,13 @@ class AllAssertion(models.Model):
         self.validate_node_refs()
         # Make sure the predicate is a predicate or property item_type
         self.validate_predicate()
+
+        if self.obj_string:
+            self.obj_string = self.obj_string.strip()
+        
+        # This is set with each save to help make sure the text field is actually
+        # unique. It's important for long text values.
+        self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
 
         self.uuid = self.primary_key_create_for_self()
         # Make sure that the data_type expected of the predicate is enforced.
@@ -1701,6 +1703,18 @@ class AllAssertion(models.Model):
             predicate_obj=self.predicate,
             object_obj=self.object
         )
+        if not self.obs_sort:
+            self.obs_sort = self.observation.meta_json.get(
+                'sort', 1
+            )
+        if not self.event_sort:
+            self.event_sort = self.event.meta_json.get(
+                'sort', 1
+            )
+        if not self.attribute_group_sort:
+            self.attribute_group_sort = self.attribute_group_sort.meta_json.get(
+                'sort', 1
+            )
 
         super(AllAssertion, self).save(*args, **kwargs)
 
@@ -1714,7 +1728,8 @@ class AllAssertion(models.Model):
                 "attribute_group",
                 "predicate",
                 "object", 
-                "obj_string",
+                "language",
+                "obj_string_hash",
                 "obj_boolean",
                 "obj_integer",
                 "obj_double",
@@ -1841,9 +1856,9 @@ class AllResource(models.Model):
         on_delete=models.PROTECT, 
         null=True
     )
-    source_id = models.CharField(max_length=50, db_index=True)
-    uri = models.CharField(max_length=400)
-    sha256_checksum = models.CharField(max_length=200, null=True)
+    source_id = models.TextField(db_index=True)
+    uri = models.TextField()
+    sha256_checksum = models.TextField(null=True)
     filesize = models.DecimalField(max_digits=19, decimal_places=3, null=True)
     rank = models.IntegerField(default=0)
     is_static = models.BooleanField(default=True)
@@ -1923,7 +1938,7 @@ class AllResource(models.Model):
         # Make an HTTP head request to get filesize and/or
         # mediatype if missing.
         head = None
-        if not self.filesize or not self.mediatype:
+        if not self.filesize or self.mediatype is None:
             head = get_web_resource_head_info(
                 self.uri
             )
@@ -1959,7 +1974,7 @@ class AllResource(models.Model):
 @reversion.register  # records in this model under version control
 class AllHistory(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
-    sha1_hash = models.CharField(max_length=50, unique=True)
+    sha1_hash = models.TextField(unique=True)
     item = models.ForeignKey(
         AllManifest, 
         db_column='item_uuid', 
@@ -2023,9 +2038,9 @@ class AllIdentifier(models.Model):
         related_name='+', 
         on_delete=models.CASCADE
     )
-    scheme = models.CharField(max_length=10)
+    scheme = models.TextField()
     rank = models.IntegerField(default=0)
-    id =  models.CharField(max_length=300)
+    id =  models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
