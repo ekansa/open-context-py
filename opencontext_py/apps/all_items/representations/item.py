@@ -3,6 +3,8 @@ import copy
 import hashlib
 import uuid as GenUUID
 
+from django.db.models import OuterRef, Subquery
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
@@ -15,6 +17,7 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 from opencontext_py.apps.all_items import utilities
+from opencontext_py.apps.all_items.representations import metadata
 
 
 # This provides a mappig between a predicate.data_type and
@@ -104,6 +107,11 @@ def _print_tree_dict(tree_dict, level=0):
 
 def get_item_assertions(subject_id):
     """Gets an assertion queryset about an item"""
+    thumbs_qs = AllResource.objects.filter(
+        item=OuterRef('object'),
+        resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
+    ).values('uri')
+
     qs = AllAssertion.objects.filter(
         subject_id=subject_id,
         visible=True,
@@ -121,6 +129,8 @@ def get_item_assertions(subject_id):
         'object'
     ).select_related( 
         'object__item_class'
+    ).annotate(
+        object_thumbnail=Subquery(thumbs_qs)
     )
     return qs
 
@@ -141,6 +151,8 @@ def make_predicate_objects_list(predicate, assert_objs):
                     obj['type'] = assert_obj.object.item_class.item_key
                 else:
                     obj['type'] = f'https://{assert_obj.object.item_class.uri}'
+            if getattr(assert_obj, 'object_thumbnail'):
+                obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
         elif predicate.data_type == 'xsd:string':
             obj = {
                 f'@{assert_obj.language.item_key}': assert_obj.obj_string
@@ -154,6 +166,7 @@ def make_predicate_objects_list(predicate, assert_objs):
                 obj = obj.date().isoformat()
         pred_objects.append(obj)
     return pred_objects
+
 
 def add_predicates_assertions_to_dict(pred_keyed_assert_objs, act_dict=None):
     """Adds predicates with their grouped objects to a dictionary, keyed by each pred"""
@@ -267,14 +280,31 @@ def make_representation_dict(subject_id):
     else:
         # The following is for other types of items that don't have lots
         # of nested observation, event, and attribute nodes.
-        grp_index_attribs = ['predicate']
         pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
             qs=assert_qs, 
-            index_list=grp_index_attribs
+            index_list=['predicate']
         )
         rep_dict = add_predicates_assertions_to_dict(
             pred_keyed_assert_objs, 
             act_dict=rep_dict
         )
+    # NOTE: This adds Dublin Core metadata
+    rep_dict = metadata.add_dublin_core_literal_metadata(
+        subject, 
+        assert_qs, 
+        act_dict=rep_dict
+    )
+    # NOTE: This add project Dublin Core metadata.
+    proj_metadata_qs = metadata.get_project_metadata_qs(
+        project=subject.project
+    )
+    pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
+        qs=proj_metadata_qs, 
+        index_list=['predicate']
+    )
+    rep_dict = add_predicates_assertions_to_dict(
+        pred_keyed_assert_objs, 
+        act_dict=rep_dict
+    )
     return rep_dict
         

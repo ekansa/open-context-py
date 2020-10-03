@@ -28,7 +28,8 @@ def uri_to_common_prefix(uri, uri_prefixes):
         # Make sure that the ns_prefix ends wit a ':'
         if ns_prefix[-1] != ':':
             ns_prefix += ':'
-        common_prefix = ns_prefix + uri[len(uri_prefix):]
+        uri_part = uri[len(uri_prefix):].strip('/').strip('#')
+        common_prefix = ns_prefix + uri_part
     return common_prefix
 
 
