@@ -54,9 +54,21 @@ migrate_legacy_spacetime_for_project(project_uuid=murlo)
 orig_assert_migrate_errors = migrate_legacy_assertions_for_project(murlo)
 new_assert_mirgrate_errors = migrate_legacy_assertions_from_csv(
     project_uuid=murlo,
-    file_path='/home/ekansa/bad-murlo-assertions.csv'
+    file_path='/home/ekansa/migration-errors/very-bad-murlo-assertions.csv'
 )
-save_old_assertions_to_csv('/home/ekansa/very-bad-murlo-assertions.csv', new_assert_mirgrate_errors)
+save_old_assertions_to_csv(
+    '/home/ekansa/migration-errors/very-very-bad-murlo-assertions.csv', 
+    new_assert_mirgrate_errors
+)
+# DT migration
+new_assert_mirgrate_errors = migrate_legacy_assertions_from_csv(
+    project_uuid='3',
+    file_path='/home/ekansa/migration-errors/assert-m-errors-1-domuztepe-excavati.csv'
+)
+save_old_assertions_to_csv(
+    '/home/ekansa/migration-errors/assert-m-errors-worse-1-domuztepe-excavati.csv', 
+    new_assert_mirgrate_errors
+)
 """
 
 SOURCE_ID = 'legacy-oc-migrate'
@@ -166,6 +178,10 @@ LEGACY_ROOT_SUBJECTS = [
 
 LEGACY_DATA_DATA_TYPES = {
     '3C110D75-C090-441C-BE21-BD681E1F9EE5': 'xsd:string',
+}
+
+LEGACY_MANIFEST_MAPPINGS = {
+    'oc-gen:has-note': configs.PREDICATE_NOTE_UUID,
 }
 
 # Data types for literal values.
@@ -435,7 +451,11 @@ def migrate_legacy_predicate(old_man_obj):
     data_type = old_pred.data_type
     if old_id in LEGACY_DATA_DATA_TYPES:
         data_type = LEGACY_DATA_DATA_TYPES[old_id]
-    else:
+    elif data_type != 'xsd:string':
+        # Some of the very oldest dat in Open Context mixes data-types, 
+        # These mixed type predicates usually have xsd:strings data-types
+        # so only check for mixed types if the old_pred.data_type is
+        # NOT a xsd:string. 
         p_dtypes = OldAssertion.objects.filter(
             predicate_uuid=old_id
         ).order_by(
@@ -1014,6 +1034,11 @@ def migrate_legacy_subject(old_man_obj, parent_new_id=None):
 
 def get_new_manifest_obj_from_old_id_db(old_id):
     """Gets a new manifest obj corresponding to an old id, using the DB"""
+    new_mapping_id = LEGACY_MANIFEST_MAPPINGS.get(old_id)
+    if new_mapping_id:
+        # We have a configured mapping between an old_id and a new id.
+        return AllManifest.objects.filter(uuid=new_mapping_id).first()
+
     old_man_obj = OldManifest.objects.filter(uuid=old_id).first()
     if not old_man_obj:
         return None
@@ -1234,6 +1259,18 @@ def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=N
             return None
         assert_dict['obj_string'] = old_man_obj.label.strip()
         meta_json['legacy_object_uuid'] = old_man_obj.uuid
+        old_assert.object_type = 'xsd:string'
+    elif (
+            predicate_obj.data_type == 'xsd:string' 
+            and old_assert.object_type in ['xsd:double', 'xsd:integer', 'xsd:boolean', 'xsd:date',]
+         ):
+        # We have a string predicate a different kind of literal.
+        if old_assert.data_num:
+            meta_json['legacy_object_data_num'] = old_assert.data_num
+            assert_dict['obj_string'] = str(old_assert.data_num)
+        elif old_assert.data_date:
+            meta_json['legacy_object_data_date'] = old_assert.data_date.date().isoformat()
+            assert_dict['obj_string'] = old_assert.data_date.date().isoformat()
         old_assert.object_type = 'xsd:string'
     elif predicate_obj.data_type == 'xsd:boolean':
         assert_dict['obj_boolean'] = bool(old_assert.data_num)
