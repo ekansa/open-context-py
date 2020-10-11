@@ -1,6 +1,9 @@
 
+import hashlib
 import uuid as GenUUID
 
+
+from django.core.cache import caches
 from django.db.models import Q
 
 from opencontext_py.apps.all_items import configs
@@ -307,18 +310,76 @@ def load_legacy_link_entities():
         load_legacy_link_entity(old_le)
 
 
-def get_man_obj_from_la(la_identifier):
+def is_valid_uuid(val):
+    try:
+        return GenUUID.UUID(str(val))
+    except ValueError:
+        return False
+
+
+def add_oc_uuid_uri_variants(la_identifier):
+    """Makes a tuple of lists from a legacy la_identifer for new uuid, uri options""" 
+    _, new_id = update_old_id(la_identifier)
+    uuids = [new_id]
+    if is_valid_uuid(la_identifier):
+        uuids.append(la_identifier)
+        # The la_identifer is not a URI because it's a uuid.
+        return uuids, []
+
+    uris = [
+        AllManifest().clean_uri(la_identifier)
+    ]
+    for oc_type in configs.OC_ITEM_TYPES:
+        uri_part_oc_type = f'/{oc_type}/'
+        if not uri_part_oc_type in la_identifier:
+            continue
+        old_oc_id = la_identifier.split(uri_part_oc_type)[-1]
+        _, new_id = update_old_id(old_oc_id)
+        uuids.append(new_id)
+        new_uri = la_identifier.replace(old_oc_id, new_id)
+        new_uri = AllManifest().clean_uri(new_uri)
+        uris.append(new_uri)
+    
+    return uuids, uris
+
+
+def db_get_man_obj_from_la(la_identifier):
     """Checks if a legacy link entity URI is in the new manifest"""
+    uuids, uris = add_oc_uuid_uri_variants(la_identifier)
     new_man_obj = AllManifest.objects.filter(
-        Q(uri=AllManifest().clean_uri(
-                la_identifier
-            )
-        ) 
+        Q(uri__in=uris) 
         | Q(item_key=la_identifier)
+        | Q(uuid__in=uuids)
     ).first()
     if not new_man_obj:
         print(f'Cannot find new manifest obj for entity {la_identifier}')
         return None
+    return new_man_obj
+
+
+def get_man_obj_from_la(la_identifier, use_cache=False):
+    """Checks if a legacy link entity URI is in the new manifest"""
+    if not la_identifier:
+        return None
+    if not use_cache:
+        return db_get_man_obj_from_la(la_identifier)
+    # Using the cache, so make a hash key.
+    hash_obj = hashlib.sha1()
+    hash_obj.update(str(la_identifier).encode('utf-8'))
+    hash_id = hash_obj.hexdigest()
+    cache_key = f'la_id_allman_{hash_id}'
+    cache = caches['memory']
+    new_man_obj = cache.get(cache_key)
+    if new_man_obj is not None:
+        # We've already cached this, so returned the cached object
+        return new_man_obj
+    new_man_obj = db_get_man_obj_from_la(la_identifier)
+    if not new_man_obj:
+        return None
+    try:
+        cache.set(cache_key, new_man_obj)
+    except:
+        pass
     return new_man_obj
 
 
@@ -400,7 +461,11 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
     return  missing_entities
 
 
-def migrate_legacy_link_annotations(project_uuid='0'):
+def migrate_legacy_link_annotations(
+    project_uuid='0', 
+    more_filters_dict={'subject_type': 'uri'},
+    use_cache=False
+):
     """Migrates legacy link annotations (limited to entities already in the manifest)"""
     
     old_proj_id, new_proj_uuid = update_old_id(project_uuid)
@@ -413,8 +478,7 @@ def migrate_legacy_link_annotations(project_uuid='0'):
 
     missing_entities = []
     
-    la_qs = LinkAnnotation.objects.filter(
-        subject_type='uri', 
+    la_qs = LinkAnnotation.objects.filter( 
         project_uuid=old_proj_id
     ).order_by(
         'subject', 
@@ -422,11 +486,14 @@ def migrate_legacy_link_annotations(project_uuid='0'):
         'sort', 
         'object_uri'
     )
+    if more_filters_dict:
+        # Add some additional filters to this query set.
+        la_qs = la_qs.filter(**more_filters_dict)
 
     for la in la_qs:
-        subj_obj = get_man_obj_from_la(la.subject)
-        pred_obj = get_man_obj_from_la(la.predicate_uri)
-        obj_obj = get_man_obj_from_la(la.object_uri)
+        subj_obj = get_man_obj_from_la(la.subject, use_cache=use_cache)
+        pred_obj = get_man_obj_from_la(la.predicate_uri, use_cache=use_cache)
+        obj_obj = get_man_obj_from_la(la.object_uri, use_cache=use_cache)
         if not subj_obj or not pred_obj or not obj_obj:
             if not subj_obj and la.subject not in missing_entities:
                 missing_entities.append(la.subject)

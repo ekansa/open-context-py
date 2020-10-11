@@ -1452,7 +1452,7 @@ def migrate_legacy_assertions_from_csv(project_uuid, file_path=None, df=None, us
     return errors
 
 
-def save_old_assertions_to_csv(file_path, old_assertions, attribute_keys=[]):
+def save_old_assertions_to_csv(file_path, old_assertions, attribute_keys=None):
     """Saves old assertion objects to a csv output"""
     if not attribute_keys:
         attribute_keys = [
