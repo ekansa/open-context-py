@@ -17,6 +17,7 @@ from opencontext_py.apps.all_items.models import (
 )
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
+from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -30,8 +31,8 @@ from django.utils.cache import patch_vary_headers
 @never_cache
 def test_json(request, uuid):
     """ API for searching Open Context """
-    uuid = uuid.lower()
-    rep_dict = item.make_representation_dict(subject_id=uuid)
+    _, new_uuid = update_old_id(uuid)
+    rep_dict = item.make_representation_dict(subject_id=new_uuid)
     json_output = json.dumps(
         rep_dict,
         indent=4,
@@ -48,8 +49,8 @@ def test_html(request, uuid):
     """HTML representation for searching Open Context """
     # NOTE: There is NO templating here, this is strictly so we can 
     # use the Django debugger to optimize queries
-    uuid = uuid.lower()
-    rep_dict = item.make_representation_dict(subject_id=uuid)
+    _, new_uuid = update_old_id(uuid)
+    rep_dict = item.make_representation_dict(subject_id=new_uuid)
     json_output = json.dumps(
         rep_dict,
         indent=4,

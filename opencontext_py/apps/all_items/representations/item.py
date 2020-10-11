@@ -17,7 +17,9 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 from opencontext_py.apps.all_items import utilities
+from opencontext_py.apps.all_items.representations import geojson
 from opencontext_py.apps.all_items.representations import metadata
+from opencontext_py.apps.all_items.representations import rep_utils
 
 
 # This provides a mappig between a predicate.data_type and
@@ -30,6 +32,22 @@ ASSERTION_DATA_TYPE_LITERAL_MAPPINGS = {
     'xsd:double': 'obj_double',
     'xsd:date': 'obj_datetime',
 }
+
+
+def add_select_related_contexts_to_qs(qs, context_prefix='', depth=10, more_related_objs=['item_class']):
+    """Adds select_related contexts to a queryset"""
+    # NOTE: This is all about reducing the number of queries we send to the 
+    # database. This most important use case for this is to look up parent
+    # context paths of manifest "subjects" item_types. 
+    act_path = context_prefix
+    next_context = 'context'
+    for _ in range(depth):
+        act_path += next_context
+        next_context = '__context'
+        qs = qs.select_related(act_path)
+        for rel_obj in more_related_objs:
+            qs = qs.select_related(f'{act_path}__{rel_obj}')
+    return qs
 
 
 def make_grouped_by_dict_from_queryset(qs, index_list):
@@ -107,10 +125,12 @@ def _print_tree_dict(tree_dict, level=0):
 
 def get_item_assertions(subject_id):
     """Gets an assertion queryset about an item"""
+
+    # Limit this subquery to only 1 result, the first.
     thumbs_qs = AllResource.objects.filter(
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
-    ).values('uri')
+    ).values('uri')[:1]
 
     qs = AllAssertion.objects.filter(
         subject_id=subject_id,
@@ -135,6 +155,53 @@ def get_item_assertions(subject_id):
     return qs
 
 
+def get_related_subjects_item_from_object_id(object_id):
+    """Gets a Query Set of subjects items related to an assertion object_id"""
+    # NOTE: Some media and documents items are only related to 
+    # an item_type subject via an assertion where the media and
+    # documents items is the object of a assertion relationship.
+    # Since an item_type = 'subjects' is needed to establish the
+    # full context of a media or document item, and we won't necessarily
+    # get a relationship to an item_type = 'subjects' item from
+    # the get_item_assertions function, we will often need to
+    # do this additional query.
+    rel_subj_item_assetion_qs = AllAssertion.objects.filter(
+        object_id=object_id,
+        subject__item_type='subjects',
+        visible=True,
+    ).select_related(
+        'subject'
+    ).select_related(
+        'subject__item_class'
+    )
+    rel_subj_item_assetion_qs = add_select_related_contexts_to_qs(
+        rel_subj_item_assetion_qs, 
+        context_prefix='subject__'
+    )
+    return rel_subj_item_assetion_qs.first()
+
+
+def get_related_subjects_item_assertion(item_man_obj, assert_qs):
+    """Gets the related subject item for a media or documents subject item"""
+    if item_man_obj.item_type not in ['media', 'documents']:
+        return None
+    
+    for assert_obj in assert_qs:
+        if assert_obj.object.item_type == 'subjects':
+            return assert_obj.object
+    
+    # An manifest item_type='subjects' is not the object of any of
+    # the assert_qs assertions, so we need to do another database pull
+    # to check for manifest item_type 'subjects' items that are the
+    # subject of an assertion.
+    rel_subj_item_assetion = get_related_subjects_item_from_object_id(
+        object_id=item_man_obj.uuid
+    )
+    if not rel_subj_item_assetion:
+        return None
+    return rel_subj_item_assetion.subject
+
+
 def make_predicate_objects_list(predicate, assert_objs):
     """Makes a list of assertion objects for a predicate"""
     # NOTE: Predicates of different data-types will hae different values
@@ -146,12 +213,11 @@ def make_predicate_objects_list(predicate, assert_objs):
             obj['id'] = f'https://{assert_obj.object.uri}'
             obj['slug'] = assert_obj.object.slug
             obj['label'] = assert_obj.object.label
-            if str(assert_obj.object.item_class.uuid) != configs.DEFAULT_CLASS_UUID:
-                if assert_obj.object.item_class.item_key:
-                    obj['type'] = assert_obj.object.item_class.item_key
-                else:
-                    obj['type'] = f'https://{assert_obj.object.item_class.uri}'
-            if getattr(assert_obj, 'object_thumbnail'):
+            if assert_obj.object.item_class and str(assert_obj.object.item_class.uuid) != configs.DEFAULT_CLASS_UUID:
+                obj['type'] = rep_utils.get_item_key_or_uri_value(
+                    assert_obj.object.item_class
+                )
+            if getattr(assert_obj, 'object_thumbnail', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
         elif predicate.data_type == 'xsd:string':
             obj = {
@@ -162,7 +228,9 @@ def make_predicate_objects_list(predicate, assert_objs):
                 predicate.data_type
             )
             obj = getattr(assert_obj, act_attrib)
-            if predicate.data_type == 'xsd:date':
+            if predicate.data_type == 'xsd:double':
+                obj = float(obj)
+            elif predicate.data_type == 'xsd:date':
                 obj = obj.date().isoformat()
         pred_objects.append(obj)
     return pred_objects
@@ -176,10 +244,8 @@ def add_predicates_assertions_to_dict(pred_keyed_assert_objs, act_dict=None):
         pred_objects = make_predicate_objects_list(predicate, assert_objs)
         if predicate.item_type == 'predicates':
             pred_key = f'oc-pred:{predicate.slug}'
-        elif predicate.item_key:
-            pred_key = predicate.item_key
         else:
-            pred_key = f'https://{predicate.uri}'
+            pred_key = rep_utils.get_item_key_or_uri_value(predicate)
         act_dict[pred_key] = pred_objects
     return act_dict
 
@@ -244,35 +310,125 @@ def get_observations_attributes_from_assertion_qs(assert_qs):
     return observations
 
 
-def make_subject_dict(subject):
-    output = LastUpdatedOrderedDict()
-    output['uuid'] = str(subject.uuid)
-    output['slug'] = subject.slug
-    output['label'] = subject.label
-    if str(subject.item_class.uuid) != configs.DEFAULT_CLASS_UUID:
-        if subject.item_class.item_key:
-            output['category'] =subject.item_class.item_key
+def get_related_media_resources(item_man_obj):
+    """Gets related media resources for a media subject"""
+    if item_man_obj.item_type not in ['media', 'projects']:
+        return None
+    resource_qs = AllResource.objects.filter(
+        item=item_man_obj,
+    ).select_related(
+        'resourcetype'
+    ).select_related(
+        'mediatype'
+    )
+    return resource_qs
+
+
+def add_related_media_files_dicts(item_man_obj, act_dict=None):
+    resource_qs = get_related_media_resources(item_man_obj)
+    if not resource_qs:
+        return act_dict
+    if not act_dict:
+        act_dict = LastUpdatedOrderedDict()
+    act_dict["oc-gen:has-files"] = []
+    for res_obj in resource_qs:
+        res_dict = LastUpdatedOrderedDict()
+        res_dict['id'] = f'https://{res_obj.uri}'
+        res_dict['type'] = rep_utils.get_item_key_or_uri_value(res_obj.resourcetype)
+        res_dict['dc-terms:hasFormat'] = f'https://{res_obj.mediatype.uri}'
+        if res_obj.filesize > 1:
+            res_dict['dcat:size'] = int(res_obj.filesize)
+        act_dict["oc-gen:has-files"].append(res_dict)
+    return act_dict
+
+
+def add_to_parent_context_list(manifest_obj, context_list=None):
+    if context_list is None:
+        context_list = []
+    if manifest_obj.item_type != 'subjects':
+        return context_list
+    item_dict = LastUpdatedOrderedDict()
+    item_dict['id'] = f'https://{manifest_obj.uri}'
+    item_dict['slug'] = manifest_obj.slug
+    item_dict['label'] = manifest_obj.label
+    item_dict['type'] = rep_utils.get_item_key_or_uri_value(manifest_obj.item_class)
+    context_list.append(item_dict)
+    if (manifest_obj.context.item_type == 'subjects' 
+       and str(manifest_obj.context.uuid) != configs.DEFAULT_SUBJECTS_ROOT_UUID):
+        context_list = add_to_parent_context_list(manifest_obj.context, context_list=context_list)
+    return context_list
+
+
+def start_item_representation_dict(item_man_obj):
+    """Start making an item representation dictionary object"""
+    rep_dict = LastUpdatedOrderedDict()
+    rep_dict['uuid'] = str(item_man_obj.uuid)
+    rep_dict['slug'] = item_man_obj.slug
+    rep_dict['label'] = item_man_obj.label
+    if item_man_obj.item_class and str(item_man_obj.item_class.uuid) != configs.DEFAULT_CLASS_UUID:
+        if item_man_obj.item_class.item_key:
+            rep_dict['category'] = item_man_obj.item_class.item_key
         else:
-            output['category'] = f'https://{subject.item_class.uri}'
-    return output
+            rep_dict['category'] = f'https://{item_man_obj.item_class.uri}'
+    return rep_dict
 
 
 def make_representation_dict(subject_id):
     """Makes a representation dict for a subject id"""
-    subject = AllManifest.objects.filter(
+    # This will most likely get all the context hierarchy in 1 query, thereby
+    # limiting the number of times we hit the database.
+    item_man_obj_qs = AllManifest.objects.filter(
         uuid=subject_id
     ).select_related(
         'project'
     ).select_related(
         'item_class'
-    ).first()
-    if not subject:
+    )
+    item_man_obj_qs = add_select_related_contexts_to_qs(
+        item_man_obj_qs
+    )
+    item_man_obj = item_man_obj_qs.first()
+    if not item_man_obj:
         return None
-    rep_dict = make_subject_dict(subject)
-    assert_qs = get_item_assertions(subject_id)
-    if not len(assert_qs):
-        return rep_dict
-    if subject.item_type in ['subjects', 'media', 'documents', 'persons', 'projects']:
+    rep_dict = start_item_representation_dict(item_man_obj)
+
+    # Get the assertion query set for this item
+    assert_qs = get_item_assertions(subject_id=item_man_obj.uuid)
+    # Get the related subjects item (for media and documents)
+    # NOTE: rel_subjects_man_obj will be None for all other item types.
+    rel_subjects_man_obj = get_related_subjects_item_assertion(
+        item_man_obj, 
+        assert_qs
+    )
+
+    # Adds geojson features. This will involve a database query to fetch
+    # spacetime objects.
+    rep_dict = geojson.add_geojson_features(
+        item_man_obj, 
+        rel_subjects_man_obj=rel_subjects_man_obj, 
+        act_dict=rep_dict
+    )
+
+    # Add the list of media resources associated with this item if
+    # the item has the appropriate item_type.
+    rep_dict = add_related_media_files_dicts(item_man_obj, act_dict=rep_dict)
+
+    if item_man_obj.item_type == 'subjects':
+        parent_list = add_to_parent_context_list(item_man_obj.context)
+        if parent_list:
+            # The parent order needs to be reversed to make the most
+            # general first, followed by the most specific.
+            parent_list.reverse()
+            rep_dict['oc-gen:has-contexts'] = parent_list
+    elif rel_subjects_man_obj:
+        parent_list = add_to_parent_context_list(rel_subjects_man_obj)
+        if parent_list:
+            # The parent order needs to be reversed to make the most
+            # general first, followed by the most specific.
+            parent_list.reverse()
+            rep_dict['oc-gen:has-linked-contexts'] = parent_list
+
+    if item_man_obj.item_type in ['subjects', 'media', 'documents', 'persons', 'projects']:
         # These types of items have nested nodes of observations, 
         # events, and attribute-groups
         observations = get_observations_attributes_from_assertion_qs(assert_qs)
@@ -288,15 +444,16 @@ def make_representation_dict(subject_id):
             pred_keyed_assert_objs, 
             act_dict=rep_dict
         )
+    
     # NOTE: This adds Dublin Core metadata
     rep_dict = metadata.add_dublin_core_literal_metadata(
-        subject, 
-        assert_qs, 
+        item_man_obj, 
+        rel_subjects_man_obj=rel_subjects_man_obj, 
         act_dict=rep_dict
     )
     # NOTE: This add project Dublin Core metadata.
     proj_metadata_qs = metadata.get_project_metadata_qs(
-        project=subject.project
+        project=item_man_obj.project
     )
     pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
         qs=proj_metadata_qs, 
@@ -307,4 +464,3 @@ def make_representation_dict(subject_id):
         act_dict=rep_dict
     )
     return rep_dict
-        

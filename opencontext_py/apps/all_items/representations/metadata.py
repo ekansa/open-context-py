@@ -63,27 +63,18 @@ def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
     return proj_meta_qs
 
 
-def add_dublin_core_literal_metadata(subject, assert_qs, act_dict=None):
+def add_dublin_core_literal_metadata(item_man_obj, rel_subjects_man_obj=None, act_dict=None):
     """Adds Dublin Core (literal) metadata"""
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
-    if subject.item_type == 'subjects':
-        from_path = '/'.join((subject.path.split('/'))[:-1])
-        act_dict['dc-terms:title'] = f'{subject.label} from {from_path}'
-    elif subject.item_type in ['media', 'documents']:
-        subj_path = None
-        for assert_obj in assert_qs:
-            if assert_obj.object.item_type != 'subjects':
-                continue
-            subj_path = '/'.join(assert_obj.object.path.split('/'))
-            break
-        if subj_path:
-            act_dict['dc-terms:title'] = f'{subject.label} from {subj_path}'
-        else:
-            act_dict['dc-terms:title'] = subject.label
+    if item_man_obj.item_type == 'subjects':
+        from_path = '/'.join((item_man_obj.path.split('/'))[:-1])
+        act_dict['dc-terms:title'] = f'{item_man_obj.label} from {from_path}'
+    elif rel_subjects_man_obj and item_man_obj.item_type in ['media', 'documents']:
+        act_dict['dc-terms:title'] = f'{item_man_obj.label} from {rel_subjects_man_obj.path}'
     else:
-        act_dict['dc-terms:title'] = subject.label
+        act_dict['dc-terms:title'] = item_man_obj.label
     # NOTE: Adds DC date metadata
-    act_dict['dc-terms:issued'] = subject.published.date().isoformat()
-    act_dict['dc-terms:modified'] = subject.revised.date().isoformat()
+    act_dict['dc-terms:issued'] = item_man_obj.published.date().isoformat()
+    act_dict['dc-terms:modified'] = item_man_obj.revised.date().isoformat()
     return act_dict
