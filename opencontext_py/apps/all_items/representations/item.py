@@ -22,17 +22,6 @@ from opencontext_py.apps.all_items.representations import metadata
 from opencontext_py.apps.all_items.representations import rep_utils
 
 
-# This provides a mappig between a predicate.data_type and
-# the attribute of an assertion object for the object of that
-# assertion.
-ASSERTION_DATA_TYPE_LITERAL_MAPPINGS = {
-    'xsd:string': 'obj_string',
-    'xsd:boolean': 'obj_boolean',
-    'xsd:integer': 'obj_integer',
-    'xsd:double': 'obj_double',
-    'xsd:date': 'obj_datetime',
-}
-
 
 def add_select_related_contexts_to_qs(qs, context_prefix='', depth=10, more_related_objs=['item_class']):
     """Adds select_related contexts to a queryset"""
@@ -123,7 +112,7 @@ def _print_tree_dict(tree_dict, level=0):
                 )
 
 
-def get_item_assertions(subject_id):
+def get_item_assertions(subject_id, select_related_object_contexts=False):
     """Gets an assertion queryset about an item"""
 
     # Limit this subquery to only 1 result, the first.
@@ -131,6 +120,22 @@ def get_item_assertions(subject_id):
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
     ).values('uri')[:1]
+
+    # DC-Creator equivalent predicate
+    dc_creator_qs = AllAssertion.objects.filter(
+        subject=OuterRef('predicate'),
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+        object_id=configs.PREDICATE_DCTERMS_CREATOR_UUID,
+        visible=True,
+    ).values('object')[:1]
+
+    # DC-Contributor equivalent predicate
+    dc_contributor_qs = AllAssertion.objects.filter(
+        subject=OuterRef('predicate'),
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+        object_id=configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID,
+        visible=True,
+    ).values('object')[:1]
 
     qs = AllAssertion.objects.filter(
         subject_id=subject_id,
@@ -151,7 +156,22 @@ def get_item_assertions(subject_id):
         'object__item_class'
     ).annotate(
         object_thumbnail=Subquery(thumbs_qs)
+    ).annotate(
+        # This will indicate if a predicate is equivalent to a
+        # dublin core creator.
+        predicate_dc_creator=Subquery(dc_creator_qs)
+    ).annotate(
+        # This will indicate if a predicate is equivalent to a
+        # dublin core contributor.
+        predicate_dc_contributor=Subquery(dc_contributor_qs)
     )
+    if select_related_object_contexts:
+        # Get the context hierarchy for related objects. We typically
+        # only do this for media and documents.
+        qs =  add_select_related_contexts_to_qs(
+            qs, 
+            context_prefix='object__'
+        )
     return qs
 
 
@@ -200,54 +220,6 @@ def get_related_subjects_item_assertion(item_man_obj, assert_qs):
     if not rel_subj_item_assetion:
         return None
     return rel_subj_item_assetion.subject
-
-
-def make_predicate_objects_list(predicate, assert_objs):
-    """Makes a list of assertion objects for a predicate"""
-    # NOTE: Predicates of different data-types will hae different values
-    # for different 
-    pred_objects = []
-    for assert_obj in assert_objs:
-        if predicate.data_type == 'id':
-            obj = LastUpdatedOrderedDict()
-            obj['id'] = f'https://{assert_obj.object.uri}'
-            obj['slug'] = assert_obj.object.slug
-            obj['label'] = assert_obj.object.label
-            if assert_obj.object.item_class and str(assert_obj.object.item_class.uuid) != configs.DEFAULT_CLASS_UUID:
-                obj['type'] = rep_utils.get_item_key_or_uri_value(
-                    assert_obj.object.item_class
-                )
-            if getattr(assert_obj, 'object_thumbnail', None):
-                obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
-        elif predicate.data_type == 'xsd:string':
-            obj = {
-                f'@{assert_obj.language.item_key}': assert_obj.obj_string
-            }
-        else:
-            act_attrib = ASSERTION_DATA_TYPE_LITERAL_MAPPINGS.get(
-                predicate.data_type
-            )
-            obj = getattr(assert_obj, act_attrib)
-            if predicate.data_type == 'xsd:double':
-                obj = float(obj)
-            elif predicate.data_type == 'xsd:date':
-                obj = obj.date().isoformat()
-        pred_objects.append(obj)
-    return pred_objects
-
-
-def add_predicates_assertions_to_dict(pred_keyed_assert_objs, act_dict=None):
-    """Adds predicates with their grouped objects to a dictionary, keyed by each pred"""
-    if not act_dict:
-        act_dict = LastUpdatedOrderedDict()
-    for predicate, assert_objs in pred_keyed_assert_objs.items():
-        pred_objects = make_predicate_objects_list(predicate, assert_objs)
-        if predicate.item_type == 'predicates':
-            pred_key = f'oc-pred:{predicate.slug}'
-        else:
-            pred_key = rep_utils.get_item_key_or_uri_value(predicate)
-        act_dict[pred_key] = pred_objects
-    return act_dict
 
 
 def get_observations_attributes_from_assertion_qs(assert_qs):
@@ -302,7 +274,7 @@ def get_observations_attributes_from_assertion_qs(assert_qs):
                     act_event['oc-gen:has-attribute-groups'].append(act_attrib_grp)
                 # Now add the predicate keys and their assertion objects to
                 # the act_attrib_grp
-                act_attrib_grp = add_predicates_assertions_to_dict(
+                act_attrib_grp = rep_utils.add_predicates_assertions_to_dict(
                     pred_keyed_assert_objs=preds, 
                     act_dict=act_attrib_grp
                 )
@@ -392,8 +364,17 @@ def make_representation_dict(subject_id):
         return None
     rep_dict = start_item_representation_dict(item_man_obj)
 
+    select_related_object_contexts = False
+    if item_man_obj.item_type in ['media', 'documents']:
+        # We'll want to include the selection of related
+        # object contexts to get the spatial hierarchy of related
+        # item_type subjects.
+        select_related_object_contexts = True
     # Get the assertion query set for this item
-    assert_qs = get_item_assertions(subject_id=item_man_obj.uuid)
+    assert_qs = get_item_assertions(
+        subject_id=item_man_obj.uuid,
+        select_related_object_contexts=select_related_object_contexts
+    )
     # Get the related subjects item (for media and documents)
     # NOTE: rel_subjects_man_obj will be None for all other item types.
     rel_subjects_man_obj = get_related_subjects_item_assertion(
@@ -440,7 +421,7 @@ def make_representation_dict(subject_id):
             qs=assert_qs, 
             index_list=['predicate']
         )
-        rep_dict = add_predicates_assertions_to_dict(
+        rep_dict = rep_utils.add_predicates_assertions_to_dict(
             pred_keyed_assert_objs, 
             act_dict=rep_dict
         )
@@ -451,6 +432,11 @@ def make_representation_dict(subject_id):
         rel_subjects_man_obj=rel_subjects_man_obj, 
         act_dict=rep_dict
     )
+    # First add item specific Dublin Core creators, contributors.
+    rep_dict = metadata.add_dc_creator_contributor_equiv_metadata(
+        assert_qs, 
+        act_dict=rep_dict
+    )
     # NOTE: This add project Dublin Core metadata.
     proj_metadata_qs = metadata.get_project_metadata_qs(
         project=item_man_obj.project
@@ -459,8 +445,11 @@ def make_representation_dict(subject_id):
         qs=proj_metadata_qs, 
         index_list=['predicate']
     )
-    rep_dict = add_predicates_assertions_to_dict(
+    # Add project metadata, but only for those predicates that
+    # don't already have item-specific object values.
+    rep_dict = rep_utils.add_predicates_assertions_to_dict(
         pred_keyed_assert_objs, 
-        act_dict=rep_dict
+        act_dict=rep_dict,
+        add_objs_to_existing_pred=False,
     )
     return rep_dict

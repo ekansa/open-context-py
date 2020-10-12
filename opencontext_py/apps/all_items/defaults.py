@@ -38,8 +38,8 @@ DEFAULT_IDENTIFIERS = [
     },
 ]
 
-# Set up the basic spatial containment hierarchy.
 DEFAULT_ASSERTIONS = [
+    # Set up the basic spatial containment hierarchy.
     {
         'project_id': OPEN_CONTEXT_PROJ_UUID,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
@@ -1487,34 +1487,11 @@ DEFAULT_MANIFESTS = [
         'uri': 'http://purl.org/dc/terms/title',
         'context_id': DCTERMS_VOCAB_UUID,
     },
-    {
-        'uuid': PREDICATE_DCTERMS_CONTRIBUTOR_UUID,
-        'publisher_id': DCMI_PUB_UUID,
-        'project_id': OPEN_CONTEXT_PROJ_UUID,
-        'item_class_id': DEFAULT_CLASS_UUID,
-        'source_id': DEFAULT_SOURCE_ID,
-        'item_type': 'property',
-        'data_type': 'id',
-        'slug': 'dc-terms-contributor',
-        'label': 'Contributor',
-        'item_key': 'dc-terms:contributor',
-        'uri': 'http://purl.org/dc/terms/contributor',
-        'context_id': DCTERMS_VOCAB_UUID,
-    },
-    {
-        'uuid': PREDICATE_DCTERMS_CREATOR_UUID,
-        'publisher_id': DCMI_PUB_UUID,
-        'project_id': OPEN_CONTEXT_PROJ_UUID,
-        'item_class_id': DEFAULT_CLASS_UUID,
-        'source_id': DEFAULT_SOURCE_ID,
-        'item_type': 'property',
-        'data_type': 'id',
-        'slug': 'dc-terms-creator',
-        'label': 'Creator',
-        'item_key': 'dc-terms:creator',
-        'uri': 'http://purl.org/dc/terms/creator',
-        'context_id': DCTERMS_VOCAB_UUID,
-    },
+    # NOTE: Because DC-Terms contributor and
+    # DC-Terms creators have special uses when making item representations
+    # We put their full dictionaries into the configs.
+    DCTERMS_CONTRIBUTOR_MANIFEST_DICT,
+    DCTERMS_CREATOR_MANIFEST_DICT,
     {
         'uuid': PREDICATE_DCTERMS_COVERAGE_UUID,
         'publisher_id': DCMI_PUB_UUID,

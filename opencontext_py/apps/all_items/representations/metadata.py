@@ -18,7 +18,55 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 from opencontext_py.apps.all_items import utilities
+from opencontext_py.apps.all_items.representations import rep_utils
 
+
+# Make easy to look up manifest objects for dublin core metadata that
+# we use for authorship, based on equivalence relationships with other predicates.
+# This lets us avoid a query to the database to look up these manifest objects.
+DC_CREATOR_CONTRIBUTOR_OBJECTS = {
+    configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID: AllManifest(**configs.DCTERMS_CONTRIBUTOR_MANIFEST_DICT),
+    configs.PREDICATE_DCTERMS_CREATOR_UUID: AllManifest(**configs.DCTERMS_CREATOR_MANIFEST_DICT),
+}
+
+
+def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
+    """Makes a dictionary keyed by DC creator or contributor id with
+    equivalent assertion objects
+
+    :param QuerySet assert_qs: An assertion object queryset for assertions
+        that describe the item for which we're creating a representation
+    :param dict act_dict: The dictionary object that is being created as 
+        a representation of an item.
+    """
+    equiv_dict = {}
+    for assert_obj in assert_qs:
+        if assert_obj.predicate_dc_creator:
+            # The assertion is equivalent to a dublin core creator assertion.
+            predicate_dc_creator = DC_CREATOR_CONTRIBUTOR_OBJECTS.get(
+                str(assert_obj.predicate_dc_creator)
+            )
+            if not predicate_dc_creator:
+                continue
+            equiv_dict.setdefault(predicate_dc_creator, [])
+            equiv_dict[predicate_dc_creator].append(assert_obj)
+        elif assert_obj.predicate_dc_contributor:
+            # The assertion is equivalent to a dublin core contributor assertion.
+            predicate_dc_contributor = DC_CREATOR_CONTRIBUTOR_OBJECTS.get(
+                str(assert_obj.predicate_dc_contributor)
+            )
+            if not predicate_dc_contributor:
+                continue
+            equiv_dict.setdefault(predicate_dc_contributor, [])
+            equiv_dict[predicate_dc_contributor].append(assert_obj)
+        else:
+            continue
+    if not equiv_dict:
+        # No dublin core equivalences found, so skip.
+        return act_dict
+    # Return the act_dict with the Dublin core creator and/or contributors
+    # added.
+    return rep_utils.add_predicates_assertions_to_dict(equiv_dict, act_dict=act_dict)
 
 
 def db_get_project_metadata_qs(project_id):

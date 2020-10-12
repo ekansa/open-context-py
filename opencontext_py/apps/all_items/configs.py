@@ -488,6 +488,38 @@ PREDICATE_DCTERMS_SOURCE_UUID = '00000000-ed50-a947-e471-df79e64e5236'
 PREDICATE_DCTERMS_SPATIAL_UUID = '00000000-ed50-e685-f3da-d9f7135a4f24'
 PREDICATE_DCTERMS_SUBJECT_UUID = '00000000-ed50-5006-1991-3afe609b3089'
 PREDICATE_DCTERMS_TEMPORAL_UUID = '00000000-ed50-4d17-4574-2f0d30c17ef8'
+
+# We will want to reference these to avoid database calls for items, so
+# make their full manifest item easily available here as dicts.
+DCTERMS_CONTRIBUTOR_MANIFEST_DICT = {
+    'uuid': PREDICATE_DCTERMS_CONTRIBUTOR_UUID,
+    'publisher_id': DCMI_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'property',
+    'data_type': 'id',
+    'slug': 'dc-terms-contributor',
+    'label': 'Contributor',
+    'item_key': 'dc-terms:contributor',
+    'uri': 'http://purl.org/dc/terms/contributor',
+    'context_id': DCTERMS_VOCAB_UUID,
+}
+DCTERMS_CREATOR_MANIFEST_DICT =  {
+    'uuid': PREDICATE_DCTERMS_CREATOR_UUID,
+    'publisher_id': DCMI_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'property',
+    'data_type': 'id',
+    'slug': 'dc-terms-creator',
+    'label': 'Creator',
+    'item_key': 'dc-terms:creator',
+    'uri': 'http://purl.org/dc/terms/creator',
+    'context_id': DCTERMS_VOCAB_UUID,
+}
+
 # ---------------------------------------------------------------------
 
 # ---------------------------------------------------------------------
@@ -612,7 +644,7 @@ UNITS_SQUAREMETER_UUID = '00000000-75e9-c8ae-b57c-0ab952428987'
 
 
 # List of predicate uuids where the subject is roughly equivalent to the object
-PREDICATE_LIST_DBJ_EQUIV_OBJ = [
+PREDICATE_LIST_SBJ_EQUIV_OBJ = [
     PREDICATE_OWL_SAME_AS_UUID,
     PREDICATE_SKOS_EXACT_MATCH_UUID,
     PREDICATE_SKOS_CLOSE_MATCH_UUID,

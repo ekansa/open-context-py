@@ -43,6 +43,12 @@ def migrate_all_general():
     legacy_oc.migrate_root_subjects()
     legacy_oc.migrate_legacy_manifest_for_project(project_uuid='0')
     legacy_oc.migrate_legacy_spacetime_for_project(project_uuid='0')
+     # Now add the link data annotations specific to this project
+    legacy_ld.migrate_legacy_link_annotations(
+        project_uuid='0',
+        more_filters_dict=None,
+        use_cache=True,
+    )
 
 
 def migrate_single_project(old_project_uuid, error_path=''):
