@@ -432,7 +432,7 @@ def make_representation_dict(subject_id):
         rel_subjects_man_obj=rel_subjects_man_obj, 
         act_dict=rep_dict
     )
-    # First add item specific Dublin Core creators, contributors.
+    # First add item-specific Dublin Core creators, contributors.
     rep_dict = metadata.add_dc_creator_contributor_equiv_metadata(
         assert_qs, 
         act_dict=rep_dict

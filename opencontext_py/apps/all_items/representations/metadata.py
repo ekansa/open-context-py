@@ -41,26 +41,33 @@ def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
     """
     equiv_dict = {}
     for assert_obj in assert_qs:
-        if assert_obj.predicate_dc_creator:
+        predicate_dc_creator = None
+        predicate_dc_contributor = None
+        if str(assert_obj.predicate.uuid) == configs.PREDICATE_DCTERMS_CREATOR_UUID:
+            # The item itself has a creator assertion
+            predicate_dc_creator = assert_obj.predicate
+        elif str(assert_obj.predicate.uuid) == configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID:
+            # The item itself as a contributor assertion
+            predicate_dc_contributor = assert_obj.predicate
+        elif assert_obj.predicate_dc_creator:
             # The assertion is equivalent to a dublin core creator assertion.
             predicate_dc_creator = DC_CREATOR_CONTRIBUTOR_OBJECTS.get(
                 str(assert_obj.predicate_dc_creator)
             )
-            if not predicate_dc_creator:
-                continue
-            equiv_dict.setdefault(predicate_dc_creator, [])
-            equiv_dict[predicate_dc_creator].append(assert_obj)
         elif assert_obj.predicate_dc_contributor:
             # The assertion is equivalent to a dublin core contributor assertion.
             predicate_dc_contributor = DC_CREATOR_CONTRIBUTOR_OBJECTS.get(
                 str(assert_obj.predicate_dc_contributor)
             )
-            if not predicate_dc_contributor:
-                continue
+        else:
+            # The assertion has nothing to do with Dublin Core creators or contributors
+            continue
+        if predicate_dc_creator:
+            equiv_dict.setdefault(predicate_dc_creator, [])
+            equiv_dict[predicate_dc_creator].append(assert_obj)
+        if predicate_dc_contributor:
             equiv_dict.setdefault(predicate_dc_contributor, [])
             equiv_dict[predicate_dc_contributor].append(assert_obj)
-        else:
-            continue
     if not equiv_dict:
         # No dublin core equivalences found, so skip.
         return act_dict
