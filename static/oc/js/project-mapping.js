@@ -34,7 +34,9 @@ function project_map(map_dom_id, json_url) {
 	map.show_browse_count = true;  // show counts in popup for browsing collections
 	
 	var bounds = new L.LatLngBounds();
-	var mapboxLight = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+	var mapboxLight = L.tileLayer(
+		'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' + map_box_token, {
+		tileSize: 256,
 		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
 	var mapboxAlt = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.run-bike-hike/{z}/{x}/{y}.png?access_token=' + map_box_token, {

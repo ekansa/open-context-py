@@ -107,13 +107,17 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
-	var mapboxLight = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+	var mapboxLight = L.tileLayer(
+		'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' + map_box_token, {
+		tileSize: 256,
 		maxZoom: 26,
 		id: 'mapbox-light',
 		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
 	
-	var mapboxDark = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+	var mapboxDark = L.tileLayer(
+		'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token=' + map_box_token, {
+		tileSize: 256,
 		maxZoom: 26,
 		id: 'mapbox-dark',
 		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
