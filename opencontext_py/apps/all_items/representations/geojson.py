@@ -18,12 +18,20 @@ from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import rep_utils
 
 
+# List of URIs for gazetteer vocabularies to help identify
+# non-subjects manifest entities that may have spacetime objects.
+GAZETTEER_VOCAB_URIS = [
+    'www.geonames.org',
+    'pleiades.stoa.org',
+]
+
 
 def get_spacetime_geo_and_chronos(rel_subjects_man_obj):
     """Gets space time objects for a manifest_obj and parent contexts"""
     if not rel_subjects_man_obj:
         return None
-    if rel_subjects_man_obj.item_type != 'subjects':
+    if (rel_subjects_man_obj.item_type != 'subjects'
+        and rel_subjects_man_obj.context.uri not in GAZETTEER_VOCAB_URIS):
         return None
     context_objs = [rel_subjects_man_obj]
     # Get a list of all the context objects in this manifest_obj
@@ -135,10 +143,15 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
     """
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
-    if item_man_obj.item_type == "subjects" and not rel_subjects_man_obj:
-        # We're describing a subjects item, so the rel_subjects_man_obj
-        # is the same manifest object.
-        rel_subjects_man_obj = item_man_obj
+    
+    if not rel_subjects_man_obj:
+        if item_man_obj.item_type == "subjects":
+            # We're describing a subjects item, so the rel_subjects_man_obj
+            # is the same manifest object.
+            rel_subjects_man_obj = item_man_obj
+        elif item_man_obj.item_type == "uri" and item_man_obj.context.uri in GAZETTEER_VOCAB_URIS:
+            # We're describing a geonames place item.
+            rel_subjects_man_obj = item_man_obj
     
     # Get the spacetime features for this rel_subjects_man_obj.
     act_spacetime_features = get_spacetime_geo_and_chronos(rel_subjects_man_obj)

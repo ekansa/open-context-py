@@ -130,6 +130,8 @@ def add_dublin_core_literal_metadata(item_man_obj, rel_subjects_man_obj=None, ac
     else:
         act_dict['dc-terms:title'] = item_man_obj.label
     # NOTE: Adds DC date metadata
-    act_dict['dc-terms:issued'] = item_man_obj.published.date().isoformat()
-    act_dict['dc-terms:modified'] = item_man_obj.revised.date().isoformat()
+    if item_man_obj.published:
+        act_dict['dc-terms:issued'] = item_man_obj.published.date().isoformat()
+    if item_man_obj.revised:
+        act_dict['dc-terms:modified'] = item_man_obj.revised.date().isoformat()
     return act_dict

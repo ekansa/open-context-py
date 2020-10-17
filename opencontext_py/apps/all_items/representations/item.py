@@ -23,8 +23,25 @@ from opencontext_py.apps.all_items.representations import rep_utils
 
 
 
-def add_select_related_contexts_to_qs(qs, context_prefix='', depth=10, more_related_objs=['item_class']):
-    """Adds select_related contexts to a queryset"""
+def add_select_related_contexts_to_qs(
+    qs, 
+    context_prefix='', 
+    depth=7, 
+    more_related_objs=['item_class']
+):
+    """Adds select_related contexts to a queryset
+    
+    :param QuerySet qs: The queryset that we will modify by adding
+        select_related to AllManifest objects.
+    :param str context_prefix: A prefix to identify which of the 
+        queryset manifest objects we want use for select_related
+    :param int depth: The depth of how many steps of select_related
+        contexts we want to de-reference. We default to 7 which is
+        enough to go up 7 levels of context hierarchy.
+    :param list more_related_objs: A list of additional related
+        AllManifest objects related to the context objects that
+        we want to dereference.
+    """
     # NOTE: This is all about reducing the number of queries we send to the 
     # database. This most important use case for this is to look up parent
     # context paths of manifest "subjects" item_types. 
@@ -40,7 +57,11 @@ def add_select_related_contexts_to_qs(qs, context_prefix='', depth=10, more_rela
 
 
 def make_grouped_by_dict_from_queryset(qs, index_list):
-    """Makes a dictionary, grouped by attributes of query set objects"""
+    """Makes a dictionary, grouped by attributes of query set objects
+    
+    :param list index_list: List of attributes in objects of the
+       query set we want to use as group-by criteria.
+    """
     keyed_objects = LastUpdatedOrderedDict()
     for obj in qs:
         key = tuple(getattr(obj, act_attrib) for act_attrib in index_list)
@@ -49,7 +70,15 @@ def make_grouped_by_dict_from_queryset(qs, index_list):
 
 
 def get_dict_path_value(path_keys_list, dict_obj, default=None):
-    """Get a value from a dictionary object by a list of keys """
+    """Get a value from a dictionary object by a list of keys 
+    
+    :param list path_keys_list: A list of hierarchically organized
+       keys to select within the tree of a dict_obj
+    :param dict dict_obj: A dictionary object that is the source
+       of the value we want to select with the path_key_list.
+    :param (any) default: A default value to return if the
+       path_keys_list can't be found.
+    """
     if not isinstance(dict_obj, dict):
         return None
     act_obj = copy.deepcopy(dict_obj)
