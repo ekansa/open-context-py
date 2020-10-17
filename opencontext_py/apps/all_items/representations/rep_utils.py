@@ -30,6 +30,14 @@ ASSERTION_DATA_TYPE_LITERAL_MAPPINGS = {
     'xsd:date': 'obj_datetime',
 }
 
+# ---------------------------------------------------------------------
+# NOTE: These functions are widely use in making item representations.
+# Open Context's primary representation for a database item is a
+# JSON-LD (with GeoJSON for records with geospatial data) document.
+# To insure that the JSON-LD representation is well supported, 
+# all other representations (esp. HTML) will be built from the JSON-LD
+# representation as a starting point.
+# ---------------------------------------------------------------------
 
 
 def get_item_key_or_uri_value(manifest_obj):
@@ -40,7 +48,15 @@ def get_item_key_or_uri_value(manifest_obj):
 
 
 def make_predicate_objects_list(predicate, assert_objs):
-    """Makes a list of assertion objects for a predicate"""
+    """Makes a list of assertion objects for a predicate
+    
+    :param AllManifest predicate: An all manifest object for the
+        predicate for which we want a list of assertion objects.
+    :param list or QuerySet assert_objs: A list of query set of
+        AllAssertion objects. We iterate through this list to pull
+        out the objects of the 'predicate' assertions.
+    returns list of JSON-LD formated assertion dicts or literals. 
+    """
     # NOTE: Predicates of different data-types will hae different values
     # for different 
     pred_objects = []
@@ -57,6 +73,8 @@ def make_predicate_objects_list(predicate, assert_objs):
             if getattr(assert_obj, 'object_thumbnail', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
         elif predicate.data_type == 'xsd:string':
+            # A string gets a language code key, so it's not just a naked
+            # literal returned in the pred_objects list.
             obj = {
                 f'@{assert_obj.language.item_key}': assert_obj.obj_string
             }
