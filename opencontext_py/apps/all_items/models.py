@@ -7,6 +7,9 @@ import requests
 import reversion  # version control object
 import uuid as GenUUID
 
+# For geospace manipulations.
+from shapely.geometry import mapping, shape
+
 from datetime import datetime
 from math import pow
 from time import sleep
@@ -1010,6 +1013,15 @@ class AllSpaceTime(models.Model):
                     f'Geometry dict type { self.geometry.get("type") } must '
                     'have a list of coordinates'
                 )
+        
+        if self.longitude is None or self.latitude is None:
+            # We don't have the centroid, so calculate it from the
+            # geometry object.
+            s = shape(self.geometry)
+            coords = s.centroid.coords[0]
+            self.longitude = coords[0]
+            self.latitude = coords[1]
+
         # Now validate that we actually have a latitude and longitude coordinate
         # pair.
         if self.longitude is None or self.latitude is None:
