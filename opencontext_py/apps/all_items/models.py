@@ -15,6 +15,7 @@ from math import pow
 from time import sleep
 from unidecode import unidecode
 
+from django.conf import settings
 from django.core.cache import caches
 
 from django.db import models
@@ -24,8 +25,6 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.defaultfilters import slugify
 from django.utils import timezone
-
-from django.conf import settings
 
 
 from opencontext_py.apps.all_items import configs
