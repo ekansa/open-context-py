@@ -1427,6 +1427,8 @@ class AllAssertion(models.Model):
         related_name='subject_uuid', 
         on_delete=models.CASCADE
     )
+    # Observations are nodes for grouping related assertions, perhaps
+    # made by different people.
     observation = models.ForeignKey(
         AllManifest,  
         db_column='observation_uuid', 
@@ -1435,6 +1437,8 @@ class AllAssertion(models.Model):
         default=configs.DEFAULT_OBS_UUID,
     )
     obs_sort = models.IntegerField(default=1)
+    # Events are nodes for identifying specific space-time grouped
+    # assertions.
     event = models.ForeignKey(
         AllManifest,  
         db_column='event_uuid', 
@@ -1443,6 +1447,10 @@ class AllAssertion(models.Model):
         default=configs.DEFAULT_EVENT_UUID,
     )
     event_sort = models.IntegerField(default=1)
+    # Attribute groups are for modeling predicate and object values
+    # that need to be understood as a group. For example, a ratio
+    # with a numerator and a denominator are 3 grouped assertions that
+    # would make sense together in an attribute group.
     attribute_group = models.ForeignKey(
         AllManifest, 
         db_column='attribute_group_uuid', 
