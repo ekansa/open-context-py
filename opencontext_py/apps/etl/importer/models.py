@@ -162,12 +162,14 @@ class DataSourceAnnotation(models.Model):
         related_name='+', 
         on_delete=models.CASCADE, 
     )
+    # The data source field that is the subject of this annotation.
     subject_field = models.ForeignKey(
         DataSourceField, 
         db_column='subject_field_uuid', 
         related_name='+', 
         on_delete=models.CASCADE,
     )
+    # A predicate (attribute or relation) used in this annotation.
     predicate = models.ForeignKey(
         AllManifest, 
         db_column='predicate_uuid', 
@@ -175,6 +177,8 @@ class DataSourceAnnotation(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    # The data source field who's values provide the predicate 
+    # (attribute or relation) used in this annotation.
     predicate_field = models.ForeignKey(
         DataSourceField,
         db_column='predicate_field_uuid', 
@@ -182,6 +186,7 @@ class DataSourceAnnotation(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    # A named entity object of the predicate for this annotation.
     object = models.ForeignKey(
         AllManifest, 
         db_column='object_uuid', 
@@ -189,6 +194,8 @@ class DataSourceAnnotation(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    # The data source field who's values provide the objects 
+    # used in this annotation.
     object_field = models.ForeignKey(
         DataSourceField,
         db_column='object_field_uuid', 
@@ -196,6 +203,19 @@ class DataSourceAnnotation(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    # A constant string object value. For example, if you want to add the exact
+    # same note to multiple items in subject_field, obj_sting will have a value.
+    # NOTE: The obj_string_hash only exists to determine uniqueness.
+    obj_string_hash = models.TextField(null=True)
+    obj_string = models.TextField(null=True)
+    # A constant boolean object value.
+    obj_boolean = models.BooleanField(null=True)
+    # A constant integer object value.
+    obj_integer = models.BigIntegerField(null=True)
+    # A constant double object value.
+    obj_double = models.DecimalField(max_digits=19, decimal_places=10, null=True)
+     # A constant datetime object value.
+    obj_datetime = models.DateTimeField(null=True)
     # Observations are nodes for grouping related assertions.
     observation = models.ForeignKey(
         AllManifest,  
@@ -203,6 +223,7 @@ class DataSourceAnnotation(models.Model):
         related_name='+', 
         on_delete=models.PROTECT,
         default=configs.DEFAULT_OBS_UUID,
+        null=True,
     )
     observation_field = models.ForeignKey(
         DataSourceField,
@@ -219,6 +240,7 @@ class DataSourceAnnotation(models.Model):
         related_name='+', 
         on_delete=models.PROTECT,
         default=configs.DEFAULT_EVENT_UUID,
+        null=True,
     )
     event_field = models.ForeignKey(
         DataSourceField,
@@ -237,6 +259,7 @@ class DataSourceAnnotation(models.Model):
         related_name='+', 
         on_delete=models.PROTECT,
         default=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+        null=True,
     )
     attribute_group_field = models.ForeignKey(
         DataSourceField,
@@ -245,10 +268,233 @@ class DataSourceAnnotation(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    # Language for text in xsd:string objects.
+    language =  models.ForeignKey(
+        AllManifest,
+        db_column='language_uuid', 
+        related_name='+', 
+        on_delete=models.PROTECT, 
+        default=configs.DEFAULT_LANG_UUID,
+        null=True,
+    )
+    language_field =  models.ForeignKey(
+        DataSourceField,
+        db_column='language_field_uuid', 
+        related_name='+', 
+        on_delete=models.CASCADE,
+        null=True,
+    )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
 
+    def validate_attribute_groups(self):
+        """Certain groups of attributes should have 1 and only 1 not null value"""
+        attribute_groups = [
+            (
+                'predicates', 
+                [
+                    self.predicate, 
+                    self.predicate_field,
+                ],
+            ),
+            (
+                'objects',
+                [
+                    self.object, 
+                    self.object_field,
+                    self.obj_string,
+                    self.obj_boolean,
+                    self.obj_integer,
+                    self.obj_double,
+                    self.obj_datetime,
+                ],
+            ),
+            (
+                'observations',
+                [
+                    self.observation, 
+                    self.observation_field,
+                ],
+            ),
+            (
+                'events',
+                [
+                    self.event,
+                    self.event_field,
+                ],
+            ),
+            (
+                'attribute_groups',
+                [
+                    self.attribute_group,
+                    self.attribute_group_field
+                ],
+            ),
+            (
+                'languages',
+                [
+                    self.language,
+                    self.language_field,
+                ],
+            ),
+        ]
+        for group_name, attribute_group in attribute_groups:
+            count_not_null = 0
+            for attribute in attribute_group:
+                if attribute is None:
+                    continue
+                count_not_null += 1
+            if count_not_null != 1:
+                raise ValueError(
+                    f'Need 1 not null field in the {group_name} group, '
+                    f'but {count_not_null} are not null.'
+                )
+
+    def make_obj_string_hash(self, obj_string):
+        """Makes an object string hash value"""
+        if obj_string:
+            obj_string = obj_string.strip()
+            hash_obj = hashlib.sha1()
+            hash_obj.update(str(obj_string).encode('utf-8'))
+            return hash_obj.hexdigest()
+        else:
+            # No string value to hash, so return something
+            # small to be nice to our index.
+            return '0'
+
+
+    def primary_key_create(
+        self,
+        data_source_id,
+        subject_field_id,
+        predicate_id=None,
+        predicate_field_id=None,
+        object_id=None,
+        object_field_id=None,
+        obj_string=None,
+        obj_boolean=None,
+        obj_integer=None,
+        obj_double=None,
+        obj_datetime=None,
+        observation_id=None,
+        observation_field_id=None,
+        event_id=None,
+        event_field_id=None,
+        attribute_group_id=None,
+        attribute_group_field_id=None,
+        language_id=None,
+        language_field_id=None, 
+    ):
+        """Deterministically make the primary key based on attribute values"""
+        data_source_id = str(data_source_id)
+        uuid_prefix = data_source_id.split('-')[0]
+
+        if obj_string:
+            obj_string = obj_string.strip()
+
+        hash_obj = hashlib.sha1()
+        concat_string = " ".join(
+            [
+                str(data_source_id),
+                str(subject_field_id),
+                str(predicate_id),
+                str(predicate_field_id),
+                str(object_id),
+                str(object_field_id),
+                str(obj_string),
+                str(obj_boolean),
+                str(obj_integer),
+                str(obj_double),
+                str(obj_datetime),
+                str(observation_id),
+                str(observation_field_id),
+                str(event_id),
+                str(event_field_id),
+                str(attribute_group_id),
+                str(attribute_group_field_id),
+                str(language_id),
+                str(language_field_id),
+            ]
+        )
+        hash_obj.update(concat_string.encode('utf-8'))
+        hash_id = hash_obj.hexdigest()
+        uuid_from_hash_id = str(
+            GenUUID.UUID(hex=hash_id[:32])
+        )
+        new_parts = uuid_from_hash_id.split('-')
+        uuid = '-'.join(
+            ([uuid_prefix] + new_parts[1:])
+        )
+        return uuid
+
+
+    def primary_key_create_for_self(self):
+        """Makes a primary key using a prefix from the subject"""
+        if self.uuid:
+            # One is already defined, so skip this step.
+            return self.uuid
+        
+        entity_fields = [
+            (self.data_source, 'data_source_id',),
+            (self.subject_field, 'subject_field_id',),
+            (self.predicate, 'predicate_id',),
+            (self.predicate_field, 'predicate_field_id',),
+            (self.object, 'object_id',),
+            (self.object_field, 'object_field_id',),
+            (self.observation, 'observation_id', ),
+            (self.observation_field, 'observation_field_id', ),
+            (self.event, 'event_id', ),
+            (self.event_field, 'event_field_id', ),
+            (self.attribute_group, 'attribute_group_id',),
+            (self.attribute_group_field, 'attribute_group_field_id',),
+            (self.language, 'language_id',),
+            (self.language_field, 'language_field_id',),
+        ]
+        literal_fields = [
+            (self.obj_string, 'obj_string',),
+            (self.obj_boolean, 'obj_boolean',),
+            (self.obj_integer, 'obj_integer', ),
+            (self.obj_double, 'obj_double', ),
+            (self.obj_datetime, 'obj_datetime', ),
+        ]
+        kwargs = {key:val for val, key in literal_fields if val is not None}
+        for entity_val, key in entity_fields:
+            if entity_val is None:
+                continue
+            kwargs[key] = entity_val.uuid
+        return self.primary_key_create(**kwargs)
+    
+
+    def save(self, *args, **kwargs):
+        if self.obj_string:
+            self.obj_string = self.obj_string.strip()
+        
+        self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
+
+        self.validate_attribute_groups()
+        self.uuid = self.primary_key_create_for_self()
+        super(DataSourceAnnotation, self).save(*args, **kwargs)
+
+
+    class Meta:
+        db_table = 'etl_annotations'
+        ordering = ['data_source', 'subject_field']
+        unique_together = (
+            "data_source",
+            "subject_field",
+            "predicate", 
+            "predicate_field",
+            "object",
+            "object_field",
+            "obj_string_hash",
+            "obj_boolean",
+            "obj_integer",
+            "obj_double",
+            "obj_datetime",
+            "language",
+            "language_field",
+        )
 
 
 # Records data source individual records for ETL (extract transform load)
