@@ -57,7 +57,7 @@ class DataSource(models.Model):
     field_count = models.IntegerField()
     row_count = models.IntegerField()
     source_type = models.TextField()
-    is_current = models.BooleanField(default=None)
+    is_current = models.BooleanField(default=True)
     status = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -99,10 +99,10 @@ class DataSourceField(models.Model):
     )
     field_num = models.IntegerField()
     label = models.TextField()
-    ref_name = models.TextField()
-    ref_orig_name = models.TextField()
-    item_type = models.TextField()
-    data_type = models.TextField()
+    ref_name = models.TextField(null=True)
+    ref_orig_name = models.TextField(null=True)
+    item_type = models.TextField(null=True)
+    data_type = models.TextField(null=True)
     item_class = models.ForeignKey(
         AllManifest, 
         db_column='item_class_uuid', 
@@ -110,7 +110,7 @@ class DataSourceField(models.Model):
         on_delete=models.CASCADE, 
         default=configs.DEFAULT_CLASS_UUID,
     )
-    value_prefix = models.TextField()
+    value_prefix = models.TextField(null=True)
     unique_count = models.IntegerField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -287,6 +287,41 @@ class DataSourceAnnotation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
+
+    # List of attributes that take DataSourceFields items.
+    FIELD_ATTRIBUTE_LIST = [
+        'subject_field',
+        'predicate_field',
+        'object_field',
+        'observation_field',
+        'event_field',
+        'attribute_group_field',
+        'language_field',
+    ]
+
+    def validate_fields_data_sources(self):
+        """Validates that field references are in the same data source"""
+        field_attributes = [
+            ('subjects', self.subject_field,),
+            ('predicates', self.predicate_field,),
+            ('objects', self.object_field,),
+            ('observations', self.observation_field,),
+            ('events', self.event_field,),
+            ('attribute_groups', self.attribute_group_field,),
+            ('languages', self.language_field,),
+        ]
+        for field_name, attribute_field in field_attributes:
+            if attribute_field is None:
+                # This is a null, so generally OK.
+                continue
+            if attribute_field.data_source == self.data_source:
+                # The field is in the same data_source as data_source.
+                continue
+            raise ValueError(
+                f'The {field_name} field {attribute_field.label} (field_num: {attribute_field.field_num}) '
+                f'is from data source {attribute_field.data_source.source_id} not {self.data_source.source_id}'
+            )
+
 
     def validate_attribute_groups(self):
         """Certain groups of attributes should have 1 and only 1 not null value"""
@@ -472,6 +507,7 @@ class DataSourceAnnotation(models.Model):
         
         self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
 
+        self.validate_fields_data_sources()
         self.validate_attribute_groups()
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceAnnotation, self).save(*args, **kwargs)
@@ -509,16 +545,16 @@ class DataSourceRecord(models.Model):
     )
     row_num = models.IntegerField()
     field_num = models.IntegerField()
-    context_uuid = models.ForeignKey(
+    context = models.ForeignKey(
         AllManifest, 
         db_column='context_uuid', 
         related_name='+', 
         on_delete=models.CASCADE,
         null=True,
     )
-    record_uuid = models.ForeignKey(
+    item = models.ForeignKey(
         AllManifest, 
-        db_column='record_uuid', 
+        db_column='item_uuid', 
         related_name='+', 
         on_delete=models.CASCADE,
         null=True,
