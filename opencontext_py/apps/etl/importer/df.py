@@ -19,6 +19,13 @@ from opencontext_py.apps.etl.importer.models import (
 )
 from opencontext_py.apps.etl.importer import autofields
 
+# ---------------------------------------------------------------------
+# NOTE: These functions provide a means to load data into our ETL
+# workflow from CSV data sources using Pandas. It also provides a
+# function to read data already loaded into the ETL related models
+# for expression as a Pandas Dataframe.
+# ---------------------------------------------------------------------
+
 """
 Testing:
 from opencontext_py.apps.all_items.models import (
@@ -98,7 +105,11 @@ def db_make_dataframe_from_etl_data_source(
 
 
 def df_str_cols_load_csv(file_path):
-    """Imports a dataset from a CSV file"""
+    """Creates a dataframe with all string datatype columns from a CSV file
+
+    :param str file_path: The file path to a CSV file that will be read into
+        a dataframe for ingest in an ETL process.
+    """
     if not os.path.exists(file_path):
         return None
     col_names = pd.read_csv(file_path, nrows=0).columns
@@ -186,6 +197,10 @@ def save_data_source_fields_for_df(df, ds_source, col_prior_fields):
             'data_source': ds_source,
             'field_num': field_num,
             'label': col,
+            # The ref_name can help match the original column name
+            # should we have changed the label of a field while preparing
+            # an ETL process.
+            'ref_name': col,
             'unique_count': len(df[col].unique()),
         }
         ds_new_field = DataSourceField.objects.create(**new_dict)
@@ -243,7 +258,22 @@ def load_df_for_etl(
     data_source_label=None, 
     source_exists="raise"
 ):
-    
+    """Loads a DataFrame into the ETL related database models
+
+    :param DataFrame df: A dataframe that we are currently preparing for ETL,
+    :param AllManifest project: A manifest object for the project that we
+        want to update via an ETL process.
+    :param str prelim_source_id: A provisional human-readable ID for a
+        data-source (typically a filename). This may be altered if this
+        ID already exists in the ETL models.
+    :param str source_exists: Handling options if a prelim_source_id
+        already exists in the ETL records. If "raise" then throw an
+        exception, if "replace" then replace the prior data source with 
+        new data (provided the projects are the same between the old and
+        new ETL), if "new" then change the prelim_source_id to be a new
+        identifier, as the user claims this is a new dataset for ETL.
+    """
+
     col_prior_fields = {}
     prior_to_new_fields = None
     map_ready_field_annotations = None
@@ -256,7 +286,7 @@ def load_df_for_etl(
     elif source_exists == "replace" and ds and ds.project != project:
         raise ValueError(
             f'We cannot replace data from {prelim_source_id} because '
-            f'it was imported into another project "{ds.project.label}", '
+            f'it belongs to another project "{ds.project.label}", '
             f'uuid: {str(ds.project.uuid)} '
         )
     elif source_exists == "replace" and ds and ds.project == project:
@@ -297,7 +327,8 @@ def load_df_for_etl(
         ds_check = ds
         i = 0
         while ds_check is not None:
-            # Iterate through this until
+            # Iterate through this until we get a source_id that
+            # is new and not used.
             i += 1
             ds_count = DataSource.objects.filter(
                 source_id__startswith=prelim_source_id
@@ -308,7 +339,7 @@ def load_df_for_etl(
             ).first()
             if i > 10:
                 raise ValueError(f'Too many {prelim_source_id} data sources!')
-    else:
+    elif ds is None:
         # This prelim_source_id is new, so not conflicting with prior
         # ETL data sources.
         col_prior_fields = map_cols_to_prior_fields(
@@ -316,6 +347,11 @@ def load_df_for_etl(
             project,
         )
         source_id = prelim_source_id
+    else:
+        raise ValueError(
+            'This data source already exists, but source_exists handling '
+            f'must be "raise", "replace", or "new" not {source_exists}'
+        )
     
     # Now make the new data source object.
     ds_source = save_data_source_for_df(
@@ -343,7 +379,21 @@ def load_df_for_etl(
 
 
 def load_csv_for_etl(project, file_path, data_source_label=None, source_exists="raise"):
-    """Loads a csv file for an etl"""
+    """Loads a csv file for an ETL process.
+
+    :param AllManifest project: A manifest object for the project that we
+        want to update via an ETL process.
+    :param str file_path: The file path to a CSV file that will be read into
+        a dataframe for ingest in an ETL process.
+    :param str data_source_label: A human readable label for to give this
+        datafile a bit of descriptive metadata.
+    :param str source_exists: Handling options if a prelim_source_id
+        already exists in the ETL records. If "raise" then throw an
+        exception, if "replace" then replace the prior data source with 
+        new data (provided the projects are the same between the old and
+        new ETL), if "new" then change the prelim_source_id to be a new
+        identifier, as the user claims this is a new dataset for ETL.
+    """
     df = df_str_cols_load_csv(file_path)
     if df is None:
         # No data returned from loading the CSV.

@@ -110,6 +110,7 @@ def copy_prior_project_field_attributes(ds_new_field, prior_field):
     """Copies attributes from a field in the same project """
     # Copy certain attributes from the a field, defined
     # within this project.  
+    ds_new_field.label = prior_field.label
     ds_new_field.item_type = prior_field.item_type
     ds_new_field.data_type = prior_field.data_type
     ds_new_field.item_class = prior_field.item_class
@@ -149,7 +150,7 @@ def get_annotations_on_mapped_prior_fields(prior_to_new_fields):
                     # to check
                     continue
                 # The act_anno has a relationship to a field that
-                # has no mapping between prior and new fields, so it is 
+                # has NO mapping between prior and new fields, so it is 
                 # NOT ok to add
                 ok_to_add = False
                 break
