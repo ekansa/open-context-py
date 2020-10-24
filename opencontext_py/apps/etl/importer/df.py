@@ -17,7 +17,7 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceRecord,
     DataSourceAnnotation,
 )
-from opencontext_py.apps.etl.importer import fields
+from opencontext_py.apps.etl.importer import autofields
 
 """
 Testing:
@@ -122,7 +122,7 @@ def map_cols_to_prior_fields(df, project, limit_prior_data_source=None):
     else:
         added_filters = None
     col_prior_fields = {
-        col: fields.get_matching_project_field_by_labels(
+        col: autofields.get_matching_project_field_by_labels(
             project=project,
             label=col, 
             added_filters=added_filters,
@@ -193,7 +193,7 @@ def save_data_source_fields_for_df(df, ds_source, col_prior_fields):
         if not prior_field:
             continue
         # Copy the mapped prior field attributes to this new field.
-        ds_new_field = fields.copy_prior_project_field_attributes(
+        ds_new_field = autofields.copy_prior_project_field_attributes(
             ds_new_field, 
             prior_field
         )
@@ -275,7 +275,7 @@ def load_df_for_etl(
         }
         # NOTE: We're only looking these up if we're replacing a source within a project
         # because this helps to cache prior annotations prior to deleting them.
-        map_ready_field_annotations = fields.get_annotations_on_mapped_prior_fields(
+        map_ready_field_annotations = autofields.get_annotations_on_mapped_prior_fields(
             prior_to_new_fields
         )
         # Now that we have copied over related field attributes and annotations
@@ -332,7 +332,7 @@ def load_df_for_etl(
         col_prior_fields
     )
     # Save any field annotations from prior matched fields.
-    fields.copy_prior_annotations_to_new_datasource(
+    autofields.copy_prior_annotations_to_new_datasource(
         prior_to_new_fields=prior_to_new_fields,
         map_ready_field_annotations=map_ready_field_annotations,
     )

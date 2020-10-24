@@ -17,7 +17,11 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceAnnotation,
 )
 
-
+# ---------------------------------------------------------------------
+# NOTE: These functions help to automatically prepopulate data source
+# field attributes and annotations based on prior ETL configurations
+# defined within the scope of a project
+# ---------------------------------------------------------------------
 
 def get_matching_project_field_by_labels(
     project,
