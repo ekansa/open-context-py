@@ -34,6 +34,9 @@ from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 
 
+MAX_ANNOTATION_HIERARCHY_DEPTH = 20
+
+
 # Records data sources for ETL (extract transform load)
 # processes that ingest data into Open Context
 class DataSource(models.Model):
@@ -152,9 +155,99 @@ class DataSourceField(models.Model):
 
 
 
+# ---------------------------------------------------------------------
+# NOTE: The following functions are for validating spatial context
+# containment annotations between fields with item_type="subjects".
+# The point is to prevent circular hierarchies and to make sure that
+# containment annotations are made only between item_type subjects
+# fields.
+# ---------------------------------------------------------------------
+def get_immediate_context_parent_obj_db(child_field_obj):
+    """Get the immediate (spatial) context parent of a child_obj"""
+    p_annotation = DataSourceAnnotation.objects.filter(
+        predicate_id=configs.PREDICATE_CONTAINS_UUID,
+        object_field=child_field_obj
+    ).first()
+    if not p_annotation:
+        return None
+    return p_assert.subject_field
+
+def get_immediate_context_children_objs_db(parent_field_obj):
+    """Get the immediate (spatial) context children of a parent_field_obj"""
+    return [
+        a.object_field 
+        for a in DataSourceAnnotation.objects.filter(
+            subject_field=parent_field_obj,
+            predicate_id=configs.PREDICATE_CONTAINS_UUID,
+        )
+    ]
+
+def validate_context_subject_objects(subject_field_obj, object_field_obj, raise_on_error=True):
+    """Validates the correct item-types for subject and object fields."""
+    tup_checks = [
+        ('subject_field', subject_field_obj,),
+        ('object_field', object_field_obj,),
+    ]
+    for field_name, field_obj in tup_checks:
+        if field_obj.item_type == "subjects":
+            # This is valid, so skip.
+            continue
+        if raise_on_error:
+            raise ValueError(
+                f'The {field_name} must be item_type="subjects", not '
+                f'{field_obj.item_type} as found in field: {field_obj.label}'
+                f'(field_num: {field_obj.field_num}) (uuid: {field_obj.uuid})'
+            )
+        else:
+            return False
+    return True
+
+
+def validate_context_assertion(
+    subject_field_obj, 
+    object_field_obj,
+    max_depth=MAX_ANNOTATION_HIERARCHY_DEPTH
+):
+    """Validates a spatial context annotation between subject and object fields"""
+    validate_context_subject_objects(subject_field_obj, object_field_obj)
+
+    obj_field_parent = get_immediate_context_parent_obj_db(
+        object_field_obj
+    )
+    if obj_field_parent and obj_field_parent != subject_field_obj:
+        # The child object already has a parent, and
+        # we allow only 1 parent.
+        raise ValueError(
+            f'Object-field {object_field_obj.label} already contained in '
+            f'{obj_field_parent.label} (field_num: {obj_field_parent.field_num})'
+        )
+    subj_parent = subject_field_obj
+    i = 0
+    while i <= max_depth and subj_parent is not None:
+        i += 1
+        subj_parent = get_immediate_context_parent_obj_db(
+            subj_parent
+        )
+        if subj_parent == object_field_obj:
+            raise ValueError(
+                'Circular containment error. '
+                f'(Child) object {object_field_obj.label} '
+                f'(field_num: {object_field_obj.field_num}) is a parent field for '
+                f'{subj_parent.label} (field_num: {subj_parent.field_num})'
+            )
+    if i > max_depth:
+        raise ValueError(
+            f'Parent field object {subject_field_obj.label} too deep in hierarchy'
+        )
+    return True
+
+
+
+
 # Records data source annotations for modeling ETL (extract transform load)
 # processes that ingest data into Open Context
 class DataSourceAnnotation(models.Model):
+
     uuid = models.UUIDField(primary_key=True, editable=True)
     data_source = models.ForeignKey(
         DataSource, 
@@ -314,7 +407,7 @@ class DataSourceAnnotation(models.Model):
             if attribute_field is None:
                 # This is a null, so generally OK.
                 continue
-            if attribute_field.data_source == self.data_source:
+            if str(attribute_field.data_source.uuid) == str(self.data_source.uuid):
                 # The field is in the same data_source as data_source.
                 continue
             raise ValueError(
@@ -506,9 +599,13 @@ class DataSourceAnnotation(models.Model):
             self.obj_string = self.obj_string.strip()
         
         self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
-
         self.validate_fields_data_sources()
         self.validate_attribute_groups()
+
+        if self.predicate and str(self.predicate.uuid) == configs.PREDICATE_CONTAINS_UUID:
+            # We're attempting to save a containment annotation, so check it.
+            validate_context_assertion(self.subject_field, self.object_field)
+
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceAnnotation, self).save(*args, **kwargs)
 

@@ -215,6 +215,11 @@ def copy_prior_annotations_to_new_datasource(
                     # that has no mapping to the new data source.
                     ok_to_add = False
                     continue
+                if ds_new_mapped_field_obj.data_source != ds_new_field.data_source:
+                    # We can only make data source field annotations if all
+                    # the fields are for the same data source.
+                    ok_to_add = False
+                    continue
                 new_dict[field_attrib] = ds_new_mapped_field_obj
             if not ok_to_add:
                 # Skip saving this mapped field annotation.

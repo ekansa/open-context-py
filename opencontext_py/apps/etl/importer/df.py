@@ -4,7 +4,7 @@ import hashlib
 import numpy as np
 import pandas as pd
 
-from opencontext_py.apps.all_items import configs
+
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
@@ -231,6 +231,8 @@ def save_data_source_records_for_df(df, ds_source, chuck_size=50):
         data_source_records = []
         for i, row in df_chunk.iterrows():
             for field_num, col in enumerate(cols, start=1):
+                # We store each cell value as a string in the
+                # DataSourceRecord model. 
                 record = str(row[col])
                 if not record:
                     # Skip empty records. We should be able to handle
