@@ -219,6 +219,9 @@ def get_add_gbif_parent(child_uri, child_obj=None):
 def add_get_gbif_manifest_obj_and_hierarchy(raw_uri):
     """Adds GBIF entity and its hierarchy"""
     gbif_obj = add_get_gbif_manifest_entity(raw_uri)
+    if not gbif_obj:
+        # This is not a GBIF object.
+        return None
     add_new_hierarchy = True
     child_obj = gbif_obj
     while add_new_hierarchy:

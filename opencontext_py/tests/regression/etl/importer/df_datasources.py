@@ -35,25 +35,26 @@ SUBJECTS_FIELDS_ATTRIBUTE_DICTS = [
     {
         'label': 'World Region',
         'item_type': 'subjects',
-        'item_class': configs.CLASS_OC_REGION_UUID,
+        'item_class_id': configs.CLASS_OC_REGION_UUID,
         'data_type': 'id',
+        'context_id': configs.DEFAULT_SUBJECTS_OCEANIA_UUID,
     },
     {
         'label': 'Realm',
         'item_type': 'subjects',
-        'item_class': configs.CLASS_OC_REGION_UUID,
+        'item_class_id': configs.CLASS_OC_REGION_UUID,
         'data_type': 'id',
     },
     {
         'label': 'Region',
         'item_type': 'subjects',
-        'item_class': configs.CLASS_OC_REGION_UUID,
+        'item_class_id': configs.CLASS_OC_REGION_UUID,
         'data_type': 'id',
     },
     {
         'label': 'Site',
         'item_type': 'subjects',
-        'item_class': configs.CLASS_OC_REGION_UUID,
+        'item_class_id': configs.CLASS_OC_REGION_UUID,
         'data_type': 'id',
     },
 ]

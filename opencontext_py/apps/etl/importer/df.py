@@ -41,11 +41,24 @@ ds_source = load_csv_for_etl(project, file_path, source_exists="replace")
 df_etl = db_make_dataframe_from_etl_data_source(ds_source, use_column_labels=True)
 """
 
+# How many rows will we update in 1 database query?
+DB_ROW_UPDATE_CHUNK_SIZE = 100
+
+
+def chunk_list(list_name, n=DB_ROW_UPDATE_CHUNK_SIZE):
+    """Breaks a long list into chunks of size n"""
+    for i in range(0, len(list_name), n):
+        yield list_name[i:i + n]
+
 
 def db_make_dataframe_from_etl_data_source(
     ds_source, 
-    include_uuid_cols=False, 
-    use_column_labels=False
+    include_uuid_cols=False,
+    include_error_cols=False,
+    use_column_labels=False,
+    limit_field_num_list=None,
+    limit_row_num_start=None,
+    limit_row_count=None,
 ):
     """Makes a dataframe from the etl ds_source
     
@@ -65,7 +78,20 @@ def db_make_dataframe_from_etl_data_source(
     df = pd.DataFrame(data=data)
 
     # Get the queryset of records for this data source.
-    ds_recs_qs = DataSourceRecord.objects.filter(data_source=ds_source).iterator()
+    ds_recs_qs = DataSourceRecord.objects.filter(data_source=ds_source)
+
+    if limit_field_num_list:
+        # We're limiting the query set to a list of field_nums.
+        ds_recs_qs = ds_recs_qs.filter(field_num__in=limit_field_num_list)
+    
+    if limit_row_num_start is not None and limit_row_count is not None:
+        # We're limiting the query set a range of rows.
+        ds_recs_qs = ds_recs_qs.filter(
+            row_num__gte=limit_row_num_start,
+            row_num__lt=(limit_row_num_start + limit_row_count),
+        )
+
+    ds_recs_qs = ds_recs_qs.iterator()
     prior_row_num = 1
     row_data = {}
     for ds_rec in ds_recs_qs:
@@ -76,17 +102,23 @@ def db_make_dataframe_from_etl_data_source(
         # Make a row dictionary.
         row_data['row_num'] = ds_rec.row_num
         if include_uuid_cols:
-            context = ''
-            item = ''
+            context = None
+            item = None
             if ds_rec.context:
                 context = str(ds_rec.context.uuid)
             if ds_rec.item:
                 item = str(ds_rec.item.uuid)
             row_data[f'{ds_rec.field_num}_context'] = context
             row_data[f'{ds_rec.field_num}_item'] = item
+        if include_error_cols:
+            row_data[f'{ds_rec.field_num}_reconcile_errors'] = None
         row_data[f'{ds_rec.field_num}_col'] = ds_rec.record
     # Now add the final row.
     df = df.append(row_data, ignore_index=True)
+
+    # Fill na with empty strings for missing records.
+    for df_field in ds_fields_qs:
+        df[f'{df_field.field_num}_col'].fillna('', inplace=True)
 
     # We want to replace the numeric column names with corresponding
     # field labels.

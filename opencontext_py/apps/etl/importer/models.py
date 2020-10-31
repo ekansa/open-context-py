@@ -113,6 +113,13 @@ class DataSourceField(models.Model):
         on_delete=models.CASCADE, 
         default=configs.DEFAULT_CLASS_UUID,
     )
+    context = models.ForeignKey(
+        AllManifest, 
+        db_column='context_uuid', 
+        related_name='+', 
+        on_delete=models.CASCADE,
+        null=True,
+    )
     value_prefix = models.TextField(null=True)
     unique_count = models.IntegerField()
     created = models.DateTimeField(auto_now_add=True)
@@ -170,7 +177,8 @@ def get_immediate_context_parent_obj_db(child_field_obj):
     ).first()
     if not p_annotation:
         return None
-    return p_assert.subject_field
+    return p_annotation.subject_field
+
 
 def get_immediate_context_children_objs_db(parent_field_obj):
     """Get the immediate (spatial) context children of a parent_field_obj"""
@@ -181,6 +189,7 @@ def get_immediate_context_children_objs_db(parent_field_obj):
             predicate_id=configs.PREDICATE_CONTAINS_UUID,
         )
     ]
+
 
 def validate_context_subject_objects(subject_field_obj, object_field_obj, raise_on_error=True):
     """Validates the correct item-types for subject and object fields."""
@@ -240,8 +249,6 @@ def validate_context_assertion(
             f'Parent field object {subject_field_obj.label} too deep in hierarchy'
         )
     return True
-
-
 
 
 # Records data source annotations for modeling ETL (extract transform load)

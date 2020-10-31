@@ -36,9 +36,10 @@ logger = logging.getLogger("tests-regression-logger")
 def test_load_ds_source():
     """Tests the creation of a ds_source object from a CSV file."""
     ds_source = get_or_load_test_data_dataframe(TEST_SOURCE_ID, TEST_FILE)
+    cleanup_etl_test_entities()
     assert ds_source.field_count > 0
     assert ds_source.row_count > 0
-
+    
 
 @pytest.mark.django_db
 def test_set_ds_fields_subjects():
@@ -54,3 +55,4 @@ def test_set_ds_fields_subjects():
             label=attrib_dict['label']
         ).first()
         assert ds_field.item_type == 'subjects'
+    cleanup_etl_test_entities()
