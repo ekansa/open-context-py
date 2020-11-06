@@ -59,7 +59,66 @@ SUBJECTS_FIELDS_ATTRIBUTE_DICTS = [
     },
 ]
 
+VALID_HIERARCHY_ANNOTATIONS = [
+    # Note the annotation order does not hve the root first.
+    ('Region', configs.PREDICATE_CONTAINS_UUID, 'Site',),
+    ('World Region', configs.PREDICATE_CONTAINS_UUID, 'Realm',),
+    ('Realm', configs.PREDICATE_CONTAINS_UUID, 'Region',),
+]
 
+# Attribute dicts for predicates, types, variables and values fields
+PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS = [
+    {
+        'label': 'Site Type',
+        'item_type': 'types',
+        'data_type': 'id',
+    },
+    {
+        'label': 'Site Attribute',
+        'item_type': 'variables',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'id',
+    },
+    {
+        'label': 'Site Attribute Type',
+        'item_type': 'types',
+        'data_type': 'id',
+    },
+    {
+        'label': 'Site Notes',
+        'item_type': 'predicates',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'xsd:string',
+    },
+    {
+        'label': 'Last Wikipedia Edit',
+        'item_type': 'predicates',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'xsd:date',
+    },
+    {
+        'label': 'Population Count',
+        'item_type': 'variables',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'xsd:integer',
+    },
+    {
+        'label': 'Population Value',
+        'item_type': 'values',
+        'data_type': 'xsd:integer',
+    },
+    {
+        'label': 'Location Note',
+        'item_type': 'predicates',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'xsd:string',
+    },
+]
+
+VARIABLES_VALUES_ANNOTATIONS = [
+    ('Site Attribute', configs.PREDICATE_RDFS_RANGE_UUID, 'Site Attribute Type',),
+    ('Population Count', configs.PREDICATE_RDFS_RANGE_UUID, 'Population Value',),
+]
 
 def get_test_file_path(test_file):
     """Gets the path to a test file"""
@@ -99,7 +158,61 @@ def update_fields_attributes(ds_source, list_attribute_dicts):
     # We assume we'll be matching on column label
     # for this.
     for attrib_dict in list_attribute_dicts:
-        ds_field = DataSourceField.objects.filter(
+        DataSourceField.objects.filter(
             data_source=ds_source,
             label=attrib_dict['label']
         ).update(**attrib_dict)
+
+
+@pytest.mark.django_db
+def setup_valid_spatial_containment_annotations(
+    ds_source, 
+    anno_tups=VALID_HIERARCHY_ANNOTATIONS
+):
+    """Sets up a valid spatial containment hierarchy between fields"""
+    update_fields_attributes(
+        ds_source, 
+        list_attribute_dicts=SUBJECTS_FIELDS_ATTRIBUTE_DICTS,
+    )
+    for sub_field_label, predicate_id, obj_field_label in anno_tups:
+        sub_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=sub_field_label
+        ).first()
+        obj_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=obj_field_label
+        ).first()
+        dsa = DataSourceAnnotation()
+        dsa.data_source = ds_source
+        dsa.subject_field = sub_field
+        dsa.predicate_id = predicate_id
+        dsa.object_field = obj_field
+        dsa.save()
+
+
+@pytest.mark.django_db
+def setup_preds_types_vars_vals_fields_annotations(
+    ds_source, 
+    anno_tups=VARIABLES_VALUES_ANNOTATIONS,
+):
+    """Sets up a valid spatial containment hierarchy between fields"""
+    update_fields_attributes(
+        ds_source, 
+        list_attribute_dicts=PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS,
+    )
+    for sub_field_label, predicate_id, obj_field_label in anno_tups:
+        sub_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=sub_field_label
+        ).first()
+        obj_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=obj_field_label
+        ).first()
+        dsa = DataSourceAnnotation()
+        dsa.data_source = ds_source
+        dsa.subject_field = sub_field
+        dsa.predicate_id = predicate_id
+        dsa.object_field = obj_field
+        dsa.save()

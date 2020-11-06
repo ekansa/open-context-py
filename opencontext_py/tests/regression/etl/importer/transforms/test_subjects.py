@@ -29,8 +29,10 @@ from opencontext_py.tests.regression.etl.importer.df_datasources import (
     TEST_SOURCE_UUID,
     TEST_FILE,
     SUBJECTS_FIELDS_ATTRIBUTE_DICTS,
+    VALID_HIERARCHY_ANNOTATIONS,
     get_or_load_test_data_dataframe,
     update_fields_attributes,
+    setup_valid_spatial_containment_annotations,
 )
 
 
@@ -78,13 +80,6 @@ BAD_HIERARCHY_ANNOTATIONS = [
 
 EXPECTED_ROOT_FIELD = 'World Region'
 EXPECTED_DEEPEST_FIELD = 'Site'
-
-VALID_HIERARCHY_ANNOTATIONS = [
-    # Note the annotation order does not hve the root first.
-    ('Region', configs.PREDICATE_CONTAINS_UUID, 'Site',),
-    (EXPECTED_ROOT_FIELD, configs.PREDICATE_CONTAINS_UUID, 'Realm',),
-    ('Realm', configs.PREDICATE_CONTAINS_UUID, 'Region',),
-]
 
 # The following list tests the expected creation of manifest objects
 # with item_type subjects and the expected spatial hierarchy for 
@@ -186,30 +181,6 @@ def test_bad_spatial_containment_heirarchies_annotations():
                 dsa.save()
                 assert len(str(dsa.uuid)) > 0
     cleanup_etl_test_entities()
-
-
-@pytest.mark.django_db
-def setup_valid_spatial_containment_annotations(ds_source, anno_tups):
-    """Sets up a valid spatial containment hierarchy between fields"""
-    update_fields_attributes(
-        ds_source, 
-        list_attribute_dicts=SUBJECTS_FIELDS_ATTRIBUTE_DICTS,
-    )
-    for sub_field_label, predicate_id, obj_field_label in anno_tups:
-        sub_field = DataSourceField.objects.filter(
-            data_source=ds_source,
-            label=sub_field_label
-        ).first()
-        obj_field = DataSourceField.objects.filter(
-            data_source=ds_source,
-            label=obj_field_label
-        ).first()
-        dsa = DataSourceAnnotation()
-        dsa.data_source = ds_source
-        dsa.subject_field = sub_field
-        dsa.predicate_id = predicate_id
-        dsa.object_field = obj_field
-        dsa.save()
 
 
 @pytest.mark.django_db

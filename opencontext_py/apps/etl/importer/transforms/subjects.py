@@ -54,8 +54,19 @@ def get_ds_fields_in_containment(ds_source):
 
 def get_contain_and_non_containment_subject_fields(ds_source):
     """Gets data source fields for item_type='subjects' that are and are not in containment relations"""
-    contain_fields = get_ds_fields_in_containment(ds_source)
+    contain_paths = get_containment_fields_in_hierarchy(ds_source)
+    # This makes a "flat list" of each item_type='subjects' field in
+    # a containment hierarchy in order of most general (parent) fields
+    # to more specific child fields.
+    contain_fields = []
+    for path in contain_paths:
+        for ds_field in path:
+            if ds_field in contain_fields:
+                continue
+            contain_fields.append(ds_field)
+    
     contain_uuids = [f.uuid for f in contain_fields]
+
     non_contain_subj_fields_qs = DataSourceField.objects.filter(
         data_source=ds_source,
         item_type='subjects',
@@ -209,9 +220,12 @@ def make_containment_assertions_for_ds_field(df, ds_field):
         )
 
 
-def reconcile_item_type_subjects(ds_source):
+def reconcile_item_type_subjects(ds_source, df=None):
     """Reconciles all item_type='subjects' fields in a data_source"""
-    df = get_item_type_subjects_df(ds_source)
+    if df is None:
+        # We get the dataframe of subjects only fields.
+        df = get_item_type_subjects_df(ds_source)
+
     if df is None:
         # We have no fields of item_type = 'subjects'
         # to reconcile.
@@ -240,7 +254,8 @@ def reconcile_item_type_subjects(ds_source):
         )
     
     # Finally, make spatial containment assertions items in each of the fields
-    # with containment relations
+    # with containment relations. The contain_fields list should be in order
+    # of bigest (most general) fields followed by more specific child fields.
     for ds_field in contain_fields:
         make_containment_assertions_for_ds_field(df, ds_field)
 

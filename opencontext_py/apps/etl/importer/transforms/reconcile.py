@@ -84,11 +84,29 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         # filter to contextualize)
         man_qs = man_qs.filter(label=item_label)
 
-    if record_item_class is None and ds_field.item_class:
+
+
+    if (record_item_class is None and ds_field.item_class 
+        and str(ds_field.item_class.uuid) != configs.DEFAULT_CLASS_UUID):
         record_item_class = ds_field.item_class
+    
+    if (ds_field.item_type == 'predicates'
+            and (
+                not record_item_class 
+                or 
+                str(record_item_class.uuid) not in configs.CLASS_LIST_OC_PREDICATES
+            )
+    ):
+        # We are attempting to reconcile an item_type = 'predicates'
+        # item, but we don't have a correct record_item_class set. So
+        # default to the class for a variable (not a link)
+        record_item_class = AllManifest.objects.filter(
+            uuid=configs.CLASS_OC_VARIABLES_UUID
+        ).first()
 
     if record_item_class:
         man_qs = man_qs.filter(item_class=record_item_class)
+
 
     more_filter_args = ds_field.meta_json.get('reconcile_filter_args')
     more_exclude_args = ds_field.meta_json.get('reconcile_exclude_args')
@@ -113,6 +131,7 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         # We didn't find a match, but we lack the context to mint
         # a new item. This is likely a result of a subjects item that
         # we tried to match, but we lack context to assign it.
+        logger.info(f'NEED CONTEXT to make {ds_field.item_type}: {item_label}')
         return None, made_new, 0
 
     # Make a new Manifest item
@@ -128,8 +147,6 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
     if record_item_class:
         man_dict['item_class'] = record_item_class
 
-    item_obj = AllManifest(**man_dict)
-
     try:
         item_obj = AllManifest(**man_dict)
         item_obj.save()
@@ -141,22 +158,31 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
 
 
 
-def get_predicate_list_subject_is_super_objects(only_spatial_contains):
+def get_predicate_list_subject_is_super_objects(only_spatial_contains, only_variable_range=False):
     """Gets a list of predicates where the subject is super (parent) of objects"""
     if only_spatial_contains:
         return [configs.PREDICATE_CONTAINS_UUID]
+    if only_variable_range:
+        return [configs.PREDICATE_RDFS_RANGE_UUID]
     return (
         configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
         + configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
+        # This is for field type variable -> value annotations.
+        + [configs.PREDICATE_RDFS_RANGE_UUID]
     )
 
 def get_immediate_parent_field_objs_db(child_field_obj):
     """Get the immediate parents of a child ds_field object using DB"""
+    only_spatial_contains = False
+    only_variable_range = False
     if child_field_obj.item_type == 'subjects':
         only_spatial_contains = True
+    
+    if child_field_obj.item_type in ['types', 'values']:
+        only_variable_range = True
 
     pred_list_sbj_is_super_obj = get_predicate_list_subject_is_super_objects(
-        only_spatial_contains
+        only_spatial_contains, only_variable_range
     )
     subj_super_qs = DataSourceAnnotation.objects.filter(
         object_field=child_field_obj,
@@ -165,9 +191,9 @@ def get_immediate_parent_field_objs_db(child_field_obj):
     )
     all_parents = [a.subject_field for a in subj_super_qs]
 
-    if only_spatial_contains:
+    if only_spatial_contains or only_variable_range:
         # Our work is done, spatial containment hierarchies are defined in
-        # only one direction.
+        # only one direction. Same with relations to variable fields.
         return all_parents
     
     subj_subord_qs = DataSourceAnnotation.objects.filter(
@@ -183,13 +209,18 @@ def get_immediate_parent_field_objs_db(child_field_obj):
 
 def get_immediate_child_field_objs_db(parent_field_obj):
     """Get the immediate children fields of a parent field object using DB"""
+    only_spatial_contains = False
+    only_variable_range = False
     if parent_field_obj.item_type == 'subjects':
         only_spatial_contains = True
+    
+    if parent_field_obj.item_type in ['variables', 'predicates']:
+        only_variable_range = True
 
     # item_type subjects only have 1 possible kind of hierarchy relation
     # that we care about in this function.
     pred_list_sbj_is_super_obj = get_predicate_list_subject_is_super_objects(
-        only_spatial_contains
+        only_spatial_contains, only_variable_range
     )
 
     subj_super_qs = DataSourceAnnotation.objects.filter(
@@ -200,14 +231,15 @@ def get_immediate_child_field_objs_db(parent_field_obj):
         object_field=None,
     )
     all_children = [a.object_field for a in subj_super_qs]
-    if only_spatial_contains:
+    if only_spatial_contains or only_variable_range:
         # Our work is done! Spatial hierarchy only works in one direction, with
         # a subject_field as parent of a child object_field.
+        # Similarly with variables fields.
         return all_children
 
     # When item_type is not "subjects", there may be cases where the subject_field
     # is a child of a parent object_field. Query for that below.
-    subj_subord_qs = AllAssertion.objects.filter(
+    subj_subord_qs = DataSourceAnnotation.objects.filter(
         object_field=parent_field_obj,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
         subject_field__data_type='id',
@@ -284,7 +316,7 @@ def df_reconcile_id_field(
             df.loc[act_index, col_item] = str(item_obj.uuid)
             for rows in etl_df.chunk_list(df[act_index]['row_num'].unique().tolist()):
                 # Update the context and the item fields form this ds_field.
-                # Storing these data will let us make assertions about the the 
+                # Storing these data will let us make assertions about the
                 # item_obj that we just created or reconciled.
                 DataSourceRecord.objects.filter(
                     data_source=ds_field.data_source,
@@ -309,7 +341,7 @@ def df_reconcile_id_field(
                     # within the context of an item_type = 'predicates' context.
                     next_context = item_obj
                 elif (
-                        ds_field.item_type in ['subjects', 'predicates'] 
+                        ds_field.item_type in ['subjects', 'predicates',] 
                         and context.item_type in ['subjects', 'predicates']
                     ):
                     # We don't have an item_obj, so use the current context to 
