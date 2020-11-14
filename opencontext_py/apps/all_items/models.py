@@ -747,6 +747,9 @@ class AllManifest(models.Model):
         self.make_slug_and_sort()
         super(AllManifest, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return f'{self.uuid}: {self.label}; {self.item_type}'
+
     class Meta:
         db_table = 'oc_all_manifest'
 
@@ -1709,6 +1712,7 @@ class AllAssertion(models.Model):
         self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
 
         self.uuid = self.primary_key_create_for_self()
+
         # Make sure that the data_type expected of the predicate is enforced.
         self.validate_predicate_objects()
         # Make sure hierarchy assertions are valid, not circular
@@ -1736,6 +1740,25 @@ class AllAssertion(models.Model):
             )
 
         super(AllAssertion, self).save(*args, **kwargs)
+
+    def __str__(self):
+        out = (
+            f'{self.uuid}: {self.subject.label} [{self.subject.uuid}] '
+            f'-> {self.predicate.label} [{self.predicate.uuid}] -> '
+        )
+        if self.predicate.data_type == 'id':
+            out += f'{self.object.label} [{self.object.uuid}]'
+        elif self.predicate.data_type == 'xsd:string':
+            out += f'"{self.obj_string[:20]}"'
+        elif self.predicate.data_type == 'xsd:boolean':
+            out += f'{self.obj_boolean}'
+        elif self.predicate.data_type == 'xsd:integer':
+            out += f'{self.obj_integer}'
+        elif self.predicate.data_type == 'xsd:double':
+            out += f'{self.obj_double}'
+        elif self.predicate.data_type == 'xsd:date':
+            out += f'{self.obj_datetime}'
+        return out
 
     class Meta:
         db_table = 'oc_all_assertions'
