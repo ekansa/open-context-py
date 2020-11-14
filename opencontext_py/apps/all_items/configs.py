@@ -106,6 +106,8 @@ MANIFEST_META_JSON_KEYS = {
     ('tables', 'edit_status', int,),
     ('tables', 'view_group_id', int,),
     ('tables', 'edit_group_id', int,),
+
+    ('predicates', 'sort', int,),
     
     # Persons related metadata keys.
     ('persons', 'combined_name', str,),
@@ -183,6 +185,12 @@ PREDICATE_GEO_OVERLAY_UUID = '6531aee0-c19d-630d-ed5e-d02c9ea92723'
 PREDICATE_OC_HAS_ICON_UUID = '00000000-6e24-f67a-9c19-09c9e320443c'
 # OC-General Predicate 'Has technique'
 PREDICATE_OC_HAS_TECHNIQUE_UUID = '00000000-6e24-7a66-2fff-65ea5fabd642'
+
+# These are used for ETL (data ingest) modeling purposes
+PREDICATE_OC_ETL_DESCRIBED_BY = 'c1745101-16a7-87e0-25ce-00f52da37f60'  # 'oc-gen:etl-described-by'
+PREDICATE_OC_ETL_MEDIA_PART_OF = '931c8f69-e7ab-7a3f-109c-80f5322846f9' # 'oc-gen:etl-media-part-of'
+PREDICATE_OC_ETL_HAS_METADATA = '739a6d12-fdf7-6976-babd-962818b4a4cc' # 'oc-gen:etl-has-metadata'
+
 
 # OC-General Resource Classes:
 OC_RESOURCE_FULLFILE_UUID = '00000000-6e24-dbd6-3608-9961b99c331b'
