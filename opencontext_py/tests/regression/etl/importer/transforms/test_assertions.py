@@ -52,12 +52,20 @@ EXPECTED_PREDICATES_TYPES_RELATIONS = [
     ('Construction Technique', 'Foraged iron',),
     ('Construction Technique', 'Excavated',),
     ('Geology', 'Volcanic',),
-    ('Geology', 'Mithril veins',),
+    ('Geology', 'Mithril ore',),
     ('Site Type', 'Tower',),
-    ('Site Type', 'Dungeon',),
+    ('Site Type', 'Mine',),
 ]
 
 EXPECTED_ASSERTIONS_LITERALS = [
+    # NOTE: These are for testing the expected presence of assertions with
+    # literal objects. The tuples are as follows:
+    #
+    # (subject_label, subject_path_exclude, predicate_label, data_type, literal_value,)
+    #
+    ('Mordor', None, 'Other Realm Name', 'xsd:string', 'Land of Shadow',),
+    ('Rohan', None, 'Other Realm Name', 'xsd:string', 'Riddermark',),
+    ('Rohan', None, 'Other Realm Name', 'xsd:string', 'Calenardhon',),
     ('Gorgoroth', None, 'Region Notes', 'xsd:string', 'It is a barren wasteland',),
     ('Gorgoroth', None, 'Region Notes', 'xsd:string', 'There is evil there that does not sleep',),
     ('Misty Mountains', None, 'Region Notes', 'xsd:string', 'Has deep roots',),
@@ -70,6 +78,25 @@ EXPECTED_ASSERTIONS_LITERALS = [
     ('Mt. Doom', 'Mordor', 'Site Notes', 'xsd:string', 'A 2nd “Mt. Doom”',),
     ('Mt. Doom', 'Mordor', 'Last Wikipedia Edit [Note]', 'xsd:string', 'As if!',),
     ('Mt. Doom', 'Mordor', 'All [Note]', 'xsd:string', 'Fake',),
+]
+
+EXPECTED_ASSERTIONS_NAMED_ENTITIES = [
+    # NOTE: These are for testing the expected presence of assertions with
+    # named entity (item_type='types') objects. The tuples are as follows:
+    #
+    # (subject_label, subject_path_exclude, predicate_label, type_label,)
+    #
+    ('Barad-dûr', None, 'Site Type', 'Tower',),
+    ('Barad-dûr', None, 'Construction Technique', 'Foraged iron',),
+    ('Isengard', None, 'Site Type', 'Tower',),
+    ('Moria', None, 'Site Type', 'Mine',),
+    ('Moria', None, 'Geology', 'Mithril ore',),
+    # NOTE: This is to make sure the Mt. Doom in Mordor gets the correct types.
+    ('Mt. Doom', 'Misty Mountains', 'Site Type', 'Mountain',),
+    ('Mt. Doom', 'Misty Mountains', 'Geology', 'Volcanic',),
+    # NOTE: This is the tricky 2nd 'Mt. Doom' that is NOT in Mordor.
+    ('Mt. Doom', 'Mordor', 'Site Type', 'Non-Tolkien',),
+    ('Mt. Doom', 'Mordor', 'Construction Technique', 'Faked',),
 ]
 
 @pytest.mark.django_db
@@ -110,6 +137,7 @@ def test_descriptive_assertions():
     _ = etl_subjects.reconcile_item_type_subjects(ds_source)
     _ = etl_p_t_v.reconcile_predicates_types_variables(ds_source)
     etl_asserts.make_all_descriptive_assertions(ds_source, log_new_assertion=True)
+    # NOTE: This checks descriptive assertions that have literals as objects.
     for subj_label, subj_path_exclude, pred_label, data_type, literal in EXPECTED_ASSERTIONS_LITERALS:
         object_val = etl_utils.validate_transform_data_type_value(
             literal, 
@@ -141,6 +169,32 @@ def test_descriptive_assertions():
             act_assert_qs = act_assert_qs.filter(obj_datetime=object_val)
         logger.info(
             f'Check {man_subj.label} -> {pred_label} -> {object_val}'
+        )
+        # We should expect 1 and only 1 assertion to fit our expectations.
+        assert len(act_assert_qs) == 1
+    # NOTE: This checks descriptive assertions that have named entities as objects.
+    for subj_label, subj_path_exclude, pred_label, obj_label in EXPECTED_ASSERTIONS_NAMED_ENTITIES:
+        man_subj_qs = AllManifest.objects.filter(
+            project=ds_source.project,
+            item_type='subjects',
+            label=subj_label
+        )
+        if subj_path_exclude:
+            # We want to exclude something from the path
+            # when looking up the subject entity.
+            man_subj_qs = man_subj_qs.exclude(
+                path__contains=subj_path_exclude
+            )
+        man_subj = man_subj_qs.first()
+        act_assert_qs = AllAssertion.objects.filter(
+            project=ds_source.project,
+            subject=man_subj,
+            predicate__label=pred_label,
+            predicate__data_type='id',
+            object__label=obj_label,
+        )
+        logger.info(
+            f'Check {man_subj.label} -> {pred_label} -> {obj_label}'
         )
         # We should expect 1 and only 1 assertion to fit our expectations.
         assert len(act_assert_qs) == 1

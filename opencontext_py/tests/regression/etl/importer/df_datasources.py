@@ -69,6 +69,12 @@ VALID_HIERARCHY_ANNOTATIONS = [
 # Attribute dicts for predicates, types, variables and values fields
 PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS = [
     {
+        'label': 'Other Realm Name',
+        'item_type': 'predicates',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'xsd:string',
+    },
+    {
         'label': 'Region Notes',
         'item_type': 'predicates',
         'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
@@ -128,6 +134,7 @@ VARIABLES_VALUES_ANNOTATIONS = [
 
 SIMPLE_DESCRIPTION_ANNOTATIONS = [
     # These provide descriptive relationships for entities in the subject_field.
+    ('Realm', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Other Realm Name',),
     ('Region', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Region Notes',),
     ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Site Type',),
     ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Site Attribute',),
