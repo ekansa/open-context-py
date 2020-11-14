@@ -197,11 +197,6 @@ def make_containment_assertions_for_ds_field(df, ds_field):
         child_obj = AllManifest.objects.filter(uuid=item_uuid).first()
         if not context or not child_obj:
             continue
-        # OK, we're now read to make an assertion relationship.
-        logger.info(
-            f'Assert {context.label} ({context.uuid}) -> contains '
-            f'-> {child_obj.label} ({child_obj.uuid})'
-        )
         assert_dict = {
             'project': ds_field.data_source.project,
             'publisher': ds_field.data_source.project.publisher,
@@ -218,6 +213,8 @@ def make_containment_assertions_for_ds_field(df, ds_field):
             ),
             defaults=assert_dict
         )
+        # OK, we're now read to make an assertion relationship.
+        logger.info(ass_obj)
 
 
 def reconcile_item_type_subjects(ds_source, df=None):

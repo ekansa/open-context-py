@@ -51,13 +51,13 @@ def get_variable_paired_with_types_annotation_qs(ds_source):
 
 def get_predicates_types_variables_df(ds_source):
     """Makes a data frame with predicate, types, variables, fields"""
-    preds_types_fields_qs = DataSourceField.objects.filter(
+    fields_qs = DataSourceField.objects.filter(
         data_source=ds_source,
         item_type__in=['predicates', 'types', 'variables'],
     )
-    if not len(preds_types_fields_qs):
+    if not len(fields_qs):
         return None
-    limit_field_num_list = [f.field_num for f in preds_types_fields_qs]
+    limit_field_num_list = [f.field_num for f in fields_qs]
     df = etl_df.db_make_dataframe_from_etl_data_source(
         ds_source, 
         include_uuid_cols=True,

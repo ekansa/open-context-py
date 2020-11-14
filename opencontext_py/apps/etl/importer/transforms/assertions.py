@@ -1,0 +1,364 @@
+import json
+import logging
+
+import numpy as np
+import pandas as pd
+
+from django.db.models import Q
+
+from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllAssertion,
+)
+
+from opencontext_py.apps.etl.importer.models import (
+    DataSource,
+    DataSourceField,
+    DataSourceRecord,
+    DataSourceAnnotation,
+    get_immediate_context_parent_obj_db,
+    get_immediate_context_children_objs_db,
+)
+from opencontext_py.apps.etl.importer import df as etl_df
+from opencontext_py.apps.etl.importer import utilities as etl_utils
+from opencontext_py.apps.etl.importer.transforms import reconcile
+
+
+logger = logging.getLogger("etl-importer-logger")
+
+# ---------------------------------------------------------------------
+# NOTE: These functions manage the transformations for making
+# assertions on already reconciled entities. These assertions will
+# typically include assertions about literal values.
+# ---------------------------------------------------------------------
+
+LITERAL_ATTRIBUTE_DATA_TYPES = [
+    ('obj_string', 'xsd:string',),
+    ('obj_boolean', 'xsd:boolean',),
+    ('obj_integer', 'xsd:integer',),
+    ('obj_double', 'xsd:double',),
+    ('obj_datetime',  'xsd:date',),
+]
+
+# These are attributes needed to calculate the uuid
+# (primary key ID) for a given assertion.
+ASSERT_ID_ATTRIBUTES = [
+    'subject_id',
+    'predicate_id',
+    'object_id',
+    'obj_string',
+    'obj_boolean',
+    'obj_integer',
+    'obj_double',
+    'obj_datetime',
+    'observation_id',
+    'event_id',
+    'attribute_group_id',
+    'language_id',
+]
+
+def update_df_object_column_for_ds_anno(ds_anno, df, act_obj_col=None, act_obj_dt_col=None):
+    """Updates an ETL import dataframe by setting object item and literal columns"""
+    if not act_obj_col:
+        act_obj_col = f'assertion_object__{ds_anno.data_source.source_id}'
+    if not act_obj_dt_col:
+        act_obj_dt_col = f'assertion_object_dt__{ds_anno.data_source.source_id}'
+    
+    # Set the columns with empty values.
+    df[act_obj_col] = np.nan
+    df[act_obj_dt_col] = np.nan
+
+    if not ds_anno.object_field:
+        # We're trying to assign a preset literal value.
+        for lit_attrib, data_type in LITERAL_ATTRIBUTE_DATA_TYPES:
+            literal_val = getattr(ds_anno, lit_attrib)
+            if not literal_val:
+                continue
+            df[act_obj_col] = literal_val
+            df[act_obj_dt_col] = data_type
+        return df
+    
+    object_field = ds_anno.object_field
+    act_item_obj_col = f'{object_field.field_num}_item'
+    act_item_literal_col = f'{object_field.field_num}_col'
+    df[act_obj_dt_col] = object_field.data_type
+    if object_field.data_type != 'id':
+        # Copy literal (non-named entity) values 
+        df[act_obj_col] = df[act_item_literal_col]
+    else:
+        # Copy the already reconciled uuids to named entities
+        df[act_obj_col] = df[act_item_obj_col]
+    return df
+
+
+def get_make_note_predicate_for_invalid_literal_db(
+    ds_source, 
+    predicate_uuid, 
+    sort,
+    add_assoction_uuid=None
+):
+    """Gets a note predicate for use with a literal value that is not valid"""
+    # Get the manifest object for the literal predicate for which we 
+    # have an object value with the wrong data_type.
+    man_obj = AllManifest.objects.filter(uuid=predicate_uuid).first()
+    if not man_obj:
+        return None
+    pred_note_label = f'{man_obj.label} [Note]'
+    pred_note_obj = AllManifest.objects.filter(
+        label=pred_note_label,
+        item_type='predicates',
+        project=ds_source.project,
+        data_type='xsd:string',
+        item_class_id=configs.CLASS_OC_VARIABLES_UUID,
+    ).first()
+    if pred_note_obj:
+        return pred_note_obj
+
+    # Make a new Manifest item
+    man_dict = {
+        'publisher': ds_source.publisher,
+        'project': ds_source.project,
+        'source_id': ds_source.source_id,
+        'item_type': 'predicates',
+        'data_type': 'xsd:string',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'label': pred_note_label,
+        'context': ds_source.project,
+        'meta_json':  {'sort': sort},
+    }
+
+    try:
+        pred_note_obj = AllManifest(**man_dict)
+        pred_note_obj.save()
+    except:
+        pred_note_obj = None
+    
+    if not pred_note_obj:
+        return None
+
+    logger.info(f'Made note field: {pred_note_obj} from {man_obj}')
+    if pred_note_obj and add_assoction_uuid:
+        # Add an association between the new pred_note_obj
+        # and the literal predicate object.
+        assert_dict = {
+            'project': ds_source.project,
+            'publisher': ds_source.publisher,
+            'source_id': ds_source.source_id,
+            'subject': pred_note_obj,
+            'predicate_id': add_assoction_uuid,
+            'object': man_obj,
+        }
+        ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(
+                subject_id=assert_dict['subject'].uuid,
+                predicate_id=assert_dict['predicate_id'],
+                object_id=assert_dict['object'].uuid,
+            ),
+            defaults=assert_dict
+        )
+    return pred_note_obj
+
+
+def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_new_assertion=False):
+    """Make a descriptive assertion based on a ds_anno object"""
+    ds_source = ds_anno.data_source
+    act_subj_col = f'assertion_subject_uuid__{ds_source.source_id}'
+    act_pred_col = f'assertion_predicate_uuid__{ds_source.source_id}'
+    act_obs_col = f'assertion_obs_uuid__{ds_source.source_id}'
+    act_event_col = f'assertion_event_uuid__{ds_source.source_id}'
+    act_attrib_group_col = f'assertion_attribute_group_uuid__{ds_source.source_id}'
+    act_lang_col = f'assertion_language_uuid__{ds_source.source_id}'
+    act_obj_col = f'assertion_object__{ds_source.source_id}'
+    act_obj_dt_col = f'assertion_object_dt__{ds_source.source_id}'
+
+    assert_cols = [
+        act_subj_col,
+        act_pred_col,
+        act_obs_col,
+        act_event_col,
+        act_attrib_group_col,
+        act_lang_col,
+        act_obj_col,
+        act_obj_dt_col,
+    ]
+
+    # Set up the subjects of the assertions
+    subj_item_col = f'{ds_anno.subject_field.field_num}_item'
+    df[act_subj_col] = df[subj_item_col]
+
+    # This list of tuples defines which dataframe columns go with which
+    # ds_anno attributes.
+    node_col_attributes = [
+        (act_obs_col, ds_anno.observation_field, ds_anno.observation,),
+        (act_event_col, ds_anno.event_field, ds_anno.event,),
+        (act_attrib_group_col, ds_anno.attribute_group_field, ds_anno.attribute_group,),
+        (act_lang_col, ds_anno.language_field, ds_anno.language,),
+    ]
+    for df_node_col, ds_node_field, ds_node_obj in node_col_attributes:
+        if ds_node_field:
+            # Multiple node entities come from this node_field.
+            # copy them in to the df_node_col
+            field_item_col = f'{ds_node_field.field_num}_item'
+            df[df_node_col] = df[field_item_col]
+            continue
+        # The simple case, where the node is a single object, not 
+        # multiple objects in a field. 
+        # NOTE: this sets all values in the df_node_col to the same value.
+        df[df_node_col] = str(ds_node_obj.uuid)
+    
+    if ds_anno.object_field and ds_anno.object_field.item_type == 'variables':
+        # In this case assertion predicate will come from a 
+        # ds_field of item_type = 'variables', and the objects will
+        # come from an associated item_type = 'values' or 'types' field.
+        var_val_anno = DataSourceAnnotation.objects.filter(
+            data_source=ds_source,
+            subject_field=ds_anno.object_field,
+            predicate_id=configs.PREDICATE_RDFS_RANGE_UUID,
+        ).first()
+        if not var_val_anno:
+            # We can't do a description in a variables field has no
+            # associated values.
+            return None
+        des_pred_field = var_val_anno.subject_field
+        des_pred_col = f'{des_pred_field.field_num}_item'
+        df[act_pred_col] = df[des_pred_col]
+        # Get the columns for the assertion objects.
+        df = update_df_object_column_for_ds_anno(
+            var_val_anno, 
+            df, 
+            act_obj_col=act_obj_col, 
+            act_obj_dt_col=act_obj_dt_col,
+        )
+    else:
+        # This is a simpler case where assertion predicates come from the
+        # context object of the ds_anno object field. The ds_anno object
+        # field will have either literal or named entities as objects of
+        # assertions.
+        if (ds_anno.object_field 
+            and ds_anno.object_field.context 
+            and ds_anno.object_field.context.item_type in ['predicates', 'property', 'class']
+        ):
+            # NOTE: this sets all values in the act_pred_col to the same value.
+            df[act_pred_col] = str(ds_anno.object_field.context.uuid)
+        # Get the columns for the assertion objects.
+        df = update_df_object_column_for_ds_anno(
+            ds_anno, 
+            df, 
+            act_obj_col=act_obj_col, 
+            act_obj_dt_col=act_obj_dt_col,
+        )
+    
+    df_act = df[assert_cols].copy()
+    # Remove rows with null values, these can't have assertions.
+    df_act.dropna(inplace=True)
+    df_grp = df_act.groupby(assert_cols).first().reset_index()
+    sort_denom = 10 * len(df_grp.index)
+
+    # Mappings between literal to note predicates.
+    literal_to_note_preds = {}
+
+    for i, row in df_grp.iterrows():
+        # Start making a dict that includes most of the
+        # assertion's attributes.
+        raw_object_val = str(row[act_obj_col]).strip()
+        if not raw_object_val:
+            # We have a blank value, so skip.
+            continue
+        
+        predicate_uuid = str(row[act_pred_col])
+        if log_new_assertion:
+            logger.info(f'Make assertion on: {predicate_uuid} {raw_object_val}')
+
+        assert_dict = {
+            'project': ds_source.project,
+            'publisher': ds_source.project.publisher,
+            'source_id': ds_source.source_id,
+            'subject_id': str(row[act_subj_col]),
+            'observation_id': str(row[act_obs_col]),
+            'event_id': str(row[act_event_col]),
+            'attribute_group_id': str(row[act_attrib_group_col]),
+            'predicate_id': predicate_uuid,
+            'sort': (ds_anno.object_field.field_num + (i/sort_denom)),
+            'language_id': str(row[act_lang_col]),
+        }
+        if str(row[act_obj_dt_col]) == 'id':
+            # We're making an assertion where the object is a named
+            # entity.
+            assert_dict['object_id'] = raw_object_val
+        else:
+            # We're making an assertion where the object is a 
+            # literal of some data_type.
+            for lit_attrib, data_type in LITERAL_ATTRIBUTE_DATA_TYPES:
+                if str(row[act_obj_dt_col]) != data_type:
+                    # The assertion is not about this data_type
+                    continue
+                # Convert the raw_object_val to an object value that
+                # conforms to the expected data type.
+                object_val = etl_utils.validate_transform_data_type_value(
+                    raw_object_val, 
+                    data_type
+                )
+                if object_val is not None:
+                    # We have a literal value that is valid for this
+                    # assertion. Add it.
+                    assert_dict[lit_attrib] = object_val
+                    continue
+                # We're in a sad situation where the raw_object_val cannot
+                # be parsed into an object_value of the correct data type. So
+                # we need to get or make a new predicate
+                pred_note_obj = literal_to_note_preds.get(predicate_uuid)
+                if invalid_literal_to_str and pred_note_obj is None:
+                    # We don't have an object_val that is
+                    # valid for this data type, so make a string
+                    # literal assertion instead.
+                    pred_note_obj = get_make_note_predicate_for_invalid_literal_db(
+                        ds_source=ds_source, 
+                        predicate_uuid=predicate_uuid, 
+                        sort=ds_anno.object_field.field_num,
+                        add_assoction_uuid=configs.PREDICATE_SKOS_RELATED_UUID,
+                    )
+                    literal_to_note_preds[predicate_uuid] = pred_note_obj
+                if not pred_note_obj:
+                    # We don't have a predicate note object, so skip.
+                    continue
+                assert_dict['predicate_id'] = str(pred_note_obj.uuid)
+                assert_dict['obj_string'] = raw_object_val
+                continue
+        
+        # Make a UUID keyword arg dict for making the assertion uuid.
+        uuid_kargs = {k:assert_dict.get(k) for k in ASSERT_ID_ATTRIBUTES}
+
+        ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(**uuid_kargs),
+            defaults=assert_dict
+        )
+        if log_new_assertion:
+            logger.info(ass_obj)
+
+
+def make_all_descriptive_assertions(ds_source, df=None, invalid_literal_to_str=True, log_new_assertion=False):
+    """Makes descriptive assertions on entities already reconciled in a data source"""
+    if df is None:
+        df = etl_df.db_make_dataframe_from_etl_data_source(
+            ds_source,
+            include_uuid_cols=True,
+        )
+
+    des_ds_anno_qs =  DataSourceAnnotation.objects.filter(
+        data_source=ds_source,
+        subject_field__item_type__in=configs.OC_ITEM_TYPES,
+        predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+    )
+    for ds_anno in des_ds_anno_qs:
+        # Makes descriptive assertions from fields that are related
+        # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
+        make_descriptive_assertions(
+            ds_anno, 
+            df, 
+            invalid_literal_to_str=invalid_literal_to_str,
+            log_new_assertion=log_new_assertion,
+        )
+
+        
+        

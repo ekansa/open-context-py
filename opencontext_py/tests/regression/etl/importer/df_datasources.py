@@ -69,6 +69,12 @@ VALID_HIERARCHY_ANNOTATIONS = [
 # Attribute dicts for predicates, types, variables and values fields
 PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS = [
     {
+        'label': 'Region Notes',
+        'item_type': 'predicates',
+        'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        'data_type': 'xsd:string',
+    },
+    {
         'label': 'Site Type',
         'item_type': 'types',
         'data_type': 'id',
@@ -118,6 +124,16 @@ PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS = [
 VARIABLES_VALUES_ANNOTATIONS = [
     ('Site Attribute', configs.PREDICATE_RDFS_RANGE_UUID, 'Site Attribute Type',),
     ('Population Count', configs.PREDICATE_RDFS_RANGE_UUID, 'Population Value',),
+]
+
+SIMPLE_DESCRIPTION_ANNOTATIONS = [
+    # These provide descriptive relationships for entities in the subject_field.
+    ('Region', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Region Notes',),
+    ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Site Type',),
+    ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Site Attribute',),
+    ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Site Notes',),
+    ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Last Wikipedia Edit',),
+    ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Population Count',),
 ]
 
 def get_test_file_path(test_file):
@@ -196,10 +212,41 @@ def setup_preds_types_vars_vals_fields_annotations(
     ds_source, 
     anno_tups=VARIABLES_VALUES_ANNOTATIONS,
 ):
-    """Sets up a valid spatial containment hierarchy between fields"""
+    """Sets rdfs:range annoations between variable, value fields"""
     update_fields_attributes(
         ds_source, 
         list_attribute_dicts=PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS,
+    )
+    for sub_field_label, predicate_id, obj_field_label in anno_tups:
+        sub_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=sub_field_label
+        ).first()
+        obj_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=obj_field_label
+        ).first()
+        dsa = DataSourceAnnotation()
+        dsa.data_source = ds_source
+        dsa.subject_field = sub_field
+        dsa.predicate_id = predicate_id
+        dsa.object_field = obj_field
+        dsa.save()
+
+
+@pytest.mark.django_db
+def setup_described_by_fields_annotations(
+    ds_source, 
+    anno_tups=SIMPLE_DESCRIPTION_ANNOTATIONS,
+):
+    """Sets described by relationships between fields"""
+    update_fields_attributes(
+        ds_source, 
+        list_attribute_dicts=PREDS_TYPES_VARS_VALS_FIELDS_ATTRIBUTE_DICTS,
+    )
+    setup_preds_types_vars_vals_fields_annotations(
+        ds_source, 
+        anno_tups=VARIABLES_VALUES_ANNOTATIONS,
     )
     for sub_field_label, predicate_id, obj_field_label in anno_tups:
         sub_field = DataSourceField.objects.filter(

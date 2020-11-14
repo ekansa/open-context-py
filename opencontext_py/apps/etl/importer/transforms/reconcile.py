@@ -146,6 +146,10 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
     }
     if record_item_class:
         man_dict['item_class'] = record_item_class
+    if ds_field.item_type == 'predicates':
+        man_dict['meta_json'] = {
+            'sort': ds_field.field_num,
+        }
 
     try:
         item_obj = AllManifest(**man_dict)
