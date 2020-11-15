@@ -58,6 +58,15 @@ ASSERT_ID_ATTRIBUTES = [
     'language_id',
 ]
 
+# These are predicates have special handling, and are NOT to be
+# considered when making linking assertions between named entities.
+LINKS_EXCLUDE_PREDICATE_IDS = [
+    configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+    configs.PREDICATE_CONTAINS_UUID,
+    configs.PREDICATE_OC_ETL_MEDIA_PART_OF,
+]
+
+
 def update_df_object_column_for_ds_anno(ds_anno, df, act_obj_col=None, act_obj_dt_col=None):
     """Updates an ETL import dataframe by setting object item and literal columns"""
     if not act_obj_col:
@@ -237,7 +246,7 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
         # assertions.
         if (ds_anno.object_field 
             and ds_anno.object_field.context 
-            and ds_anno.object_field.context.item_type in ['predicates', 'property', 'class']
+            and ds_anno.object_field.context.item_type in DataSourceAnnotation.PREDICATE_OK_ITEM_TYPES
         ):
             # NOTE: this sets all values in the act_pred_col to the same value.
             df[act_pred_col] = str(ds_anno.object_field.context.uuid)
@@ -254,6 +263,12 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
     df_act.dropna(inplace=True)
     df_grp = df_act.groupby(assert_cols).first().reset_index()
     sort_denom = 10 * len(df_grp.index)
+
+    if ds_anno.object_field:
+        sort_start = ds_anno.object_field.field_num
+    else:
+        # Put this to the very end.
+        sort_start = ds_source.field_count
 
     # Mappings between literal to note predicates.
     literal_to_note_preds = {}
@@ -279,7 +294,7 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
             'event_id': str(row[act_event_col]),
             'attribute_group_id': str(row[act_attrib_group_col]),
             'predicate_id': predicate_uuid,
-            'sort': (ds_anno.object_field.field_num + (i/sort_denom)),
+            'sort': (sort_start + (i/sort_denom)),
             'language_id': str(row[act_lang_col]),
         }
         if str(row[act_obj_dt_col]) == 'id':
@@ -345,12 +360,12 @@ def make_all_descriptive_assertions(ds_source, df=None, invalid_literal_to_str=T
             include_uuid_cols=True,
         )
 
-    des_ds_anno_qs =  DataSourceAnnotation.objects.filter(
+    ds_anno_qs =  DataSourceAnnotation.objects.filter(
         data_source=ds_source,
         subject_field__item_type__in=configs.OC_ITEM_TYPES,
         predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
     )
-    for ds_anno in des_ds_anno_qs:
+    for ds_anno in ds_anno_qs:
         # Makes descriptive assertions from fields that are related
         # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
         make_descriptive_assertions(
@@ -360,5 +375,136 @@ def make_all_descriptive_assertions(ds_source, df=None, invalid_literal_to_str=T
             log_new_assertion=log_new_assertion,
         )
 
+
+def make_link_assertions(ds_anno, df, log_new_assertion=False):
+    """Makes linking assertions between named entities"""
+    ds_source = ds_anno.data_source
+    act_subj_col = f'assertion_subject_uuid__{ds_source.source_id}'
+    act_pred_col = f'assertion_predicate_uuid__{ds_source.source_id}'
+    act_obs_col = f'assertion_obs_uuid__{ds_source.source_id}'
+    act_event_col = f'assertion_event_uuid__{ds_source.source_id}'
+    act_attrib_group_col = f'assertion_attribute_group_uuid__{ds_source.source_id}'
+    act_lang_col = f'assertion_language_uuid__{ds_source.source_id}'
+    act_obj_col = f'assertion_object__{ds_source.source_id}'
+
+    assert_cols = [
+        act_subj_col,
+        act_pred_col,
+        act_obs_col,
+        act_event_col,
+        act_attrib_group_col,
+        act_lang_col,
+        act_obj_col,
+    ]
+
+    # Set up the subjects of the assertions
+    subj_item_col = f'{ds_anno.subject_field.field_num}_item'
+    df[act_subj_col] = df[subj_item_col]
+
+    # This list of tuples defines which dataframe columns go with which
+    # ds_anno attributes.
+    col_attributes = [
+        (act_obs_col, ds_anno.observation_field, ds_anno.observation,),
+        (act_event_col, ds_anno.event_field, ds_anno.event,),
+        (act_attrib_group_col, ds_anno.attribute_group_field, ds_anno.attribute_group,),
+        (act_lang_col, ds_anno.language_field, ds_anno.language,),
+        (act_pred_col, ds_anno.predicate_field, ds_anno.predicate,), 
+        (act_obj_col, ds_anno.object_field, ds_anno.object,), 
+    ]
+
+    for df_col, ds_field, ds_obj in col_attributes:
+        if ds_field:
+            if ds_field.data_type != 'id':
+                # Skip out, we're only dealing with named entities, no literals
+                return None
+            # Multiple node entities come from this ds_field.
+            # copy them in to the df_col
+            field_item_col = f'{ds_field.field_num}_item'
+            df[df_col] = df[field_item_col]
+            continue
+        # The simple case, where the node is a single object, not 
+        # multiple objects in a field. 
+        # NOTE: this sets all values in the df_col to the same value.
+        if ds_obj and ds_obj.data_type != 'id':
+            # Skip out, we're only dealing with named entities, no literals
+            return None
+        df[df_col] = str(ds_obj.uuid)
+    
+    df_act = df[assert_cols].copy()
+    # Remove rows with null values, these can't have assertions.
+    df_act.dropna(inplace=True)
+    df_grp = df_act.groupby(assert_cols).first().reset_index()
+    sort_denom = 10 * len(df_grp.index)
+
+    if ds_anno.predicate_field:
+        sort_start = ds_anno.predicate_field.field_num
+    elif ds_anno.object_field:
+        sort_start = ds_anno.object_field.field_num
+    else:
+        # Put this to the very end.
+        sort_start = ds_source.field_count * 2
+
+    for i, row in df_grp.iterrows():
+        # Start making a dict that includes most of the
+        # assertion's attributes.
+        object_uuid = str(row[act_obj_col])
+        if not object_uuid:
+            continue
+
+        assert_dict = {
+            'project': ds_source.project,
+            'publisher': ds_source.project.publisher,
+            'source_id': ds_source.source_id,
+            'subject_id': str(row[act_subj_col]),
+            'observation_id': str(row[act_obs_col]),
+            'event_id': str(row[act_event_col]),
+            'attribute_group_id': str(row[act_attrib_group_col]),
+            'predicate_id': str(row[act_pred_col]),
+            'sort': (sort_start + (i/sort_denom)),
+            'language_id': str(row[act_lang_col]),
+            'object_id': object_uuid,
+        }
         
+        # Make a UUID keyword arg dict for making the assertion uuid.
+        uuid_kargs = {k:assert_dict.get(k) for k in ASSERT_ID_ATTRIBUTES}
+        ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(**uuid_kargs),
+            defaults=assert_dict
+        )
+        if log_new_assertion:
+            logger.info(ass_obj)
+    
+
+def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False):
+    """Makes linking assertions on entities already reconciled in a data source"""
+    if df is None:
+        df = etl_df.db_make_dataframe_from_etl_data_source(
+            ds_source,
+            include_uuid_cols=True,
+        )
+
+    ds_anno_qs =  DataSourceAnnotation.objects.filter(
+        data_source=ds_source,
+        subject_field__item_type__in=configs.OC_ITEM_TYPES,
+        subject_field__data_type__isnull=False,
+    ).filter(
+        # Make sure the object has a named entity, either a single
+        # named entity (in the 'object' attribute, or a field with
+        # multiple named entities, in the 'object_field' attribute.)
+        Q(object__isnull=False)|Q(object_field__isnull=False)
+    ).filter(
+        # Make sure that the data type for the predicate or the 
+        # predicate_field is 'id' for named entities.
+        Q(predicate__data_type='id')|Q(predicate_field__data_type='id')
+    ).exclude(
+        predicate_id__in=LINKS_EXCLUDE_PREDICATE_IDS
+    )
+    for ds_anno in ds_anno_qs:
+        # Makes link assertions from fields that are related
+        # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
+        make_link_assertions(
+            ds_anno, 
+            df, 
+            log_new_assertion=log_new_assertion,
+        )
         

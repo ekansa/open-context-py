@@ -32,7 +32,7 @@ def validate_transform_data_type_value(raw_str_value, data_type, timezone=tz.UTC
     """Validates the raw value of a data_type"""
     if not raw_str_value:
         return None
-    raw_str_value = raw_str_value.strip()
+    raw_str_value = str(raw_str_value).strip()
     if not raw_str_value:
         return None
     if data_type == 'xsd:string':

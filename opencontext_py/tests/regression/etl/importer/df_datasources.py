@@ -13,7 +13,9 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceRecord,
     DataSourceAnnotation,
 )
+
 from opencontext_py.apps.etl.importer import df as etl_df
+from opencontext_py.apps.etl.importer.transforms import reconcile
 
 from opencontext_py.tests.regression.etl.project_setup import (
     TEST_PROJECT_UUID,
@@ -143,6 +145,34 @@ SIMPLE_DESCRIPTION_ANNOTATIONS = [
     ('Site', configs.PREDICATE_OC_ETL_DESCRIBED_BY, 'Population Count',),
 ]
 
+# Attribute dicts for testing entity linking relationships
+LINKING_FIELDS_ATTRIBUTE_DICTS = [
+    {
+        'label': 'Ruler',
+        'item_type': 'persons',
+        'item_class_id': configs.CLASS_FOAF_PERSON_UUID,
+        'data_type': 'id',
+    },
+    {
+        'label': 'Person',
+        'item_type': 'persons',
+        'item_class_id': configs.CLASS_FOAF_PERSON_UUID,
+        'data_type': 'id',
+    },
+    {
+        'label': 'Relationship',
+        'item_type': 'variables',
+        'item_class_id': configs.CLASS_OC_LINKS_UUID,
+        'data_type': 'id',
+    },
+]
+
+LINKING_ANNOTATIONS = [
+    ('Site', 'Is Ruled By', None, 'Ruler',),
+    ('Site', None, 'Relationship', 'Person',),
+]
+
+
 def get_test_file_path(test_file):
     """Gets the path to a test file"""
     current_path = os.path.dirname(os.path.realpath(__file__))
@@ -268,5 +298,49 @@ def setup_described_by_fields_annotations(
         dsa.data_source = ds_source
         dsa.subject_field = sub_field
         dsa.predicate_id = predicate_id
+        dsa.object_field = obj_field
+        dsa.save()
+        
+
+@pytest.mark.django_db
+def setup_linking_fields_annotations(
+    ds_source, 
+    anno_tups=LINKING_ANNOTATIONS,
+):
+    """Sets described by relationships between fields"""
+    update_fields_attributes(
+        ds_source, 
+        list_attribute_dicts=LINKING_FIELDS_ATTRIBUTE_DICTS,
+    )
+    for sub_field_label, predicate_label, predicate_field_label, obj_field_label in anno_tups:
+        sub_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=sub_field_label
+        ).first()
+        obj_field = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label=obj_field_label
+        ).first()
+
+        pred_obj = None
+        pred_field = None
+        if predicate_label:
+            # Make a predicate manifest object.
+            pred_obj, _, _ = reconcile.get_or_create_single_predicate_manifest_entity(
+                ds_source=ds_source,
+                label=predicate_label,
+            )
+        else:
+            # The predicates for the relationships are values in a field.
+            pred_field = DataSourceField.objects.filter(
+                data_source=ds_source,
+                label=predicate_field_label
+            ).first()
+
+        dsa = DataSourceAnnotation()
+        dsa.data_source = ds_source
+        dsa.subject_field = sub_field
+        dsa.predicate = pred_obj
+        dsa.predicate_field = pred_field
         dsa.object_field = obj_field
         dsa.save()

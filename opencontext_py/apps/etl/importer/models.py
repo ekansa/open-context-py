@@ -399,6 +399,8 @@ class DataSourceAnnotation(models.Model):
         'language_field',
     ]
 
+    PREDICATE_OK_ITEM_TYPES = ['predicates', 'property', 'class', 'variables']
+
     def validate_fields_data_sources(self):
         """Validates that field references are in the same data source"""
         field_attributes = [
@@ -485,6 +487,21 @@ class DataSourceAnnotation(models.Model):
                     f'Need 1 not null field in the {group_name} group, '
                     f'but {count_not_null} are not null.'
                 )
+    
+
+    def validate_predicate_item_type(self):
+        """validate the item type for the predicate, or predicate_field"""
+        if self.predicate and self.predicate.item_type not in self.PREDICATE_OK_ITEM_TYPES:
+            raise ValueError(
+                f'The object {self.predicate.label}; {self.predicate.item_type} '
+                f'cannot be used as a predicate. It must be a {str(self.PREDICATE_OK_ITEM_TYPES)}'
+            )
+        if self.predicate_field and self.predicate_field.item_type not in self.PREDICATE_OK_ITEM_TYPES:
+            raise ValueError(
+                f'The field {self.predicate_field.label}; {self.predicate_field.item_type} '
+                f'cannot be used for predicates. It must be a {str(self.PREDICATE_OK_ITEM_TYPES)}'
+            )
+
 
     def make_obj_string_hash(self, obj_string):
         """Makes an object string hash value"""
@@ -612,6 +629,10 @@ class DataSourceAnnotation(models.Model):
         if self.predicate and str(self.predicate.uuid) == configs.PREDICATE_CONTAINS_UUID:
             # We're attempting to save a containment annotation, so check it.
             validate_context_assertion(self.subject_field, self.object_field)
+        
+        # Validate that the predicate or predicate_field attributes have an
+        # allowed item_type.
+        self.validate_predicate_item_type()
 
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceAnnotation, self).save(*args, **kwargs)

@@ -19,6 +19,7 @@ from opencontext_py.apps.etl.importer.models import (
 
 from opencontext_py.apps.etl.importer.transforms import subjects as etl_subjects
 from opencontext_py.apps.etl.importer.transforms import predicates_types_variables as etl_p_t_v
+from opencontext_py.apps.etl.importer.transforms import general_named_entities as etl_gen
 from opencontext_py.apps.etl.importer.transforms import assertions as etl_asserts
 
 from opencontext_py.apps.etl.importer import utilities as etl_utils
@@ -37,6 +38,7 @@ from opencontext_py.tests.regression.etl.importer.df_datasources import (
     setup_valid_spatial_containment_annotations,
     setup_preds_types_vars_vals_fields_annotations,
     setup_described_by_fields_annotations,
+    setup_linking_fields_annotations,
 )
 
 
@@ -80,23 +82,42 @@ EXPECTED_ASSERTIONS_LITERALS = [
     ('Mt. Doom', 'Mordor', 'All [Note]', 'xsd:string', 'Fake',),
 ]
 
-EXPECTED_ASSERTIONS_NAMED_ENTITIES = [
-    # NOTE: These are for testing the expected presence of assertions with
-    # named entity (item_type='types') objects. The tuples are as follows:
+EXPECTED_DESCRIPTIVE_ASSERTIONS_NAMED_ENTITIES = [
+    # NOTE: These are for testing the expected presence of descriptive 
+    # assertions with named entity objects. The tuples are as follows:
     #
-    # (subject_label, subject_path_exclude, predicate_label, type_label,)
+    # (subject_label, subject_path_exclude, predicate_label, object_item_type, object_label,)
     #
-    ('Barad-dûr', None, 'Site Type', 'Tower',),
-    ('Barad-dûr', None, 'Construction Technique', 'Foraged iron',),
-    ('Isengard', None, 'Site Type', 'Tower',),
-    ('Moria', None, 'Site Type', 'Mine',),
-    ('Moria', None, 'Geology', 'Mithril ore',),
+    ('Barad-dûr', None, 'Site Type', 'types', 'Tower',),
+    ('Barad-dûr', None, 'Construction Technique', 'types', 'Foraged iron',),
+    ('Isengard', None, 'Site Type', 'types', 'Tower',),
+    ('Moria', None, 'Site Type', 'types', 'Mine',),
+    ('Moria', None, 'Geology', 'types', 'Mithril ore',),
     # NOTE: This is to make sure the Mt. Doom in Mordor gets the correct types.
-    ('Mt. Doom', 'Misty Mountains', 'Site Type', 'Mountain',),
-    ('Mt. Doom', 'Misty Mountains', 'Geology', 'Volcanic',),
+    ('Mt. Doom', 'Misty Mountains', 'Site Type', 'types', 'Mountain',),
+    ('Mt. Doom', 'Misty Mountains', 'Geology', 'types', 'Volcanic',),
     # NOTE: This is the tricky 2nd 'Mt. Doom' that is NOT in Mordor.
-    ('Mt. Doom', 'Mordor', 'Site Type', 'Non-Tolkien',),
-    ('Mt. Doom', 'Mordor', 'Construction Technique', 'Faked',),
+    ('Mt. Doom', 'Mordor', 'Site Type', 'types', 'Non-Tolkien',),
+    ('Mt. Doom', 'Mordor', 'Construction Technique', 'types', 'Faked',),
+]
+
+EXPECTED_LINK_ASSERTIONS_NAMED_ENTITIES = [
+    # NOTE: These are for testing the expected presence of linking assertions between
+    # named entities. The tuples are as follows:
+    #
+    # (subject_label, subject_path_exclude, predicate_label, object_item_type, object_label,)
+    #
+    ('Barad-dûr', None, 'Is Ruled By', 'persons', 'Sauron',),
+    ('Barad-dûr', None, 'Overseen by', 'persons', 'Sauron',),
+    ('Barad-dûr', None, 'Has spokes person', 'persons', 'Mouth of Sauron',),
+    ('Isengard', None, 'Is Ruled By', 'persons', 'Saruman',),
+    ('Isengard', None,'Has spokes person', 'persons', 'Wormtounge',),
+    # NOTE: This is to make sure the Mt. Doom in Mordor gets the correct types.
+    ('Mt. Doom', 'Misty Mountains', 'Is Ruled By', 'persons', 'Sauron',),
+    ('Mt. Doom', 'Misty Mountains', 'Overseen by', 'persons', 'Witch King',),
+    # NOTE: This is the tricky 2nd 'Mt. Doom' that is NOT in Mordor.
+    ('Mt. Doom', 'Mordor', 'Is Ruled By', 'persons', 'Eric',),
+    ('Mt. Doom', 'Mordor', 'Avoided by', 'persons', 'Sauron',),
 ]
 
 @pytest.mark.django_db
@@ -173,7 +194,7 @@ def test_descriptive_assertions():
         # We should expect 1 and only 1 assertion to fit our expectations.
         assert len(act_assert_qs) == 1
     # NOTE: This checks descriptive assertions that have named entities as objects.
-    for subj_label, subj_path_exclude, pred_label, obj_label in EXPECTED_ASSERTIONS_NAMED_ENTITIES:
+    for subj_label, subj_path_exclude, pred_label, obj_item_type, obj_label in EXPECTED_DESCRIPTIVE_ASSERTIONS_NAMED_ENTITIES:
         man_subj_qs = AllManifest.objects.filter(
             project=ds_source.project,
             item_type='subjects',
@@ -192,6 +213,47 @@ def test_descriptive_assertions():
             predicate__label=pred_label,
             predicate__data_type='id',
             object__label=obj_label,
+            object__item_type=obj_item_type,
+        )
+        logger.info(
+            f'Check {man_subj.label} -> {pred_label} -> {obj_label}'
+        )
+        # We should expect 1 and only 1 assertion to fit our expectations.
+        assert len(act_assert_qs) == 1
+    cleanup_etl_test_entities()
+
+
+@pytest.mark.django_db
+def test_linking_assertions():
+    """Tests linking assertions made after all ETL"""
+    ds_source = get_or_load_test_data_dataframe(TEST_SOURCE_ID, TEST_FILE)
+    setup_valid_spatial_containment_annotations(ds_source)
+    setup_linking_fields_annotations(ds_source)
+    _ = etl_subjects.reconcile_item_type_subjects(ds_source)
+    _ = etl_p_t_v.reconcile_predicates_types_variables(ds_source)
+    _ = etl_gen.reconcile_general_named_entities(ds_source)
+    etl_asserts.make_all_linking_assertions(ds_source, log_new_assertion=True)
+    # NOTE: This checks descriptive assertions that have named entities as objects.
+    for subj_label, subj_path_exclude, pred_label, obj_item_type, obj_label in EXPECTED_LINK_ASSERTIONS_NAMED_ENTITIES:
+        man_subj_qs = AllManifest.objects.filter(
+            project=ds_source.project,
+            item_type='subjects',
+            label=subj_label
+        )
+        if subj_path_exclude:
+            # We want to exclude something from the path
+            # when looking up the subject entity.
+            man_subj_qs = man_subj_qs.exclude(
+                path__contains=subj_path_exclude
+            )
+        man_subj = man_subj_qs.first()
+        act_assert_qs = AllAssertion.objects.filter(
+            project=ds_source.project,
+            subject=man_subj,
+            predicate__label=pred_label,
+            predicate__data_type='id',
+            object__label=obj_label,
+            object__item_type=obj_item_type,
         )
         logger.info(
             f'Check {man_subj.label} -> {pred_label} -> {obj_label}'

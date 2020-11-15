@@ -29,6 +29,73 @@ logger = logging.getLogger("etl-importer-logger")
 # ---------------------------------------------------------------------
 # NOTE: These functions manage general entity reconciliation
 # ---------------------------------------------------------------------
+def get_or_create_single_predicate_manifest_entity(
+    ds_source, 
+    label,
+    sort=100,
+    item_class_id=configs.CLASS_OC_LINKS_UUID, 
+    data_type='id',
+    new_uuid=None,
+):
+    """Gets or creates a predicate manifest entity after reconciliation"""
+
+    # NOTE: This is usually for making predicates used for linking
+    # relationships, which is why the item_class_id defaults to a 
+    # linking relationship item class.
+
+    # Limit the projects in which we will search for matching spatial items
+    # for this col_record
+    reconcile_project_ids = [configs.OPEN_CONTEXT_PROJ_UUID, str(ds_source.project.uuid)]
+
+    label = AllManifest().clean_label(label)
+
+    man_qs = AllManifest.objects.filter(
+        project_id__in=reconcile_project_ids,
+        item_type='predicates',
+        item_class_id=item_class_id,
+        data_type=data_type,
+        label=label,
+    )
+    
+    # Now handle the results where of our query to attempt to 
+    # find matching records for this specific item.
+    made_new = False
+    num_matching = len(man_qs) 
+    if num_matching == 1:
+        # We have found exactly one match for this, meaning this
+        # entity already exists so return it
+        return man_qs[0], made_new, num_matching
+    elif num_matching > 1:
+        # Too many items found, meaning our reconciliation filters where too
+        # permissive. 
+        return None, made_new, num_matching
+
+    # Make a new Manifest item
+    man_dict = {
+        'publisher': ds_source.publisher,
+        'project': ds_source.project,
+        'source_id': ds_source.source_id,
+        'item_type': 'predicates',
+        'item_class_id': item_class_id,
+        'data_type': data_type,
+        'label': label,
+        'context': ds_source.project,
+        'meta_json': {'sort': sort, },
+    }
+    if new_uuid:
+        # Use a specified uuid for this new item.
+        man_dict['uuid'] = new_uuid
+    
+    try:
+        item_obj = AllManifest(**man_dict)
+        item_obj.save()
+        made_new = True
+    except:
+        item_obj = None
+        made_new = False
+    return item_obj, made_new, 0
+
+
 def get_ds_field_context(ds_field, context=None):
     """Gets the context for a ds_field, from specific to more general prioritization"""
     if context:
@@ -77,6 +144,19 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         man_qs = man_qs.filter(
             Q(uri=AllManifest().clean_uri(raw_column_record))
             | Q(item_key=raw_column_record)
+            | Q(label=item_label)
+        )
+    elif ds_field.item_type == 'persons' and ds_field.meta_json.get('reconcile_on_initials'):
+        # We're allowing reconciliation on initials.
+        man_qs = man_qs.filter(
+            Q(meta_json__initials=item_label)
+            | Q(meta_json__combined_name=item_label)
+            | Q(label=item_label)
+        )
+    elif ds_field.item_type == 'persons' and not ds_field.meta_json.get('reconcile_on_initials'):
+        # We're reconciling a persons item, but not with initials.
+        man_qs = man_qs.filter(
+            Q(meta_json__combined_name=item_label)
             | Q(label=item_label)
         )
     else:
