@@ -1,0 +1,189 @@
+{% load humanize %}
+
+<template id='ds-field-field-num'>
+  <span>
+    [[ field_num ]]
+  </span>
+  <b-alert
+    :show="dismissCountDown"
+    fade
+    variant="info"
+    @dismiss-count-down="countDownChanged"
+    >
+</template>
+
+<template id='ds-field-label'>
+  <b-form-input 
+    size="sm"
+    debounce="250"
+    @change="onChange"
+    :key="label"
+    :value="label"></b-form-input>
+</template>
+
+<template id="ds-fields-general">
+    <b-row v-if="ds_fields" >
+      <b-col cols="8">
+        <b-form-group label="Selection mode:" label-cols-md="4">
+          <b-form-select v-model="selectMode" :options="modes" class="mb-3"></b-form-select>
+        </b-form-group>
+    
+        <b-table
+          ref="dsFieldsGeneralTable"
+          sticky-header="500px"
+          small
+          striped
+          selectable
+          :select-mode="selectMode"
+          :items="ds_fields"
+          :fields="fields"
+          @row-selected="onRowSelected"
+          :sort-by.sync="sortBy"
+          :sort-desc.sync="sortDesc"
+          responsive="lg"
+        >
+
+          <template #cell(field_num)="data">
+            <ds-field-field-num
+              v-bind:uuid="data.item.uuid"
+              v-bind:field_num="data.item.field_num">
+            </ds-field-field-num>
+          </template>
+
+          <template #cell(label)="data">
+            <ds-field-label
+              v-bind:uuid="data.item.uuid"
+              v-bind:label="data.item.label">
+            </ds-fields-label>
+          </template>
+
+          
+          <template #cell()="data">
+            [[ data.value ]]
+          </template>
+
+        </b-table>
+        <p>
+          <b-button size="sm" @click="selectAllRows">Select all</b-button>
+          <b-button size="sm" @click="clearSelected">Clear selected</b-button>
+        </p>
+        <p>
+          Selected Rows:<br>
+          [[ selected ]]
+        </p>
+      </b-col>
+      <b-col cols="4">
+
+      </b-col>
+    </b-row>
+  </template>
+
+
+    <script type="text/javascript">
+
+var vs_ds_field_field_num = Vue.component(
+      'ds-field-field-num',
+      {
+        delimiters: ['[[', ']]'],
+        props: ['uuid', 'field_num',],
+        data() {
+          return {
+            uuid: null,
+            field_num: null,
+          };
+        },
+        template: '#ds-field-field-num',
+      },
+    );
+
+    var vs_ds_field_label = Vue.component(
+      'ds-field-label',
+      {
+        delimiters: ['[[', ']]'],
+        props: ['uuid', 'label',],
+        data() {
+          return {
+            uuid: null,
+            label: null,
+          };
+        },
+        template: '#ds-field-label',
+        methods: {
+          onChange(label) {
+            const requestOptions = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify(
+                [
+                  { uuid: this.uuid, label: label}
+                ]
+              )
+            };
+            fetch('/etl-importer-setup/update-fields', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                this.label = data.updated[0].label;
+                console.log(data);
+                console.log(this.label);
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+            
+          }
+        },
+      },
+    );
+
+    var vc_ds_fields_general = Vue.component(
+        'ds-fields-general',
+        {
+            delimiters: ['[[', ']]'],
+            props: ['ds_fields'],
+            data() {
+                return {
+                modes: ['multi', 'single', 'range'],
+                sortBy: 'field_num',
+                sortDesc: false,
+                fields: [
+                  {key: 'field_num', sortable: true },
+                  {key: 'label', sortable: true },
+                  {key: 'ref_orig_name', label: 'Original Name', sortable: false},
+                  {key: 'item_type', sortable: true},
+                  {key: 'data_type', sortable: true},
+                  {key: 'unique_count', sortable: true},
+                ],
+                items: [],
+                selectMode: 'range',
+                selected: []
+                }
+            },
+            template: '#ds-fields-general',
+            methods: {
+                onRowSelected(items) {
+                this.selected = items
+                },
+                selectAllRows() {
+                this.$refs.dsFieldsGeneralTable.selectAllRows()
+                },
+                clearSelected() {
+                this.$refs.dsFieldsGeneralTable.clearSelected()
+                }
+            },
+            components: {
+              'ds-field-label': vs_ds_field_label,
+            },
+        }
+    ); 
+
+  </script>

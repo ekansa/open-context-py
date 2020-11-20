@@ -171,11 +171,11 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         record_item_class = ds_field.item_class
     
     if (ds_field.item_type == 'predicates'
-            and (
-                not record_item_class 
-                or 
-                str(record_item_class.uuid) not in configs.CLASS_LIST_OC_PREDICATES
-            )
+        and (
+            not record_item_class 
+            or 
+            str(record_item_class.uuid) not in configs.CLASS_LIST_OC_PREDICATES
+        )
     ):
         # We are attempting to reconcile an item_type = 'predicates'
         # item, but we don't have a correct record_item_class set. So

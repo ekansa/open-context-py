@@ -37,6 +37,11 @@ from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchView
 # Testing views for all items
 from opencontext_py.apps.all_items import views as AllItemsViews
 
+# Testing new ETL views. These are for GET requests
+from opencontext_py.apps.etl.importer import views as etlViews
+# Testing new ETL views for POST request endpoints.
+from opencontext_py.apps.etl.importer.setup import views as etlSetupViews
+
 
 urlpatterns = [
     # Examples:
@@ -104,6 +109,13 @@ urlpatterns = [
     # New all_items testing views
     url(r'^all-items/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='all_items_json'),
     url(r'^all-items/(?P<uuid>\S+)', AllItemsViews.test_html, name='all_items_html'),
+
+    # New ETL views
+    url(r'^etl-importer/prepare/(?P<source_id>\S+)', etlViews.view_html, name='etl_view_html'),
+    url(r'^etl-importer/source/(?P<source_id>\S+)', etlViews.etl_source, name='etl_source_json'),
+    url(r'^etl-importer/fields/(?P<source_id>\S+)', etlViews.etl_fields, name='etl_fields_json'),
+    # New ETL POST request views
+    url(r'^etl-importer-setup/update-fields', etlSetupViews.etl_update_fields, name='etl_setup_update_fields'),
 
     
     url(r'^search.json?', SearchViews.json_view, name='search_json_d'),

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    {% include './head.html' %}
+    <body>
+        {% include './ds_fields_general.html' %}
+        <div id="main">
+            <b-container fluid="xl" id="app">
+                <h1>[[ message ]]</h3>
+                <p>Data source: [[ source_id ]]</p>
+                <ds-fields-general v-bind:ds_fields="ds_fields"></ds-fields-general>
+                
+            </b-container>
+        </div>
+
+
+
+        <script type="text/javascript">
+            // Populated by Django.
+            var csrftoken = Vue.$cookies.get('csrftoken');
+            var base_url = '{{ base_url|safe }}';
+            var source_id = '{{ ds_source.source_id }}';
+            var source_uuid = '{{ ds_source.uuid }}';
+
+            // Set up the vue router in 'history' mode to manage
+            // API requests to the backend. The history mode pushes
+            // changes to the client's browser URL, which should let
+            // the client bookmark state.
+            const routes = [
+                {path: ('/etl-importer/prepare/' + source_uuid)}
+            ];
+            const router = new VueRouter({
+                mode: 'history',
+                routes: routes
+            });
+
+
+            var vm = new Vue({
+               delimiters: ['[[', ']]'],
+               el: '#app',
+               data: {
+                    message: 'Open Context ETL',
+                    source_id: source_id,
+                    ds_fields: null,
+               },
+               created(){
+                    this.fetch_api_fields();
+               },
+               watch: {
+                    // call again the method if the route changes
+                    '$route': 'fetch_api_fields'
+               },
+               methods: {
+                    fetch_api_fields: function (){
+                         this.error = null;
+                         this.loading = true;
+                         fetch(
+                            ('/etl-importer/fields/' + source_uuid),
+                              {
+                                   headers:{
+                                        'Accept': 'application/json',
+                                   }
+                              }
+                         )
+                         .then(this.loading = false)
+                         .then(response => response.json())
+                         .then(json => {
+                              this.ds_fields = json
+                         })
+                    },
+               },
+               components: {
+                 'ds-fields-general': vc_ds_fields_general,
+               },
+             }).$mount('#app');
+
+        </script>
+    </body>
+</html>
