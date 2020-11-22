@@ -1,15 +1,42 @@
 {% load humanize %}
 
+<style>
+  .row_update_alert {
+    text-align: right; 
+    padding-top: .2rem; 
+    padding-bottom:.15rem; 
+    padding-left: .3rem; 
+    padding-right: .3rem; 
+    margin-bottom: 0px;
+  }
+  .ds_fields_button_group {
+    width: 100%;
+    display: block;
+  }
+  .ds_fields_button {
+    width: 100%;
+  }
+</style>
 <template id='ds-field-field-num'>
-  <span>
-    [[ field_num ]]
-  </span>
-  <b-alert
-    :show="dismissCountDown"
-    fade
-    variant="info"
-    @dismiss-count-down="countDownChanged"
-    >
+  <b-row>
+    <b-col cols="6">
+      [[ field_num ]]
+    </b-col>
+    <b-col cols="6">
+      <div v-for="(alert_uuid, index) in alert_update_uuids">
+        <b-alert
+          v-if="alert_uuid == uuid"
+          class="row_update_alert"
+          :show="dismissCountDown"
+          responsive="sm"
+          fade
+          variant="success"
+          @dismissed="onDissmiss"
+          @dismiss-count-down="countDownChanged"
+          ><b-icon-cloud-upload-fill></b-icon-cloud-upload-fill</b-alert>
+      </div>
+    </b-col>
+  </b-row>
 </template>
 
 <template id='ds-field-label'>
@@ -17,20 +44,30 @@
     size="sm"
     debounce="250"
     @change="onChange"
-    :key="label"
     :value="label"></b-form-input>
+</template>
+
+<template id="ds-field-item-type-button">
+  <b-button block variant="primary" @click="updateFieldItemType" class="ds_fields_button">
+    [[ label ]]
+    <b-badge variant="light">[[ item_type ]]</b-badge>
+  </b-button>
+</template>
+
+<template id="ds-field-data-type-button">
+  <b-button block variant="secondary" @click="updateFieldDataType" class="ds_fields_button">
+    [[ label ]]
+    <b-badge variant="light">[[ data_type ]]</b-badge>
+  </b-button>
 </template>
 
 <template id="ds-fields-general">
     <b-row v-if="ds_fields" >
-      <b-col cols="8">
-        <b-form-group label="Selection mode:" label-cols-md="4">
-          <b-form-select v-model="selectMode" :options="modes" class="mb-3"></b-form-select>
-        </b-form-group>
+      <b-col cols="9">
     
         <b-table
           ref="dsFieldsGeneralTable"
-          sticky-header="500px"
+          :sticky-header="ds_fields_table_height"
           small
           striped
           selectable
@@ -45,13 +82,18 @@
 
           <template #cell(field_num)="data">
             <ds-field-field-num
+              @countdown_done="remove_alert_update_uuid($event)"
+              v-bind:alert_timer_state="alert_timer_state"
+              v-bind:alert_timer_duration="alert_timer_duration"
               v-bind:uuid="data.item.uuid"
+              v-bind:alert_update_uuids="alert_update_uuids"
               v-bind:field_num="data.item.field_num">
             </ds-field-field-num>
           </template>
 
           <template #cell(label)="data">
             <ds-field-label
+              @label_update="add_alert_update_uuid($event)"
               v-bind:uuid="data.item.uuid"
               v-bind:label="data.item.label">
             </ds-fields-label>
@@ -72,8 +114,30 @@
           [[ selected ]]
         </p>
       </b-col>
-      <b-col cols="4">
-
+      <b-col cols="3">
+          <h5 style="text-align: center;">Item Types for Fields</h5>
+          <b-button-group vertical size="sm" class="ds_fields_button_group" >
+            <ds-field-item-type-button
+              v-for="(act_item, index) in ds_fields_item_types"
+              @updating_item_type="add_alert_update_uuid_list($event)"
+              v-bind:key="act_item.item_type"
+              v-bind:item_type="act_item.item_type"
+              v-bind:selected="selected"
+              v-bind:label="act_item.label"></ds-field-item-type-button>
+          </b-button-group>
+          <br/>
+          <br/>
+          <h5 style="text-align: center;">Data Types for Fields</h5>
+          <b-button-group block vertical size="sm" class="ds_fields_button_group">
+            <ds-field-data-type-button
+              v-for="(act_item, index) in ds_fields_data_types"
+              @updating_data_type="add_alert_update_uuid_list($event)"
+              v-bind:key="act_item.data_type"
+              v-bind:data_type="act_item.data_type"
+              v-bind:selected="selected"
+              v-bind:label="act_item.label"></ds-field-data-type-button>
+          </b-button-group>
+        
       </b-col>
     </b-row>
   </template>
@@ -81,18 +145,34 @@
 
     <script type="text/javascript">
 
-var vs_ds_field_field_num = Vue.component(
+    var vs_ds_field_field_num = Vue.component(
       'ds-field-field-num',
       {
         delimiters: ['[[', ']]'],
-        props: ['uuid', 'field_num',],
+        props: ['uuid', 'field_num', 'alert_update_uuids', 'alert_timer_duration', 'alert_timer_state'],
         data() {
           return {
             uuid: null,
             field_num: null,
+            dismissSecs: 2,
+            dismissCountDown: 2,
           };
         },
         template: '#ds-field-field-num',
+        methods: {
+          countDownChanged(dismissCountDown) {
+            this.dismissCountDown = dismissCountDown
+          },
+          showAlert() {
+            this.dismissCountDown = this.dismissSecs
+          },
+          onDissmiss(){
+            this.$emit('countdown_done', this.uuid);
+            // Reset the dismiss countdown to re-render if
+            // this ds_field gets another update.
+            this.dismissCountDown = this.dismissSecs;
+          },
+        }
       },
     );
 
@@ -103,6 +183,7 @@ var vs_ds_field_field_num = Vue.component(
         props: ['uuid', 'label',],
         data() {
           return {
+            is_alerter: false,
             uuid: null,
             label: null,
           };
@@ -110,6 +191,7 @@ var vs_ds_field_field_num = Vue.component(
         template: '#ds-field-label',
         methods: {
           onChange(label) {
+            this.$emit('label_update', this.uuid);
             const requestOptions = {
               method: 'POST',
               headers: {
@@ -131,17 +213,141 @@ var vs_ds_field_field_num = Vue.component(
                   const error = (data && data.message) || response.status;
                   return Promise.reject(error);
                 }
-                this.label = data.updated[0].label;
-                console.log(data);
-                console.log(this.label);
+                // Reload the whole table. Kinda drastic.
+                vm.$forceUpdate();
               })
               .catch(error => {
                 this.errorMessage = error;
                 console.error('There was an error!', error);
               });
-            
           }
         },
+      },
+    );
+
+
+    var vs_ds_field_item_type_button =  Vue.component(
+      'ds-field-item-type-button',
+      {
+        delimiters: ['[[', ']]'],
+        props: ['item_type', 'label', 'selected',],
+        data() {
+          return {
+            item_type: null,
+            label: null,
+            selected: [],
+          };
+        },
+        template: '#ds-field-item-type-button',
+        methods: {
+          updateFieldItemType() {
+            console.log('Updating: ' + this.item_type);
+            if(typeof(this.selected.length) == 'undefined' || this.selected.length < 1){
+              console.log("None selected, don't update item_type");
+              return null;
+            }
+            let update_list = [];
+            let alert_uuids = [];
+            for (let item of this.selected){
+              let update_item = {
+                uuid: item.uuid,
+                item_type: this.item_type,
+              }
+              update_list.push(update_item);
+              alert_uuids.push(item.uuid);
+            }
+
+            const requestOptions = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify(update_list)
+            };
+            // Make the update alerts light up.
+            this.$emit('updating_item_type', alert_uuids);
+            fetch('/etl-importer-setup/update-fields', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Reload the whole table. Kinda drastic.
+                vm.fetch_api_fields();
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+          },
+        }
+      },
+    );
+
+
+    var vs_ds_field_data_type_button =  Vue.component(
+      'ds-field-data-type-button',
+      {
+        delimiters: ['[[', ']]'],
+        props: ['data_type', 'label', 'selected',],
+        data() {
+          return {
+            data_type: null,
+            label: null,
+            selected: [],
+          };
+        },
+        template: '#ds-field-data-type-button',
+        methods: {
+          updateFieldDataType() {
+            console.log('Updating: ' + this.data_type);
+            if(typeof(this.selected.length) == 'undefined' || this.selected.length < 1){
+              console.log("None selected, don't update data_type");
+              return null;
+            }
+            let update_list = [];
+            let alert_uuids = [];
+            for (let item of this.selected){
+              let update_item = {
+                uuid: item.uuid,
+                data_type: this.data_type,
+              }
+              update_list.push(update_item);
+              alert_uuids.push(item.uuid);
+            }
+
+            const requestOptions = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify(update_list)
+            };
+            // Make the update alerts light up.
+            this.$emit('updating_data_type', alert_uuids);
+            fetch('/etl-importer-setup/update-fields', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Reload the whole table. Kinda drastic.
+                vm.fetch_api_fields();
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+          },
+        }
       },
     );
 
@@ -149,7 +355,7 @@ var vs_ds_field_field_num = Vue.component(
         'ds-fields-general',
         {
             delimiters: ['[[', ']]'],
-            props: ['ds_fields'],
+            props: ['ds_fields', 'ds_fields_item_types', 'ds_fields_data_types', 'ds_fields_table_height'],
             data() {
                 return {
                 modes: ['multi', 'single', 'range'],
@@ -165,11 +371,39 @@ var vs_ds_field_field_num = Vue.component(
                 ],
                 items: [],
                 selectMode: 'range',
-                selected: []
+                selected: [],
+                alert_update_uuids: [],
+                alert_timer_duration: 2, // length of time the alerts stay up.
+                alert_timer_state: 0,
                 }
             },
             template: '#ds-fields-general',
             methods: {
+                add_alert_update_uuid(uuid) {
+                  const index = this.alert_update_uuids.indexOf(uuid);
+                  if (index > -1) {
+                    return null;
+                  }
+                  this.alert_update_uuids.push(uuid);
+                  this.alert_timer_state = this.alert_timer_duration;
+                },
+                add_alert_update_uuid_list(uuid_list){
+                  for (let uuid of uuid_list){
+                    this.add_alert_update_uuid(uuid);
+                  }
+                },
+                remove_alert_update_uuid(uuid) {
+                  const index = this.alert_update_uuids.indexOf(uuid);
+                  if (index > -1) {
+                    this.alert_update_uuids.splice(index, 1);
+                  }
+                  this.alert_timer_state = 0;
+                  // Remove all the uuids from the alerts all at once.
+                  this.alert_update_uuids = [];
+                },
+                clear_alert_update_uuids(){
+                  this.alert_update_uuids = [];
+                },
                 onRowSelected(items) {
                 this.selected = items
                 },
@@ -178,10 +412,13 @@ var vs_ds_field_field_num = Vue.component(
                 },
                 clearSelected() {
                 this.$refs.dsFieldsGeneralTable.clearSelected()
-                }
+                },
             },
             components: {
+              'ds-field-field-num': vs_ds_field_field_num,
               'ds-field-label': vs_ds_field_label,
+              'ds-field-item-type-button': vs_ds_field_item_type_button,
+              'ds-field-data-type-button': vs_ds_field_data_type_button,
             },
         }
     ); 

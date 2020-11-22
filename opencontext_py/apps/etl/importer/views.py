@@ -53,9 +53,20 @@ def view_html(request, source_id):
     # Disable the search template and just use vue with the JSON
     # API.
     # search_temp = SearchTemplate(response_dict.copy())
+    ds_fields_item_types =  [
+        {'item_type': item_type, 'label': label,}
+        for item_type, label, _ in DataSourceField.USER_SELECT_ITEM_TYPES
+    ]
+    ds_fields_data_types =  [
+        {'data_type': data_type, 'label': label,}
+        for data_type, label in DataSourceField.USER_SELECT_DATA_TYPES
+    ]
+
     context = {
         'base_url': rp.get_baseurl(),
         'ds_source': ds_source,
+        'ds_fields_item_types': json.dumps(ds_fields_item_types),
+        'ds_fields_data_types': json.dumps(ds_fields_data_types),
     }
     template = loader.get_template('bootstrap_vue/etl/etl.html')
     response = HttpResponse(template.render(context, request))

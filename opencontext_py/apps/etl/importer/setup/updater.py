@@ -46,16 +46,27 @@ def update_fields(request_json):
         if not uuid:
             errors.append('Must have "uuid" attribute.')
             continue
+
+        ds_field =  DataSourceField.objects.filter(uuid=uuid).first()
+        if not ds_field:
+            errors.append(f'Cannot find ds_field for {uuid}')
+            continue
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
             k:item_update.get(k) 
             for k in DS_FIELDS_UPDATE_ALLOWED if item_update.get(k)
         }
+
         if not update_dict:
             errors.append(f'Field {uuid}: no attribute allowed for update specified.')
             continue
+
+        for attr, value in update_dict.items():
+            setattr(ds_field, attr, value)
+
         try:
-            ok = DataSourceField.objects.filter(uuid=uuid).update(**update_dict)
+            ds_field.save()
+            ok = True
         except Exception as e:
             ok = False
             if hasattr(e, 'message'):

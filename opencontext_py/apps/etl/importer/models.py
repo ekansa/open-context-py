@@ -126,6 +126,74 @@ class DataSourceField(models.Model):
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
 
+    # Item types and their human readable descriptions for
+    # fields, as generally configured by users setting up
+    # an ETL process.
+    USER_SELECT_ITEM_TYPES = [
+        # NOTE: Tuples defined as follows:
+        # (item_type, item_type_description, required_data_type,)
+        ('subjects', 'Locations or Objects', 'id'),
+        ('media', 'Media Files', 'id'),
+        ('documents', 'Documents (Text, HTML)', 'id'),
+        ('persons', 'Persons or Organizations', 'id'),
+        ('predicates', 'Descriptions', None),
+        ('variables', 'Descriptive or Linking Properties', None),
+        ('values', 'Values of Descriptions', None),
+        ('uuid', 'UUIDs (identifiers)', 'xsd:string'),
+        ('latitude', 'Latitudes (decimal degrees)', 'xsd:double'),
+        ('longitude', 'Longitudes (decimal degrees)', 'xsd:double'),
+        ('earliest', 'Earliest Years (BCE/CE)', 'xsd:double'),
+        ('latest', 'Latest Years (BCE/CE)', 'xsd:double'),
+        ('uri', 'URIs (Linked Data)', 'id'),
+        ('observations', 'Observations (description grouping)', 'id'),
+        ('events', 'Events (description grouping)', 'id'),
+        ('attribute-groups', 'Attribute Groups', 'id'),
+        ('languages', 'Languages', 'id'),
+    ]
+
+    USER_SELECT_DATA_TYPES = [
+        ('id', 'Named, identified items',),
+        ('xsd:boolean', 'True/False values',),
+        ('xsd:date', 'Dates, datetimes',),
+        ('xsd:double', 'Numbers (decimal)',),
+        ('xsd:integer', 'Integer numbers',),
+        ('xsd:string', 'Free text values',),
+    ]
+
+
+    def add_default_data_type_for_item_type(self):
+        """Adds a default data_type if an item_type is given"""
+        if not self.item_type or self.data_type:
+            # Skip out.
+            return None
+        item_types_to_data_types = {
+            item_type:data_type 
+            for item_type, _, data_type in self.USER_SELECT_ITEM_TYPES
+            if data_type is not None
+        }
+        data_type = item_types_to_data_types.get(self.item_type)
+        if not data_type:
+            # No default data-type for this item_type.
+            return None
+        self.data_type = data_type
+
+
+    def validate_type_type_data_types(self):
+        """Validates that a data_type is allowed for an item_type"""
+        data_type_allowed_item_types = {}
+        for item_type, _, data_type in self.USER_SELECT_ITEM_TYPES:
+            if data_type is None:
+                continue
+            data_type_allowed_item_types.setdefault(data_type, [])
+            data_type_allowed_item_types[data_type].append(item_type)
+        if not self.data_type or not self.item_type:
+            # Can't validate, we're missing data
+            return None
+        if self.item_type not in data_type_allowed_item_types[self.data_type]:
+            raise ValueError(
+                f'data_type {self.data_type} not allowed for {self.item_type}'
+            )
+
     def primary_key_create(self, data_source_id, field_num):
         """Converts a source_id into a UUID deterministically"""
         data_source_id = str(data_source_id)
@@ -152,6 +220,8 @@ class DataSourceField(models.Model):
     def save(self, *args, **kwargs):
         # Defaults the primary key uuid to value deterministically
         # generated.
+        self.add_default_data_type_for_item_type()
+        self.validate_type_type_data_types()
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceField, self).save(*args, **kwargs)
 

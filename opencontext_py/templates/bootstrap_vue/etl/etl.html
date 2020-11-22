@@ -8,19 +8,35 @@
             <b-container fluid="xl" id="app">
                 <h1>[[ message ]]</h3>
                 <p>Data source: [[ source_id ]]</p>
-                <ds-fields-general v-bind:ds_fields="ds_fields"></ds-fields-general>
-                
+                <ds-fields-general
+                    v-bind:ds_fields_table_height="ds_fields_table_height"
+                    v-bind:ds_fields="ds_fields"
+                    v-bind:ds_fields_item_types="ds_fields_item_types"
+                    v-bind:ds_fields_data_types="ds_fields_data_types"></ds-fields-general>
             </b-container>
         </div>
 
 
 
         <script type="text/javascript">
+
+            var body = document.body;
+            var html = document.documentElement;
+
+            var page_height = Math.max(
+                body.scrollHeight, body.offsetHeight, 
+                html.clientHeight, html.scrollHeight, html.offsetHeight
+            );
+
             // Populated by Django.
             var csrftoken = Vue.$cookies.get('csrftoken');
             var base_url = '{{ base_url|safe }}';
             var source_id = '{{ ds_source.source_id }}';
             var source_uuid = '{{ ds_source.uuid }}';
+
+            // From the backend.
+            var ds_fields_item_types = JSON.parse('{{ ds_fields_item_types|escapejs }}');
+            var ds_fields_data_types = JSON.parse('{{ ds_fields_data_types|escapejs }}');
 
             // Set up the vue router in 'history' mode to manage
             // API requests to the backend. The history mode pushes
@@ -37,11 +53,16 @@
 
             var vm = new Vue({
                delimiters: ['[[', ']]'],
+               ref: 'etl_app',
                el: '#app',
                data: {
                     message: 'Open Context ETL',
                     source_id: source_id,
                     ds_fields: null,
+                    ds_fields_item_types: ds_fields_item_types,
+                    ds_fields_data_types: ds_fields_data_types,
+                    page_height: page_height,
+                    ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
                },
                created(){
                     this.fetch_api_fields();
