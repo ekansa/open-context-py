@@ -178,21 +178,27 @@ class DataSourceField(models.Model):
         self.data_type = data_type
 
 
-    def validate_type_type_data_types(self):
+    def validate_item_type_data_types(self):
         """Validates that a data_type is allowed for an item_type"""
-        data_type_allowed_item_types = {}
+        if not self.item_type or not self.data_type:
+            # Skip out.
+            return None
+        is_valid = True
         for item_type, _, data_type in self.USER_SELECT_ITEM_TYPES:
             if data_type is None:
+                # No data type restriction means we're valid
                 continue
-            data_type_allowed_item_types.setdefault(data_type, [])
-            data_type_allowed_item_types[data_type].append(item_type)
-        if not self.data_type or not self.item_type:
-            # Can't validate, we're missing data
-            return None
-        if self.item_type not in data_type_allowed_item_types[self.data_type]:
-            raise ValueError(
-                f'data_type {self.data_type} not allowed for {self.item_type}'
-            )
+            if item_type != self.item_type:
+                # Our item_type is not this specific config, so
+                # continue
+                continue
+            if self.data_type != data_type:
+                is_valid = False
+                raise ValueError(
+                    f'data_type {self.data_type} not allowed for {self.item_type}'
+                )
+        return is_valid
+
 
     def primary_key_create(self, data_source_id, field_num):
         """Converts a source_id into a UUID deterministically"""
@@ -221,7 +227,7 @@ class DataSourceField(models.Model):
         # Defaults the primary key uuid to value deterministically
         # generated.
         self.add_default_data_type_for_item_type()
-        self.validate_type_type_data_types()
+        self.validate_item_type_data_types()
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceField, self).save(*args, **kwargs)
 
