@@ -48,6 +48,8 @@ def update_fields(request_json):
             continue
 
         ds_field =  DataSourceField.objects.filter(uuid=uuid).first()
+        orig_item_type = ds_field.item_type
+
         if not ds_field:
             errors.append(f'Cannot find ds_field for {uuid}')
             continue
@@ -63,6 +65,11 @@ def update_fields(request_json):
 
         for attr, value in update_dict.items():
             setattr(ds_field, attr, value)
+        
+        if orig_item_type != ds_field.item_type:
+            # We're changing item_types, which means we should reset other attributes.
+            ds_field.data_type = None
+            ds_field.item_class_id = configs.DEFAULT_CLASS_UUID
 
         try:
             ds_field.save()
