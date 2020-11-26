@@ -1,0 +1,280 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and Vue Components for more specific, detailed editing of data source fields.
+-->
+
+<style>
+  .value_prefix_cell {
+    max-width: 475px;
+  }
+</style>
+
+
+<template id="ds-fields-specific">
+  <b-row v-if="ds_fields" >
+    <b-col cols="9">
+
+      <b-table
+        ref="dsFieldsSpecificTable"
+        :sticky-header="ds_fields_table_height"
+        table-variant="secondary"
+        striped
+        selectable
+        :select-mode="selectMode"
+        :items="ds_fields"
+        :fields="fields"
+        @row-selected="onRowSelected"
+        :sort-by.sync="sortBy"
+        :sort-desc.sync="sortDesc"
+        responsive="lg"
+      >
+
+        <template #cell(field_num)="data">
+          <ds-field-field-num
+            @countdown_done="remove_alert_update_uuid($event)"
+            v-bind:alert_timer_state="alert_timer_state"
+            v-bind:alert_timer_duration="alert_timer_duration"
+            v-bind:ds_field_item="data.item"
+            v-bind:alert_update_uuids="alert_update_uuids">
+          </ds-field-field-num>
+        </template>
+
+        <template #cell(item_class__label)="data">
+          <span v-if="data.item.item_class_id == oc_item_class_null">
+          </span>
+          <span v-else>[[ data.item.item_class__label ]]</span>
+        </template>
+
+        <template #cell(value_prefix)="data">
+          <ds-field-value-prefix
+            @value_prefix_update="add_alert_update_uuid($event)"
+            v-bind:ds_field_item="data.item">
+          </ds-field-value-prefix>
+        </template>
+
+        <template #cell()="data">
+          [[ data.value ]]
+        </template>
+
+      </b-table>
+      
+    </b-col>
+    <b-col cols="3">
+        <b-card
+            header="Assign Item Classifications and Contexts"
+          >
+          <b-card-text>Entities in each field can have a classification to help organize
+            data. If you assign a context, then each entity in a field will be contained
+            within that context.
+          </b-card-text>
+        </b-card>
+        <br/>
+
+        <b-card
+          header="Assign Item Classifications"
+            v-if="root_item_id"
+          >
+          <b-card-text>
+            
+            <div v-if="selected_class_item">
+              <b-alert show v-if="!selected_class_item.at_root">
+                <b-row>
+                  <b-col>
+                    Click below to classify <strong>[[selected_ds_field_item.label]]</strong> records as 
+                    <strong>[[ selected_class_item.label ]]</strong>
+                  </b-col>
+                </b-row>
+                <b-row>
+                  <b-col>
+                    <b-button 
+                    sm
+                    block
+                    @click="updateFieldItemClass"
+                    variant="info">Classify <strong>[[selected_ds_field_item.label]]</strong> Records</b-button>
+                  </b-col>
+                </b-row>
+              </b-alert>
+            </div>
+          
+            <b-row>
+              <b-col>
+                <root-item-tree
+                  v-if="root_item_id"
+                  v-bind:root_item_id="root_item_id"
+                  v-bind:cached_tree_items="cached_tree_items"
+                  @set_selected_item="set_selected_class_item($event)"
+                ></root-item-tree>
+              </b-col>
+            </b-row>
+            
+          </b-card-text>
+        </b-card>
+
+    </b-col>
+  </b-row>
+</template>
+
+
+<script type="text/javascript">
+
+  const oc_item_class_null = '{{ oc_item_class_null }}';
+  const ds_field_specific_item_types = [
+    'subjects',
+    'media',
+    'resources',
+    'persons',
+    'events',
+    'uri',
+  ];
+
+  var vc_ds_fields_specific = Vue.component(
+      'ds-fields-specific',
+      {
+          delimiters: ['[[', ']]'],
+          props: ['source_uuid', 'ds_fields_table_height'],
+          data() {
+              return {
+              modes: ['multi', 'single', 'range'],
+              sortBy: 'field_num',
+              sortDesc: false,
+              oc_item_class_null: oc_item_class_null,
+              fields: [
+                {key: 'field_num', sortable: true },
+                {key: 'label', sortable: true },
+                {key: 'item_type', sortable: true},
+                {key: 'item_class__label', label: 'Class', sortable: true},
+                {key: 'context__label', label: 'Context', sortable: true},
+                {
+                  key: 'value_prefix', 
+                  label: 'Example Records (with optional prefix)', 
+                  sortable: false, 
+                  class: 'value_prefix_cell'
+                },
+              ],
+              items: [],
+              selectMode: 'single',
+              selected_ds_field_item: null,
+              selected_class_item: null,
+              selected_context_item: null,
+              alert_update_uuids: [],
+              alert_timer_duration: 2, // length of time the alerts stay up.
+              alert_timer_state: 0,
+              ds_fields: [],
+              cached_tree_items: {},
+              allow_item_types: ds_field_specific_item_types,
+              }
+          },
+          template: '#ds-fields-specific',
+          created(){
+            this.fetch_api_ds_fields();
+          },
+          computed: {
+            root_item_id: function() {
+              if(this.selected_ds_field_item && this.selected_ds_field_item.item_type != 'uri'){
+                return 'oc-gen-' + this.selected_ds_field_item.item_type;
+              }
+              return null;
+            },
+          },
+          methods: {
+              fetch_api_ds_fields: function (){
+                this.error = null;
+                this.loading = true;
+                fetch(
+                  ('/etl-importer/fields/' + this.source_uuid),
+                    {
+                          headers:{
+                              'Accept': 'application/json',
+                          }
+                    }
+                )
+                .then(this.loading = false)
+                .then(response => response.json())
+                .then(json => {
+                    let rows = [];
+                    for (let item of json){
+                      const index = this.allow_item_types.indexOf(item.item_type);
+                      if(item.data_type == 'id' && index >= 0){
+                        rows.push(item);
+                      }
+                    }
+                    this.ds_fields = rows;
+                })
+              },
+              updateFieldItemClass() {
+                if(typeof(this.selected_ds_field_item) == 'undefined' || typeof(this.selected_class_item) == 'undefined' ){
+                  console.log("None selected, don't update item_class");
+                  return null;
+                }
+                this.add_alert_update_uuid(this.selected_ds_field_item.uuid);
+                const requestOptions = {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                  },
+                  body: JSON.stringify(
+                    [
+                      { uuid: this.selected_ds_field_item.uuid, item_class_id: this.selected_class_item.uuid }
+                    ]
+                  )
+                };
+                fetch('/etl-importer-setup/update-fields', requestOptions)
+                  .then(async response => {
+                    const data = await response.json();
+                    // check for error response
+                    if (!response.ok) {
+                      // get error message from body or default to response status
+                      const error = (data && data.message) || response.status;
+                      return Promise.reject(error);
+                    }
+                    // Reload the whole table. Kinda drastic.
+                    this.fetch_api_ds_fields();
+                  })
+                  .catch(error => {
+                    this.errorMessage = error;
+                    console.error('There was an error!', error);
+                  });
+              },
+              add_alert_update_uuid(uuid) {
+                const index = this.alert_update_uuids.indexOf(uuid);
+                if (index > -1) {
+                  return null;
+                }
+                this.alert_update_uuids.push(uuid);
+                this.alert_timer_state = this.alert_timer_duration;
+              },
+              remove_alert_update_uuid(uuid) {
+                const index = this.alert_update_uuids.indexOf(uuid);
+                if (index > -1) {
+                  this.alert_update_uuids.splice(index, 1);
+                }
+                this.alert_timer_state = 0;
+                // Remove all the uuids from the alerts all at once.
+                this.alert_update_uuids = [];
+              },
+              set_cached_tree_items(cached_tree_items) {
+                this.cached_tree_items = cached_tree_items;
+              },
+              set_selected_class_item(class_item) {
+                this.selected_class_item = class_item;
+                console.log('Selected class item: ' + this.selected_class_item.label);
+              },
+              clear_alert_update_uuids(){
+                this.alert_update_uuids = [];
+              },
+              onRowSelected(items) {
+                this.selected_ds_field_item = items[0];
+                this.selected_class_item = null;
+              },
+          },
+          components: {
+            'ds-field-field-num': vs_ds_field_field_num,
+            'ds-field-value-prefix': vs_ds_field_value_prefix,
+            'root-item-tree': vs_root_item_tree,
+          },
+      }
+  ); 
+
+</script>

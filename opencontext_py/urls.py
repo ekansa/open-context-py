@@ -36,6 +36,7 @@ from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchView
 
 # Testing views for all items
 from opencontext_py.apps.all_items import views as AllItemsViews
+from opencontext_py.apps.all_items.editorial import views as EditorialViews
 
 # Testing new ETL views. These are for GET requests
 from opencontext_py.apps.etl.importer import views as etlViews
@@ -110,10 +111,18 @@ urlpatterns = [
     url(r'^all-items/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='all_items_json'),
     url(r'^all-items/(?P<uuid>\S+)', AllItemsViews.test_html, name='all_items_html'),
 
+    # New add_items administrative (for editing, etl) views
+    url(r'^editorial/item-children/(?P<identifier>\S+)', EditorialViews.item_children_json, name='editorial_item_children'),
+
     # New ETL views
-    url(r'^etl-importer/prepare/(?P<source_id>\S+)', etlViews.view_html, name='etl_view_html'),
+    url(r'^etl-importer/prepare/(?P<source_id>\S+)', etlViews.home_html, name='etl_home_html'),
     url(r'^etl-importer/source/(?P<source_id>\S+)', etlViews.etl_source, name='etl_source_json'),
     url(r'^etl-importer/fields/(?P<source_id>\S+)', etlViews.etl_fields, name='etl_fields_json'),
+    url(
+        r'^etl-importer/field-record-examples/(?P<field_uuid>\S+)', 
+        etlViews.etl_field_record_examples, 
+        name='etl_field_record_examples_json'
+    ),
     # New ETL POST request views
     url(r'^etl-importer-setup/update-fields', etlSetupViews.etl_update_fields, name='etl_setup_update_fields'),
 

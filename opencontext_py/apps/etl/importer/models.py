@@ -133,7 +133,8 @@ class DataSourceField(models.Model):
         # NOTE: Tuples defined as follows:
         # (item_type, item_type_description, required_data_type,)
         ('subjects', 'Locations or Objects', 'id'),
-        ('media', 'Media Files', 'id'),
+        ('media', 'Media Labels (image, pdf, video, etc.)', 'id'),
+        ('resources', 'Media File URLs', 'id'),
         ('documents', 'Documents (Text, HTML)', 'id'),
         ('persons', 'Persons or Organizations', 'id'),
         ('predicates', 'Descriptions', None),

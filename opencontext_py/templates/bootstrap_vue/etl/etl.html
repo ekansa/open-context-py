@@ -1,18 +1,41 @@
 <!DOCTYPE html>
 
 <html lang="en">
-    {% include './head.html' %}
+    {% include '../../bootstrap_vue/etl/head.html' %}
     <body>
-        {% include './ds_fields_general.html' %}
+
+        <!-- Include the more general components first-->
+        {% include '../../bootstrap_vue/editorial/tree.html' %}
+
+        {% include '../../bootstrap_vue/etl/ds_fields_cells.html' %}
+        {% include '../../bootstrap_vue/etl/ds_fields_general.html' %}
+        {% include '../../bootstrap_vue/etl/ds_fields_specific.html' %}
+
         <div id="main">
-            <b-container fluid="xl" id="app">
-                <h1>[[ message ]]</h3>
-                <p>Data source: [[ source_id ]]</p>
-                <ds-fields-general
-                    v-bind:ds_fields_table_height="ds_fields_table_height"
-                    v-bind:ds_fields="ds_fields"
-                    v-bind:ds_fields_item_types="ds_fields_item_types"
-                    v-bind:ds_fields_data_types="ds_fields_data_types"></ds-fields-general>
+            <b-container fluid id="app">
+                <b-row>
+                    <b-col>
+                        <h1>[[ message ]]</h1>
+                    </b-col>
+                    <b-col>
+                        <b-card>
+                            Data source: [[ source_id ]]
+                        </b-card>
+                    </b-col>
+                </b-row>
+                <div>
+                    <b-nav pills>
+                      <b-nav-item :to="{ name: 'home'}" >Home</b-nav-item>
+                      <b-nav-item :to="{ name: 'ds-fields-general'}">Fields</b-nav-item>
+                      <b-nav-item :to="{ name: 'ds-fields-specific'}">Fields Specifics</b-nav-item>
+                      <b-nav-item :to="{ name: 'link-rels'}">Link Relations</b-nav-item>
+                      <b-nav-item :to="{ name: 'describe-rels'}">Descriptive Relations</b-nav-item>
+                      <b-nav-item :to="{ name: 'finalize'}">Finalize</b-nav-item>
+                    </b-nav>
+                </div>
+                
+                <router-view></router-view>
+                
             </b-container>
         </div>
 
@@ -20,80 +43,84 @@
 
         <script type="text/javascript">
 
+            // A hacky solution for scaling the height of tables
             var body = document.body;
             var html = document.documentElement;
-
             var page_height = Math.max(
                 body.scrollHeight, body.offsetHeight, 
                 html.clientHeight, html.scrollHeight, html.offsetHeight
             );
+            var table_height = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
 
             // Populated by Django.
-            var csrftoken = Vue.$cookies.get('csrftoken');
-            var base_url = '{{ base_url|safe }}';
-            var source_id = '{{ ds_source.source_id }}';
-            var source_uuid = '{{ ds_source.uuid }}';
+            const csrftoken = Vue.$cookies.get('csrftoken');
+            const base_url = '{{ base_url|safe }}';
+            const source_id = '{{ ds_source.source_id }}';
+            const source_uuid = '{{ ds_source.uuid }}';
 
-            // From the backend.
-            var ds_fields_item_types = JSON.parse('{{ ds_fields_item_types|escapejs }}');
-            var ds_fields_data_types = JSON.parse('{{ ds_fields_data_types|escapejs }}');
-
-            // Set up the vue router in 'history' mode to manage
-            // API requests to the backend. The history mode pushes
-            // changes to the client's browser URL, which should let
-            // the client bookmark state.
             const routes = [
-                {path: ('/etl-importer/prepare/' + source_uuid)}
+                {
+                    path: '/etl-importer/prepare/' + source_uuid,
+                    name: 'home',
+                    component: vc_ds_fields_general,
+                    props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+                },
+                {
+                    path: '/etl-importer/prepare/' + source_uuid + '#ds-fields-general',
+                    name: 'ds-fields-general',
+                    component: vc_ds_fields_general,
+                    props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+                },
+                {
+                    path: '/etl-importer/prepare/' + source_uuid + '#ds-fields-specific',
+                    name: 'ds-fields-specific',
+                    component: vc_ds_fields_specific,
+                    props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+                },
+                {
+                    path: '/etl-importer/prepare/' + source_uuid + '#link-rels',
+                    name: 'link-rels',
+                    component: vc_ds_fields_general,
+                    props: {source_uuid: source_uuid, ds_fields_table_height: '250px'},
+                },
+                {
+                    path: '/etl-importer/prepare/' + source_uuid + '#describe-rels',
+                    name: 'describe-rels',
+                    component: vc_ds_fields_general,
+                    props: {source_uuid: source_uuid, ds_fields_table_height: '50px'},
+                },
+                {
+                    path: '/etl-importer/prepare/' + source_uuid + '#finalize',
+                    name: 'finalize',
+                    component: vc_ds_fields_general,
+                    props: {source_uuid: source_uuid, ds_fields_table_height: '150px'},
+                }
             ];
+
             const router = new VueRouter({
                 mode: 'history',
-                routes: routes
+                routes: routes,
             });
 
-
-            var vm = new Vue({
-               delimiters: ['[[', ']]'],
-               ref: 'etl_app',
-               el: '#app',
-               data: {
-                    message: 'Open Context ETL',
-                    source_id: source_id,
-                    ds_fields: null,
-                    ds_fields_item_types: ds_fields_item_types,
-                    ds_fields_data_types: ds_fields_data_types,
-                    page_height: page_height,
-                    ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
-               },
-               created(){
-                    this.fetch_api_fields();
-               },
-               watch: {
-                    // call again the method if the route changes
-                    '$route': 'fetch_api_fields'
-               },
-               methods: {
-                    fetch_api_fields: function (){
-                         this.error = null;
-                         this.loading = true;
-                         fetch(
-                            ('/etl-importer/fields/' + source_uuid),
-                              {
-                                   headers:{
-                                        'Accept': 'application/json',
-                                   }
-                              }
-                         )
-                         .then(this.loading = false)
-                         .then(response => response.json())
-                         .then(json => {
-                              this.ds_fields = json
-                         })
+            var vm = new Vue(
+                {
+                    router: router,
+                    delimiters: ['[[', ']]'],
+                    ref: 'etl_app',
+                    el: '#app',
+                    data: {
+                        message: 'Open Context ETL',
+                        source_id: source_id,
+                        source_uuid: source_uuid,
+                        page_height: page_height,
+                        ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
                     },
-               },
-               components: {
-                 'ds-fields-general': vc_ds_fields_general,
-               },
-             }).$mount('#app');
+                    components: {
+                        'ds-fields-general': vc_ds_fields_general,
+                        'ds-fields-specific': vc_ds_fields_specific,
+                    },
+                },
+            ).$mount('#app');
 
         </script>
     </body>

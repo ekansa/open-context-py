@@ -55,7 +55,7 @@ def make_error_response(errors):
     )
 
 
-
+@cache_control(no_cache=True)
 @never_cache
 def etl_update_fields(request):
     if request.method != 'POST':
@@ -80,6 +80,4 @@ def etl_update_fields(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
-
-
 

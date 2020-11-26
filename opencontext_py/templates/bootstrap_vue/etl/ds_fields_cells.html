@@ -1,0 +1,260 @@
+{% load humanize %}
+<!-- 
+NOTE: Templates and Vue Components for use with ds_fields components.
+-->
+
+<style>
+  .row_update_alert {
+    text-align: center; 
+    padding-top: .2rem; 
+    padding-bottom:.15rem; 
+    padding-left: .3rem; 
+    padding-right: .3rem; 
+    margin-bottom: 0px;
+  }
+</style>
+
+<!-- Used with: both ds_fields_general, ds_fields_specific -->
+<template id='ds-field-field-num'>
+  <b-row>
+    <b-col cols="6">
+      [[ ds_field_item.field_num ]]
+    </b-col>
+    <b-col cols="6">
+      <div v-for="(alert_uuid, index) in alert_update_uuids">
+        <b-alert
+          v-if="alert_uuid == ds_field_item.uuid"
+          class="row_update_alert"
+          :show="dismissCountDown"
+          responsive="sm"
+          fade
+          variant="success"
+          @dismissed="onDissmiss"
+          @dismiss-count-down="countDownChanged"
+          ><b-icon-cloud-upload-fill></b-icon-cloud-upload-fill</b-alert>
+      </div>
+    </b-col>
+  </b-row>
+</template>
+
+
+<!-- Used with: both ds_fields_general -->
+<template id='ds-field-label'>
+  <b-form-input 
+    size="sm"
+    debounce="250"
+    @change="onChange"
+    :value="ds_field_item.label"></b-form-input>
+</template>
+
+
+<!-- Used with: both ds_fields_specific -->
+<template id='ds-field-value-prefix'>
+  <div>
+    <b-form-input
+      v-if="value_prefix_ok"
+      size="sm"
+      debounce="250"
+      @change="onChange"
+      :value="ds_field_item.value_prefix"></b-form-input>
+      
+      <b-container>
+        <b-row>
+          <b-col cols="3">
+            <em>'[[ ds_field_item.label ]]' Examples</em>
+          </b-col>
+          <b-col cols="9">
+          <b-row align-h="start"> 
+            <b-col md v-for="(rec, index) in record_examples">
+              <small>[[ rec ]]</small>
+            </b-col>
+          </b-row>
+          </b-col>
+        </b-row>
+      </b-container>
+  </div>
+</template>
+
+
+
+
+
+<script type="text/javascript">
+
+  var vs_ds_field_field_num = Vue.component(
+    'ds-field-field-num',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['ds_field_item', 'alert_update_uuids', 'alert_timer_duration', 'alert_timer_state'],
+      data() {
+        return {
+          ds_field_item: null,
+          dismissSecs: 2,
+          dismissCountDown: 2,
+        };
+      },
+      template: '#ds-field-field-num',
+      methods: {
+        countDownChanged(dismissCountDown) {
+          this.dismissCountDown = dismissCountDown
+        },
+        showAlert() {
+          this.dismissCountDown = this.dismissSecs
+        },
+        onDissmiss(){
+          this.$emit('countdown_done', this.ds_field_item.uuid);
+          // Reset the dismiss countdown to re-render if
+          // this ds_field gets another update.
+          this.dismissCountDown = this.dismissSecs;
+        },
+      }
+    },
+  );
+
+  var vs_ds_field_label = Vue.component(
+    'ds-field-label',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['ds_field_item',],
+      data() {
+        return {
+          ds_field_item: null,
+        };
+      },
+      template: '#ds-field-label',
+      methods: {
+        onChange(label) {
+          this.$emit('label_update', this.ds_field_item.uuid);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(
+              [
+                { uuid: this.ds_field_item.uuid, label: label}
+              ]
+            )
+          };
+          fetch('/etl-importer-setup/update-fields', requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              // Reload the whole table. Kinda drastic.
+              this.$emit('refresh_ds_fields');
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            });
+        }
+      },
+    },
+  );
+
+
+  const value_prefix_item_types = [
+    'subjects',
+    'media',
+    'documents',
+  ];
+
+  var vs_ds_field_value_prefix = Vue.component(
+    'ds-field-value-prefix',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['ds_field_item',],
+      data() {
+        return {
+          ds_field_item: null,
+          record_examples: [],
+          ok_prefix_item_types: value_prefix_item_types,
+        };
+      },
+      template: '#ds-field-value-prefix',
+      created(){
+        this.fetch_api_ds_field_record_examples();
+      },
+      computed: {
+        value_prefix_ok: function() {
+          if(this.ds_field_item){
+            const index = this.ok_prefix_item_types.indexOf(this.ds_field_item.item_type);
+            if(index >=0){
+              return true;
+            }
+          }
+          return false;
+        },
+      },
+      methods: {
+        fetch_api_ds_field_record_examples: function (){
+          const requestOptions = {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
+          fetch('/etl-importer/field-record-examples/' + this.ds_field_item.uuid, requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              this.record_examples = [];
+              for (let rec of data){
+                this.record_examples.push(rec.record);
+              }
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            }
+          );
+        },
+        onChange(value_prefix) {
+          this.record_examples = [];
+          this.$emit('value_prefix_update', this.ds_field_item.uuid);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(
+              [
+                { uuid: this.ds_field_item.uuid, value_prefix: value_prefix}
+              ]
+            )
+          };
+          fetch('/etl-importer-setup/update-fields', requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              // Reload the whole table. Kinda drastic.
+              this.fetch_api_ds_field_record_examples();
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            }
+          );
+        },
+      },
+    },
+  );
+
+</script>

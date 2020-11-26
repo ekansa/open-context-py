@@ -39,10 +39,19 @@ from django.utils.cache import patch_vary_headers
 # NOTE: This handles HTTP GET requests to give clients/users
 # information about the setup and status of an ETL process.
 
+
+def uuid_to_string(dict_obj):
+    for key, val in dict_obj.items():
+        if not isinstance(val, GenUUID.UUID):
+            continue
+        dict_obj[key] = str(val)
+    return dict_obj
+
+
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
 @never_cache
-def view_html(request, source_id):
+def home_html(request, source_id):
     _, valid_uuid = update_old_id(source_id)
     ds_source = DataSource.objects.filter(
         Q(source_id=source_id)|Q(uuid=valid_uuid)
@@ -50,9 +59,6 @@ def view_html(request, source_id):
     if not ds_source:
         return Http404
     rp = RootPath()
-    # Disable the search template and just use vue with the JSON
-    # API.
-    # search_temp = SearchTemplate(response_dict.copy())
     ds_fields_item_types =  [
         {'item_type': item_type, 'label': label,}
         for item_type, label, _ in DataSourceField.USER_SELECT_ITEM_TYPES
@@ -61,10 +67,10 @@ def view_html(request, source_id):
         {'data_type': data_type, 'label': label,}
         for data_type, label in DataSourceField.USER_SELECT_DATA_TYPES
     ]
-
     context = {
         'base_url': rp.get_baseurl(),
         'ds_source': ds_source,
+        'oc_item_class_null': str(configs.DEFAULT_CLASS_UUID),
         'ds_fields_item_types': json.dumps(ds_fields_item_types),
         'ds_fields_data_types': json.dumps(ds_fields_data_types),
     }
@@ -72,14 +78,6 @@ def view_html(request, source_id):
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response
-
-
-def uuid_to_string(dict_obj):
-    for key, val in dict_obj.items():
-        if not isinstance(val, GenUUID.UUID):
-            continue
-        dict_obj[key] = str(val)
-    return dict_obj
 
 
 @cache_control(no_cache=True)
@@ -160,3 +158,89 @@ def etl_fields(request, source_id):
     )
 
 
+@cache_control(no_cache=True)
+@never_cache
+def etl_field_record_examples(request, field_uuid):
+    """Get JSON list of example values in a data source field"""
+    source_id = request.GET.get('source_id')
+    field_num = request.GET.get('field_num')
+    if source_id and field_num:
+        # Get the field by specifying the data_source id
+        # and the field number.
+        _, valid_souce_uuid = update_old_id(source_id)
+        ds_field = DataSourceField.objects.filter(
+             Q(data_source__source_id=source_id)
+             |Q(data_source_id=valid_souce_uuid)
+        ).filter(
+            field_num=field_num
+        ).first()
+
+    else:
+        # Get the field by the field's UUID.
+        _, valid_field_uuid = update_old_id(field_uuid)
+        ds_field = DataSourceField.objects.filter(
+            uuid=valid_field_uuid,
+        ).first()
+    if not ds_field:
+        return Http404
+
+    # Default to random sorting
+    sort = request.GET.get('sort', '?')
+    # Default to staring at the begining
+    start = request.GET.get('start', 0)
+    # Default to 5 rows returned.
+    rows = request.GET.get('rows', 5)
+    if rows < 1:
+        rows = 1
+
+    ds_rec_qs = DataSourceRecord.objects.filter(
+        data_source=ds_field.data_source,
+        field_num=ds_field.field_num,
+    ).select_related(
+        'context'
+    ).select_related(
+        'item'
+    ).select_related(
+        'item__item_class'
+    ).distinct(
+        'record'
+    ).order_by(
+    ).values(
+        'uuid',
+        'data_source_id',
+        'data_source__label',
+        'data_source__source_id',
+        'row_num',
+        'field_num',
+        'context_id',
+        'context__item_type',
+        'context__label',
+        'item_id',
+        'item__item_type',
+        'item__label',
+        'item__item_class_id',
+        'item__item_class__label',
+        'record',
+    )[start:(start + rows)]
+    
+    output = []
+    for r_dict in ds_rec_qs:
+        r_dict['ds_field_id'] = str(ds_field.uuid)
+        r_dict['ds_field__label'] = ds_field.label
+        r_dict = uuid_to_string(r_dict)
+        if ds_field.value_prefix:
+            r_dict['record'] = (
+                str(ds_field.value_prefix)
+                + r_dict.get('record', '')
+            )
+        output.append(r_dict )
+
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )

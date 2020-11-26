@@ -1,0 +1,197 @@
+{% load humanize %}
+<!--
+  This code block provides a general interface for getting, navigating, and
+  selecting items in hierarchic trees.
+-->
+<style>
+  .tree_children_open_close {
+    font-weight: bold;
+  }
+  .tree_list {
+    list-style-type: none;
+    padding-inline-start: 20px;
+  }
+  .tree_item_label {
+    cursor: pointer;
+  }
+ 
+</style>
+
+<template id='tree-item'>
+  <li v-if="item">
+    <div>
+      <span @click="toggle" class="tree_item_label">
+        <span v-if="has_children" class="tree_children_open_close">
+          <span v-if="!is_open">+</span>
+          <span v-if="is_open">-</span>
+          [[ item.label ]]
+        </span>
+        <span v-if="!has_children & loading" class="text-muted">[[ item.label ]]</span>
+        <span v-if="!has_children & !loading">[[ item.label ]]</span>
+      </span>
+      <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+    </div>
+    <ul v-show="is_open" v-if="is_open && has_children" class="tree_list">
+      <tree-item
+        @cache_fetched_item="cache_fetched_item($event)"
+        @set_selected_item="set_selected_item($event)"
+        v-for="(child, index) in item.children"
+        :key="child.uuid"
+        :item="child"
+        v-bind:cached_tree_items="cached_tree_items"
+      ></tree-item>
+    </ul>
+  </li>
+</template>
+
+<template id='root-item-tree'>
+  <ul class="tree_list">
+    <tree-item
+      @cache_fetched_item="cache_fetched_item($event)"
+      @set_selected_item="set_selected_item($event)"
+      v-bind:cached_tree_items="cached_tree_items"
+      v-bind:root_item_id="root_item_id"
+    ></tree-item>
+  </ul>
+</template>
+
+
+<script type="text/javascript">
+
+  var vs_tree_item = Vue.component(
+    'tree-item',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['root_item_id', 'item', 'cached_tree_items'],
+      data() {
+        return {
+          item: Object,
+          is_open: false,
+          selected_item: null,
+          cached_tree_items: {},
+        };
+      },
+      template: '#tree-item',
+      computed: {
+        has_children: function() {
+          return this.item.children && this.item.children.length;
+        },
+        item_link: function() {
+          if(this.item){
+            return 'https://' + this.item.uri;
+          }
+        }
+      },
+      created(){
+        this.fetch_api_item_children();
+      },
+      methods: {
+        cache_fetched_item(item){
+          // This passes a shared "cache" of items already fetched
+          // from the backend so they don't need to get fetched again
+          // if a node is opened and closed again.
+          if(typeof this.cached_tree_items === 'undefined'){
+            this.cached_tree_items = {};
+          }
+          if(item){
+            this.cached_tree_items[item.uuid] = item;
+            this.$emit('cache_fetched_item', item);
+          }
+        },
+        fetch_api_item_children: function (){
+          this.error = null;
+          this.loading = true;
+          let at_root = true;
+          let fetch_id = this.root_item_id;
+          if(this.item && this.item.uuid){
+            at_root = false;
+            fetch_id = this.item.uuid;
+          }
+          if(this.cached_tree_items && fetch_id in this.cached_tree_items){
+            // We've already fetched this tree item. No need to
+            // make a network request to get it again.
+            this.item = this.cached_tree_items[fetch_id];
+            this.item.at_root = at_root;
+            this.loading = false;
+            console.log('Found tree item in cache: ' + fetch_id );
+            return null;
+          }
+          fetch(
+            ('/editorial/item-children/' + fetch_id),
+              {
+                headers:{
+                  'Accept': 'application/json',
+                }
+              }
+          )
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            this.cache_fetched_item(data);
+            this.item = data;
+            this.item.at_root = at_root;
+            this.loading = false;
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
+        },
+        set_selected_item(item){
+          if(item){
+            this.selected_item = item;
+            // This will go up parent components recursively, all the way to
+            // the root tree.
+            this.$emit('set_selected_item', this.selected_item);
+          }
+        },
+        toggle: function() {
+          this.set_selected_item(this.item);
+          if (this.has_children) {
+            this.is_open = !this.is_open;
+          }
+        },
+      }
+    },
+  );
+
+  var vs_root_item_tree = Vue.component(
+    'root-item-tree',
+    {
+      props: ['root_item_id', 'cached_tree_items'],
+      data() {
+        return {
+          root_item_id: null,
+          selected_item: null,
+          cached_tree_items: {},
+        };
+      },
+      template: '#root-item-tree',
+      methods: {
+        cache_fetched_item(item){
+          if(item){
+            this.cached_tree_items[item.uuid] = item;
+            this.$emit('set_cached_tree_items', this.cached_tree_items);
+          }
+        },
+        set_selected_item(item){
+          if(item){
+            this.selected_item = item;
+            console.log('Selected item: ' + this.selected_item.label);
+            // Now emit this selected item so it can be available for
+            // parent components.
+            this.$emit('set_selected_item', this.selected_item);
+          }
+        },
+      },
+      components: {
+        'tree-item': vs_tree_item,
+      }
+    }
+  );
+  </script>

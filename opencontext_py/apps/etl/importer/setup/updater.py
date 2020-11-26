@@ -54,7 +54,7 @@ def update_fields(request_json):
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
             k:item_update.get(k) 
-            for k in DS_FIELDS_UPDATE_ALLOWED if item_update.get(k)
+            for k in DS_FIELDS_UPDATE_ALLOWED if item_update.get(k) is not None
         }
 
         if not update_dict:

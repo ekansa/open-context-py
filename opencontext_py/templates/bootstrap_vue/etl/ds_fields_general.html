@@ -1,14 +1,10 @@
 {% load humanize %}
 
+<!-- 
+NOTE: Templates and Vue Components for general editing of data source fields.
+-->
+
 <style>
-  .row_update_alert {
-    text-align: right; 
-    padding-top: .2rem; 
-    padding-bottom:.15rem; 
-    padding-left: .3rem; 
-    padding-right: .3rem; 
-    margin-bottom: 0px;
-  }
   .ds_fields_button_group {
     width: 100%;
     display: block;
@@ -17,35 +13,6 @@
     width: 100%;
   }
 </style>
-<template id='ds-field-field-num'>
-  <b-row>
-    <b-col cols="6">
-      [[ field_num ]]
-    </b-col>
-    <b-col cols="6">
-      <div v-for="(alert_uuid, index) in alert_update_uuids">
-        <b-alert
-          v-if="alert_uuid == uuid"
-          class="row_update_alert"
-          :show="dismissCountDown"
-          responsive="sm"
-          fade
-          variant="success"
-          @dismissed="onDissmiss"
-          @dismiss-count-down="countDownChanged"
-          ><b-icon-cloud-upload-fill></b-icon-cloud-upload-fill</b-alert>
-      </div>
-    </b-col>
-  </b-row>
-</template>
-
-<template id='ds-field-label'>
-  <b-form-input 
-    size="sm"
-    debounce="250"
-    @change="onChange"
-    :value="label"></b-form-input>
-</template>
 
 <template id="ds-field-item-type-button">
   <b-button block variant="primary" @click="updateFieldItemType" class="ds_fields_button">
@@ -71,6 +38,7 @@
           small
           striped
           selectable
+          table-variant="secondary"
           :select-mode="selectMode"
           :items="ds_fields"
           :fields="fields"
@@ -85,17 +53,16 @@
               @countdown_done="remove_alert_update_uuid($event)"
               v-bind:alert_timer_state="alert_timer_state"
               v-bind:alert_timer_duration="alert_timer_duration"
-              v-bind:uuid="data.item.uuid"
-              v-bind:alert_update_uuids="alert_update_uuids"
-              v-bind:field_num="data.item.field_num">
+              v-bind:ds_field_item="data.item"
+              v-bind:alert_update_uuids="alert_update_uuids">
             </ds-field-field-num>
           </template>
 
           <template #cell(label)="data">
             <ds-field-label
               @label_update="add_alert_update_uuid($event)"
-              v-bind:uuid="data.item.uuid"
-              v-bind:label="data.item.label">
+              @refresh_ds_fields="fetch_api_ds_fields($event)"
+              v-bind:ds_field_item="data.item">
             </ds-fields-label>
           </template>
 
@@ -105,14 +72,7 @@
           </template>
 
         </b-table>
-        <p>
-          <b-button size="sm" @click="selectAllRows">Select all</b-button>
-          <b-button size="sm" @click="clearSelected">Clear selected</b-button>
-        </p>
-        <p>
-          Selected Rows:<br>
-          [[ selected ]]
-        </p>
+        
       </b-col>
       <b-col cols="3">
           <h5 style="text-align: center;">Item Types for Fields</h5>
@@ -120,6 +80,7 @@
             <ds-field-item-type-button
               v-for="(act_item, index) in ds_fields_item_types"
               @updating_item_type="add_alert_update_uuid_list($event)"
+              @refresh_ds_fields="fetch_api_ds_fields($event)"
               v-bind:key="act_item.item_type"
               v-bind:item_type="act_item.item_type"
               v-bind:selected="selected"
@@ -132,99 +93,24 @@
             <ds-field-data-type-button
               v-for="(act_item, index) in ds_fields_data_types"
               @updating_data_type="add_alert_update_uuid_list($event)"
+              @refresh_ds_fields="fetch_api_ds_fields($event)"
               v-bind:key="act_item.data_type"
               v-bind:data_type="act_item.data_type"
               v-bind:selected="selected"
               v-bind:label="act_item.label"></ds-field-data-type-button>
           </b-button-group>
-        
+          <br/>
+          <br/>
+          <p>
+            <b-button size="sm" @click="selectAllRows">Select all</b-button>
+            <b-button size="sm" @click="clearSelected">Clear selected</b-button>
+          </p>
       </b-col>
     </b-row>
   </template>
 
 
     <script type="text/javascript">
-
-    var vs_ds_field_field_num = Vue.component(
-      'ds-field-field-num',
-      {
-        delimiters: ['[[', ']]'],
-        props: ['uuid', 'field_num', 'alert_update_uuids', 'alert_timer_duration', 'alert_timer_state'],
-        data() {
-          return {
-            uuid: null,
-            field_num: null,
-            dismissSecs: 2,
-            dismissCountDown: 2,
-          };
-        },
-        template: '#ds-field-field-num',
-        methods: {
-          countDownChanged(dismissCountDown) {
-            this.dismissCountDown = dismissCountDown
-          },
-          showAlert() {
-            this.dismissCountDown = this.dismissSecs
-          },
-          onDissmiss(){
-            this.$emit('countdown_done', this.uuid);
-            // Reset the dismiss countdown to re-render if
-            // this ds_field gets another update.
-            this.dismissCountDown = this.dismissSecs;
-          },
-        }
-      },
-    );
-
-    var vs_ds_field_label = Vue.component(
-      'ds-field-label',
-      {
-        delimiters: ['[[', ']]'],
-        props: ['uuid', 'label',],
-        data() {
-          return {
-            is_alerter: false,
-            uuid: null,
-            label: null,
-          };
-        },
-        template: '#ds-field-label',
-        methods: {
-          onChange(label) {
-            this.$emit('label_update', this.uuid);
-            const requestOptions = {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
-              },
-              body: JSON.stringify(
-                [
-                  { uuid: this.uuid, label: label}
-                ]
-              )
-            };
-            fetch('/etl-importer-setup/update-fields', requestOptions)
-              .then(async response => {
-                const data = await response.json();
-                // check for error response
-                if (!response.ok) {
-                  // get error message from body or default to response status
-                  const error = (data && data.message) || response.status;
-                  return Promise.reject(error);
-                }
-                // Reload the whole table. Kinda drastic.
-                vm.$forceUpdate();
-              })
-              .catch(error => {
-                this.errorMessage = error;
-                console.error('There was an error!', error);
-              });
-          }
-        },
-      },
-    );
-
 
     var vs_ds_field_item_type_button =  Vue.component(
       'ds-field-item-type-button',
@@ -277,7 +163,7 @@
                   return Promise.reject(error);
                 }
                 // Reload the whole table. Kinda drastic.
-                vm.fetch_api_fields();
+                this.$emit('refresh_ds_fields');
               })
               .catch(error => {
                 this.errorMessage = error;
@@ -287,7 +173,6 @@
         }
       },
     );
-
 
     var vs_ds_field_data_type_button =  Vue.component(
       'ds-field-data-type-button',
@@ -340,7 +225,7 @@
                   return Promise.reject(error);
                 }
                 // Reload the whole table. Kinda drastic.
-                vm.fetch_api_fields();
+                this.$emit('refresh_ds_fields');
               })
               .catch(error => {
                 this.errorMessage = error;
@@ -351,18 +236,23 @@
       },
     );
 
+
+    // From the backend.
+    const ds_fields_item_types = JSON.parse('{{ ds_fields_item_types|escapejs }}');
+    const ds_fields_data_types = JSON.parse('{{ ds_fields_data_types|escapejs }}');
+
     var vc_ds_fields_general = Vue.component(
         'ds-fields-general',
         {
             delimiters: ['[[', ']]'],
-            props: ['ds_fields', 'ds_fields_item_types', 'ds_fields_data_types', 'ds_fields_table_height'],
+            props: ['source_uuid', 'ds_fields_table_height'],
             data() {
                 return {
                 modes: ['multi', 'single', 'range'],
                 sortBy: 'field_num',
                 sortDesc: false,
                 fields: [
-                  {key: 'field_num', sortable: true },
+                  {key: 'field_num', sortable: true},
                   {key: 'label', sortable: true },
                   {key: 'ref_orig_name', label: 'Original Name', sortable: false},
                   {key: 'item_type', sortable: true},
@@ -375,10 +265,35 @@
                 alert_update_uuids: [],
                 alert_timer_duration: 2, // length of time the alerts stay up.
                 alert_timer_state: 0,
+                ds_fields: [],
+                ds_fields_item_types: ds_fields_item_types,
+                ds_fields_data_types: ds_fields_data_types,
+                // testing
+                root_item_id: 'oc-gen-subjects',
                 }
             },
             template: '#ds-fields-general',
+            created(){
+              this.fetch_api_ds_fields();
+            },
             methods: {
+                fetch_api_ds_fields: function (){
+                      this.error = null;
+                      this.loading = true;
+                      fetch(
+                        ('/etl-importer/fields/' + this.source_uuid),
+                          {
+                                headers:{
+                                    'Accept': 'application/json',
+                                }
+                          }
+                      )
+                      .then(this.loading = false)
+                      .then(response => response.json())
+                      .then(json => {
+                          this.ds_fields = json
+                      })
+                },
                 add_alert_update_uuid(uuid) {
                   const index = this.alert_update_uuids.indexOf(uuid);
                   if (index > -1) {
@@ -419,6 +334,7 @@
               'ds-field-label': vs_ds_field_label,
               'ds-field-item-type-button': vs_ds_field_item_type_button,
               'ds-field-data-type-button': vs_ds_field_data_type_button,
+              'root-item-tree': vs_root_item_tree,
             },
         }
     ); 
