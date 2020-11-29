@@ -53,6 +53,7 @@ def update_fields(request_json):
         if not ds_field:
             errors.append(f'Cannot find ds_field for {uuid}')
             continue
+
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
             k:item_update.get(k) 
@@ -64,12 +65,19 @@ def update_fields(request_json):
             continue
 
         for attr, value in update_dict.items():
+            if attr == 'item_class_id' and value is False:
+                # We're removing an item class, so set it back to the default
+                value = configs.DEFAULT_CLASS_UUID
+            elif attr == 'context_id' and value is False:
+                # We're removing a context, so set it to None.
+                value = None
             setattr(ds_field, attr, value)
         
         if orig_item_type != ds_field.item_type:
             # We're changing item_types, which means we should reset other attributes.
             ds_field.data_type = None
             ds_field.item_class_id = configs.DEFAULT_CLASS_UUID
+            ds_field.context = None
 
         try:
             ds_field.save()

@@ -49,6 +49,30 @@ NOTE: Templates and Vue Components for use with ds_fields components.
 
 
 <!-- Used with: both ds_fields_specific -->
+<template id='ds-field-class'>
+  <div>
+    <span v-if="ds_field_item.item_class_id == oc_item_class_null">
+    </span>
+    <b-badge 
+      v-else 
+      @click="on_click"
+      variant="info">[[ ds_field_item.item_class__label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
+    </b-badge>
+  </div>
+</template>
+
+
+<template id='ds-field-context'>
+  <div>
+    <b-badge 
+      v-if="ds_field_item.context_id" 
+      @click="on_click"
+      variant="info">[[ ds_field_item.context__label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
+    </b-badge>
+  </div>
+</template>
+
+
 <template id='ds-field-value-prefix'>
   <div>
     <b-form-input
@@ -157,6 +181,103 @@ NOTE: Templates and Vue Components for use with ds_fields components.
       },
     },
   );
+
+
+  var vs_ds_field_class = Vue.component(
+    'ds-field-class',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['ds_field_item',],
+      data() {
+        return {
+          ds_field_item: null,
+        };
+      },
+      template: '#ds-field-class',
+      methods: {
+        on_click() {
+          this.$emit('class_update', this.ds_field_item.uuid);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(
+              [
+                { uuid: this.ds_field_item.uuid, item_class_id: false}
+              ]
+            )
+          };
+          fetch('/etl-importer-setup/update-fields', requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              // Reload the whole table. Kinda drastic.
+              this.$emit('refresh_ds_fields');
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            });
+        }
+      },
+    },
+  );
+
+
+  var vs_ds_field_context = Vue.component(
+    'ds-field-context',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['ds_field_item',],
+      data() {
+        return {
+          ds_field_item: null,
+        };
+      },
+      template: '#ds-field-context',
+      methods: {
+        on_click() {
+          this.$emit('context_update', this.ds_field_item.uuid);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(
+              [
+                { uuid: this.ds_field_item.uuid, context_id: false}
+              ]
+            )
+          };
+          fetch('/etl-importer-setup/update-fields', requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              // Reload the whole table. Kinda drastic.
+              this.$emit('refresh_ds_fields');
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            });
+        }
+      },
+    },
+  );
+
 
 
   const value_prefix_item_types = [

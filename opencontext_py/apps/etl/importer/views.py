@@ -19,6 +19,7 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 from opencontext_py.apps.all_items.legacy_all import update_old_id
+from opencontext_py.apps.all_items.editorial import api as editorial_api
 
 from opencontext_py.apps.etl.importer.models import (
     DataSource,
@@ -38,14 +39,6 @@ from django.utils.cache import patch_vary_headers
 
 # NOTE: This handles HTTP GET requests to give clients/users
 # information about the setup and status of an ETL process.
-
-
-def uuid_to_string(dict_obj):
-    for key, val in dict_obj.items():
-        if not isinstance(val, GenUUID.UUID):
-            continue
-        dict_obj[key] = str(val)
-    return dict_obj
 
 
 @ensure_csrf_cookie
@@ -102,7 +95,7 @@ def etl_source(request, source_id):
     if not ds_source:
         return Http404
     json_output = json.dumps(
-        uuid_to_string(ds_source),
+        editorial_api.dict_uuids_to_string(ds_source),
         indent=4,
         ensure_ascii=False
     )
@@ -145,7 +138,7 @@ def etl_fields(request, source_id):
         'meta_json', 
     )
     output = [
-        uuid_to_string(f) for f in ds_fields_qs
+        editorial_api.dict_uuids_to_string(f) for f in ds_fields_qs
     ]
     json_output = json.dumps(
         output,
@@ -187,9 +180,15 @@ def etl_field_record_examples(request, field_uuid):
     # Default to random sorting
     sort = request.GET.get('sort', '?')
     # Default to staring at the begining
-    start = request.GET.get('start', 0)
+    start = editorial_api.make_integer_or_default(
+        raw_value=request.GET.get('start', 0),
+        default_value=0
+    )
     # Default to 5 rows returned.
-    rows = request.GET.get('rows', 5)
+    rows = editorial_api.make_integer_or_default(
+        raw_value=request.GET.get('rows', 5),
+        default_value=5
+    )
     if rows < 1:
         rows = 1
 
@@ -227,7 +226,7 @@ def etl_field_record_examples(request, field_uuid):
     for r_dict in ds_rec_qs:
         r_dict['ds_field_id'] = str(ds_field.uuid)
         r_dict['ds_field__label'] = ds_field.label
-        r_dict = uuid_to_string(r_dict)
+        r_dict = editorial_api.dict_uuids_to_string(r_dict)
         if ds_field.value_prefix:
             r_dict['record'] = (
                 str(ds_field.value_prefix)
