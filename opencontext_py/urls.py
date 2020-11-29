@@ -113,6 +113,8 @@ urlpatterns = [
 
     # New add_items administrative (for editing, etl) views
     url(r'^editorial/item-children/(?P<identifier>\S+)', EditorialViews.item_children_json, name='editorial_item_children'),
+    url(r'^editorial/item-look-up', EditorialViews.item_look_up_json, name='editorial_item_look_up'),
+    url(r'^editorial/item-meta-look-up', EditorialViews.item_meta_look_up_json, name='editorial_item_meta_look_up'),
 
     # New ETL views
     url(r'^etl-importer/prepare/(?P<source_id>\S+)', etlViews.home_html, name='etl_home_html'),

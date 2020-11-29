@@ -1,0 +1,274 @@
+{% load humanize %}
+<!--
+  This code block provides a general interface for lookups of Manifest
+  items
+-->
+<style>
+  }
+ 
+</style>
+
+<template id='lookup-list-item'>
+  <b-list-group-item action class="d-flex justify-content-between align-items-center">
+      <span @click="toggle">[[ item.label ]]</span>
+      <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+    <div>
+      <small v-if="show_item_type" class="text-muted">[[ item.item_type ]]</small>
+      <small v-if="show_project" class="text-muted">[[ item.project__label ]]</small>
+      <small v-if="show_item_class" class="text-muted">[[ item.item_class__label ]]</small>
+      <small v-if="show_context" class="text-muted">[[ item.context__label ]]</small>
+    </div>
+  </b-list-group-item>
+</template>
+
+
+<template id='lookup-list'>
+  <div>
+    <b-form-group v-if="show_q_search_box"
+      description="Lookup item by labels (main, alternates)"
+      label-for="lookup-list-q-search-box"
+    >
+      <b-form-input
+        id="lookup-list-q-search-box"
+        size="sm"
+        debounce="250"
+        @change="on_change_q_search"
+        :value="q"></b-form-input>
+    </b-form-group>
+
+    <b-form-group v-if="show_label_search_box"
+      description="Lookup item by label"
+      label-for="lookup-list-label-search-box"
+    >
+      <b-form-input
+        id="lookup-list-label-search-box"
+        size="sm"
+        debounce="250"
+        @change="on_change_label_search"
+        :value="label__icontains"></b-form-input>
+    </b-form-group>
+
+    <b-form-group v-if="show_path_search_box"
+      description="Look within a (spatial) context path"
+      label-for="lookup-list-path-search-box"
+    >
+      <b-form-input
+        id="lookup-list-path-search-box"
+        size="sm"
+        debounce="250"
+        @change="on_change_path_search"
+        :value="path__icontains"></b-form-input>
+    </b-form-group>
+  
+    <small v-if="!loading & show_total_results">Number Found: [[ totalResults ]]</small>
+    <small v-if="loading">Searching for items...</small>
+    <b-list-group flush v-if="!loading & results.length > 0">
+      <lookup-list-item
+        @set_selected_item="set_selected_item($event)"
+        v-for="(item, index) in results"
+        :key="item.uuid"
+        :item="item"
+        v-bind:show_item_type="show_item_type"
+        v-bind:show_project="show_project"
+        v-bind:show_item_class="show_item_class"
+        v-bind:show_context="show_context"
+      ></lookup-list-item>
+    </b-list-group>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+var vs_look_up_list_item = Vue.component(
+    'lookup-list-item',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['item', 'show_item_type', 'show_project', 'show_item_class', 'show_context'],
+      data() {
+        return {
+          item: Object,
+          selected_item: null,
+          show_item_type: false,
+          show_project: false,
+          show_item_class: false,
+          show_context: false,
+        };
+      },
+      template: '#lookup-list-item',
+      computed: {
+        item_link: function() {
+          if(this.item){
+            return 'https://' + this.item.uri;
+          }
+        },
+        context_link: function() {
+          if(this.item && this.item.context__item_type == 'vocabularies'){
+            return 'https://' + this.item.context__uri;
+          }
+        },
+      },
+      methods: {
+        set_selected_item(item){
+          if(item){
+            this.selected_item = item;
+            // This will go up parent components recursively.
+            this.$emit('set_selected_item', this.selected_item);
+          }
+        },
+        toggle: function() {
+          this.set_selected_item(this.item);
+        },
+      }
+    },
+  );
+
+  var vs_look_up_list = Vue.component(
+    'lookup-list',
+    {
+      delimiters: ['[[', ']]'],
+      props: [
+        'item_type', 
+        'project_id', 
+        'item_class_id', 
+        'context_id',  
+        'q', 
+        'path__icontains',
+        'label__icontains',
+        'fetch_on_create',
+        'start',
+        'rows',
+        'show_q_search_box',
+        'show_label_search_box',
+        'show_path_search_box',
+        'show_total_results',
+        'show_item_type', 
+        'show_project', 
+        'show_item_class', 
+        'show_context',
+      ],
+      data() {
+        return {
+          item_type: [],
+          project_id: [],
+          item_class_id: [],
+          context_id: [],
+          path__icontains: null,
+          label__icontains: null,
+          q: null,
+          selected_item: null,
+          multi_val_delim: '||',
+          results: [],
+          start: null,
+          row: null,
+          totalResults: null,
+          show_q_search_box: true,
+          show_label_search_box: false,
+          show_path_search_box: false,
+          show_total_results: true,
+          show_item_type: false,
+          show_project: false,
+          show_item_class: false,
+          show_context: false,
+          loading: null,
+        };
+      },
+      template: '#lookup-list',
+      created(){
+        if(this.fetch_on_create){
+          this.fetch_api_item_look_up();
+        }
+      },
+      methods: {
+        get_list_request_params: function () {
+          // Makes request parameters for attributes with listed values.
+          let params = {};
+          if(this.item_type && this.item_type.length > 0){
+            params.item_type = this.item_type.join(this.multi_val_delim);
+          }
+          if(this.project_id && this.project_id.length > 0){
+            params.project_id = this.project_id.join(this.multi_val_delim);
+          }
+          if(this.item_class_id && this.item_class_id.length > 0){
+            params.item_class_id = this.item_class_id.join(this.multi_val_delim);
+          }
+          return params;
+        },
+        fetch_api_item_look_up: function (){
+          this.error = null;
+          this.loading = true;
+          let params = this.get_list_request_params();
+          let has_query = false;
+          if(this.q && this.q.length > 0){
+            params.q = this.q;
+            has_query = true;
+          }
+          if(this.label__icontains  && this.label__icontains.length > 0){
+            params.label__icontains = this.label__icontains;
+            has_query = true;
+          }
+          if(this.path__icontains && this.path__icontains.length > 0){
+            params.path__icontains = this.path__icontains;
+            has_query = true;
+          }
+          if(!has_query && !this.fetch_on_create){
+            // Skip out, because we don't have enough to limit a query.
+            return null;
+          }
+          if(this.start){
+            params.start = this.start;
+          }
+          if(this.rows){
+            params.rows = this.rows;
+          }
+          const requestOptions = {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
+          fetch(
+            ('/editorial/item-look-up?' + new URLSearchParams(params)), 
+            requestOptions,
+          )
+          .then(this.loading = false)
+          .then(response => response.json())
+          .then(json => {
+            this.totalResults = json.totalResults;
+            this.results = json.results;
+          });
+        },
+        clear_selected_item(){
+          this.selected_item = null;
+          this.$emit('clear_selected_item', this.selected_item);
+        },
+        on_change_q_search(q){
+          this.q = q;
+          this.clear_selected_item();
+          this.fetch_api_item_look_up();
+        },
+        on_change_label_search(label__icontains){
+          this.label__icontains = label__icontains;
+          this.clear_selected_item();
+          this.fetch_api_item_look_up();
+        },
+        on_change_path_search(path__icontains){
+          this.path__icontains = path__icontains;
+          this.clear_selected_item();
+          this.fetch_api_item_look_up();
+        },
+        set_selected_item(item){
+          if(item){
+            this.selected_item = item;
+            // This will go up parent components recursively.
+            this.$emit('set_selected_item', this.selected_item);
+          }
+        },
+      },
+      components: {
+        'lookup-list-item': vs_look_up_list_item,
+      },
+    },
+  );
+
+  </script>
