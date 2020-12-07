@@ -137,15 +137,16 @@ class DataSourceField(models.Model):
         ('resources', 'Media File URLs', 'id'),
         ('documents', 'Documents (Text, HTML)', 'id'),
         ('persons', 'Persons or Organizations', 'id'),
-        ('predicates', 'Descriptions', None),
-        ('variables', 'Descriptive or Linking Properties', None),
-        ('values', 'Values of Descriptions', None),
+        ('predicates', 'Single Attribute Descriptions or Relations', None),
+        ('variables', 'Multiple Descriptive Attributes', None),
+        ('values', 'Values of Multi-Attributes', None),
         ('uuid', 'UUIDs (identifiers)', 'xsd:string'),
         ('latitude', 'Latitudes (decimal degrees)', 'xsd:double'),
         ('longitude', 'Longitudes (decimal degrees)', 'xsd:double'),
         ('earliest', 'Earliest Years (BCE/CE)', 'xsd:double'),
         ('latest', 'Latest Years (BCE/CE)', 'xsd:double'),
-        ('uri', 'URIs (Linked Data)', 'id'),
+        ('uri', 'Linked Data Instances (URIs)', 'id'),
+        ('class', 'Linked Data Classes (URIs)', 'id'),
         ('observations', 'Observations (description grouping)', 'id'),
         ('events', 'Events (description grouping)', 'id'),
         ('attribute-groups', 'Attribute Groups', 'id'),
@@ -478,6 +479,25 @@ class DataSourceAnnotation(models.Model):
 
     PREDICATE_OK_ITEM_TYPES = ['predicates', 'property', 'class', 'variables']
 
+    DESCRIBED_BY_LINK_OK_ITEM_TYPES = [
+        'projects', 
+        'tables',
+        'subjects',
+        'media',
+        'documents',
+        'persons',
+    ]
+
+    DESCRIBED_BY_OK_OBJECT_TYPES = [
+        'predicates',
+        'variables',
+        'uuid',
+        'latitude',
+        'longitude',
+        'earliest',
+        'latest',
+    ]
+
     def validate_fields_data_sources(self):
         """Validates that field references are in the same data source"""
         field_attributes = [
@@ -577,6 +597,79 @@ class DataSourceAnnotation(models.Model):
             raise ValueError(
                 f'The field {self.predicate_field.label}; {self.predicate_field.item_type} '
                 f'cannot be used for predicates. It must be a {str(self.PREDICATE_OK_ITEM_TYPES)}'
+            )
+
+
+    def validate_subject_predicate_objects(self):
+        """Validates that we're not using the same items/fields for in multiple roles"""
+        if self.subject_field == self.predicate_field:
+            raise ValueError(
+                f'The subject field {self.subject_field.label} cannot also be a predicate_field'
+            )
+        if self.subject_field == self.object_field:
+            raise ValueError(
+                f'The subject field {self.subject_field.label} cannot also be an object_field'
+            )
+        if self.predicate_field is not None and self.predicate_field == self.object_field:
+            raise ValueError(
+                f'The predicate field {self.predicate_field.label} cannot also be an object_field' 
+            )
+        if self.predicate is not None and self.predicate == self.object:
+            raise ValueError(
+                f'The predicate {self.predicate.label} cannot also be an object'
+            )
+    
+
+    def validate_media_has_files(self):
+        """Validates that has-files annotations have correct field item_types"""
+        if not self.predicate:
+            return None
+        if str(self.predicate.uuid) != configs.PREDICATE_OC_ETL_MEDIA_HAS_FILES:
+            return None
+        if self.subject_field.item_type != 'media':
+            raise ValueError(
+                f'The subject field {self.subject_field.label} must be of type "media" to have files.'
+            )
+        if not self.object_field:
+            raise ValueError(
+                f'The object of a "{self.predicate.label}" annotation must be an object field'
+            )
+        if self.object_field.item_type != 'resources':
+            raise ValueError(
+                f'The object of a "{self.predicate.label}" annotation must be of type "resources". '
+            )
+    
+
+    def validate_described_by_link_item_types(self):
+        """Validates that described-by and link annotations have correct field item_types"""
+        if not self.predicate:
+            return None
+        if (str(self.predicate.uuid) 
+            not in [configs.PREDICATE_LINK_UUID, configs.PREDICATE_OC_ETL_DESCRIBED_BY]):
+            # We're only checking certain predicates for these relationships
+            return None
+        if self.subject_field.item_type not in self.DESCRIBED_BY_LINK_OK_ITEM_TYPES:
+            raise ValueError(
+                f'For links, subject field {self.subject_field.label} '
+                f'must be of an item_type {self.DESCRIBED_BY_LINK_OK_ITEM_TYPES} .'
+            )
+        
+        # Object item types are have somewhat different validation criteria for
+        # PREDICATE_OC_ETL_DESCRIBED_BY and PREDICATE_LINK_UUID
+        if self.predicate.uuid == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
+            ok_object_types = self.DESCRIBED_BY_OK_OBJECT_TYPES
+        else:
+            ok_object_types = self.DESCRIBED_BY_LINK_OK_ITEM_TYPES
+
+        if self.object_field and self.object_field.item_type not in ok_object_types:
+            raise ValueError(
+                f'For links, object field "{self.object_field}" '
+                f'must be of an item_type {ok_object_types} .'
+            )
+        if self.object and self.object.item_type not in sok_object_types:
+            raise ValueError(
+                f'For links, the object "{self.object.label}" '
+                f'must be of an item_type {ok_object_types} .'
             )
 
 
@@ -706,10 +799,16 @@ class DataSourceAnnotation(models.Model):
         if self.predicate and str(self.predicate.uuid) == configs.PREDICATE_CONTAINS_UUID:
             # We're attempting to save a containment annotation, so check it.
             validate_context_assertion(self.subject_field, self.object_field)
-        
+
+
+        # Validate we're using different items/fields for different attributes
+        self.validate_subject_predicate_objects()
+
         # Validate that the predicate or predicate_field attributes have an
         # allowed item_type.
         self.validate_predicate_item_type()
+        self.validate_media_has_files()
+        self.validate_described_by_link_item_types()
 
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceAnnotation, self).save(*args, **kwargs)

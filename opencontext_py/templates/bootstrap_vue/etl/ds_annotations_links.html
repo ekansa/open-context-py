@@ -1,0 +1,390 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and Vue Components for general user interface components to manage ds_annotations.
+-->
+
+<template id="ds-annotations-links">
+  <b-row v-if="ds_annotations" >
+    <b-col cols="8">
+
+      <b-table
+        ref="dsAnnotationsTable"
+        :sticky-header="ds_annos_table_height"
+        table-variant="secondary"
+        striped
+        :items="ds_annotations"
+        :fields="fields"
+        :sort-by.sync="sortBy"
+        :sort-desc.sync="sortDesc"
+        responsive="lg"
+      >
+      <template #cell(subject_field_id)="data">
+        <ds-anno-remove
+          @refresh_ds_annos="fetch_api_ds_annotations($event)"
+          v-bind:ds_anno_item="data.item">
+        </ds-anno-remove>
+      </template>
+
+      <template #cell(subject_field__label)="data">
+        [[ data.item.subject_field__label ]]
+        <div class="text-muted">
+          <small 
+            v-if="data.item.subject_field__item_class_id != DEFAULT_CLASS_UUID"
+          >
+          [[ data.item.subject_field__item_type ]] :: [[ data.item.subject_field__item_class__label ]]
+          </small>
+          <small v-else>[[ data.item.subject_field__item_type ]]</small>
+        </div>
+      </template>
+
+        <template #cell()="data">
+          [[ data.value ]]
+        </template>
+
+      </b-table>
+      
+    </b-col>
+    <b-col cols="4">
+
+      <b-card
+        header="Assign Linking Relations"
+      >
+        <b-card-text>Entities in each field can be modeled to have linking relationships of
+          different kinds. Most commonly these define spatial containment relationships, or
+          associations between records and their authors/creators, or associations between
+          images and other records of data.
+        </b-card-text>
+      </b-card>
+
+      <br/>
+      <br/>
+
+      
+      <b-container fluid>
+        <b-button 
+          v-if="contain_ds_fields.ok_subj.length && contain_ds_fields.ok_obj.length"
+          variant="info"
+          block
+          @click="open_contain_ui"
+          >[[ PREDICATE_CONTAINS.label ]]</b-button>
+        <b-button 
+          v-if="link_ds_fields.ok_subj.length && link_ds_fields.ok_obj.length"
+          variant="info"
+          block
+          @click="open_link_ui"
+          >[[ PREDICATE_LINK.label ]]</b-button>
+        <b-button 
+          v-if="media_files_ds_fields.ok_subj.length && media_files_ds_fields.ok_obj.length"
+          variant="info"
+          block
+          @click="open_media_has_files_ui"
+          >[[ PREDICATE_OC_ETL_MEDIA_HAS_FILES.label ]]</b-button>
+        <b-button 
+          v-if="var_val_ds_fields.ok_subj.length && var_val_ds_fields.ok_obj.length"
+          variant="info"
+          block
+          @click="open_var_val_ui"
+          >Variable - Value Links</b-button>
+        <b-button 
+          v-if="gen_ds_fields.ok_subj.length && gen_ds_fields.ok_obj.length"
+          variant="info"
+          block
+          @click="open_other_rel_ui"
+          >Other Relationship</b-button>
+      </b-container>
+      
+
+      <ds-anno-pred-item-ui
+      v-bind:predicate_item="selected_predicate_item"
+      v-bind:ok_subj_fields="selected_ok_subj_fields"
+      v-bind:ok_obj_fields="selected_ok_obj_fields"
+      v-bind:ok_pred_reset="ok_pred_reset"
+      v-bind:project_uuid="project_uuid"
+      @refresh_ds_annos="fetch_api_ds_annotations($event)"
+      ></ds-anno-pred-item-ui>
+
+    </b-col>
+  </b-row>
+</template>
+
+
+<script type="text/javascript">
+
+  var vc_ds_annotations_links = Vue.component(
+      'ds-annotations-links',
+      {
+          delimiters: ['[[', ']]'],
+          props: ['source_uuid', 'project_uuid', 'ds_annos_table_height'],
+          data() {
+            return {
+              sortBy: null,
+              sortDesc: false,
+              fields: [
+                {key: 'subject_field_id', label: 'Remove', sortable: false },
+                {key: 'subject_field__label', label: 'Subject Field', sortable: true },
+                {key: 'predicate__label', label: 'Predicate', sortable: true},
+                {key: 'object_field__label', label: 'Object', sortable: true},
+              ],
+              items: [],
+              selected_predicate_item: PREDICATE_LINK,
+              selected_predicate_field: null,
+              ok_pred_reset: false,
+              selected_ok_subj_fields: [],
+              selected_ok_obj_fields: [],
+              ds_annotations: [],
+              ds_fields: [],
+            }
+          },
+          template: '#ds-annotations-links',
+          computed: {
+            link_ds_fields: function() {
+              let result = {ok_subj: [], ok_obj: []};
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                const t_index = DESCRIBED_BY_LINK_OK_ITEM_TYPES.indexOf(ds_field.item_type);
+                if(t_index >= 0 && ds_field.data_type == 'id'){
+                  result.ok_subj.push(ds_field);
+                  result.ok_obj.push(ds_field);
+                }
+              }
+              return result;
+            },
+            contain_ds_fields: function() {
+              // Makes lists of subjects ds_fields that are OK for
+              // annotations in containment relationships.
+              let result = {ok_subj: [], ok_obj: []};
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              if(this.ds_annotations === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                if(ds_field.item_type != 'subjects'){
+                  continue;
+                }
+                let is_parent = false;
+                let is_child = false;
+                for(let ds_anno of this.ds_annotations) {
+                  if(ds_anno.predicate_id != PREDICATE_CONTAINS.uuid){
+                    continue;
+                  }
+                  if(ds_anno.subject_field_id == ds_field.uuid){
+                    is_parent = true;
+                  }
+                  if(ds_anno.object_field_id == ds_field.uuid){
+                    is_child = true;
+                  }
+                }
+                if(!is_parent){
+                  result.ok_subj.push(ds_field);
+                }
+                if(!is_child){
+                  result.ok_obj.push(ds_field);
+                }
+              }
+              return result;
+            },
+            media_files_ds_fields: function() {
+              // Makes lists of media and resources ds_fields that are
+              // OK for 'media has files' annotations
+              let result = {ok_subj: [], ok_obj: []};
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              if(this.ds_annotations === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                if(ds_field.item_type == 'media'){
+                  result.ok_subj.push(ds_field);
+                  continue;
+                }
+                if(ds_field.item_type != 'resources'){
+                  continue;
+                }
+                let is_linked = false;
+                for(let ds_anno of this.ds_annotations) {
+                  if(ds_anno.predicate_id != PREDICATE_OC_ETL_MEDIA_HAS_FILES.uuid){
+                    continue;
+                  }
+                  if(ds_anno.object_field_id == ds_field.uuid){
+                    is_linked = true;
+                  }
+                }
+                if(!is_linked){
+                  result.ok_obj.push(ds_field);
+                }
+              }
+              return result;
+            },
+            var_val_ds_fields: function() {
+              // Makes lists of variable and value ds_fields that are
+              // OK for 'rdfs:range' annotations
+              let result = {ok_subj: [], ok_obj: []};
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              if(this.ds_annotations === undefined){
+                return result;
+              }
+              const var_val = ['variables', 'values', 'types'];
+              for(let ds_field of this.ds_fields){
+                let type_index = var_val.indexOf(ds_field.item_type);
+                if(type_index < 0){
+                  // This ds_field is not relevant to this interface.
+                  continue;
+                }
+                let is_linked = false;
+                for(let ds_anno of this.ds_annotations) {
+                  if(ds_anno.predicate_id != PREDICATE_RDFS_RANGE.uuid){
+                    continue;
+                  }
+                  if(ds_anno.object_field_id == ds_field.uuid){
+                    is_linked = true;
+                  }
+                }
+                if(!is_linked){
+                  // The field is not yet related to another field.
+                  if(ds_field.item_type == 'variables'){
+                    // variables are only OK as subject fields.
+                    result.ok_subj.push(ds_field);
+                  }
+                  else {
+                    // types and values can be objects only.
+                    result.ok_obj.push(ds_field);
+                  }
+                }
+              }
+              return result;
+            },
+            gen_ds_fields: function() {
+              // Makes a list of OK subjects and object fields
+              // based on data_type.
+              let result = {ok_subj: [], ok_obj: []};
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                if(ds_field.data_type == 'id'){
+                  result.ok_subj.push(ds_field);
+                  result.ok_obj.push(ds_field);
+                }
+              }
+              return result;
+            }
+          },
+          created(){
+            this.fetch_api_ds_annotations();
+            this.fetch_api_ds_fields();
+          },
+          methods: {
+            fetch_api_ds_annotations: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/etl-importer/annotations/' + this.source_uuid),
+                  {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  let results = [];
+                  for(let ds_anno of json){
+                    if(ds_anno.predicate_id != PREDICATE_OC_ETL_DESCRIBED_BY.uuid){
+                      results.push(ds_anno);
+                    }
+                  }
+                  this.ds_annotations = results;
+              })
+            },
+            fetch_api_ds_fields: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/etl-importer/fields/' + this.source_uuid),
+                  {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.ds_fields = json
+              })
+            },
+            close_pred_item_ui(){
+              this.$bvModal.hide('ds-anno-pred-item-modal');
+              this.selected_predicate_item = null;
+              this.selected_ok_subj_fields = [];
+              this.selected_ok_obj_fields = [];
+            },
+            open_pred_item_ui(pred_item, ok_subj_fields, ok_obj_fields){
+              this.$bvModal.show('ds-anno-pred-item-modal');
+              this.selected_predicate_item = pred_item;
+              this.selected_ok_subj_fields = ok_subj_fields;
+              this.selected_ok_obj_fields = ok_obj_fields;
+              this.$bvModal.show('ds-anno-pred-item-modal');
+            },
+            open_link_ui(){
+              this.ok_pred_reset = false;
+              this.open_pred_item_ui(
+                PREDICATE_LINK,
+                this.link_ds_fields.ok_subj,
+                this.link_ds_fields.ok_obj,
+              );
+            },
+            open_contain_ui(){
+              this.ok_pred_reset = false;
+              this.open_pred_item_ui(
+                PREDICATE_CONTAINS,
+                this.contain_ds_fields.ok_subj,
+                this.contain_ds_fields.ok_obj,
+              );
+            },
+            open_media_has_files_ui(){
+              this.ok_pred_reset = false;
+              this.open_pred_item_ui(
+                PREDICATE_OC_ETL_MEDIA_HAS_FILES,
+                this.media_files_ds_fields.ok_subj,
+                this.media_files_ds_fields.ok_obj,
+              );
+            },
+            open_var_val_ui(){
+              this.ok_pred_reset = false;
+              let pred = PREDICATE_RDFS_RANGE;
+              pred.label = 'Has Values';
+              this.open_pred_item_ui(
+                pred,
+                this.var_val_ds_fields.ok_subj,
+                this.var_val_ds_fields.ok_obj,
+              );
+            },
+            open_other_rel_ui(){
+              this.ok_pred_reset = true;
+              this.open_pred_item_ui(
+                {uuid:null, label: 'Select Other Relationship'},
+                this.gen_ds_fields.ok_subj,
+                this.gen_ds_fields.ok_obj,
+              );
+            },
+          },
+          components: {
+            'ds-anno-remove': vs_ds_anno_remove,
+            'ds-anno-pred-item-ui': vs_ds_anno_pred_item_ui,
+            'root-item-tree': vs_root_item_tree,
+            'lookup-list': vs_look_up_list,
+          },
+      }
+  ); 
+
+</script>

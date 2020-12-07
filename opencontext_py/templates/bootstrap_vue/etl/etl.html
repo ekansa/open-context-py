@@ -12,16 +12,29 @@
         {% include '../../bootstrap_vue/etl/ds_fields_general.html' %}
         {% include '../../bootstrap_vue/etl/ds_fields_specific.html' %}
 
+        {% include '../../bootstrap_vue/etl/ds_annotations.html' %}
+        {% include '../../bootstrap_vue/etl/ds_annotations_links.html' %}
+        {% include '../../bootstrap_vue/etl/ds_annotations_describes.html' %}
+
         <div id="main">
             <b-container fluid id="app">
                 <b-row>
-                    <b-col>
+                    <b-col cols="7">
                         <h1>[[ message ]]</h1>
                     </b-col>
-                    <b-col>
-                        <b-card>
-                            Data source: [[ source_id ]]
-                        </b-card>
+                    <b-col cols="5">
+                        <b-container fluid>
+                            <dl class="row">
+                                <dt class="col-sm-4">
+                                    Data Source
+                                </dt>
+                                <dd class="col-sm-8">[[ source_id ]]</dd>
+                                <dt class="col-sm-4">
+                                    Project
+                                </dt>
+                                <dd class="col-sm-8">[[ PROJECT_LABEL ]]</dd>
+                            </dl>
+                        </b-container>
                     </b-col>
                 </b-row>
                 <div>
@@ -58,6 +71,8 @@
             const base_url = '{{ base_url|safe }}';
             const source_id = '{{ ds_source.source_id }}';
             const source_uuid = '{{ ds_source.uuid }}';
+            const PROJECT_LABEL = '{{ ds_source.project.label }}';
+            const PROJECT_UUID = '{{ ds_source.project.uuid }}';
 
             const routes = [
                 {
@@ -81,14 +96,14 @@
                 {
                     path: '/etl-importer/prepare/' + source_uuid + '#link-rels',
                     name: 'link-rels',
-                    component: vc_ds_fields_general,
-                    props: {source_uuid: source_uuid, ds_fields_table_height: '250px'},
+                    component: vc_ds_annotations_links,
+                    props: {source_uuid: source_uuid, project_uuid: PROJECT_UUID, ds_annos_table_height: table_height},
                 },
                 {
                     path: '/etl-importer/prepare/' + source_uuid + '#describe-rels',
                     name: 'describe-rels',
-                    component: vc_ds_fields_general,
-                    props: {source_uuid: source_uuid, ds_fields_table_height: '50px'},
+                    component: vc_ds_annotations_describes,
+                    props: {source_uuid: source_uuid, project_uuid: PROJECT_UUID, ds_annos_table_height: table_height},
                 },
                 {
                     path: '/etl-importer/prepare/' + source_uuid + '#finalize',
@@ -113,12 +128,15 @@
                         message: 'Open Context ETL',
                         source_id: source_id,
                         source_uuid: source_uuid,
+                        project_uuid: PROJECT_UUID,
                         page_height: page_height,
                         ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
                     },
                     components: {
                         'ds-fields-general': vc_ds_fields_general,
                         'ds-fields-specific': vc_ds_fields_specific,
+                        'ds-annotations-links': vc_ds_annotations_links,
+                        'ds-annotations-describes': vc_ds_annotations_describes,
                     },
                 },
             ).$mount('#app');

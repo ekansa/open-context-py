@@ -96,6 +96,63 @@ def update_fields(request_json):
     return updated, errors
 
 
+def add_single_annotation(request_item_dict, errors=None):
+    """Adds a DataSourceAnnotation based on request_json"""
+    if errors is None:
+        errors = []
+
+    created = None
+    subject_field_id = request_item_dict.get('subject_field_id')
+    if not subject_field_id:
+        errors.append('subject_field_id')
+        return None, errors
+
+    ds_subj_field = DataSourceField.objects.filter(
+        uuid=subject_field_id
+    ).first()
+    if not ds_subj_field:
+        errors.append(f'Cannot find field {ds_subj_field}')
+        return None, errors
+    
+    create_dict = {
+        'data_source': ds_subj_field.data_source,
+        'subject_field': ds_subj_field,
+    }
+    skip_keys = ['data_source', 'data_source_id', 'subject_field', 'subject_field_id']
+    for key, value in request_item_dict.items():
+        if key in skip_keys:
+            continue
+        create_dict[key] = value
+    
+    ds_anno = DataSourceAnnotation(**create_dict)
+    try:
+        ds_anno.save()
+        created = str(ds_anno.uuid)
+    except Exception as e:
+        created = None
+        if hasattr(e, 'message'):
+            error = e.message
+        else:
+            error = str(e)
+        errors.append(error)
+    return created, errors
+
+
+def add_annotations(request_json):
+    """Adds annotation items from a request_json list"""
+    if not request_json:
+        return [], ['Empty request']
+    
+    all_created = []
+    errors = None
+    for request_item_dict in request_json:
+        created, errors = add_single_annotation(request_item_dict, errors=errors)
+        print(f'NEW created: {created}, errors: {errors}')
+        all_created.append(created)
+    
+    print(f'Created: {all_created}, errors: {errors}')
+    return all_created,  errors
+
 
 
 

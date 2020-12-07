@@ -188,7 +188,7 @@ PREDICATE_OC_HAS_TECHNIQUE_UUID = '00000000-6e24-7a66-2fff-65ea5fabd642'
 
 # These are used for ETL (data ingest) modeling purposes
 PREDICATE_OC_ETL_DESCRIBED_BY = 'c1745101-16a7-87e0-25ce-00f52da37f60'  # 'oc-gen:etl-described-by'
-PREDICATE_OC_ETL_MEDIA_PART_OF = '931c8f69-e7ab-7a3f-109c-80f5322846f9' # 'oc-gen:etl-media-part-of'
+PREDICATE_OC_ETL_MEDIA_HAS_FILES = '931c8f69-e7ab-7a3f-109c-80f5322846f9' # 'oc-gen:etl-media-has-files'
 PREDICATE_OC_ETL_HAS_METADATA = '739a6d12-fdf7-6976-babd-962818b4a4cc' # 'oc-gen:etl-has-metadata'
 
 

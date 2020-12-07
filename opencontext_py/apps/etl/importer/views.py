@@ -41,6 +41,7 @@ from django.utils.cache import patch_vary_headers
 # information about the setup and status of an ETL process.
 
 
+
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
 @never_cache
@@ -60,12 +61,50 @@ def home_html(request, source_id):
         {'data_type': data_type, 'label': label,}
         for data_type, label in DataSourceField.USER_SELECT_DATA_TYPES
     ]
+
+    pred_link = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.PREDICATE_LINK_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used for general spatial containment
+    pred_contains =  editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.PREDICATE_CONTAINS_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used to define relationships between media and (file) resources
+    pred_media_has_files = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.PREDICATE_CONTAINS_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used to define variable->value relationsips.
+    pred_rdfs_range = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.PREDICATE_RDFS_RANGE_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used to define 'described by' relationships.
+    pred_described_by = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+        do_minimal=True,
+    )
+
     context = {
         'base_url': rp.get_baseurl(),
         'ds_source': ds_source,
-        'oc_item_class_null': str(configs.DEFAULT_CLASS_UUID),
-        'ds_fields_item_types': json.dumps(ds_fields_item_types),
-        'ds_fields_data_types': json.dumps(ds_fields_data_types),
+        'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),
+        'DEFAULT_CLASS_UUID': str(configs.DEFAULT_CLASS_UUID),
+        'DESCRIBED_BY_LINK_OK_ITEM_TYPES': json.dumps(
+            DataSourceAnnotation.DESCRIBED_BY_LINK_OK_ITEM_TYPES
+        ),
+        'DESCRIBED_BY_OK_OBJECT_TYPES': json.dumps(
+            DataSourceAnnotation.DESCRIBED_BY_OK_OBJECT_TYPES
+        ),
+        'PREDICATE_LINK': json.dumps(pred_link),
+        'PREDICATE_CONTAINS': json.dumps(pred_contains),
+        'PREDICATE_OC_ETL_MEDIA_HAS_FILES': json.dumps(pred_media_has_files),
+        'PREDICATE_RDFS_RANGE': json.dumps(pred_rdfs_range),
+        'PREDICATE_OC_ETL_DESCRIBED_BY': json.dumps(pred_described_by),
+        'DS_FIELDS_ITEM_TYPES': json.dumps(ds_fields_item_types),
+        'DS_FIELDS_DATA_TYPES': json.dumps(ds_fields_data_types),
     }
     template = loader.get_template('bootstrap_vue/etl/etl.html')
     response = HttpResponse(template.render(context, request))
@@ -234,6 +273,139 @@ def etl_field_record_examples(request, field_uuid):
             )
         output.append(r_dict )
 
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+
+@cache_control(no_cache=True)
+@never_cache
+def etl_annotations(request, source_id):
+    _, valid_uuid = update_old_id(source_id)
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        Q(data_source__source_id=source_id)
+        |Q(data_source__uuid=valid_uuid)
+    ).select_related(
+        'data_source'
+    ).select_related(
+        'subject_field'
+    ).select_related(
+        'subject_field__item_class'
+    ).select_related(
+        'subject_field__context'
+    ).select_related(
+        'predicate'
+    ).select_related(
+        'predicate_field'
+    ).select_related(
+        'object'
+    ).select_related(
+        'object__item_class'
+    ).select_related(
+        'object__context'
+    ).select_related(
+        'object_field'
+    ).select_related(
+        'object_field__item_class'
+    ).select_related(
+        'object_field__context'
+    ).select_related(
+        'observation'
+    ).select_related(
+        'observation_field'
+    ).select_related(
+        'event'
+    ).select_related(
+        'event_field'
+    ).select_related(
+        'attribute_group'
+    ).select_related(
+        'attribute_group_field'
+    ).select_related(
+        'language'
+    ).select_related(
+        'language_field'
+    ).values(
+        'uuid',
+        'data_source_id',
+        'data_source__label',
+        'data_source__source_id',
+        'subject_field__field_num',
+        'subject_field__label',
+        'subject_field__item_type',
+        'subject_field__data_type',
+        'subject_field__item_class_id',
+        'subject_field__item_class__label',
+        'subject_field__context_id',
+        'subject_field__context__item_type',
+        'subject_field__context__label',
+        'subject_field__unique_count',
+
+        'predicate_id',
+        'predicate__label',
+        'predicate__data_type',
+        'predicate_field_id',
+        'predicate_field__field_num',
+        'predicate_field__label',
+        'predicate_field__data_type',
+
+        'object_id',
+        'object__label',
+        'object__item_class_id',
+        'object__item_class__label',
+        'object__context_id',
+        'object__context__label',
+        'object_field_id',
+        'object_field__field_num',
+        'object_field__label',
+        'object_field__item_class_id',
+        'object_field__item_class__label',
+        'object_field__context_id',
+        'object_field__context__label',
+
+        'obj_string',
+        'obj_boolean',
+        'obj_integer',
+        'obj_double',
+        'obj_datetime',
+
+        'observation_id',
+        'observation__label',
+        'observation_field_id',
+        'observation_field__field_num',
+        'observation_field__label',
+       
+        'event_id',
+        'event__label',
+        'event_field_id',
+        'event_field__field_num',
+        'event_field__label',
+
+        'attribute_group_id',
+        'attribute_group__label',
+        'attribute_group_field_id',
+        'attribute_group_field__field_num',
+        'attribute_group_field__label',
+    
+        'language_id',
+        'language__label',
+        'language_field_id',
+        'language_field__field_num',
+        'language_field__label',
+
+        'meta_json', 
+    )
+    output = [
+        editorial_api.dict_uuids_to_string(ds_anno) 
+        for ds_anno in ds_anno_qs
+    ]
     json_output = json.dumps(
         output,
         indent=4,

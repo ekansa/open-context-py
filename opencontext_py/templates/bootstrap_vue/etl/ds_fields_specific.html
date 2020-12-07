@@ -44,6 +44,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
           <ds-field-class
             @class_update="add_alert_update_uuid($event)"
             @refresh_ds_fields="fetch_api_ds_fields($event)"
+            v-bind:oc_item_class_null="oc_item_class_null"
             v-bind:ds_field_item="data.item">
           </ds-field-class>
         </template>
@@ -167,15 +168,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
 
 <script type="text/javascript">
 
-  const oc_item_class_null = '{{ oc_item_class_null }}';
-  const ds_field_specific_item_types = [
-    'subjects',
-    'media',
-    'resources',
-    'persons',
-    'events',
-    'uri',
-  ];
+  const DEFAULT_CLASS_UUID = '{{ DEFAULT_CLASS_UUID }}';
 
   var vc_ds_fields_specific = Vue.component(
       'ds-fields-specific',
@@ -187,7 +180,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               modes: ['multi', 'single', 'range'],
               sortBy: 'field_num',
               sortDesc: false,
-              oc_item_class_null: oc_item_class_null,
+              oc_item_class_null: DEFAULT_CLASS_UUID,
               fields: [
                 {key: 'field_num', sortable: true },
                 {key: 'label', sortable: true },
@@ -211,8 +204,21 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               alert_timer_state: 0,
               ds_fields: [],
               cached_tree_items: {},
-              allow_item_types: ds_field_specific_item_types,
-              }
+              allow_item_types: [
+                'subjects',
+                'media',
+                'resources',
+                'persons',
+                'events',
+                'uri',
+                'class',
+              ],
+              vocab_context_item_types: [
+                  'uri',
+                  'property',
+                  'class',
+              ],
+            }
           },
           template: '#ds-fields-specific',
           created(){
@@ -220,19 +226,23 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
           },
           computed: {
             root_item_id: function() {
-              if(this.selected_ds_field_item && this.selected_ds_field_item.item_type != 'uri'){
+              if(this.selected_ds_field_item){
+                const vocab_index = this.vocab_context_item_types.indexOf(
+                  this.selected_ds_field_item.item_type
+                );
+                if(vocab_index >= 0){
+                  // item types that have vocab contexts don't get class hierarchy lookups.
+                  return null;
+                }
                 return 'oc-gen-' + this.selected_ds_field_item.item_type;
               }
               return null;
             },
             lookup_context_item_types: function() {
               if(this.selected_ds_field_item){
-                const vocab_types = [
-                  'uri',
-                  'property',
-                  'class',
-                ];
-                const vocab_index = vocab_types.indexOf(this.selected_ds_field_item.item_type);
+                const vocab_index = this.vocab_context_item_types.indexOf(
+                  this.selected_ds_field_item.item_type
+                );
                 if(vocab_index >= 0){
                   return ['vocabularies'];
                 }

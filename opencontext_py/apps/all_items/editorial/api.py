@@ -184,8 +184,21 @@ def dict_uuids_to_string(dict_obj):
     return dict_obj
 
 
-def manifest_obj_to_json_safe_dict(manifest_obj):
+def manifest_obj_to_json_safe_dict(manifest_obj, do_minimal=False):
     """Makes a dict safe for JSON expression from a manifest object"""
+    if not manifest_obj:
+        return None
+    if do_minimal:
+        # Return only a limited number of attributes
+        return {
+            'uuid': str(manifest_obj.uuid),
+            'slug': manifest_obj.slug,
+            'label': manifest_obj.label,
+            'item_type': manifest_obj.item_type,
+            'data_type': manifest_obj.data_type,
+            'path': manifest_obj.path,
+            'uri': manifest_obj.uri,
+        }
     if not manifest_obj.item_class:
         # In case we don't have an item class, fill it in with a temporary
         # object.
@@ -219,6 +232,17 @@ def manifest_obj_to_json_safe_dict(manifest_obj):
         'uri': manifest_obj.uri,
         'alt_label': manifest_obj.meta_json.get('alt_label'),
     }
+
+
+def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
+    """Returns a manifest item dict by uuid"""
+    manifest_obj = AllManifest.objects.filter(uuid=uuid).first()
+    if not manifest_obj:
+        return None
+    return manifest_obj_to_json_safe_dict(
+        manifest_obj, 
+        do_minimal=do_minimal
+    )
 
 
 def get_item_children(identifier):

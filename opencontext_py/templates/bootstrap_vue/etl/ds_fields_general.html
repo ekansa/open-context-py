@@ -238,8 +238,8 @@ NOTE: Templates and Vue Components for general editing of data source fields.
 
 
     // From the backend.
-    const ds_fields_item_types = JSON.parse('{{ ds_fields_item_types|escapejs }}');
-    const ds_fields_data_types = JSON.parse('{{ ds_fields_data_types|escapejs }}');
+    const DS_FIELDS_ITEM_TYPES = JSON.parse('{{ DS_FIELDS_ITEM_TYPES|escapejs }}');
+    const DS_FIELDS_DATA_TYPES = JSON.parse('{{ DS_FIELDS_DATA_TYPES|escapejs }}');
 
     var vc_ds_fields_general = Vue.component(
         'ds-fields-general',
@@ -266,8 +266,8 @@ NOTE: Templates and Vue Components for general editing of data source fields.
                 alert_timer_duration: 2, // length of time the alerts stay up.
                 alert_timer_state: 0,
                 ds_fields: [],
-                ds_fields_item_types: ds_fields_item_types,
-                ds_fields_data_types: ds_fields_data_types,
+                ds_fields_item_types: DS_FIELDS_ITEM_TYPES,
+                ds_fields_data_types: DS_FIELDS_DATA_TYPES,
                 // testing
                 root_item_id: 'oc-gen-subjects',
                 }

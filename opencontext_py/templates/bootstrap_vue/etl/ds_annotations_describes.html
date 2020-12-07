@@ -1,0 +1,224 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and Vue Components for more specific, detailed editing of data source fields.
+-->
+
+<style>
+  
+</style>
+
+
+<template id="ds-annotations-describes">
+  <b-row v-if="ds_annotations" >
+    <b-col cols="5">
+
+      <b-table
+        ref="dsAnnosDescribesTable"
+        :sticky-header="ds_annos_table_height"
+        small
+        striped
+        selectable
+        table-variant="secondary"
+        :select-mode="selectMode"
+        :items="obj_ds_fields"
+        :fields="fields"
+        @row-selected="onRowSelected"
+        :sort-by.sync="sortBy"
+        :sort-desc.sync="sortDesc"
+        responsive="lg"
+      >
+
+        <template #cell()="data">
+          [[ data.value ]]
+        </template>
+
+      </b-table>
+      
+    </b-col>
+    <b-col cols="2">
+
+      <p>Select Subject of Description Field</p>
+      <b-list-group v-if="subj_ds_fields && subj_ds_fields.length > 0">
+        <ds-anno-selectable-field
+          v-for="(ds_field, index) in subj_ds_fields"
+          @on_click="select_field($event)"
+          v-bind:ds_field="ds_field"
+          v-bind:v_style="'info'"
+          v-bind:role="'subject_field'"
+          :key="ds_field.uuid"
+          ></ds-anno-selectable-field>
+      </b-list-group>
+      
+      
+    </b-col>
+    <b-col cols="5">
+
+      <b-card
+        header="Assign Descriptions"
+      >
+        <b-card-text>Named entities in different fields can be described by named entities
+          or by literal values (numbers, free-text, etc.) in other fields. Use this interface
+          to describe descriptive relationships in this dataset.
+        </b-card-text>
+      </b-card>
+
+    </b-col>
+  </b-row>
+</template>
+
+
+<script type="text/javascript">
+
+
+  var vc_ds_annotations_describes = Vue.component(
+      'ds-annotations-describes',
+      {
+          delimiters: ['[[', ']]'],
+          props: ['source_uuid', 'project_uuid', 'ds_annos_table_height'],
+          data() {
+            return {
+              modes: ['multi', 'single', 'range'],
+              sortBy: 'field_num',
+              sortDesc: false,
+              fields: [
+                {key: 'field_num', sortable: true},
+                {key: 'label', sortable: true },
+                {key: 'data_type', sortable: true},
+                {key: 'unique_count', sortable: true},
+              ],
+              items: [],
+              selectMode: 'range',
+              selected: [],
+              alert_update_uuids: [],
+              alert_timer_duration: 2, // length of time the alerts stay up.
+              alert_timer_state: 0,
+              selected_subj_field: null,
+              ds_annotations: [],
+              ds_fields: [],
+            }
+          },
+          template: '#ds-annotations-describes',
+          computed: {
+            subj_ds_fields: function() {
+              let result = [];
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                const t_index = DESCRIBED_BY_LINK_OK_ITEM_TYPES.indexOf(ds_field.item_type);
+                if(t_index >= 0){
+                  result.push(ds_field);
+                }
+              }
+              return result;
+            },
+            obj_ds_fields: function() {
+              let result = [];
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              if(this.ds_annotations === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                const t_index = DESCRIBED_BY_OK_OBJECT_TYPES.indexOf(ds_field.item_type);
+                if(t_index < 0){
+                  // Skip, this has the wrong item type to be used in description.
+                  continue;
+                }
+                result.push(ds_field);
+              }
+              return result;
+            }
+          },
+          created(){
+            this.fetch_api_ds_annotations();
+            this.fetch_api_ds_fields();
+          },
+          methods: {
+            fetch_api_ds_annotations: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/etl-importer/annotations/' + this.source_uuid),
+                  {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.ds_annotations = json;
+              })
+            },
+            fetch_api_ds_fields: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/etl-importer/fields/' + this.source_uuid),
+                  {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.ds_fields = json
+              })
+            },
+            select_field(args) {
+              // NOTE! In this context, this is for selecting the subject of
+              // the description field.
+              this.selected_subj_field = args.ds_field;
+              console.log(this.selected_subj_field);
+            },
+            add_alert_update_uuid(uuid) {
+              const index = this.alert_update_uuids.indexOf(uuid);
+              if (index > -1) {
+                return null;
+              }
+              this.alert_update_uuids.push(uuid);
+              this.alert_timer_state = this.alert_timer_duration;
+            },
+            add_alert_update_uuid_list(uuid_list){
+              for (let uuid of uuid_list){
+                this.add_alert_update_uuid(uuid);
+              }
+            },
+            remove_alert_update_uuid(uuid) {
+              const index = this.alert_update_uuids.indexOf(uuid);
+              if (index > -1) {
+                this.alert_update_uuids.splice(index, 1);
+              }
+              this.alert_timer_state = 0;
+              // Remove all the uuids from the alerts all at once.
+              this.alert_update_uuids = [];
+            },
+            clear_alert_update_uuids(){
+              this.alert_update_uuids = [];
+            },
+            onRowSelected(items) {
+            this.selected = items
+            },
+            selectAllRows() {
+            this.$refs.dsFieldsGeneralTable.selectAllRows()
+            },
+            clearSelected() {
+            this.$refs.dsFieldsGeneralTable.clearSelected()
+            },
+          },
+          components: {
+            'ds-anno-remove': vs_ds_anno_remove,
+            'ds-anno-pred-item-ui': vs_ds_anno_pred_item_ui,
+            'root-item-tree': vs_root_item_tree,
+            'lookup-list': vs_look_up_list,
+          },
+      }
+  ); 
+
+</script>

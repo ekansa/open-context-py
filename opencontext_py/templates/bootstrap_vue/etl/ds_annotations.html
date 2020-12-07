@@ -1,0 +1,357 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and Vue Components for general user interface components to manage ds_annotations.
+-->
+
+<style>
+  .value_prefix_cell {
+    max-width: 475px;
+  }
+</style>
+
+
+<template id='ds-anno-remove'>
+ <b-button 
+    @click="on_click"
+    variant="dark"><b-icon-x-circle-fill></b-icon-x-circle-fill>
+  </b-button>
+</template>
+
+
+<template id='ds-anno-selectable-field'>
+  <b-list-group-item
+    @click="on_click"
+    :variant="v_style">
+    [[ ds_field.label ]]
+    <div class="text-muted">
+      <small 
+        v-if="ds_field.item_class_id != DEFAULT_CLASS_UUID"
+      >
+      [[ ds_field.item_type ]] :: [[ ds_field.item_class__label ]]
+      </small>
+      <small v-else>[[ ds_field.item_type ]]</small>
+    </div>
+  </b-list-group-item>
+ </template>
+
+
+<template id='ds-anno-pred-item-ui'>
+  <div v-if="predicate_item">
+    <b-modal
+      size="lg"
+      scrollable
+      ref="ds-anno-pred-item-modal"
+      id="ds-anno-pred-item-modal" 
+      :title="'Link Fields with: ' + predicate_item.label"
+      @shown="on_shown"
+    >
+      <b-container v-if="predicate_item.uuid" fluid>
+        <b-row class="justify-content-center text-center">
+          <b-col cols="3">
+            <b-button
+              v-if="selected_subj_field"
+              @click="remove_subj"
+              variant="outline-info">[[ selected_subj_field.label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
+            </b-button>
+            <span v-else class="text-muted">
+              <small>Subject</small> <b-icon-patch-question></b-icon-patch-question>
+            </span>
+          </b-col>
+          <b-col cols="1">
+            <b-icon-arrow-right></b-icon-arrow-right>
+          </b-col>
+          <b-col cols="3">
+            <b-button
+              v-if="predicate_item.uuid && ok_pred_reset"
+              @click="reset_pred"
+              variant="outline-primary">[[ predicate_item.label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
+            </b-button>
+            <span v-else>[[ predicate_item.label ]]</span>
+          </b-col>
+          <b-col cols="1">
+            <b-icon-arrow-right></b-icon-arrow-right>
+          </b-col>
+          <b-col cols="3">
+            <b-button 
+              v-if="selected_obj_field"
+              @click="remove_obj"
+              variant="outline-secondary">[[ selected_obj_field.label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
+            </b-button>
+            <span v-else class="text-muted">
+              <small>Object</small> <b-icon-patch-question></b-icon-patch-question>
+            </span>
+          </b-col>
+          <b-col cols="1">
+            <b-button size="sm"
+            v-if="selected_subj_field && selected_obj_field"
+            variant="primary"
+            @click="add_annotation"
+            >Save <b-icon-cloud-arrow-up-fill></b-icon-cloud-arrow-up-fill></b-button>
+          </b-col>
+        </b-row>
+        <b-row>&nbsp;</b-row>
+        <b-row class="justify-content-center">
+          <b-col cols="4">
+            <p>Select Subject Field</p>
+            <b-list-group v-if="act_subj_fields && act_subj_fields.length > 0">
+              <ds-anno-selectable-field
+                v-for="(ds_field, index) in act_subj_fields"
+                @on_click="select_field($event)"
+                v-bind:ds_field="ds_field"
+                v-bind:v_style="'info'"
+                v-bind:role="'subject_field'"
+                :key="ds_field.uuid"
+               ></ds-anno-selectable-field>
+            </b-list-group>
+          </b-col>
+          <b-col cols="3">&nbsp;</b-col>
+          <b-col cols="4">
+            <p>Select Object Field</p>
+            <b-list-group v-if="act_obj_fields && act_obj_fields.length > 0">
+              <ds-anno-selectable-field
+                v-for="(ds_field, index) in act_obj_fields"
+                @on_click="select_field($event)"
+                v-bind:ds_field="ds_field"
+                v-bind:v_style="'secondary'"
+                v-bind:role="'object_field'"
+                :key="ds_field.uuid"
+               ></ds-anno-selectable-field>
+            </b-list-group>
+          </b-col>
+          <b-col cols="1">&nbsp;</b-col>
+        </b-row>
+      </b-container>
+
+      <b-container v-else fluid>
+        <p class="lead">Look-up a linking relationship to use:</p>
+        <lookup-list
+          v-bind:item_type="lookup_pred_item_types"
+          v-bind:project_id="lookup_project_ids"
+          v-bind:show_label_search_box="true"
+          v-bind:show_path_search_box="false"
+          @set_selected_item="set_selected_predicate_item($event)"
+        ></lookup-list>
+      </b-container>
+
+    </b-modal>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+  const OPEN_CONTEXT_PROJ_UUID = '{{ OPEN_CONTEXT_PROJ_UUID }}';
+  // NOTE: These are also item types that can be the subjects of descriptions.
+  const DESCRIBED_BY_LINK_OK_ITEM_TYPES = JSON.parse('{{ DESCRIBED_BY_LINK_OK_ITEM_TYPES|escapejs }}');
+  const DESCRIBED_BY_OK_OBJECT_TYPES = JSON.parse('{{ DESCRIBED_BY_OK_OBJECT_TYPES|escapejs }}');
+  
+  const PREDICATE_LINK = JSON.parse('{{ PREDICATE_LINK|escapejs }}');
+  const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
+  const PREDICATE_OC_ETL_MEDIA_HAS_FILES = JSON.parse('{{ PREDICATE_OC_ETL_MEDIA_HAS_FILES|escapejs }}');
+  const PREDICATE_RDFS_RANGE = JSON.parse('{{ PREDICATE_RDFS_RANGE|escapejs }}');
+  const PREDICATE_OC_ETL_DESCRIBED_BY = JSON.parse('{{ PREDICATE_OC_ETL_DESCRIBED_BY|escapejs }}');
+
+  var vs_ds_anno_remove = Vue.component(
+    'ds-anno-remove',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['ds_anno_item',],
+      data() {
+        return {
+          ds_anno_item: null,
+        };
+      },
+      template: '#ds-anno-remove',
+      methods: {
+        on_click() {
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+          };
+          fetch('/etl-importer-setup/delete-annotation/' + this.ds_anno_item.uuid, requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              // Reload the whole table. Kinda drastic.
+              this.$emit('refresh_ds_annos');
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            });
+        }
+      },
+    },
+  );
+
+
+  var vs_ds_anno_selectable_field = Vue.component(
+    'ds-anno-selectable-field',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['role', 'ds_field', 'v_style',],
+      data() {
+        return {
+          ds_field: null,
+          v_style: 'info',
+          role: 'subject_field',
+        };
+      },
+      template: '#ds-anno-selectable-field',
+      methods: {
+        on_click() {
+          this.$emit('on_click', {ds_field:this.ds_field, role:this.role});
+        }
+      },
+    },
+  );
+
+
+  var vs_ds_anno_pred_item_ui = Vue.component(
+    'ds-anno-pred-item-ui',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['predicate_item', 'ok_subj_fields', 'ok_obj_fields', 'ok_pred_reset', 'project_uuid'],
+      data() {
+        return {
+          predicate_item: null,
+          ok_pred_reset: false,
+          ok_subj_fields: [],
+          ok_obj_fields: [],
+          selected_subj_field: null,
+          selected_obj_field: null,
+          lookup_pred_item_types: [
+            'predicates', 
+            'property',
+          ],
+          lookup_project_ids: [
+            this.project_uuid,
+            OPEN_CONTEXT_PROJ_UUID,
+          ]
+        };
+      },
+      template: '#ds-anno-pred-item-ui',
+      computed: {
+        act_subj_fields: function() {
+          let result = [];
+          if(this.ok_subj_fields === undefined){
+            return result;
+          }
+          for(let ds_field of this.ok_subj_fields){
+            if(ds_field != this.selected_subj_field && ds_field != this.selected_obj_field){
+              result.push(ds_field);
+            }
+          }
+          return result;
+        },
+        act_obj_fields: function() {
+          let result = [];
+          if(this.ok_obj_fields === undefined){
+            return result;
+          }
+          for(let ds_field of this.ok_obj_fields){
+            if(ds_field != this.selected_subj_field && ds_field != this.selected_obj_field){
+              result.push(ds_field);
+            }
+          }
+          return result;
+        },
+      },
+      methods: {
+        add_annotation: function() {
+
+          // Note: We'll have to add options for setting non-default
+          // observation and event nodes here. But this covers most current
+          // use cases.
+          let new_anno = {
+            'subject_field_id': this.selected_subj_field.uuid,
+            'predicate_id': this.predicate_item.uuid,
+            'object_field_id': this.selected_obj_field.uuid,
+          };
+
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify([new_anno]),
+          };
+
+          fetch('/etl-importer-setup/add-annotations', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            // Reload the whole table. Kinda drastic.
+            this.$bvModal.hide('ds-anno-pred-item-modal');
+            this.$emit('refresh_ds_annos');
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
+        },
+        on_shown: function() {
+          console.log('on_shown; checking selected fields');
+          if(this.selected_subj_field && this.ok_subj_fields){
+            const subj_index = this.ok_subj_fields.indexOf(this.selected_subj_field);
+            if(subj_index < 0){
+              // The subject is no longer OK for selection.
+              this.selected_subj_field = null;
+            }
+          }
+          if(this.selected_obj_field && this.ok_obj_fields){
+            const obj_index = this.ok_obj_fields.indexOf(this.selected_obj_field);
+            if(obj_index < 0){
+              // The subject is no longer OK for selection.
+              this.selected_obj_field = null;
+            }
+          }
+        },
+        select_field(args) {
+          if(args.role == 'subject_field'){
+            this.selected_subj_field = args.ds_field;
+          }
+          else{
+            this.selected_obj_field = args.ds_field;
+          }
+        },
+        remove_subj() {
+          this.selected_subj_field = null;
+        },
+        remove_obj() {
+          this.selected_obj_field = null;
+        },
+        reset_pred() {
+          this.predicate_item = {
+            uuid: null,
+            label: 'Select Other Relationship',
+          }
+        },
+        set_selected_predicate_item(predicate_item){
+          this.predicate_item = predicate_item;
+        },
+      },
+      components: {
+        'ds-anno-selectable-field': vs_ds_anno_selectable_field,
+        'lookup-list': vs_look_up_list,
+      },
+    },
+  );
+
+
+</script>
