@@ -21,6 +21,8 @@ NOTE: Templates and Vue Components for general user interface components to mana
 
 <template id='ds-anno-selectable-field'>
   <b-list-group-item
+    button
+    :disabled="is_disabled"
     @click="on_click"
     :variant="v_style">
     [[ ds_field.label ]]
@@ -130,6 +132,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
           v-bind:project_id="lookup_project_ids"
           v-bind:show_label_search_box="true"
           v-bind:show_path_search_box="false"
+          v-bind:show_context="true"
           @set_selected_item="set_selected_predicate_item($event)"
         ></lookup-list>
       </b-container>
@@ -171,8 +174,9 @@ NOTE: Templates and Vue Components for general user interface components to mana
               'Content-Type': 'application/json',
               'X-CSRFToken': csrftoken,
             },
+            body: JSON.stringify([this.ds_anno_item.uuid]),
           };
-          fetch('/etl-importer-setup/delete-annotation/' + this.ds_anno_item.uuid, requestOptions)
+          fetch('/etl-importer-setup/delete-annotations', requestOptions)
             .then(async response => {
               const data = await response.json();
               // check for error response
@@ -198,10 +202,11 @@ NOTE: Templates and Vue Components for general user interface components to mana
     'ds-anno-selectable-field',
     {
       delimiters: ['[[', ']]'],
-      props: ['role', 'ds_field', 'v_style',],
+      props: ['role', 'ds_field', 'v_style', 'is_disabled',],
       data() {
         return {
           ds_field: null,
+          is_disabled: false,
           v_style: 'info',
           role: 'subject_field',
         };

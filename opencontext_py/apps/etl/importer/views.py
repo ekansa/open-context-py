@@ -27,7 +27,7 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceRecord,
     DataSourceAnnotation,
 )
-
+from opencontext_py.apps.etl.importer import df as etl_df
 
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
@@ -284,7 +284,6 @@ def etl_field_record_examples(request, field_uuid):
     )
 
 
-
 @cache_control(no_cache=True)
 @never_cache
 def etl_annotations(request, source_id):
@@ -337,6 +336,8 @@ def etl_annotations(request, source_id):
         'data_source_id',
         'data_source__label',
         'data_source__source_id',
+
+        'subject_field_id',
         'subject_field__field_num',
         'subject_field__label',
         'subject_field__item_type',
@@ -408,6 +409,99 @@ def etl_annotations(request, source_id):
     ]
     json_output = json.dumps(
         output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def etl_described_by_examples(request, source_id):
+    """Returns examples of described by replationships"""
+
+    number_examples = request.GET.get('number_examples', 5)
+
+    _, valid_uuid = update_old_id(source_id)
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        Q(data_source__source_id=source_id)
+        |Q(data_source__uuid=valid_uuid)
+    ).filter(
+        predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY
+    ).select_related(
+        'data_source'
+    ).select_related(
+        'subject_field'
+    ).select_related(
+        'subject_field__item_class'
+    ).select_related(
+        'object_field'
+    ).order_by('subject_field__field_num', 'object_field__field_num')
+
+    if not len(ds_anno_qs):
+        return HttpResponse(
+            '[]',
+            content_type="application/json; charset=utf8"
+        )
+    
+    ds_source = ds_anno_qs[0].data_source
+    
+    subjs_objects = {ds_anno.subject_field:[] for ds_anno in ds_anno_qs}
+    for ds_anno in ds_anno_qs:
+        subjs_objects[ds_anno.subject_field].append(
+            ds_anno.object_field
+        )
+    
+    results = []
+    for subject_field, object_field_list in subjs_objects.items():
+        # Get records for the subject field. This will be
+        # non-blank records.
+        sub_rec_qs = DataSourceRecord.objects.filter(
+            data_source=ds_source,
+            field_num=subject_field.field_num,
+        )[0:number_examples]
+        if not len(sub_rec_qs):
+            # We don't have any subject records.
+            continue
+        # Make a list of rows to limit for a dataframe.
+        row_list = [r.row_num for r in sub_rec_qs]
+        object_field_nums = [o_f.field_num for o_f in object_field_list]
+        print(f'Object fields: {object_field_nums}')
+        df = etl_df.db_make_dataframe_from_etl_data_source(
+            ds_source,
+            use_column_labels=True,
+            limit_field_num_list=([subject_field.field_num] + object_field_nums),
+            limit_row_num_list=row_list,
+        )
+        
+        # Add value prefixes if needed to the subject field.
+        if subject_field.value_prefix and subject_field.label in df.columns:
+            df[subject_field.label] = subject_field.value_prefix + df[subject_field.label]
+
+        # Arrange columns so the subject field is first. Drop the row number.
+        df.drop(columns=['row_num'], inplace=True, errors='ignore')
+        object_cols = [c for c in df.columns if c != subject_field.label]
+        if subject_field.label in df.columns:
+            final_cols = [subject_field.label] + object_cols
+        else:
+            final_cols = object_cols
+        
+        result = {
+            'subject_field_id': str(subject_field.uuid),
+            'subject_field__field_num': subject_field.field_num,
+            'subject_field__label': subject_field.label,
+            'subject_field__item_type': subject_field.item_type,
+            'subject_field__item_class_id': str(subject_field.item_class.uuid),
+            'subject_field__item_class__label': subject_field.item_class.label,
+            'examples': df[final_cols].to_dict('records'),
+        }
+        results.append(result)
+
+    json_output = json.dumps(
+        results,
         indent=4,
         ensure_ascii=False
     )

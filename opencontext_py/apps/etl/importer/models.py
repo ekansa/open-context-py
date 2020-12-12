@@ -656,7 +656,7 @@ class DataSourceAnnotation(models.Model):
         
         # Object item types are have somewhat different validation criteria for
         # PREDICATE_OC_ETL_DESCRIBED_BY and PREDICATE_LINK_UUID
-        if self.predicate.uuid == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
+        if str(self.predicate.uuid) == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
             ok_object_types = self.DESCRIBED_BY_OK_OBJECT_TYPES
         else:
             ok_object_types = self.DESCRIBED_BY_LINK_OK_ITEM_TYPES
@@ -832,7 +832,6 @@ class DataSourceAnnotation(models.Model):
             "language",
             "language_field",
         )
-
 
 # Records data source individual records for ETL (extract transform load)
 # processes that ingest data into Open Context

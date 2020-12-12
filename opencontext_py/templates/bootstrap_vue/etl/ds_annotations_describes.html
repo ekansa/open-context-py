@@ -5,55 +5,125 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
 -->
 
 <style>
-  
+  .ds-example-item {
+    margin-bottom: 32px;
+  }
+  .ds-example-description {
+    background-color: #b3b7bb;
+  }
 </style>
 
 
 <template id="ds-annotations-describes">
   <b-row v-if="ds_annotations" >
-    <b-col cols="5">
+    <b-col cols="9">
 
-      <b-table
-        ref="dsAnnosDescribesTable"
-        :sticky-header="ds_annos_table_height"
-        small
-        striped
-        selectable
-        table-variant="secondary"
-        :select-mode="selectMode"
-        :items="obj_ds_fields"
-        :fields="fields"
-        @row-selected="onRowSelected"
-        :sort-by.sync="sortBy"
-        :sort-desc.sync="sortDesc"
-        responsive="lg"
-      >
+      <b-row>
+        <b-col cols="3">
+          Select Descriptive Fields
+        </b-col>
+        <b-col cols="2">
+          <b-button block size="sm" @click="selectAllRows">Select all</b-button>
+        </b-col>
+        <b-col cols="2">
+          <b-button block size="sm" @click="clearSelected">Clear selected</b-button>
+        </b-col>
 
-        <template #cell()="data">
-          [[ data.value ]]
-        </template>
+        <b-col cols="1">
+          &nbsp;
+        </b-col>
 
-      </b-table>
-      
+        <b-col class="text-center" cols="3">
+          Select Subject of Description Field
+        </b-col>
+
+        <b-col cols="1">
+          &nbsp;
+        </b-col>
+
+      </b-row>
+
+      <b-row>
+        <b-col cols="7">
+          <b-table
+            ref="dsAnnosDescribesTable"
+            :sticky-header="ds_annos_table_height"
+            small
+            striped
+            selectable
+            table-variant="secondary"
+            :select-mode="selectMode"
+            :items="obj_ds_fields"
+            :fields="fields"
+            @row-selected="onRowSelected"
+            :sort-by.sync="sortBy"
+            :sort-desc.sync="sortDesc"
+            responsive="lg"
+          >
+            <template #cell(field_num)="data">
+              <ds-field-field-num
+                @countdown_done="remove_alert_update_uuid($event)"
+                v-bind:alert_timer_state="alert_timer_state"
+                v-bind:alert_timer_duration="alert_timer_duration"
+                v-bind:ds_field_item="data.item"
+                v-bind:alert_update_uuids="alert_update_uuids">
+              </ds-field-field-num>
+            </template>
+
+            <template #cell(anno__subject_field__label)="data">
+              <div>
+                <small v-if="!data.item.anno__subject_field__label" class="text-muted">None</small>
+                <span v-else>
+                  [[data.item.anno__subject_field__label]]
+                </span>
+              </div>
+            </template>
+
+            <template #cell()="data">
+              [[ data.value ]]
+            </template>
+
+          </b-table>
+        </b-col>
+
+        <b-col cols="1">
+          &nbsp;
+        </b-col>
+
+        <b-col cols="3">
+          <b-list-group v-if="subj_ds_fields && subj_ds_fields.length > 0">
+            <ds-anno-selectable-field
+              v-for="(ds_field, index) in subj_ds_fields"
+              @on_click="select_field($event)"
+              v-bind:ds_field="ds_field"
+              v-bind:v_style="'info'"
+              v-bind:role="'subject_field'"
+              v-bind:is_disabled="selected.length == 0"
+              :key="ds_field.uuid"
+              ></ds-anno-selectable-field>
+          </b-list-group>
+          <br/>
+          <br/>
+          <b-button
+            v-if="subj_ds_fields && subj_ds_fields.length > 0"
+            :disabled="selected.length == 0"
+            block
+            @click="delete_annotations"
+            variant="outline-secondary"
+          >
+          Remove Describes Link <b-icon-x-circle-fill></b-icon-x-circle-fill>
+          </b-button>
+        </b-col>
+        
+        <b-col cols="1">
+          &nbsp;
+        </b-col>
+
+      </b-row>
+
     </b-col>
-    <b-col cols="2">
-
-      <p>Select Subject of Description Field</p>
-      <b-list-group v-if="subj_ds_fields && subj_ds_fields.length > 0">
-        <ds-anno-selectable-field
-          v-for="(ds_field, index) in subj_ds_fields"
-          @on_click="select_field($event)"
-          v-bind:ds_field="ds_field"
-          v-bind:v_style="'info'"
-          v-bind:role="'subject_field'"
-          :key="ds_field.uuid"
-          ></ds-anno-selectable-field>
-      </b-list-group>
-      
-      
-    </b-col>
-    <b-col cols="5">
-
+    
+    <b-col cols="3">
       <b-card
         header="Assign Descriptions"
       >
@@ -62,6 +132,57 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
           to describe descriptive relationships in this dataset.
         </b-card-text>
       </b-card>
+
+      <br/>
+      <br/>
+
+      <div class="accordion" role="tablist" v-if="described_by_examples.length > 0">
+        <h5 class="text-center">View Description Examples</h5>
+        <b-card
+          v-for="(subj_examples, index) in described_by_examples"
+          no-body 
+          class="mb-1">
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'subj-description-examples-' + index" 
+              variant="info">
+              <strong>[[ subj_examples.subject_field__label ]]</strong> Descriptions
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            :id="'subj-description-examples-' + index" 
+            :visible="index == 0" 
+            accordion="my-accordion" 
+            role="tabpanel">
+
+            <b-card-body v-if="subj_examples.examples.length > 0">
+
+              <b-card
+                border-variant="secondary"
+                class="ds-example-item" 
+                v-for="(keys_vals, exp_i) in subj_examples.examples">
+
+                <div v-for="(value, field_name, kv_i) in keys_vals">
+                  <dl
+                    v-if="kv_i === 0" class="row text-info"
+                  >
+                    <dt class="col-sm-5">[[ field_name ]]</dt>
+                    <dd class="col-sm-7 font-weight-bold">[[ value ]]</dd>
+                  </dl>
+                  <dl v-else class="row">
+                    <dt class="col-sm-5">[[ field_name ]]</dt>
+                    <dd class="col-sm-7">[[ value ]]</dd>
+                  </dl>
+                </div>
+                
+              </b-card>
+              
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+      </div>
 
     </b-col>
   </b-row>
@@ -86,6 +207,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 {key: 'label', sortable: true },
                 {key: 'data_type', sortable: true},
                 {key: 'unique_count', sortable: true},
+                {key: 'anno__subject_field__label', label: 'Describes', sortable: true},
               ],
               items: [],
               selectMode: 'range',
@@ -94,6 +216,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               alert_timer_duration: 2, // length of time the alerts stay up.
               alert_timer_state: 0,
               selected_subj_field: null,
+              described_by_examples: [],
               ds_annotations: [],
               ds_fields: [],
             }
@@ -121,11 +244,32 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               if(this.ds_annotations === undefined){
                 return result;
               }
+              let ds_desc_annos = [];
+              for(let ds_anno of this.ds_annotations){
+                if(ds_anno.predicate_id != PREDICATE_OC_ETL_DESCRIBED_BY.uuid){
+                  // Skip this is not a descriptive annotation.
+                  continue;
+                }
+                ds_desc_annos.push(ds_anno);
+              }
               for(let ds_field of this.ds_fields){
                 const t_index = DESCRIBED_BY_OK_OBJECT_TYPES.indexOf(ds_field.item_type);
                 if(t_index < 0){
                   // Skip, this has the wrong item type to be used in description.
                   continue;
+                }
+                ds_field.anno_id = null;
+                ds_field.anno__subject_field_id = null;
+                ds_field.anno__subject_field__label = null;
+                ds_field.anno__subject_field__field_num = null;
+                for(let ds_anno of ds_desc_annos){
+                  if(ds_anno.object_field_id != ds_field.uuid){
+                    continue
+                  }
+                  ds_field.anno_id = ds_anno.uuid;
+                  ds_field.anno__subject_field_id = ds_anno.subject_field_id;
+                  ds_field.anno__subject_field__label = ds_anno.subject_field__label;
+                  ds_field.anno__subject_field__field_num = ds_anno.subject_field__field_num;
                 }
                 result.push(ds_field);
               }
@@ -135,6 +279,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
           created(){
             this.fetch_api_ds_annotations();
             this.fetch_api_ds_fields();
+            this.fetch_api_described_by_examples();
           },
           methods: {
             fetch_api_ds_annotations: function (){
@@ -169,13 +314,123 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               .then(response => response.json())
               .then(json => {
                   this.ds_fields = json
+              });
+            },
+            fetch_api_described_by_examples: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/etl-importer/described-by-examples/' + this.source_uuid),
+                  {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.described_by_examples = json;
+              });
+            },
+            add_annotations: function() {
+              // Note: We'll have to add options for setting non-default
+              // observation and event nodes here. But this covers most current
+              // use cases.
+              if(!this.selected_subj_field){
+                // skip out. We don't have a selected subject field
+                return null;
+              }
+              if(this.selected.length < 1){
+                // skip out. We don't have any selected object fields
+                return null;
+              }
+              
+              // Make a list of new annotations to POST.
+              let new_annos = [];
+              for(let obj_field of this.selected){
+                let anno = {
+                  'subject_field_id': this.selected_subj_field.uuid,
+                  'predicate_id': PREDICATE_OC_ETL_DESCRIBED_BY.uuid,
+                  'object_field_id': obj_field.uuid,
+                };
+                this.add_alert_update_uuid(obj_field.uuid);
+                new_annos.push(anno);
+              }
+
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(new_annos),
+              };
+
+              fetch('/etl-importer-setup/add-annotations', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Reload the whole table. Kinda drastic.
+                this.fetch_api_ds_annotations();
+                this.fetch_api_described_by_examples();
+                this.clearSelected();
               })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+            },
+            delete_annotations: function() {
+              if(this.selected.length < 1){
+                // skip out. We don't have any selected object fields
+                return null;
+              }
+              let delete_anno_ids = [];
+              for(let item of this.selected){
+                if(!item.anno_id){
+                  continue;
+                }
+                this.add_alert_update_uuid(item.uuid);
+                delete_anno_ids.push(item.anno_id);
+              }
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(delete_anno_ids),
+              };
+              fetch('/etl-importer-setup/delete-annotations', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Reload the whole table. Kinda drastic.
+                this.fetch_api_ds_annotations();
+                this.fetch_api_described_by_examples();
+                this.clearSelected();
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
             },
             select_field(args) {
               // NOTE! In this context, this is for selecting the subject of
               // the description field.
               this.selected_subj_field = args.ds_field;
-              console.log(this.selected_subj_field);
+              this.add_annotations();
             },
             add_alert_update_uuid(uuid) {
               const index = this.alert_update_uuids.indexOf(uuid);
@@ -206,13 +461,14 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
             this.selected = items
             },
             selectAllRows() {
-            this.$refs.dsFieldsGeneralTable.selectAllRows()
+            this.$refs.dsAnnosDescribesTable.selectAllRows()
             },
             clearSelected() {
-            this.$refs.dsFieldsGeneralTable.clearSelected()
+            this.$refs.dsAnnosDescribesTable.clearSelected()
             },
           },
           components: {
+            'ds-field-field-num': vs_ds_field_field_num,
             'ds-anno-remove': vs_ds_anno_remove,
             'ds-anno-pred-item-ui': vs_ds_anno_pred_item_ui,
             'root-item-tree': vs_root_item_tree,

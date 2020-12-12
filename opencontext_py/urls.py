@@ -126,13 +126,14 @@ urlpatterns = [
         name='etl_field_record_examples_json'
     ),
     url(r'^etl-importer/annotations/(?P<source_id>\S+)', etlViews.etl_annotations, name='etl_annotations_json'),
+    url(
+        r'^etl-importer/described-by-examples/(?P<source_id>\S+)', 
+        etlViews.etl_described_by_examples, 
+        name='etl_described_by_examples_json'
+    ),
     # New ETL POST request views
     url(r'^etl-importer-setup/update-fields', etlSetupViews.etl_update_fields, name='etl_setup_update_fields'),
-    url(
-        r'^etl-importer-setup/delete-annotation/(?P<ds_anno_uuid>\S+)', 
-        etlSetupViews.etl_delete_annotation, 
-        name='etl_delete_annotation'
-    ),
+    url(r'^etl-importer-setup/delete-annotations', etlSetupViews.etl_delete_annotations, name='etl_delete_annotations'),
     url(r'^etl-importer-setup/add-annotations', etlSetupViews.etl_add_annotations, name='etl_add_annotations'),
     
     url(r'^search.json?', SearchViews.json_view, name='search_json_d'),

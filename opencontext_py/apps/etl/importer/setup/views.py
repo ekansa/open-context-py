@@ -84,19 +84,25 @@ def etl_update_fields(request):
 
 @cache_control(no_cache=True)
 @never_cache
-def etl_delete_annotation(request, ds_anno_uuid):
+def etl_delete_annotations(request):
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
         )
 
-    num_deleted = DataSourceAnnotation.objects.filter(
-        uuid=ds_anno_uuid
+    delete_uuids = json.loads(request.body)
+    if not isinstance(delete_uuids, list):
+        return HttpResponse(
+            'Must POST a JSON encoded list of uuids to delete', status=400
+        )
+    
+    num_deleted, _ = DataSourceAnnotation.objects.filter(
+        uuid__in=delete_uuids
     ).delete()
 
     output = {
         'ok': True,
-        'deleted': ds_anno_uuid,
+        'deleted': delete_uuids,
         'num_deleted': num_deleted,
     }
     json_output = json.dumps(

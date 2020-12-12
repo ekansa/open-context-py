@@ -114,6 +114,16 @@ def add_single_annotation(request_item_dict, errors=None):
         errors.append(f'Cannot find field {ds_subj_field}')
         return None, errors
     
+    object_field_id = request_item_dict.get('object_field_id')
+    predicate_id = request_item_dict.get('predicate_id')
+    if object_field_id and predicate_id == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
+        # Delete annotations where the object_field_id is already an
+        # described-by object in another annotation
+        DataSourceAnnotation.objects.filter(
+            object_field_id=object_field_id,
+            predicate_id=predicate_id,
+        ).delete()
+
     create_dict = {
         'data_source': ds_subj_field.data_source,
         'subject_field': ds_subj_field,

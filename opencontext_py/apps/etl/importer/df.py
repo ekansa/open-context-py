@@ -59,6 +59,7 @@ def db_make_dataframe_from_etl_data_source(
     limit_field_num_list=None,
     limit_row_num_start=None,
     limit_row_count=None,
+    limit_row_num_list=None,
 ):
     """Makes a dataframe from the etl ds_source
     
@@ -68,6 +69,10 @@ def db_make_dataframe_from_etl_data_source(
 
     # Start making the output datafame by adding of its columns.
     ds_fields_qs = DataSourceField.objects.filter(data_source=ds_source)
+    if limit_field_num_list:
+        # We're limiting the query set to a list of field_nums.
+        ds_fields_qs = ds_fields_qs.filter(field_num__in=limit_field_num_list)
+
     data = {'row_num': [],}
     for df_field in ds_fields_qs:
         if include_uuid_cols:
@@ -89,6 +94,12 @@ def db_make_dataframe_from_etl_data_source(
         ds_recs_qs = ds_recs_qs.filter(
             row_num__gte=limit_row_num_start,
             row_num__lt=(limit_row_num_start + limit_row_count),
+        )
+    
+    if limit_row_num_list is not None:
+        # We're limiting the query set a list of row numbers.
+        ds_recs_qs = ds_recs_qs.filter(
+            row_num__in=limit_row_num_list,
         )
 
     ds_recs_qs = ds_recs_qs.iterator()

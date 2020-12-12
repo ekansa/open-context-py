@@ -1007,9 +1007,15 @@ class CandidateSubject():
         """
         match_found = False
         levels = context.split('/')
-        if len(levels) < 2:
+        if len(levels) < 6:
             # only do this if we're pretty far up a hierarchy,
             # otherwise a waste of time.
+            match_projects = [
+                '339673ec-f692-4a96-8a88-1e7a3c8ae4fa', # Čḯxwicən Bird
+                '24945aba-38f6-46bb-92e9-2c8886e598fc', # Čḯxwicən main
+                self.project_uuid, 
+                '0'
+            ]
             subject_match = Subject.objects\
                                    .filter(project_uuid__in=[self.project_uuid, '0'],
                                            context=context)[:1]
