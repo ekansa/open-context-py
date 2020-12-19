@@ -75,6 +75,8 @@
             const PROJECT_UUID = '{{ ds_source.project.uuid }}';
 
             const routes = [
+                // NOTE: The name for the route is in the hash of the path URL. This enables linking directly
+                // to a given route/component.
                 {
                     path: '/etl-importer/prepare/' + source_uuid,
                     name: 'home',
@@ -115,6 +117,7 @@
 
             const router = new VueRouter({
                 mode: 'history',
+                linkExactActiveClass: 'active',
                 routes: routes,
             });
 
@@ -131,6 +134,26 @@
                         project_uuid: PROJECT_UUID,
                         page_height: page_height,
                         ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
+                    },
+                    computed: {
+                        act_route: function () {
+                            return this.$route;
+                        },
+                    },
+                    watch: {
+                        $route(to, from) {
+                        // react to route changes...
+                        }
+                    },
+                    created() {
+                        console.log(this.act_route);
+                        if(this.act_route.hash.length > 0){
+                            // This makes sure that we change the route based on what's in the
+                            // request URL hash.
+                            router.replace(
+                                {name: this.act_route.hash.replace('#', '')}
+                            );
+                        }
                     },
                     components: {
                         'ds-fields-general': vc_ds_fields_general,
