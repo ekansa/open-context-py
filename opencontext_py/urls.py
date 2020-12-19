@@ -127,6 +127,16 @@ urlpatterns = [
     ),
     url(r'^etl-importer/annotations/(?P<source_id>\S+)', etlViews.etl_annotations, name='etl_annotations_json'),
     url(
+        r'^etl-importer/spatial-contained-examples/(?P<source_id>\S+)', 
+        etlViews.etl_spatial_contained_examples, 
+        name='etl_spatial_contained_examples_json'
+    ),
+    url(
+        r'^etl-importer/linked-examples/(?P<source_id>\S+)', 
+        etlViews.etl_link_annotations_examples, 
+        name='etl_link_annotations_examples_json'
+    ),
+    url(
         r'^etl-importer/described-by-examples/(?P<source_id>\S+)', 
         etlViews.etl_described_by_examples, 
         name='etl_described_by_examples_json'

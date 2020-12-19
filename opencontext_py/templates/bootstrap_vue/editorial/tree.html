@@ -39,6 +39,7 @@
         :key="child.uuid"
         :item="child"
         v-bind:cached_tree_items="cached_tree_items"
+        v-bind:etl_source_id="etl_source_id"
       ></tree-item>
     </ul>
   </li>
@@ -51,6 +52,7 @@
       @set_selected_item="set_selected_item($event)"
       v-bind:cached_tree_items="cached_tree_items"
       v-bind:root_item_id="root_item_id"
+      v-bind:etl_source_id="etl_source_id"
     ></tree-item>
   </ul>
 </template>
@@ -62,24 +64,34 @@
     'tree-item',
     {
       delimiters: ['[[', ']]'],
-      props: ['root_item_id', 'item', 'cached_tree_items'],
+      props: ['root_item_id', 'item', 'cached_tree_items', 'etl_source_id'],
       data() {
         return {
           item: Object,
           is_open: false,
           selected_item: null,
           cached_tree_items: {},
+          fetch_url_oc: '/editorial/item-children/',
+          etl_source_id: null,
+          fetch_url_etl: '/etl-importer/spatial-contained-examples/',
         };
       },
       template: '#tree-item',
       computed: {
+        fetch_url: function() {
+          if(!this.etl_source_id){
+            return this.fetch_url_oc;
+          }
+          return this.fetch_url_etl + this.etl_source_id;
+        },
         has_children: function() {
           return this.item.children && this.item.children.length;
         },
         item_link: function() {
-          if(this.item){
+          if(this.item && this.item.uri){
             return 'https://' + this.item.uri;
           }
+          return null;
         }
       },
       created(){
@@ -116,8 +128,36 @@
             console.log('Found tree item in cache: ' + fetch_id );
             return null;
           }
+
+          let fetch_url = '';
+          if(!this.etl_source_id){
+            // This is for getting tree children from the published part
+            // of the Open Context database.
+            fetch_url = this.fetch_url_oc + fetch_id;
+          }
+          else{
+            // We're getting unpublished examples of an ETL spatial containment
+            // tree, so the fetch will be a bit different.
+            if(!this.item){
+              this.item = {};
+            }
+            if(!this.item.path){
+              this.item.path = {};
+            }
+            let params = {
+              path: JSON.stringify(this.item.path),
+            };
+            fetch_url = (
+              this.fetch_url_etl 
+              + this.etl_source_id
+              + '?'
+              + new URLSearchParams(params)
+            );
+
+          }
+
           fetch(
-            ('/editorial/item-children/' + fetch_id),
+            (fetch_url),
               {
                 headers:{
                   'Accept': 'application/json',
@@ -163,12 +203,13 @@
   var vs_root_item_tree = Vue.component(
     'root-item-tree',
     {
-      props: ['root_item_id', 'cached_tree_items'],
+      props: ['root_item_id', 'cached_tree_items', 'etl_source_id'],
       data() {
         return {
           root_item_id: null,
           selected_item: null,
           cached_tree_items: {},
+          etl_source_id: null,
         };
       },
       template: '#root-item-tree',

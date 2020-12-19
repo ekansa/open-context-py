@@ -5,12 +5,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
 -->
 
 <style>
-  .ds-example-item {
-    margin-bottom: 32px;
-  }
-  .ds-example-description {
-    background-color: #b3b7bb;
-  }
+  
 </style>
 
 
@@ -136,7 +131,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
       <br/>
       <br/>
 
-      <div class="accordion" role="tablist" v-if="described_by_examples.length > 0">
+      <div class="accordion" role="tablist" v-if="described_by_examples.length > 0" id="examples-accordion">
         <h5 class="text-center">View Description Examples</h5>
         <b-card
           v-for="(subj_examples, index) in described_by_examples"
@@ -146,14 +141,14 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
             <b-button 
               block 
               v-b-toggle="'subj-description-examples-' + index" 
-              variant="info">
+              variant="outline-info">
               <strong>[[ subj_examples.subject_field__label ]]</strong> Descriptions
             </b-button>
           </b-card-header>
           <b-collapse 
             :id="'subj-description-examples-' + index" 
             :visible="index == 0" 
-            accordion="my-accordion" 
+            accordion="examples-accordion" 
             role="tabpanel">
 
             <b-card-body v-if="subj_examples.examples.length > 0">

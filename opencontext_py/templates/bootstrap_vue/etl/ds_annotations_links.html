@@ -21,7 +21,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
       >
       <template #cell(subject_field_id)="data">
         <ds-anno-remove
-          @refresh_ds_annos="fetch_api_ds_annotations($event)"
+          @refresh_ds_annos="refresh_annotations_examples($event)"
           v-bind:ds_anno_item="data.item">
         </ds-anno-remove>
       </template>
@@ -94,6 +94,98 @@ NOTE: Templates and Vue Components for general user interface components to mana
           >Other Relationship</b-button>
       </b-container>
       
+      <br/>
+      <br/>
+
+
+      <div class="accordion" role="tablist" v-if="show_examples" id="examples-accordion">
+        <h5 class="text-center">View Linking Examples</h5>
+        <b-card
+          v-if="show_contain_tree"
+          no-body 
+          class="mb-1">
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'spatial_contain_tree_accordion'" 
+              variant="outline-info">
+              <strong>Spatial Containment</strong> Examples
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="spatial_contain_tree_accordion" 
+            :visible="false" 
+            accordion="examples-accordion" 
+            role="tabpanel">
+            <b-card-body>
+              <b-card
+                border-variant="secondary"
+                class="ds-example-item">
+
+                <root-item-tree
+                  :key="tree_key"
+                  ref="spatial_contain_tree"
+                  v-bind:root_item_id="source_uuid"
+                  v-bind:etl_source_id="source_uuid"
+                  v-bind:cached_tree_items="cached_tree_items"
+                ></root-item-tree>
+                
+              </b-card>
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+        <b-card
+          v-for="(anno_examples, index) in linked_examples"
+          no-body 
+          class="mb-1">
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'anno-link-examples-' + index" 
+              variant="outline-info">
+              <strong>[[ anno_examples.subject_field__label ]]</strong> Links ([[ (index + 1) ]])
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            :id="'anno-link-examples-' + index" 
+            :visible="false" 
+            accordion="examples-accordion" 
+            role="tabpanel">
+
+            <b-card-body v-if="anno_examples.examples.length > 0">
+
+              <b-card
+                border-variant="secondary"
+                class="ds-example-item" 
+                v-for="(keys_vals, exp_i) in anno_examples.examples">
+
+                <div v-for="(value, field_name, kv_i) in keys_vals">
+                  <dl
+                    v-if="kv_i === 0" class="row text-info"
+                  >
+                    <dt class="col-sm-5">[[ field_name ]]</dt>
+                    <dd class="col-sm-7 font-weight-bold">[[ value ]]</dd>
+                  </dl>
+                  <dl v-else class="row">
+                    <dt class="col-sm-5">[[ field_name ]]</dt>
+                    <dd class="col-sm-7">[[ value ]]</dd>
+                  </dl>
+                </div>
+                
+              </b-card>
+              
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+
+      </div>
+
+
+
+
+
 
       <ds-anno-pred-item-ui
       v-bind:predicate_item="selected_predicate_item"
@@ -101,8 +193,10 @@ NOTE: Templates and Vue Components for general user interface components to mana
       v-bind:ok_obj_fields="selected_ok_obj_fields"
       v-bind:ok_pred_reset="ok_pred_reset"
       v-bind:project_uuid="project_uuid"
-      @refresh_ds_annos="fetch_api_ds_annotations($event)"
+      @refresh_ds_annos="refresh_annotations_examples($event)"
       ></ds-anno-pred-item-ui>
+
+
 
     </b-col>
   </b-row>
@@ -134,10 +228,40 @@ NOTE: Templates and Vue Components for general user interface components to mana
               selected_ok_obj_fields: [],
               ds_annotations: [],
               ds_fields: [],
+              cached_tree_items: {},
+              tree_key: 0,
+              linked_examples: [],
             }
           },
           template: '#ds-annotations-links',
           computed: {
+            show_examples: function() {
+              if(this.ds_annotations === undefined){
+                return false;
+              }
+              for(let ds_anno of this.ds_annotations) {
+                if(ds_anno.predicate_id && ds_anno.predicate_id != PREDICATE_OC_ETL_DESCRIBED_BY.uuid){
+                  // We have annotations that are not described by.
+                  return true;
+                }
+                if(ds_anno.predicate_field_id){
+                  // We have an annotation that has predicates in a field.
+                  return true;
+                }
+              }
+              return false;
+            },
+            show_contain_tree: function() {
+              if(this.ds_annotations === undefined){
+                return false;
+              }
+              for(let ds_anno of this.ds_annotations) {
+                if(ds_anno.predicate_id == PREDICATE_CONTAINS.uuid){
+                  return true;
+                }
+              }
+              return false;
+            },
             link_ds_fields: function() {
               let result = {ok_subj: [], ok_obj: []};
               if(this.ds_fields === undefined){
@@ -280,6 +404,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
           created(){
             this.fetch_api_ds_annotations();
             this.fetch_api_ds_fields();
+            this.fetch_api_linked_examples();
           },
           methods: {
             fetch_api_ds_annotations: function (){
@@ -322,11 +447,35 @@ NOTE: Templates and Vue Components for general user interface components to mana
                   this.ds_fields = json
               })
             },
+            fetch_api_linked_examples: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/etl-importer/linked-examples/' + this.source_uuid),
+                  {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.linked_examples = json;
+              });
+            },
             close_pred_item_ui(){
               this.$bvModal.hide('ds-anno-pred-item-modal');
               this.selected_predicate_item = null;
               this.selected_ok_subj_fields = [];
               this.selected_ok_obj_fields = [];
+            },
+            refresh_annotations_examples: function (){
+              this.fetch_api_ds_annotations();
+              this.fetch_api_linked_examples();
+              // This will make the tree re-render itself.
+              this.cached_tree_items = {};
+              this.tree_key += 1;
             },
             open_pred_item_ui(pred_item, ok_subj_fields, ok_obj_fields){
               this.$bvModal.show('ds-anno-pred-item-modal');

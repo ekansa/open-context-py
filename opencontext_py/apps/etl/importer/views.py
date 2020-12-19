@@ -1,3 +1,4 @@
+import copy
 import json
 import uuid as GenUUID
 from django.conf import settings
@@ -28,6 +29,7 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceAnnotation,
 )
 from opencontext_py.apps.etl.importer import df as etl_df
+from opencontext_py.apps.etl.importer.transforms import subjects as etl_subjects
 
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
@@ -420,6 +422,345 @@ def etl_annotations(request, source_id):
 
 @cache_control(no_cache=True)
 @never_cache
+def etl_spatial_contained_examples(request, source_id):
+    """Returns examples of spatial containment replationships"""
+
+    number_examples = request.GET.get('number_examples', 5)
+    path_dict = {}
+    path_str =  request.GET.get('path')
+    if path_str:
+        path_dict = json.loads(path_str)
+
+    _, valid_uuid = update_old_id(source_id)
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        Q(data_source__source_id=source_id)
+        |Q(data_source__uuid=valid_uuid)
+    ).filter(
+        predicate_id=configs.PREDICATE_CONTAINS_UUID
+    )
+    if not len(ds_anno_qs):
+        return HttpResponse(
+            json.dumps({}),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+
+    ds_source = ds_anno_qs[0].data_source
+    _, root_uuid = update_old_id(
+        json.dumps(
+            {'source_id':str(ds_source.uuid), 'path': path_dict}
+        )
+    )
+
+    result = {
+        'uuid': str(root_uuid),
+        'label': 'Top of Dataset Spatial Hierarchy',
+        'path': path_dict,
+        'children': [],
+    }
+    ds_source = ds_anno_qs[0].data_source
+
+    # Get all of the different containment trees / paths.
+    all_containment_paths = etl_subjects.get_containment_fields_in_hierarchy(ds_source)
+
+    path_dict = {}
+    path_str =  request.GET.get('path')
+    if path_str:
+        path_dict = json.loads(path_str)
+
+    if not len(path_dict) and len(all_containment_paths) > 1:
+        # We're at the top of a containment tree for the ETL source
+        # and this ETL source has multiple containment hierarchies defined.
+        # So make these different trees as children.
+        for i, _ in enumerate( all_containment_paths):
+            act_path = {'tree': i}
+            _, child_uuid = update_old_id(
+                json.dumps(
+                    {'source_id':str(ds_source.uuid), 'path': act_path}
+                )
+            )
+            child = {
+                'uuid': str(child_uuid),
+                'path': act_path,
+                'label': f'Containment path [{i}]'
+            }
+            result['children'].append(child)
+        json_output = json.dumps(
+            result,
+            indent=4,
+            ensure_ascii=False
+        )
+        return HttpResponse(
+            json_output,
+            content_type="application/json; charset=utf8"
+        )
+    
+    # Select the containment path index that we want for examples. Defaults
+    # to 0, the first tree.
+    try:
+        tree_index = int(float(path_dict.get('tree', 0)))
+    except:
+        return HttpResponse(
+            json.dumps({'error': f'Spatial containment tree index must be a positive integer'}),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+
+    if tree_index < 0 or tree_index >= len(all_containment_paths):
+        return HttpResponse(
+            json.dumps({'error': f'No spatial containment tree at index {tree_index}'}),
+            content_type="application/json; charset=utf8",
+            status=404
+        ) 
+
+    # Get the specific field path for example containment records.
+    field_path = all_containment_paths[tree_index]
+
+    child_rec_qs = DataSourceRecord.objects.filter(
+        data_source=ds_source,
+    )
+    level = 0
+    child_field = None
+    prior_row_limit = None
+    for field in field_path:
+        if child_field:
+            continue
+        if level == 0 and field.context and field.context.item_type == 'subjects':
+            result['label'] = field.context.label
+        level += 1
+        field_rec_val = path_dict.get(str(field.field_num))
+        if not field_rec_val:
+            # We are at the bottom of the hierarchy of selected parent
+            # field items. so now it's time to set the current field as the
+            # field that we want to use to find child items.
+            child_field = field
+            break
+
+        if field.value_prefix:
+            result['label'] = field.value_prefix + field_rec_val
+        else:
+            result['label'] = field_rec_val
+        # Now limit the children. This incrementally adds
+        field_rows_qs = DataSourceRecord.objects.filter(
+            data_source=ds_source,
+            field_num=field.field_num,
+            record=field_rec_val,
+        )
+        if prior_row_limit:
+            # Limit the filter on this field to the rows that
+            # we already selected in the parent field selection.
+            field_rows_qs = field_rows_qs.filter(
+                row_num__in=prior_row_limit
+            )
+        
+        field_rows = field_rows_qs.values_list('row_num', flat=True)
+        child_rec_qs = child_rec_qs.filter(row_num__in=field_rows)
+        prior_row_limit = field_rows
+
+    if not child_field:
+        # We have already selected everything and don't have a child
+        # field to find child field items. 
+        child_rec_qs = []
+    else:
+        # Use we want records for the child_field, so filter by
+        # the child_field field_num.
+        child_rec_qs = child_rec_qs.filter(
+            field_num=child_field.field_num
+        )
+
+    for rec in child_rec_qs[0:number_examples]:
+        act_path = path_dict.copy()
+        act_path[child_field.field_num] = rec.record
+        label = rec.record
+        if child_field.value_prefix:
+            label = child_field.value_prefix + label
+        _, child_uuid = update_old_id(
+            json.dumps(
+                {'source_id':str(ds_source.uuid), 'path': act_path}
+            )
+        )
+        child = {
+            'uuid': str(child_uuid),
+            'path': act_path,
+            'label': label
+        }
+        result['children'].append(child)
+    
+    json_output = json.dumps(
+        result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def etl_link_annotations_examples(request, source_id):
+    """Returns examples of spatial containment replationships"""
+
+    number_examples = request.GET.get('number_examples', 5)
+
+    _, valid_uuid = update_old_id(source_id)
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        Q(data_source__source_id=source_id)
+        |Q(data_source__uuid=valid_uuid)
+    ).exclude(
+        # Exclude predicates that have specialized
+        # examples.
+        predicate_id__in=[
+            configs.PREDICATE_CONTAINS_UUID,
+            configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+        ]
+    ).select_related(
+        'data_source'
+    ).select_related(
+        'subject_field'
+    ).select_related(
+        'subject_field__item_class'
+    ).select_related(
+        'predicate'
+    ).select_related(
+        'predicate_field'
+    ).select_related(
+        'object_field'
+    ).order_by('subject_field__field_num', 'object_field__field_num')
+
+    if not len(ds_anno_qs):
+        return HttpResponse(
+            '[]',
+            content_type="application/json; charset=utf8"
+        )
+
+    ds_source = ds_anno_qs[0].data_source
+
+    results = []
+    for ds_anno in ds_anno_qs:
+        subject_field = ds_anno.subject_field
+        subj_rows = DataSourceRecord.objects.filter(
+            data_source=ds_source,
+            field_num=subject_field.field_num,
+        ).values_list('row_num', flat=True)
+        pred_rows = None
+        obj_rows = None
+
+        anno_field_nums = [subject_field.field_num]
+
+        if ds_anno.predicate_field:
+            # We have a field where we want predicates.
+            anno_field_nums.append(ds_anno.predicate_field.field_num)
+
+            # Get a list of rows with predicate records
+            # limited by what's in the list of subject rows.
+            pred_rows = DataSourceRecord.objects.filter(
+                data_source=ds_source,
+                field_num=ds_anno.subject_field.field_num,
+                row_num__in=subj_rows,
+            ).values_list('row_num', flat=True)
+
+        if ds_anno.object_field:
+            # We have a field where the objects of assertions can be
+            # found.
+            anno_field_nums.append(ds_anno.object_field.field_num)
+
+            if pred_rows is not None:
+                # Use the predicate row list to limit this pull
+                obj_rows = DataSourceRecord.objects.filter(
+                    data_source=ds_source,
+                    field_num=ds_anno.object_field.field_num,
+                    row_num__in=pred_rows,
+                ).values_list('row_num', flat=True)
+            else:
+                # Use the subject row list to limit this pull
+                obj_rows = DataSourceRecord.objects.filter(
+                    data_source=ds_source,
+                    field_num=ds_anno.object_field.field_num,
+                    row_num__in=subj_rows,
+                ).values_list('row_num', flat=True)
+
+        # Now get the examples, limited to those rows that have values
+        # in the subject, predictate (if applicable), and object (if applicable) fields.
+        if obj_rows is not None:
+            row_list = obj_rows[0:number_examples]
+        elif pred_rows is not None:
+            row_list = pred_rows[0:number_examples]
+        else:
+            row_list = subj_rows[0:number_examples]
+
+        # Make a dataframe using row limits determined by subject, predicate, and or object fields.
+        df = etl_df.db_make_dataframe_from_etl_data_source(
+            ds_source,
+            use_column_labels=False,
+            limit_field_num_list=anno_field_nums,
+            limit_row_num_list=row_list,
+        )
+
+        col_renames = {}
+        subject_col = f'{subject_field.field_num}_col'
+        col_renames[subject_col] = 'subject'
+        # Add value prefixes if needed to the subject field.
+        if subject_field.value_prefix and subject_col in df.columns:
+            df[subject_col] = subject_field.value_prefix + df[subject_col]
+
+        if ds_anno.predicate_field:
+            predicate_col =  f'{ds_anno.predicate_field.field_num}_col'
+            col_renames[predicate_col] = 'predicate'
+        elif ds_anno.predicate:
+            df['predicate'] = ds_anno.predicate.label
+        else:
+            # This should not happen.
+            df['predicate'] = None
+        
+        if ds_anno.object_field:
+            object_col =  f'{ds_anno.object_field.field_num}_col'
+            col_renames[object_col] = 'object'
+        elif ds_anno.object:
+            df['object'] = ds_anno.object.label
+        elif ds_anno.obj_string:
+            # NOTE: Here and below, we a single literal assigned as an object.
+            df['object'] = ds_anno.obj_string
+        elif ds_anno.obj_boolean is not None:
+            df['object'] = ds_anno.obj_boolean
+        elif ds_anno.obj_integer is not None:
+            df['object'] = ds_anno.obj_integer
+        elif ds_anno.obj_double is not None:
+            df['object'] = ds_anno.obj_double
+        elif ds_anno.obj_datetime is not None:
+            df['object'] = ds_anno.obj_datetime
+        else:
+            df['object'] = None
+
+        df.rename(columns=col_renames, inplace=True)
+
+        result = {
+            'subject_field_id': str(subject_field.uuid),
+            'subject_field__field_num': subject_field.field_num,
+            'subject_field__label': subject_field.label,
+            'subject_field__item_type': subject_field.item_type,
+            'subject_field__item_class_id': str(subject_field.item_class.uuid),
+            'subject_field__item_class__label': subject_field.item_class.label,
+            'examples': df[['subject', 'predicate', 'object']].to_dict('records')
+        }
+        results.append(result)
+
+    json_output = json.dumps(
+        results,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
 def etl_described_by_examples(request, source_id):
     """Returns examples of described by replationships"""
 
@@ -438,6 +779,8 @@ def etl_described_by_examples(request, source_id):
     ).select_related(
         'subject_field__item_class'
     ).select_related(
+        'predicate'
+    ).select_related(
         'object_field'
     ).order_by('subject_field__field_num', 'object_field__field_num')
 
@@ -448,6 +791,7 @@ def etl_described_by_examples(request, source_id):
         )
     
     ds_source = ds_anno_qs[0].data_source
+    predicate = ds_anno_qs[0].predicate
     
     subjs_objects = {ds_anno.subject_field:[] for ds_anno in ds_anno_qs}
     for ds_anno in ds_anno_qs:
@@ -469,7 +813,7 @@ def etl_described_by_examples(request, source_id):
         # Make a list of rows to limit for a dataframe.
         row_list = [r.row_num for r in sub_rec_qs]
         object_field_nums = [o_f.field_num for o_f in object_field_list]
-        print(f'Object fields: {object_field_nums}')
+
         df = etl_df.db_make_dataframe_from_etl_data_source(
             ds_source,
             use_column_labels=True,
@@ -496,6 +840,8 @@ def etl_described_by_examples(request, source_id):
             'subject_field__item_type': subject_field.item_type,
             'subject_field__item_class_id': str(subject_field.item_class.uuid),
             'subject_field__item_class__label': subject_field.item_class.label,
+            'predicate_id': str(predicate.uuid),
+            'predicate__label': predicate.label,
             'examples': df[final_cols].to_dict('records'),
         }
         results.append(result)
