@@ -42,6 +42,8 @@ from opencontext_py.apps.all_items.editorial import views as EditorialViews
 from opencontext_py.apps.etl.importer import views as etlViews
 # Testing new ETL views for POST request endpoints.
 from opencontext_py.apps.etl.importer.setup import views as etlSetupViews
+# Testing new ETL views for POST request for final transform, load steps.
+from opencontext_py.apps.etl.importer.transforms import views as etlTransformsViews
 
 
 urlpatterns = [
@@ -145,6 +147,18 @@ urlpatterns = [
     url(r'^etl-importer-setup/update-fields', etlSetupViews.etl_update_fields, name='etl_setup_update_fields'),
     url(r'^etl-importer-setup/delete-annotations', etlSetupViews.etl_delete_annotations, name='etl_delete_annotations'),
     url(r'^etl-importer-setup/add-annotations', etlSetupViews.etl_add_annotations, name='etl_add_annotations'),
+    # New ETL POST transform-load views
+    url(
+        r'^etl-importer-transforms/reset-transform-load/(?P<source_id>\S+)', 
+        etlTransformsViews.etl_reset_transform_load,
+        name='etl_reset_transform_load_json'
+    ),
+    url(
+        r'^etl-importer-transforms/transform-load/(?P<source_id>\S+)', 
+        etlTransformsViews.etl_transform_load,
+        name='etl_transform_load_json'
+    ),
+
     
     url(r'^search.json?', SearchViews.json_view, name='search_json_d'),
     url(r'^search/(?P<spatial_context>\S+)?.json', SearchViews.json_view, name='search_json'),

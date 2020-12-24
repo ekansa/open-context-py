@@ -113,7 +113,7 @@ def update_predicate_context_for_ds_field(ds_field, raise_on_error=True):
     return ds_field
 
 
-def reconcile_predicates_types_variables(ds_source, df=None):
+def reconcile_predicates_types_variables(ds_source, df=None, filter_index=None):
     """Reconciles all item_type='predicates' and 'types' fields in a data_source"""
     if df is None:
         # We get the dataframe of predicates and types only fields.
@@ -123,6 +123,10 @@ def reconcile_predicates_types_variables(ds_source, df=None):
         # We have no fields of item_type = 'predicates' or 'types'
         # to reconcile.
         return None
+    
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
     
     # Get the predicates and types that are paired with an rdfs:range 
     # annotation. For these paired predicates and types, the records
@@ -143,6 +147,7 @@ def reconcile_predicates_types_variables(ds_source, df=None):
             df=df,
             ds_field=ds_field,
             do_recursive=True,
+            filter_index=filter_index,
         )
 
     # Now get all the variables and types fields that are NOT
@@ -173,6 +178,7 @@ def reconcile_predicates_types_variables(ds_source, df=None):
             df=df,
             ds_field=ds_field,
             do_recursive=False,
+            filter_index=filter_index,
         )
 
     non_paired_types_fields_qs = DataSourceField.objects.filter(
@@ -196,6 +202,7 @@ def reconcile_predicates_types_variables(ds_source, df=None):
             ds_field=ds_field,
             context=ds_field.context,
             do_recursive=False,
+            filter_index=filter_index,
         )
     
     # Finally, reconcile the field labels for predicates fields. In these
@@ -215,7 +222,7 @@ def reconcile_predicates_types_variables(ds_source, df=None):
         # Now update the dataframe with the context
         col_context = f'{ds_field.field_num}_context'
         col = f'{ds_field.field_num}_col'
-        update_index = (~df[col].isnull() & ~(df[col] == ''))
+        update_index = filter_index & (~df[col].isnull() & ~(df[col] == ''))
         df.loc[update_index, col_context] = str(ds_field.context.uuid)
         for rows in etl_df.chunk_list(df[update_index]['row_num'].unique().tolist()):
             # Update the context and the item fields form this ds_field.

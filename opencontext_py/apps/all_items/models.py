@@ -817,6 +817,16 @@ class AllSpaceTime(models.Model):
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
 
+    # Geometry types that we allow.
+    GEOMETRY_TYPES = [
+        'Point',
+        'LineString',
+        'Polygon',
+        'MultiPoint',
+        'MultiLineString',
+        'MultiPolygon',
+    ]
+
     def validate_times(
         self, 
         earliest=None,
@@ -977,6 +987,16 @@ class AllSpaceTime(models.Model):
             exclude_uuid=self.uuid,
         )
     
+    def validate_longitude(self, lon):
+        if not isinstance(lon, float):
+            return False
+        return (-180 <= lon <= 180)
+    
+    def validate_latitude(self, lat):
+        if not isinstance(lat, float):
+            return False
+        return (-90 <= lat <= 90)
+
     def validate_correct_geometry(self):
         """Validates and corrects the geometry object"""
         if not self.geometry_type:
@@ -1016,6 +1036,12 @@ class AllSpaceTime(models.Model):
                     'have a list of coordinates'
                 )
         
+        if self.geometry_type not in self.GEOMETRY_TYPES:
+            raise ValueError(
+                f'Geometry type { self.geometry_type } must '
+                f'be of {str(self.GEOMETRY_TYPES)}'
+            )
+        
         if self.longitude is None or self.latitude is None:
             # We don't have the centroid, so calculate it from the
             # geometry object.
@@ -1030,6 +1056,16 @@ class AllSpaceTime(models.Model):
             raise ValueError(
                 f'Geometry {self.geometry_type} must '
                 'have latitude and longitude coordinates.'
+            )
+        
+        if not self.validate_longitude(self.longitude):
+            raise ValueError(
+                f'Longitude must be between -180 and 180'
+            )
+        
+        if not self.validate_latitude(self.latitude):
+            raise ValueError(
+                f'Latitude must be between -90 and 90'
             )
 
 
@@ -1469,6 +1505,9 @@ class AllAssertion(models.Model):
         on_delete=models.CASCADE
     )
     sort = models.FloatField(null=True, default=1)
+    # Th attribute 'visible' can be set to False to indicate that an assertion is no longer 
+    # current. If so, it can be used to maintain a record of changes, especially
+    # with metadata about changes stored in meta_json.
     visible = models.BooleanField(default=True)
     # Estimated probability for an assertion 
     # (with 1 as 100% certain, .001 for very uncertain), null for not determined.
@@ -1487,12 +1526,16 @@ class AllAssertion(models.Model):
         on_delete=models.PROTECT, 
         default=configs.DEFAULT_LANG_UUID
     )
+    # This obj_string_hash is a hash of the obj_string field used to help in unique
+    # constraints for assertions.
     obj_string_hash = models.TextField()
+    # The following fields are for object literals.
     obj_string = models.TextField(null=True)
     obj_boolean = models.BooleanField(null=True)
     obj_integer = models.BigIntegerField(null=True)
     obj_double = models.DecimalField(max_digits=19, decimal_places=10, null=True)
     obj_datetime = models.DateTimeField(null=True)
+    # The following fields are some administrative metadata about assertions.
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)

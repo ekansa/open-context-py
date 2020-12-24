@@ -37,6 +37,7 @@ logger = logging.getLogger("etl-importer-logger")
 EXCLUDE_FROM_GENERAL_ITEM_TYPES = [
     'subjects',
     'media',
+    'resources',
     'predicates',
     'types',
     'variables',
@@ -63,7 +64,7 @@ def get_general_named_entities_df(ds_source):
     return df
 
 
-def reconcile_general_named_entities(ds_source, df=None):
+def reconcile_general_named_entities(ds_source, df=None, filter_index=None):
     """Reconciles all item_type='predicates' and 'types' fields in a data_source"""
     if df is None:
         # We get the dataframe of general named entity fields.
@@ -72,6 +73,10 @@ def reconcile_general_named_entities(ds_source, df=None):
     if df is None:
         # We have no general entity fields
         return None
+    
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
     
     # Iterate through all of the general named entity fields to
     # reconcile and create named entities.
@@ -86,6 +91,7 @@ def reconcile_general_named_entities(ds_source, df=None):
             df=df,
             ds_field=ds_field,
             do_recursive=False,
+            filter_index=filter_index,
         )
     return df
 

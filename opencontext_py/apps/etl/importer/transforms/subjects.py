@@ -39,6 +39,7 @@ def get_containment_annotation_qs(ds_source):
         object_field__item_type='subjects',
     )
 
+
 def get_ds_fields_in_containment(ds_source):
     """Gets a list of data sources fields in spatial containment relations"""
     contain_anno_qs = get_containment_annotation_qs(ds_source)
@@ -175,12 +176,16 @@ def get_item_type_subjects_df(ds_source, subj_fields_qs=None):
     return df
 
 
-def make_containment_assertions_for_ds_field(df, ds_field):
+def make_containment_assertions_for_ds_field(df, ds_field, filter_index=None):
     """Makes containment relationships for reconciled items in a ds_field"""
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
+
     col_context = f'{ds_field.field_num}_context'
     col_item =  f'{ds_field.field_num}_item'
     contexts = {}
-    df_act = df[[col_context, col_item]].copy()
+    df_act = df[filter_index][[col_context, col_item]].copy()
     df_grp = df_act.groupby([col_context, col_item]).first().reset_index()
     for i, row in df_grp.iterrows():
         context_uuid = str(row[col_context])
@@ -217,7 +222,7 @@ def make_containment_assertions_for_ds_field(df, ds_field):
         logger.info(ass_obj)
 
 
-def reconcile_item_type_subjects(ds_source, df=None):
+def reconcile_item_type_subjects(ds_source, df=None, filter_index=None):
     """Reconciles all item_type='subjects' fields in a data_source"""
     if df is None:
         # We get the dataframe of subjects only fields.
@@ -228,6 +233,10 @@ def reconcile_item_type_subjects(ds_source, df=None):
         # to reconcile.
         return None
     
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
+    
     contain_fields, non_contain_fields = get_contain_and_non_containment_subject_fields(ds_source)
     # First, reconcile the fields that DO NOT have spatial containment
     # relationships.
@@ -236,6 +245,7 @@ def reconcile_item_type_subjects(ds_source, df=None):
             df=df,
             ds_field=ds_field,
             do_recursive=False,
+            filter_index=filter_index,
         )
 
     # Now process the fields that DO HAVE spatial containment hierarchy
@@ -248,13 +258,18 @@ def reconcile_item_type_subjects(ds_source, df=None):
             df=df,
             ds_field=root_anno.subject_field,
             do_recursive=True,
+            filter_index=filter_index,
         )
     
     # Finally, make spatial containment assertions items in each of the fields
     # with containment relations. The contain_fields list should be in order
     # of bigest (most general) fields followed by more specific child fields.
     for ds_field in contain_fields:
-        make_containment_assertions_for_ds_field(df, ds_field)
+        make_containment_assertions_for_ds_field(
+            df, 
+            ds_field,
+            filter_index=filter_index,
+        )
 
     return df
 

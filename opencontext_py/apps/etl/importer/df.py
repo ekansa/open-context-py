@@ -1,5 +1,6 @@
 import os
 import hashlib
+import time
 
 import numpy as np
 import pandas as pd
@@ -58,14 +59,18 @@ def db_make_dataframe_from_etl_data_source(
     use_column_labels=False,
     limit_field_num_list=None,
     limit_row_num_start=None,
+    limit_row_num_last=None,
     limit_row_count=None,
     limit_row_num_list=None,
+    exclude_row_list=None,
 ):
     """Makes a dataframe from the etl ds_source
     
     :param DataSource ds_source: A DataSource object that provides
         metadata about the data source for an ETL process.
     """
+
+    start = time.time()
 
     # Start making the output datafame by adding of its columns.
     ds_fields_qs = DataSourceField.objects.filter(data_source=ds_source)
@@ -96,18 +101,40 @@ def db_make_dataframe_from_etl_data_source(
             row_num__lt=(limit_row_num_start + limit_row_count),
         )
     
+    if limit_row_num_start is not None and limit_row_num_last is not None:
+        # We're limiting the query set a range of rows.
+        ds_recs_qs = ds_recs_qs.filter(
+            row_num__gte=limit_row_num_start,
+            row_num__lte=limit_row_num_last,
+        )
+    
     if limit_row_num_list is not None:
         # We're limiting the query set a list of row numbers.
         ds_recs_qs = ds_recs_qs.filter(
             row_num__in=limit_row_num_list,
         )
+    
+    if exclude_row_list is not None:
+        ds_recs_qs = ds_recs_qs.exclude(
+            row_num__in=exclude_row_list,
+        )
+    
+    ds_recs_qs = ds_recs_qs.select_related(
+        'context'
+    ).select_related(
+        'item'
+    )
 
-    ds_recs_qs = ds_recs_qs.iterator()
-    prior_row_num = 1
+    # NOTE: We make a list, all_rows, that will have a row_data dict
+    # for each row we want to add to the dataframe. Making a dataframe
+    # from a list (all_rows) is about 30x faster than appending each
+    # individual row_data dict directly to the dataframe
+    all_rows = []
     row_data = {}
-    for ds_rec in ds_recs_qs:
+    prior_row_num = 1
+    for ds_rec in ds_recs_qs.iterator():
         if ds_rec.row_num != prior_row_num:
-            df = df.append(row_data, ignore_index=True)
+            all_rows.append(row_data)
             row_data = {}
             prior_row_num = ds_rec.row_num
         # Make a row dictionary.
@@ -125,7 +152,10 @@ def db_make_dataframe_from_etl_data_source(
             row_data[f'{ds_rec.field_num}_reconcile_errors'] = None
         row_data[f'{ds_rec.field_num}_col'] = ds_rec.record
     # Now add the final row.
-    df = df.append(row_data, ignore_index=True)
+    all_rows.append(row_data)
+
+    # Append the all_rows list all at once for a major speed boost.
+    df = df.append(all_rows, ignore_index=True)
 
     # Fill na with empty strings for missing records.
     for df_field in ds_fields_qs:
@@ -143,7 +173,10 @@ def db_make_dataframe_from_etl_data_source(
                 label = df_field.label
             used_labels.append(df_field.label)
             rename_cols[f'{df_field.field_num}_col'] = label
-        df.rename(columns=rename_cols, inplace=True) 
+        df.rename(columns=rename_cols, inplace=True)
+
+    end = time.time()
+    print(f'df generation time: {(end - start)}')
     return df
 
 

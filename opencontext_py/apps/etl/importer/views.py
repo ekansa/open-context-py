@@ -75,7 +75,7 @@ def home_html(request, source_id):
     )
     # NOTE: Used to define relationships between media and (file) resources
     pred_media_has_files = editorial_api.get_manifest_item_dict_by_uuid(
-        uuid=configs.PREDICATE_CONTAINS_UUID,
+        uuid=configs.PREDICATE_OC_ETL_MEDIA_HAS_FILES,
         do_minimal=True,
     )
     # NOTE: Used to define variable->value relationsips.
@@ -586,6 +586,9 @@ def etl_spatial_contained_examples(request, source_id):
             'path': act_path,
             'label': label
         }
+        if child in result['children']:
+            # Skip, this is already in the list.
+            continue
         result['children'].append(child)
     
     json_output = json.dumps(
@@ -602,7 +605,7 @@ def etl_spatial_contained_examples(request, source_id):
 @cache_control(no_cache=True)
 @never_cache
 def etl_link_annotations_examples(request, source_id):
-    """Returns examples of spatial containment replationships"""
+    """Returns examples of non spatial containment not linked annotations replationships"""
 
     number_examples = request.GET.get('number_examples', 5)
 

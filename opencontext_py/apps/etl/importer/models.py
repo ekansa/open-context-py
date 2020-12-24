@@ -129,7 +129,7 @@ class DataSourceField(models.Model):
     # Item types and their human readable descriptions for
     # fields, as generally configured by users setting up
     # an ETL process.
-    USER_SELECT_ITEM_TYPES = [
+    MAIN_USER_SELECT_ITEM_TYPES = [
         # NOTE: Tuples defined as follows:
         # (item_type, item_type_description, required_data_type,)
         ('subjects', 'Locations or Objects', 'id'),
@@ -138,20 +138,38 @@ class DataSourceField(models.Model):
         ('documents', 'Documents (Text, HTML)', 'id'),
         ('persons', 'Persons or Organizations', 'id'),
         ('predicates', 'Single Attribute Descriptions or Relations', None),
+        ('types', 'Controlled Vocabulary Descriptions', 'id'),
         ('variables', 'Multiple Descriptive Attributes', None),
         ('values', 'Values of Multi-Attributes', None),
         ('uuid', 'UUIDs (identifiers)', 'xsd:string'),
+    ]
+
+    SPACE_TIME_USER_SELECT_ITEM_TYPES = [
         ('latitude', 'Latitudes (decimal degrees)', 'xsd:double'),
         ('longitude', 'Longitudes (decimal degrees)', 'xsd:double'),
+        ('geometry', 'GeoJSON (spatial geometry)', 'xsd:string'),
         ('earliest', 'Earliest Years (BCE/CE)', 'xsd:double'),
         ('latest', 'Latest Years (BCE/CE)', 'xsd:double'),
+    ]
+
+    LINK_DATA_USER_SELECT_ITEM_TYPES = [
         ('uri', 'Linked Data Instances (URIs)', 'id'),
         ('class', 'Linked Data Classes (URIs)', 'id'),
+    ]
+
+    NODE_USER_SELECT_ITEM_TYPES = [
         ('observations', 'Observations (description grouping)', 'id'),
         ('events', 'Events (description grouping)', 'id'),
         ('attribute-groups', 'Attribute Groups', 'id'),
         ('languages', 'Languages', 'id'),
     ]
+
+    USER_SELECT_ITEM_TYPES = (
+        MAIN_USER_SELECT_ITEM_TYPES
+        + SPACE_TIME_USER_SELECT_ITEM_TYPES
+        + LINK_DATA_USER_SELECT_ITEM_TYPES
+        + NODE_USER_SELECT_ITEM_TYPES
+    )
 
     USER_SELECT_DATA_TYPES = [
         ('id', 'Named, identified items',),
@@ -479,6 +497,7 @@ class DataSourceAnnotation(models.Model):
 
     PREDICATE_OK_ITEM_TYPES = ['predicates', 'property', 'class', 'variables']
 
+    # These are OK to be used as subjects of PREDICATE_OC_ETL_DESCRIBED_BY
     DESCRIBED_BY_LINK_OK_ITEM_TYPES = [
         'projects', 
         'tables',
@@ -488,12 +507,15 @@ class DataSourceAnnotation(models.Model):
         'persons',
     ]
 
+    # These are OK to be used as objects of PREDICATE_OC_ETL_DESCRIBED_BY
     DESCRIBED_BY_OK_OBJECT_TYPES = [
         'predicates',
+        'types',
         'variables',
         'uuid',
         'latitude',
         'longitude',
+        'geojson',
         'earliest',
         'latest',
     ]

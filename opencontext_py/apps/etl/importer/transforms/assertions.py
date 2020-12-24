@@ -63,20 +63,30 @@ ASSERT_ID_ATTRIBUTES = [
 LINKS_EXCLUDE_PREDICATE_IDS = [
     configs.PREDICATE_OC_ETL_DESCRIBED_BY,
     configs.PREDICATE_CONTAINS_UUID,
-    configs.PREDICATE_OC_ETL_MEDIA_PART_OF,
+    configs.PREDICATE_OC_ETL_MEDIA_HAS_FILES,
 ]
 
 
-def update_df_object_column_for_ds_anno(ds_anno, df, act_obj_col=None, act_obj_dt_col=None):
+def update_df_object_column_for_ds_anno(
+    ds_anno, 
+    df, 
+    act_obj_col=None, 
+    act_obj_dt_col=None,
+    filter_index=None,
+):
     """Updates an ETL import dataframe by setting object item and literal columns"""
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
+
     if not act_obj_col:
         act_obj_col = f'assertion_object__{ds_anno.data_source.source_id}'
     if not act_obj_dt_col:
         act_obj_dt_col = f'assertion_object_dt__{ds_anno.data_source.source_id}'
     
     # Set the columns with empty values.
-    df[act_obj_col] = np.nan
-    df[act_obj_dt_col] = np.nan
+    df.loc[filter_index, act_obj_col] = np.nan
+    df.loc[filter_index, act_obj_dt_col] = np.nan
 
     if not ds_anno.object_field:
         # We're trying to assign a preset literal value.
@@ -84,20 +94,20 @@ def update_df_object_column_for_ds_anno(ds_anno, df, act_obj_col=None, act_obj_d
             literal_val = getattr(ds_anno, lit_attrib)
             if not literal_val:
                 continue
-            df[act_obj_col] = literal_val
-            df[act_obj_dt_col] = data_type
+            df.loc[filter_index, act_obj_col] = literal_val
+            df.loc[filter_index, act_obj_dt_col] = data_type
         return df
     
     object_field = ds_anno.object_field
     act_item_obj_col = f'{object_field.field_num}_item'
     act_item_literal_col = f'{object_field.field_num}_col'
-    df[act_obj_dt_col] = object_field.data_type
+    df.loc[filter_index, act_obj_dt_col] = object_field.data_type
     if object_field.data_type != 'id':
         # Copy literal (non-named entity) values 
-        df[act_obj_col] = df[act_item_literal_col]
+        df.loc[filter_index, act_obj_col] = df[filter_index][act_item_literal_col]
     else:
         # Copy the already reconciled uuids to named entities
-        df[act_obj_col] = df[act_item_obj_col]
+        df.loc[filter_index, act_obj_col] = df[filter_index][act_item_obj_col]
     return df
 
 
@@ -169,8 +179,19 @@ def get_make_note_predicate_for_invalid_literal_db(
     return pred_note_obj
 
 
-def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_new_assertion=False):
+def make_descriptive_assertions(
+    ds_anno, 
+    df, 
+    invalid_literal_to_str=True, 
+    log_new_assertion=False,
+    filter_index=None,
+):
     """Make a descriptive assertion based on a ds_anno object"""
+
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
+
     ds_source = ds_anno.data_source
     act_subj_col = f'assertion_subject_uuid__{ds_source.source_id}'
     act_pred_col = f'assertion_predicate_uuid__{ds_source.source_id}'
@@ -194,7 +215,7 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
 
     # Set up the subjects of the assertions
     subj_item_col = f'{ds_anno.subject_field.field_num}_item'
-    df[act_subj_col] = df[subj_item_col]
+    df.loc[filter_index, act_subj_col] = df[filter_index][subj_item_col]
 
     # This list of tuples defines which dataframe columns go with which
     # ds_anno attributes.
@@ -209,12 +230,12 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
             # Multiple node entities come from this node_field.
             # copy them in to the df_node_col
             field_item_col = f'{ds_node_field.field_num}_item'
-            df[df_node_col] = df[field_item_col]
+            df.loc[filter_index, df_node_col] = df[filter_index][field_item_col]
             continue
         # The simple case, where the node is a single object, not 
         # multiple objects in a field. 
         # NOTE: this sets all values in the df_node_col to the same value.
-        df[df_node_col] = str(ds_node_obj.uuid)
+        df.loc[filter_index, df_node_col] = str(ds_node_obj.uuid)
     
     if ds_anno.object_field and ds_anno.object_field.item_type == 'variables':
         # In this case assertion predicate will come from a 
@@ -231,13 +252,14 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
             return None
         des_pred_field = var_val_anno.subject_field
         des_pred_col = f'{des_pred_field.field_num}_item'
-        df[act_pred_col] = df[des_pred_col]
+        df.loc[filter_index, act_pred_col] = df[filter_index][des_pred_col]
         # Get the columns for the assertion objects.
         df = update_df_object_column_for_ds_anno(
             var_val_anno, 
             df, 
             act_obj_col=act_obj_col, 
             act_obj_dt_col=act_obj_dt_col,
+            filter_index=filter_index,
         )
     else:
         # This is a simpler case where assertion predicates come from the
@@ -249,16 +271,17 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
             and ds_anno.object_field.context.item_type in DataSourceAnnotation.PREDICATE_OK_ITEM_TYPES
         ):
             # NOTE: this sets all values in the act_pred_col to the same value.
-            df[act_pred_col] = str(ds_anno.object_field.context.uuid)
+            df.loc[filter_index, act_pred_col] = str(ds_anno.object_field.context.uuid)
         # Get the columns for the assertion objects.
         df = update_df_object_column_for_ds_anno(
             ds_anno, 
             df, 
             act_obj_col=act_obj_col, 
             act_obj_dt_col=act_obj_dt_col,
+            filter_index=filter_index,
         )
     
-    df_act = df[assert_cols].copy()
+    df_act = df[filter_index][assert_cols].copy()
     # Remove rows with null values, these can't have assertions.
     df_act.dropna(inplace=True)
     df_grp = df_act.groupby(assert_cols).first().reset_index()
@@ -352,13 +375,23 @@ def make_descriptive_assertions(ds_anno, df, invalid_literal_to_str=True, log_ne
             logger.info(ass_obj)
 
 
-def make_all_descriptive_assertions(ds_source, df=None, invalid_literal_to_str=True, log_new_assertion=False):
+def make_all_descriptive_assertions(
+    ds_source, 
+    df=None, 
+    invalid_literal_to_str=True, 
+    log_new_assertion=False,
+    filter_index=None
+):
     """Makes descriptive assertions on entities already reconciled in a data source"""
     if df is None:
         df = etl_df.db_make_dataframe_from_etl_data_source(
             ds_source,
             include_uuid_cols=True,
         )
+    
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
 
     ds_anno_qs =  DataSourceAnnotation.objects.filter(
         data_source=ds_source,
@@ -373,11 +406,17 @@ def make_all_descriptive_assertions(ds_source, df=None, invalid_literal_to_str=T
             df, 
             invalid_literal_to_str=invalid_literal_to_str,
             log_new_assertion=log_new_assertion,
+            filter_index=filter_index,
         )
 
 
-def make_link_assertions(ds_anno, df, log_new_assertion=False):
+def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None):
     """Makes linking assertions between named entities"""
+
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
+
     ds_source = ds_anno.data_source
     act_subj_col = f'assertion_subject_uuid__{ds_source.source_id}'
     act_pred_col = f'assertion_predicate_uuid__{ds_source.source_id}'
@@ -399,7 +438,7 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False):
 
     # Set up the subjects of the assertions
     subj_item_col = f'{ds_anno.subject_field.field_num}_item'
-    df[act_subj_col] = df[subj_item_col]
+    df.loc[filter_index, act_subj_col] = df[filter_index][subj_item_col]
 
     # This list of tuples defines which dataframe columns go with which
     # ds_anno attributes.
@@ -420,7 +459,7 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False):
             # Multiple node entities come from this ds_field.
             # copy them in to the df_col
             field_item_col = f'{ds_field.field_num}_item'
-            df[df_col] = df[field_item_col]
+            df.loc[filter_index, df_col] = df[filter_index][field_item_col]
             continue
         # The simple case, where the node is a single object, not 
         # multiple objects in a field. 
@@ -428,9 +467,9 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False):
         if ds_obj and ds_obj.data_type != 'id':
             # Skip out, we're only dealing with named entities, no literals
             return None
-        df[df_col] = str(ds_obj.uuid)
+        df.loc[filter_index, df_col] = str(ds_obj.uuid)
     
-    df_act = df[assert_cols].copy()
+    df_act = df[filter_index][assert_cols].copy()
     # Remove rows with null values, these can't have assertions.
     df_act.dropna(inplace=True)
     df_grp = df_act.groupby(assert_cols).first().reset_index()
@@ -475,13 +514,17 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False):
             logger.info(ass_obj)
     
 
-def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False):
+def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False, filter_index=None):
     """Makes linking assertions on entities already reconciled in a data source"""
     if df is None:
         df = etl_df.db_make_dataframe_from_etl_data_source(
             ds_source,
             include_uuid_cols=True,
         )
+
+    if filter_index is None:
+        # No filter index set, so process the whole dataframe df
+        filter_index = df['row_num'] >= 0
 
     ds_anno_qs =  DataSourceAnnotation.objects.filter(
         data_source=ds_source,
@@ -506,5 +549,6 @@ def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False):
             ds_anno, 
             df, 
             log_new_assertion=log_new_assertion,
+            filter_index=filter_index,
         )
         

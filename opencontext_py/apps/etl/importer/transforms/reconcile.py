@@ -293,6 +293,7 @@ def get_immediate_parent_field_objs_db(child_field_obj):
 
 def get_immediate_child_field_objs_db(parent_field_obj):
     """Get the immediate children fields of a parent field object using DB"""
+
     only_spatial_contains = False
     only_variable_range = False
     if parent_field_obj.item_type == 'subjects':
@@ -337,7 +338,8 @@ def df_reconcile_id_field(
     ds_field, 
     context=None, 
     col_record_tuples=None, 
-    do_recursive=True
+    do_recursive=True,
+    filter_index=None,
     ):
     """Reconciles a data_type = 'id' field, walking down a hierarchy if hierarchic.
     
@@ -361,7 +363,11 @@ def df_reconcile_id_field(
     # Set up the filter index for the dataframe so as to 
     if col_record_tuples is None:
         col_record_tuples = []
-    current_index = df['row_num'] > 0
+    
+    if filter_index is None:
+        filter_index = df['row_num'] >= 0
+
+    current_index = filter_index
     for index_col, index_col_record in col_record_tuples:
         current_index &= (df[index_col] == index_col_record)
 
