@@ -34,7 +34,7 @@ from opencontext_py.apps.all_items.models import (
     AllAssertion,
 )
 from opencontext_py.apps.etl.importer.df import *
-
+file_path = '/home/ekansa/github/datasets/naga-ed-deir-csv.csv'
 file_path = '/home/ekansa/github/datasets/pinar-bird-specimen-test.csv'
 df = df_str_cols_load_csv(file_path)
 project = AllManifest.objects.filter(item_type='projects').last()

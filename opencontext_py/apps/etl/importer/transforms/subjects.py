@@ -22,6 +22,7 @@ from opencontext_py.apps.etl.importer.models import (
 )
 from opencontext_py.apps.etl.importer import df as etl_df
 from opencontext_py.apps.etl.importer.transforms import reconcile
+from opencontext_py.apps.etl.importer.transforms import utilities as trans_utils
 
 
 logger = logging.getLogger("etl-importer-logger")
@@ -187,6 +188,9 @@ def make_containment_assertions_for_ds_field(df, ds_field, filter_index=None):
     contexts = {}
     df_act = df[filter_index][[col_context, col_item]].copy()
     df_grp = df_act.groupby([col_context, col_item]).first().reset_index()
+
+    assert_uuids = []
+    unsaved_assert_objs = []
     for i, row in df_grp.iterrows():
         context_uuid = str(row[col_context])
         item_uuid = str(row[col_item])
@@ -196,10 +200,16 @@ def make_containment_assertions_for_ds_field(df, ds_field, filter_index=None):
             continue
         context = contexts.get(context_uuid)
         if not context:
-            context = AllManifest.objects.filter(uuid=context_uuid).first()
+            context = AllManifest.objects.filter(
+                uuid=context_uuid, 
+                item_type='subjects',
+            ).first()
         if context and not contexts.get(context_uuid):
             contexts[context_uuid] = context
-        child_obj = AllManifest.objects.filter(uuid=item_uuid).first()
+        child_obj = AllManifest.objects.filter(
+            uuid=item_uuid,
+            item_type='subjects',
+        ).first()
         if not context or not child_obj:
             continue
         assert_dict = {
@@ -210,16 +220,26 @@ def make_containment_assertions_for_ds_field(df, ds_field, filter_index=None):
             'predicate_id': configs.PREDICATE_CONTAINS_UUID,
             'object': child_obj,
         }
-        ass_obj, _ = AllAssertion.objects.get_or_create(
-            uuid=AllAssertion().primary_key_create(
-                subject_id=assert_dict['subject'].uuid,
-                predicate_id=assert_dict['predicate_id'],
-                object_id=assert_dict['object'].uuid,
-            ),
-            defaults=assert_dict
+
+        assert_uuid = AllAssertion().primary_key_create(
+            subject_id=assert_dict['subject'].uuid,
+            predicate_id=assert_dict['predicate_id'],
+            object_id=assert_dict['object'].uuid,
         )
+        assert_uuids.append(assert_uuid)
+        assert_dict['uuid'] = assert_uuid
+        assert_obj = AllAssertion(**assert_dict)
+        unsaved_assert_objs.append(assert_obj)
+
         # OK, we're now read to make an assertion relationship.
-        logger.info(ass_obj)
+        logger.info(assert_obj)
+
+    # Bulk save these assertions. This does a fallback to saving saving assertion
+    # objects individually if something goes wrong, but that's far slower.
+    trans_utils.bulk_create_assertions(
+        assert_uuids, 
+        unsaved_assert_objs
+    )
 
 
 def reconcile_item_type_subjects(ds_source, df=None, filter_index=None):

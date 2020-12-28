@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 
@@ -38,7 +39,7 @@ from opencontext_py.apps.etl.importer.transforms import subjects
 
 logger = logging.getLogger("etl-importer-logger")
 
-
+ETL_CACHE_LIFE = 60 * 60 * 6 # 6 hours. 
 DF_LOAD_BATCH_SIZE = 250
 
 PROCESS_STAGES = [
@@ -47,48 +48,56 @@ PROCESS_STAGES = [
         'Gather data for transform and load', 
         None, 
         DF_LOAD_BATCH_SIZE,
+        True,
     ),
     (
         'media_resources', 
         'Load media and link to files', 
         media_resources.reconcile_item_type_media_resources, 
         50,
+        True,
     ),
     (
         'subjects', 
-        'Load locations, objects, and their contexts',
+        'Load locations, objects, and context relationships',
         subjects.reconcile_item_type_subjects,
-        100,
+        150,
+        True,
     ),
     (
         'named_entities', 
         'Load misc. named entities',
         general_named_entities.reconcile_general_named_entities,
-        500,
+        100,
+        True,
     ),
     (
         'space_time', 
         'Load spatial and chronological (event) data',
         space_time_events.reconcile_space_time,
-        500,
+        100,
+        True,
     ),
     (
         'predicates_types_variables', 
         'Load descriptive attributes and controlled vocabs',
         predicates_types_variables.reconcile_predicates_types_variables,
-        500,
+        100,
+        True,
     ),
     (
         'link_assertions', 
-        'Load linking assertions',
+        'Load misc. linking assertions',
         assertions.make_all_linking_assertions,
-        500,
+        300,
+        False,
     ),
     (
         'descriptive_assertions', 
         'Load descriptive assertions',
         assertions.make_all_descriptive_assertions,
-        500,
+        300,
+        False,
     ),
 ]
 
@@ -99,8 +108,64 @@ PROCESS_STAGES = [
 # a data_source after the user has completed adding annotations that
 # configure the process.
 # ---------------------------------------------------------------------
+def delete_data_source_reconciled_associations(ds_source):
+    """Removes reconciled associations between a data source and the manifest"""
+    
+    # Remove item and context reconciliation values from the data source
+    # records. This makes sure we don't delete rows from this model if they've
+    # been reconciled and then deleted from the manifest.
+    ds_rec_qs = DataSourceRecord.objects.filter(
+        data_source=ds_source,
+    ).update(
+        item=None
+    )
+    ds_rec_qs = DataSourceRecord.objects.filter(
+        data_source=ds_source,
+    ).update(
+        context=None
+    )
+
+    # Remove item_class and context references associated
+    # for ds_fields that may be associated with already imported items.
+    ds_field_qs = DataSourceField.objects.filter(
+        item_class__source_id=ds_source.source_id,
+    ).update(
+        item_class_id=configs.DEFAULT_CLASS_UUID
+    )
+    
+    ds_field_qs = DataSourceField.objects.filter(
+        context__source_id=ds_source.source_id,
+    )
+    for ds_field in ds_field_qs:
+        ds_field.context = None
+        ds_field.save()
+    
+    # Delete if the predicate is from this same data source.
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        predicate__source_id=ds_source.source_id,
+    ).delete()
+    # Delete if the object is from this same data source.
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        object__source_id=ds_source.source_id,
+    ).delete()
+    # Delete if the observation is from this same data source.
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        observation__source_id=ds_source.source_id,
+    ).delete()
+    # Delete if the event is from this same data source.
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        event__source_id=ds_source.source_id,
+    ).delete()
+    # Delete if theattribute_group is from this same data source.
+    ds_anno_qs = DataSourceAnnotation.objects.filter(
+        attribute_group__source_id=ds_source.source_id,
+    ).delete()
+    
+
+
 def delete_imported_from_datasource(ds_source):
     """Deletes already imported data from this data source"""
+
     models = [
         AllResource,
         AllSpaceTime,
@@ -134,6 +199,7 @@ def reset_data_source_etl_process_cache(ds_source):
 
 def reset_data_source_transform_load(ds_source):
     """Resets the Transform, Load stage of the ETL process"""
+    delete_data_source_reconciled_associations(ds_source)
     count_prior_load_deleted = delete_imported_from_datasource(ds_source)
     count_etl_cache_deleted = reset_data_source_etl_process_cache(ds_source)
     return count_prior_load_deleted, count_etl_cache_deleted
@@ -154,7 +220,7 @@ def add_cache_key_to_etl_cache_key_list(ds_source, new_key):
 
     keys.append(new_key)
     try:
-        cache.set(key_list_cache_key, keys)
+        cache.set(key_list_cache_key, keys, timeout=ETL_CACHE_LIFE)
     except:
         logger.info(f'Cache failure with: {key_list_cache_key}')
 
@@ -164,7 +230,7 @@ def cache_item_and_cache_key_for_etl_source(ds_source, cache_key, object_to_cach
     cache = caches['redis']
     add_cache_key_to_etl_cache_key_list(ds_source, cache_key)
     try:
-        cache.set(cache_key, object_to_cache)
+        cache.set(cache_key, object_to_cache, timeout=ETL_CACHE_LIFE)
     except:
         logger.info(f'Cache failure with: {cache_key}')
     return object_to_cache
@@ -315,21 +381,24 @@ def apply_transform_function(
     progress_key_name, 
     chunk_size,
     df=None,
-    print_progress=True
+    print_progress=True,
 ):
-    """Applies a transform function to a data source"""
+    """Applies a transform function to a data source, changing the data source dataframe"""
+    # NOTE: This is where we do a transformation that changes the data source dataframe.
+    # Transforms are done on batches of rows, but we don't care about the number
+    # of columns involved in the "batches".
     cache = caches['redis']
 
     if df is None:
         # Try to get the dataframe for the data source.
         df =  get_ds_source_df_if_ready(ds_source)
     if df is None:
-        return None
+        return None, None, None, None, None
 
     max_row_num = df['row_num'].max()
     prior_row_cache_key = f'{progress_key_name}-{str(ds_source.uuid)}'
     prior_row = cache.get(prior_row_cache_key)
-    
+
     if not prior_row:
         prior_row = 0
     
@@ -337,25 +406,110 @@ def apply_transform_function(
         # This is already done. so skip out.
         return df,  max_row_num,  max_row_num
     
-    last_batch_row = prior_row + chunk_size
+    last_batch_row = prior_row + chunk_size 
     
     batch_index = (
         (df['row_num'] >= prior_row)
         & (df['row_num'] <= last_batch_row)
     )
+
+    if last_batch_row > max_row_num:
+        last_batch_row = max_row_num
     
-    df= transform_function(
+    transform_result = transform_function(
         ds_source, 
         df=df,
         filter_index=batch_index
     )
-    if df is None:
+   
+
+    if transform_result is None:
         # There are no transforms to do.
         return None, 0, 0
+    
+    # Cache the last_batch_media_row as the prior media row for the 
+    cache_item_and_cache_key_for_etl_source(
+        ds_source, 
+        prior_row_cache_key, 
+        last_batch_row
+    )
+    
+    # We expected to change th dataframe.
+    df = transform_result
     
     # Cache the altered data frame.
     df_cache_key = f'df-{str(ds_source.uuid)}'
     cache_item_and_cache_key_for_etl_source(ds_source, df_cache_key, df)
+
+    return df,  last_batch_row,  max_row_num
+
+
+def apply_transform_function_on_annotation(
+    ds_source, 
+    transform_function, 
+    progress_key_name, 
+    chunk_size,
+    df=None,
+    print_progress=True,
+):
+    """Applies a transform/load function based on a specific DataSourceAnnotation"""
+    # NOTE: This is were we do a transformation that DOES NOT change the data source dataframe.
+    # Transforms are done on batches of rows, and we the transform on each user defined
+    # DataSourceAnnotation, one at a time.
+    cache = caches['redis']
+
+    if df is None:
+        # Try to get the dataframe for the data source.
+        df =  get_ds_source_df_if_ready(ds_source)
+    if df is None:
+        return None, None, None, None, None
+
+    max_row_num = df['row_num'].max()
+    prior_row_cache_key = f'{progress_key_name}-{str(ds_source.uuid)}'
+    prior_row = cache.get(prior_row_cache_key)
+
+    if not prior_row:
+        prior_row = 0
+    
+    anno_count_cache_key = f'{progress_key_name}-anno-count-{str(ds_source.uuid)}'
+    anno_count = cache.get(anno_count_cache_key)
+
+    anno_index_cache_key = f'{progress_key_name}-anno-{str(ds_source.uuid)}'
+    anno_index = cache.get(anno_index_cache_key)
+    if anno_index is None:
+        anno_index = 0
+    
+    if anno_count and anno_index >= anno_count and prior_row >= max_row_num:
+        # This is already done. so skip out.
+        return df,  max_row_num,  max_row_num, anno_index, anno_count
+    
+    # Make the dataframe filter index for this batch.
+    last_batch_row = prior_row + chunk_size 
+    batch_index = (
+        (df['row_num'] >= prior_row)
+        & (df['row_num'] <= last_batch_row)
+    )
+
+    if last_batch_row > max_row_num:
+        last_batch_row = max_row_num
+    
+    count_anno_qs = transform_function(
+        ds_source, 
+        df=df,
+        filter_index=batch_index,
+        ds_anno_index_limit=anno_index,
+    )
+
+    if last_batch_row >= max_row_num and anno_index < count_anno_qs:
+        # We've finished the last row for so move on to the next annotation
+        # to process.
+        anno_index += 1
+        last_batch_row = 0
+        cache_item_and_cache_key_for_etl_source(
+            ds_source, 
+            anno_index_cache_key, 
+            anno_index
+        )
 
     # Cache the last_batch_media_row as the prior media row for the 
     cache_item_and_cache_key_for_etl_source(
@@ -364,7 +518,15 @@ def apply_transform_function(
         last_batch_row
     )
 
-    return df,  last_batch_row,  max_row_num
+    # Save the total annotation count for this transform.
+    anno_count = count_anno_qs
+    cache_item_and_cache_key_for_etl_source(
+        ds_source, 
+        anno_count_cache_key, 
+        anno_count
+    )
+
+    return last_batch_row, max_row_num, anno_index, anno_count
 
 
 def transform_load(ds_source):
@@ -372,46 +534,72 @@ def transform_load(ds_source):
     cache = caches['redis']
     cache_key_stages = f'done-stages-{str(ds_source.uuid)}'
 
-    etl_stages = cache.get(cache_key_stages)
-    if etl_stages is None:
-        etl_stages = {k:{'done': False} for k, _, _, _ in PROCESS_STAGES}
+    raw_etl_stages = cache.get(cache_key_stages)
+    if raw_etl_stages is None:
+        etl_stages = {k:{'done': False} for k, _, _, _, _ in PROCESS_STAGES}
+    else:
+        etl_stages = raw_etl_stages.copy()
 
     do_next_stage = True
-    for process_stage, label, transform_function, chunk_size in PROCESS_STAGES:
+    for process_stage, label, transform_function, chunk_size, df_change_no_anno_index in PROCESS_STAGES:
         stage_status = etl_stages[process_stage]
         stage_status['label'] = label
+        stage_status['last_anno_index'] = None
+        stage_status['total_anno_count'] = None
         if stage_status.get('done') or not do_next_stage:
             # This stage is done, so continue to the next stage
             continue
+    
         if do_next_stage and process_stage == 'initialize_df':
+            # This is the step where we set up the dataframe for this data source.
             df, cached_max, max_row_num = initialize_df(ds_source)
             stage_status['done_count'] = cached_max
             stage_status['total_count'] = max_row_num
-            if df is not None:
-                stage_status['len_df'] = len(df.index)
             if cached_max ==  max_row_num:
                 stage_status['done'] = True
             do_next_stage = False
-        elif do_next_stage and transform_function is not None:
+    
+        elif do_next_stage and df_change_no_anno_index and transform_function is not None:
+            # This is where we do a transformation that changes the data source dataframe.
+            # Transforms are done on batches of rows, but we don't care about the number
+            # of columns involved in the "batches".
             df, max_done_row, max_row_num = apply_transform_function(
                 ds_source,
                 df=None,
                 transform_function=transform_function, 
                 progress_key_name=f'prior-row-{process_stage}', 
                 chunk_size=chunk_size, 
-                print_progress=True
+                print_progress=True,
             )
             stage_status['done_count'] = max_done_row
             stage_status['total_count'] = max_row_num
-            if df is not None:
-                stage_status['len_df'] = len(df.index)
             if max_done_row ==  max_row_num:
+                stage_status['done'] = True
+            do_next_stage = False
+        elif do_next_stage and not df_change_no_anno_index and transform_function is not None:
+            # This is were we do a transformation that DOES NOT change the data source dataframe.
+            # Transforms are done on batches of rows, and we the transform on each user defined
+            # DataSourceAnnotation, one at a time.
+            max_done_row, max_row_num, anno_index, anno_count = apply_transform_function_on_annotation(
+                ds_source,
+                df=None,
+                transform_function=transform_function, 
+                progress_key_name=f'prior-row-{process_stage}', 
+                chunk_size=chunk_size, 
+                print_progress=True,
+            )
+            stage_status['done_count'] = max_done_row
+            stage_status['total_count'] = max_row_num
+            stage_status['last_anno_index'] = anno_index
+            stage_status['total_anno_count'] = anno_count
+            if max_done_row ==  max_row_num and anno_index == anno_count:
+                # We're only done if the rows and the column counts say we're done.
                 stage_status['done'] = True
             do_next_stage = False
     
     # Check if all the stages are complete.
     all_done = True
-    for process_stage, _, _, _ in PROCESS_STAGES:
+    for process_stage, _, _, _, _ in PROCESS_STAGES:
         stage_status = etl_stages[process_stage]
         if not stage_status.get('done'):
             all_done = False

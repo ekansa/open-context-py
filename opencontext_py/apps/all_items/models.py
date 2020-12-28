@@ -955,7 +955,7 @@ class AllSpaceTime(models.Model):
             latest=self.latest,
             latitude=self.latitude,
             longitude=self.longitude,
-            geometry=self.longitude,
+            geometry=self.geometry,
         )
     
     def determine_feature_id(self, item_id, exclude_uuid=None):

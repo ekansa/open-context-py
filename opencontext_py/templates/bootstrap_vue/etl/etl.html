@@ -15,6 +15,8 @@
         {% include '../../bootstrap_vue/etl/ds_annotations.html' %}
         {% include '../../bootstrap_vue/etl/ds_annotations_links.html' %}
         {% include '../../bootstrap_vue/etl/ds_annotations_describes.html' %}
+    
+        {% include '../../bootstrap_vue/etl/etl_finalize.html' %}
 
         <div id="main">
             <b-container fluid id="app">
@@ -110,8 +112,8 @@
                 {
                     path: '/etl-importer/prepare/' + source_uuid + '#finalize',
                     name: 'finalize',
-                    component: vc_ds_fields_general,
-                    props: {source_uuid: source_uuid, ds_fields_table_height: '150px'},
+                    component: vc_etl_finalize,
+                    props: {source_uuid: source_uuid},
                 }
             ];
 
@@ -160,6 +162,7 @@
                         'ds-fields-specific': vc_ds_fields_specific,
                         'ds-annotations-links': vc_ds_annotations_links,
                         'ds-annotations-describes': vc_ds_annotations_describes,
+                        'etl-finalize': vc_etl_finalize,
                     },
                 },
             ).$mount('#app');

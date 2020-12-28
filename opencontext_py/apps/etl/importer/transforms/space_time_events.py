@@ -1,9 +1,12 @@
 import json
 import logging
+import pytz
 
 import numpy as np
 import pandas as pd
 
+from django.conf import settings
+from django.utils import timezone
 from django.db.models import Q
 
 from opencontext_py.apps.all_items import configs
@@ -36,6 +39,19 @@ logger = logging.getLogger("etl-importer-logger")
 # of the subjects of the space-time objects. 
 # ---------------------------------------------------------------------
 SPACE_TIME_ITEM_TYPES = [i_t for i_t, _, _ in DataSourceField.SPACE_TIME_USER_SELECT_ITEM_TYPES]
+
+# UUID related attributes for space-time objects
+SPACE_TIME_ID_ATTRIBUTES = [
+    'item_id',
+    'event_id',
+    'earliest',
+    'start',
+    'stop',
+    'latest',
+    'latitude',
+    'longitude',
+    'geometry',
+]
 
 
 def get_space_time_annotation_qs(ds_source):
@@ -122,7 +138,7 @@ def reconcile_space_time_event(
     # NOTE: This defaults to None, and that's OK.
     if event_obj:
         meta_json = event_obj.meta_json
-        all_event_uuid = str(event_obj)
+        all_event_uuid = str(event_obj.uuid)
         event_uuid_col = None
     else:
         meta_json = event_field.meta_json
@@ -144,13 +160,16 @@ def reconcile_space_time_event(
     # with the subj_ds_field and event.
     space_time_fields = {}
     for space_time_type in SPACE_TIME_ITEM_TYPES:
-        space_time_fields[space_time_type] = DataSourceAnnotation.objects.filter(
+        ds_anno = DataSourceAnnotation.objects.filter(
             subject_field=subj_ds_field,
             predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
             event=event_obj,
             event_field=event_field,
             object_field__item_type=space_time_type,
         ).first()
+        if not ds_anno:
+            continue
+        space_time_fields[space_time_type] = ds_anno.object_field
     
     for subject_uuid in df[filter_index][subj_uuid_col].unique():
         if not subject_uuid:
@@ -250,6 +269,15 @@ def reconcile_space_time_event(
             # OK this already exists, so skip and don't change the database
             continue
 
+        uuid_kargs = {k:act_event_dict.get(k) for k in SPACE_TIME_ID_ATTRIBUTES}
+        uuid = AllSpaceTime().primary_key_create(**uuid_kargs)
+        act_event_dict['uuid'] = uuid
+        act_event_dict['created'] = timezone.now()
+        if False:
+            act_event_dict['created'] = pytz.timezone(settings.TIME_ZONE).localize(
+                timezone.now(), 
+                is_dst=None
+            )
         # OK. Try to create the new space time event for this item.
         try:
             space_time_obj = AllSpaceTime(**act_event_dict)
@@ -260,10 +288,12 @@ def reconcile_space_time_event(
                 error = e.message
             else:
                 error = str(e)
-            logger.info(
+            error_message = (
                 f'Failed to create space time object at row {row_num}, field {subj_ds_field.label} '
                 f'Error: {str(error)}'
             )
+            logger.info(error_message)
+            print(error_message)
         
     return df
 
@@ -274,7 +304,7 @@ def import_subj_ds_field_space_time(subj_ds_field, df, filter_index=None):
     anno_qs = DataSourceAnnotation.objects.filter(
         subject_field=subj_ds_field,
         predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
-        object_field__item_type=SPACE_TIME_ITEM_TYPES,
+        object_field__item_type__in=SPACE_TIME_ITEM_TYPES,
     )
 
     event_objs = list(
@@ -300,6 +330,7 @@ def import_subj_ds_field_space_time(subj_ds_field, df, filter_index=None):
         filter_index = df['row_num'] >= 0
 
     for event_obj in event_objs:
+        print(f'Adding space time to field {subj_ds_field.label}, event {event_obj.label}')
         df = reconcile_space_time_event(
             subj_ds_field, 
             df, 

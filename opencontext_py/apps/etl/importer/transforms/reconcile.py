@@ -238,6 +238,7 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
     except:
         item_obj = None
         made_new = False
+        print(f'Failed to make new manifest item: {str(man_dict)}')
     return item_obj, made_new, 0 
 
 

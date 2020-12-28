@@ -1,8 +1,8 @@
+import pytz
 
 from dateutil.parser import parse
-from dateutil import tz
 
-
+from django.conf import settings
 from opencontext_py.apps.all_items import configs
 
 
@@ -28,7 +28,7 @@ STR_TO_BOOLEANS = {
     '1.0': True,
 }
 
-def validate_transform_data_type_value(raw_str_value, data_type, timezone=tz.UTC):
+def validate_transform_data_type_value(raw_str_value, data_type, timezone=settings.TIME_ZONE):
     """Validates the raw value of a data_type"""
     if not raw_str_value:
         return None
@@ -54,8 +54,8 @@ def validate_transform_data_type_value(raw_str_value, data_type, timezone=tz.UTC
     elif data_type == 'xsd:date':
         # Parse a date / datetime string, set to a timezone.
         try:
-            date_obj = parse(raw_str_value)
-            date_obj = date_obj.replace(tzinfo=date_obj.tzinfo or timezone)
+            naive_date_obj = parse(raw_str_value)
+            date_obj = pytz.timezone(timezone).localize(naive_date_obj, is_dst=None)
         except:
             date_obj = None
         return date_obj

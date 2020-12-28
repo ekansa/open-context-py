@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,7 @@ from opencontext_py.apps.etl.importer.models import (
 from opencontext_py.apps.etl.importer import df as etl_df
 from opencontext_py.apps.etl.importer import utilities as etl_utils
 from opencontext_py.apps.etl.importer.transforms import reconcile
+from opencontext_py.apps.etl.importer.transforms import utilities as trans_utils
 
 
 logger = logging.getLogger("etl-importer-logger")
@@ -185,8 +187,19 @@ def make_descriptive_assertions(
     invalid_literal_to_str=True, 
     log_new_assertion=False,
     filter_index=None,
+    print_progress=False,
 ):
     """Make a descriptive assertion based on a ds_anno object"""
+
+    start = time.time()
+    if print_progress:
+        print(
+            f'Start assertion creation with: {ds_anno.subject_field.label} '
+        )
+    if print_progress and ds_anno.object_field:
+        print(
+            f'-> {ds_anno.object_field.label} '
+        )
 
     if filter_index is None:
         # No filter index set, so process the whole dataframe df
@@ -212,6 +225,8 @@ def make_descriptive_assertions(
         act_obj_col,
         act_obj_dt_col,
     ]
+    for assert_col in assert_cols:
+        df[assert_col] = np.nan
 
     # Set up the subjects of the assertions
     subj_item_col = f'{ds_anno.subject_field.field_num}_item'
@@ -287,6 +302,12 @@ def make_descriptive_assertions(
     df_grp = df_act.groupby(assert_cols).first().reset_index()
     sort_denom = 10 * len(df_grp.index)
 
+    t_now = time.time()
+    if print_progress:
+        print(
+            f'Grouped unique values {(sort_denom / 10)} time: {(t_now - start)}'
+        )
+
     if ds_anno.object_field:
         sort_start = ds_anno.object_field.field_num
     else:
@@ -296,12 +317,19 @@ def make_descriptive_assertions(
     # Mappings between literal to note predicates.
     literal_to_note_preds = {}
 
+    assert_uuids = []
+    unsaved_assert_objs = []
     for i, row in df_grp.iterrows():
         # Start making a dict that includes most of the
         # assertion's attributes.
         raw_object_val = str(row[act_obj_col]).strip()
+        act_data_type = str(row[act_obj_dt_col])
+
         if not raw_object_val:
             # We have a blank value, so skip.
+            continue
+        if not act_data_type:
+            # We have a data type that is empty, skip.
             continue
         
         predicate_uuid = str(row[act_pred_col])
@@ -320,15 +348,16 @@ def make_descriptive_assertions(
             'sort': (sort_start + (i/sort_denom)),
             'language_id': str(row[act_lang_col]),
         }
-        if str(row[act_obj_dt_col]) == 'id':
+        if act_data_type == 'id':
             # We're making an assertion where the object is a named
             # entity.
             assert_dict['object_id'] = raw_object_val
         else:
             # We're making an assertion where the object is a 
             # literal of some data_type.
+            literal_done = False
             for lit_attrib, data_type in LITERAL_ATTRIBUTE_DATA_TYPES:
-                if str(row[act_obj_dt_col]) != data_type:
+                if literal_done or act_data_type != data_type:
                     # The assertion is not about this data_type
                     continue
                 # Convert the raw_object_val to an object value that
@@ -341,6 +370,7 @@ def make_descriptive_assertions(
                     # We have a literal value that is valid for this
                     # assertion. Add it.
                     assert_dict[lit_attrib] = object_val
+                    literal_done = True
                     continue
                 # We're in a sad situation where the raw_object_val cannot
                 # be parsed into an object_value of the correct data type. So
@@ -360,19 +390,33 @@ def make_descriptive_assertions(
                 if not pred_note_obj:
                     # We don't have a predicate note object, so skip.
                     continue
+
+                if print_progress:
+                    print(f'Using {pred_note_obj.label} for {raw_object_val}')
                 assert_dict['predicate_id'] = str(pred_note_obj.uuid)
                 assert_dict['obj_string'] = raw_object_val
-                continue
+                literal_done = True
         
         # Make a UUID keyword arg dict for making the assertion uuid.
         uuid_kargs = {k:assert_dict.get(k) for k in ASSERT_ID_ATTRIBUTES}
-
-        ass_obj, _ = AllAssertion.objects.get_or_create(
-            uuid=AllAssertion().primary_key_create(**uuid_kargs),
-            defaults=assert_dict
-        )
+        assert_uuid = AllAssertion().primary_key_create(**uuid_kargs)
+        assert_uuids.append(assert_uuid)
+        assert_dict['uuid'] = assert_uuid
+        assert_obj = AllAssertion(**assert_dict)
+        unsaved_assert_objs.append(assert_obj)
         if log_new_assertion:
             logger.info(ass_obj)
+
+    # Bulk save these assertions. This does a fallback to saving saving assertion
+    # objects individually if something goes wrong, but that's far slower.
+    trans_utils.bulk_create_assertions(
+        assert_uuids, 
+        unsaved_assert_objs
+    )
+
+    end = time.time()
+    if print_progress:
+        print(f'Assertion generation time: {(end - start)}')
 
 
 def make_all_descriptive_assertions(
@@ -380,7 +424,8 @@ def make_all_descriptive_assertions(
     df=None, 
     invalid_literal_to_str=True, 
     log_new_assertion=False,
-    filter_index=None
+    filter_index=None,
+    ds_anno_index_limit=None,
 ):
     """Makes descriptive assertions on entities already reconciled in a data source"""
     if df is None:
@@ -398,7 +443,16 @@ def make_all_descriptive_assertions(
         subject_field__item_type__in=configs.OC_ITEM_TYPES,
         predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
     )
-    for ds_anno in ds_anno_qs:
+
+    count_anno_qs = len(ds_anno_qs)
+    use_annos = ds_anno_qs
+    if ds_anno_index_limit is not None:
+        if ds_anno_index_limit >= count_anno_qs:
+            # Skip out, we're don't have this index number.
+            return count_anno_qs
+        use_annos = [ds_anno_qs[ds_anno_index_limit]]
+
+    for ds_anno in use_annos:
         # Makes descriptive assertions from fields that are related
         # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
         make_descriptive_assertions(
@@ -408,6 +462,8 @@ def make_all_descriptive_assertions(
             log_new_assertion=log_new_assertion,
             filter_index=filter_index,
         )
+    
+    return count_anno_qs
 
 
 def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None):
@@ -435,6 +491,9 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
         act_lang_col,
         act_obj_col,
     ]
+
+    for assert_col in assert_cols:
+        df[assert_col] = np.nan
 
     # Set up the subjects of the assertions
     subj_item_col = f'{ds_anno.subject_field.field_num}_item'
@@ -514,7 +573,13 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
             logger.info(ass_obj)
     
 
-def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False, filter_index=None):
+def make_all_linking_assertions(
+    ds_source, 
+    df=None, 
+    log_new_assertion=False, 
+    filter_index=None,
+    ds_anno_index_limit=None,
+):
     """Makes linking assertions on entities already reconciled in a data source"""
     if df is None:
         df = etl_df.db_make_dataframe_from_etl_data_source(
@@ -542,7 +607,16 @@ def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False, fil
     ).exclude(
         predicate_id__in=LINKS_EXCLUDE_PREDICATE_IDS
     )
-    for ds_anno in ds_anno_qs:
+
+    count_anno_qs = len(ds_anno_qs)
+    use_annos = ds_anno_qs
+    if ds_anno_index_limit is not None:
+        if ds_anno_index_limit >= count_anno_qs:
+            # Skip out, we're don't have this index number.
+            return count_anno_qs
+        use_annos = [ds_anno_qs[ds_anno_index_limit]]
+
+    for ds_anno in use_annos:
         # Makes link assertions from fields that are related
         # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
         make_link_assertions(
@@ -551,4 +625,5 @@ def make_all_linking_assertions(ds_source, df=None, log_new_assertion=False, fil
             log_new_assertion=log_new_assertion,
             filter_index=filter_index,
         )
-        
+    
+    return count_anno_qs

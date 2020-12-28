@@ -1,0 +1,247 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to transform and load a datasource according to
+user defined configuration annotations.
+-->
+
+<style>
+ .progress_row {
+   min-height: 72px;
+ }
+</style>
+
+
+
+<template id="etl-finalize">
+  <b-row>
+    <b-col cols="8">
+
+      <b-row>
+        <b-col cols="12"><br/></b-col>
+      </b-row>
+
+      <b-row v-if="!etl_started & !etl_done" align-v="center">
+        <b-col cols="3">
+          <b-button 
+              block 
+              @click="etl_start"
+              variant="primary">
+              Transform and Load
+            </b-button>
+        </b-col>
+        <b-col cols="9">
+          Pressing this button transforms and loads data from this data source. Any data already loaded from
+          this data source will be deleted and reloaded.
+        </b-col>
+      </b-row>
+
+      <b-row v-if="etl_started & !etl_done" align-v="center">
+        <b-col cols="3" class="text-center">
+          <b-spinner label="Loading..."></b-spinner>
+        </b-col>
+        <b-col cols="9">
+          Transform and load process started at <strong>[[ etl_started_display ]]</strong> 
+          on ongoing after <strong>[[ etl_elapsed_time_display ]]</strong>. 
+          <br/>
+          Deleted <strong>[[ count_prior_load_deleted ]]</strong> records from this data source's prior load attempt.
+        </b-col>
+      </b-row>
+
+      <b-row v-if="etl_started & etl_done" align-v="center">
+        <b-col cols="3">
+
+        </b-col>
+        <b-col cols="9">
+          Transform and load process completed after: <strong>[[ etl_elapsed_time_display ]]</strong>
+        </b-col>
+      </b-row>
+
+
+      <b-row>
+        <b-col cols="12"><br/></b-col>
+      </b-row>
+
+
+      <div v-if="etl_progress_stages">
+        <b-row v-for="(stage, index) in etl_progress_stages" class="progress_row" align-v="center">
+          <b-col cols="3">
+            [[ stage.label ]]
+          </b-col>
+          <b-col cols="9">
+            <b-progress max="1" height="2rem" variant="success">
+              <b-progress-bar :value="stage.progress">
+                <span><strong>[[ (stage.progress * 100).toFixed(1) ]] %</strong> ([[ stage.message ]])</span>
+              </b-progress-bar>
+            </b-progress>
+          </b-col>
+        </b-row>
+      </div>
+
+    </b-col>
+    <b-col cols="4">
+        <b-card
+            header="Finish the ETL"
+          >
+          <b-card-text>This step finishes the ETL process by transforming and loading data from This
+            data source according to the configurations and annotations you assigned to the fields
+            in this data source.
+          </b-card-text>
+        </b-card>
+        <br/>
+
+
+    </b-col>
+  </b-row>
+</template>
+
+
+<script type="text/javascript">
+
+  var vc_etl_finalize = Vue.component(
+      'etl-finalize',
+      {
+          delimiters: ['[[', ']]'],
+          props: ['source_uuid'],
+          data() {
+              return {
+                count_prior_load_deleted: null,
+                etl_started: false,
+                etl_done: false,
+                etl_start_time: null,
+                etl_progress_time: null,
+                etl_done_time: null,
+                etl_elapsed_time: null,
+                etl_progress_stages: null,
+                loading: false,
+            }
+          },
+          template: '#etl-finalize',
+          computed: {
+            etl_started_display: function() {
+              if(!this.etl_start_time){
+                return null;
+              }
+              return this.etl_start_time.toLocaleTimeString();
+            },
+            etl_elapsed_time_display: function() {
+              if(!this.etl_start_time){
+                return null;
+              }
+              let last_time = new Date();
+              if(this.etl_done_time != null){
+                last_time = this.etl_done_time;
+                console.log('done time');
+              }
+              else if(this.etl_progress_time != null){
+                last_time = this.etl_progress_time;
+                console.log('progress time');
+              }
+              
+              let time_diff = last_time - this.etl_start_time;
+              time_diff /= 1000;
+              let min_time_diff = Math.floor(time_diff / 60);
+              let hr_time_diff = Math.floor(min_time_diff / 60);
+              let seconds = Math.floor(time_diff % 60);
+              let seconds_str = seconds < 10 ? "0" + seconds : seconds;
+              let minutes = min_time_diff % 60;
+              let minutes_str = minutes < 10 ? "0" + minutes : minutes;
+              let hours = hr_time_diff % 24;
+              let hours_str = hours < 10 ? "0" + hours : hours;
+              return `${hours}:${minutes_str}:${seconds_str}`;
+            },
+          },
+          methods: {
+              fetch_api_reset_transform_load: function (){
+                this.error = null;
+                this.loading = true;
+                fetch(
+                  ('/etl-importer-transforms/reset-transform-load/' + this.source_uuid),
+                    {
+                          headers:{
+                              'Accept': 'application/json',
+                          }
+                    }
+                )
+                .then(this.loading = false)
+                .then(response => response.json())
+                .then(json => {
+                    this.count_prior_load_deleted = json.count_prior_load_deleted;
+                    if(this.etl_started && ! this.etl_done){
+                      this.etl_progress_time = new Date();
+                      this.fetch_api_transform_load();
+                    }
+                })
+              },
+              fetch_api_transform_load: function (){
+                this.error = null;
+                this.loading = true;
+                fetch(
+                  ('/etl-importer-transforms/transform-load/' + this.source_uuid),
+                    {
+                          headers:{
+                              'Accept': 'application/json',
+                          }
+                    }
+                )
+                .then(this.loading = false)
+                .then(response => response.json())
+                .then(json => {
+                    this.etl_done = json.complete;
+                    this.etl_progress_stages = [];
+                    for(let key in json){
+                      if(key == 'complete'){
+                        // not a key we need.
+                        continue;
+                      }
+                      if(!json.hasOwnProperty(key)) {
+                        continue;
+                      }
+                      let stage = json[key];
+                      let progress = 0;
+                      let message = '';
+                      if(stage.total_anno_count == null && stage.total_count > 0){
+                        progress = stage.done_count/stage.total_count;
+                        message = `${stage.done_count} of ${stage.total_count}`;
+                      }
+                      if(stage.total_anno_count > 0 && stage.total_count > 0){
+                        progress = (stage.last_anno_index + (stage.done_count/stage.total_count)) / stage.total_anno_count;
+                        if(stage.done_count > 0){
+                          message = `${stage.done_count} of ${stage.total_count}, field ${stage.last_anno_index } of ${stage.total_anno_count}`;
+                        }
+                        else{
+                          message = `Field ${stage.last_anno_index } of ${stage.total_anno_count}`;
+                        }
+                      }
+                      if(stage.done){
+                        progress = 1;
+                      }
+                      if(stage.total_count == 0 || stage.total_anno_count == 0){
+                        message = 'No load of this type';
+                      }
+                      if(progress > 1){
+                        progress = 1;
+                      }
+                      stage.progress = progress;
+                      stage.message = message;
+                      this.etl_progress_stages.push(stage);
+                    }
+                    this.etl_progress_time = new Date();
+                    if(!this.etl_done){
+                      this.fetch_api_transform_load();
+                    }
+                })
+              },
+              etl_start: function() {
+                this.etl_started = true;
+                this.etl_start_time = new Date();
+                this.fetch_api_reset_transform_load();
+              }
+          },
+          components: {
+            
+          },
+      }
+  ); 
+
+</script>
