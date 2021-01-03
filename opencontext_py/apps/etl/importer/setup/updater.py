@@ -48,11 +48,11 @@ def update_fields(request_json):
             continue
 
         ds_field =  DataSourceField.objects.filter(uuid=uuid).first()
-        orig_item_type = ds_field.item_type
-
         if not ds_field:
             errors.append(f'Cannot find ds_field for {uuid}')
             continue
+
+        orig_item_type = ds_field.item_type
 
         # Update if the item_update has attributes that we allow to update.
         update_dict = {

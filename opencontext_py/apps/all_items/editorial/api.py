@@ -1,5 +1,6 @@
 
 import copy
+import datetime
 import hashlib
 import uuid as GenUUID
 
@@ -22,6 +23,11 @@ from opencontext_py.apps.all_items.models import (
 
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.legacy_all import update_old_id
+
+from opencontext_py.libs.models import (
+    make_dict_json_safe, 
+    make_model_object_json_safe_dict
+)
 
 
 MANIFEST_LOOKUP_DEFAULT_ROWS = 10
@@ -184,7 +190,7 @@ def dict_uuids_to_string(dict_obj):
     return dict_obj
 
 
-def manifest_obj_to_json_safe_dict(manifest_obj, do_minimal=False):
+def manifest_obj_to_json_safe_dict(manifest_obj, do_minimal=False, for_edit=False):
     """Makes a dict safe for JSON expression from a manifest object"""
     if not manifest_obj:
         return None
@@ -210,8 +216,7 @@ def manifest_obj_to_json_safe_dict(manifest_obj, do_minimal=False):
             }
         )
         manifest_obj.item_class = item_class_obj
-
-    return {
+    output = {
         'uuid': str(manifest_obj.uuid),
         'slug': manifest_obj.slug,
         'label': manifest_obj.label,
@@ -230,8 +235,23 @@ def manifest_obj_to_json_safe_dict(manifest_obj, do_minimal=False):
         'context__uri': manifest_obj.context.uri,
         'path': manifest_obj.path,
         'uri': manifest_obj.uri,
+        'source_id': manifest_obj.source_id,
         'alt_label': manifest_obj.meta_json.get('alt_label'),
     }
+    if for_edit:
+        output['meta_json'] = manifest_obj.meta_json
+        output['indexed'] = None
+        output['published'] = None
+        output['updated'] = None
+        if manifest_obj.indexed:
+            output['indexed'] = manifest_obj.indexed.date().isoformat()
+        if manifest_obj.revised:
+            output['revised'] = manifest_obj.revised.date().isoformat()
+        if manifest_obj.published:
+            output['published'] = manifest_obj.published.date().isoformat()
+        if manifest_obj.updated:
+            output['updated'] = manifest_obj.updated.date().isoformat()
+    return output
 
 
 def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
@@ -481,7 +501,7 @@ def lookup_manifest_dicts(request_dict, value_delim=MULTI_VALUE_DELIM, default_r
 
 def lookup_up_general_distinct_metadata(request_dict, value_delim=MULTI_VALUE_DELIM):
     """Returns a list of distinct projects, item classes, and contexts metadata that match query criteria"""
-    man_qs, assert_qs = make_lookup_qs_tuples(request_dict, value_delim=value_delim)
+    man_qs, assert_qs = make_lookup_qs(request_dict, value_delim=value_delim)
 
     if assert_qs:
         # We want manifest object from the subject of an
@@ -526,7 +546,7 @@ def lookup_up_general_distinct_metadata(request_dict, value_delim=MULTI_VALUE_DE
     ).distinct().order_by()
 
     output = [
-        dict_uuids_to_string(q_dict) for q_dict in man_qs
+        make_dict_json_safe(q_dict) for q_dict in man_qs
     ]
     return output
 

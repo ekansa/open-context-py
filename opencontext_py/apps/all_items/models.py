@@ -1,10 +1,14 @@
+import copy
+import decimal
+import datetime
 import hashlib
+import json
 import pytz
-import time
 import re
 import roman
 import requests
 import reversion  # version control object
+import time
 import uuid as GenUUID
 
 # For geospace manipulations.
@@ -30,6 +34,10 @@ from django.utils import timezone
 from opencontext_py.apps.all_items import configs
 
 from opencontext_py.libs.validategeojson import ValidateGeoJson
+from opencontext_py.libs.models import (
+    make_dict_json_safe, 
+    make_model_object_json_safe_dict
+)
 
 DEFAULT_LABEL_SORT_LEN = 6
 
@@ -2055,6 +2063,7 @@ class AllResource(models.Model):
         ordering = ["item", "rank", "resourcetype",]
 
 
+
 # Records a hash history of an item for use in version control.
 @reversion.register  # records in this model under version control
 class AllHistory(models.Model):
@@ -2069,6 +2078,67 @@ class AllHistory(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
+
+
+    def get_model_objs_for_history(self, item_id):
+        """Gets model objects relating to an item_id for making a history"""
+        man_qs = AllManifest.objects.filter(uuid=item_id)[:1]
+        if not len( man_qs):
+            return None
+
+        all_model_objs = {
+            AllManifest._meta.label: man_qs,
+        }
+        other_models = [
+            AllSpaceTime,
+            AllAssertion,
+            AllResource,
+            AllIdentifier,
+        ]
+        for act_model in other_models:
+            if act_model._meta.label == 'all_items.AllAssertion':
+                # The main item is the subject of the assertions.
+                qs =  act_model.objects.filter(subject=man_qs[0])
+            else:
+                qs = act_model.objects.filter(item=man_qs[0])
+            all_model_objs[act_model._meta.label] = qs
+        return all_model_objs
+
+    def get_model_dicts_for_history(self, item_id):
+        """Gets model objects relating to an item_id for making a history"""
+        all_model_objs = self.get_model_objs_for_history(item_id)
+        if not all_model_objs:
+            return None
+        all_model_dicts = {}
+        for model_key, qs in all_model_objs.items():
+            all_model_dicts[model_key] = []
+            for model_obj in qs:
+                model_dict = make_model_object_json_safe_dict(model_obj)
+                all_model_dicts[model_key].append(model_dict)
+        return all_model_dicts
+    
+    def calculate_sha1_hash_from_all_model_dicts(self, all_model_dicts):
+        """Calculates a sha1 hash from all_model_dicts"""
+        if not all_model_dicts:
+            return None
+        item_json = json.dumps(all_model_dicts, ensure_ascii=False)
+        encoded_str = item_json.encode()
+        # create a sha1 hash object initialized with the encoded string
+        hash_obj = hashlib.sha1(encoded_str)
+        return hash_obj.hexdigest()
+
+    def calculate_sha1_hash_for_item(self, item_id):
+        """Makes a sha1 hash for an item"""
+        all_model_dicts = self.get_model_dicts_for_history(item_id)
+        if not all_model_dicts:
+            return None
+        return self.calculate_sha1_hash_from_all_model_dicts(all_model_dicts)
+    
+    def calculate_sha1_hash_for_self(self):
+        """Make sha1 hash for self"""
+        if not self.item:
+            return None
+        return self.calculate_sha1_hash_for_item(self.item.uuid)
 
     def primary_key_create(self, item_id, sha1_hash):
         """Makes a primary key using a prefix from the item"""
@@ -2098,14 +2168,18 @@ class AllHistory(models.Model):
         Makes the primary key sorted for the first part
         of the subject uuid
         """
+        if not self.sha1_hash:
+            self.sha1_hash = self.calculate_sha1_hash_for_self()
+
         self.uuid = self.primary_key_create_for_self()
-        # Make sure the item has the right
-        # manifest object item_type (open context items)
-        validate_related_manifest_item_type(
-            man_obj=self.item,
-            allowed_types=configs.OC_ITEM_TYPES,
-            obj_role='item'
-        )
+        if False:
+            # Make sure the item has the right
+            # manifest object item_type (open context items)
+            validate_related_manifest_item_type(
+                man_obj=self.item,
+                allowed_types=configs.OC_ITEM_TYPES,
+                obj_role='item'
+            )
         super(AllHistory, self).save(*args, **kwargs)
 
     class Meta:

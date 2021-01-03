@@ -1,0 +1,83 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+<style>
+ .field_row {
+   margin-top: 48px;
+ }
+</style>
+
+
+
+<template id="edit-history">
+  <b-card
+    no-body 
+    class="mb-1">
+    <b-card-header header-tag="header" class="p-1" role="tab">
+      Item Edit History
+    </b-card-header>
+    <b-card-body>
+      <b-list-group v-if="history">
+        <b-list-group-item
+          v-for="(hist_obj, index) in history"
+          :key="hist_obj.uuid"
+        >
+        [[ hist_obj.meta_json.edit_note ]]
+        </b-list-group-item>
+      </b-list-group>
+    </b-card-body>
+  </b-card>
+</template>
+
+
+<script type="text/javascript">
+
+    var vc_edit_history = Vue.component(
+        'edit-history',
+        {
+          delimiters: ['[[', ']]'],
+          props: ['uuid',],
+          data() {
+            return {
+              uuid: null,
+              history: [],
+            }
+          },
+          template: '#edit-history',
+          created() {
+            this.fetch_api_history();
+          },
+          computed: {
+            
+          },
+          methods: {
+            fetch_api_history: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/editorial/item-history/' + this.uuid),
+                  {
+                    headers:{
+                        'Accept': 'application/json',
+                    }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.history = json;
+                  this.new_history = false;
+              })
+            },
+            
+          },
+          components: {
+            
+          },
+        }
+    ); 
+  
+  </script>

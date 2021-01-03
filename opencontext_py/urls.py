@@ -37,6 +37,7 @@ from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchView
 # Testing views for all items
 from opencontext_py.apps.all_items import views as AllItemsViews
 from opencontext_py.apps.all_items.editorial import views as EditorialViews
+from opencontext_py.apps.all_items.editorial.item import views as EditorialItemViews
 
 # Testing new ETL views. These are for GET requests
 from opencontext_py.apps.etl.importer import views as etlViews
@@ -117,6 +118,52 @@ urlpatterns = [
     url(r'^editorial/item-children/(?P<identifier>\S+)', EditorialViews.item_children_json, name='editorial_item_children'),
     url(r'^editorial/item-look-up', EditorialViews.item_look_up_json, name='editorial_item_look_up'),
     url(r'^editorial/item-meta-look-up', EditorialViews.item_meta_look_up_json, name='editorial_item_meta_look_up'),
+    # New edit_item administrative (for editing) views
+    url(
+        r'^editorial/item-edit/(?P<uuid>\S+)', 
+        EditorialItemViews.item_edit_interface_html, 
+        name='editorial_item_edit_interface_html'
+    ),
+    url(
+        r'^editorial/item-history/(?P<uuid>\S+)', 
+        EditorialItemViews.item_history_json, 
+        name='editorial_item_history_json'
+    ),
+    url(
+        r'^editorial/item-manifest/(?P<uuid>\S+)', 
+        EditorialItemViews.item_manifest_json, 
+        name='editorial_item_manifest_json'
+    ),
+    url(
+        r'^editorial/item-assertions/(?P<uuid>\S+)', 
+        EditorialItemViews.item_assertions_json, 
+        name='editorial_item_assertions_json'
+    ),
+    url(
+        r'^editorial/item-update-manifest', 
+        EditorialItemViews.update_manifest_fields, 
+        name='editorial_update_manifest_fields'
+    ),
+    url(
+        r'^editorial/item-update-assertions', 
+        EditorialItemViews.update_assertions_fields, 
+        name='editorial_update_assertions_fields'
+    ),
+    url(
+        r'^editorial/item-update-space-time', 
+        EditorialItemViews.update_space_time_fields, 
+        name='editorial_update_space_time_fields'
+    ),
+    url(
+        r'^editorial/item-update-resource', 
+        EditorialItemViews.update_resource_fields, 
+        name='editorial_update_resource_field'
+    ),
+    url(
+        r'^editorial/item-update-identifier', 
+        EditorialItemViews.update_identifier_fields, 
+        name='editorial_update_identifier_fields'
+    ),
 
     # New ETL views
     url(r'^etl-importer/prepare/(?P<source_id>\S+)', etlViews.home_html, name='etl_home_html'),

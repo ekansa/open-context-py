@@ -1,0 +1,68 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit assertions made on an item
+-->
+
+<style>
+ .field_row {
+   margin-top: 48px;
+ }
+</style>
+
+
+
+<template id="edit-assertions">
+  <div v-if="assertions">
+    <h4>Assertion Count [[ assertions.length ]]</h4>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+    var vc_edit_assertions = Vue.component(
+        'edit-assertions',
+        {
+          delimiters: ['[[', ']]'],
+          props: ['uuid'],
+          data() {
+            return {
+              uuid: null,
+              assertions: [],
+            }
+          },
+          template: '#edit-assertions',
+          created() {
+            this.fetch_api_assertions();
+          },
+          computed: {
+            
+          },
+          methods: {
+            fetch_api_assertions: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/editorial/item-assertions/' + this.uuid),
+                  {
+                    headers:{
+                        'Accept': 'application/json',
+                    }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.assertions= json;
+              })
+            },
+          },
+          components: {
+            'root-item-tree': vs_root_item_tree,
+            'lookup-list': vs_look_up_list,
+          },
+        }
+    ); 
+  
+  </script>

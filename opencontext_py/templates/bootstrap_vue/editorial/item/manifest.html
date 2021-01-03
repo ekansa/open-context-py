@@ -1,0 +1,466 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+<style>
+ .field_row {
+   margin-top: 48px;
+ }
+</style>
+
+
+
+<template id="edit-manifest">
+  <div v-if="man_obj">
+    <b-card 
+    :title="'Edit Item \'' + man_obj.label + '\''"
+    :sub-title="'UUID: ' + man_obj.uuid">
+      <b-card-text>
+
+        <b-row class="field_row">
+          <b-col cols="1">
+            
+          </b-col>
+          <b-col cols="8">
+            <label for="input-label">Item Label</label>
+            <b-form-input id="input-label" :placeholder="man_obj.label">[[ man_obj.label ]]</b-form-input>
+          </b-col>
+          <b-col cols="3">
+            <small>A label is the primary name used for people to identify an item. 
+              This differs from an item's UUID and URI, both of which are universally 
+              unique identifiers used by software. Changing an item's label does not change 
+              the item's UUID or URI, nor does it change an item's relationships with other items.
+            </small>
+          </b-col>
+        </b-row>
+      
+        <b-row class="field_row">
+          <b-col cols="1">
+            
+          </b-col>
+
+          <b-col cols="4">
+            <b-row>
+              <b-col>
+                <label>Item Class / Category</label><br/>
+                <strong>[[ man_obj.item_class__label ]]</strong>
+              </b-col>
+            </b-row>
+            <b-row>
+              <b-col cols="2" class="text-right">
+                <small><strong>ID:</strong></small>
+              </b-col>
+              <b-col cols="10">
+                <b-form-input id="input-item-class" size="sm" :placeholder="man_obj.item_class_id">[[ man_obj.item_class_id ]]</b-form-input>
+              </b-col>
+            </b-row>
+          </b-col>
+          
+          <b-col cols="4">
+            <b-card
+              header="Assign Item Classifications">
+              <b-card-text>
+                <b-row>
+                  <b-col>
+                    <b-alert show>
+                      <b-row>
+                        <b-col>
+                          Click below to assign a new classification to this item
+                        </b-col>
+                      </b-row>
+                      <b-row>
+                        <b-col>
+                          <b-button 
+                          sm
+                          block
+                          @click="update_item_class"
+                          v-if="selected_class_item"
+                          variant="info">Classify as <strong>[[ selected_class_item.label ]]</strong></b-button>
+                        </b-col>
+                      </b-row>
+                    </b-alert>
+                  </b-col>
+                </b-row>
+               
+                <b-row>
+                  <b-col>
+                    <root-item-tree
+                      v-bind:root_item_id="'oc-gen-' + man_obj.item_type"
+                      v-bind:cached_tree_items="cached_tree_items"
+                      @set_selected_item="set_selected_class_item($event)"
+                    ></root-item-tree>
+                  </b-col>
+                </b-row>
+                
+              </b-card-text>
+            </b-card>
+          </b-col>
+
+          <b-col cols="3">
+            <small>General categories help organize data and media for easier search and browsing.
+            </small>
+          </b-col>
+        </b-row>
+
+        <b-row v-if="show_context" class="field_row">
+          <b-col cols="1">
+            
+          </b-col>
+
+          <b-col cols="4">
+            <b-row>
+              <b-col>
+                <label>Context</label><br/>
+                <strong>[[ man_obj.context__label ]]</strong>
+              </b-col>
+            </b-row>
+            <b-row>
+              <b-col cols="2" class="text-right">
+                <small><strong>ID:</strong></small>
+              </b-col>
+              <b-col cols="10">
+                <b-form-input id="input-item-context" size="sm" :placeholder="man_obj.context_id">[[ man_obj.context_id ]]</b-form-input>
+              </b-col>
+            </b-row>
+          </b-col>
+
+          <b-col cols="4">
+            <b-card
+              header="Assign Item Context">
+              <b-card-text>
+                <b-row>
+                  <b-col>
+                    <b-alert show>
+                      <b-row>
+                        <b-col>
+                          Click below to assign a new context to this item
+                        </b-col>
+                      </b-row>
+                      <b-row>
+                        <b-col>
+                          <b-button 
+                          sm
+                          block
+                          @click="update_item_context"
+                          v-if="selected_context_item"
+                          variant="info">
+                          Change Context to 
+                          <strong>[[ selected_context_item.label ]]</strong> ([[ selected_context_item.item_class__label ]])
+                        </b-button>
+                        </b-col>
+                      </b-row>
+                    </b-alert>
+                  </b-col>
+                </b-row>
+               
+                <b-row>
+                  <b-col>
+                    <lookup-list
+                      key="context-lookup"
+                      v-bind:item_type="lookup_context_item_types"
+                      v-bind:show_label_search_box="true"
+                      v-bind:do_meta="true"
+                      v-bind:show_project="true"
+                      v-bind:show_item_class="true"
+                      v-bind:show_path_search_box="lookup_context_show_path_search"
+                      @set_selected_item="set_selected_context_item($event)"
+                    ></lookup-list>
+                  </b-col>
+                </b-row>
+                
+              </b-card-text>
+            </b-card>
+          </b-col>
+          
+        </b-row>
+
+
+        <b-row v-if="show_project" class="field_row">
+          <b-col cols="1">
+            
+          </b-col>
+
+          <b-col cols="4">
+            <b-row>
+              <b-col>
+                <label>Project</label><br/>
+                <strong>[[ man_obj.project__label ]]</strong>
+              </b-col>
+            </b-row>
+            <b-row>
+              <b-col cols="2" class="text-right">
+                <small><strong>ID:</strong></small>
+              </b-col>
+              <b-col cols="10">
+                <b-form-input id="input-item-project" size="sm" :placeholder="man_obj.project_id">[[ man_obj.project_id ]]</b-form-input>
+              </b-col>
+            </b-row>
+          </b-col>
+
+          <b-col cols="4">
+            <b-card
+              header="Assign Item Project">
+              <b-card-text>
+                <b-row>
+                  <b-col>
+                    <b-alert show>
+                      <b-row>
+                        <b-col>
+                          Click below to assign a new project to this item
+                        </b-col>
+                      </b-row>
+                      <b-row>
+                        <b-col>
+                          <b-button 
+                          sm
+                          block
+                          @click="update_item_project"
+                          v-if="selected_project_item"
+                          variant="info">
+                          Change Project to 
+                          <strong>[[ selected_project_item.label ]]</strong>
+                        </b-button>
+                        </b-col>
+                      </b-row>
+                    </b-alert>
+                  </b-col>
+                </b-row>
+               
+                <b-row>
+                  <b-col>
+                    <lookup-list
+                      key="project-lookup"
+                      v-bind:item_type="lookup_project_item_types"
+                      v-bind:show_label_search_box="true"
+                      @set_selected_item="set_selected_project_item($event)"
+                    ></lookup-list>
+                  </b-col>
+                </b-row>
+                
+              </b-card-text>
+            </b-card>
+          </b-col>
+          
+
+        </b-row>
+
+      </b-card-text>
+    </b-card>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+    var vc_edit_manifest = Vue.component(
+        'edit-manifest',
+        {
+          delimiters: ['[[', ']]'],
+          props: ['uuid'],
+          data() {
+            return {
+              uuid: null,
+              man_obj: null,
+              cached_tree_items: {},
+              new_label: null,
+              selected_class_item: null,
+              selected_context_item: null,
+              selected_project_item: null,
+              vocab_context_item_types: [
+                  'uri',
+                  'property',
+                  'class',
+              ],
+              lookup_project_item_types: ['projects'],
+            }
+          },
+          template: '#edit-manifest',
+          created() {
+            this.fetch_api_manifest_obj();
+          },
+          computed: {
+            show_context: function() {
+              if(!this.man_obj){
+                return false;
+              }
+              if(this.man_obj.item_type == 'subjects'){
+                return true;
+              }
+            },
+            show_project: function() {
+              if(!this.man_obj){
+                return false;
+              }
+              return true;
+            },
+            lookup_context_item_types: function() {
+              if(!this.man_obj){
+                return null;
+              }
+              const vocab_index = this.vocab_context_item_types.indexOf(
+                this.man_obj.item_type
+              );
+              if(vocab_index >= 0){
+                return ['vocabularies'];
+              }
+              else if(this.man_obj.item_type == 'subjects') {
+                // Subjects can be in subject context.
+                return ['subjects'];
+              }
+              else{
+                // We don't assign contexts to other item types.
+                return null;
+              }
+            },
+            lookup_context_show_path_search: function() {
+              if(!this.man_obj){
+                return false;
+              }
+              if(this.man_obj.item_type == 'subjects') {
+                // Subjects can have a path search box.
+                return true;
+              }
+              else{
+                // We don't do path search for other item_types.
+                return false;
+              }
+            },
+          },
+          methods: {
+            fetch_api_manifest_obj: function (){
+              this.error = null;
+              this.loading = true;
+              fetch(
+                ('/editorial/item-manifest/' + this.uuid),
+                  {
+                    headers:{
+                        'Accept': 'application/json',
+                    }
+                  }
+              )
+              .then(this.loading = false)
+              .then(response => response.json())
+              .then(json => {
+                  this.man_obj = json;
+              })
+            },
+            send_manifest_update_request(requestOptions){
+              // Actually sends the request to update the manifest object.
+              fetch('/editorial/item-update-manifest', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Share the news we just did an edit
+                this.$emit('edit_done', true);
+                // Reload the item.
+                this.fetch_api_manifest_obj();
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+            },
+            update_item_label() {
+              if(!this.new_label){
+                console.log("No new label defined, will not update.");
+                return null;
+              }
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(
+                  [
+                    { uuid: this.uuid, label: this.new_label }
+                  ]
+                )
+              };
+              this.send_manifest_update_request(requestOptions);
+            },
+            update_item_class() {
+              if(typeof(this.selected_class_item) == 'undefined' ){
+                console.log("None selected, don't update item_class");
+                return null;
+              }
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(
+                  [
+                    { uuid: this.uuid, item_class_id: this.selected_class_item.uuid }
+                  ]
+                )
+              };
+              this.send_manifest_update_request(requestOptions);
+            },
+            update_item_context() {
+              if(typeof(this.selected_context_item) == 'undefined' ){
+                console.log("None selected, don't update context");
+                return null;
+              }
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(
+                  [
+                    { uuid: this.uuid, context_id: this.selected_context_item.uuid }
+                  ]
+                )
+              };
+              this.send_manifest_update_request(requestOptions);
+            },
+            update_item_project() {
+              if(typeof(this.selected_project_item) == 'undefined' ){
+                console.log("None selected, don't update project");
+                return null;
+              }
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(
+                  [
+                    { uuid: this.uuid, project_id: this.selected_project_item.uuid }
+                  ]
+                )
+              };
+              this.send_manifest_update_request(requestOptions);
+            },
+            set_selected_class_item(class_item) {
+              this.selected_class_item = class_item;
+              console.log('Selected class item: ' + this.selected_class_item.label);
+            },
+            set_selected_context_item(context_item) {
+              this.selected_context_item = context_item;
+              console.log('Selected context item: ' + this.selected_context_item.label);
+            },
+            set_selected_project_item(project_item) {
+              this.selected_project_item = project_item;
+              console.log('Selected project item: ' + this.selected_project_item.label);
+            },
+          },
+          components: {
+            'root-item-tree': vs_root_item_tree,
+            'lookup-list': vs_look_up_list,
+          },
+        }
+    ); 
+  
+  </script>

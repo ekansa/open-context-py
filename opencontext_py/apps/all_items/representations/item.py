@@ -251,8 +251,12 @@ def get_related_subjects_item_assertion(item_man_obj, assert_qs):
     return rel_subj_item_assetion.subject
 
 
-def get_observations_attributes_from_assertion_qs(assert_qs):
-    """Gets observations and attributes in observations"""
+def get_observations_attributes_from_assertion_qs(assert_qs, for_edit=False):
+    """Gets observations and attributes in observations
+    
+    :param bool for_edit: Do we want an output with additional identifiers
+        useful for editing.
+    """
     grp_index_attribs = ['observation', 'event', 'attribute_group', 'predicate']
     grouped_asserts = make_tree_dict_from_grouped_qs(
         qs=assert_qs, 
@@ -263,6 +267,8 @@ def get_observations_attributes_from_assertion_qs(assert_qs):
         act_obs = LastUpdatedOrderedDict()
         act_obs['id'] = f'#-obs-{observation.slug}'
         act_obs['label'] = observation.label
+        if for_edit:
+            act_obs['observation_id'] = str(observation.uuid)
         # NOTE: we've added act_obs to the observations list, but
         # we are continuing to modify it, even though it is part this
         # observations list already. 
@@ -284,6 +290,8 @@ def get_observations_attributes_from_assertion_qs(assert_qs):
                 act_event['id'] = f'#-event-{event.slug}'
                 act_event['label'] = event.label
                 act_event['type'] = 'oc-gen:events'
+                if for_edit:
+                    act_obs['event_id'] = str(event.uuid)
                 act_obs.setdefault('oc-gen:has-events', [])
                 act_obs['oc-gen:has-events'].append(act_event)
             for attrib_group, preds in attrib_groups.items():
@@ -299,13 +307,16 @@ def get_observations_attributes_from_assertion_qs(assert_qs):
                     act_attrib_grp['id'] = f'#-attribute-group-{attrib_group.slug}'
                     act_attrib_grp['label'] = attrib_group.label
                     act_attrib_grp['type'] = 'oc-gen:attribute-groups'
+                    if for_edit:
+                        act_obs['attribute_group_id'] = str(attrib_group.uuid)
                     act_event.setdefault('oc-gen:has-attribute-groups', [])
                     act_event['oc-gen:has-attribute-groups'].append(act_attrib_grp)
                 # Now add the predicate keys and their assertion objects to
                 # the act_attrib_grp
                 act_attrib_grp = rep_utils.add_predicates_assertions_to_dict(
                     pred_keyed_assert_objs=preds, 
-                    act_dict=act_attrib_grp
+                    act_dict=act_attrib_grp,
+                    for_edit=for_edit,
                 )
 
     return observations

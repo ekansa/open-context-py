@@ -4,22 +4,30 @@
   items
 -->
 <style>
-  }
+  
  
 </style>
 
 <template id='lookup-list-item'>
   <b-list-group-item action class="d-flex justify-content-between align-items-center">
+    <div v-if="show_item_meta">
+      <span @click="toggle">[[ item.label ]]</span>
+      <a class="text-right" v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <p class="text-left">
+        <small v-if="show_item_type" class="text-muted">[[ item.item_type ]]</small>
+        <small v-if="show_project" class="text-muted">[[ item.project__label ]]</small>
+        <small v-if="show_item_class" class="text-muted">[[ item.item_class__label ]]</small>
+        <small v-if="show_context" class="text-muted">[[ item.context__label ]]</small>
+      </p>
+    </div>
+    <div v-else>
       <span @click="toggle">[[ item.label ]]</span>
       <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
-    <div>
-      <small v-if="show_item_type" class="text-muted">[[ item.item_type ]]</small>
-      <small v-if="show_project" class="text-muted">[[ item.project__label ]]</small>
-      <small v-if="show_item_class" class="text-muted">[[ item.item_class__label ]]</small>
-      <small v-if="show_context" class="text-muted">[[ item.context__label ]]</small>
     </div>
   </b-list-group-item>
 </template>
+
+
 
 
 <template id='lookup-list'>
@@ -107,6 +115,21 @@ var vs_look_up_list_item = Vue.component(
             return 'https://' + this.item.context__uri;
           }
         },
+        show_item_meta: function() {
+          if(this.show_item_type){
+            return true;
+          }
+          if(this.show_project){
+            return true;
+          }
+          if(this.show_item_class){
+            return true;
+          }
+          if(this.show_context){
+            return true;
+          }
+          return false;
+        },
       },
       methods: {
         set_selected_item(item){
@@ -146,6 +169,7 @@ var vs_look_up_list_item = Vue.component(
         'show_project', 
         'show_item_class', 
         'show_context',
+        'do_meta',
       ],
       data() {
         return {
@@ -159,8 +183,10 @@ var vs_look_up_list_item = Vue.component(
           selected_item: null,
           multi_val_delim: '||',
           results: [],
+          do_meta: false,
+          result_meta: {},
           start: null,
-          row: null,
+          rows: null,
           totalResults: null,
           show_q_search_box: true,
           show_label_search_box: false,
@@ -236,6 +262,52 @@ var vs_look_up_list_item = Vue.component(
           .then(json => {
             this.totalResults = json.totalResults;
             this.results = json.results;
+            if(this.do_meta){
+              this.fetch_api_item_meta_look_up();
+            }
+          });
+        },
+        fetch_api_item_meta_look_up: function (){
+          this.error = null;
+          this.loading = true;
+          let params = this.get_list_request_params();
+          let has_query = false;
+          if(this.q && this.q.length > 0){
+            params.q = this.q;
+            has_query = true;
+          }
+          if(this.label__icontains  && this.label__icontains.length > 0){
+            params.label__icontains = this.label__icontains;
+            has_query = true;
+          }
+          if(this.path__icontains && this.path__icontains.length > 0){
+            params.path__icontains = this.path__icontains;
+            has_query = true;
+          }
+          if(!has_query && !this.fetch_on_create){
+            // Skip out, because we don't have enough to limit a query.
+            return null;
+          }
+          if(this.start){
+            params.start = this.start;
+          }
+          if(this.rows){
+            params.rows = this.rows;
+          }
+          const requestOptions = {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
+          fetch(
+            ('/editorial/item-meta-look-up?' + new URLSearchParams(params)), 
+            requestOptions,
+          )
+          .then(this.loading = false)
+          .then(response => response.json())
+          .then(json => {
+            this.result_meta = json;
           });
         },
         clear_selected_item(){

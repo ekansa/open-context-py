@@ -47,7 +47,7 @@ def get_item_key_or_uri_value(manifest_obj):
     return f"https://{manifest_obj.uri}"
 
 
-def make_predicate_objects_list(predicate, assert_objs):
+def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
     """Makes a list of assertion objects for a predicate
     
     :param AllManifest predicate: An all manifest object for the
@@ -55,6 +55,8 @@ def make_predicate_objects_list(predicate, assert_objs):
     :param list or QuerySet assert_objs: A list of query set of
         AllAssertion objects. We iterate through this list to pull
         out the objects of the 'predicate' assertions.
+    :param bool for_edit: Do we want an output with additional identifiers
+        useful for editing.
     returns list of JSON-LD formated assertion dicts or literals. 
     """
     # NOTE: Predicates of different data-types will hae different values
@@ -78,6 +80,8 @@ def make_predicate_objects_list(predicate, assert_objs):
             obj = {
                 f'@{assert_obj.language.item_key}': assert_obj.obj_string
             }
+            if for_edit:
+                obj['obj_string'] = assert_obj.obj_string
         else:
             act_attrib = ASSERTION_DATA_TYPE_LITERAL_MAPPINGS.get(
                 predicate.data_type
@@ -87,6 +91,27 @@ def make_predicate_objects_list(predicate, assert_objs):
                 obj = float(obj)
             elif predicate.data_type == 'xsd:date':
                 obj = obj.date().isoformat()
+            if for_edit:
+                obj = {act_attrib: obj}
+        
+        if for_edit:
+            # Add lots of extra information about the assertion to make editing easier.
+            obj['uuid'] = str(assert_obj.uuid)
+            obj['observation_id'] = str(assert_obj.observation.uuid)
+            obj['observation__label'] = assert_obj.observation.label
+            obj['event_id'] = str(assert_obj.event.uuid)
+            obj['event__label'] = assert_obj.event.label
+            obj['attribute_group_id'] = str(assert_obj.attribute_group.uuid)
+            obj['attribute_group__label'] = assert_obj.attribute_group.label
+            obj['predicate__label'] = predicate.label
+            obj['predicate_id'] = str(predicate.uuid)
+            obj['predicate__label'] = predicate.label
+            obj['language_id'] = str(assert_obj.language.uuid)
+            obj['language__label'] = assert_obj.language.label
+            obj['sort'] = assert_obj.sort
+            obj['created'] = assert_obj.created.isoformat()
+            obj['updated'] = assert_obj.updated.isoformat()
+
         if obj in pred_objects:
             # We already have this object, so don't add it. We face this circumstance
             # when want to add objects to from different predicates that we
@@ -96,13 +121,20 @@ def make_predicate_objects_list(predicate, assert_objs):
     return pred_objects
 
 
-def add_predicates_assertions_to_dict(pred_keyed_assert_objs, act_dict=None, add_objs_to_existing_pred=True):
+def add_predicates_assertions_to_dict(
+    pred_keyed_assert_objs, 
+    act_dict=None, 
+    add_objs_to_existing_pred=True,
+    for_edit=False,
+):
     """Adds predicates with their grouped objects to a dictionary, keyed by each pred
     
     :param dict pred_keyed_assert_objs: A dictionary, keyed by a manifest predicate
         object that has a list of assertion objects related to that represent the
         objects of that predicate's description.
     :param dict act_dict: A dictionary that gets the predicate object list
+    :param bool for_edit: Do we want an output with additional identifiers
+        useful for editing.
     """
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
@@ -116,7 +148,7 @@ def add_predicates_assertions_to_dict(pred_keyed_assert_objs, act_dict=None, add
             # So skip the rest.
             continue
         # Make list of dicts and literal values for the predicate objects.
-        pred_objects = make_predicate_objects_list(predicate, assert_objs)
+        pred_objects = make_predicate_objects_list(predicate, assert_objs, for_edit=for_edit)
         # Set a default list for the pred_key. This lets us add to an
         # already existing list.
         act_dict.setdefault(pred_key, [])

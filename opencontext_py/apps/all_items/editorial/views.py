@@ -1,7 +1,6 @@
 import copy
 import json
 import uuid as GenUUID
-
 from django.conf import settings
 from django.shortcuts import redirect
 from django.http import HttpResponse, Http404
@@ -20,9 +19,15 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
 )
-from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
+
+from opencontext_py.apps.etl.importer.models import (
+    DataSource,
+    DataSourceField,
+    DataSourceRecord,
+    DataSourceAnnotation,
+)
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -96,3 +101,4 @@ def item_meta_look_up_json(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
