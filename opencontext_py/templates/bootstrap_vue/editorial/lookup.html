@@ -34,10 +34,10 @@
   <div>
     <b-form-group v-if="show_q_search_box"
       description="Lookup item by labels (main, alternates)"
-      label-for="lookup-list-q-search-box"
+      :label-for="'lookup-list-q-search-box' + id_part"
     >
       <b-form-input
-        id="lookup-list-q-search-box"
+        :id="'lookup-list-q-search-box' + id_part"
         size="sm"
         debounce="250"
         @change="on_change_q_search"
@@ -46,10 +46,10 @@
 
     <b-form-group v-if="show_label_search_box"
       description="Lookup item by label"
-      label-for="lookup-list-label-search-box"
+      :label-for="'lookup-list-label-search-box' + id_part"
     >
       <b-form-input
-        id="lookup-list-label-search-box"
+        :id="'lookup-list-label-search-box' + id_part"
         size="sm"
         debounce="250"
         @change="on_change_label_search"
@@ -58,10 +58,10 @@
 
     <b-form-group v-if="show_path_search_box"
       description="Look within a (spatial) context path"
-      label-for="lookup-list-path-search-box"
+      :label-for="'lookup-list-path-search-box' + id_part"
     >
       <b-form-input
-        id="lookup-list-path-search-box"
+        :id="'lookup-list-path-search-box' + id_part"
         size="sm"
         debounce="250"
         @change="on_change_path_search"
@@ -88,7 +88,14 @@
 
 <script type="text/javascript">
 
-var vs_look_up_list_item = Vue.component(
+  function guidGenerator() {
+    var S4 = function() {
+      return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+  }
+
+  var vs_look_up_list_item = Vue.component(
     'lookup-list-item',
     {
       delimiters: ['[[', ']]'],
@@ -197,6 +204,7 @@ var vs_look_up_list_item = Vue.component(
           show_item_class: false,
           show_context: false,
           loading: null,
+          id_part: guidGenerator(),
         };
       },
       template: '#lookup-list',

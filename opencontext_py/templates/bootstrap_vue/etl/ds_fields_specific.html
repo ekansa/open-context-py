@@ -278,9 +278,9 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 fetch(
                   ('/etl-importer/fields/' + this.source_uuid),
                     {
-                          headers:{
-                              'Accept': 'application/json',
-                          }
+                      headers:{
+                          'Accept': 'application/json',
+                      }
                     }
                 )
                 .then(this.loading = false)

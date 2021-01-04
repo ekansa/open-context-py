@@ -45,7 +45,7 @@
                 body.scrollHeight, body.offsetHeight, 
                 html.clientHeight, html.scrollHeight, html.offsetHeight
             );
-            var table_height = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
+            var TABLE_HEIGHT = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
 
             // Populated by Django.
             const csrftoken = Vue.$cookies.get('csrftoken');
@@ -62,13 +62,13 @@
                     path: '/editorial/item-edit/' + ITEM_UUID,
                     name: 'manifest',
                     component: vc_edit_manifest,
-                    props: {uuid: ITEM_UUID,},
+                    props: {uuid: ITEM_UUID, },
                 },
                 {
                     path: '/editorial/item-edit/' + ITEM_UUID + '#assertions',
                     name: 'assertions',
                     component: vc_edit_assertions,
-                    props: {uuid: ITEM_UUID,},
+                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
                 },
             ];
 
@@ -89,7 +89,7 @@
                         project_uuid: PROJECT_UUID,
                         page_height: page_height,
                         history_key: 1,
-                        table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
+                        table_height: TABLE_HEIGHT,
                     },
                     computed: {
                         act_route: function () {

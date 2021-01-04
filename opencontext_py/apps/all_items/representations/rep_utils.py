@@ -106,6 +106,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
             obj['predicate__label'] = predicate.label
             obj['predicate_id'] = str(predicate.uuid)
             obj['predicate__label'] = predicate.label
+            obj['predicate__data_type'] = predicate.data_type
             obj['language_id'] = str(assert_obj.language.uuid)
             obj['language__label'] = assert_obj.language.label
             obj['sort'] = assert_obj.sort

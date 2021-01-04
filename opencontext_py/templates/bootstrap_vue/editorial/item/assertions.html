@@ -5,64 +5,345 @@ NOTE: Templates and view components to edit assertions made on an item
 -->
 
 <style>
- .field_row {
+ .obs_row {
    margin-top: 48px;
  }
 </style>
 
+<template id="assert-uuid">
+  <b-row>
+    <b-col>
+      <div v-for="(alert_uuid, index) in alert_update_uuids">
+        <b-alert
+          v-if="alert_uuid == assert.uuid"
+          class="row_update_alert"
+          :show="dismissCountDown"
+          responsive="sm"
+          fade
+          variant="success"
+          @dismissed="onDissmiss"
+          @dismiss-count-down="countDownChanged"
+          ><b-icon-cloud-upload-fill></b-icon-cloud-upload-fill>
+        </b-alert>
+        <span v-else>[[assert.updated]]</span>
+      </div>
+    </b-col>
+  </b-row>
+</template>
+
+<template id='assert-object'>
+  <div>
+    <b-form-group label="Boolean (True/False)" v-if="assert.predicate__data_type == 'xsd:boolean'">
+      <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="true">True</b-form-radio>
+      <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="false">False</b-form-radio>
+    </b-form-group>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:string'"
+      :placeholder="assert.obj_string"
+    ></b-form-input>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:integer'"
+      type="number"
+      :placeholder="assert.obj_integer"
+    ></b-form-input>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:double'"
+      type="number"
+      :placeholder="assert.obj_double"
+    ></b-form-input>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:date'"
+      type="date"
+      :placeholder="assert.obj_date"
+    ></b-form-input>
+  </div>
+</template>
+
+<template id="edit-observation">
+  <div v-if="act_obs.assertions">
+    <b-table
+      ref="obs_assertions"
+      :sticky-header="table_height"
+      small
+      striped
+      selectable
+      table-variant="secondary"
+      :select-mode="selectMode"
+      :items="act_obs.assertions"
+      :fields="fields"
+      @row-selected="onRowSelected"
+      :sort-by.sync="sortBy"
+      :sort-desc.sync="sortDesc"
+      responsive="lg"
+    >
+
+      <template #cell(uuid)="data">
+        <assert-uuid
+          @countdown_done="remove_alert_update_uuid($event)"
+          v-bind:alert_timer_state="alert_timer_state"
+          v-bind:alert_timer_duration="alert_timer_duration"
+          v-bind:assert="data.item"
+          v-bind:alert_update_uuids="alert_update_uuids">
+        </assert-uuid>
+      </template>
+
+      <template #cell(obj)="data">
+        <assert-object
+          v-bind:assert="data.item"
+        >
+        </assert-object>
+      </template>
+      
+      <template #cell()="data">
+        [[ data.value ]]
+      </template>
+
+    </b-table>
+
+  </div>
+</template>
 
 
 <template id="edit-assertions">
-  <div v-if="assertions">
-    <h4>Assertion Count [[ assertions.length ]]</h4>
+  <div v-if="assertions_in_obs">
+    <h4>Observation Count [[ assertions_in_obs.length ]]</h4>
+    <b-row class="obs_row" v-for="(act_obs, index) in assertions_in_obs">
+      <b-col>
+        <edit-observation 
+          v-bind:act_obs="act_obs"
+          v-bind:table_height="table_height"></edit-observation>
+      </b-col>
+    </b-row>
+
+
   </div>
 </template>
 
 
 <script type="text/javascript">
 
-    var vc_edit_assertions = Vue.component(
-        'edit-assertions',
-        {
-          delimiters: ['[[', ']]'],
-          props: ['uuid'],
-          data() {
-            return {
-              uuid: null,
-              assertions: [],
-            }
-          },
-          template: '#edit-assertions',
-          created() {
-            this.fetch_api_assertions();
-          },
-          computed: {
-            
-          },
-          methods: {
-            fetch_api_assertions: function (){
-              this.error = null;
-              this.loading = true;
-              fetch(
-                ('/editorial/item-assertions/' + this.uuid),
-                  {
-                    headers:{
-                        'Accept': 'application/json',
-                    }
-                  }
-              )
-              .then(this.loading = false)
-              .then(response => response.json())
-              .then(json => {
-                  this.assertions= json;
-              })
-            },
-          },
-          components: {
-            'root-item-tree': vs_root_item_tree,
-            'lookup-list': vs_look_up_list,
-          },
+  var vs_assert_uuid = Vue.component(
+    'assert-uuid',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['assert', 'alert_update_uuids', 'alert_timer_duration', 'alert_timer_state'],
+      data() {
+        return {
+          assert: null,
+          dismissSecs: 2,
+          dismissCountDown: 2,
+        };
+      },
+      template: '#assert-uuid',
+      methods: {
+        countDownChanged(dismissCountDown) {
+          this.dismissCountDown = dismissCountDown
+        },
+        showAlert() {
+          this.dismissCountDown = this.dismissSecs
+        },
+        onDissmiss(){
+          this.$emit('countdown_done', this.assert.uuid);
+          // Reset the dismiss countdown to re-render if
+          // this ds_field gets another update.
+          this.dismissCountDown = this.dismissSecs;
+        },
+      }
+    },
+  );
+
+  var vs_assert_object = Vue.component(
+    'assert-object',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['assert', ],
+      data() {
+        return {
+          assert: null,
+        };
+      },
+      template: '#assert-object',
+      methods: {
+      }
+    },
+  );
+
+  var vc_edit_observation = Vue.component(
+    'edit-observation',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['act_obs', 'table_height'],
+      data() {
+        return {
+          act_obs: null,
+          table_height: '900px',
+          modes: ['multi', 'single', 'range'],
+          sortBy: 'sort',
+          sortDesc: false,
+          fields: [
+            {key: 'uuid', sortable: false},
+            {key: 'event__label', sortable: false },
+            {key: 'attribute_group__label', sortable: false},
+            {key: 'predicate__label', sortable: false},
+            {key: 'obj', sortable: false},
+          ],
+          items: [],
+          selectMode: 'range',
+          selected: [],
+          alert_update_uuids: [],
+          alert_timer_duration: 2, // length of time the alerts stay up.
+          alert_timer_state: 0,
         }
-    ); 
+      },
+      template: '#edit-observation',
+      created() {
+        
+      },
+      computed: {
+        
+      },
+      methods: {
+        add_alert_update_uuid(uuid) {
+          const index = this.alert_update_uuids.indexOf(uuid);
+          if (index > -1) {
+            return null;
+          }
+          this.alert_update_uuids.push(uuid);
+          this.alert_timer_state = this.alert_timer_duration;
+        },
+        add_alert_update_uuid_list(uuid_list){
+          for (let uuid of uuid_list){
+            this.add_alert_update_uuid(uuid);
+          }
+        },
+        remove_alert_update_uuid(uuid) {
+          const index = this.alert_update_uuids.indexOf(uuid);
+          if (index > -1) {
+            this.alert_update_uuids.splice(index, 1);
+          }
+          this.alert_timer_state = 0;
+          // Remove all the uuids from the alerts all at once.
+          this.alert_update_uuids = [];
+        },
+        clear_alert_update_uuids(){
+          this.alert_update_uuids = [];
+        },
+        onRowSelected(items) {
+          this.selected = items
+        },
+        selectAllRows() {
+          this.$refs.dsFieldsGeneralTable.selectAllRows()
+        },
+        clearSelected() {
+          this.$refs.dsFieldsGeneralTable.clearSelected()
+        },
+      },
+      components: {
+        'assert-uuid': vs_assert_uuid,
+        'assert-object': vs_assert_object,
+      },
+    }
+  );
+
+  var vc_edit_assertions = Vue.component(
+    'edit-assertions',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['uuid', 'table_height'],
+      data() {
+        return {
+          uuid: null,
+          table_height: '900px',
+          assertions_in_obs: [],
+          non_pred_keys: [
+            'id', 
+            'label', 
+            'type', 
+            'oc_gen_has_events', 
+            'oc_gen_has_attribute_groups'
+          ],
+        }
+      },
+      template: '#edit-assertions',
+      created() {
+        this.fetch_api_assertions();
+      },
+      computed: {
+        
+      },
+      methods: {
+        process_assertions(json) {
+          let new_obs = [];
+          for(let obs of json){
+            let obs_assertions = [];
+            let act_events = [];
+            if('oc_gen_has_events' in obs){
+              for(let event of obs.oc_gen_has_events){
+                act_events.push(event);
+              }
+            }
+            else{
+              act_events.push(obs);
+            }
+            let act_attrib_group = [];
+            for(let event of act_events){
+              if('oc_gen_has_attribute_groups' in event){
+                for(let a_group of event.oc-gen_has_attribute_groups){
+                  act_attrib_group.push(a_group);
+                }
+              }
+              else{
+                act_attrib_group.push(event);
+              }
+            }
+            for(let a_group of act_attrib_group){
+              for (let key in a_group) {
+                let key_index = this.non_pred_keys.indexOf(key);
+                if(key_index >= 0){
+                  continue;
+                }
+                if (a_group.hasOwnProperty(key)) {
+                  let act_assert_objs = [];
+                  for(let assert of a_group[key]){
+                    assert.obj = assert.uuid;
+                    obs_assertions.push(assert);
+                  }
+                }
+              }
+            }
+            let new_obs_item = {
+              label: obs.label,
+              assertions: obs_assertions,
+            }
+            new_obs.push(new_obs_item);
+          }
+          return new_obs;
+        },
+        fetch_api_assertions: function (){
+          this.error = null;
+          this.loading = true;
+          fetch(
+            ('/editorial/item-assertions/' + this.uuid),
+              {
+                headers:{
+                    'Accept': 'application/json',
+                }
+              }
+          )
+          .then(this.loading = false)
+          .then(response => response.json())
+          .then(json => {
+            this.assertions_in_obs = this.process_assertions(json);
+            console.log(this.assertions_in_obs);
+          })
+        },
+      },
+      components: {
+        'root-item-tree': vs_root_item_tree,
+        'lookup-list': vs_look_up_list,
+        'edit-observation': vc_edit_observation,
+      },
+    }
+  ); 
   
   </script>

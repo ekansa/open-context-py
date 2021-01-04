@@ -12,6 +12,7 @@ def uuid_to_string(val):
         return val
     return str(val)
 
+
 def datetime_to_string(val):
     """Changes a datetime value to a string"""
     if not val:
@@ -19,6 +20,7 @@ def datetime_to_string(val):
     if not isinstance(val, datetime.datetime):
         return val
     return val.isoformat()
+
 
 def decimal_to_float(val):
     """Changes a decimal value to a float"""
@@ -28,19 +30,39 @@ def decimal_to_float(val):
         return val
     return float(val)
 
-def make_dict_json_safe(input_obj):
+
+def make_javascript_friendly_key(key):
+    """Make a key javascript friendly"""
+    char_mappings = {
+        '-': '_',
+        ':': '_',
+        '.': '_',
+        ' ': '_',
+    }
+    for f, r in char_mappings.items():
+        key = key.replace(f, r)
+    return key
+
+
+def make_dict_json_safe(input_obj, javascript_friendly_keys=False):
     """Makes a dictionary object json safe, recursively"""
     if not input_obj:
         return input_obj
     if  isinstance(input_obj, dict):
         output_dict = {}
         for key, value in input_obj.items():
+            if javascript_friendly_keys:
+                key = make_javascript_friendly_key(key)
+                print(f'Key is {key}')
             output_dict[key] = make_dict_json_safe(value)
         return output_dict
     elif isinstance(input_obj, list):
         new_values = []
         for v in input_obj:
-            v = make_dict_json_safe(v)
+            v = make_dict_json_safe(
+                v, 
+                javascript_friendly_keys=javascript_friendly_keys
+            )
             v = uuid_to_string(v)
             v = datetime_to_string(v)
             v = decimal_to_float(v)
