@@ -197,23 +197,6 @@ DEFAULT_MANIFESTS = [
         }
     },
     {
-        'uuid': DEFAULT_EVENT_UUID,
-        'publisher_id': OPEN_CONTEXT_PUB_UUID,
-        'project_id': OPEN_CONTEXT_PROJ_UUID,
-        'item_class_id': DEFAULT_CLASS_UUID,
-        'source_id': DEFAULT_SOURCE_ID,
-        'item_type': 'events',
-        'data_type': 'id',
-        'slug': 'oc-default-event',
-        'label': 'Default Event',
-        'uri': 'opencontext.org/vocabularies/oc-general/events#event-1',
-        'item_key': '#event-1',
-        'context_id': OC_GEN_VOCAB_UUID,
-        'meta_json': {
-            'sort': 1,
-        }
-    },
-    {
         'uuid': DEFAULT_ATTRIBUTE_GROUP_UUID,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
         'project_id': OPEN_CONTEXT_PROJ_UUID,
@@ -855,6 +838,75 @@ DEFAULT_MANIFESTS = [
         'item_key': 'oc-gen:geo-coverage',
         'uri': 'opencontext.org/vocabularies/oc-general/geo-coverage',
         'context_id': OC_GEN_VOCAB_UUID,
+    },
+    # Default event node instances.
+    {
+        'uuid': DEFAULT_EVENT_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': OC_EVENT_TYPE_GENERAL_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'events',
+        'data_type': 'id',
+        'slug': 'oc-default-event',
+        'label': 'Default Event',
+        'uri': 'opencontext.org/vocabularies/oc-general/events-default',
+        'item_key': '#events-default',
+        'context_id': OC_GEN_VOCAB_UUID,
+        'meta_json': {
+            'sort': 1,
+        }
+    },
+    {
+        'uuid': DEFAULT_EVENT_CURRENT_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': OC_EVENT_TYPE_CURRENT_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'events',
+        'data_type': 'id',
+        'slug': 'oc-default-event-current',
+        'label': 'Current Event',
+        'uri': 'opencontext.org/vocabularies/oc-general/events-current',
+        'item_key': '#events-current',
+        'context_id': OC_GEN_VOCAB_UUID,
+        'meta_json': {
+            'sort': 2,
+        }
+    },
+    {
+        'uuid': DEFAULT_EVENT_ORIGINS_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': OC_EVENT_TYPE_ORIGINS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'events',
+        'data_type': 'id',
+        'slug': 'oc-default-event-origins',
+        'label': 'Origins Event',
+        'uri': 'opencontext.org/vocabularies/oc-general/events-origins',
+        'item_key': '#events-origins',
+        'context_id': OC_GEN_VOCAB_UUID,
+        'meta_json': {
+            'sort': 3,
+        }
+    },
+    {
+        'uuid': DEFAULT_EVENT_COVERAGE_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': OC_EVENT_TYPE_COVERAGE_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'events',
+        'data_type': 'id',
+        'slug': 'oc-default-event-coverage',
+        'label': 'Coverage Event',
+        'uri': 'opencontext.org/vocabularies/oc-general/events-coverage',
+        'item_key': '#events-coverage',
+        'context_id': OC_GEN_VOCAB_UUID,
+        'meta_json': {
+            'sort': 4,
+        }
     },
 
 
