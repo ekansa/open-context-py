@@ -97,6 +97,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
         if for_edit:
             # Add lots of extra information about the assertion to make editing easier.
             obj['uuid'] = str(assert_obj.uuid)
+            obj['subject_id'] = str(assert_obj.subject.uuid)
             obj['observation_id'] = str(assert_obj.observation.uuid)
             obj['observation__label'] = assert_obj.observation.label
             obj['event_id'] = str(assert_obj.event.uuid)

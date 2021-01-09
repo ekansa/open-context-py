@@ -74,11 +74,48 @@ def item_edit_interface_html(request, uuid):
     if not man_obj:
         raise Http404
 
+    # NOTE: Used to get the default observation
+    default_obs = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.DEFAULT_OBS_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used to get the default event.
+    default_event = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.DEFAULT_EVENT_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used to get the default attribute group.
+    default_attribute_group = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used to get the default language
+    default_lang = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.DEFAULT_LANG_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used for general spatial containment
+    pred_contains =  editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.PREDICATE_CONTAINS_UUID,
+        do_minimal=True,
+    )
+    # NOTE: Used as a general (or not specified) item-class.
+    default_class = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.DEFAULT_CLASS_UUID,
+        do_minimal=True,
+    )
+
     rp = RootPath()
     context = {
         'base_url': rp.get_baseurl(),
         'man_obj': man_obj,
         'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),
+        'DEFAULT_OBS': json.dumps(default_obs),
+        'DEFAULT_EVENT': json.dumps(default_event),
+        'DEFAULT_ATTRIBUTE_GROUP': json.dumps(default_attribute_group),
+        'DEFAULT_LANG': json.dumps(default_lang),
+        'PREDICATE_CONTAINS': json.dumps(pred_contains),
+        'DEFAULT_CLASS': json.dumps(default_class),
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
     response = HttpResponse(template.render(context, request))
@@ -133,7 +170,8 @@ def item_manifest_json(request, uuid):
         )
 
     api_result = make_model_object_json_safe_dict(
-        man_obj
+        man_obj,
+        more_attributes=['item_class__label', 'context__label', 'project__label']
     )
     json_output = json.dumps(
         api_result,
@@ -168,6 +206,39 @@ def item_assertions_json(request, uuid):
         observations, 
         javascript_friendly_keys=True
     )
+    
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@never_cache
+@cache_control(no_cache=True)
+def item_spacetime_json(request, uuid):
+    """JSON representation of space-time about an item"""
+    _, valid_uuid = update_old_id(uuid)
+    man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
+    if not man_obj:
+        return HttpResponse(
+            json.dumps({}),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    api_result = []
+    spacetime_qs = AllSpaceTime.objects.filter(
+        item=man_obj
+    )
+    for spacetime_obj in spacetime_qs:
+        api_result.append(
+            make_model_object_json_safe_dict(spacetime_obj)
+        )
     
     json_output = json.dumps(
         api_result,
@@ -219,8 +290,21 @@ def update_assertions_fields(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
+    updated, errors = item_updater.update_attribute_fields(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
     return HttpResponse(
-        '[]',
+        json_output,
         content_type="application/json; charset=utf8"
     )
 

@@ -48,6 +48,38 @@ MANIFEST_ATTRIBUTES_UPDATE_CONFIG = [
 
 MANIFEST_ATTRIBUTES_UPDATE_ALLOWED = [m_a for m_a, _ in MANIFEST_ATTRIBUTES_UPDATE_CONFIG]
 
+ASSERTION_ATTRIBUTES_UPDATE_CONFIG = [
+    ('project_id', 'Changed assertion project',),
+    ('publisher_id', 'Changed assertion publisher',),
+    ('subject_id', 'Changed item attribute or relationships',),
+    ('observation_id', 'Changed observation group',),
+    ('event_id', 'Changed geospatial/chronology specific description',),
+    ('attribute_group_id', 'Changed attribute group',),
+    ('predicate_id', 'Changed attribute/relationship predicate',),
+    ('language_id', 'Changed assertion language',),
+    ('sort', 'Changed assertion sorting',),
+    ('visible', 'Changed assertion visibility',),
+    ('certainty', 'Changed assertion certainty',),
+    ('object_id', 'Changed attribute/relationship object item',),
+    ('obj_string', 'Changed attribute value',),
+    ('obj_boolean', 'Changed attribute value',),
+    ('obj_integer', 'Changed attribute value',),
+    ('obj_double', 'Changed attribute value',),
+    ('obj_datetime', 'Changed attribute value',),
+    ('meta_json', 'Changed assertion admministrative metadata',),
+]
+
+ASSERTION_DEFAULT_NODE_IDS = {
+    'observation_id': configs.DEFAULT_OBS_UUID,
+    'event_id': configs.DEFAULT_EVENT_UUID,
+    'attribute_group_id': configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
+    'language_id':  configs.DEFAULT_LANG_UUID,
+}
+
+ASSERTION_ATTRIBUTES_UPDATE_ALLOWED = [
+    a_a 
+    for a_a, _ in ASSERTION_ATTRIBUTES_UPDATE_CONFIG
+]
 
 def make_models_dict(models_dict=None, item_obj=None, obj_qs=None):
     """Makes an edit history dict, keyed by the model label"""
@@ -319,6 +351,116 @@ def update_manifest_fields(request_json):
                     item_obj=old_contain
                 )
         
+        edit_note = "; ".join(edits)
+
+        history_obj = record_edit_history(
+            man_obj,
+            edit_note=edit_note,
+            prior_to_edit_model_dict=prior_to_edit_model_dict,
+            after_edit_model_dict=after_edit_model_dict,
+        )
+        update_dict['history_id'] = str(history_obj.uuid)
+        update_dict['uuid'] = uuid
+        updated.append(update_dict)
+
+    return updated, errors
+
+
+def update_attribute_fields(request_json):
+    """Updates AllManifest fields based on listed attributes in client request JSON"""
+    errors = []
+    
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return [], errors
+
+    # Make a dict to look up the edit notes associated with different attributes.
+    edit_note_dict = {k:v for k, v in ASSERTION_ATTRIBUTES_UPDATE_CONFIG}
+
+    updated = []
+    for item_update in request_json:
+        uuid = item_update.get('uuid')
+        if not uuid:
+            errors.append('Must have "uuid" attribute.')
+            continue
+        assert_obj = AllAssertion.objects.filter(uuid=uuid).first()
+        if not assert_obj:
+            errors.append(f'Cannot find assertion object for {uuid}')
+            continue
+
+        # Update if the item_update has attributes that we allow to update.
+        update_dict = {
+            k:item_update.get(k) 
+            for k in ASSERTION_ATTRIBUTES_UPDATE_ALLOWED
+            if item_update.get(k) is not None and str(getattr(assert_obj, k)) != str(item_update.get(k))
+        }
+        
+        if not len(update_dict):
+            print('Nothing to update')
+            continue
+
+        # Make a copy for editing purposes.
+        update_assert_obj = copy.deepcopy(assert_obj)
+        update_assert_obj.uuid = None
+        update_assert_obj.pk = None
+
+        edits = []
+        for attr, value in update_dict.items():
+            if value is False and ASSERTION_DEFAULT_NODE_IDS.get(attr):
+                # We're removing an an assertion node, so set it back to the default
+                value = ASSERTION_DEFAULT_NODE_IDS.get(attr)
+
+            old_edited_obj = None
+            new_edited_obj = None
+            if attr.endswith('_id'):
+                # Get the label for the attribute that we're changing.
+                edited_obj_attrib = attr.replace('_id', '')
+                old_edited_obj = getattr(update_assert_obj, edited_obj_attrib)
+                new_edited_obj = AllManifest.objects.filter(uuid=value).first()
+            else:
+                old_value = getattr(update_assert_obj, attr)
+
+            # Compose a note about the edit.
+            attribute_edit_note = edit_note_dict.get(attr)
+            if attribute_edit_note and attr.startswith('obj'):
+                attribute_edit_note += f', "{update_assert_obj.predicate.label}",'
+                if not attr.endswith('_id'):
+                    attribute_edit_note += f' from {old_value} to {value}'
+            if old_edited_obj and new_edited_obj and attribute_edit_note:
+                attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
+            
+            if attribute_edit_note:
+                edits.append(attribute_edit_note)
+            setattr(update_assert_obj, attr, value)
+
+
+        # Keep a copy of the old state before saving it.
+        prior_to_edit_model_dict = make_models_dict(item_obj=assert_obj)
+
+        try:
+            update_assert_obj.save()
+            ok = True
+        except Exception as e:
+            ok = False
+            if hasattr(e, 'message'):
+                error = e.message
+            else:
+                error = str(e)
+            errors.append(f'Assertion item {uuid} update error: {error}')
+        if not ok:
+            continue
+
+        # Get the subject of the assertion's manifest object. This
+        # will be used for history tracking.
+        man_obj = AllManifest.objects.filter(
+            uuid=assert_obj.subject.uuid
+        ).first()
+        # Delete the assertion that we just changed. The UUID will be different.
+        assert_obj.delete()
+
+        # Make a copy of the new state of your model.
+        after_edit_model_dict = make_models_dict(item_obj=update_assert_obj)
+
         edit_note = "; ".join(edits)
 
         history_obj = record_edit_history(

@@ -1,5 +1,6 @@
 import json
 import uuid as GenUUID
+
 from django.conf import settings
 
 from django.db.models import Q
@@ -34,7 +35,6 @@ DS_FIELDS_UPDATE_ALLOWED = [
     'context_id',
     'value_prefix',
 ]
-
 
 
 def update_fields(request_json):

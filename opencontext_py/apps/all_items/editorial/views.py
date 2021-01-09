@@ -102,3 +102,35 @@ def item_meta_look_up_json(request):
         content_type="application/json; charset=utf8"
     )
 
+
+@cache_control(no_cache=True)
+@never_cache
+def html_validate(request):
+    """Checks if a string in the request body is valid HTML"""
+    if request.method == 'POST':
+        # For big strings of text to validate.
+        request_str_dict = json.loads(request.body)
+        request_str = request_str_dict.get('str')
+    else:
+        # Easier for testing short strings.
+        request_str = request.GET.get('str')
+    if request_str is None:
+        return HttpResponse(
+            json.dumps({'error': 'Need to POST a JSON dict with "str" key, or GET with "str" param.'}),
+            content_type="application/json; charset=utf8",
+            status=400
+        )
+    is_valid, errors = editorial_api.html_validate(request_str)
+    output = {
+        'ok':  is_valid,
+        'errors': errors,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )

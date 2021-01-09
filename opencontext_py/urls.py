@@ -118,6 +118,7 @@ urlpatterns = [
     url(r'^editorial/item-children/(?P<identifier>\S+)', EditorialViews.item_children_json, name='editorial_item_children'),
     url(r'^editorial/item-look-up', EditorialViews.item_look_up_json, name='editorial_item_look_up'),
     url(r'^editorial/item-meta-look-up', EditorialViews.item_meta_look_up_json, name='editorial_item_meta_look_up'),
+    url(r'^editorial/html-validate', EditorialViews.html_validate, name='editorial_html_validate'),
     # New edit_item administrative (for editing) views
     url(
         r'^editorial/item-edit/(?P<uuid>\S+)', 
@@ -138,6 +139,11 @@ urlpatterns = [
         r'^editorial/item-assertions/(?P<uuid>\S+)', 
         EditorialItemViews.item_assertions_json, 
         name='editorial_item_assertions_json'
+    ),
+    url(
+        r'^editorial/item-spacetimes/(?P<uuid>\S+)', 
+        EditorialItemViews.item_spacetime_json, 
+        name='editorial_item_spacetime_json'
     ),
     url(
         r'^editorial/item-update-manifest', 

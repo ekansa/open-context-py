@@ -75,10 +75,39 @@ def make_dict_json_safe(input_obj, javascript_friendly_keys=False):
         return input_obj
 
 
-def make_model_object_json_safe_dict(model_obj):
-    """Makes a model object a json safe dictionary"""
+def get_attrib_value_from_rel_objects(model_obj, act_attrib):
+    """Gets an attribute value from a model_obj's related objects"""
+    attrib_path = act_attrib.split('__')
+    last_path_index = len(attrib_path) - 1 
+    act_model_obj = copy.deepcopy(model_obj)
+    for i, attrib_item in enumerate(attrib_path):
+        act_attrib_value = getattr(act_model_obj, attrib_item)
+        if not act_attrib_value:
+            continue
+        if i == last_path_index:
+            return act_attrib_value
+        act_model_obj = copy.deepcopy(act_attrib_value)
+    return None
+
+
+def make_model_object_json_safe_dict(model_obj, more_attributes=None):
+    """Makes a model object a json safe dictionary
+    
+    :param model.Object model_obj: An instance of a Django model object
+    :param list more_attributes: A list of additional model attributes
+        to include in the json_safe dict to return.
+    """
+    dict_skips = [
+        '_django_version', '_state', 'meta_json'
+    ]
     raw_dict = model_obj.__dict__
-    dict_obj = {k:v for k, v in raw_dict.items() if k not in ['_state', 'meta_json']}
+    if more_attributes:
+        for act_attrib in more_attributes:
+            act_attrib_value = get_attrib_value_from_rel_objects(model_obj, act_attrib)
+            if not act_attrib_value:
+                continue
+            raw_dict[act_attrib] = act_attrib_value
+    dict_obj = {k:v for k, v in raw_dict.items() if k not in dict_skips}
     if raw_dict.get('meta_json'):
         dict_obj['meta_json'] = copy.deepcopy(model_obj.meta_json)
     return make_dict_json_safe(dict_obj)

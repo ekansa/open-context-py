@@ -2,6 +2,8 @@
 import copy
 import datetime
 import hashlib
+from lxml import etree
+import lxml.html
 import uuid as GenUUID
 
 from django.db.models import Q
@@ -161,6 +163,23 @@ OTHER_LABEL_PREDICATE_IDS = [
     configs.PREDICATE_SKOS_ALTLABEL_UUID,
     configs.PREDICATE_DCTERMS_TITLE_UUID,
 ]
+
+
+def html_validate(check_str):
+    """ checks to see if a string is OK as HTML """
+    parser = etree.XMLParser()
+    check_str = '<div>' + check_str + '</div>'
+    errors = []
+    try:
+        is_valid = True
+        tree = etree.XML(check_str, parser)
+    except:
+        is_valid = False
+        for i, elog in enumerate(parser.error_log):
+            errors.append(
+                f'HTML problem ({(i + 1)}): {elog.message}'
+            )
+    return is_valid, errors
 
 
 def make_integer_or_default(raw_value, default_value):

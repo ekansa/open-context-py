@@ -22,7 +22,10 @@
                 </div>
                 <b-row>
                     <b-col cols="9">
-                        <router-view @edit_done="edit_done"></router-view>
+                        <router-view
+                        :key="name + history_key"
+                        @edit_done="edit_done"
+                        ></router-view>
                     </b-col>
                     <b-col cols="3">
                         <edit-history
@@ -33,8 +36,6 @@
                 </b-row>
             </b-container>
         </div>
-
-
 
         <script type="text/javascript">
 

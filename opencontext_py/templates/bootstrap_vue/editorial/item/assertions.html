@@ -8,6 +8,9 @@ NOTE: Templates and view components to edit assertions made on an item
  .obs_row {
    margin-top: 48px;
  }
+ .pred_col {
+   width: 33%;
+ }
 </style>
 
 <template id="assert-uuid">
@@ -32,30 +35,68 @@ NOTE: Templates and view components to edit assertions made on an item
 </template>
 
 <template id='assert-object'>
+  <b-row>
+    <b-col cols="9">
+      <b-form-group label="Boolean (True/False)" v-if="assert.predicate__data_type == 'xsd:boolean'">
+        <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="true">True</b-form-radio>
+        <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="false">False</b-form-radio>
+      </b-form-group>
+      <b-form-textarea
+        v-if="assert.predicate__data_type == 'xsd:string'"
+        debounce="250"
+        @change="html_validate"
+        :state="is_valid_html"
+        :placeholder="assert.obj_string"
+        :value="assert.obj_string"
+      ></b-form-textarea>
+      <b-form-input
+        v-if="assert.predicate__data_type == 'xsd:integer'"
+        type="number"
+        @change="value_change"
+        :placeholder="assert.obj_integer"
+        :value="assert.obj_integer"
+      ></b-form-input>
+      <b-form-input
+        v-if="assert.predicate__data_type == 'xsd:double'"
+        type="number"
+        @change="value_change"
+        :placeholder="assert.obj_double"
+        :value="assert.obj_double"
+      ></b-form-input>
+      <b-form-input
+        v-if="assert.predicate__data_type == 'xsd:date'"
+        type="date"
+        @change="value_change"
+        :value="assert.obj_datetime"
+      ></b-form-input>
+    </b-col>
+    <b-col cols="3">
+      <b-spinner v-if="updating" label="Updating..."></b-spinner>
+      <b-button
+        v-if="is_value_changed && !updating"
+        sm
+        block
+        @click="update_object_value"
+        variant="info">Update to <strong>[[ disp_changed_value ]]</strong></b-button>
+      <b-list-group v-if="errors">
+        <b-list-group-item v-for="(error, index) in errors"
+        :key="assert.uuid + '-error-' + index"
+        variant="warning">
+        <small>[[error]]</small>
+        </b-list-group-item>
+      </b-list-group>
+    </b-col>
+  </b-row>
+</template>
+
+<template id='assert-objects'>
   <div>
-    <b-form-group label="Boolean (True/False)" v-if="assert.predicate__data_type == 'xsd:boolean'">
-      <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="true">True</b-form-radio>
-      <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="false">False</b-form-radio>
-    </b-form-group>
-    <b-form-input
-      v-if="assert.predicate__data_type == 'xsd:string'"
-      :placeholder="assert.obj_string"
-    ></b-form-input>
-    <b-form-input
-      v-if="assert.predicate__data_type == 'xsd:integer'"
-      type="number"
-      :placeholder="assert.obj_integer"
-    ></b-form-input>
-    <b-form-input
-      v-if="assert.predicate__data_type == 'xsd:double'"
-      type="number"
-      :placeholder="assert.obj_double"
-    ></b-form-input>
-    <b-form-input
-      v-if="assert.predicate__data_type == 'xsd:date'"
-      type="date"
-      :placeholder="assert.obj_date"
-    ></b-form-input>
+    <assert-object 
+      v-for="(assert, index) in assert_node.objs"
+      :key="assert.uuid"
+      @assertion_update_done="assertion_update_done($event)"
+      v-bind:assert="assert"
+    ></assert-object>
   </div>
 </template>
 
@@ -63,7 +104,6 @@ NOTE: Templates and view components to edit assertions made on an item
   <div v-if="act_obs.assertions">
     <b-table
       ref="obs_assertions"
-      :sticky-header="table_height"
       small
       striped
       selectable
@@ -75,7 +115,9 @@ NOTE: Templates and view components to edit assertions made on an item
       :sort-by.sync="sortBy"
       :sort-desc.sync="sortDesc"
       responsive="lg"
+      caption-top
     >
+      <template #table-caption>[[ act_obs.label ]]</template>
 
       <template #cell(uuid)="data">
         <assert-uuid
@@ -87,11 +129,22 @@ NOTE: Templates and view components to edit assertions made on an item
         </assert-uuid>
       </template>
 
-      <template #cell(obj)="data">
-        <assert-object
-          v-bind:assert="data.item"
+      <template #cell(predicate__label)="data">
+        <p v-if="data.item.event_id != DEFAULT_EVENT.uuid">
+          <small>[[ data.item.event__label ]]</small>
+        </p>
+        <p v-if="data.item.attribute_group_id != DEFAULT_ATTRIBUTE_GROUP.uuid">
+          <small>[[ data.item.attribute_group__label ]]</small>
+        </p>
+        [[ data.item.predicate__label ]]
+      </template>
+
+      <template #cell(objs)="data">
+        <assert-objects
+          @assertion_update_done="assertion_update_done($event)"
+          v-bind:assert_node="data.item"
         >
-        </assert-object>
+        </assert-objects>
       </template>
       
       <template #cell()="data">
@@ -110,6 +163,7 @@ NOTE: Templates and view components to edit assertions made on an item
     <b-row class="obs_row" v-for="(act_obs, index) in assertions_in_obs">
       <b-col>
         <edit-observation 
+          @assertion_update_done="assertion_update_done($event)"
           v-bind:act_obs="act_obs"
           v-bind:table_height="table_height"></edit-observation>
       </b-col>
@@ -121,6 +175,10 @@ NOTE: Templates and view components to edit assertions made on an item
 
 
 <script type="text/javascript">
+
+const DEFAULT_EVENT = JSON.parse('{{ DEFAULT_EVENT|escapejs }}');
+const DEFAULT_ATTRIBUTE_GROUP = JSON.parse('{{ DEFAULT_ATTRIBUTE_GROUP|escapejs }}');
+const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
 
   var vs_assert_uuid = Vue.component(
     'assert-uuid',
@@ -160,10 +218,169 @@ NOTE: Templates and view components to edit assertions made on an item
       data() {
         return {
           assert: null,
+          input_value: null,
+          is_valid_html: null,
+          errors: null,
+          updating: false,
         };
       },
       template: '#assert-object',
+      computed: {
+        returned_value: function () {
+          if(!this.assert){
+            return null;
+          }
+          if(this.assert.predicate__data_type == 'xsd:boolean'){
+            return assert.obj_boolean;
+          }
+          if(this.assert.predicate__data_type == 'xsd:string'){
+            return this.assert.obj_string;
+          }
+          if(this.assert.predicate__data_type == 'xsd:integer'){
+            return this.assert.obj_integer;
+          }
+          if(this.assert.predicate__data_type == 'xsd:double'){
+            return this.assert.obj_double;
+          }
+          if(this.assert.predicate__data_type == 'xsd:date'){
+            return this.assert.obj_datetime;
+          }
+          return null;
+        },
+        disp_changed_value: function() {
+          if(this.input_value === null){
+            return null;
+          }
+          let max_length = 20;
+          let act_val = '' + this.input_value;
+          return act_val.length > max_length ? act_val.substring(0, max_length) + "..." : act_val;
+        },
+        is_value_changed: function() {
+          if(this.input_value === null){
+            return null;
+          }
+          if(this.returned_value === null){
+            return null;
+          }
+          return (this.input_value != this.returned_value);
+        }
+      },
       methods: {
+        value_change(input_value) {
+          this.input_value = input_value;
+        },
+        html_validate(input_value) {
+          this.input_value = input_value.trim();
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(
+              {str: input_value}
+            ),
+          };
+          fetch('/editorial/html-validate', requestOptions)
+            .then(async response => {
+              const data = await response.json();
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+              this.is_valid_html = data.ok;
+              this.errors = data.errors;
+            })
+            .catch(error => {
+              this.errorMessage = error;
+              console.error('There was an error!', error);
+            }
+          );
+        },
+        update_object_value: function() {
+          if(this.input_value === null){
+            console.log('No input value for the object');
+            return null;
+          }
+          if(this.input_value === this.returned_value){
+            console.log('No object value change detected');
+            return null;
+          }
+          this.updating = true;
+          let update_obj = {
+            uuid: this.assert.uuid,
+            // subject_id: this.assert.subject_id,
+            // observation_id: this.assert.observation_id,
+            // event_id: this.assert.event_id,
+            // attribute_group_id: this.assert.attribute_group_id,
+            // predicate_id: this.assert.predicate_id,
+            // language_id: this.assert.language_id,
+            // sort: this.assert.sort,
+          };
+          if(this.assert.predicate__data_type == 'xsd:boolean'){
+            update_obj.obj_boolean = this.input_value;
+          }
+          if(this.assert.predicate__data_type == 'xsd:string'){
+            update_obj.obj_string = this.input_value;
+          }
+          if(this.assert.predicate__data_type == 'xsd:integer'){
+            update_obj.obj_integer = this.input_value;
+          }
+          if(this.assert.predicate__data_type == 'xsd:double'){
+            update_obj.obj_double = this.input_value;
+          }
+          if(this.assert.predicate__data_type == 'xsd:date'){
+            update_obj.obj_datetime = this.input_value;
+          }
+          let update_objs = [];
+          update_objs.push(update_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(update_objs)
+          };
+          fetch('/editorial/item-update-assertions', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.input_value = null;
+            this.$emit('assertion_update_done', true);
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
+        }
+      }
+    },
+  );
+
+  var vs_assert_objects = Vue.component(
+    'assert-objects',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['assert_node', ],
+      data() {
+        return {
+          assert: null,
+        };
+      },
+      template: '#assert-objects',
+      methods: {
+        assertion_update_done(v){
+          this.$emit('assertion_update_done', true);
+        }
       }
     },
   );
@@ -181,11 +398,17 @@ NOTE: Templates and view components to edit assertions made on an item
           sortBy: 'sort',
           sortDesc: false,
           fields: [
-            {key: 'uuid', sortable: false},
-            {key: 'event__label', sortable: false },
-            {key: 'attribute_group__label', sortable: false},
-            {key: 'predicate__label', sortable: false},
-            {key: 'obj', sortable: false},
+            {
+              key: 'predicate__label', 
+              label:'Attribute or Relationship (Predicate)',
+              class: 'pred_col',
+              sortable: false
+            },
+            {
+              key: 'objs', 
+              label:'Attribute Values', 
+              sortable: false
+            },
           ],
           items: [],
           selectMode: 'range',
@@ -237,10 +460,13 @@ NOTE: Templates and view components to edit assertions made on an item
         clearSelected() {
           this.$refs.dsFieldsGeneralTable.clearSelected()
         },
+        assertion_update_done(v){
+          this.$emit('assertion_update_done', true);
+        }
       },
       components: {
         'assert-uuid': vs_assert_uuid,
-        'assert-object': vs_assert_object,
+        'assert-objects': vs_assert_objects,
       },
     }
   );
@@ -262,6 +488,7 @@ NOTE: Templates and view components to edit assertions made on an item
             'oc_gen_has_events', 
             'oc_gen_has_attribute_groups'
           ],
+          emit_edit_done:false,
         }
       },
       template: '#edit-assertions',
@@ -303,11 +530,9 @@ NOTE: Templates and view components to edit assertions made on an item
                   continue;
                 }
                 if (a_group.hasOwnProperty(key)) {
-                  let act_assert_objs = [];
-                  for(let assert of a_group[key]){
-                    assert.obj = assert.uuid;
-                    obs_assertions.push(assert);
-                  }
+                  let obs_assert_node = a_group[key][0];
+                  obs_assert_node.objs = a_group[key];
+                  obs_assertions.push(obs_assert_node);
                 }
               }
             }
@@ -335,8 +560,16 @@ NOTE: Templates and view components to edit assertions made on an item
           .then(json => {
             this.assertions_in_obs = this.process_assertions(json);
             console.log(this.assertions_in_obs);
+            if(this.emit_edit_done){
+              this.emit_edit_done = false;
+              this.$emit('edit_done', true);
+            }
           })
         },
+        assertion_update_done(v){
+          this.emit_edit_done = true;
+          this.fetch_api_assertions();
+        }
       },
       components: {
         'root-item-tree': vs_root_item_tree,
