@@ -798,15 +798,6 @@ class AllSpaceTime(models.Model):
     # An integer ID, used for sorting, that is unique to the
     # specific item.
     feature_id = models.IntegerField(default=1)
-    # Describes the spatial component of this record. The event_class
-    # describes how the chronology and spatial information go together.
-    event_class = models.ForeignKey(
-        AllManifest,  
-        db_column='event_class_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT,
-        default=configs.OC_EVENT_TYPE_GENERAL_UUID,
-    )
 
     # Time span information. 
     earliest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
@@ -873,7 +864,6 @@ class AllSpaceTime(models.Model):
         self, 
         item_id,
         event_id=configs.DEFAULT_EVENT_UUID,
-        event_class_id=configs.OC_EVENT_TYPE_GENERAL_UUID,
         earliest=None,
         start=None,
         stop=None,
@@ -893,7 +883,6 @@ class AllSpaceTime(models.Model):
         concat_list = [
             str(item_id),
             str(event_id),
-            str(event_class_id),
             str(earliest),
             str(start),
             str(stop),
@@ -914,7 +903,6 @@ class AllSpaceTime(models.Model):
         self, 
         item_id,
         event_id=configs.DEFAULT_EVENT_UUID,
-        event_class_id=configs.OC_EVENT_TYPE_GENERAL_UUID,
         earliest=None,
         start=None,
         stop=None,
@@ -930,7 +918,6 @@ class AllSpaceTime(models.Model):
         hash_id = self.make_hash_id(
             item_id=item_id,
             event_id=configs.DEFAULT_EVENT_UUID,
-            event_class_id=configs.OC_EVENT_TYPE_GENERAL_UUID,
             earliest=None,
             start=None,
             stop=None,
@@ -956,7 +943,6 @@ class AllSpaceTime(models.Model):
         return self.primary_key_create(
             item_id=self.item.uuid,
             event_id=self.event.uuid,
-            event_class_id=self.event_class,
             earliest=self.earliest,
             start=self.start,
             stop=self.stop,
@@ -1106,13 +1092,6 @@ class AllSpaceTime(models.Model):
         # Validates the geometry dict, make sure the coordinates are in the
         # correct GeoJSON order.
         self.validate_correct_geometry()
-
-        # Validate the event type.
-        if str(self.event_class.uuid) not in configs.OC_EVENT_TYPE_UUIDS:
-            raise ValueError(
-                f'{self.event_class.label} is not in allowed event types '
-                f'must be: {str(configs.OC_EVENT_TYPE_UUIDS)}'
-            )
 
         self.primary_key_create_for_self()
         self.feature_id = self.determine_feature_id_for_self()
