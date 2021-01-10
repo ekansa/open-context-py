@@ -495,7 +495,9 @@ def lookup_manifest_objs(request_dict, value_delim=MULTI_VALUE_DELIM, default_ro
         'context'
     )
     total_count = man_qs.count()
-    man_qs = man_qs[start:(start + rows)]
+    if not request_dict.get('all'):
+        # Limit the size of the query set returned
+        man_qs = man_qs[start:(start + rows)]
     output = []
     for m in man_qs:
         alt_label = alt_labels.get(m.uuid)

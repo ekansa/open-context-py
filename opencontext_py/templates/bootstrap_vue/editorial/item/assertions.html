@@ -101,6 +101,7 @@ NOTE: Templates and view components to edit assertions made on an item
               :key="'lookup' + assert.uuid"
               v-bind:context_id="[assert.predicate_id]"
               v-bind:show_label_search_box="true"
+              v-bind:fetch_on_create="true"
               @set_selected_item="set_selected_obj_item($event)"
             ></lookup-list>
           </b-col>

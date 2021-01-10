@@ -4,7 +4,10 @@
   items
 -->
 <style>
-  
+  .result_list {
+    max-height: 250px;
+    overflow: scroll;
+  }
  
 </style>
 
@@ -40,7 +43,7 @@
         :id="'lookup-list-q-search-box' + id_part"
         size="sm"
         debounce="250"
-        @change="on_change_q_search"
+        @update="on_change_q_search"
         :value="q"></b-form-input>
     </b-form-group>
 
@@ -52,7 +55,7 @@
         :id="'lookup-list-label-search-box' + id_part"
         size="sm"
         debounce="250"
-        @change="on_change_label_search"
+        @update="on_change_label_search"
         :value="label__icontains"></b-form-input>
     </b-form-group>
 
@@ -64,13 +67,13 @@
         :id="'lookup-list-path-search-box' + id_part"
         size="sm"
         debounce="250"
-        @change="on_change_path_search"
+        @update="on_change_path_search"
         :value="path__icontains"></b-form-input>
     </b-form-group>
   
     <small v-if="!loading & show_total_results">Number Found: [[ totalResults ]]</small>
     <small v-if="loading">Searching for items...</small>
-    <b-list-group flush v-if="!loading & results.length > 0">
+    <b-list-group flush v-if="!loading & results.length > 0" class="result_list">
       <lookup-list-item
         @set_selected_item="set_selected_item($event)"
         v-for="(item, index) in results"
@@ -205,6 +208,8 @@
           show_context: false,
           loading: null,
           id_part: guidGenerator(),
+          fetch_on_create: false,
+          fetch_all: false,
         };
       },
       template: '#lookup-list',
@@ -228,6 +233,9 @@
           }
           if(this.context_id && this.context_id.length > 0){
             params.context_id = this.context_id.join(this.multi_val_delim);
+          }
+          if(this.fetch_all){
+            params.all = true;
           }
           return params;
         },
