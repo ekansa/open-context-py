@@ -74,6 +74,9 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
                 )
             if getattr(assert_obj, 'object_thumbnail', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
+            if for_edit:
+                obj['object_id'] = str(assert_obj.object.uuid)
+                obj['object__label'] = assert_obj.object.label
         elif predicate.data_type == 'xsd:string':
             # A string gets a language code key, so it's not just a naked
             # literal returned in the pred_objects list.
@@ -108,6 +111,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
             obj['predicate_id'] = str(predicate.uuid)
             obj['predicate__label'] = predicate.label
             obj['predicate__data_type'] = predicate.data_type
+            obj['predicate__item_class_id'] = str(predicate.item_class.uuid)
             obj['language_id'] = str(assert_obj.language.uuid)
             obj['language__label'] = assert_obj.language.label
             obj['sort'] = assert_obj.sort

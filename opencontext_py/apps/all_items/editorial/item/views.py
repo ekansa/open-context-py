@@ -104,6 +104,16 @@ def item_edit_interface_html(request, uuid):
         uuid=configs.DEFAULT_CLASS_UUID,
         do_minimal=True,
     )
+    # NOTE: This is to identify predicates that take 'types' as objects
+    oc_variables = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.CLASS_OC_VARIABLES_UUID,
+        do_minimal=True,
+    )
+    oc_links = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.CLASS_OC_LINKS_UUID,
+        do_minimal=True,
+    )
+
 
     rp = RootPath()
     context = {
@@ -116,6 +126,8 @@ def item_edit_interface_html(request, uuid):
         'DEFAULT_LANG': json.dumps(default_lang),
         'PREDICATE_CONTAINS': json.dumps(pred_contains),
         'DEFAULT_CLASS': json.dumps(default_class),
+        'OC_VARIABLES': json.dumps(oc_variables),
+        'OC_LINKS': json.dumps(oc_links),
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
     response = HttpResponse(template.render(context, request))
@@ -231,13 +243,24 @@ def item_spacetime_json(request, uuid):
             status=404
         )
 
+    # List of related object attributes to add to the JSON
+    # output for each space-time object.
+    more_attributes = [
+        'item__label',
+        'event__label',
+        'event__item_class_id',
+        'event__item_class__label',
+    ]
     api_result = []
     spacetime_qs = AllSpaceTime.objects.filter(
         item=man_obj
     )
     for spacetime_obj in spacetime_qs:
         api_result.append(
-            make_model_object_json_safe_dict(spacetime_obj)
+            make_model_object_json_safe_dict(
+                spacetime_obj,
+                more_attributes=more_attributes
+            )
         )
     
     json_output = json.dumps(

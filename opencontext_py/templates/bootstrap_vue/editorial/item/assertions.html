@@ -8,6 +8,10 @@ NOTE: Templates and view components to edit assertions made on an item
  .obs_row {
    margin-top: 48px;
  }
+ .obj_row {
+   margin-top: 12px;
+   margin-bottom: 12px;
+ }
  .pred_col {
    width: 33%;
  }
@@ -35,7 +39,7 @@ NOTE: Templates and view components to edit assertions made on an item
 </template>
 
 <template id='assert-object'>
-  <b-row>
+  <b-row class="obj_row">
     <b-col cols="9">
       <b-form-group label="Boolean (True/False)" v-if="assert.predicate__data_type == 'xsd:boolean'">
         <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="true">True</b-form-radio>
@@ -69,6 +73,39 @@ NOTE: Templates and view components to edit assertions made on an item
         @change="value_change"
         :value="assert.obj_datetime"
       ></b-form-input>
+      <div v-if="assert.predicate__data_type == 'id'">
+        <b-row>
+          <b-col cols="2">
+            <b-button
+              v-if="!is_object_edit_open"
+              sm
+              block
+              @click="toggle_object_edit"
+              variant="info">Edit</b-button>
+              <b-button
+              v-if="is_object_edit_open"
+              sm
+              block
+              @click="toggle_object_edit"
+              variant="outline-secondary">Close</b-button>
+          </b-col>
+          <b-col cols="10">
+            [[assert.object__label]]
+            <br/>
+            <small>ID: <span class="text-muted">[[assert.object_id]]</span></small>
+          </b-col>
+        </b-row>
+        <b-row v-if="is_object_edit_open">
+          <b-col v-if="assert.predicate__item_class_id == OC_VARIABLES.uuid">
+            <lookup-list
+              :key="'lookup' + assert.uuid"
+              v-bind:context_id="[assert.predicate_id]"
+              v-bind:show_label_search_box="true"
+              @set_selected_item="set_selected_obj_item($event)"
+            ></lookup-list>
+          </b-col>
+        </b-row>
+      </div>
     </b-col>
     <b-col cols="3">
       <b-spinner v-if="updating" label="Updating..."></b-spinner>
@@ -178,7 +215,10 @@ NOTE: Templates and view components to edit assertions made on an item
 
 const DEFAULT_EVENT = JSON.parse('{{ DEFAULT_EVENT|escapejs }}');
 const DEFAULT_ATTRIBUTE_GROUP = JSON.parse('{{ DEFAULT_ATTRIBUTE_GROUP|escapejs }}');
+const DEFAULT_LANG = JSON.parse('{{ DEFAULT_LANG|escapejs }}');
 const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
+const OC_VARIABLES = JSON.parse('{{ OC_VARIABLES|escapejs }}');
+const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
 
   var vs_assert_uuid = Vue.component(
     'assert-uuid',
@@ -218,6 +258,8 @@ const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
       data() {
         return {
           assert: null,
+          is_object_edit_open: false,
+          selected_item: null,
           input_value: null,
           is_valid_html: null,
           errors: null,
@@ -245,6 +287,9 @@ const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
           if(this.assert.predicate__data_type == 'xsd:date'){
             return this.assert.obj_datetime;
           }
+          if(this.assert.predicate__data_type == 'id'){
+            return this.assert.object_id;
+          }
           return null;
         },
         disp_changed_value: function() {
@@ -252,7 +297,13 @@ const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
             return null;
           }
           let max_length = 20;
-          let act_val = '' + this.input_value;
+          let act_val = '';
+          if(!this.selected_item){
+            act_val += this.input_value;
+          }
+          else{
+            act_val += this.selected_item.label;
+          }
           return act_val.length > max_length ? act_val.substring(0, max_length) + "..." : act_val;
         },
         is_value_changed: function() {
@@ -266,6 +317,17 @@ const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
         }
       },
       methods: {
+        toggle_object_edit() {
+          if(this.is_object_edit_open === null){
+            this.is_object_edit_open = false;
+          }
+          this.is_object_edit_open = !this.is_object_edit_open;
+        },
+        set_selected_obj_item(obj_item) {
+          this.selected_item = obj_item;
+          this.input_value = this.selected_item.uuid;
+          console.log('selected_item: ' + this.selected_item.label);
+        },
         value_change(input_value) {
           this.input_value = input_value;
         },
@@ -334,6 +396,9 @@ const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
           if(this.assert.predicate__data_type == 'xsd:date'){
             update_obj.obj_datetime = this.input_value;
           }
+          if(this.assert.predicate__data_type == 'id'){
+            update_obj.object_id = this.input_value;
+          }
           let update_objs = [];
           update_objs.push(update_obj);
           const requestOptions = {
@@ -362,7 +427,11 @@ const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
             console.error('There was an error!', error);
           });
         }
-      }
+      },
+      components: {
+        'root-item-tree': vs_root_item_tree,
+        'lookup-list': vs_look_up_list,
+      },
     },
   );
 

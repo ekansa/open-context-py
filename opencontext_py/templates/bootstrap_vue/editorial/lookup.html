@@ -226,6 +226,9 @@
           if(this.item_class_id && this.item_class_id.length > 0){
             params.item_class_id = this.item_class_id.join(this.multi_val_delim);
           }
+          if(this.context_id && this.context_id.length > 0){
+            params.context_id = this.context_id.join(this.multi_val_delim);
+          }
           return params;
         },
         fetch_api_item_look_up: function (){
