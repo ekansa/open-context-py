@@ -12,10 +12,94 @@ NOTE: Templates and view components to edit assertions made on an item
    margin-top: 12px;
    margin-bottom: 12px;
  }
+ .add_obj_row {
+   margin-bottom: 24px;
+ }
  .pred_col {
    width: 33%;
  }
 </style>
+
+<template id="assert-object-edit">
+  <div v-if="assert">
+    <b-form-group label="Boolean (True/False)" v-if="assert.predicate__data_type == 'xsd:boolean'">
+      <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="true">True</b-form-radio>
+      <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="false">False</b-form-radio>
+    </b-form-group>
+    <b-form-textarea
+      v-if="assert.predicate__data_type == 'xsd:string'"
+      debounce="250"
+      @change="html_validate"
+      :state="is_valid_html"
+      :placeholder="assert.obj_string"
+      :value="assert.obj_string"
+    ></b-form-textarea>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:integer'"
+      type="number"
+      @change="value_change"
+      :placeholder="assert.obj_integer"
+      :value="assert.obj_integer"
+    ></b-form-input>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:double'"
+      type="number"
+      @change="value_change"
+      :placeholder="assert.obj_double"
+      :value="assert.obj_double"
+    ></b-form-input>
+    <b-form-input
+      v-if="assert.predicate__data_type == 'xsd:date'"
+      type="date"
+      @change="value_change"
+      :value="assert.obj_datetime"
+    ></b-form-input>
+    <div v-if="assert.predicate__data_type == 'id'">
+      <b-row v-if="!for_add_new">
+        <b-col cols="2">
+          <b-button
+            v-if="!is_object_edit_open"
+            sm
+            block
+            @click="toggle_object_edit"
+            variant="info">Edit</b-button>
+            <b-button
+            v-if="is_object_edit_open"
+            sm
+            block
+            @click="toggle_object_edit"
+            variant="outline-secondary">Keep</b-button>
+        </b-col>
+        <b-col cols="10">
+          [[assert.object__label]]
+          <br/>
+          <small>ID: <span class="text-muted">[[assert.object_id]]</span></small>
+        </b-col>
+      </b-row>
+      <b-row v-if="for_add_new || is_object_edit_open">
+        <b-col v-if="assert.predicate__item_class_id == OC_VARIABLES.uuid">
+          <lookup-list
+            :key="'lookup' + assert.uuid"
+            v-bind:context_id="[assert.predicate_id]"
+            v-bind:show_label_search_box="true"
+            v-bind:fetch_on_create="true"
+            @set_selected_item="set_selected_obj_item($event)"
+          ></lookup-list>
+        </b-col>
+        <b-col v-if="assert.predicate__item_class_id == OC_LINKS.uuid">
+          <lookup-list
+            :key="'lookup' + assert.uuid"
+            v-bind:project_id="ITEM_PROJECT_UUIDS"
+            v-bind:item_type="OC_PRED_LINK_OK_ITEM_TYPES"
+            v-bind:show_label_search_box="true"
+            @set_selected_item="set_selected_obj_item($event)"
+          ></lookup-list>
+        </b-col>
+      </b-row>
+    </div>
+  </div>
+</template>
+
 
 <template id="assert-uuid">
   <b-row>
@@ -38,75 +122,18 @@ NOTE: Templates and view components to edit assertions made on an item
   </b-row>
 </template>
 
+
 <template id='assert-object'>
   <b-row class="obj_row">
     <b-col cols="9">
-      <b-form-group label="Boolean (True/False)" v-if="assert.predicate__data_type == 'xsd:boolean'">
-        <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="true">True</b-form-radio>
-        <b-form-radio :selected="assert.obj_boolean" v-model="selected" :name="'radio-' + assert.uuid" value="false">False</b-form-radio>
-      </b-form-group>
-      <b-form-textarea
-        v-if="assert.predicate__data_type == 'xsd:string'"
-        debounce="250"
-        @change="html_validate"
-        :state="is_valid_html"
-        :placeholder="assert.obj_string"
-        :value="assert.obj_string"
-      ></b-form-textarea>
-      <b-form-input
-        v-if="assert.predicate__data_type == 'xsd:integer'"
-        type="number"
-        @change="value_change"
-        :placeholder="assert.obj_integer"
-        :value="assert.obj_integer"
-      ></b-form-input>
-      <b-form-input
-        v-if="assert.predicate__data_type == 'xsd:double'"
-        type="number"
-        @change="value_change"
-        :placeholder="assert.obj_double"
-        :value="assert.obj_double"
-      ></b-form-input>
-      <b-form-input
-        v-if="assert.predicate__data_type == 'xsd:date'"
-        type="date"
-        @change="value_change"
-        :value="assert.obj_datetime"
-      ></b-form-input>
-      <div v-if="assert.predicate__data_type == 'id'">
-        <b-row>
-          <b-col cols="2">
-            <b-button
-              v-if="!is_object_edit_open"
-              sm
-              block
-              @click="toggle_object_edit"
-              variant="info">Edit</b-button>
-              <b-button
-              v-if="is_object_edit_open"
-              sm
-              block
-              @click="toggle_object_edit"
-              variant="outline-secondary">Close</b-button>
-          </b-col>
-          <b-col cols="10">
-            [[assert.object__label]]
-            <br/>
-            <small>ID: <span class="text-muted">[[assert.object_id]]</span></small>
-          </b-col>
-        </b-row>
-        <b-row v-if="is_object_edit_open">
-          <b-col v-if="assert.predicate__item_class_id == OC_VARIABLES.uuid">
-            <lookup-list
-              :key="'lookup' + assert.uuid"
-              v-bind:context_id="[assert.predicate_id]"
-              v-bind:show_label_search_box="true"
-              v-bind:fetch_on_create="true"
-              @set_selected_item="set_selected_obj_item($event)"
-            ></lookup-list>
-          </b-col>
-        </b-row>
-      </div>
+
+      <assert-object-edit
+        v-bind:assert="assert"
+        @get_validation_errors="get_validation_errors($event)"
+        @get_value_change="get_value_change($event)"
+      >
+      </assert-object-edit>
+
     </b-col>
     <b-col cols="3">
       <b-spinner v-if="updating" label="Updating..."></b-spinner>
@@ -115,7 +142,9 @@ NOTE: Templates and view components to edit assertions made on an item
         sm
         block
         @click="update_object_value"
-        variant="info">Update to <strong>[[ disp_changed_value ]]</strong></b-button>
+        variant="info">Update to <strong>[[ disp_changed_value ]]</strong>
+        <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+      </b-button>
       <b-list-group v-if="errors">
         <b-list-group-item v-for="(error, index) in errors"
         :key="assert.uuid + '-error-' + index"
@@ -126,6 +155,7 @@ NOTE: Templates and view components to edit assertions made on an item
     </b-col>
   </b-row>
 </template>
+
 
 <template id='assert-objects'>
   <div>
@@ -138,9 +168,108 @@ NOTE: Templates and view components to edit assertions made on an item
   </div>
 </template>
 
+
+<template id='add-assertion-ui'>
+  <b-modal
+    size="lg"
+    scrollable
+    ref="add-assertion-modal"
+    id="add-assertion-modal" 
+    :title="'Add Attribute or Relationship to: ' + act_obs.label"
+    @shown="on_shown"
+  >
+    <b-container fluid>
+
+      <b-alert  v-if="selected_pred_item && new_object_display" show variant="success">
+        <b-row>
+          <b-col cols="4">
+            <small>Attribute/Relationship Predicate</small><br/>
+            [[ selected_pred_item.label ]]
+          </b-col>
+          <b-col cols="2" class="text-center"><b-icon-arrow-right></b-icon-arrow-right></b-col>
+          <b-col cols="4">
+            <small>Attribute/Relationship Object Value</small><br/>
+            [[ new_object_display ]]
+          </b-col>
+          <b-col cols="2">
+            <b-spinner v-if="updating" label="Updating..."></b-spinner>
+            <b-button
+              v-if="!updating"
+              @click="add_assertion"
+            >
+              Add <b-icon-cloud-arrow-up-fill></b-icon-cloud-arrow-up-fill>
+            </b-button>
+          </b-col>
+        </b-row>
+      </b-alert>
+
+      <b-alert v-else show variant="info">
+        <b-row>
+          <b-col cols="4">
+            <div v-if="selected_pred_item">
+              <small>Attribute/Relationship Predicate</small><br/>
+              [[ selected_pred_item.label ]]
+            </div>
+            <small v-else class="text-muted">Select Attribute/Relationship Predicate</small>
+          </b-col>
+          <b-col cols="2">&nbsp;</b-col>
+          <b-col cols="4">&nbsp;</b-col>
+          <b-col cols="2">
+            <b-button
+              disabled="true"
+              @click="add_assertion"
+            >
+              Add <b-icon-cloud-arrow-up-fill></b-icon-cloud-arrow-up-fill>
+            </b-button>
+          </b-col>
+        </b-row>
+      </b-alert>
+      
+      <b-row>
+        <b-col cols="5">
+          <lookup-list
+            :key="'lookup' + act_obs.id"
+            v-bind:project_id="ITEM_PROJECT_UUIDS"
+            v-bind:item_type="['predicates']"
+            v-bind:show_label_search_box="true"
+            @set_selected_item="set_selected_pred_item($event)"
+          ></lookup-list>
+          <small class="text-muted">Look up a descriptive attribute or linking relationship to add</small>
+        </b-col>
+        <b-col cols="1"></b-col>
+        <b-col cols="4">
+          <div v-if="assert">
+            
+            <assert-object-edit
+              v-bind:assert="assert"
+              v-bind:for_add_new="true"
+              @get_validation_errors="get_validation_errors($event)"
+              @get_value_change="get_value_change($event)"
+            >
+            </assert-object-edit>
+
+            <small class="text-muted">Add Attribute or Relationship Object Value</small>
+          </div>
+        </b-col>
+        <b-col cols="2">
+          <b-list-group v-if="errors">
+            <b-list-group-item v-for="(error, index) in errors"
+            :key="act_obs.id + '-error-' + index"
+            variant="warning">
+            <small>[[error]]</small>
+            </b-list-group-item>
+          </b-list-group>
+        </b-col>
+      </b-row>
+    </b-container>
+  </b-modal>
+  
+</template>
+
 <template id="edit-observation">
-  <div v-if="act_obs.assertions">
+  <div>
     <b-table
+      v-if="act_obs.assertions"
       ref="obs_assertions"
       small
       striped
@@ -191,6 +320,22 @@ NOTE: Templates and view components to edit assertions made on an item
 
     </b-table>
 
+    <b-row>
+      <b-col cols="2">
+        <b-button
+          sm
+          block
+          @click="toggle_add_new_assertion"
+          variant="primary">Add New <b-icon-plus-circle-fill></b-icon-plus-circle-fill></b-button>
+      </b-col>
+      <b-col cols="10">Add another Attribute or Relationship to [[ act_obs.label ]]</b-col>
+    </b-row>
+    
+    <add-assertion-ui
+      v-bind:act_obs="act_obs"
+    >
+    </add-assertion-ui>
+
   </div>
 </template>
 
@@ -220,6 +365,7 @@ const DEFAULT_LANG = JSON.parse('{{ DEFAULT_LANG|escapejs }}');
 const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
 const OC_VARIABLES = JSON.parse('{{ OC_VARIABLES|escapejs }}');
 const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
+const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|escapejs }}');
 
   var vs_assert_uuid = Vue.component(
     'assert-uuid',
@@ -251,25 +397,37 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
     },
   );
 
-  var vs_assert_object = Vue.component(
-    'assert-object',
+
+  var vs_assert_object_edit = Vue.component(
+    'assert-object-edit',
     {
       delimiters: ['[[', ']]'],
-      props: ['assert', ],
+      props: ['assert', 'for_add_new'],
       data() {
         return {
           assert: null,
+          for_add_new: false,
           is_object_edit_open: false,
-          selected_item: null,
+          selected_obj_item: null,
           input_value: null,
           is_valid_html: null,
           errors: null,
-          updating: false,
+          input_value: null,
+          is_value_changed: null,
         };
       },
-      template: '#assert-object',
+      template: '#assert-object-edit',
       computed: {
-        returned_value: function () {
+        
+      },
+      methods: {
+        toggle_object_edit() {
+          if(this.is_object_edit_open === null){
+            this.is_object_edit_open = false;
+          }
+          this.is_object_edit_open = !this.is_object_edit_open;
+        },
+        get_original_value() {
           if(!this.assert){
             return null;
           }
@@ -293,47 +451,41 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
           }
           return null;
         },
-        disp_changed_value: function() {
-          if(this.input_value === null){
+        get_display_value(input_value){
+          if(input_value === null){
             return null;
           }
           let max_length = 20;
           let act_val = '';
-          if(!this.selected_item){
-            act_val += this.input_value;
+          if(!this.selected_obj_item){
+            act_val += input_value;
           }
           else{
-            act_val += this.selected_item.label;
+            act_val += this.selected_obj_item.label;
           }
           return act_val.length > max_length ? act_val.substring(0, max_length) + "..." : act_val;
         },
-        is_value_changed: function() {
-          if(this.input_value === null){
-            return null;
-          }
-          if(this.returned_value === null){
-            return null;
-          }
-          return (this.input_value != this.returned_value);
-        }
-      },
-      methods: {
-        toggle_object_edit() {
-          if(this.is_object_edit_open === null){
-            this.is_object_edit_open = false;
-          }
-          this.is_object_edit_open = !this.is_object_edit_open;
-        },
-        set_selected_obj_item(obj_item) {
-          this.selected_item = obj_item;
-          this.input_value = this.selected_item.uuid;
-          console.log('selected_item: ' + this.selected_item.label);
-        },
         value_change(input_value) {
           this.input_value = input_value;
+          let orig_value = this.get_original_value();
+          let is_value_changed = (input_value != orig_value);
+          let output = {
+            input_value: input_value,
+            is_value_changed: is_value_changed,
+            disp_changed_value: this.get_display_value(input_value),
+          };
+          this.$emit('get_value_change', output);
+          return output;
+        },
+        set_selected_obj_item(obj_item) {
+          this.selected_obj_item = obj_item;
+          this.input_value = this.selected_obj_item.uuid;
+          this.value_change(this.selected_obj_item.uuid);
+          console.log('selected_item: ' + this.selected_obj_item.label);
         },
         html_validate(input_value) {
           this.input_value = input_value.trim();
+          this.value_change(input_value);
           const requestOptions = {
             method: 'POST',
             headers: {
@@ -355,12 +507,49 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
               }
               this.is_valid_html = data.ok;
               this.errors = data.errors;
+              this.$emit('get_validation_errors', this.errors);
             })
             .catch(error => {
               this.errorMessage = error;
               console.error('There was an error!', error);
             }
           );
+        },
+      },
+      components: {
+        'root-item-tree': vs_root_item_tree,
+        'lookup-list': vs_look_up_list,
+      },
+    },
+  );
+
+
+  var vs_assert_object = Vue.component(
+    'assert-object',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['assert', ],
+      data() {
+        return {
+          assert: null,
+          is_value_changed: null,
+          input_value: null,
+          errors: null,
+          updating: false,
+        };
+      },
+      template: '#assert-object',
+      computed: {
+      },
+      methods: {
+        get_validation_errors(errors) {
+          this.errors = errors;
+        },
+        get_value_change(changes) {
+          console.log(changes);
+          this.input_value =  changes.input_value;
+          this.is_value_changed = changes.is_value_changed;
+          this.disp_changed_value = changes.disp_changed_value;
         },
         update_object_value: function() {
           if(this.input_value === null){
@@ -427,11 +616,10 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
             this.errorMessage = error;
             console.error('There was an error!', error);
           });
-        }
+        },
       },
       components: {
-        'root-item-tree': vs_root_item_tree,
-        'lookup-list': vs_look_up_list,
+        'assert-object-edit': vs_assert_object_edit,
       },
     },
   );
@@ -452,6 +640,78 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
           this.$emit('assertion_update_done', true);
         }
       }
+    },
+  );
+
+  var vs_add_assertion_ui = Vue.component(
+    'add-assertion-ui',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['act_obs',],
+      data() {
+        return {
+          act_obs: null,
+          selected_pred_item: null,
+          new_object_display: null,
+          new_object_val: null,
+          new_object_item: null,
+          errors: null,
+          updating: false,
+        }
+      },
+      template: '#add-assertion-ui',
+      computed: {
+        assert: function() {
+          if(!this.selected_pred_item){
+            return null;
+          }
+          return {
+            uuid: this.selected_pred_item.uuid + '-new-assert',
+            predicate_id: this.selected_pred_item.uuid,
+            predicate__label: this.selected_pred_item.label,
+            predicate__data_type: this.selected_pred_item.data_type,
+            predicate__item_class_id: this.selected_pred_item.item_class_id,
+            predicate__item_class__label: this.selected_pred_item.item_class__label,
+            obj_boolean: null,
+            obj_string: null,
+            obj_integer: null,
+            obj_double: null,
+            obj_datetime: null,
+            object_id: null,
+            object__label: null,
+          };
+        },
+      },
+      methods: {
+        get_validation_errors(errors) {
+          this.errors = errors;
+        },
+        get_value_change(changes) {
+          console.log(changes);
+          this.new_object_val =  changes.input_value;
+          this.new_object_display = changes.disp_changed_value;
+        },
+        assertion_update_done(v){
+          this.$emit('assertion_update_done', true);
+        },
+        on_shown: function() {
+          this.show_add_assertion_ui = true;
+          console.log('on_shown;');
+        },
+        set_selected_pred_item(pred_item) {
+          this.selected_pred_item = pred_item;
+          console.log('selected_pred_item: ' + this.selected_pred_item.label);
+        },
+        add_assertion: function() {
+          this.updating = true;
+          console.log('add-assertion');
+
+        },
+      },
+      components: {
+        'lookup-list': vs_look_up_list,
+        'assert-object-edit': vs_assert_object_edit,
+      },
     },
   );
 
@@ -532,11 +792,15 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
         },
         assertion_update_done(v){
           this.$emit('assertion_update_done', true);
-        }
+        },
+        toggle_add_new_assertion() {
+          this.$bvModal.show('add-assertion-modal');  
+        },
       },
       components: {
         'assert-uuid': vs_assert_uuid,
         'assert-objects': vs_assert_objects,
+        'add-assertion-ui': vs_add_assertion_ui,
       },
     }
   );
@@ -608,6 +872,7 @@ const OC_LINKS = JSON.parse('{{ OC_LINKS|escapejs }}');
             }
             let new_obs_item = {
               label: obs.label,
+              id: obs.id.replace('#', ''),
               assertions: obs_assertions,
             }
             new_obs.push(new_obs_item);

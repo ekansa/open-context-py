@@ -22,10 +22,11 @@ OC_ITEM_TYPES = [
     'subjects',
     'media',
     'documents',
+    'persons',
     'predicates',
     'types',
-    'persons',
 ]
+
 
 # Item type with full URIs as the main identifer. These are for
 # supplemental metadata / linked data annotation and description of
@@ -153,6 +154,17 @@ CLASS_OC_LINKS_UUID = '00000000-6e24-5e11-6d91-b097262f3f05'
 CLASS_LIST_OC_PREDICATES = [
     CLASS_OC_VARIABLES_UUID,
     CLASS_OC_LINKS_UUID,
+]
+
+# Item types that can objects of a linking predicate (with
+# CLASS_OC_LINKS_UUID) assertions
+OC_PRED_LINK_OK_ITEM_TYPES = [
+    'projects', 
+    'tables',
+    'subjects',
+    'media',
+    'documents',
+    'persons',
 ]
 
 # Standard predicate for project root children; 'oc-gen:contains-root'

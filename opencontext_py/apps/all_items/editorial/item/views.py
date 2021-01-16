@@ -114,11 +114,27 @@ def item_edit_interface_html(request, uuid):
         do_minimal=True,
     )
 
+    item_project_uuids = []
+    item_project = man_obj.project
+    at_root_proj = False
+    while at_root_proj:
+        project_uuid = str(item_project.uuid)
+        if not project_uuid in item_project_uuids:
+            item_projects.append(project_uuid)
+        else:
+            at_root_proj = True
+        if project_uuid == str(configs.OPEN_CONTEXT_PROJ_UUID):
+            at_root_proj = True
+        if not at_root_proj:
+            # Now go up a level in the item hierarchy
+            item_project = item_project.project
 
     rp = RootPath()
     context = {
         'base_url': rp.get_baseurl(),
         'man_obj': man_obj,
+        # NOTE: ITEM_PROJECT_UUIDS is the list of parent project uuids for an item
+        'ITEM_PROJECT_UUIDS': json.dumps(item_project_uuids),
         'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),
         'DEFAULT_OBS': json.dumps(default_obs),
         'DEFAULT_EVENT': json.dumps(default_event),
@@ -128,6 +144,7 @@ def item_edit_interface_html(request, uuid):
         'DEFAULT_CLASS': json.dumps(default_class),
         'OC_VARIABLES': json.dumps(oc_variables),
         'OC_LINKS': json.dumps(oc_links),
+        'OC_PRED_LINK_OK_ITEM_TYPES': json.dumps(configs.OC_PRED_LINK_OK_ITEM_TYPES),
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
     response = HttpResponse(template.render(context, request))

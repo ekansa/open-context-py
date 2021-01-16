@@ -54,6 +54,8 @@
             const ITEM_UUID = '{{ man_obj.uuid }}';
             const PROJECT_LABEL = '{{ man_obj.project.label }}';
             const PROJECT_UUID = '{{ man_obj.project.uuid }}';
+            const ITEM_PROJECT_UUIDS = JSON.parse('{{ ITEM_PROJECT_UUIDS|escapejs }}');
+            const OPEN_CONTEXT_PROJ_UUID = '{{ OPEN_CONTEXT_PROJ_UUID }}';
 
 
             const routes = [

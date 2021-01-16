@@ -1595,6 +1595,31 @@ class AllAssertion(models.Model):
             else:
                 assert data_type_is_none
     
+    def validate_predicate_class_objects(self):
+        """Validates that predicates of item_type predicates have
+           objects of the appropriate class"""
+        if self.predicate.item_type != 'predicates':
+            # This check does not apply.
+            return None
+        if self.predicate.data_type != 'id':
+            # Object is not a named entity, so this check does not
+            # apply
+            return None
+        if str(self.predicate.item_class.uuid) == str(configs.CLASS_OC_VARIABLES_UUID):
+            if self.object.item_type != 'types':
+                raise(
+                    f'Object of predicate {self.predicate.label}, '
+                    f'a {self.predicate.item_class.label} ({str(self.predicate.item_class.uuid)})'
+                    f'must be item_type = "types"'
+                )
+        if str(self.predicate.item_class.uuid) == str(configs.CLASS_OC_LINKS_UUID):
+            if not self.object.item_type in configs.OC_PRED_LINK_OK_ITEM_TYPES:
+                raise(
+                    f'Object of predicate {self.predicate.label}, '
+                    f'a {self.predicate.item_class.label} ({str(self.predicate.item_class.uuid)})'
+                    f'must be item_type in {str(configs.OC_PRED_LINK_OK_ITEM_TYPES)}'
+                )
+    
     def make_obj_string_hash(self, obj_string):
         """Makes an object string hash value"""
         if obj_string:
