@@ -1746,7 +1746,27 @@ class AllAssertion(models.Model):
             attribute_group_id=self.attribute_group.uuid,
             language_id=self.language.uuid,
         )
-        return self.uuid 
+        return self.uuid
+    
+
+    def get_display_object(self, add_id=True):
+        """Gets the display object for an assertion"""
+        if add_id and self.predicate.data_type == 'id':
+            return f'{self.object.label} [{self.object.uuid}]'
+        elif not add_id and self.predicate.data_type == 'id':
+            return f'{self.object.label}'
+        elif self.predicate.data_type == 'xsd:string':
+           return f'"{self.obj_string[:20]}"'
+        elif self.predicate.data_type == 'xsd:boolean':
+            return f'{self.obj_boolean}'
+        elif self.predicate.data_type == 'xsd:integer':
+            return f'{self.obj_integer}'
+        elif self.predicate.data_type == 'xsd:double':
+            return f'{self.obj_double}'
+        elif self.predicate.data_type == 'xsd:date':
+            return f'{self.obj_datetime}'
+        return ''
+
 
     def save(self, *args, **kwargs):
         """
@@ -1801,18 +1821,7 @@ class AllAssertion(models.Model):
             f'{self.uuid}: {self.subject.label} [{self.subject.uuid}] '
             f'-> {self.predicate.label} [{self.predicate.uuid}] -> '
         )
-        if self.predicate.data_type == 'id':
-            out += f'{self.object.label} [{self.object.uuid}]'
-        elif self.predicate.data_type == 'xsd:string':
-            out += f'"{self.obj_string[:20]}"'
-        elif self.predicate.data_type == 'xsd:boolean':
-            out += f'{self.obj_boolean}'
-        elif self.predicate.data_type == 'xsd:integer':
-            out += f'{self.obj_integer}'
-        elif self.predicate.data_type == 'xsd:double':
-            out += f'{self.obj_double}'
-        elif self.predicate.data_type == 'xsd:date':
-            out += f'{self.obj_datetime}'
+        out += self.get_display_object()
         return out
 
     class Meta:

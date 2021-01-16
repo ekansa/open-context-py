@@ -353,6 +353,35 @@ def update_assertions_fields(request):
 @never_cache
 @transaction.atomic()
 @reversion.create_revision()
+def add_assertions(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = item_updater.add_assertions(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
 def update_space_time_fields(request):
     if request.method != 'POST':
         return HttpResponse(

@@ -705,7 +705,64 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
         add_assertion: function() {
           this.updating = true;
           console.log('add-assertion');
-
+          if(this.new_object_val === null || this.selected_pred_item === null){
+            console.log('No input value for the object');
+            return null;
+          }
+          let add_obj = {
+            subject_id: ITEM_UUID,
+            predicate_id: this.selected_pred_item.uuid,
+            // observation_id: this.assert.observation_id,
+            // event_id: this.assert.event_id,
+            // attribute_group_id: this.assert.attribute_group_id,
+            // language_id: this.assert.language_id,
+            // sort: this.assert.sort,
+          };
+          if(this.selected_pred_item.data_type == 'xsd:boolean'){
+            add_obj.obj_boolean = this.new_object_val;
+          }
+          if(this.selected_pred_item.data_type == 'xsd:string'){
+            add_obj.obj_string = this.new_object_val;
+          }
+          if(this.selected_pred_item.data_type == 'xsd:integer'){
+            add_obj.obj_integer = this.new_object_val;
+          }
+          if(this.selected_pred_item.data_type == 'xsd:double'){
+            add_obj.obj_double = this.new_object_val;
+          }
+          if(this.selected_pred_item.data_type == 'xsd:date'){
+            add_obj.obj_datetime = this.new_object_val;
+          }
+          if(this.selected_pred_item.data_type == 'id'){
+            add_obj.object_id = this.new_object_val;
+          }
+          let add_objs = [];
+          add_objs.push(add_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(add_objs)
+          };
+          fetch('/editorial/item-add-assertions', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.input_value = null;
+            this.$emit('assertion_update_done', true);
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
         },
       },
       components: {

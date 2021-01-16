@@ -156,6 +156,11 @@ urlpatterns = [
         name='editorial_update_assertions_fields'
     ),
     url(
+        r'^editorial/item-add-assertions', 
+        EditorialItemViews.add_assertions, 
+        name='editorial_add_assertions'
+    ),
+    url(
         r'^editorial/item-update-space-time', 
         EditorialItemViews.update_space_time_fields, 
         name='editorial_update_space_time_fields'

@@ -81,6 +81,10 @@ ASSERTION_ATTRIBUTES_UPDATE_ALLOWED = [
     for a_a, _ in ASSERTION_ATTRIBUTES_UPDATE_CONFIG
 ]
 
+# The source id to use for adding new assertions if not provided
+DEFAULT_ADD_ASSERTION_SOURCE_ID = 'ui-added-assertion'
+
+
 def make_models_dict(models_dict=None, item_obj=None, obj_qs=None):
     """Makes an edit history dict, keyed by the model label"""
     if not item_obj and not obj_qs:
@@ -133,7 +137,7 @@ def create_edit_history_meta_json(
             obj_qs=after_edit_model_objs
         )
 
-    if not prior_to_edit_model_dict or not after_edit_model_dict:
+    if not prior_to_edit_model_dict and not after_edit_model_dict:
         return None
 
     edit_dict['prior_to_edit'] = prior_to_edit_model_dict
@@ -367,7 +371,7 @@ def update_manifest_fields(request_json):
 
 
 def update_attribute_fields(request_json):
-    """Updates AllManifest fields based on listed attributes in client request JSON"""
+    """Updates AllAssertion fields based on listed attributes in client request JSON"""
     errors = []
     
     if not isinstance(request_json, list):
@@ -395,6 +399,12 @@ def update_attribute_fields(request_json):
             if item_update.get(k) is not None and str(getattr(assert_obj, k)) != str(item_update.get(k))
         }
         
+        if update_dict.get('predicate_id') == str(configs.PREDICATE_CONTAINS_UUID):
+            # Don't allow modification of spatial containment, because that
+            # has wider implications on manifest object records.
+            errors.append(f'Cannot change (spatial) containment with this method')
+            continue
+
         if not len(update_dict):
             print('Nothing to update')
             continue
@@ -474,3 +484,142 @@ def update_attribute_fields(request_json):
         updated.append(update_dict)
 
     return updated, errors
+
+
+def add_assertions(request_json, source_id=DEFAULT_ADD_ASSERTION_SOURCE_ID):
+    """Add AllAssertions and from a client request JSON"""
+    errors = []
+    
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return [], errors
+
+    added = []
+    for item_add in request_json:
+        subj_man_obj = None
+        if item_add.get('subject_id'):
+            subj_man_obj = AllManifest.objects.filter(
+                uuid=item_add.get('subject_id')
+            ).first()
+
+        if not subj_man_obj:
+            errors.append(f'Cannot find subject for assertion {str(item_add)}')
+            continue
+
+        # Update if the item_update has attributes that we allow to update.
+        add_dict = {
+            k:item_add.get(k) 
+            for k in ASSERTION_ATTRIBUTES_UPDATE_ALLOWED
+            if k != 'uuid' and item_add.get(k) is not None
+        }
+        
+        if add_dict.get('predicate_id') == str(configs.PREDICATE_CONTAINS_UUID):
+            # Don't allow modification of spatial containment, because that
+            # has wider implications on manifest object records.
+            errors.append(f'Cannot add (spatial) containment with this method')
+            continue
+
+        if not add_dict.get('predicate_id'):
+            errors.append(f'Assertion must have a predicate')
+            continue
+
+        if not len(add_dict):
+            print('Nothing to update')
+            continue
+
+        # Fill in some of the blanks that the client may not usually send
+        add_dict['subject_id'] = subj_man_obj.uuid
+        if not add_dict.get('project_id'):
+            add_dict['project_id'] = subj_man_obj.project.uuid
+        if not add_dict.get('publisher_id'):
+            add_dict['publisher_id'] = subj_man_obj.publisher.uuid
+        if not add_dict.get('source_id'):
+            add_dict['source_id'] = source_id
+        if not add_dict.get('meta_json'):
+            add_dict['meta_json'] = {}
+
+
+        # NOTE: The sorting for the new assertion can be determined if not
+        # already specified by the client in the add_dict. The following
+        # steps should add the new assertion record with an expected sort
+        # value.
+        if not add_dict.get('sort'):
+            sort_assert = AllAssertion.objects.filter(
+                subject=subj_man_obj,
+                predicate_id=add_dict.get('predicate_id')
+            ).order_by('-sort').first()
+            if sort_assert:
+                # This subject already has assertion(s) with this predicate,
+                # so add a small value to the sort of the new assertion.
+                add_dict['sort'] = sort_assert.sort + 0.001
+
+        if not add_dict.get('sort'):
+            pred_obj = AllManifest.objects.filter(
+                uuid=add_dict.get('predicate_id')
+            ).first()
+            if pred_obj and pred_obj.meta_json.get('sort'):
+                # The predicate object has a default sort value, so use it
+                add_dict['sort'] = pred_obj.meta_json.get('sort')
+        
+        if not add_dict.get('sort'):
+            sort_assert = AllAssertion.objects.filter(
+                subject=subj_man_obj,
+            ).order_by('-sort').first()
+            if sort_assert:
+                # This subject does not have any assertions with the new
+                # predicate, so add larger sort value to the new assertion
+                add_dict['sort'] = sort_assert.sort + 1
+
+
+        for attr, value in add_dict.items():
+            if value is False and ASSERTION_DEFAULT_NODE_IDS.get(attr):
+                # We're removing an an assertion node, so set it back to the default
+                value = ASSERTION_DEFAULT_NODE_IDS.get(attr)
+
+            if not attr.endswith('_id'):
+                continue
+        
+            if attr == 'source_id':
+                # Skip this, it's not meant to be a manifest object.
+                continue
+            
+            # Get the label for the attribute that we're changing.
+            ref_obj = AllManifest.objects.filter(uuid=value).first()
+            if ref_obj:
+                continue
+            error = f'Cannot find {attr} object {value}'
+            errors.append(error)
+
+        try:
+            assert_obj = AllAssertion(**add_dict)
+            assert_obj.save()
+            ok = True
+        except Exception as e:
+            ok = False
+            if hasattr(e, 'message'):
+                error = e.message
+            else:
+                error = str(e)
+            errors.append(f'Assertion item add error: {error}')
+        if not ok:
+            continue
+
+        # Make a copy of the new state of your model.
+        after_edit_model_dict = make_models_dict(item_obj=assert_obj)
+
+        display_obj = assert_obj.get_display_object()
+        edit_note = (
+            f'Added assertion: {assert_obj.predicate.label} -> {display_obj}'
+        )
+
+        history_obj = record_edit_history(
+            subj_man_obj,
+            edit_note=edit_note,
+            prior_to_edit_model_dict={},
+            after_edit_model_dict=after_edit_model_dict,
+        )
+        item_add['history_id'] = str(history_obj.uuid)
+        item_add['uuid'] = str(assert_obj.uuid)
+        added.append(item_add)
+
+    return added, errors
