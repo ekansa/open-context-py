@@ -56,17 +56,19 @@ NOTE: Templates and view components to edit assertions made on an item
     ></b-form-input>
     <div v-if="assert.predicate__data_type == 'id'">
       <b-row v-if="!for_add_new">
-        <b-col cols="2">
+        <b-col cols="2" class="text-center">
           <b-button
             v-if="!is_object_edit_open"
             sm
             block
             @click="toggle_object_edit"
+            class="text-center"
             variant="info">Edit</b-button>
             <b-button
             v-if="is_object_edit_open"
             sm
             block
+            class="text-center"
             @click="toggle_object_edit"
             variant="outline-secondary">Keep</b-button>
         </b-col>
@@ -125,8 +127,19 @@ NOTE: Templates and view components to edit assertions made on an item
 
 <template id='assert-object'>
   <b-row class="obj_row">
-    <b-col cols="9">
 
+    <b-col cols="1" class="text-center">
+      <b-button
+        sm
+        @click="delete_assertion"
+        variant="dark"
+        title="Delete assertion"
+        class="text-center"><small><b-icon-x-circle></b-icon-x-circle></small>
+      </b-button>
+    </b-col>
+  
+    <b-col cols="8">
+  
       <assert-object-edit
         v-bind:assert="assert"
         @get_validation_errors="get_validation_errors($event)"
@@ -135,13 +148,14 @@ NOTE: Templates and view components to edit assertions made on an item
       </assert-object-edit>
 
     </b-col>
-    <b-col cols="3">
+    <b-col cols="3" class="text-center">
       <b-spinner v-if="updating" label="Updating..."></b-spinner>
       <b-button
         v-if="is_value_changed && !updating"
         sm
         block
         @click="update_object_value"
+        class="text-center"
         variant="info">Update to <strong>[[ disp_changed_value ]]</strong>
         <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
       </b-button>
@@ -333,6 +347,7 @@ NOTE: Templates and view components to edit assertions made on an item
     
     <add-assertion-ui
       v-bind:act_obs="act_obs"
+      @assertion_update_done="assertion_update_done($event)"
     >
     </add-assertion-ui>
 
@@ -550,6 +565,39 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
           this.input_value =  changes.input_value;
           this.is_value_changed = changes.is_value_changed;
           this.disp_changed_value = changes.disp_changed_value;
+        },
+        delete_assertion: function() {
+          this.updating = true;
+          let delete_obj = {
+            uuid: this.assert.uuid,
+          };
+          let delete_objs = [];
+          delete_objs.push(delete_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(delete_objs)
+          };
+          fetch('/editorial/item-delete-assertions', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.input_value = null;
+            this.$emit('assertion_update_done', true);
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
         },
         update_object_value: function() {
           if(this.input_value === null){

@@ -24,7 +24,9 @@ from opencontext_py.apps.all_items.models import (
 )
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
-from opencontext_py.apps.all_items.editorial.item import updater as item_updater
+
+from opencontext_py.apps.all_items.editorial.item import updater_manifest
+from opencontext_py.apps.all_items.editorial.item import updater_assertions
 
 from opencontext_py.apps.all_items.representations.item import (
     get_item_assertions,
@@ -247,6 +249,151 @@ def item_assertions_json(request, uuid):
     )
 
 
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def update_manifest_fields(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    updated, errors = updater_manifest.update_manifest_fields(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def delete_manifest(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    deleted, errors = updater_manifest.delete_manifest_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'deleted': deleted,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def update_assertions_fields(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    updated, errors = updater_assertions.update_attribute_fields(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def add_assertions(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = updater_assertions.add_assertions(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def delete_assertions(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = updater_assertions.delete_assertions(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
 @never_cache
 @cache_control(no_cache=True)
 def item_spacetime_json(request, uuid):
@@ -282,93 +429,6 @@ def item_spacetime_json(request, uuid):
     
     json_output = json.dumps(
         api_result,
-        indent=4,
-        ensure_ascii=False
-    )
-    return HttpResponse(
-        json_output,
-        content_type="application/json; charset=utf8"
-    )
-
-
-@cache_control(no_cache=True)
-@never_cache
-@transaction.atomic()
-@reversion.create_revision()
-def update_manifest_fields(request):
-    if request.method != 'POST':
-        return HttpResponse(
-            'Must be a POST request', status=405
-        )
-    request_json = json.loads(request.body)
-    updated, errors = item_updater.update_manifest_fields(request_json)
-    if len(errors):
-        # We failed.
-        return make_error_response(errors)
-    output = {
-        'ok': True,
-        'updated': updated,
-    }
-    json_output = json.dumps(
-        output,
-        indent=4,
-        ensure_ascii=False
-    )
-    return HttpResponse(
-        json_output,
-        content_type="application/json; charset=utf8"
-    )
-
-
-@cache_control(no_cache=True)
-@never_cache
-@transaction.atomic()
-@reversion.create_revision()
-def update_assertions_fields(request):
-    if request.method != 'POST':
-        return HttpResponse(
-            'Must be a POST request', status=405
-        )
-    request_json = json.loads(request.body)
-    updated, errors = item_updater.update_attribute_fields(request_json)
-    if len(errors):
-        # We failed.
-        return make_error_response(errors)
-    output = {
-        'ok': True,
-        'updated': updated,
-    }
-    json_output = json.dumps(
-        output,
-        indent=4,
-        ensure_ascii=False
-    )
-    return HttpResponse(
-        json_output,
-        content_type="application/json; charset=utf8"
-    )
-
-
-@cache_control(no_cache=True)
-@never_cache
-@transaction.atomic()
-@reversion.create_revision()
-def add_assertions(request):
-    if request.method != 'POST':
-        return HttpResponse(
-            'Must be a POST request', status=405
-        )
-    request_json = json.loads(request.body)
-    added, errors = item_updater.add_assertions(request_json)
-    if len(errors):
-        # We failed.
-        return make_error_response(errors)
-    output = {
-        'ok': True,
-        'added': added,
-    }
-    json_output = json.dumps(
-        output,
         indent=4,
         ensure_ascii=False
     )

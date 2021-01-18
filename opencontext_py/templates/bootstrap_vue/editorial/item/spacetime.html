@@ -1,0 +1,292 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+<style>
+ .spacetime_row {
+   margin-top: 24px;
+   margin-bottom: 24px;
+ }
+</style>
+
+<template id='act-map'>
+  <div v-if="spacetime.feature">          
+    <l-map
+      style="min-height: 300px;"
+      :ref="'map' + spacetime.uuid" 
+      :zoom="spacetime.map_config.zoom"
+      :center="spacetime.map_config.center"
+      :load-tiles-while-animating="true" 
+      :load-tiles-while-interacting="true">
+      <l-control-layers position="topright"></l-control-layers>
+      <l-tile-layer
+        v-for="tp in tileProviders"
+        :key="tp.name"
+        :name="tp.name"
+        :visible="tp.visible"
+        :url="tp.url"
+        :attribution="tp.attribution"
+        layer-type="base"></l-tile-layer>
+      <l-geo-json
+        :geojson="spacetime.feature"
+      ></l-geo-json>
+    </l-map>
+  </div>
+</template>
+
+
+<template id="spacetime-obj">
+  <b-row class="spacetime_row" v-if="spacetime">
+
+    <b-col cols="1" class="text-center">
+      <b-button
+        sm
+        @click="delete_spacetime"
+        variant="dark"
+        title="Delete location / chronology record"
+        class="text-center"><small><b-icon-x-circle></b-icon-x-circle></small>
+      </b-button>
+    </b-col>
+
+    <b-col cols="5">
+      <b-row>
+        <label :for="'start-' + spacetime.uuid">Early Date</label>
+        <b-form-input
+          v-model="input_start"
+          :id="'start-' + spacetime.uuid"
+          type="number"
+          @change="value_change"
+          :value="spacetime.start"
+        ></b-form-input>
+      </b-row>
+      <b-row>
+        <label :for="'stop-' + spacetime.uuid">Late Date</label>
+        <b-form-input
+          v-model="input_stop"
+          :id="'stop-' + spacetime.uuid"
+          type="number"
+          @change="value_change"
+          :value="spacetime.stop"
+        ></b-form-input>
+      </b-row>
+    </b-col>
+
+    <b-col cols="1">
+      <b-spinner v-if="updating" label="Updating..."></b-spinner>
+      <b-button
+        v-if="is_value_changed && !updating"
+        sm
+        block
+        @click="update_object_value"
+        class="text-center"
+        variant="info">Update to <strong>[[ disp_changed_value ]]</strong>
+        <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+      </b-button>
+    </b-col>
+
+    <b-col cols="5">
+      <act-map v-bind:spacetime="spacetime"></act-map>
+    </b-col>
+
+  </b-row>
+</template>
+
+
+<template id="edit-spacetime">
+  <div v-for="(spacetime, index) in spacetime_objs">
+    <spacetime-obj
+      :key="'space-time-obj' + spacetime.uuid"
+      v-bind:spacetime="spacetime"
+    >
+    </spacetime-obj>
+</div>
+</template>
+
+
+<script type="text/javascript">
+
+  // Import Vue2Leaflet components. 
+  const l_tile_layer = Vue.component(
+    'l-tile-layer', 
+    window.Vue2Leaflet.LTileLayer,
+  );
+  const l_geojson = Vue.component(
+    'l-geo-json', 
+    window.Vue2Leaflet.LGeoJson,
+  );
+  const l_control_layers = Vue.component(
+    'l-control-layers', 
+    window.Vue2Leaflet.LControlLayers,
+  );
+  const l_map = Vue.component(
+    'l-map', 
+    window.Vue2Leaflet.LMap,
+  );
+  // Set up some base map tile sources.
+  const map_box_token = "pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g";
+  const TILE_PROVIDERS = [
+      {
+            name: 'OpenStreetMap',
+            visible: true,
+            id: 'osm',
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      },
+      {
+            name: 'OpenTopoMap',
+            visible: false,
+            id: 'otm',
+            url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+            attribution: 'Map data: © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+      },
+      {
+            name: 'MapBox Light',
+            visible: false,
+            id: 'mapbox-light',
+            url: ('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token),
+            attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+      },
+      {
+            name: 'MapBox Dark',
+            visible: false,
+            id: 'mapbox-dark',
+            url: ('https://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token),
+            attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+      }
+  ];
+
+
+  // Now make a Vue component of for a leaflet map.
+  var vc_map = Vue.component(
+    'act-map', 
+    {
+      props: ['spacetime'],
+      data() {
+        return {
+            // Map Options
+            zoom_def: 13,
+            layers: [],
+            selectedTileSet: TILE_PROVIDERS[0], 
+            tileProviders: TILE_PROVIDERS,
+            mapOptions: {
+                  zoomControl: true, 
+                  attributionControl: true, 
+                  zoomSnap: true 
+            },
+            minZoom_def: 1,
+            maxZoom_def: 30,
+            show_mapsets_default: true,
+        };
+      },
+      template: '#act-map',
+      computed: {
+        
+      },
+      methods: {
+            
+      },
+  });
+
+
+  var vc_spacetime_obj = Vue.component(
+    'spacetime-obj',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['spacetime'],
+      data() {
+        return {
+          spacetime: null,
+          updating: false,
+          input_start: null,
+          input_stop: null,
+        }
+      },
+      template: '#spacetime-obj',
+      created() {
+        
+      },
+      computed: {
+        is_value_changed: function() {
+          return false;
+        },
+      },
+      methods: {
+        value_change(input_value) {
+          console.log(this);
+          console.log(input_value);
+        },
+        delete_spacetime: function (){
+          this.error = null;
+          this.loading = true;
+        },
+      },
+      components: {
+        'root-item-tree': vs_root_item_tree,
+        'lookup-list': vs_look_up_list,
+        'act-map': vc_map,
+      },
+    }
+  ); 
+
+
+  var vc_edit_spacetime = Vue.component(
+    'edit-spacetime',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['uuid'],
+      data() {
+        return {
+          uuid: null,
+          man_obj: null,
+          spacetime_objs: null,
+        }
+      },
+      template: '#edit-spacetime',
+      created() {
+        this.fetch_api_spacetime();
+      },
+      methods: {
+        fetch_api_spacetime: function (){
+          this.error = null;
+          this.loading = true;
+          fetch(
+            ('/editorial/item-spacetimes/' + this.uuid),
+              {
+                headers:{
+                    'Accept': 'application/json',
+                }
+              }
+          )
+          .then(this.loading = false)
+          .then(response => response.json())
+          .then(json => {
+            this.spacetime_objs = [];
+            for(let spacetime of json){
+              if(spacetime.geometry){
+                spacetime.map_config = {
+                  center: [
+                    spacetime.latitude,
+                    spacetime.longitude,
+                  ],
+                  zoom: 13,
+                };
+                spacetime.feature = {
+                  type: "Feature",
+                  geometry: spacetime.geometry,
+                };
+              }
+              this.spacetime_objs.push(spacetime);
+            }
+            console.log(this.spacetime_objs);
+          });
+        },
+      },
+      components: {
+        'spacetime-obj': vc_spacetime_obj,
+      },
+    }
+  ); 
+  
+  </script>

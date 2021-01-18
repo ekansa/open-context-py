@@ -151,6 +151,11 @@ urlpatterns = [
         name='editorial_update_manifest_fields'
     ),
     url(
+        r'^editorial/item-delete-manifest', 
+        EditorialItemViews.delete_manifest, 
+        name='editorial_delete_manifest'
+    ),
+    url(
         r'^editorial/item-update-assertions', 
         EditorialItemViews.update_assertions_fields, 
         name='editorial_update_assertions_fields'
@@ -159,6 +164,11 @@ urlpatterns = [
         r'^editorial/item-add-assertions', 
         EditorialItemViews.add_assertions, 
         name='editorial_add_assertions'
+    ),
+    url(
+        r'^editorial/item-delete-assertions', 
+        EditorialItemViews.delete_assertions, 
+        name='editorial_delete_assertions'
     ),
     url(
         r'^editorial/item-update-space-time', 

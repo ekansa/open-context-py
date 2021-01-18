@@ -2140,18 +2140,20 @@ class AllHistory(models.Model):
         hash_obj = hashlib.sha1(encoded_str)
         return hash_obj.hexdigest()
 
-    def calculate_sha1_hash_for_item(self, item_id):
+    def calculate_sha1_hash_for_item(self, item_id, use_time=False):
         """Makes a sha1 hash for an item"""
         all_model_dicts = self.get_model_dicts_for_history(item_id)
         if not all_model_dicts:
             return None
+        if use_time:
+            all_model_dicts['updated'] = timezone.now().isoformat()
         return self.calculate_sha1_hash_from_all_model_dicts(all_model_dicts)
     
-    def calculate_sha1_hash_for_self(self):
+    def calculate_sha1_hash_for_self(self, use_time=False):
         """Make sha1 hash for self"""
         if not self.item:
             return None
-        return self.calculate_sha1_hash_for_item(self.item.uuid)
+        return self.calculate_sha1_hash_for_item(self.item.uuid, use_time=use_time)
 
     def primary_key_create(self, item_id, sha1_hash):
         """Makes a primary key using a prefix from the item"""
