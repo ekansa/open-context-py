@@ -15,7 +15,7 @@ NOTE: Templates and view components to edit an item's manifest object.
   <div v-if="spacetime.feature">          
     <l-map
       style="min-height: 300px;"
-      :ref="'map' + spacetime.uuid" 
+      :ref="'map-' + spacetime.uuid" 
       :zoom="spacetime.map_config.zoom"
       :center="spacetime.map_config.center"
       :load-tiles-while-animating="true" 
@@ -30,12 +30,113 @@ NOTE: Templates and view components to edit an item's manifest object.
         :attribution="tp.attribution"
         layer-type="base"></l-tile-layer>
       <l-geo-json
-      :options="options"
+        :key="'geojson-' + spacetime.uuid + map_key"
+        :ref="'geojson-' + spacetime.uuid"
+        :options="options"
         :geojson="spacetime.feature"
       >
         </l-popup>
       </l-geo-json>
     </l-map>
+  </div>
+</template>
+
+
+<template id="spacetime-form">
+  <div>
+
+    <b-row>
+      <b-col>
+        <label :for="'earliest-' + spacetime.uuid">Early Date</label>
+        <b-form-input
+          v-model="spacetime.earliest"
+          :id="'earliest-' + spacetime.uuid"
+          type="number"
+          @change="value_change"
+          :value="spacetime.earliest"
+        ></b-form-input>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col>
+        <label :for="'latest-' + spacetime.uuid">Late Date</label>
+        <b-form-input
+          v-model="spacetime.latest"
+          :id="'latest-' + spacetime.uuid"
+          type="number"
+          @change="value_change"
+          :value="spacetime.latest"
+        ></b-form-input>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col>
+        <label :for="'lat-' + spacetime.uuid">Latitude</label>
+        <b-form-input
+          v-model="spacetime.latitude"
+          :id="'lat-' + spacetime.uuid"
+          type="number"
+          @change="value_change"
+          :value="spacetime.latitude"
+        ></b-form-input>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col>
+        <label :for="'lon-' + spacetime.uuid">Longitude</label>
+        <b-form-input
+          v-model="spacetime.longitude"
+          :id="'lon-' + spacetime.uuid"
+          type="number"
+          @change="value_change"
+          :value="spacetime.longitude"
+        ></b-form-input>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col>
+        <label :for="'geometry-' + spacetime.uuid">Geometry</label>
+        <b-form-textarea
+          :id="'geometry-' + spacetime.uuid"
+          debounce="250"
+          @change="value_change"
+          v-model="spacetime.geometry"
+          :value="spacetime.geometry"
+        ></b-form-textarea>
+      </b-col>
+    </b-row>
+
+    <b-row>
+
+      <b-col v-if="!add_new">
+        <b-spinner v-if="updating" label="Updating..."></b-spinner>
+        <b-button
+          v-if="is_value_changed && !updating"
+          sm
+          block
+          @click="update_spacetime"
+          class="text-center"
+          variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
+      </b-col>
+      <b-col v-if="add_new">
+        <b-spinner v-if="updating" label="Adding..."></b-spinner>
+        <b-button
+          v-if="is_value_changed && !updating"
+          sm
+          block
+          @click="add_spacetime"
+          class="text-center"
+          variant="info">Add <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
+      </b-col>
+
+    </b-row>
+
   </div>
 </template>
 
@@ -55,92 +156,17 @@ NOTE: Templates and view components to edit an item's manifest object.
 
     <b-col cols="5">
 
-      <b-row>
-        <b-col>
-          <label :for="'earliest-' + spacetime.uuid">Early Date</label>
-          <b-form-input
-            v-model="spacetime.earliest"
-            :id="'earliest-' + spacetime.uuid"
-            type="number"
-            @change="value_change"
-            :value="spacetime.earliest"
-          ></b-form-input>
-        </b-col>
-      </b-row>
-
-      <b-row>
-        <b-col>
-          <label :for="'latest-' + spacetime.uuid">Late Date</label>
-          <b-form-input
-            v-model="spacetime.latest"
-            :id="'latest-' + spacetime.uuid"
-            type="number"
-            @change="value_change"
-            :value="spacetime.latest"
-          ></b-form-input>
-        </b-col>
-      </b-row>
-
-      <b-row>
-        <b-col>
-          <label :for="'lat-' + spacetime.uuid">Latitude</label>
-          <b-form-input
-            v-model="spacetime.latitude"
-            :id="'lat-' + spacetime.uuid"
-            type="number"
-            @change="value_change"
-            :value="spacetime.latitude"
-          ></b-form-input>
-        </b-col>
-      </b-row>
-
-      <b-row>
-        <b-col>
-          <label :for="'lon-' + spacetime.uuid">Longitude</label>
-          <b-form-input
-            v-model="spacetime.longitude"
-            :id="'lon-' + spacetime.uuid"
-            type="number"
-            @change="value_change"
-            :value="spacetime.longitude"
-          ></b-form-input>
-        </b-col>
-      </b-row>
-
-      <b-row>
-        <b-col>
-          <label :for="'geometry-' + spacetime.uuid">Geometry</label>
-          <b-form-textarea
-            :id="'geometry-' + spacetime.uuid"
-            debounce="250"
-            @change="value_change"
-            v-model="spacetime.geometry"
-            :value="spacetime.geometry"
-          ></b-form-textarea>
-        </b-col>
-      </b-row>
-
-      <b-row>
-
-        <b-col>
-          <b-spinner v-if="updating" label="Updating..."></b-spinner>
-          <b-button
-            v-if="is_value_changed && !updating"
-            sm
-            block
-            @click="update_spacetime"
-            class="text-center"
-            variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
-          </b-button>
-        </b-col>
-
-      </b-row>
-
+      <spacetime-form
+        @edit_spacetime="edit_spacetime($event)"
+        v-bind:spacetime="spacetime">
+      </spacetime-form>
 
     </b-col>
 
     <b-col cols="6">
-      <act-map v-bind:spacetime="spacetime"></act-map>
+      <act-map
+        v-bind:map_key="map_key"
+        v-bind:spacetime="spacetime"></act-map>
     </b-col>
 
   </b-row>
@@ -149,13 +175,18 @@ NOTE: Templates and view components to edit an item's manifest object.
 
 <template id="edit-spacetime">
   <div>
-    <div v-for="(spacetime, index) in spacetime_objs">
-      <spacetime-obj
-        :key="'space-time-obj' + spacetime.uuid"
-        v-bind:spacetime="spacetime"
-      >
-      </spacetime-obj>
-    </div>
+    <b-card no-body v-for="(spacetime, index) in spacetime_objs">
+      <b-card-header header-tag="header" class="p-1" role="tab">
+        Record [[ (index + 1) ]]</b-button>
+      </b-card-header>
+      <b-card-body>
+        <spacetime-obj
+          :key="'space-time-obj' + spacetime.uuid"
+          v-bind:spacetime="spacetime"
+        >
+        </spacetime-obj>
+      </b-card-body>
+    </b-card>
   </div>
 </template>
 
@@ -187,40 +218,50 @@ NOTE: Templates and view components to edit an item's manifest object.
   // Set up some base map tile sources.
   const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
   const TILE_PROVIDERS = [
-      {
-            name: 'OpenStreetMap',
-            visible: true,
-            id: 'osm',
-            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-      },
-      {
-            name: 'OpenTopoMap',
-            visible: false,
-            id: 'otm',
-            url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-            attribution: 'Map data: © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-      },
-      {
-            name: 'MapBox Light',
-            visible: false,
-            id: 'mapbox-light',
-            url: (
-              'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
-              + MAPBOX_PUBLIC_ACCESS_TOKEN
-            ),
-            attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
-      },
-      {
-            name: 'MapBox Dark',
-            visible: false,
-            id: 'mapbox-dark',
-            url: (
-              'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token='
-              + MAPBOX_PUBLIC_ACCESS_TOKEN
-            ),
-            attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
-      }
+    {
+      name: 'OpenStreetMap',
+      visible: true,
+      id: 'osm',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    },
+    {
+      name: 'OpenTopoMap',
+      visible: false,
+      id: 'otm',
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: 'Map data: © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+    },
+    {
+      name: 'MapBox Light',
+      visible: false,
+      id: 'mapbox-light',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    },
+    {
+      name: 'MapBox Dark',
+      visible: false,
+      id: 'mapbox-dark',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    },
+    {
+      name: 'MapBox Satellite',
+      visible: false,
+      id: 'mapbox-satellite',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    }
   ];
 
 
@@ -228,10 +269,11 @@ NOTE: Templates and view components to edit an item's manifest object.
   var vc_map = Vue.component(
     'act-map', 
     {
-      props: ['spacetime'],
+      props: ['spacetime', 'map_key'],
       data() {
         return {
             // Map Options
+            map_key: 0,
             zoom_def: 13,
             layers: [],
             selectedTileSet: TILE_PROVIDERS[0], 
@@ -239,9 +281,16 @@ NOTE: Templates and view components to edit an item's manifest object.
             minZoom_def: 1,
             maxZoom_def: 30,
             show_mapsets_default: true,
+            map_ref: ('map-' + this.spacetime.uuid)
         };
       },
       template: '#act-map',
+      created() {
+        this.get_map_ref();
+      },
+      mounted() {
+        this.get_map_ref();
+      },
       computed: {
         options() {
           return {
@@ -250,28 +299,30 @@ NOTE: Templates and view components to edit an item's manifest object.
         },
         onEachFeatureFunction() {
           return (feature, layer) => {
-              layer.bindPopup(
-                `<dl class="row">
-                  <dt class="col-sm-4">Item</dt>
-                  <dd class="col-sm-8">${this.spacetime.item__label}</dd>
-                  <dt class="col-sm-4">Record</dt>
-                  <dd class="col-sm-8">${this.spacetime.event__label}</dd>
-                  <dt class="col-sm-4">Type</dt>
-                  <dd class="col-sm-8">${this.spacetime.event__item_class__label}</dd>
-                  <dt class="col-sm-4">Geometry</dt>
-                  <dd class="col-sm-8">${this.spacetime.geometry_type}</dd>
-                </dl>`
-              );
-              layer.bindTooltip(
-                ("<div>" + feature.properties.item__label + "</div>"),
-                { permanent: false, sticky: true }
-              );
-              console.log(feature);
+            layer.bindPopup(
+              `<dl class="row">
+                <dt class="col-sm-4">Item</dt>
+                <dd class="col-sm-8">${this.spacetime.item__label}</dd>
+                <dt class="col-sm-4">Record</dt>
+                <dd class="col-sm-8">${this.spacetime.event__label}</dd>
+                <dt class="col-sm-4">Type</dt>
+                <dd class="col-sm-8">${this.spacetime.event__item_class__label}</dd>
+                <dt class="col-sm-4">Geometry</dt>
+                <dd class="col-sm-8">${this.spacetime.geometry_type}</dd>
+              </dl>`
+            );
+            layer.bindTooltip(
+              ("<div>" + feature.properties.item__label + "</div>"),
+              { permanent: false, sticky: true }
+            );
           };
         },
       },
       methods: {
-        
+        get_map_ref: function() {
+          console.log(this.$refs);
+          console.log(this.$refs[this.map_ref]);
+        },
       },
       components: {
         'l-popup': l_popup,
@@ -283,22 +334,23 @@ NOTE: Templates and view components to edit an item's manifest object.
   });
 
 
-  var vc_spacetime_obj = Vue.component(
-    'spacetime-obj',
+  var vc_spacetime_form = Vue.component(
+    'spacetime-form',
     {
       delimiters: ['[[', ']]'],
-      props: ['spacetime', 'original_spacetime'],
+      props: ['spacetime', 'original_spacetime', 'add_new'],
       data() {
         return {
           spacetime: null,
           original_spacetime: null,
+          add_new: false,
           is_value_changed: false,
           updating: false,
           input_start: null,
           input_stop: null,
         }
       },
-      template: '#spacetime-obj',
+      template: '#spacetime-form',
       created() {
         this.set_original_spacetime();
       },
@@ -307,7 +359,7 @@ NOTE: Templates and view components to edit an item's manifest object.
       },
       methods: {
         set_original_spacetime: function (){
-          if(!this.original_spacetime){
+          if(!this.add_new && !this.original_spacetime){
             this.original_spacetime = {};
             for (let key in this.spacetime) {
               if (this.spacetime.hasOwnProperty(key)){
@@ -317,6 +369,9 @@ NOTE: Templates and view components to edit an item's manifest object.
           }
         },
         check_value_change: function() {
+          if(this.add_new){
+            this.is_value_changed = true;
+          }
           if(!this.spacetime){
             this.is_value_changed = false;
           }
@@ -341,13 +396,15 @@ NOTE: Templates and view components to edit an item's manifest object.
             this.spacetime.earliest = this.spacetime.latest;
             this.spacetime.latest = temp;
           }
+          this.spacetime.geometry = JSON.parse(this.spacetime.geometry);
+          this.$emit('edit_spacetime',this.spacetime);
           this.check_value_change();
         },
-        delete_spacetime: function (){
+        update_spacetime: function (){
           this.error = null;
           this.loading = true;
         },
-        update_spacetime: function (){
+        add_spacetime: function (){
           this.error = null;
           this.loading = true;
         },
@@ -355,6 +412,78 @@ NOTE: Templates and view components to edit an item's manifest object.
       components: {
         'root-item-tree': vs_root_item_tree,
         'lookup-list': vs_look_up_list,
+      },
+    }
+  ); 
+
+
+  var vc_spacetime_obj = Vue.component(
+    'spacetime-obj',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['spacetime',],
+      data() {
+        return {
+          spacetime: null,
+          original_spacetime: null,
+          map_key: 1,
+        }
+      },
+      template: '#spacetime-obj',
+      created() {
+        this.compute_feature();
+      },
+      computed: {
+        
+      },
+      methods: {
+        set_original_spacetime: function (){
+          if(!this.add_new && !this.original_spacetime){
+            this.original_spacetime = {};
+            for (let key in this.spacetime) {
+              if (this.spacetime.hasOwnProperty(key)){
+                this.original_spacetime[key] = this.spacetime[key];
+              }
+            }
+          }
+        },
+        compute_feature: function (){
+          if(!this.spacetime){
+            return null;
+          }
+          if(!this.spacetime.geometry){
+            return null;
+          }
+          this.spacetime.map_config = {
+            center: [
+              this.spacetime.latitude,
+              this.spacetime.longitude,
+            ],
+            zoom: 13,
+          };
+          this.spacetime.feature = {
+            type: "Feature",
+            geometry: this.spacetime.geometry,
+            properties: {
+              'item__label': this.spacetime.item__label,
+              'event__label': this.spacetime.event__label,
+              'event__item_class__label': this.spacetime.event__item_class__label,
+            },
+          };
+        },
+        edit_spacetime(spacetime){
+          this.spacetime = spacetime;
+          this.compute_feature();
+          this.map_key += 1;
+          console.log(this.spacetime);
+        },
+        delete_spacetime: function (){
+          this.error = null;
+          this.loading = true;
+        },
+      },
+      components: {
+        'spacetime-form': vc_spacetime_form,
         'act-map': vc_map,
       },
     }
@@ -392,28 +521,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           .then(this.loading = false)
           .then(response => response.json())
           .then(json => {
-            this.spacetime_objs = [];
-            for(let spacetime of json){
-              if(spacetime.geometry){
-                spacetime.map_config = {
-                  center: [
-                    spacetime.latitude,
-                    spacetime.longitude,
-                  ],
-                  zoom: 13,
-                };
-                spacetime.feature = {
-                  type: "Feature",
-                  geometry: spacetime.geometry,
-                  properties: {
-                    'item__label': spacetime.item__label,
-                    'event__label': spacetime.event__label,
-                    'event__item_class__label': spacetime.event__item_class__label,
-                  },
-                };
-              }
-              this.spacetime_objs.push(spacetime);
-            }
+            this.spacetime_objs = json;
             console.log(this.spacetime_objs);
           });
         },
