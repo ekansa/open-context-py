@@ -185,7 +185,7 @@ NOTE: Templates and view components to edit an item's manifest object.
     window.Vue2Leaflet.LMap,
   );
   // Set up some base map tile sources.
-  const map_box_token = "pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g";
+  const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
   const TILE_PROVIDERS = [
       {
             name: 'OpenStreetMap',
@@ -205,14 +205,20 @@ NOTE: Templates and view components to edit an item's manifest object.
             name: 'MapBox Light',
             visible: false,
             id: 'mapbox-light',
-            url: ('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token),
+            url: (
+              'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
+              + MAPBOX_PUBLIC_ACCESS_TOKEN
+            ),
             attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
       },
       {
             name: 'MapBox Dark',
             visible: false,
             id: 'mapbox-dark',
-            url: ('https://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token),
+            url: (
+              'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token='
+              + MAPBOX_PUBLIC_ACCESS_TOKEN
+            ),
             attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
       }
   ];

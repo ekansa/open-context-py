@@ -147,6 +147,7 @@ def item_edit_interface_html(request, uuid):
         'OC_VARIABLES': json.dumps(oc_variables),
         'OC_LINKS': json.dumps(oc_links),
         'OC_PRED_LINK_OK_ITEM_TYPES': json.dumps(configs.OC_PRED_LINK_OK_ITEM_TYPES),
+        'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
     response = HttpResponse(template.render(context, request))

@@ -395,7 +395,12 @@ USE_L10N = True
 USE_TZ = True
 
 # ----------------------------
-# IMPORTER SETIINGS
+# WEB MAPPING SETTINGS
+# ----------------------------
+MAPBOX_PUBLIC_ACCESS_TOKEN = 'pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g'
+
+# ----------------------------
+# IMPORTER SETTINGS
 # ----------------------------
 IMPORT_BATCH_SIZE = 500  # number of records to import in 1 batch
 
