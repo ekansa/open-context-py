@@ -190,6 +190,10 @@ def item_history_json(request, uuid):
     )
 
 
+
+# ---------------------------------------------------------------------
+# NOTE: Item Manifest Edit endpoints
+# ---------------------------------------------------------------------
 @never_cache
 @cache_control(no_cache=True)
 def item_manifest_json(request, uuid):
@@ -207,40 +211,6 @@ def item_manifest_json(request, uuid):
         man_obj,
         more_attributes=['item_class__label', 'context__label', 'project__label']
     )
-    json_output = json.dumps(
-        api_result,
-        indent=4,
-        ensure_ascii=False
-    )
-    return HttpResponse(
-        json_output,
-        content_type="application/json; charset=utf8"
-    )
-
-
-@never_cache
-@cache_control(no_cache=True)
-def item_assertions_json(request, uuid):
-    """JSON representation of assertions about an item"""
-    _, valid_uuid = update_old_id(uuid)
-    man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
-    if not man_obj:
-        return HttpResponse(
-            json.dumps({}),
-            content_type="application/json; charset=utf8",
-            status=404
-        )
-
-    assert_qs = get_item_assertions(man_obj.uuid)
-    observations = get_observations_attributes_from_assertion_qs(
-        assert_qs,
-        for_edit=True
-    )
-    api_result = make_dict_json_safe(
-        observations, 
-        javascript_friendly_keys=True
-    )
-    
     json_output = json.dumps(
         api_result,
         indent=4,
@@ -301,6 +271,43 @@ def delete_manifest(request):
     }
     json_output = json.dumps(
         output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+# ---------------------------------------------------------------------
+# NOTE: Item Assertion Edit endpoints
+# ---------------------------------------------------------------------
+@never_cache
+@cache_control(no_cache=True)
+def item_assertions_json(request, uuid):
+    """JSON representation of assertions about an item"""
+    _, valid_uuid = update_old_id(uuid)
+    man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
+    if not man_obj:
+        return HttpResponse(
+            json.dumps({}),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    assert_qs = get_item_assertions(man_obj.uuid)
+    observations = get_observations_attributes_from_assertion_qs(
+        assert_qs,
+        for_edit=True
+    )
+    api_result = make_dict_json_safe(
+        observations, 
+        javascript_friendly_keys=True
+    )
+    
+    json_output = json.dumps(
+        api_result,
         indent=4,
         ensure_ascii=False
     )
@@ -396,7 +403,9 @@ def delete_assertions(request):
         content_type="application/json; charset=utf8"
     )
 
-
+# ---------------------------------------------------------------------
+# NOTE: Item Spacetime Edit endpoints
+# ---------------------------------------------------------------------
 @never_cache
 @cache_control(no_cache=True)
 def item_spacetime_json(request, uuid):
@@ -517,6 +526,56 @@ def delete_space_time(request):
     }
     json_output = json.dumps(
         output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+# ---------------------------------------------------------------------
+# NOTE: Item Resource Edit endpoints
+# ---------------------------------------------------------------------
+@never_cache
+@cache_control(no_cache=True)
+def item_resources_json(request, uuid):
+    """JSON representation of resources about an item"""
+    _, valid_uuid = update_old_id(uuid)
+    man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
+    if not man_obj:
+        return HttpResponse(
+            json.dumps({}),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    # List of related object attributes to add to the JSON
+    # output for each resources object.
+    more_attributes = [
+        'item__label',
+        'resourcetype__label',
+        'resourcetype__item_class_id',
+        'resourcetype__item_class__label',
+        'mediatype__label',
+        'mediatype__item_class_id',
+        'mediatype__item_class__label',
+    ]
+    api_result = []
+    resource_qs = AllResource.objects.filter(
+        item=man_obj
+    )
+    for resource_obj in resource_qs:
+        api_result.append(
+            make_model_object_json_safe_dict(
+                resource_obj,
+                more_attributes=more_attributes
+            )
+        )
+    
+    json_output = json.dumps(
+        api_result,
         indent=4,
         ensure_ascii=False
     )

@@ -12,14 +12,16 @@
         {% include './manifest.html' %}
         {% include './assertions.html' %}
         {% include './spacetime.html' %}
+        {% include './resources.html' %}
 
         <div id="main">
             <b-container fluid id="app">
                 <div>
                     <b-nav tabs>
-                    <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
-                    <b-nav-item :to="{ name: 'assertions'}" >Edit Descriptions, Links</b-nav-item>
-                    <b-nav-item :to="{ name: 'spacetime'}" >Edit Location and Chronology</b-nav-item>
+                        <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
+                        <b-nav-item :to="{ name: 'assertions'}" >Edit Descriptions, Links</b-nav-item>
+                        <b-nav-item :to="{ name: 'spacetime'}" >Edit Location and Chronology</b-nav-item>
+                        <b-nav-item :to="{ name: 'resources'}" >Edit Resources</b-nav-item>
                     </b-nav>
                 </div>
                 <b-row>
@@ -81,6 +83,12 @@
                     component: vc_edit_spacetime,
                     props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
                 },
+                {
+                    path: '/editorial/item-edit/' + ITEM_UUID + '#resources',
+                    name: 'resources',
+                    component: vc_edit_resources,
+                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+                },
             ];
 
             const router = new VueRouter({
@@ -133,6 +141,7 @@
                         'edit-history': vc_edit_history,
                         'edit-assertions': vc_edit_assertions,
                         'edit-spacetime': vc_edit_spacetime,
+                        'edit-resources': vc_edit_resources,
                     },
                 },
             ).$mount('#app');

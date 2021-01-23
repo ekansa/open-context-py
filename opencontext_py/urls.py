@@ -136,16 +136,6 @@ urlpatterns = [
         name='editorial_item_manifest_json'
     ),
     url(
-        r'^editorial/item-assertions/(?P<uuid>\S+)', 
-        EditorialItemViews.item_assertions_json, 
-        name='editorial_item_assertions_json'
-    ),
-    url(
-        r'^editorial/item-spacetimes/(?P<uuid>\S+)', 
-        EditorialItemViews.item_spacetime_json, 
-        name='editorial_item_spacetime_json'
-    ),
-    url(
         r'^editorial/item-update-manifest', 
         EditorialItemViews.update_manifest_fields, 
         name='editorial_update_manifest_fields'
@@ -154,6 +144,12 @@ urlpatterns = [
         r'^editorial/item-delete-manifest', 
         EditorialItemViews.delete_manifest, 
         name='editorial_delete_manifest'
+    ),
+    # Item assertion editing URLs
+    url(
+        r'^editorial/item-assertions/(?P<uuid>\S+)', 
+        EditorialItemViews.item_assertions_json, 
+        name='editorial_item_assertions_json'
     ),
     url(
         r'^editorial/item-update-assertions', 
@@ -170,6 +166,12 @@ urlpatterns = [
         EditorialItemViews.delete_assertions, 
         name='editorial_delete_assertions'
     ),
+    # Item space-time editing URLs
+    url(
+        r'^editorial/item-spacetimes/(?P<uuid>\S+)', 
+        EditorialItemViews.item_spacetime_json, 
+        name='editorial_item_spacetime_json'
+    ),
     url(
         r'^editorial/item-update-space-time', 
         EditorialItemViews.update_space_time_fields, 
@@ -184,6 +186,12 @@ urlpatterns = [
         r'^editorial/item-delete-space-time', 
         EditorialItemViews.delete_space_time, 
         name='editorial_delete_space_time'
+    ),
+    # Item space-time editing URLs
+    url(
+        r'^editorial/item-resources/(?P<uuid>\S+)', 
+        EditorialItemViews.item_resources_json, 
+        name='editorial_item_resources_json'
     ),
     url(
         r'^editorial/item-update-resource', 

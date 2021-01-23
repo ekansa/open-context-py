@@ -70,7 +70,7 @@ NOTE: Templates and view components to edit assertions made on an item
             block
             class="text-center"
             @click="toggle_object_edit"
-            variant="outline-secondary">Keep</b-button>
+            variant="outline-secondary">Exit</b-button>
         </b-col>
         <b-col cols="10">
           [[assert.object__label]]
@@ -287,7 +287,6 @@ NOTE: Templates and view components to edit assertions made on an item
       ref="obs_assertions"
       small
       striped
-      selectable
       table-variant="secondary"
       :select-mode="selectMode"
       :items="act_obs.assertions"
@@ -979,6 +978,15 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
               label: obs.label,
               id: obs.id.replace('#', ''),
               assertions: obs_assertions,
+            }
+            new_obs.push(new_obs_item);
+          }
+          
+          if(new_obs.length < 1){
+            let new_obs_item = {
+              label: 'Empty Item Observation',
+              id: 0,
+              assertions: [],
             }
             new_obs.push(new_obs_item);
           }

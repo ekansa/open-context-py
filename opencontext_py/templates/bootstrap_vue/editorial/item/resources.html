@@ -1,0 +1,141 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+<style>
+ .spacetime_row {
+   margin-top: 24px;
+   margin-bottom: 24px;
+ }
+</style>
+
+
+<template id="resource-obj">
+  <div>
+
+    <b-row>
+      <b-col>
+        <label :for="'resource-' + resource.uri">File URI</label>
+        <b-form-input
+          v-model="resource.uri"
+          :id="'resource-' + resource.uri"
+          @change="value_change"
+          :value="resource.uri"
+        ></b-form-input>
+      </b-col>
+    </b-row>
+
+  </div>
+</template>
+
+
+<template id="edit-resources">
+  <div>
+    <b-row>
+      <b-col cols="12">
+        <b-card no-body v-for="(resource, index) in resource_objs">
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            Resource [[ (index + 1) ]]</b-button>
+          </b-card-header>
+          <b-card-body>
+            <resource-obj
+              :key="'resource-obj' + resource.uuid"
+              @resource_update_done="resource_update_done($event)"
+              v-bind:resource="resource"
+            >
+            </resource-obj>
+          </b-card-body>
+        </b-card>
+      </b-col>
+    </b-row>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+var vc_resource_obj = Vue.component(
+    'resource-obj',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['resource'],
+      data() {
+        return {
+          resource: null,
+        }
+      },
+      template: '#resource-obj',
+      created() {
+        
+      },
+      methods: {
+        value_change(input_value) {
+          console.log(input_value);
+        },
+      },
+      components: {
+
+      },
+    }
+  ); 
+
+
+  var vc_edit_resources = Vue.component(
+    'edit-resources',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['uuid'],
+      data() {
+        return {
+          uuid: null,
+          man_obj: null,
+          resource_objs: null,
+          emit_edit_done:false,
+        }
+      },
+      template: '#edit-resources',
+      created() {
+        this.fetch_api_resources();
+      },
+      methods: {
+        fetch_api_resources: function (){
+          this.error = null;
+          this.loading = true;
+          fetch(
+            ('/editorial/item-resources/' + this.uuid),
+              {
+                headers:{
+                    'Accept': 'application/json',
+                }
+              }
+          )
+          .then(this.loading = false)
+          .then(response => response.json())
+          .then(json => {
+            this.resource_objs = json;
+            console.log(this.resource_objs);
+            if(this.emit_edit_done){
+              this.emit_edit_done = false;
+              this.$emit('edit_done', true);
+            }
+          });
+        },
+        toggle_add_new_resource() {
+          console.log('here');
+          console.log(this.$bvModal);
+          this.$bvModal.show('add-resource-modal');  
+        },
+        resource_update_done(v){
+          this.emit_edit_done = true;
+          this.fetch_api_resources();
+        },
+      },
+      components: {
+        'resource-obj': vc_resource_obj,
+      },
+    }
+  ); 
+  
+  </script>
