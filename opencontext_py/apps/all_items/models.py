@@ -837,9 +837,18 @@ class AllSpaceTime(models.Model):
         makes sure time data is properly validated
         """
         raw_time_list = [earliest, start, stop, latest]
-        time_list = list(
-            set([t for t in raw_time_list if t is not None])
-        )
+        time_list = []
+        for raw_time in raw_time_list:
+            if isinstance(raw_time, str):
+                try:
+                    raw_time = float(raw_time)
+                except:
+                    raw_time = None
+            if raw_time is None:
+                continue
+            time_list.append(raw_time)
+    
+        time_list = list(set(time_list))
         if not len(time_list):
             return (
                 None,
@@ -847,17 +856,33 @@ class AllSpaceTime(models.Model):
                 None,
                 None,
             )
-
+        
         # Sort the list, then fill in any blanks.
         time_list.sort()
         while len(time_list) < 4:
             time_list.append(max(time_list))
+
+        if time_list[1] == max(time_list):
+            time_list[1] = min(time_list)
+        if time_list[2] == min(time_list):
+            time_list[2] = max(time_list)
 
         return (
             min(time_list),
             time_list[1],
             time_list[2],
             max(time_list),
+        )
+    
+    def validate_times_for_self(self):
+        """
+        makes sure time data is properly validated
+        """
+        self.earliest, self.start, self.stop, self.latest = self.validate_times(
+            self.earliest,
+            self.start,
+            self.stop,
+            self.latest,
         )
     
     def make_hash_id(
@@ -982,12 +1007,12 @@ class AllSpaceTime(models.Model):
         )
     
     def validate_longitude(self, lon):
-        if not isinstance(lon, float):
+        if not isinstance(lon, float) and not isinstance(lon, decimal.Decimal):
             return False
         return (-180 <= lon <= 180)
     
     def validate_latitude(self, lat):
-        if not isinstance(lat, float):
+        if not isinstance(lat, float) and not isinstance(lat, decimal.Decimal):
             return False
         return (-90 <= lat <= 90)
 
@@ -1052,6 +1077,23 @@ class AllSpaceTime(models.Model):
                 'have latitude and longitude coordinates.'
             )
         
+        if isinstance(self.longitude, str):
+            try:
+                self.longitude = float(self.longitude)
+            except:
+                raise ValueError(
+                    f'Coordinate {self.longitude} must '
+                    'be numeric.'
+                )
+        if isinstance(self.latitude, str):
+            try:
+                self.latitude = float(self.latitude)
+            except:
+                raise ValueError(
+                    f'Coordinate {self.longitude} must '
+                    'be numeric.'
+                )
+
         if not self.validate_longitude(self.longitude):
             raise ValueError(
                 f'Longitude must be between -180 and 180'

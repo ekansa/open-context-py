@@ -12,7 +12,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 </style>
 
 <template id='act-map'>
-  <div v-if="spacetime.feature">          
+  <div v-if="spacetime.feature && spacetime.geometry_type != null && spacetime.geometry_type != 'None'">          
     <l-map
       style="min-height: 300px;"
       :ref="'map-' + spacetime.uuid" 
@@ -70,9 +70,27 @@ NOTE: Templates and view components to edit an item's manifest object.
         ></b-form-input>
       </b-col>
     </b-row>
-
+  
     <b-row>
       <b-col>
+        <label :for="'geotype-' + spacetime.uuid">Geometry Type</label>
+        <b-form-input
+          v-model="spacetime.geometry_type"
+          :id="'geotype-' + spacetime.uuid"
+          @change="value_change"
+          :list="'geotypes-' + spacetime.uuid"
+          :value="spacetime.geometry_type"
+        ></b-form-input>
+        <datalist :id="'geotypes-' + spacetime.uuid">
+          <option title="No geo-spatial data">None</option>
+          <option v-for="geo_type in GEOMETRY_TYPES">[[ geo_type ]]</option>
+        </datalist>
+        <small class="text-muted">Enter 'None' to remove geo-spatial data.</small>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col v-if="spacetime.geometry_type == 'Point'">
         <label :for="'lat-' + spacetime.uuid">Latitude</label>
         <b-form-input
           v-model="spacetime.latitude"
@@ -85,7 +103,7 @@ NOTE: Templates and view components to edit an item's manifest object.
     </b-row>
 
     <b-row>
-      <b-col>
+      <b-col v-if="spacetime.geometry_type == 'Point'">
         <label :for="'lon-' + spacetime.uuid">Longitude</label>
         <b-form-input
           v-model="spacetime.longitude"
@@ -98,8 +116,8 @@ NOTE: Templates and view components to edit an item's manifest object.
     </b-row>
 
     <b-row>
-      <b-col>
-        <label :for="'geometry-' + spacetime.uuid">Geometry</label>
+      <b-col v-if="spacetime.geometry_type != null && spacetime.geometry_type != 'None'">
+        <label :for="'geometry-' + spacetime.uuid">Geometry (GeoJSON)</label>
         <b-form-textarea
           :id="'geometry-' + spacetime.uuid"
           debounce="250"
@@ -110,9 +128,9 @@ NOTE: Templates and view components to edit an item's manifest object.
       </b-col>
     </b-row>
 
-    <b-row>
+    <b-row class="spacetime_row">
 
-      <b-col v-if="!add_new">
+      <b-col v-if="!add_new" cols="6">
         <b-spinner v-if="updating" label="Updating..."></b-spinner>
         <b-button
           v-if="is_value_changed && !updating"
@@ -121,6 +139,16 @@ NOTE: Templates and view components to edit an item's manifest object.
           @click="update_spacetime"
           class="text-center"
           variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
+      </b-col>
+      <b-col v-if="!add_new" cols="6">
+        <b-button
+          v-if="is_value_changed && !updating"
+          sm
+          block
+          @click="reset_to_original_spacetime"
+          class="text-center"
+          variant="secondary">Undo Edit <b-icon-dash-square></b-icon-dash-square>
         </b-button>
       </b-col>
       <b-col v-if="add_new">
@@ -137,6 +165,14 @@ NOTE: Templates and view components to edit an item's manifest object.
 
     </b-row>
 
+    <b-row>
+      <b-col cols="12">
+        <b-alert v-if="errors" dismissible show variant="danger">
+          <small v-for="(error, index) in errors">[[error]]</small>
+        </b-alert>
+      </b-col>
+    </b-row>
+
   </div>
 </template>
 
@@ -144,7 +180,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 <template id="spacetime-obj">
   <b-row class="spacetime_row" v-if="spacetime">
 
-    <b-col cols="1">
+    <b-col cols="2">
       <b-button
         sm
         @click="delete_spacetime"
@@ -157,13 +193,16 @@ NOTE: Templates and view components to edit an item's manifest object.
     <b-col cols="5">
 
       <spacetime-form
+        @spacetime_update_done="spacetime_update_done($event)"
         @edit_spacetime="edit_spacetime($event)"
+        @edit_form="edit_form($event)"
+        :key="'form-key-' + spacetime.uuid + '-' + form_key"
         v-bind:spacetime="spacetime">
       </spacetime-form>
 
     </b-col>
 
-    <b-col cols="6">
+    <b-col cols="5">
       <act-map
         v-bind:map_key="map_key"
         v-bind:spacetime="spacetime"></act-map>
@@ -173,20 +212,80 @@ NOTE: Templates and view components to edit an item's manifest object.
 </template>
 
 
+<template id="add-spacetime-ui">
+  <div>
+    <b-modal
+      size="lg"
+      scrollable
+      ref="add-spacetime-modal"
+      id="add-spacetime-modal" 
+      title="Add Location and Chronology Data"
+      @shown="on_shown"
+    >
+      <b-container fluid>
+        <b-row>
+
+          <b-col cols="6">
+            <spacetime-form
+              @edit_spacetime="edit_spacetime($event)"
+              @edit_form="edit_form($event)"
+              @spacetime_update_done="spacetime_update_done($event)"
+              v-bind:add_new="true"
+              v-bind:spacetime="spacetime">
+            </spacetime-form>
+          </b-col>
+
+          <b-col cols="6">
+            <act-map
+              v-bind:map_key="map_key"
+              v-bind:spacetime="spacetime"></act-map>
+          </b-col>
+
+        </b-row>
+      </b-container>
+    </b-modal>
+  </div>
+</template>
+
+
+
 <template id="edit-spacetime">
   <div>
-    <b-card no-body v-for="(spacetime, index) in spacetime_objs">
-      <b-card-header header-tag="header" class="p-1" role="tab">
-        Record [[ (index + 1) ]]</b-button>
-      </b-card-header>
-      <b-card-body>
-        <spacetime-obj
-          :key="'space-time-obj' + spacetime.uuid"
-          v-bind:spacetime="spacetime"
-        >
-        </spacetime-obj>
-      </b-card-body>
-    </b-card>
+    <b-row>
+      <b-col cols="12">
+        <b-card no-body v-for="(spacetime, index) in spacetime_objs">
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            Record [[ (index + 1) ]]</b-button>
+          </b-card-header>
+          <b-card-body>
+            <spacetime-obj
+              :key="'space-time-obj' + spacetime.uuid"
+              @spacetime_update_done="spacetime_update_done($event)"
+              v-bind:spacetime="spacetime"
+            >
+            </spacetime-obj>
+          </b-card-body>
+        </b-card>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="2">
+        <b-button
+          sm
+          @click="toggle_add_new_spacetime"
+          variant="primary"
+          title="Add new location / chronology record"
+          class="text-center">Add New <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+        </b-button>
+
+        <div>
+          <add-spacetime-ui
+            @spacetime_update_done="spacetime_update_done($event)"
+            v-bind:item_id="ITEM_UUID">
+          </add-spacetime-ui>
+        </div>
+      </b-col>
+    </b-row>
   </div>
 </template>
 
@@ -216,6 +315,7 @@ NOTE: Templates and view components to edit an item's manifest object.
     window.Vue2Leaflet.LMap,
   );
   // Set up some base map tile sources.
+  const GEOMETRY_TYPES = JSON.parse('{{ GEOMETRY_TYPES|escapejs }}');
   const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
   const TILE_PROVIDERS = [
     {
@@ -342,16 +442,15 @@ NOTE: Templates and view components to edit an item's manifest object.
       data() {
         return {
           spacetime: null,
-          original_spacetime: null,
+          original_spacetime_str: null,
           add_new: false,
           is_value_changed: false,
           updating: false,
-          input_start: null,
-          input_stop: null,
+          errors: null,
         }
       },
       template: '#spacetime-form',
-      created() {
+      mounted() {
         this.set_original_spacetime();
       },
       computed: {
@@ -359,35 +458,40 @@ NOTE: Templates and view components to edit an item's manifest object.
       },
       methods: {
         set_original_spacetime: function (){
-          if(!this.add_new && !this.original_spacetime){
-            this.original_spacetime = {};
-            for (let key in this.spacetime) {
-              if (this.spacetime.hasOwnProperty(key)){
-                this.original_spacetime[key] = this.spacetime[key];
-              }
-            }
+          if(!this.add_new && this.spacetime){
+            // Hack to make a deep-copy.
+            this.original_spacetime_str = JSON.stringify(this.spacetime);
+            console.log('Original spacetime cached as JSON str');
           }
+        },
+        reset_to_original_spacetime: function () {
+          console.log('Reset to original spacetime cache');
+          if(this.original_spacetime_str){
+            this.spacetime = JSON.parse(this.original_spacetime_str);
+          }
+          this.is_value_changed = false;
+          this.$emit('edit_form', this.spacetime);
         },
         check_value_change: function() {
           if(this.add_new){
             this.is_value_changed = true;
+            return true;
           }
           if(!this.spacetime){
             this.is_value_changed = false;
           }
-          if(!this.original_spacetime){
+          if(!this.original_spacetime_str){
             this.is_value_changed = false;
           }
+          let orig = JSON.parse(this.original_spacetime_str);
           this.is_value_changed = false;
-          for (let key in this.original_spacetime) {
-            if (this.original_spacetime.hasOwnProperty(key)
-             && this.spacetime.hasOwnProperty(key)) {
-              if(this.original_spacetime[key] != this.spacetime[key]){
+          for (let key in orig) {
+            if (orig.hasOwnProperty(key) && this.spacetime.hasOwnProperty(key)) {
+              if(orig[key] != this.spacetime[key]){
                 this.is_value_changed = true;
               }
             }
           }
-          console.log(this.is_value_changed);
           return this.is_value_changed;
         },
         value_change(input_value) {
@@ -396,17 +500,105 @@ NOTE: Templates and view components to edit an item's manifest object.
             this.spacetime.earliest = this.spacetime.latest;
             this.spacetime.latest = temp;
           }
-          this.spacetime.geometry = JSON.parse(this.spacetime.geometry);
-          this.$emit('edit_spacetime',this.spacetime);
+          if(!this.spacetime.geometry_type || this.spacetime.geometry_type == 'None'){
+            this.spacetime.geometry = null;
+            this.spacetime.latitude = null;
+            this.spacetime.longitude = null;
+          }
+          if(this.spacetime.geometry instanceof String || typeof this.spacetime.geometry === "string"){
+            this.spacetime.geometry = JSON.parse(this.spacetime.geometry);
+          }
           this.check_value_change();
+          this.$emit('edit_spacetime', this.spacetime);
         },
         update_spacetime: function (){
           this.error = null;
-          this.loading = true;
+          this.updating = true;
+          console.log('add_spacetime');
+          let orig = JSON.parse(this.original_spacetime_str);
+          let update_obj = {
+            uuid: this.spacetime.uuid,
+          };
+          for (let key in this.spacetime) {
+            if (orig.hasOwnProperty(key) && this.spacetime.hasOwnProperty(key)) {
+              if(orig[key] != this.spacetime[key]){
+                update_obj[key] = this.spacetime[key];
+              }
+            }
+          }
+          console.log(update_obj);
+          let update_objs = [];
+          update_objs.push(update_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(update_objs),
+          };
+          fetch('/editorial/item-update-space-time', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            this.updating = false;
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              if(data && data.errors){
+                this.errors = data.errors;
+              }
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.$emit('spacetime_update_done', true);
+          })
+          .catch(error => {
+            console.log(error);
+            console.log(this.errors);
+          });
         },
         add_spacetime: function (){
           this.error = null;
-          this.loading = true;
+          this.updating = true;
+          console.log('add_spacetime');
+          let add_obj = {};
+          for (let key in this.spacetime) {
+            if (this.spacetime.hasOwnProperty(key) && this.spacetime[key] != null) {
+              add_obj[key] = this.spacetime[key];
+            }
+          }
+          console.log(add_obj);
+          let add_objs = [];
+          add_objs.push(add_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(add_objs)
+          };
+          fetch('/editorial/item-add-space-time', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            this.updating = false;
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              if(data && data.errors){
+                this.errors = data.errors;
+              }
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.$emit('spacetime_update_done', true);
+          })
+          .catch(error => {
+            console.log(error);
+            console.log(this.errors);
+          });
         },
       },
       components: {
@@ -427,6 +619,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           spacetime: null,
           original_spacetime: null,
           map_key: 1,
+          form_key: 1,
         }
       },
       template: '#spacetime-obj',
@@ -477,9 +670,134 @@ NOTE: Templates and view components to edit an item's manifest object.
           this.map_key += 1;
           console.log(this.spacetime);
         },
+        edit_form(spacetime){
+          console.log(spacetime);
+          this.edit_spacetime(spacetime);
+          this.form_key += 1;
+          console.log('Form key is: ' + this.form_key );
+        },
         delete_spacetime: function (){
           this.error = null;
-          this.loading = true;
+          this.updating = true;
+          console.log('delete_spacetime');
+          let delete_obj = {
+            uuid: this.spacetime.uuid,
+          };
+          let delete_objs = [];
+          delete_objs.push(delete_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(delete_objs),
+          };
+          fetch('/editorial/item-delete-space-time', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            this.updating = false;
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              if(data && data.errors){
+                this.errors = data.errors;
+              }
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.$emit('spacetime_update_done', true);
+          })
+          .catch(error => {
+            console.log(error);
+            console.log(this.errors);
+          });
+
+        },
+        spacetime_update_done(v){
+          this.$emit('spacetime_update_done', true);
+        },
+      },
+      components: {
+        'spacetime-form': vc_spacetime_form,
+        'act-map': vc_map,
+      },
+    }
+  );
+
+
+  var vc_add_spacetime_ui = Vue.component(
+    'add-spacetime-ui',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['item_id',],
+      data() {
+        return {
+          item_id: ITEM_UUID,
+          spacetime: {
+            uuid: ITEM_UUID + '-new-spacetime',
+            item_id: ITEM_UUID,
+            earliest: null,
+            start: null,
+            stop: null,
+            latest: null,
+            geometry_type: null,
+            latitude: null,
+            longitude: null,
+            geo_specificity: null,
+            geometry: null,
+          },
+          map_key: 1,
+          form_key: 1,
+        }
+      },
+      template: '#add-spacetime-ui',
+      computed: {
+        
+      },
+      methods: {
+        on_shown: function() {
+          console.log('on_shown;');
+        },
+        compute_feature: function (){
+          if(!this.spacetime){
+            return null;
+          }
+          if(!this.spacetime.geometry){
+            return null;
+          }
+          this.spacetime.map_config = {
+            center: [
+              this.spacetime.latitude,
+              this.spacetime.longitude,
+            ],
+            zoom: 13,
+          };
+          this.spacetime.feature = {
+            type: "Feature",
+            geometry: this.spacetime.geometry,
+            properties: {
+              'item__label': this.spacetime.item__label,
+              'event__label': this.spacetime.event__label,
+              'event__item_class__label': this.spacetime.event__item_class__label,
+            },
+          };
+        },
+        edit_spacetime(spacetime){
+          this.spacetime = spacetime;
+          this.compute_feature();
+          this.map_key += 1;
+          console.log(this.spacetime);
+        },
+        edit_form(spacetime){
+          console.log(spacetime);
+          this.edit_spacetime(spacetime);
+          this.form_key += 1;
+          console.log('Form key is: ' + this.form_key );
+        },
+        spacetime_update_done(v){
+          this.$emit('spacetime_update_done', true);
         },
       },
       components: {
@@ -500,6 +818,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           uuid: null,
           man_obj: null,
           spacetime_objs: null,
+          emit_edit_done:false,
         }
       },
       template: '#edit-spacetime',
@@ -523,11 +842,25 @@ NOTE: Templates and view components to edit an item's manifest object.
           .then(json => {
             this.spacetime_objs = json;
             console.log(this.spacetime_objs);
+            if(this.emit_edit_done){
+              this.emit_edit_done = false;
+              this.$emit('edit_done', true);
+            }
           });
+        },
+        toggle_add_new_spacetime() {
+          console.log('here');
+          console.log(this.$bvModal);
+          this.$bvModal.show('add-spacetime-modal');  
+        },
+        spacetime_update_done(v){
+          this.emit_edit_done = true;
+          this.fetch_api_spacetime();
         },
       },
       components: {
         'spacetime-obj': vc_spacetime_obj,
+        'add-spacetime-ui': vc_add_spacetime_ui,
       },
     }
   ); 

@@ -176,6 +176,16 @@ urlpatterns = [
         name='editorial_update_space_time_fields'
     ),
     url(
+        r'^editorial/item-add-space-time', 
+        EditorialItemViews.add_space_time, 
+        name='editorial_add_space_time'
+    ),
+    url(
+        r'^editorial/item-delete-space-time', 
+        EditorialItemViews.delete_space_time, 
+        name='editorial_delete_space_time'
+    ),
+    url(
         r'^editorial/item-update-resource', 
         EditorialItemViews.update_resource_fields, 
         name='editorial_update_resource_field'

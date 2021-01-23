@@ -65,7 +65,7 @@ ASSERTION_ATTRIBUTES_UPDATE_ALLOWED = [
 ]
 
 # The source id to use for adding new assertions if not provided
-DEFAULT_ADD_ASSERTION_SOURCE_ID = 'ui-added-assertion'
+DEFAULT_SOURCE_ID = 'ui-added'
 
 
 def update_attribute_fields(request_json):
@@ -184,7 +184,7 @@ def update_attribute_fields(request_json):
     return updated, errors
 
 
-def add_assertions(request_json, source_id=DEFAULT_ADD_ASSERTION_SOURCE_ID):
+def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
     """Add AllAssertions and from a client request JSON"""
     errors = []
     

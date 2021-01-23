@@ -168,6 +168,9 @@ def update_manifest_fields(request_json):
                 errors.append(error_message)
                 continue
             
+        # Keep a copy of the old state before saving it.
+        prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=man_obj)
+
         edits = []
         for attr, value in update_dict.items():
             if attr == 'item_class_id' and value is False:
@@ -179,7 +182,7 @@ def update_manifest_fields(request_json):
 
             old_edited_obj = None
             new_edited_obj = None
-            if attr.endswith('_id'):
+            if attr.endswith('_id') and attr != 'source_id':
                 # Get the label for the attribute that we're changing.
                 edited_obj_attrib = attr.replace('_id', '')
                 old_edited_obj = getattr(man_obj, edited_obj_attrib)
@@ -192,9 +195,6 @@ def update_manifest_fields(request_json):
             if attribute_edit_note:
                 edits.append(attribute_edit_note)
             setattr(man_obj, attr, value)
-
-        # Keep a copy of the old state before saving it.
-        prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=man_obj)
 
         try:
             man_obj.save()

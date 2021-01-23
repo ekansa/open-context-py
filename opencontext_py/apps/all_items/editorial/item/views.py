@@ -27,6 +27,7 @@ from opencontext_py.apps.all_items.editorial import api as editorial_api
 
 from opencontext_py.apps.all_items.editorial.item import updater_manifest
 from opencontext_py.apps.all_items.editorial.item import updater_assertions
+from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 
 from opencontext_py.apps.all_items.representations.item import (
     get_item_assertions,
@@ -147,6 +148,7 @@ def item_edit_interface_html(request, uuid):
         'OC_VARIABLES': json.dumps(oc_variables),
         'OC_LINKS': json.dumps(oc_links),
         'OC_PRED_LINK_OK_ITEM_TYPES': json.dumps(configs.OC_PRED_LINK_OK_ITEM_TYPES),
+        'GEOMETRY_TYPES': json.dumps(AllSpaceTime.GEOMETRY_TYPES),
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
@@ -376,13 +378,13 @@ def delete_assertions(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    added, errors = updater_assertions.delete_assertions(request_json)
+    deleted, errors = updater_assertions.delete_assertions(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
     output = {
         'ok': True,
-        'added': added,
+        'added': deleted,
     }
     json_output = json.dumps(
         output,
@@ -449,8 +451,77 @@ def update_space_time_fields(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
+    updated, errors = updater_spacetime.update_spacetime_fields(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
     return HttpResponse(
-        '[]',
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def add_space_time(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = updater_spacetime.add_spacetime_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def delete_space_time(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    deleted, errors = updater_spacetime.delete_spacetime_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'deleted': deleted,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
         content_type="application/json; charset=utf8"
     )
 
