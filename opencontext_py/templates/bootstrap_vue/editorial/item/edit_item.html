@@ -19,9 +19,10 @@
                 <div>
                     <b-nav tabs>
                         <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
+                        <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Edit Media File Resources</b-nav-item>
                         <b-nav-item :to="{ name: 'assertions'}" >Edit Descriptions, Links</b-nav-item>
+                        <b-nav-item :to="{ name: 'ld-assertions'}" >Edit Standard, Linked Data</b-nav-item>
                         <b-nav-item :to="{ name: 'spacetime'}" >Edit Location and Chronology</b-nav-item>
-                        <b-nav-item :to="{ name: 'resources'}" >Edit Resources</b-nav-item>
                     </b-nav>
                 </div>
                 <b-row>
@@ -56,6 +57,7 @@
             const csrftoken = Vue.$cookies.get('csrftoken');
             const base_url = '{{ base_url|safe }}';
             const ITEM_UUID = '{{ man_obj.uuid }}';
+            const ITEM_TYPE = '{{ man_obj.item_type }}';
             const PROJECT_LABEL = '{{ man_obj.project.label }}';
             const PROJECT_UUID = '{{ man_obj.project.uuid }}';
             const ITEM_PROJECT_UUIDS = JSON.parse('{{ ITEM_PROJECT_UUIDS|escapejs }}');
@@ -75,6 +77,12 @@
                     path: '/editorial/item-edit/' + ITEM_UUID + '#assertions',
                     name: 'assertions',
                     component: vc_edit_assertions,
+                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+                },
+                {
+                    path: '/editorial/item-edit/' + ITEM_UUID + '#ld-assertions',
+                    name: 'ld-assertions',
+                    component: vc_edit_ld_assertions,
                     props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
                 },
                 {
@@ -140,6 +148,7 @@
                         'edit-manifest': vc_edit_manifest,
                         'edit-history': vc_edit_history,
                         'edit-assertions': vc_edit_assertions,
+                        'edit-ld-assertions': vc_edit_ld_assertions,
                         'edit-spacetime': vc_edit_spacetime,
                         'edit-resources': vc_edit_resources,
                     },

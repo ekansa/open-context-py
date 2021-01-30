@@ -81,7 +81,7 @@ def get_attrib_value_from_rel_objects(model_obj, act_attrib):
     last_path_index = len(attrib_path) - 1 
     act_model_obj = copy.deepcopy(model_obj)
     for i, attrib_item in enumerate(attrib_path):
-        act_attrib_value = getattr(act_model_obj, attrib_item)
+        act_attrib_value = getattr(act_model_obj, attrib_item, None)
         if not act_attrib_value:
             continue
         if i == last_path_index:

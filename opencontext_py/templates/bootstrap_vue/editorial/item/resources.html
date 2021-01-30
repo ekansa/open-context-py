@@ -5,7 +5,11 @@ NOTE: Templates and view components to edit an item's manifest object.
 -->
 
 <style>
- .spacetime_row {
+ .resource-card {
+   margin-top: 48px;
+   margin-bottom: 48px;
+ }
+ .resource-row {
    margin-top: 24px;
    margin-bottom: 24px;
  }
@@ -15,127 +19,702 @@ NOTE: Templates and view components to edit an item's manifest object.
 <template id="resource-obj">
   <div>
 
-    <b-row>
-      <b-col>
-        <label :for="'resource-' + resource.uri">File URI</label>
+    <b-row class="resource-row">
+      <b-col cols="9">
+        <label :for="'resource-uri-' + resource.uuid">File URI <b-icon-link-45deg></b-icon-link-45deg></label>
         <b-form-input
+          size="sm"
           v-model="resource.uri"
-          :id="'resource-' + resource.uri"
-          @change="value_change"
+          :id="'resource-uri-' + resource.uuid"
+          @change="uri_change"
           :value="resource.uri"
         ></b-form-input>
+        <small><strong>Media (file) type:</strong> [[ resource.mediatype__label ]]</small>
+        <p v-if="web_url">
+          <small><strong>Link <b-icon-files></b-icon-files>:</strong> <a :href="web_url" target="_blank">[[ web_url ]]</a></small>
+        </p>
+      </b-col>
+      <b-col cols="3">
+        <label :for="'resource-rank-' + resource.uuid">URI Ranking</label>
+        <b-form-input
+          size="sm"
+          v-model="resource.rank"
+          :id="'resource-rank-' + resource.uuid"
+          @change="rank_change"
+          type="number"
+          :value="resource.rank"
+        ></b-form-input>
+        <small v-if="resource.resourcetype_id" class="text-muted">
+          Ranking is only relevant if there are more than 1 
+          URIs of Resource Type <em>[[resource.resourcetype__label]]</em> 
+          associated with <em>[[ resource.item__label ]]</em>
+        </small>
+        <small v-else class="text-muted">
+          Ranking is only relevant if there are more than 1 
+          URIs of a given Resource Type associated with this item
+        </small>
       </b-col>
     </b-row>
 
+    <b-row class="resource-row">
+      <b-col cols="4">
+        <b-row>
+          <b-col cols="12">
+            <div v-if="resource.resourcetype_id">
+              <p><strong>Resource Type</strong></p>
+              <p>[[resource.resourcetype__label]]</p>
+              <p><small>ID: <span class="text-muted">[[ resource.resourcetype_id ]]</span></small></p>
+            </div>
+            <div v-else>
+              <p><strong>Resource Type</strong></p>
+              <p>Select a Resource Type</p>
+              <p><small>ID: <span class="text-muted"><em>None Yet Selected</em></span></small></p>
+            </div>
+          </b-col>
+        </b-row>
+        <b-row>
+          <b-col cols="5">
+            <b-spinner v-if="updating" label="Updating..."></b-spinner>
+            <b-button
+              v-if="!add_new && !updating && is_value_changed"
+              sm
+              block
+              @click="update_resource"
+              class="text-center"
+              variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+            </b-button>
+            <b-button
+              v-if="add_new && !updating && is_add_ready"
+              sm
+              block
+              @click="add_resource"
+              class="text-center"
+              variant="primary">Add <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+            </b-button>
+          </b-col>
+          <b-col cols="2">
+            &nbsp;
+          </b-col>
+          <b-col cols="5">
+            <b-button
+              v-if="!add_new && !updating && is_value_changed"
+              sm
+              block
+              @click="reset_to_original_resource"
+              class="text-center"
+              variant="secondary">Undo Edit <b-icon-dash-square></b-icon-dash-square>
+            </b-button>
+          </b-col>
+        </b-row>
+      </b-col>
+
+      <b-col cols="8">
+        <p>Lookup Resource Type to Describe this file URI</p>
+        <lookup-list
+          :key="'lookup-' + resource.uuid"
+          v-bind:project_id="ITEM_PROJECT_UUIDS"
+          v-bind:uuid="OC_RESOURCE_TYPES_UUIDS"
+          v-bind:item_type="['class']"
+          v-bind:fetch_on_create="true"
+          v-bind:show_label_search_box="true"
+          @set_selected_item="set_selected_resource_type($event)"
+        ></lookup-list>
+      </b-col>
+
+    </b-row>
+
+    <b-row v-if="!add_new">
+      <b-col cols="3">
+        <b-button
+          sm
+          :disabled="updating"
+          @click="open_delete_confirm"
+          variant="secondary"
+          title="Delete file resource record"
+          class="text-center"><small>Delete <b-icon-x-circle></b-icon-x-circle></small>
+        </b-button>
+
+        <b-overlay :show="show_delete_confirm" no-wrap @hidden="on_delete_confirm_hide">
+          <template #overlay>
+            <b-spinner v-if="updating" label="Deleting..."></b-spinner>
+            <div
+              v-else
+              ref="dialog"
+              tabindex="-1"
+              role="dialog"
+              aria-modal="false"
+              :aria-labelledby="'delete-confirm-label-' + resource.uuid"
+              class="text-center p-3"
+            >
+              <p>
+                <strong :id="'delete-confirm-label-' + resource.uuid">Confirm deletion</strong>
+              </p>
+              <div class="d-flex">
+                <b-button variant="outline-danger" class="mr-3" @click="on_delete_confirm_hide">
+                  Cancel
+                </b-button>
+                <b-button variant="outline-success" @click="delete_resource">OK</b-button>
+              </div>
+            </div>
+          </template>
+        </b-overlay>
+
+      </b-col>
+      <b-col cols="9">
+        &nbsp;
+      </b-col>
+    </b-row>
   </div>
 </template>
 
+
+<template id="add-resource-ui-button">
+  <div>
+    <b-button
+      v-if="!resource"
+      sm
+      @click="show_add_ui_for_resource"
+      variant="primary"
+      title="Add new file resource"
+      class="text-center">Add New Resource <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+    </b-button>
+    <b-button
+      v-if="resource"
+      sm
+      @click="show_add_ui_for_resource"
+      variant="primary"
+      :title="'Add new file resource: ' + resource.resourcetype__label"
+      class="text-center">Add [[resource.resourcetype__label]] <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+    </b-button>
+  </div>
+</template>
+
+
+<template id="add-resource-ui">
+  <div>
+    <b-modal
+      size="lg"
+      scrollable
+      ref="add-resource-modal"
+      id="add-resource-modal" 
+      title="Add Media File Resource"
+      @shown="on_shown"
+    >
+      <b-container fluid v-if="resource_obj_for_form">
+        
+        <resource-obj
+          :key="'resource-obj-add-' + add_form_key"
+          @resource_update_done="resource_update_done($event)"
+          v-bind:resource="resource_obj_for_form"
+          v-bind:add_new="true"
+        >
+        </resource-obj>
+
+      </b-container>
+    </b-modal>
+  </div>
+</template>
 
 <template id="edit-resources">
   <div>
     <b-row>
       <b-col cols="12">
-        <b-card no-body v-for="(resource, index) in resource_objs">
-          <b-card-header header-tag="header" class="p-1" role="tab">
-            Resource [[ (index + 1) ]]</b-button>
-          </b-card-header>
-          <b-card-body>
-            <resource-obj
-              :key="'resource-obj' + resource.uuid"
-              @resource_update_done="resource_update_done($event)"
-              v-bind:resource="resource"
+        <div v-for="(resource, index) in resource_objs">
+          <b-card no-body 
+            v-if="resource.expected" 
+            class="resource-card alert-primary"
             >
-            </resource-obj>
-          </b-card-body>
-        </b-card>
+            <b-card-header
+              header-bg-variant="primary"
+              header-text-variant="white"
+              header-tag="header" class="p-1" role="tab">
+              <strong>[[  resource.resourcetype__label ]]</strong> Resource [[ (index + 1) ]]
+            </b-card-header>
+            <b-card-body body-border-variant="primary">
+              <resource-obj
+                :key="'resource-obj' + resource.uuid"
+                @resource_update_done="resource_update_done($event)"
+                v-bind:resource="resource"
+              >
+              </resource-obj>
+            </b-card-body>
+          </b-card>
+          <b-card
+            class="resource-card alert-info"
+            v-else no-body 
+            >
+            <b-card-header
+              header-bg-variant="info"
+              header-text-variant="white"
+              header-tag="header" class="p-1" role="tab">
+              <strong>[[  resource.resourcetype__label ]]</strong> Resource [[ (index + 1) ]]
+            </b-card-header>
+            <b-card-body>
+              <resource-obj
+                :key="'resource-obj' + resource.uuid"
+                @resource_update_done="resource_update_done($event)"
+                v-bind:resource="resource"
+              >
+              </resource-obj>
+            </b-card-body>
+          </b-card>
+        </div>
       </b-col>
     </b-row>
+    <b-row>
+      <div v-if="missing_expected_resources.length > 0">
+        <add-resource-ui-button v-for="(m_resource, m_index) in missing_expected_resources"
+          v-bind:resource="m_resource"
+          @toggle_add_new_resource_ui="toggle_add_new_resource_ui($event)"
+          ></add-resource-ui-button>
+      </div>
+      <div v-else>
+        <add-resource-ui-button
+          v-bind:resource="null"
+          @toggle_add_new_resource_ui="toggle_add_new_resource_ui($event)"
+          ></add-resource-ui-button>
+      </div>
+    </b-row>
+
+    <add-resource-ui
+      @resource_update_done="resource_update_done($event)"
+      v-bind:add_form_key="add_form_key"
+      v-bind:resource="resource_obj_for_add"
+      v-bind:item_id="ITEM_UUID">
+    </add-resource-ui>
+
   </div>
 </template>
 
 
 <script type="text/javascript">
 
+const OC_RESOURCE_FULLFILE = JSON.parse('{{ OC_RESOURCE_FULLFILE|escapejs }}');
+const OC_RESOURCE_PREVIEW = JSON.parse('{{ OC_RESOURCE_PREVIEW|escapejs }}');
+const OC_RESOURCE_THUMBNAIL = JSON.parse('{{ OC_RESOURCE_THUMBNAIL|escapejs }}');
+const OC_RESOURCE_HERO = JSON.parse('{{ OC_RESOURCE_HERO|escapejs }}');
+const OC_RESOURCE_TYPES_UUIDS = JSON.parse('{{ OC_RESOURCE_TYPES_UUIDS|escapejs }}');
+
 var vc_resource_obj = Vue.component(
-    'resource-obj',
-    {
-      delimiters: ['[[', ']]'],
-      props: ['resource'],
-      data() {
-        return {
-          resource: null,
+  'resource-obj',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['resource', 'add_new'],
+    data() {
+      return {
+        add_new: false,
+        resource: null,
+        original_resource_str: null,
+        is_value_changed: false,
+        updating: false,
+        show_delete_confirm: false,
+      }
+    },
+    template: '#resource-obj',
+    mounted() {
+      this.set_original_resource();
+    },
+    computed: {
+      web_url: function() {
+        if(!this.resource || !this.resource.uri){
+          return null;
+        }
+        let url = this.trim_prefix(this.resource.uri, 'https://');
+        return 'https://' + this.trim_prefix(url, 'http://');
+      },
+      is_add_ready: function() {
+        if(!this.add_new || !this.resource) {
+          return false;
+        }
+        if(!this.resource.uri || !this.resource.resourcetype_id){
+          return false;
+        }
+        return true;
+      }
+    },
+    methods: {
+      set_original_resource: function (){
+        if(!this.add_new && this.resource){
+          // Hack to make a deep-copy.
+          this.original_resource_str = JSON.stringify(this.resource);
+          console.log('Original resource cached as JSON str');
         }
       },
-      template: '#resource-obj',
-      created() {
-        
-      },
-      methods: {
-        value_change(input_value) {
-          console.log(input_value);
-        },
-      },
-      components: {
-
-      },
-    }
-  ); 
-
-
-  var vc_edit_resources = Vue.component(
-    'edit-resources',
-    {
-      delimiters: ['[[', ']]'],
-      props: ['uuid'],
-      data() {
-        return {
-          uuid: null,
-          man_obj: null,
-          resource_objs: null,
-          emit_edit_done:false,
+      reset_to_original_resource: function () {
+        if(this.original_resource_str){
+          this.resource = JSON.parse(this.original_resource_str);
+          this.is_value_changed = false;
+          console.log('Reset to original resource from cache');
         }
       },
-      template: '#edit-resources',
-      created() {
-        this.fetch_api_resources();
+      trim_prefix(str, prefix) {
+        if (str.startsWith(prefix)) {
+            return str.slice(prefix.length);
+        } else {
+            return str;
+        }
       },
-      methods: {
-        fetch_api_resources: function (){
-          this.error = null;
-          this.loading = true;
-          fetch(
-            ('/editorial/item-resources/' + this.uuid),
-              {
-                headers:{
-                    'Accept': 'application/json',
-                }
-              }
-          )
-          .then(this.loading = false)
-          .then(response => response.json())
-          .then(json => {
-            this.resource_objs = json;
-            console.log(this.resource_objs);
-            if(this.emit_edit_done){
-              this.emit_edit_done = false;
-              this.$emit('edit_done', true);
+      set_selected_resource_type(resource_type){
+        this.resource.resourcetype_id = resource_type.uuid;
+        this.resource.resourcetype__label = resource_type.label;
+        this.check_value_change();
+      },
+      uri_change(input_value) {
+        input_value = this.trim_prefix(input_value, 'https://');
+        this.resource.uri = this.trim_prefix(input_value, 'http://');
+        this.check_value_change();
+      },
+      rank_change(rank){
+        this.resource.rank = rank;
+        this.check_value_change();
+      },
+      check_value_change: function() {
+        if(this.add_new){
+          this.is_value_changed = true;
+          return this.is_value_changed;
+        }
+        if(!this.original_resource_str){
+          this.is_value_changed = false;
+          return this.is_value_changed;
+        }
+        let orig = JSON.parse(this.original_resource_str);
+        this.is_value_changed = false;
+        for (let key in orig) {
+          if (orig.hasOwnProperty(key) && this.resource.hasOwnProperty(key)) {
+            if(orig[key] != this.resource[key]){
+              this.is_value_changed = true;
             }
-          });
-        },
-        toggle_add_new_resource() {
-          console.log('here');
-          console.log(this.$bvModal);
-          this.$bvModal.show('add-resource-modal');  
+          }
+        }
+        return this.is_value_changed;
+      },
+      update_resource: function() {
+        this.updating = true;
+        console.log('Update resource');
+        let orig = JSON.parse(this.original_resource_str);
+        let update_obj = {
+          uuid: this.resource.uuid,
+        };
+        for (let key in this.resource) {
+          if (orig.hasOwnProperty(key) && this.resource.hasOwnProperty(key)) {
+            if(orig[key] != this.resource[key]){
+              update_obj[key] = this.resource[key];
+            }
+          }
+        }
+        console.log(update_obj);
+        let update_objs = [];
+        update_objs.push(update_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(update_objs),
+        };
+        fetch('/editorial/item-update-resources', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('resource_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
+      add_resource: function() {
+        this.updating = true;
+        console.log('Add new resource');
+        let add_obj = {
+          item_id: ITEM_UUID,
+        };
+        for (let key in this.resource) {
+          if(key == 'uuid'){
+            continue;
+          }
+          if (this.resource.hasOwnProperty(key) && this.resource[key] != null) {
+            add_obj[key] = this.resource[key];
+          }
+        }
+        console.log(add_obj);
+        let add_objs = [];
+        add_objs.push(add_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(add_objs)
+        };
+        fetch('/editorial/item-add-resources', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('resource_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
+      open_delete_confirm: function() {
+        this.show_delete_confirm = true;
+      },
+      on_delete_confirm_hide: function () {
+        this.show_delete_confirm = false;
+      },
+      delete_resource: function() {
+        this.show_delete_confirm = false;
+        this.updating = true;
+        console.log('Delete resource');
+        let delete_obj = {
+          uuid: this.resource.uuid,
+        };
+        let delete_objs = [];
+        delete_objs.push(delete_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(delete_objs),
+        };
+        fetch('/editorial/item-delete-resources', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('resource_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
+    },
+    components: {
+      'lookup-list': vs_look_up_list,
+    },
+  }
+); 
+
+
+var vc_add_resource_ui = Vue.component(
+    'add-resource-ui',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['resource', 'add_form_key'],
+      data() {
+        return {
+          item_id: ITEM_UUID,
+          resource: null,
+          add_form_key: 1,
+          null_resource: {
+            uuid: ITEM_UUID + '-new-resource',
+            item_id: ITEM_UUID,
+            uri: null,
+            rank: 0,
+            mediatype__label: null,
+            resourcetype_id: null,
+            resourcetype__label: null,
+            item__label: null,
+          },
+          resource_obj_for_form: null,
+        }
+      },
+      template: '#add-resource-ui',
+      computed: {
+
+      },
+      methods: {
+        on_shown: function() {
+          console.log('on_shown;');
+          let res_str = '';
+          if(!this.resource){
+            res_str = JSON.stringify(this.null_resource);
+          }
+          else{
+            res_str = JSON.stringify(this.resource);
+          }
+          this.resource_obj_for_form = JSON.parse(res_str);
+          this.add_form_key += 1;
         },
         resource_update_done(v){
-          this.emit_edit_done = true;
-          this.fetch_api_resources();
+          this.$emit('resource_update_done', true);
         },
       },
       components: {
         'resource-obj': vc_resource_obj,
       },
     }
-  ); 
+  );
+
+
+var vc_add_resource_ui_button = Vue.component(
+  'add-resource-ui-button',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['resource',],
+    data() {
+      return {
+        resource: null,
+      }
+    },
+    template: '#add-resource-ui-button',
+    computed: {
+      
+    },
+    methods: {
+      show_add_ui_for_resource: function(){
+        this.$emit('toggle_add_new_resource_ui', this.resource);
+      }
+    },
+    components: {
+     
+    },
+  }
+);
+
+
+var vc_edit_resources = Vue.component(
+  'edit-resources',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['uuid'],
+    data() {
+      return {
+        uuid: null,
+        man_obj: null,
+        resource_objs: null,
+        emit_edit_done:false,
+        first_resources: [
+          OC_RESOURCE_FULLFILE,
+          OC_RESOURCE_PREVIEW,
+          OC_RESOURCE_THUMBNAIL,
+          OC_RESOURCE_HERO,
+        ],
+        media_resources: [
+          OC_RESOURCE_FULLFILE,
+          OC_RESOURCE_PREVIEW,
+          OC_RESOURCE_THUMBNAIL,
+        ],
+        project_resources: [
+          OC_RESOURCE_HERO,
+        ],
+        missing_expected_resources: [],
+        add_form_key: 1,
+        resource_obj_for_add: null,
+      }
+    },
+    template: '#edit-resources',
+    created() {
+      this.fetch_api_resources();
+    },
+    methods: {
+      fetch_api_resources: function (){
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/item-resources/' + this.uuid),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.resource_objs = [];
+          let added_uuids = [];
+
+          for(let first_res of this.first_resources){
+            let media_expected = this.media_resources.indexOf(first_res);
+            let proj_expected = this.project_resources.indexOf(first_res);
+            let expected_found = false;
+            for(let resource of json){
+              if(first_res.uuid == resource.resourcetype_id){
+                if(ITEM_TYPE == 'media' && media_expected >= 0){
+                  resource.expected = ITEM_TYPE;
+                  expected_found = true;
+                }
+                if(ITEM_TYPE == 'projects' && proj_expected >= 0){
+                  resource.expected = ITEM_TYPE;
+                  expected_found = true;
+                }
+                this.resource_objs.push(resource);
+                added_uuids.push(resource.uuid);
+              }
+            }
+            if(!expected_found && media_expected >= 0){
+              this.missing_expected_resources.push(first_res);
+            }
+          }
+
+          for(let resource of json){
+            let r_index = added_uuids.indexOf(resource.uuid);
+            if(r_index < 0){
+              this.resource_objs.push(resource);
+              added_uuids.push(resource.uuid);
+            }
+          }
+          console.log(this.resource_objs);
+          console.log(this.missing_expected_resources);
+          if(this.emit_edit_done){
+            this.emit_edit_done = false;
+            this.$emit('edit_done', true);
+          }
+        });
+      },
+      resource_update_done(v){
+        this.emit_edit_done = true;
+        this.fetch_api_resources();
+      },
+      toggle_add_new_resource_ui(resource_obj){
+        this.add_form_key += 1;
+        this.resource_obj_for_add = resource_obj;
+        this.$bvModal.show('add-resource-modal');  
+      }
+    },
+    components: {
+      'resource-obj': vc_resource_obj,
+      'add-resource-ui-button': vc_add_resource_ui_button,
+      'add-resource-ui': vc_add_resource_ui,
+    },
+  }
+); 
   
-  </script>
+</script>

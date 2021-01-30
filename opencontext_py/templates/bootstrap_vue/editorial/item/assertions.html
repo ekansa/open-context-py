@@ -5,6 +5,9 @@ NOTE: Templates and view components to edit assertions made on an item
 -->
 
 <style>
+ .obj_button {
+   margin-top: 6px;
+ }
  .obs_row {
    margin-top: 48px;
  }
@@ -62,24 +65,40 @@ NOTE: Templates and view components to edit assertions made on an item
             sm
             block
             @click="toggle_object_edit"
-            class="text-center"
+            class="text-center obj_button"
             variant="info">Edit</b-button>
             <b-button
             v-if="is_object_edit_open"
             sm
             block
-            class="text-center"
+            class="text-center obj_button"
             @click="toggle_object_edit"
             variant="outline-secondary">Exit</b-button>
         </b-col>
         <b-col cols="10">
           [[assert.object__label]]
           <br/>
-          <small>ID: <span class="text-muted">[[assert.object_id]]</span></small>
+          <dl class="row" v-if="!linked_data">
+            <dt class="col-sm-2 small">ID: </dt>
+            <dt class="col-sm-10 text-muted small">[[assert.object_id]]</dt>
+          </dl>
+          <dl class="row" v-if="linked_data">
+            <dt class="col-sm-2 small">URI:</dt>
+            <dd class="col-sm-10 small">
+              <a v-if="assert.object__uri" 
+              :href="'https://' + assert.object__uri" 
+              target="_blank">https://[[assert.object__uri]] <b-icon-info-circle-fill></b-icon-info-circle-fill>
+              </a>
+            </dd>
+            <dt class="col-sm-2 small">Context:</dt>
+            <dd class="col-sm-10 small">[[ assert.object__context__label ]]
+              <a v-if="assert.object__context__uri" :href="'https://' + assert.object__context__uri" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+            </dd>
+          </dl>
         </b-col>
       </b-row>
       <b-row v-if="for_add_new || is_object_edit_open">
-        <b-col v-if="assert.predicate__item_class_id == OC_VARIABLES.uuid">
+        <b-col v-if="!linked_data && assert.predicate__item_class_id == OC_VARIABLES.uuid">
           <lookup-list
             :key="'lookup' + assert.uuid"
             v-bind:context_id="[assert.predicate_id]"
@@ -88,7 +107,7 @@ NOTE: Templates and view components to edit assertions made on an item
             @set_selected_item="set_selected_obj_item($event)"
           ></lookup-list>
         </b-col>
-        <b-col v-if="assert.predicate__item_class_id == OC_LINKS.uuid">
+        <b-col v-if="!linked_data && assert.predicate__item_class_id == OC_LINKS.uuid">
           <lookup-list
             :key="'lookup' + assert.uuid"
             v-bind:project_id="ITEM_PROJECT_UUIDS"
@@ -97,6 +116,19 @@ NOTE: Templates and view components to edit assertions made on an item
             @set_selected_item="set_selected_obj_item($event)"
           ></lookup-list>
         </b-col>
+
+        <b-col v-if="linked_data">
+          <lookup-list
+            :key="'lookup' + assert.uuid"
+            v-bind:item_type="['class', 'property', 'units', 'uri', 'persons', 'tables', 'projects',]"
+            v-bind:show_label_search_box="true"
+            v-bind:show_context="true"
+            v-bind:do_meta="true"
+            v-bind:show_total_results="true"
+            @set_selected_item="set_selected_obj_item($event)"
+          ></lookup-list>
+        </b-col>
+
       </b-row>
     </div>
   </div>
@@ -127,21 +159,51 @@ NOTE: Templates and view components to edit assertions made on an item
 
 <template id='assert-object'>
   <b-row class="obj_row">
-
+    
     <b-col cols="1" class="text-center">
       <b-button
         sm
-        @click="delete_assertion"
-        variant="dark"
+        @click="open_delete_confirm"
+        variant="secondary"
         title="Delete assertion"
-        class="text-center"><small><b-icon-x-circle></b-icon-x-circle></small>
+        class="text-center obj_button"><small><b-icon-x-circle></b-icon-x-circle></small>
       </b-button>
+
+      <b-overlay no-wrap z-index="100" :show="show_delete_confirm" @hidden="on_delete_confirm_hide">
+        <template #overlay>
+          <b-spinner v-if="updating" label="Deleting..."></b-spinner>
+          <b-card 
+            v-else
+            ref="dialog"
+            bg-variant="light"
+            z-index="100"
+            role="dialog"
+            aria-modal="false"
+            variant="white" opacity="0.90"
+            :aria-labelledby="'delete-confirm-label-' + assert.uuid"
+            class="text-center p-3"
+          >
+            <p>
+              <strong :id="'delete-confirm-label-' + assert.uuid">Confirm deletion</strong>
+            </p>
+            <div class="d-flex">
+              <b-button variant="outline-danger" class="mr-3" @click="on_delete_confirm_hide">
+                Cancel
+              </b-button>
+              <b-button variant="outline-success" @click="delete_assertion">OK</b-button>
+            </div>
+          </b-card>
+        </template>
+      </b-overlay>
+
+
     </b-col>
   
     <b-col cols="8">
   
       <assert-object-edit
         v-bind:assert="assert"
+        v-bind:linked_data="linked_data"
         @get_validation_errors="get_validation_errors($event)"
         @get_value_change="get_value_change($event)"
       >
@@ -178,6 +240,7 @@ NOTE: Templates and view components to edit assertions made on an item
       :key="assert.uuid"
       @assertion_update_done="assertion_update_done($event)"
       v-bind:assert="assert"
+      v-bind:linked_data="linked_data"
     ></assert-object>
   </div>
 </template>
@@ -317,12 +380,26 @@ NOTE: Templates and view components to edit assertions made on an item
           <small>[[ data.item.attribute_group__label ]]</small>
         </p>
         [[ data.item.predicate__label ]]
+        <dl class="row" v-if="linked_data">
+          <dt class="col-sm-2 small">URI:</dt>
+          <dd class="col-sm-10 small">
+            <a v-if="data.item.predicate__context__uri" 
+            :href="'https://' + data.item.predicate__uri" 
+            target="_blank">https://[[data.item.predicate__uri]] <b-icon-info-circle-fill></b-icon-info-circle-fill>
+            </a>
+          </dd>
+          <dt class="col-sm-2 small">Context:</dt>
+          <dd class="col-sm-10 small">[[ data.item.predicate__context__label ]]
+            <a v-if="data.item.predicate__context__uri" :href="'https://' + data.item.predicate__context__uri" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+          </dd>
+        </dl>
       </template>
 
       <template #cell(objs)="data">
         <assert-objects
           @assertion_update_done="assertion_update_done($event)"
           v-bind:assert_node="data.item"
+          v-bind:linked_data="linked_data"
         >
         </assert-objects>
       </template>
@@ -346,6 +423,7 @@ NOTE: Templates and view components to edit assertions made on an item
     
     <add-assertion-ui
       v-bind:act_obs="act_obs"
+      v-bind:linked_data="linked_data"
       @assertion_update_done="assertion_update_done($event)"
     >
     </add-assertion-ui>
@@ -356,18 +434,29 @@ NOTE: Templates and view components to edit assertions made on an item
 
 <template id="edit-assertions">
   <div v-if="assertions_in_obs">
-    <h4>Observation Count [[ assertions_in_obs.length ]]</h4>
+    <h4 v-if="!linked_data">Observation Count [[ assertions_in_obs.length ]]</h4>
     <b-row class="obs_row" v-for="(act_obs, index) in assertions_in_obs">
       <b-col>
         <edit-observation 
           @assertion_update_done="assertion_update_done($event)"
           v-bind:act_obs="act_obs"
+          v-bind:linked_data="linked_data"
           v-bind:table_height="table_height"></edit-observation>
       </b-col>
     </b-row>
 
 
   </div>
+</template>
+
+
+<template id="edit-ld-assertions">
+  <edit-assertions
+    v-bind:uuid="uuid"
+    v-bind:table_height="table_height"
+    v-bind:linked_data="linked_data"
+    @edit_done="edit_done"
+  ></edit-assertions>
 </template>
 
 
@@ -416,10 +505,11 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'assert-object-edit',
     {
       delimiters: ['[[', ']]'],
-      props: ['assert', 'for_add_new'],
+      props: ['assert', 'linked_data', 'for_add_new'],
       data() {
         return {
           assert: null,
+          linked_data: false,
           for_add_new: false,
           is_object_edit_open: false,
           selected_obj_item: null,
@@ -542,14 +632,16 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'assert-object',
     {
       delimiters: ['[[', ']]'],
-      props: ['assert', ],
+      props: ['assert', 'linked_data'],
       data() {
         return {
           assert: null,
+          linked_data: false,
           is_value_changed: null,
           input_value: null,
           errors: null,
           updating: false,
+          show_delete_confirm: false,
         };
       },
       template: '#assert-object',
@@ -565,7 +657,14 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
           this.is_value_changed = changes.is_value_changed;
           this.disp_changed_value = changes.disp_changed_value;
         },
+        open_delete_confirm: function() {
+          this.show_delete_confirm = true;
+        },
+        on_delete_confirm_hide: function () {
+          this.show_delete_confirm = false;
+        },
         delete_assertion: function() {
+          this.show_delete_confirm = false;
           this.updating = true;
           let delete_obj = {
             uuid: this.assert.uuid,
@@ -675,9 +774,10 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'assert-objects',
     {
       delimiters: ['[[', ']]'],
-      props: ['assert_node', ],
+      props: ['assert_node', 'linked_data',],
       data() {
         return {
+          linked_data: false,
           assert: null,
         };
       },
@@ -694,9 +794,10 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'add-assertion-ui',
     {
       delimiters: ['[[', ']]'],
-      props: ['act_obs',],
+      props: ['act_obs', 'linked_data'],
       data() {
         return {
+          linked_data: false,
           act_obs: null,
           selected_pred_item: null,
           new_object_display: null,
@@ -823,9 +924,10 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'edit-observation',
     {
       delimiters: ['[[', ']]'],
-      props: ['act_obs', 'table_height'],
+      props: ['act_obs', 'linked_data', 'table_height'],
       data() {
         return {
+          linked_data: false,
           act_obs: null,
           table_height: '900px',
           modes: ['multi', 'single', 'range'],
@@ -913,10 +1015,11 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'edit-assertions',
     {
       delimiters: ['[[', ']]'],
-      props: ['uuid', 'table_height'],
+      props: ['uuid', 'linked_data', 'table_height'],
       data() {
         return {
           uuid: null,
+          linked_data: false,
           table_height: '900px',
           assertions_in_obs: [],
           non_pred_keys: [
@@ -974,8 +1077,12 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
                 }
               }
             }
+            let obs_label = obs.label;
+            if(this.linked_data && new_obs.length == 0){
+              obs_label = "Standards Aligned, Linked Data";
+            }
             let new_obs_item = {
-              label: obs.label,
+              label: obs_label,
               id: obs.id.replace('#', ''),
               assertions: obs_assertions,
             }
@@ -983,8 +1090,12 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
           }
           
           if(new_obs.length < 1){
+            let obs_label = 'Prepare Item Observation';
+            if(this.linked_data){
+              obs_label = 'Prepare Standards Aligned, Linked Data';
+            }
             let new_obs_item = {
-              label: 'Empty Item Observation',
+              label: obs_label,
               id: 0,
               assertions: [],
             }
@@ -995,13 +1106,17 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
         fetch_api_assertions: function (){
           this.error = null;
           this.loading = true;
+          let url = '/editorial/item-assertions/' + this.uuid;
+          if(this.linked_data){
+            url += '?linked-data=1';
+          }
           fetch(
-            ('/editorial/item-assertions/' + this.uuid),
-              {
-                headers:{
-                    'Accept': 'application/json',
-                }
+            (url),
+            {
+              headers:{
+                  'Accept': 'application/json',
               }
+            },
           )
           .then(this.loading = false)
           .then(response => response.json())
@@ -1025,6 +1140,31 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
         'edit-observation': vc_edit_observation,
       },
     }
+  );
+
+
+  var vc_edit_ld_assertions = Vue.component(
+    'edit-ld-assertions',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['uuid', 'table_height'],
+      data() {
+        return {
+          uuid: null,
+          linked_data: true,
+          table_height: '900px',
+        }
+      },
+      template: '#edit-ld-assertions',
+      methods: {
+        edit_done(v){
+          this.$emit('edit_done', true);
+        },
+      },
+      components: {
+        'edit-assertions': vc_edit_assertions,
+      },
+    }
   ); 
-  
-  </script>
+
+</script>

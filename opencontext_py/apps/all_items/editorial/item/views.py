@@ -28,6 +28,7 @@ from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items.editorial.item import updater_manifest
 from opencontext_py.apps.all_items.editorial.item import updater_assertions
 from opencontext_py.apps.all_items.editorial.item import updater_spacetime
+from opencontext_py.apps.all_items.editorial.item import updater_resource
 
 from opencontext_py.apps.all_items.representations.item import (
     get_item_assertions,
@@ -116,6 +117,23 @@ def item_edit_interface_html(request, uuid):
         uuid=configs.CLASS_OC_LINKS_UUID,
         do_minimal=True,
     )
+    # NOTE: These are the main resource types expected for media resources
+    oc_resource_fullfile = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.OC_RESOURCE_FULLFILE_UUID,
+        do_minimal=True,
+    )
+    oc_resource_preview = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.OC_RESOURCE_PREVIEW_UUID,
+        do_minimal=True,
+    )
+    oc_resource_thumbnail = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.OC_RESOURCE_THUMBNAIL_UUID,
+        do_minimal=True,
+    )
+    oc_resource_hero = editorial_api.get_manifest_item_dict_by_uuid(
+        uuid=configs.OC_RESOURCE_HERO_UUID,
+        do_minimal=True,
+    )
 
     item_project_uuids = []
     item_project = man_obj.project
@@ -150,6 +168,11 @@ def item_edit_interface_html(request, uuid):
         'OC_PRED_LINK_OK_ITEM_TYPES': json.dumps(configs.OC_PRED_LINK_OK_ITEM_TYPES),
         'GEOMETRY_TYPES': json.dumps(AllSpaceTime.GEOMETRY_TYPES),
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
+        'OC_RESOURCE_FULLFILE': json.dumps(oc_resource_fullfile),
+        'OC_RESOURCE_PREVIEW': json.dumps(oc_resource_preview),
+        'OC_RESOURCE_THUMBNAIL': json.dumps(oc_resource_thumbnail),
+        'OC_RESOURCE_HERO': json.dumps(oc_resource_hero),
+        'OC_RESOURCE_TYPES_UUIDS': json.dumps(configs.OC_RESOURCE_TYPES_UUIDS),
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
     response = HttpResponse(template.render(context, request))
@@ -297,6 +320,18 @@ def item_assertions_json(request, uuid):
         )
 
     assert_qs = get_item_assertions(man_obj.uuid)
+
+    if request.GET.get('linked-data'):
+        # Limit assertions to linked data class and properties
+        assert_qs = assert_qs.filter(
+            predicate__item_type__in=['class', 'property',]
+        )
+    else:
+        # Exclude assertions with linked data class and properties predicates
+        assert_qs = assert_qs.exclude(
+            predicate__item_type__in=['class', 'property',]
+        )
+
     observations = get_observations_attributes_from_assertion_qs(
         assert_qs,
         for_edit=True
@@ -556,16 +591,12 @@ def item_resources_json(request, uuid):
     more_attributes = [
         'item__label',
         'resourcetype__label',
-        'resourcetype__item_class_id',
-        'resourcetype__item_class__label',
         'mediatype__label',
-        'mediatype__item_class_id',
-        'mediatype__item_class__label',
     ]
     api_result = []
     resource_qs = AllResource.objects.filter(
         item=man_obj
-    )
+    ).order_by('-filesize')
     for resource_obj in resource_qs:
         api_result.append(
             make_model_object_json_safe_dict(
@@ -595,10 +626,82 @@ def update_resource_fields(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
+    updated, errors = updater_resource.update_resource_fields(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
     return HttpResponse(
-        '[]',
+        json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def add_resources(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = updater_resource.add_resource_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def delete_resources(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    deleted, errors = updater_resource.delete_resource_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'deleted': deleted,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
 
 
 @cache_control(no_cache=True)

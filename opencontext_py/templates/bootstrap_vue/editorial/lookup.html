@@ -7,21 +7,22 @@
   .result_list {
     max-height: 250px;
     overflow: scroll;
+    font-size: 66%;
+  }
+  .result_list_item {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
  
 </style>
 
 <template id='lookup-list-item'>
-  <b-list-group-item action class="d-flex justify-content-between align-items-center">
-    <div v-if="show_item_meta">
-      <span @click="toggle">[[ item.label ]]</span>
-      <a class="text-right" v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
-      <p class="text-left">
-        <small v-if="show_item_type" class="text-muted">[[ item.item_type ]]</small>
-        <small v-if="show_project" class="text-muted">[[ item.project__label ]]</small>
-        <small v-if="show_item_class" class="text-muted">[[ item.item_class__label ]]</small>
-        <small v-if="show_context" class="text-muted">[[ item.context__label ]]</small>
-      </p>
+  <b-list-group-item action class="d-flex justify-content-between align-items-center result_list_item">
+    <div v-if="meta_items.length > 0">
+      <span @click="toggle">[[ item.label ]]</span> <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <small class="text-muted" v-for="(m_item, index) in meta_items">
+        <br/>[[ m_item ]]
+      </small>
     </div>
     <div v-else>
       <span @click="toggle">[[ item.label ]]</span>
@@ -36,7 +37,7 @@
 <template id='lookup-list'>
   <div>
     <b-form-group v-if="show_q_search_box"
-      description="Lookup item by labels (main, alternates)"
+      description="Lookup item by any label (enter search text above)"
       :label-for="'lookup-list-q-search-box' + id_part"
     >
       <b-form-input
@@ -48,7 +49,7 @@
     </b-form-group>
 
     <b-form-group v-if="show_label_search_box"
-      description="Lookup item by label"
+      description="Lookup item by main label (enter search text above)"
       :label-for="'lookup-list-label-search-box' + id_part"
     >
       <b-form-input
@@ -60,7 +61,7 @@
     </b-form-group>
 
     <b-form-group v-if="show_path_search_box"
-      description="Look within a (spatial) context path"
+      description="Look within a (spatial) context path (enter search text above)"
       :label-for="'lookup-list-path-search-box' + id_part"
     >
       <b-form-input
@@ -71,20 +72,81 @@
         :value="path__icontains"></b-form-input>
     </b-form-group>
   
-    <small v-if="!loading & show_total_results">Number Found: [[ totalResults ]]</small>
-    <small v-if="loading">Searching for items...</small>
-    <b-list-group flush v-if="!loading & results.length > 0" class="result_list">
-      <lookup-list-item
-        @set_selected_item="set_selected_item($event)"
-        v-for="(item, index) in results"
-        :key="item.uuid"
-        :item="item"
-        v-bind:show_item_type="show_item_type"
-        v-bind:show_project="show_project"
-        v-bind:show_item_class="show_item_class"
-        v-bind:show_context="show_context"
-      ></lookup-list-item>
-    </b-list-group>
+    <b-row v-if="do_meta">
+      <b-col cols="8">
+
+        <b-row v-if="project_options.length > 1">
+          <b-col cols="12">
+            <b-form-group label="In Projects" v-slot="{ ariaDescribedby }">
+              <b-form-checkbox-group
+                :id="'project-options-' + id_part"
+                size="sm"
+                v-model="selected_projects"
+                :options="project_options"
+                :aria-describedby="ariaDescribedby"
+                name="selected_projects"
+              ></b-form-checkbox-group>
+            </b-form-group>
+          </b-col>
+        </b-row>
+
+        <b-row v-if="context_options.length > 1">
+          <b-col cols="12">
+            <b-form-group label="In Vocabulary Contexts" v-slot="{ ariaDescribedby }">
+              <b-form-checkbox-group
+                :id="'context-options-' + id_part"
+                size="sm"
+                v-model="selected_contexts"
+                :options="context_options"
+                :aria-describedby="ariaDescribedby"
+                name="selected_contexts"
+              ></b-form-checkbox-group>
+            </b-form-group>
+          </b-col>
+        </b-row>
+
+      </b-col>
+      <b-col cols="4">
+        <b-button
+          v-if="selected_option_count > 0"
+          @click="limit_by_selected"
+          sm
+          block
+          class="text-center"
+          variant="info">Limit within [[ selected_option_count ]] Options</b-button>
+        
+        <b-button
+          v-if="using_filters"
+          @click="remove_filters"
+          sm
+          block
+          class="text-center"
+          variant="secondary">Remove Filter Limits</b-button>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col cols="12">
+        <small v-if="!loading & show_total_results">Number Found: [[ totalResults ]]</small>
+        <small v-if="loading">Searching for items...</small>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="12">
+        <b-list-group flush v-if="!loading & results.length > 0" class="result_list">
+          <lookup-list-item
+            @set_selected_item="set_selected_item($event)"
+            v-for="(item, index) in results"
+            :key="item.uuid"
+            :item="item"
+            v-bind:show_item_type="show_item_type"
+            v-bind:show_project="show_project"
+            v-bind:show_item_class="show_item_class"
+            v-bind:show_context="show_context"
+          ></lookup-list-item>
+        </b-list-group>
+      </b-col>
+    </b-row>
   </div>
 </template>
 
@@ -125,20 +187,21 @@
             return 'https://' + this.item.context__uri;
           }
         },
-        show_item_meta: function() {
+        meta_items: function() {
+          let m_items = [];
           if(this.show_item_type){
-            return true;
+            m_items.push(this.item.item_type);
           }
           if(this.show_project){
-            return true;
+            m_items.push(this.item.project__label);
           }
           if(this.show_item_class){
-            return true;
+            m_items.push(this.item.item_class__label);
           }
           if(this.show_context){
-            return true;
+            m_items.push(this.item.context__label);
           }
-          return false;
+          return m_items;
         },
       },
       methods: {
@@ -161,6 +224,7 @@
     {
       delimiters: ['[[', ']]'],
       props: [
+        'uuid',
         'item_type', 
         'project_id', 
         'item_class_id', 
@@ -183,6 +247,7 @@
       ],
       data() {
         return {
+          uuid: [],
           item_type: [],
           project_id: [],
           item_class_id: [],
@@ -210,9 +275,55 @@
           id_part: guidGenerator(),
           fetch_on_create: false,
           fetch_all: false,
+          using_filters: false,
+          selected_contexts: [],
+          selected_projects: [],
         };
       },
       template: '#lookup-list',
+      computed: {
+        context_options: function() {
+          if(!this.show_context){
+            return [];
+          }
+          let options = [];
+          if(this.result_meta.hasOwnProperty('context')){
+            for(let context of this.result_meta['context']){
+              context.value = context.context_id;
+              context.text = context.context__label;
+              options.push(context);
+            }
+          }
+          if(options.length < 2){
+            return [];
+          }
+          return options;
+        },
+        project_options: function() {
+          if(!this.show_project){
+            return [];
+          }
+          let options = [];
+          if(this.result_meta.hasOwnProperty('project')){
+            for(let project of this.result_meta['project']){
+              project.value = project.project_id;
+              project.text = project.project__label;
+              options.push(project);
+            }
+          }
+          if(options.length < 2){
+            return [];
+          }
+          return options;
+        },
+        selected_option_count: function() {
+          let total_count = (
+            this.selected_contexts.length
+            + this.selected_projects.length
+          )
+          return total_count;
+        },
+      },
       created(){
         if(this.fetch_on_create){
           this.fetch_api_item_look_up();
@@ -222,6 +333,9 @@
         get_list_request_params: function () {
           // Makes request parameters for attributes with listed values.
           let params = {};
+          if(this.uuid && this.uuid.length > 0){
+            params.uuid = this.uuid.join(this.multi_val_delim);
+          }
           if(this.item_type && this.item_type.length > 0){
             params.item_type = this.item_type.join(this.multi_val_delim);
           }
@@ -233,6 +347,9 @@
           }
           if(this.context_id && this.context_id.length > 0){
             params.context_id = this.context_id.join(this.multi_val_delim);
+          }
+          if(this.selected_contexts && this.selected_contexts.length > 0){
+            params.context_id = this.selected_contexts.join(this.multi_val_delim);
           }
           if(this.fetch_all){
             params.all = true;
@@ -284,6 +401,9 @@
             if(this.do_meta){
               this.fetch_api_item_meta_look_up();
             }
+            else{
+              this.selected_contexts = [];
+            }
           });
         },
         fetch_api_item_meta_look_up: function (){
@@ -327,6 +447,7 @@
           .then(response => response.json())
           .then(json => {
             this.result_meta = json;
+            this.selected_contexts = [];
           });
         },
         clear_selected_item(){
@@ -345,6 +466,18 @@
         },
         on_change_path_search(path__icontains){
           this.path__icontains = path__icontains;
+          this.clear_selected_item();
+          this.fetch_api_item_look_up();
+        },
+        limit_by_selected(){
+          this.using_filters = true;
+          this.clear_selected_item();
+          this.fetch_api_item_look_up();
+        },
+        remove_filters(){
+          this.using_filters = false;
+          this.selected_contexts = [];
+          this.selected_projects = [];
           this.clear_selected_item();
           this.fetch_api_item_look_up();
         },

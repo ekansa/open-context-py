@@ -194,9 +194,19 @@ urlpatterns = [
         name='editorial_item_resources_json'
     ),
     url(
-        r'^editorial/item-update-resource', 
+        r'^editorial/item-update-resources', 
         EditorialItemViews.update_resource_fields, 
         name='editorial_update_resource_field'
+    ),
+    url(
+        r'^editorial/item-add-resources', 
+        EditorialItemViews.add_resources, 
+        name='editorial_add_resources'
+    ),
+    url(
+        r'^editorial/item-delete-resources', 
+        EditorialItemViews.delete_resources, 
+        name='editorial_delete_resources'
     ),
     url(
         r'^editorial/item-update-identifier', 

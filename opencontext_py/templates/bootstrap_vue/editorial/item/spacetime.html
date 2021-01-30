@@ -181,13 +181,41 @@ NOTE: Templates and view components to edit an item's manifest object.
   <b-row class="spacetime_row" v-if="spacetime">
 
     <b-col cols="2">
-      <b-button
-        sm
-        @click="delete_spacetime"
-        variant="dark"
-        title="Delete location / chronology record"
-        class="text-center"><small>Delete <b-icon-x-circle></b-icon-x-circle></small>
-      </b-button>
+      <b-row align-v="center">
+        <b-button
+          sm
+          @click="open_delete_confirm"
+          variant="secondary"
+          title="Delete location / chronology record"
+          class="text-center"><small>Delete <b-icon-x-circle></b-icon-x-circle></small>
+        </b-button>
+
+        <b-overlay :show="show_delete_confirm" no-wrap @hidden="on_delete_confirm_hide">
+          <template #overlay>
+            <b-spinner v-if="updating" label="Deleting..."></b-spinner>
+            <b-card 
+              v-else
+              ref="dialog"
+              bg-variant="light"
+              role="dialog"
+              aria-modal="false"
+              :aria-labelledby="'delete-confirm-label-' + spacetime.uuid"
+              no-center
+              class="text-center p-3"
+            >
+              <p>
+                <strong :id="'delete-confirm-label-' + spacetime.uuid">Confirm deletion</strong>
+              </p>
+              <div class="d-flex">
+                <b-button variant="outline-danger" class="mr-3" @click="on_delete_confirm_hide">
+                  Cancel
+                </b-button>
+                <b-button variant="outline-success" @click="delete_spacetime">OK</b-button>
+              </div>
+            </b-card>
+          </template>
+        </b-overlay>
+      </b-row>
     </b-col>
 
     <b-col cols="5">
@@ -562,7 +590,9 @@ NOTE: Templates and view components to edit an item's manifest object.
           this.error = null;
           this.updating = true;
           console.log('add_spacetime');
-          let add_obj = {};
+          let add_obj = {
+            item_id: ITEM_UUID,
+          };
           for (let key in this.spacetime) {
             if (this.spacetime.hasOwnProperty(key) && this.spacetime[key] != null) {
               add_obj[key] = this.spacetime[key];
@@ -620,6 +650,8 @@ NOTE: Templates and view components to edit an item's manifest object.
           original_spacetime: null,
           map_key: 1,
           form_key: 1,
+          show_delete_confirm: false,
+          updating: false,
         }
       },
       template: '#spacetime-obj',
@@ -676,7 +708,14 @@ NOTE: Templates and view components to edit an item's manifest object.
           this.form_key += 1;
           console.log('Form key is: ' + this.form_key );
         },
+        open_delete_confirm: function() {
+          this.show_delete_confirm = true;
+        },
+        on_delete_confirm_hide: function () {
+          this.show_delete_confirm = false;
+        },
         delete_spacetime: function (){
+          this.show_delete_confirm = false;
           this.error = null;
           this.updating = true;
           console.log('delete_spacetime');

@@ -78,6 +78,9 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
                 obj['object_id'] = str(assert_obj.object.uuid)
                 obj['object__label'] = assert_obj.object.label
                 obj['object__uri'] = assert_obj.object.uri
+                obj['object__context_id'] = str(assert_obj.object.context.uuid)
+                obj['object__context__label'] = assert_obj.object.context.label
+                obj['object__context__uri'] = assert_obj.object.context.uri
         elif predicate.data_type == 'xsd:string':
             # A string gets a language code key, so it's not just a naked
             # literal returned in the pred_objects list.
