@@ -29,7 +29,9 @@ NOTE: Templates and view components to edit an item's manifest object.
           @change="uri_change"
           :value="resource.uri"
         ></b-form-input>
-        <small><strong>Media (file) type:</strong> [[ resource.mediatype__label ]]</small>
+        <small>
+          <strong>Media (file) type:</strong> [[ resource.mediatype__label ]] <span v-if="formatted_size">([[formatted_size]])</span>
+        </small>
         <p v-if="web_url">
           <small><strong>Link <b-icon-files></b-icon-files>:</strong> <a :href="web_url" target="_blank">[[ web_url ]]</a></small>
         </p>
@@ -171,7 +173,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 <template id="add-resource-ui-button">
   <div>
     <b-button
-      v-if="!resource"
+      v-if="!resourcetype"
       sm
       @click="show_add_ui_for_resource"
       variant="primary"
@@ -179,12 +181,12 @@ NOTE: Templates and view components to edit an item's manifest object.
       class="text-center">Add New Resource <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
     </b-button>
     <b-button
-      v-if="resource"
+      v-if="resourcetype"
       sm
       @click="show_add_ui_for_resource"
       variant="primary"
-      :title="'Add new file resource: ' + resource.resourcetype__label"
-      class="text-center">Add [[resource.resourcetype__label]] <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+      :title="'Add new file resource: ' + resourcetype.label"
+      class="text-center">Add [[resourcetype.label]] <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
     </b-button>
   </div>
 </template>
@@ -200,12 +202,12 @@ NOTE: Templates and view components to edit an item's manifest object.
       title="Add Media File Resource"
       @shown="on_shown"
     >
-      <b-container fluid v-if="resource_obj_for_form">
+      <b-container fluid v-if="resource_obj_for_add">
         
         <resource-obj
           :key="'resource-obj-add-' + add_form_key"
           @resource_update_done="resource_update_done($event)"
-          v-bind:resource="resource_obj_for_form"
+          v-bind:resource="resource_obj_for_add"
           v-bind:add_new="true"
         >
         </resource-obj>
@@ -262,15 +264,15 @@ NOTE: Templates and view components to edit an item's manifest object.
       </b-col>
     </b-row>
     <b-row>
-      <div v-if="missing_expected_resources.length > 0">
-        <add-resource-ui-button v-for="(m_resource, m_index) in missing_expected_resources"
-          v-bind:resource="m_resource"
+      <div v-if="missing_expected_res_types.length > 0">
+        <add-resource-ui-button v-for="(resourcetype, m_index) in missing_expected_res_types"
+          v-bind:resourcetype="resourcetype"
           @toggle_add_new_resource_ui="toggle_add_new_resource_ui($event)"
           ></add-resource-ui-button>
       </div>
       <div v-else>
         <add-resource-ui-button
-          v-bind:resource="null"
+          v-bind:resourcetype="null"
           @toggle_add_new_resource_ui="toggle_add_new_resource_ui($event)"
           ></add-resource-ui-button>
       </div>
@@ -279,7 +281,7 @@ NOTE: Templates and view components to edit an item's manifest object.
     <add-resource-ui
       @resource_update_done="resource_update_done($event)"
       v-bind:add_form_key="add_form_key"
-      v-bind:resource="resource_obj_for_add"
+      v-bind:resource_obj_for_add="resource_obj_for_add"
       v-bind:item_id="ITEM_UUID">
     </add-resource-ui>
 
@@ -308,6 +310,7 @@ var vc_resource_obj = Vue.component(
         is_value_changed: false,
         updating: false,
         show_delete_confirm: false,
+        filesize_decimals: 2,
       }
     },
     template: '#resource-obj',
@@ -330,6 +333,20 @@ var vc_resource_obj = Vue.component(
           return false;
         }
         return true;
+      },
+      formatted_size: function() {
+        if(!this.resource || !this.resource.filesize){
+          return null;
+        }
+        if (this.resource.filesize < 1){
+          return '0 Bytes';
+        }
+        let bytes = this.resource.filesize;
+        const k = 1024;
+        const dm = this.filesize_decimals < 0 ? 0 : this.filesize_decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
       }
     },
     methods: {
@@ -536,23 +553,12 @@ var vc_add_resource_ui = Vue.component(
     'add-resource-ui',
     {
       delimiters: ['[[', ']]'],
-      props: ['resource', 'add_form_key'],
+      props: ['resource_obj_for_add', 'add_form_key'],
       data() {
         return {
           item_id: ITEM_UUID,
-          resource: null,
           add_form_key: 1,
-          null_resource: {
-            uuid: ITEM_UUID + '-new-resource',
-            item_id: ITEM_UUID,
-            uri: null,
-            rank: 0,
-            mediatype__label: null,
-            resourcetype_id: null,
-            resourcetype__label: null,
-            item__label: null,
-          },
-          resource_obj_for_form: null,
+          resource_obj_for_add: null,
         }
       },
       template: '#add-resource-ui',
@@ -562,14 +568,6 @@ var vc_add_resource_ui = Vue.component(
       methods: {
         on_shown: function() {
           console.log('on_shown;');
-          let res_str = '';
-          if(!this.resource){
-            res_str = JSON.stringify(this.null_resource);
-          }
-          else{
-            res_str = JSON.stringify(this.resource);
-          }
-          this.resource_obj_for_form = JSON.parse(res_str);
           this.add_form_key += 1;
         },
         resource_update_done(v){
@@ -587,19 +585,42 @@ var vc_add_resource_ui_button = Vue.component(
   'add-resource-ui-button',
   {
     delimiters: ['[[', ']]'],
-    props: ['resource',],
+    props: ['resourcetype',],
     data() {
       return {
+        resourcetype: null,
         resource: null,
+        null_resource: {
+          uuid: ITEM_UUID + '-new-resource',
+          item_id: ITEM_UUID,
+          uri: null,
+          rank: 0,
+          mediatype__label: null,
+          resourcetype_id: null,
+          resourcetype__label: null,
+          item__label: null,
+        },
       }
     },
     template: '#add-resource-ui-button',
     computed: {
-      
+      resource_obj_for_form: function() {
+        let res_str = '';
+        if(!this.resourcetype){
+          res_str = JSON.stringify(this.null_resource);
+        }
+        else{
+          let res_obj = this.null_resource;
+          res_obj.resourcetype_id = this.resourcetype.uuid;
+          res_obj.resourcetype__label = this.resourcetype.label;
+          res_str = JSON.stringify(res_obj);
+        }
+        return JSON.parse(res_str);
+      },
     },
     methods: {
       show_add_ui_for_resource: function(){
-        this.$emit('toggle_add_new_resource_ui', this.resource);
+        this.$emit('toggle_add_new_resource_ui', this.resource_obj_for_form);
       }
     },
     components: {
@@ -620,21 +641,21 @@ var vc_edit_resources = Vue.component(
         man_obj: null,
         resource_objs: null,
         emit_edit_done:false,
-        first_resources: [
+        first_res_types: [
           OC_RESOURCE_FULLFILE,
           OC_RESOURCE_PREVIEW,
           OC_RESOURCE_THUMBNAIL,
           OC_RESOURCE_HERO,
         ],
-        media_resources: [
+        media_res_types: [
           OC_RESOURCE_FULLFILE,
           OC_RESOURCE_PREVIEW,
           OC_RESOURCE_THUMBNAIL,
         ],
-        project_resources: [
+        project_res_types: [
           OC_RESOURCE_HERO,
         ],
-        missing_expected_resources: [],
+        missing_expected_res_types: [],
         add_form_key: 1,
         resource_obj_for_add: null,
       }
@@ -661,12 +682,12 @@ var vc_edit_resources = Vue.component(
           this.resource_objs = [];
           let added_uuids = [];
 
-          for(let first_res of this.first_resources){
-            let media_expected = this.media_resources.indexOf(first_res);
-            let proj_expected = this.project_resources.indexOf(first_res);
+          for(let first_res_type of this.first_res_types){
+            let media_expected = this.media_res_types.indexOf(first_res_type);
+            let proj_expected = this.project_res_types.indexOf(first_res_type);
             let expected_found = false;
             for(let resource of json){
-              if(first_res.uuid == resource.resourcetype_id){
+              if(first_res_type.uuid == resource.resourcetype_id){
                 if(ITEM_TYPE == 'media' && media_expected >= 0){
                   resource.expected = ITEM_TYPE;
                   expected_found = true;
@@ -679,8 +700,11 @@ var vc_edit_resources = Vue.component(
                 added_uuids.push(resource.uuid);
               }
             }
-            if(!expected_found && media_expected >= 0){
-              this.missing_expected_resources.push(first_res);
+            if(ITEM_TYPE == 'media' && !expected_found && media_expected >= 0){
+              this.missing_expected_res_types.push(first_res_type);
+            }
+            if(ITEM_TYPE == 'projects' && !expected_found && proj_expected >= 0){
+              this.missing_expected_res_types.push(first_res_type);
             }
           }
 
@@ -692,7 +716,7 @@ var vc_edit_resources = Vue.component(
             }
           }
           console.log(this.resource_objs);
-          console.log(this.missing_expected_resources);
+          console.log(this.missing_expected_res_types);
           if(this.emit_edit_done){
             this.emit_edit_done = false;
             this.$emit('edit_done', true);
@@ -705,7 +729,7 @@ var vc_edit_resources = Vue.component(
       },
       toggle_add_new_resource_ui(resource_obj){
         this.add_form_key += 1;
-        this.resource_obj_for_add = resource_obj;
+        this.resource_obj_for_add  = resource_obj;
         this.$bvModal.show('add-resource-modal');  
       }
     },
