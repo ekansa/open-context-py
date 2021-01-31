@@ -199,7 +199,7 @@ NOTE: Templates and view components to edit assertions made on an item
 
     </b-col>
   
-    <b-col cols="8">
+    <b-col cols="7">
   
       <assert-object-edit
         v-bind:assert="assert"
@@ -209,6 +209,24 @@ NOTE: Templates and view components to edit assertions made on an item
       >
       </assert-object-edit>
 
+    </b-col>
+    <b-col cols="1">
+      <div v-if="show_sort_placement">
+        <b-button
+          sm
+          @click="move_up"
+          variant="secondary"
+          title="Delete assertion"
+          class="text-center obj_button"><small><b-icon-arrow-up-square></b-icon-arrow-up-square></small>
+        </b-button>
+        <b-button
+          sm
+          @click="move_down"
+          variant="secondary"
+          title="Delete assertion"
+          class="text-center obj_button"><small><b-icon-arrow-down-square></b-icon-arrow-down-square></small>
+        </b-button>
+      </div>
     </b-col>
     <b-col cols="3" class="text-center">
       <b-spinner v-if="updating" label="Updating..."></b-spinner>
@@ -240,6 +258,7 @@ NOTE: Templates and view components to edit assertions made on an item
       :key="assert.uuid"
       @assertion_update_done="assertion_update_done($event)"
       v-bind:assert="assert"
+      v-bind:show_sort_placement="(assert_node.objs.length > 1)"
       v-bind:linked_data="linked_data"
     ></assert-object>
   </div>
@@ -305,9 +324,21 @@ NOTE: Templates and view components to edit assertions made on an item
       <b-row>
         <b-col cols="5">
           <lookup-list
+            v-if="!linked_data"
             :key="'lookup' + act_obs.id"
             v-bind:project_id="ITEM_PROJECT_UUIDS"
             v-bind:item_type="['predicates']"
+            v-bind:show_label_search_box="true"
+            @set_selected_item="set_selected_pred_item($event)"
+          ></lookup-list>
+          <lookup-list
+            v-if="linked_data"
+            :key="'lookup' + act_obs.id"
+            v-bind:show_label_search_box="true"
+            v-bind:show_context="true"
+            v-bind:do_meta="true"
+            v-bind:show_total_results="true"
+            v-bind:item_type="['property']"
             v-bind:show_label_search_box="true"
             @set_selected_item="set_selected_pred_item($event)"
           ></lookup-list>
@@ -320,6 +351,7 @@ NOTE: Templates and view components to edit assertions made on an item
             <assert-object-edit
               v-bind:assert="assert"
               v-bind:for_add_new="true"
+              v-bind:linked_data="linked_data"
               @get_validation_errors="get_validation_errors($event)"
               @get_value_change="get_value_change($event)"
             >
@@ -632,7 +664,7 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
     'assert-object',
     {
       delimiters: ['[[', ']]'],
-      props: ['assert', 'linked_data'],
+      props: ['assert', 'linked_data', 'show_sort_placement'],
       data() {
         return {
           assert: null,
@@ -642,6 +674,7 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
           errors: null,
           updating: false,
           show_delete_confirm: false,
+          show_sort_placement: false,
         };
       },
       template: '#assert-object',
@@ -690,6 +723,7 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
             }
             // Share the news we just did an edit
             this.input_value = null;
+            this.updating = false;
             this.$emit('assertion_update_done', true);
           })
           .catch(error => {
@@ -756,12 +790,56 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
             }
             // Share the news we just did an edit
             this.input_value = null;
+            this.updating = false;
             this.$emit('assertion_update_done', true);
           })
           .catch(error => {
             this.errorMessage = error;
             console.error('There was an error!', error);
           });
+        },
+        move_update(move_sort){
+          this.updating = true;
+          let update_obj = {
+            uuid: this.assert.uuid,
+            move_sort: move_sort,
+          };
+          let update_objs = [];
+          update_objs.push(update_obj);
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(update_objs)
+          };
+          fetch('/editorial/item-update-assertions', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            // Share the news we just did an edit
+            this.input_value = null;
+            this.updating = false;
+            this.$emit('assertion_update_done', true);
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
+        },
+        move_up: function(){
+          console.log('Move up');
+          return this.move_update('up');
+        },
+        move_down: function(){
+          console.log('Move down');
+          return this.move_update('down');
         },
       },
       components: {
@@ -1141,7 +1219,6 @@ const OC_PRED_LINK_OK_ITEM_TYPES = JSON.parse('{{ OC_PRED_LINK_OK_ITEM_TYPES|esc
       },
     }
   );
-
 
   var vc_edit_ld_assertions = Vue.component(
     'edit-ld-assertions',

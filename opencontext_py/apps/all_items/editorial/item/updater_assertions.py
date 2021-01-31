@@ -67,6 +67,96 @@ ASSERTION_ATTRIBUTES_UPDATE_ALLOWED = [
 # The source id to use for adding new assertions if not provided
 DEFAULT_SOURCE_ID = 'ui-added'
 
+PREDICATE_OBJECT_SORT_INCREMENT = 0.001
+
+def get_assert_related_qs(assert_obj):
+    """Gets a queryset of assertions in the same node as assert_obj"""
+    node_assert_qs = AllAssertion.objects.filter(
+        subject=assert_obj.subject,
+        observation=assert_obj.observation,
+        event=assert_obj.event,
+        attribute_group=assert_obj.attribute_group,
+        predicate=assert_obj.predicate,
+    ).order_by('sort')
+    return node_assert_qs
+
+
+def get_clean_sort_related_assert_qs(assert_obj, increment=PREDICATE_OBJECT_SORT_INCREMENT):
+    """Get a queryset node-related to assert_obj, cleaning sorts if needed"""
+    node_assert_qs = get_assert_related_qs(assert_obj)
+    len_qs = len(node_assert_qs)
+    if len_qs < 1:
+        return None
+
+    qs_change_needed = False
+    sort_values = []
+    for i, other_assert in enumerate(node_assert_qs):
+        if other_assert.sort is None or other_assert.sort == 0:
+            qs_change_needed = True
+            continue
+        if other_assert.sort in sort_values:
+            qs_change_needed = True
+        sort_values.append(other_assert.sort)
+
+    if not qs_change_needed:
+        # Return the queryset, it doesn't need to be updated
+        # to fix problematic sorts.
+        return node_assert_qs
+
+    # This will change the sort values to make them all 
+    # unique, but keep the order as given in the node_assert_qs
+    min_sort = 1
+    if len(sort_values):
+        min_sort = min(sort_values)
+    for i, other_assert in enumerate(node_assert_qs):
+        other_assert.sort = min_sort + (i * increment) 
+        other_assert.save()
+    
+    # The query set changed, so refetch it.
+    return get_assert_related_qs(assert_obj)
+
+
+def move_sort_placement(assert_obj, move_sort, increment=PREDICATE_OBJECT_SORT_INCREMENT):
+    """Changes a sort placement for an assertion object within it's node context"""
+    node_assert_qs = get_clean_sort_related_assert_qs(
+        assert_obj, 
+        increment=increment
+    )
+    # get_clean_sort_related_assert_qs can change the assert_obj
+    # so go fetch it again.
+    assert_obj = AllAssertion.objects.get(uuid=assert_obj.uuid)
+
+    node_assert_qs = node_assert_qs.exclude(
+        uuid=assert_obj.uuid
+    ).order_by('sort')
+    if not node_assert_qs:
+        return assert_obj
+    
+    prev_assert = None
+    next_assert = None
+    for other_assert in node_assert_qs:
+        if other_assert.sort < assert_obj.sort:
+            prev_assert = other_assert
+        if next_assert is None and other_assert.sort > assert_obj.sort:
+            # will be set by the first other assert that has a sort
+            # value greater than 
+            next_assert = other_assert
+    
+    store_sort = assert_obj.sort
+    if move_sort == 'up' and prev_assert:
+        assert_obj.sort = prev_assert.sort
+        prev_assert.sort = store_sort
+        assert_obj.save()
+        prev_assert.save()
+    
+    if move_sort == 'down' and next_assert:
+        assert_obj.sort = next_assert.sort
+        next_assert.sort = store_sort
+        assert_obj.save()
+        next_assert.save()
+    
+    return assert_obj
+    
 
 def update_attribute_fields(request_json):
     """Updates AllAssertion fields based on listed attributes in client request JSON"""
@@ -103,16 +193,27 @@ def update_attribute_fields(request_json):
             errors.append(f'Cannot change (spatial) containment with this method')
             continue
 
-        if not len(update_dict):
+        move_sort = item_update.get('move_sort')
+        if not len(update_dict) and not move_sort:
             print('Nothing to update')
             continue
 
-        # Make a copy for editing purposes.
-        update_assert_obj = copy.deepcopy(assert_obj)
-        update_assert_obj.uuid = None
-        update_assert_obj.pk = None
-
         edits = []
+
+        if not move_sort:
+            # Change assertion attributes, not sort placement.
+            update_assert_obj = copy.deepcopy(assert_obj)
+            update_assert_obj.uuid = None
+            update_assert_obj.pk = None
+        elif len(update_dict) and move_sort:
+            errors.append(f'Cannot change sort placement along with other changes')
+            continue
+        else:
+            # we're changing the sort for this item.
+            edits.append(f'Changed "{assert_obj.predicate.label}" assertion object sorting')
+            update_assert_obj = move_sort_placement(assert_obj, move_sort)
+
+
         for attr, value in update_dict.items():
             if value is False and ASSERTION_DEFAULT_NODE_IDS.get(attr):
                 # We're removing an an assertion node, so set it back to the default
@@ -145,6 +246,8 @@ def update_attribute_fields(request_json):
         # Keep a copy of the old state before saving it.
         prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=assert_obj)
 
+
+
         try:
             update_assert_obj.save()
             ok = True
@@ -163,8 +266,10 @@ def update_attribute_fields(request_json):
         man_obj = AllManifest.objects.filter(
             uuid=assert_obj.subject.uuid
         ).first()
-        # Delete the assertion that we just changed. The UUID will be different.
-        assert_obj.delete()
+
+        if not move_sort:
+            # Delete the assertion that we just changed. The UUID will be different.
+            assert_obj.delete()
 
         # Make a copy of the new state of your model.
         after_edit_model_dict = updater_general.make_models_dict(item_obj=update_assert_obj)
@@ -249,7 +354,7 @@ def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
             if sort_assert:
                 # This subject already has assertion(s) with this predicate,
                 # so add a small value to the sort of the new assertion.
-                add_dict['sort'] = sort_assert.sort + 0.001
+                add_dict['sort'] = sort_assert.sort + PREDICATE_OBJECT_SORT_INCREMENT
 
         if not add_dict.get('sort'):
             pred_obj = AllManifest.objects.filter(
@@ -290,6 +395,7 @@ def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
 
         try:
             assert_obj = AllAssertion(**add_dict)
+            assert_obj.created = timezone.now()
             assert_obj.save()
             ok = True
         except Exception as e:
