@@ -129,7 +129,7 @@ def update_subjects_context_containment_assertion(man_obj):
     return assert_obj, None
 
 
-def update_manifest_fields(request_json):
+def update_manifest_objs(request_json):
     """Updates AllManifest fields based on listed attributes in client request JSON"""
     errors = []
     

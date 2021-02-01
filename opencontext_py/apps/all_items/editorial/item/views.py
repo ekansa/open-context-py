@@ -28,7 +28,8 @@ from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items.editorial.item import updater_manifest
 from opencontext_py.apps.all_items.editorial.item import updater_assertions
 from opencontext_py.apps.all_items.editorial.item import updater_spacetime
-from opencontext_py.apps.all_items.editorial.item import updater_resource
+from opencontext_py.apps.all_items.editorial.item import updater_resources
+from opencontext_py.apps.all_items.editorial.item import updater_identifiers
 
 from opencontext_py.apps.all_items.representations.item import (
     get_item_assertions,
@@ -173,6 +174,7 @@ def item_edit_interface_html(request, uuid):
         'OC_RESOURCE_THUMBNAIL': json.dumps(oc_resource_thumbnail),
         'OC_RESOURCE_HERO': json.dumps(oc_resource_hero),
         'OC_RESOURCE_TYPES_UUIDS': json.dumps(configs.OC_RESOURCE_TYPES_UUIDS),
+        'OC_IDENTIFIER_SCHEME_CONFIGS': json.dumps(AllIdentifier.SCHEME_CONFIGS),
     }
     template = loader.get_template('bootstrap_vue/editorial/item/edit_item.html')
     response = HttpResponse(template.render(context, request))
@@ -249,13 +251,13 @@ def item_manifest_json(request, uuid):
 @never_cache
 @transaction.atomic()
 @reversion.create_revision()
-def update_manifest_fields(request):
+def update_manifest_objs(request):
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_manifest.update_manifest_fields(request_json)
+    updated, errors = updater_manifest.update_manifest_objs(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -356,13 +358,13 @@ def item_assertions_json(request, uuid):
 @never_cache
 @transaction.atomic()
 @reversion.create_revision()
-def update_assertions_fields(request):
+def update_assertions_objs(request):
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_assertions.update_attribute_fields(request_json)
+    updated, errors = updater_assertions.update_attribute_objs(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -489,13 +491,13 @@ def item_spacetime_json(request, uuid):
 @never_cache
 @transaction.atomic()
 @reversion.create_revision()
-def update_space_time_fields(request):
+def update_space_time_objs(request):
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_spacetime.update_spacetime_fields(request_json)
+    updated, errors = updater_spacetime.update_spacetime_objs(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -620,13 +622,13 @@ def item_resources_json(request, uuid):
 @never_cache
 @transaction.atomic()
 @reversion.create_revision()
-def update_resource_fields(request):
+def update_resource_objs(request):
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_resource.update_resource_fields(request_json)
+    updated, errors = updater_resources.update_resource_objs(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -655,7 +657,7 @@ def add_resources(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    added, errors = updater_resource.add_resource_objs(request_json)
+    added, errors = updater_resources.add_resource_objs(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -684,7 +686,7 @@ def delete_resources(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    deleted, errors = updater_resource.delete_resource_objs(request_json)
+    deleted, errors = updater_resources.delete_resource_objs(request_json)
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -703,18 +705,132 @@ def delete_resources(request):
     )
 
 
+# ---------------------------------------------------------------------
+# NOTE: Item Identifier Edit endpoints
+# ---------------------------------------------------------------------
+@never_cache
+@cache_control(no_cache=True)
+def item_identifiers_json(request, uuid):
+    """JSON representation of identifiers about an item"""
+    _, valid_uuid = update_old_id(uuid)
+    man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
+    if not man_obj:
+        return HttpResponse(
+            json.dumps({}),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    # List of related object attributes to add to the JSON
+    # output for each resources object.
+    more_attributes = [
+        'item__label',
+    ]
+    api_result = []
+    id_qs = AllIdentifier.objects.filter(
+        item=man_obj
+    )
+    for id_obj in id_qs:
+        api_result.append(
+            make_model_object_json_safe_dict(
+                id_obj,
+                more_attributes=more_attributes
+            )
+        )
+    
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
 
 @cache_control(no_cache=True)
 @never_cache
 @transaction.atomic()
 @reversion.create_revision()
-def update_identifier_fields(request):
+def update_identifier_objs(request):
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
+    updated, errors = updater_identifiers.update_identifier_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
     return HttpResponse(
-        '[]',
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def add_identifiers(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = updater_identifiers.add_identifier_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def delete_identifiers(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    deleted, errors = updater_identifiers.delete_identifier_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'deleted': deleted,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
         content_type="application/json; charset=utf8"
     )

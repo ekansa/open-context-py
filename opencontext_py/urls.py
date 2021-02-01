@@ -137,8 +137,8 @@ urlpatterns = [
     ),
     url(
         r'^editorial/item-update-manifest', 
-        EditorialItemViews.update_manifest_fields, 
-        name='editorial_update_manifest_fields'
+        EditorialItemViews.update_manifest_objs, 
+        name='editorial_update_manifest_objs'
     ),
     url(
         r'^editorial/item-delete-manifest', 
@@ -153,8 +153,8 @@ urlpatterns = [
     ),
     url(
         r'^editorial/item-update-assertions', 
-        EditorialItemViews.update_assertions_fields, 
-        name='editorial_update_assertions_fields'
+        EditorialItemViews.update_assertions_objs, 
+        name='editorial_update_assertions_objs'
     ),
     url(
         r'^editorial/item-add-assertions', 
@@ -174,8 +174,8 @@ urlpatterns = [
     ),
     url(
         r'^editorial/item-update-space-time', 
-        EditorialItemViews.update_space_time_fields, 
-        name='editorial_update_space_time_fields'
+        EditorialItemViews.update_space_time_objs, 
+        name='editorial_update_space_time_objs'
     ),
     url(
         r'^editorial/item-add-space-time', 
@@ -195,7 +195,7 @@ urlpatterns = [
     ),
     url(
         r'^editorial/item-update-resources', 
-        EditorialItemViews.update_resource_fields, 
+        EditorialItemViews.update_resource_objs, 
         name='editorial_update_resource_field'
     ),
     url(
@@ -208,10 +208,26 @@ urlpatterns = [
         EditorialItemViews.delete_resources, 
         name='editorial_delete_resources'
     ),
+    # Item space-time editing URLs
     url(
-        r'^editorial/item-update-identifier', 
-        EditorialItemViews.update_identifier_fields, 
-        name='editorial_update_identifier_fields'
+        r'^editorial/item-identifiers/(?P<uuid>\S+)', 
+        EditorialItemViews.item_identifiers_json, 
+        name='editorial_item_identifiers_json'
+    ),
+    url(
+        r'^editorial/item-update-identifiers', 
+        EditorialItemViews.update_identifier_objs, 
+        name='editorial_update_identifier_objs'
+    ),
+    url(
+        r'^editorial/item-add-identifiers', 
+        EditorialItemViews.add_identifiers, 
+        name='editorial_add_identifiers'
+    ),
+    url(
+        r'^editorial/item-delete-resources', 
+        EditorialItemViews.delete_identifiers, 
+        name='editorial_delete_identifiers'
     ),
 
     # New ETL views

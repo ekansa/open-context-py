@@ -13,16 +13,18 @@
         {% include './assertions.html' %}
         {% include './spacetime.html' %}
         {% include './resources.html' %}
+        {% include './identifiers.html' %}
 
         <div id="main">
             <b-container fluid id="app">
                 <div>
                     <b-nav tabs>
                         <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
-                        <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Edit Media File Resources</b-nav-item>
-                        <b-nav-item :to="{ name: 'assertions'}" >Edit Descriptions, Links</b-nav-item>
-                        <b-nav-item :to="{ name: 'ld-assertions'}" >Edit Standard, Linked Data</b-nav-item>
-                        <b-nav-item :to="{ name: 'spacetime'}" >Edit Location and Chronology</b-nav-item>
+                        <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Media File Resources</b-nav-item>
+                        <b-nav-item :to="{ name: 'assertions'}" >Descriptions, Links</b-nav-item>
+                        <b-nav-item :to="{ name: 'ld-assertions'}" >Standard, Linked Data</b-nav-item>
+                        <b-nav-item :to="{ name: 'spacetime'}" >Location, Chronology</b-nav-item>
+                        <b-nav-item :to="{ name: 'identifiers'}" >Stable IDs</b-nav-item>
                     </b-nav>
                 </div>
                 <b-row>
@@ -97,6 +99,12 @@
                     component: vc_edit_resources,
                     props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
                 },
+                {
+                    path: '/editorial/item-edit/' + ITEM_UUID + '#identifiers',
+                    name: 'identifiers',
+                    component: vc_edit_identifiers,
+                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+                },
             ];
 
             const router = new VueRouter({
@@ -151,6 +159,7 @@
                         'edit-ld-assertions': vc_edit_ld_assertions,
                         'edit-spacetime': vc_edit_spacetime,
                         'edit-resources': vc_edit_resources,
+                        'edit-identifiers': vc_edit_identifiers,
                     },
                 },
             ).$mount('#app');

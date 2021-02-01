@@ -2261,6 +2261,22 @@ class AllIdentifier(models.Model):
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
 
+    SCHEME_CONFIGS = {
+        'doi': {
+            'url_root': 'doi.org/', 
+            'limit_item_types': None
+        },
+        'ark': {
+            'url_root': 'n2t.net/ark:/', 
+            'limit_item_types': None
+        },
+        'orcid': {
+            'url_root': 'orcid.org/', 
+            'limit_item_types': 
+            ['persons'],
+        },
+    }
+
     def make_hash_id(self, item_id, scheme, rank=0):
         """Makes a hash_id for an assertion"""
         hash_obj = hashlib.sha1()
@@ -2304,6 +2320,8 @@ class AllIdentifier(models.Model):
             rank=self.rank
         )
 
+    
+    
     def save(self, *args, **kwargs):
         """
         Makes the primary key sorted for the first part

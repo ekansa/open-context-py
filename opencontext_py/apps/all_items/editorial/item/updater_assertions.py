@@ -158,7 +158,7 @@ def move_sort_placement(assert_obj, move_sort, increment=PREDICATE_OBJECT_SORT_I
     return assert_obj
     
 
-def update_attribute_fields(request_json):
+def update_attribute_objs(request_json):
     """Updates AllAssertion fields based on listed attributes in client request JSON"""
     errors = []
     

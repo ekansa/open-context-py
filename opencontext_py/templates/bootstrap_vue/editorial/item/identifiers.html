@@ -1,0 +1,331 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's identifier objects
+-->
+
+<style>
+ 
+</style>
+
+<template id="identifier-obj">
+  <b-container fluid>
+    <b-row>
+      <b-col cols="2">
+        <div v-if="!add_new && identifier.scheme != 'oc-old'">
+          <b-button
+            sm
+            @click="open_delete_confirm"
+            variant="secondary"
+            title="Delete identifier record"
+            class="text-center"><small>Delete <b-icon-x-circle></b-icon-x-circle></small>
+          </b-button>
+
+          <b-overlay :show="show_delete_confirm" no-wrap @hidden="on_delete_confirm_hide">
+            <template #overlay>
+              <b-spinner v-if="updating" label="Deleting..."></b-spinner>
+              <div
+                v-else
+                ref="dialog"
+                tabindex="-1"
+                role="dialog"
+                aria-modal="false"
+                :aria-labelledby="'delete-confirm-label-' + identifier.uuid"
+                class="text-center p-3"
+              >
+                <p>
+                  <strong :id="'delete-confirm-label-' + identifier.uuid">Confirm deletion</strong>
+                </p>
+                <div class="d-flex">
+                  <b-button variant="outline-danger" class="mr-3" @click="on_delete_confirm_hide">
+                    Cancel
+                  </b-button>
+                  <b-button variant="outline-success" @click="delete_identifier">OK</b-button>
+                </div>
+              </div>
+            </template>
+          </b-overlay>
+        </div>
+
+      </b-col>
+      <b-col cols="7">
+
+        <h3>Scheme: [[ identifier.scheme ]]</h3>
+        <b-form-select
+          v-model="identifier.scheme"
+          :options="scheme_options"
+          class="mb-3"
+        ></b-form-select>
+
+        <label :for="'identifier-id-' + identifier.uuid">Identifier</label>
+        <b-form-input
+          size="sm"
+          v-model="identifier.id"
+          :id="'identifier-id-' + identifier.uuid"
+          @change="id_change"
+          :value="identifier.id"
+        ></b-form-input>
+        <p v-if="web_url">
+          <small><strong>Link from Identifier <b-icon-files></b-icon-files>:</strong> <a :href="web_url" target="_blank">[[ web_url ]]</a></small>
+        </p>
+
+      </b-col>
+      <b-col cols="3">
+        
+      </b-col>
+    </b-row>
+  </b-container>
+</template>
+
+
+
+<template id="add-identifier-ui">
+  <div>
+    <b-modal
+      size="lg"
+      scrollable
+      ref="add-identifier-modal"
+      id="add-identifier-modal" 
+      title="Add Identifier"
+      @shown="on_shown"
+    >
+      <b-container fluid>
+        <identifier-obj
+          @identifier_update_done="identifier_update_done($event)"
+          v-bind:add_new="true"
+          v-bind:identifier="identifier">
+        </identifier-obj>
+      </b-container>
+    </b-modal>
+  </div>
+</template>
+
+
+<template id="edit-identifiers">
+  <div>
+    <b-container fluid v-if="identifiers">
+
+      <b-row v-for="(identifier, index) in identifiers">
+        <b-col cols="12">
+          <b-card no-body>
+            <b-card-header header-tag="header" class="p-1" role="tab">
+              ID [[ (index + 1) ]]</b-button>
+            </b-card-header>
+            <b-card-body>
+              <identifier-obj
+                @identifier_update_done="identifier_update_done($event)"
+                v-bind:add_new="false"
+                v-bind:identifier="identifier">
+              </identifier-obj>
+            </b-card-body>
+          </b-card>
+        </b-col>
+      </b-row>
+
+      <b-row>
+        <b-col cols="3">
+          <b-button
+            sm
+            @click="toggle_add_new_identifier_ui"
+            variant="primary"
+            title="Add new identifier to this item"
+            class="text-center">Add New Identifier <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+          </b-button>
+        </b-col>
+        <b-col cols="9">
+
+        </b-col>
+      </b-row>
+
+    </b-container>
+
+    <add-identifier-ui
+      @identifier_update_done="identifier_update_done($event)"
+      v-bind:item_id="ITEM_UUID">
+    </add-identifier-ui>
+
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+const OC_IDENTIFIER_SCHEME_CONFIGS = JSON.parse('{{ OC_IDENTIFIER_SCHEME_CONFIGS|escapejs }}');
+
+var vc_identifier_obj = Vue.component(
+  'identifier-obj',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['identifier', 'add_new'],
+    data() {
+      return {
+        add_new: false,
+        item_id: ITEM_UUID,
+        identifier: null,
+        updating: false,
+        show_delete_confirm: false,
+      }
+    },
+    template: '#identifier-obj',
+    computed: {
+      scheme_options: function () {
+        return Object.keys(OC_IDENTIFIER_SCHEME_CONFIGS);
+      },
+      web_url: function () {
+        if(!this.identifier || !this.identifier.scheme){
+          return null;
+        }
+        if(!this.identifier.id || this.identifier.id.length < 1){
+          return null;
+        }
+        let key = this.identifier.scheme;
+        if (OC_IDENTIFIER_SCHEME_CONFIGS.hasOwnProperty(key)) {
+          return 'https://' + OC_IDENTIFIER_SCHEME_CONFIGS[key].url_root + this.identifier.id;
+        }
+      },
+    },
+    methods: {
+      id_change(id){
+        this.identifier.id = id;
+      },
+      open_delete_confirm: function() {
+        this.show_delete_confirm = true;
+      },
+      on_delete_confirm_hide: function () {
+        this.show_delete_confirm = false;
+      },
+      delete_identifier: function() {
+        this.show_delete_confirm = false;
+        this.updating = true;
+        console.log('Delete identifier');
+        let delete_obj = {
+          uuid: this.identifier.uuid,
+        };
+        let delete_objs = [];
+        delete_objs.push(delete_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(delete_objs),
+        };
+        fetch('/editorial/item-delete-identifiers', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('identifier_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
+    },
+    components: {
+      
+    },
+  }
+);
+
+
+var vc_add_identifier_ui = Vue.component(
+  'add-identifier-ui',
+  {
+    delimiters: ['[[', ']]'],
+    props: [],
+    data() {
+      return {
+        item_id: ITEM_UUID,
+        identifier: {
+          item_id: ITEM_UUID,
+          scheme: null,
+          rank: 0,
+          id: null,
+        },
+      }
+    },
+    template: '#add-identifier-ui',
+    computed: {
+
+    },
+    methods: {
+      on_shown: function() {
+        console.log('on_shown;');
+      },
+      identifier_update_done(v){
+        this.$emit('identifier_update_done', true);
+      },
+    },
+    components: {
+      
+    },
+  }
+);
+
+
+var vc_edit_identifiers = Vue.component(
+  'edit-identifiers',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['uuid'],
+    data() {
+      return {
+        uuid: null,
+        emit_edit_done:false,
+        identifiers: null,
+      };
+    },
+    template: '#edit-identifiers',
+    created() {
+      this.fetch_api_identifiers();
+    },
+    methods: {
+        fetch_api_identifiers: function (){
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/item-identifiers/' + this.uuid),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.identifiers = json;
+          if(this.emit_edit_done){
+            this.emit_edit_done = false;
+            this.$emit('edit_done', true);
+          }
+        });
+      },
+      identifier_update_done(v){
+        this.emit_edit_done = true;
+        this.fetch_api_identifiers();
+      },
+      toggle_add_new_identifier_ui(){
+        this.$bvModal.show('add-identifier-modal');  
+      }
+    },
+    components: {
+      'add-identifier-ui': vc_add_identifier_ui,
+      'identifier-obj': vc_identifier_obj,
+    },
+  }
+); 
+  
+</script>

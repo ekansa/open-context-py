@@ -66,7 +66,7 @@ def make_resource_note_string(resource_obj):
     return note
 
 
-def update_resource_fields(request_json):
+def update_resource_objs(request_json):
     """Updates AllResource fields based on listed attributes in client request JSON"""
     errors = []
     
@@ -115,7 +115,7 @@ def update_resource_fields(request_json):
             if attr.endswith('_id') and attr != 'source_id':
                 # Get the label for the attribute that we're changing.
                 edited_obj_attrib = attr.replace('_id', '')
-                old_edited_obj = getattr(spt_obj, edited_obj_attrib)
+                old_edited_obj = getattr(resource_obj, edited_obj_attrib)
                 new_edited_obj = AllManifest.objects.filter(uuid=value).first()
 
             attribute_edit_note = edit_note_dict.get(attr)
@@ -307,7 +307,7 @@ def delete_resource_objs(request_json):
         edit_note = (
             f'Deleted {note}'
         )
-         # Delete the resource object.
+        # Delete the resource object.
         to_delete_res_obj.delete()
 
         history_obj = updater_general.record_edit_history(
