@@ -230,7 +230,7 @@ def add_identifier_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             errors.append(error)
 
         try:
-            id_obj = AllResource(**add_dict)
+            id_obj = AllIdentifier(**add_dict)
             id_obj.uuid = id_obj.primary_key_create_for_self()
             id_obj.created = timezone.now()
             id_obj.save()
@@ -260,7 +260,7 @@ def add_identifier_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             after_edit_model_dict=after_edit_model_dict,
         )
         item_add['history_id'] = str(history_obj.uuid)
-        item_add['uuid'] = str(resource_obj.uuid)
+        item_add['uuid'] = str(id_obj.uuid)
         added.append(item_add)
 
     return added, errors

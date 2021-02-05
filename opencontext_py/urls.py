@@ -225,7 +225,7 @@ urlpatterns = [
         name='editorial_add_identifiers'
     ),
     url(
-        r'^editorial/item-delete-resources', 
+        r'^editorial/item-delete-identifiers', 
         EditorialItemViews.delete_identifiers, 
         name='editorial_delete_identifiers'
     ),

@@ -5,14 +5,17 @@ NOTE: Templates and view components to edit an item's identifier objects
 -->
 
 <style>
- 
+ .id_row {
+   margin-top: 24px;
+   margin-bottom: 24px;
+ }
 </style>
 
 <template id="identifier-obj">
   <b-container fluid>
     <b-row>
       <b-col cols="2">
-        <div v-if="!add_new && identifier.scheme != 'oc-old'">
+        <div v-if="!add_new && modify_ok">
           <b-button
             sm
             @click="open_delete_confirm"
@@ -50,28 +53,73 @@ NOTE: Templates and view components to edit an item's identifier objects
       </b-col>
       <b-col cols="7">
 
-        <h3>Scheme: [[ identifier.scheme ]]</h3>
-        <b-form-select
-          v-model="identifier.scheme"
-          :options="scheme_options"
-          class="mb-3"
-        ></b-form-select>
+        <div v-if="add_new || modify_ok">
+          <p><strong>Scheme:</strong> [[ identifier.scheme ]]</p>
+          <b-form-select
+            v-model="identifier.scheme"
+            :options="scheme_options"
+            class="mb-3"
+          ></b-form-select>
 
-        <label :for="'identifier-id-' + identifier.uuid">Identifier</label>
-        <b-form-input
-          size="sm"
-          v-model="identifier.id"
-          :id="'identifier-id-' + identifier.uuid"
-          @change="id_change"
-          :value="identifier.id"
-        ></b-form-input>
-        <p v-if="web_url">
-          <small><strong>Link from Identifier <b-icon-files></b-icon-files>:</strong> <a :href="web_url" target="_blank">[[ web_url ]]</a></small>
-        </p>
+          <br/>
+
+          <label :for="'identifier-id-' + identifier.uuid">Identifier</label>
+          <b-form-input
+            size="sm"
+            v-model="identifier.id"
+            :id="'identifier-id-' + identifier.uuid"
+            @change="id_change"
+            :value="identifier.id"
+          ></b-form-input>
+          <p v-if="web_url">
+            <small><strong>Link from Identifier <b-icon-files></b-icon-files>:</strong> <a :href="web_url" target="_blank">[[ web_url ]]</a></small>
+          </p>
+
+          <br/>
+
+          <label :for="'identifier-rank-' + identifier.uuid">Rank within Scheme <strong>[[ identifier.scheme ]]</strong></label>
+          <b-form-input
+            size="sm"
+            v-model="identifier.rank"
+            :id="'identifier-rank-' + identifier.uuid"
+            @change="rank_change"
+            type="number"
+            min="0"
+            :value="identifier.rank"
+          ></b-form-input>
+          <p v-if="web_url">
+            <small>For the most part, a given Open Context item should have 
+            only 1 identifier of a given scheme. However, Open Context permits
+            an item to have multiple IDs within a given scheme provided these 
+            alternate IDs have different priority rankings. 
+            </small>
+          </p>
+        </div>
+        <div v-else>
+          <p><strong>Scheme:</strong> [[ identifier.scheme ]]</p>
+          <p><strong>ID:</strong> [[ identifier.id ]]</p>
+          <p><small>This type of identifier cannot be edited.</small></p>
+        </div>
 
       </b-col>
       <b-col cols="3">
-        
+        <b-spinner v-if="updating" label="Updating..."></b-spinner>
+        <b-button
+          v-if="modify_ok && !add_new && !updating"
+          sm
+          block
+          @click="update_identifier"
+          class="text-center"
+          variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
+        <b-button
+          v-if="modify_ok && add_new && !updating"
+          sm
+          block
+          @click="add_identifier"
+          class="text-center"
+          variant="primary">Add <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
       </b-col>
     </b-row>
   </b-container>
@@ -105,7 +153,7 @@ NOTE: Templates and view components to edit an item's identifier objects
   <div>
     <b-container fluid v-if="identifiers">
 
-      <b-row v-for="(identifier, index) in identifiers">
+      <b-row class="id_row" v-for="(identifier, index) in identifiers">
         <b-col cols="12">
           <b-card no-body>
             <b-card-header header-tag="header" class="p-1" role="tab">
@@ -122,7 +170,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         </b-col>
       </b-row>
 
-      <b-row>
+      <b-row class="id_row">
         <b-col cols="3">
           <b-button
             sm
@@ -180,13 +228,119 @@ var vc_identifier_obj = Vue.component(
         }
         let key = this.identifier.scheme;
         if (OC_IDENTIFIER_SCHEME_CONFIGS.hasOwnProperty(key)) {
-          return 'https://' + OC_IDENTIFIER_SCHEME_CONFIGS[key].url_root + this.identifier.id;
+          let root = OC_IDENTIFIER_SCHEME_CONFIGS[key].url_root;
+          let id_parts = this.identifier.id.split(root);
+          let id = id_parts[(id_parts.length -1)];
+          return 'https://' + root + id;
         }
+      },
+      modify_ok: function () {
+        if(!this.identifier || !this.identifier.scheme){
+          return false;
+        }
+        if(!this.identifier.id || this.identifier.id.length < 1){
+          return false;
+        }
+        let key = this.identifier.scheme;
+        if (!OC_IDENTIFIER_SCHEME_CONFIGS.hasOwnProperty(key)) {
+          // The scheme is not configured for an update.
+          return false;
+        }
+        return true;
       },
     },
     methods: {
       id_change(id){
+        let key = this.identifier.scheme;
+        if (OC_IDENTIFIER_SCHEME_CONFIGS.hasOwnProperty(key)) {
+          let root = OC_IDENTIFIER_SCHEME_CONFIGS[key].url_root;
+          let id_parts = id.split(root);
+          id = id_parts[(id_parts.length -1)];
+        }
         this.identifier.id = id;
+      },
+      rank_change(rank){
+        this.identifier.rank = rank;
+      },
+      update_identifier: function() {
+        this.updating = true;
+        console.log('update identifier');
+        let update_obj = {
+          uuid: this.identifier.uuid,
+          scheme: this.identifier.scheme,
+          id: this.identifier.id,
+          rank: this.identifier.rank,
+        };
+        let update_objs = [];
+        update_objs.push(update_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(update_objs),
+        };
+        fetch('/editorial/item-update-identifiers', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('identifier_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
+      add_identifier: function() {
+        this.updating = true;
+        console.log('add identifier');
+        let add_obj = {
+          item_id: ITEM_UUID,
+          scheme: this.identifier.scheme,
+          id: this.identifier.id,
+          rank: this.identifier.rank,
+        };
+        let add_objs = [];
+        add_objs.push(add_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(add_objs),
+        };
+        fetch('/editorial/item-add-identifiers', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('identifier_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
       },
       open_delete_confirm: function() {
         this.show_delete_confirm = true;
