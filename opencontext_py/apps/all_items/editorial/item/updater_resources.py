@@ -45,7 +45,7 @@ RESOURCE_ATTRIBUTES_UPDATE_CONFIG = [
     ('filesize', 'Changed file size',),
     ('rank', 'Changed rank',),
     ('is_static', 'Changed static',),
-    ('meta_json', 'Changed item admministrative metadata',),
+    ('meta_json', 'Changed item administrative metadata',),
 ]
 
 RESOURCE_ATTRIBUTES_UPDATE_ALLOWED = [a_a for a_a, _ in RESOURCE_ATTRIBUTES_UPDATE_CONFIG]

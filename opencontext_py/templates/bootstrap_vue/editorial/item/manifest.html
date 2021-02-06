@@ -246,6 +246,20 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         </b-row>
 
+        <b-row v-if="edit_meta_json" class="field_row">
+          <b-col cols="1">
+            
+          </b-col>
+          <b-col>
+            <meta-json-form
+              v-bind:meta_json="man_obj.meta_json"
+              v-bind:meta_configs="edit_meta_json"
+              v-bind:item_id="man_obj.uuid"
+              >
+            </meta-json-form>
+          </b-col>
+        </b-row>
+
       </b-card-text>
     </b-card>
   </div>
@@ -254,6 +268,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 
 <script type="text/javascript">
 
+const ITEM_TYPE_EDIT_CONFIG = JSON.parse('{{ ITEM_TYPE_EDIT_CONFIG|escapejs }}');
 const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
 
     var vc_edit_manifest = Vue.component(
@@ -329,6 +344,15 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
                 return false;
               }
             },
+            edit_meta_json: function() {
+              if(!this.man_obj || !ITEM_TYPE_EDIT_CONFIG){
+                return [];
+              }
+              if(ITEM_TYPE_EDIT_CONFIG.meta_json_edit.length < 1){
+                return [];
+              }
+              return ITEM_TYPE_EDIT_CONFIG.meta_json_edit;
+            },
           },
           methods: {
             fetch_api_manifest_obj: function (){
@@ -346,6 +370,7 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
               .then(response => response.json())
               .then(json => {
                   this.man_obj = json;
+                  console.log(this.man_obj);
               })
             },
             send_manifest_update_request(requestOptions){
@@ -461,6 +486,7 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
           components: {
             'root-item-tree': vs_root_item_tree,
             'lookup-list': vs_look_up_list,
+            'meta-json-form-item': vc_meta_json_form_item,
           },
         }
     ); 

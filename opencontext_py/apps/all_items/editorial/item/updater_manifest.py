@@ -44,7 +44,7 @@ MANIFEST_ATTRIBUTES_UPDATE_CONFIG = [
     ('publisher_id', 'Changed item publisher',),
     ('item_key', 'Changed item key identifier',),
     ('source_id', 'Changed item data source id',),
-    ('meta_json', 'Changed item admministrative metadata',),
+    ('meta_json', 'Changed item administrative metadata',),
 ]
 
 MANIFEST_ATTRIBUTES_UPDATE_ALLOWED = [m_a for m_a, _ in MANIFEST_ATTRIBUTES_UPDATE_CONFIG]

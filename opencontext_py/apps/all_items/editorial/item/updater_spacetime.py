@@ -51,7 +51,7 @@ SPACETIME_ATTRIBUTES_UPDATE_CONFIG = [
     ('longitude', 'Changed longitude'),
     ('geo_specificity', 'Changed location specificity'),
     ('geometry', 'Changed geometry'),
-    ('meta_json', 'Changed item admministrative metadata',),
+    ('meta_json', 'Changed item administrative metadata',),
 ]
 
 SPACETIME_ATTRIBUTES_UPDATE_ALLOWED = [a_a for a_a, _ in SPACETIME_ATTRIBUTES_UPDATE_CONFIG]

@@ -49,7 +49,7 @@ ASSERTION_ATTRIBUTES_UPDATE_CONFIG = [
     ('obj_integer', 'Changed attribute value',),
     ('obj_double', 'Changed attribute value',),
     ('obj_datetime', 'Changed attribute value',),
-    ('meta_json', 'Changed assertion admministrative metadata',),
+    ('meta_json', 'Changed assertion administrative metadata',),
 ]
 
 ASSERTION_DEFAULT_NODE_IDS = {

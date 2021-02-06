@@ -22,8 +22,12 @@ NOTE: Templates and view components to edit an item's identifier objects
       title="Add Item"
       @shown="on_shown"
     >
-      <b-container fluid>
-        
+      <b-container fluid v-if="configs">
+        <b-row>
+          <b-col>
+
+          </b-col>
+        </b-row>
       </b-container>
     </b-modal>
     <b-button
@@ -41,8 +45,6 @@ NOTE: Templates and view components to edit an item's identifier objects
 <script type="text/javascript">
 
 
-
-
 var vc_add_item = Vue.component(
   'add-item',
   {
@@ -51,12 +53,22 @@ var vc_add_item = Vue.component(
     data() {
       return {
         configs: null,
+        selected_config: null,
         project_ids: [],
       };
     },
     template: '#add-item',
     created() {
       this.fetch_api_configs();
+    },
+    computed: {
+      config_options: function() {
+        if(!configs){
+          return [];
+        }
+        let options = [];
+        
+      }
     },
     methods: {
       fetch_api_configs: function (){

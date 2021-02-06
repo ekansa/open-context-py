@@ -40,7 +40,7 @@ IDENTIFIER_ATTRIBUTES_UPDATE_CONFIG = [
     ('scheme', 'Changed identifier scheme'),
     ('rank', 'Changed rank',),
     ('id', 'Changed identifier',),
-    ('meta_json', 'Changed item admministrative metadata',),
+    ('meta_json', 'Changed item administrative metadata',),
 ]
 
 IDENTIFIER_ATTRIBUTES_UPDATE_ALLOWED = [a_a for a_a, _ in IDENTIFIER_ATTRIBUTES_UPDATE_CONFIG]

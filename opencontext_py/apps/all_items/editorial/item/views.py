@@ -154,6 +154,13 @@ def item_edit_interface_html(request, uuid):
         do_minimal=True,
     )
 
+    item_type_edit_config = {}
+    for group_configs in edit_configs.api_config_response():
+        for act_item_type_config in group_configs.get('item_types', []):
+            if act_item_type_config.get('item_type') != man_obj.item_type:
+                continue
+            item_type_edit_config = copy.deepcopy(act_item_type_config)
+
     item_project_uuids = []
     item_project = man_obj.project
     at_root_proj = False
@@ -176,6 +183,8 @@ def item_edit_interface_html(request, uuid):
         # NOTE: ITEM_PROJECT_UUIDS is the list of parent project uuids for an item
         'ITEM_PROJECT_UUIDS': json.dumps(item_project_uuids),
         'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),
+        # This is the edit config for the current item type.
+        'ITEM_TYPE_EDIT_CONFIG': json.dumps(item_type_edit_config),
         'DEFAULT_OBS': json.dumps(default_obs),
         'DEFAULT_EVENT': json.dumps(default_event),
         'DEFAULT_ATTRIBUTE_GROUP': json.dumps(default_attribute_group),
@@ -252,7 +261,12 @@ def item_manifest_json(request, uuid):
 
     api_result = make_model_object_json_safe_dict(
         man_obj,
-        more_attributes=['item_class__label', 'context__label', 'project__label']
+        more_attributes=[
+            'meta_json',
+            'item_class__label', 
+            'context__label', 
+            'project__label'
+        ]
     )
     json_output = json.dumps(
         api_result,
