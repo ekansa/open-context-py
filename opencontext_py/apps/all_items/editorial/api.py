@@ -325,7 +325,7 @@ def get_item_children(identifier):
     return output
 
 
-def make_keyord_search_filter_to_qs(qs, q_term):
+def make_keyword_search_filter_to_qs(qs, q_term):
     """Adds filters for a general keyword ('q') search """
 
     query = None
@@ -432,7 +432,7 @@ def make_lookup_qs(request_dict, value_delim=MULTI_VALUE_DELIM):
     qs = AllManifest.objects.all()
     assert_qs = None
     if q_term:
-        qs, assert_qs = make_keyord_search_filter_to_qs(qs, q_term)
+        qs, assert_qs = make_keyword_search_filter_to_qs(qs, q_term)
     
     for attribute in REQUEST_PARAMS_TO_MANIFEST_ATTRIBUTES:
         filter_raw_value = request_dict.get(attribute)

@@ -1,0 +1,94 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's identifier objects
+-->
+
+<style>
+ 
+</style>
+
+
+
+
+
+<template id="add-item">
+  <div>
+    <b-modal
+      size="lg"
+      scrollable
+      ref="add-item-modal"
+      id="add-item-modal" 
+      title="Add Item"
+      @shown="on_shown"
+    >
+      <b-container fluid>
+        
+      </b-container>
+    </b-modal>
+    <b-button
+      sm
+      block
+      @click="toggle_add_new_item"
+      variant="primary">Add New Item <b-icon-plus-circle-fill></b-icon-plus-circle-fill></b-button>
+  </div>
+</template>
+
+
+
+
+
+<script type="text/javascript">
+
+
+
+
+var vc_add_item = Vue.component(
+  'add-item',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['project_ids'],
+    data() {
+      return {
+        configs: null,
+        project_ids: [],
+      };
+    },
+    template: '#add-item',
+    created() {
+      this.fetch_api_configs();
+    },
+    methods: {
+      fetch_api_configs: function (){
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/item-add-configs'),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.configs = json;
+          console.log(this.configs);
+        });
+      },
+      on_shown: function() {
+        console.log('show add item modal');
+      },
+      toggle_add_new_item: function() {
+        this.$bvModal.show('add-item-modal');
+      },
+    },
+    components: {
+      'root-item-tree': vs_root_item_tree,
+      'lookup-list': vs_look_up_list,
+    },
+  }
+); 
+  
+</script>

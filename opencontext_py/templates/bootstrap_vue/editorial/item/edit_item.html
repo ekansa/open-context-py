@@ -8,6 +8,7 @@
         {% include '../../editorial/tree.html' %}
         {% include '../../editorial/lookup.html' %}
 
+        {% include './add_item.html' %}
         {% include './history.html' %}
         {% include './manifest.html' %}
         {% include './assertions.html' %}
@@ -35,6 +36,16 @@
                         ></router-view>
                     </b-col>
                     <b-col cols="3">
+                        <b-card
+                            header="Editing Options"
+                        >
+                        <b-card-text>
+                            <add-item
+                              v-bind:project_ids="ITEM_PROJECT_UUIDS">
+                            </add-item>
+                        </b-card-text>
+                        </b-card>
+                        <br/>
                         <edit-history
                          :key="history_key"
                          v-bind:uuid="uuid">
@@ -153,6 +164,7 @@
                         }
                     },
                     components: {
+                        'add-item': vc_add_item,
                         'edit-manifest': vc_edit_manifest,
                         'edit-history': vc_edit_history,
                         'edit-assertions': vc_edit_assertions,

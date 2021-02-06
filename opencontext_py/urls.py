@@ -121,6 +121,11 @@ urlpatterns = [
     url(r'^editorial/html-validate', EditorialViews.html_validate, name='editorial_html_validate'),
     # New edit_item administrative (for editing) views
     url(
+        r'^editorial/item-add-configs', 
+        EditorialItemViews.item_add_configs_json, 
+        name='editorial_item_add_configs_json'
+    ),
+    url(
         r'^editorial/item-edit/(?P<uuid>\S+)', 
         EditorialItemViews.item_edit_interface_html, 
         name='editorial_item_edit_interface_html'

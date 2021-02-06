@@ -25,6 +25,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
+from opencontext_py.apps.all_items.editorial.item import edit_configs
 from opencontext_py.apps.all_items.editorial.item import updater_manifest
 from opencontext_py.apps.all_items.editorial.item import updater_assertions
 from opencontext_py.apps.all_items.editorial.item import updater_spacetime
@@ -67,6 +68,23 @@ def make_error_response(errors):
         json_output,
         content_type="application/json; charset=utf8",
         status=400
+    )
+
+
+
+@never_cache
+@cache_control(no_cache=True)
+def item_add_configs_json(request):
+    """JSON representation of item add configuration"""
+    configs = edit_configs.api_config_response()
+    json_output = json.dumps(
+        configs,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
     )
 
 
