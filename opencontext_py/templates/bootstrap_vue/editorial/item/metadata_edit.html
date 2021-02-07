@@ -25,7 +25,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     border-right-0
     border-left-0
   ">
-    <b-col cols="8" v-if="meta_json && meta_json.hasOwnProperty(key_config.key)">
+    <b-col cols="8" v-if="meta_json && key_config">
       <p><strong>[[ key_config.label ]]</strong> ([[ key_config.key ]])</p>
       <p><small>[[ key_config.note ]]</small></p>
       <b-form-textarea
@@ -130,24 +130,6 @@ var vc_meta_json_form_item = Vue.component(
           this.original_meta_json_str = JSON.stringify(this.meta_json);
           console.log('Original meta_json cached as JSON str');
         }
-        if(!this.meta_json){
-          // Hack to make a deep-copy.
-          this.original_meta_json_str = JSON.stringify({});
-          this.meta_json = {ui_created: true};
-        }
-        let key = this.key_config.key;
-        if (!this.meta_json.hasOwnProperty(key)) {
-          if(this.key_config.options){
-            this.meta_json[key] = this.key_config.options[0].value;
-          }
-          else if(this.key_config.data_type == 'xsd:string'){
-            this.meta_json[key] = '';
-          }
-          else {
-            this.meta_json[key] = false;
-          }
-        }
-        console.log(this.meta_json);
       },
       reset_to_original_meta_json: function () {
         if(this.original_meta_json_str){
@@ -238,13 +220,37 @@ var vc_meta_json_form = Vue.component(
       };
     },
     template: '#meta-json-form',
-    created() {
-      
+    mounted() {
+      this.set_empty_keys();
     },
     computed: {
       
     },
     methods: {
+      set_empty_keys(){
+        if(!this.meta_configs){
+          return null;
+        }
+        if(!this.meta_json){
+          this.meta_json = Object;
+        }
+        for(let key_config of this.meta_configs){
+          let key = key_config.key;
+          if(this.meta_json.hasOwnProperty(key)){
+            continue;
+          }
+          if(key_config.options){
+            this.meta_json[key] = key_config.options[0].value;
+          }
+          else if(key_config.data_type == 'xsd:string'){
+            this.meta_json[key] = '';
+          }
+          else {
+            this.meta_json[key] = false;
+          }
+        }
+
+      },
       get_value_change(change) {
         console.log('event get_value_change');
         console.log(change);
