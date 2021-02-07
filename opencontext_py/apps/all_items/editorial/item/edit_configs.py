@@ -37,6 +37,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'data_type': 'xsd:integer',
             'note': 'An integer value indicating level of editorial review.',
             'options': [
+                {'value': -1, 'text': 'Not set',},
                 {'value': 0, 'text': 'In preparation, draft-stage',},
                 {'value': 1, 'text': 'Demonstration, Minimal editorial acceptance',},
                 {'value': 2, 'text': 'Minimal editorial acceptance',},
@@ -78,6 +79,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
+                {'value': -1, 'text': 'Not set',},
                 {'value': 0, 'text': 'In preparation, draft-stage',},
                 {'value': 1, 'text': 'Demonstration, Minimal editorial acceptance',},
                 {'value': 2, 'text': 'Minimal editorial acceptance',},
@@ -119,6 +121,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
+                {'value': -1, 'text': 'Not set',},
                 {'value': 0, 'text': 'In preparation, draft-stage',},
                 {'value': 1, 'text': 'Demonstration, Minimal editorial acceptance',},
                 {'value': 2, 'text': 'Minimal editorial acceptance',},
@@ -138,6 +141,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
+                {'value': -1, 'text': 'Not set',},
                 {'value': 0, 'text': 'In preparation, draft-stage',},
                 {'value': 1, 'text': 'Demonstration, Minimal editorial acceptance',},
                 {'value': 2, 'text': 'Minimal editorial acceptance',},
@@ -157,6 +161,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
+                {'value': -1, 'text': 'Not set',},
                 {'value': 0, 'text': 'In preparation, draft-stage',},
                 {'value': 1, 'text': 'Demonstration, Minimal editorial acceptance',},
                 {'value': 2, 'text': 'Minimal editorial acceptance',},
@@ -298,10 +303,10 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 'The data-type allowed for a unit of measure.'
             ),
             'options': [
-                {'value': 'xsd:boolean', 'text': 'Boolean (True/False); xsd:boolean',},
-                {'value': 'xsd:integer', 'text': 'Integer (whole-numbers)',},
                 {'value': 'xsd:double', 'text': 'Numeric (decimal, floating point)',},
+                {'value': 'xsd:integer', 'text': 'Integer (whole-numbers)',},
                 {'value': 'xsd:date', 'text': 'Datetime',},
+                {'value': 'xsd:boolean', 'text': 'Boolean (True/False); xsd:boolean',},
                 {'value': 'xsd:string', 'text': 'Text',},
             ],
         },

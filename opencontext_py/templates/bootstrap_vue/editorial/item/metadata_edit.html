@@ -25,7 +25,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     border-right-0
     border-left-0
   ">
-    <b-col cols="8">
+    <b-col cols="8" v-if="meta_json && meta_json.hasOwnProperty(key_config.key)">
       <p><strong>[[ key_config.label ]]</strong> ([[ key_config.key ]])</p>
       <p><small>[[ key_config.note ]]</small></p>
       <b-form-textarea
@@ -78,7 +78,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
 
 <template id="meta-json-form">
-  <b-container fluid class="meta_form alert-secondary">
+  <b-container fluid v-if="meta_configs.length > 0" class="meta_form alert-secondary">
     <h5>Administrative Metadata</h5>
     <meta-json-form-item v-for="(key_config, index) in meta_configs"
       v-bind:key_config="key_config"
@@ -120,6 +120,9 @@ var vc_meta_json_form_item = Vue.component(
     mounted() {
       this.set_original_meta_json();
     },
+    computed: {
+      
+    },
     methods: {
       set_original_meta_json: function (){
         if(!this.add_new && this.meta_json){
@@ -127,6 +130,24 @@ var vc_meta_json_form_item = Vue.component(
           this.original_meta_json_str = JSON.stringify(this.meta_json);
           console.log('Original meta_json cached as JSON str');
         }
+        if(!this.meta_json){
+          // Hack to make a deep-copy.
+          this.original_meta_json_str = JSON.stringify({});
+          this.meta_json = {ui_created: true};
+        }
+        let key = this.key_config.key;
+        if (!this.meta_json.hasOwnProperty(key)) {
+          if(this.key_config.options){
+            this.meta_json[key] = this.key_config.options[0].value;
+          }
+          else if(this.key_config.data_type == 'xsd:string'){
+            this.meta_json[key] = '';
+          }
+          else {
+            this.meta_json[key] = false;
+          }
+        }
+        console.log(this.meta_json);
       },
       reset_to_original_meta_json: function () {
         if(this.original_meta_json_str){
