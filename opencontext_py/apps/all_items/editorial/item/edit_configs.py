@@ -75,7 +75,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
-                'If given for this item, this supersedes a project-level editorial status.',
+                'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
                 {'value': 0, 'text': 'In preparation, draft-stage',},
@@ -116,7 +116,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
-                'If given for this item, this supersedes a project-level editorial status.',
+                'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
                 {'value': 0, 'text': 'In preparation, draft-stage',},
@@ -135,7 +135,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
-                'If given for this item, this supersedes a project-level editorial status.',
+                'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
                 {'value': 0, 'text': 'In preparation, draft-stage',},
@@ -154,7 +154,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
-                'If given for this item, this supersedes a project-level editorial status.',
+                'If given for this item, this supersedes a project-level editorial status.'
             ),
             'options': [
                 {'value': 0, 'text': 'In preparation, draft-stage',},
@@ -172,7 +172,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'label': 'Sort Order', 
             'data_type': 'xsd:integer',
             'note': (
-                'An integer value indicating suggested sort order for this predicate ',
+                'An integer value indicating suggested sort order for this predicate '
                 'within a descriptive observation.'
             ),
             'options':None,

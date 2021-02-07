@@ -255,6 +255,7 @@ NOTE: Templates and view components to edit an item's manifest object.
               v-bind:meta_json="man_obj.meta_json"
               v-bind:meta_configs="edit_meta_json"
               v-bind:item_id="man_obj.uuid"
+              @update_metadata="update_metadata($event)"
               >
             </meta-json-form>
           </b-col>
@@ -467,6 +468,21 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
                     { uuid: this.uuid, project_id: this.selected_project_item.uuid }
                   ]
                 )
+              };
+              this.send_manifest_update_request(requestOptions);
+            },
+            update_metadata(meta_json){
+              const requestOptions = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify(
+                [
+                  { uuid: this.uuid, meta_json: meta_json}
+                ]
+              )
               };
               this.send_manifest_update_request(requestOptions);
             },

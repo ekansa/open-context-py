@@ -6,19 +6,26 @@ NOTE: Templates and view components to edit an item's identifier objects
 
 <style>
 .meta_form {
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding: 24px;
 }
 .meta_field_row {
    margin-top: 12px;
    margin-bottom: 12px;
+   padding: 12px;
 }
 </style>
 
 
 <template id="meta-json-form-item">
-  <b-row class="meta_field_row">
-    <b-col>
+  <b-row class="
+    meta_field_row 
+    border 
+    border-info
+    border-top-0
+    border-right-0
+    border-left-0
+  ">
+    <b-col cols="8">
       <p><strong>[[ key_config.label ]]</strong> ([[ key_config.key ]])</p>
       <p><small>[[ key_config.note ]]</small></p>
       <b-form-textarea
@@ -35,6 +42,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         v-model="meta_json[key_config.key]"
         :options="key_config.options"
         class="mb-3"
+        @change="value_change"
       ></b-form-select>
 
       <b-form-input
@@ -45,8 +53,25 @@ NOTE: Templates and view components to edit an item's identifier objects
         :value="meta_json[key_config.key]"
       ></b-form-input>
     </b-col>
-    <b-col>
 
+    <b-col cols="4">
+      <b-spinner v-if="updating" label="Updating..."></b-spinner>
+      <b-button
+        v-if="is_value_changed && !updating && !add_new"
+        sm
+        block
+        @click="update_meta_field"
+        class="text-center"
+        variant="info">Update
+        <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+      </b-button>
+      <b-list-group v-if="errors">
+        <b-list-group-item v-for="(error, index) in errors"
+        :key="'metadata-error-' + index"
+        variant="warning">
+        <small>[[error]]</small>
+        </b-list-group-item>
+      </b-list-group>
     </b-col>
   </b-row>
 </template>
@@ -61,6 +86,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       v-bind:item_id="item_id"
       v-bind:add_new="add_new"
       @get_value_change="get_value_change($event)"
+      @update_metadata="update_metadata($event)"
     >
     </meta-json-form-item>
   </div>
@@ -86,6 +112,7 @@ var vc_meta_json_form_item = Vue.component(
         original_meta_json_str: null,
         is_value_changed: false,
         is_valid_html: null,
+        updating: false,
         errors: null,
       };
     },
@@ -117,16 +144,28 @@ var vc_meta_json_form_item = Vue.component(
       },
       value_change(input_value) {
         this.meta_json[this.key_config.key] = input_value;
-        let orig_value = this.get_original_value();
-        let is_value_changed = (input_value != orig_value);
+        if(!this.add_new){
+          let orig_value = this.get_original_value();
+          this.is_value_changed = (input_value != orig_value);
+        }
+        else{
+          this.is_value_changed = true;
+        }
         let output = {
           input_value: input_value,
-          is_value_changed: is_value_changed,
+          is_value_changed: this.is_value_changed,
           meta_json: this.meta_json,
         };
         console.log(output);
         this.$emit('get_value_change', output);
         return output;
+      },
+      update_meta_field: function () {
+        if(this.add_new || !this.item_id){
+          return null;
+        }
+        this.updating = true;
+        this.$emit('update_metadata', this.meta_json);
       },
       html_validate(input_value) {
         this.input_value = input_value.trim();
@@ -189,6 +228,13 @@ var vc_meta_json_form = Vue.component(
         console.log('event get_value_change');
         console.log(change);
       },
+      update_metadata(meta_json){
+        if(this.add_new || !this.item_id){
+          return null;
+        }
+        this.meta_json = meta_json;
+        this.$emit('update_metadata', this.meta_json);
+      }
     },
     components: {
       'meta-json-form-item': vc_meta_json_form_item,

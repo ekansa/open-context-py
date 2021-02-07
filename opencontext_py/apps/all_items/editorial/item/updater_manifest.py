@@ -192,6 +192,17 @@ def update_manifest_objs(request_json):
             if old_edited_obj and new_edited_obj and attribute_edit_note:
                 attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
             
+            if attr == 'meta_json' and isinstance(value, dict):
+                for key, new_key_value in value.items():
+                    old_key_value = man_obj.meta_json.get(key)
+                    if old_key_value == new_key_value:
+                        continue
+                    old_key_value = str(old_key_value)[:20]
+                    new_key_value = str(new_key_value)[:20]
+                    attribute_edit_note += (
+                        f' {key} from "{old_key_value}" to "{new_key_value}"'
+                    )
+
             if attribute_edit_note:
                 edits.append(attribute_edit_note)
             setattr(man_obj, attr, value)
