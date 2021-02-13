@@ -164,10 +164,10 @@ def item_edit_interface_html(request, uuid):
     item_project_uuids = []
     item_project = man_obj.project
     at_root_proj = False
-    while at_root_proj:
+    while not at_root_proj:
         project_uuid = str(item_project.uuid)
         if not project_uuid in item_project_uuids:
-            item_projects.append(project_uuid)
+            item_project_uuids.append(project_uuid)
         else:
             at_root_proj = True
         if project_uuid == str(configs.OPEN_CONTEXT_PROJ_UUID):

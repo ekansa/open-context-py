@@ -335,14 +335,19 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
                 'item_type': 'subjects', 
-                'item_type_note': 'A location or object, subject of observations',
+                'item_type_note': 'A location or object. The main subject of description and observational data in Open Context.',
                 'edit_uuid': True,
                 'edit_slug': True,
                 'edit_item_key': False,
@@ -357,9 +362,20 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'context_lookup': {
                     'root_item_id': None,
                     'item_type': ['subjects'],
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                     'show_path_search_box': True,
                     'show_total_results': True,
                     'show_item_class': True,
+                    'show_project': True,
+                },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
+                    'root_item_id': None,
+                    'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -380,9 +396,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': 'media',
                 },
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -399,9 +420,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -418,9 +444,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': 'persons',
                 },
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -439,9 +470,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'uuid': configs.CLASS_LIST_OC_PREDICATES,
                 },
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -461,6 +497,16 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'context_lookup': {
                     'root_item_id': None,
                     'item_type': ['predicates'],
+                    'data_type': ['id'],
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
+                    'show_project': True,
+                },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
+                    'root_item_id': None,
+                    'item_type': ['projects'],
+                    'show_project': False,
                 },
             },
         ],
@@ -485,9 +531,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -504,9 +555,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
-                'context_lookup': {
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
             {
@@ -523,10 +579,15 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
-                'context_lookup': {
+                'context_id': None,
+                'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': {
                     'root_item_id': None,
                     'item_type': ['projects'],
-                    
+                    'show_project': False,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
                 },
             },
         ],
@@ -548,6 +609,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': configs.WIKIDATA_VOCAB_UUID, # Must be in Wikidata
                 'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
             {
                 'item_type': 'class', 
@@ -565,7 +628,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': None,
                     'item_type': ['vocabularies'],
                     'show_total_results': True,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
+                    'show_project': False,
                 },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
             {
                 'item_type': 'property', 
@@ -583,14 +651,23 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': None,
                     'item_type': ['vocabularies'],
                     'show_total_results': True,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
+                    'show_project': False,
                 },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
             {
                 'item_type': 'uri', 
-                'item_type_note': 'A specific Linked Data identified item or instance',
+                'item_type_note': (
+                    'A specific Linked Data identified item or instance, '
+                    'such as a specific place in a gazetteer, an article in a '
+                    'journal repository, or an object in a museum.'
+                ),
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
-                'edit_item_key': True,
+                'edit_item_key': False,
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
@@ -601,7 +678,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': None,
                     'item_type': ['vocabularies'],
                     'show_total_results': True,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
+                    'show_project': False,
                 },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
             {
                 'item_type': 'units', 
@@ -619,7 +701,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': None,
                     'item_type': ['vocabularies'],
                     'show_total_results': True,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
+                    'show_project': False,
                 },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
             {
                 'item_type': 'media-types', 
@@ -637,7 +724,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'root_item_id': None,
                     'item_type': ['vocabularies'],
                     'show_total_results': True,
+                    'show_label_search_box': False,
+                    'show_q_search_box': True,
+                    'show_project': False,
                 },
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
         ],
     },
@@ -647,7 +739,11 @@ MANIFEST_ADD_EDIT_CONFIGS = [
         'item_types': [
             {
                 'item_type': 'vocabularies', 
-                'item_type_note': 'An ontology, controlled vocabulary, or data source',
+                'item_type_note': (
+                    'An ontology, controlled vocabulary, or data source '
+                    'that is NOT part of an Open Context project. Examples include: '
+                    'GBIF, UBERON, and the Wikipedia.'
+                ),
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
                 'edit_item_key': False,
@@ -660,6 +756,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': configs.OPEN_CONTEXT_PROJ_UUID,  # Always in the OC project
                 'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
             {
                 'item_type': 'publishers', 
@@ -676,6 +774,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': configs.OPEN_CONTEXT_PROJ_UUID,  # Always in the OC project
                 'context_lookup': None,
+                'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+                'project_lookup': None,
             },
         ],
     },
@@ -692,7 +792,7 @@ def api_config_response():
     for config_group in all_configs:
         for item_type_config in config_group['item_types']:
             item_type = item_type_config.get('item_type')
-            item_type_config['meta_json_edit'] = ITEM_TYPE_META_JSON_CONFIGS.get(item_type, {})
+            item_type_config['meta_json_edit'] = ITEM_TYPE_META_JSON_CONFIGS.get(item_type, [])
             for expected_id_list, expected_obj_list in expected_mappings:
                 # Iterate through the expected IDs to look up their
                 # manifest object to include in the output.

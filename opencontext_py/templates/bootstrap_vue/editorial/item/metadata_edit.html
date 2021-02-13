@@ -256,9 +256,6 @@ var vc_meta_json_form = Vue.component(
         console.log(change);
       },
       update_metadata(meta_json){
-        if(this.add_new || !this.item_id){
-          return null;
-        }
         this.meta_json = meta_json;
         this.$emit('update_metadata', this.meta_json);
       }

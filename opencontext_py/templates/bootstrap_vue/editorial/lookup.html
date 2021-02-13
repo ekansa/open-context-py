@@ -127,7 +127,7 @@
 
     <b-row>
       <b-col cols="12">
-        <small v-if="!loading & show_total_results">Number Found: [[ totalResults ]]</small>
+        <small v-if="!loading & show_total_results & totalResults">Number Found: [[ totalResults ]]</small>
         <small v-if="loading">Searching for items...</small>
       </b-col>
     </b-row>
@@ -143,6 +143,7 @@
             v-bind:show_project="show_project"
             v-bind:show_item_class="show_item_class"
             v-bind:show_context="show_context"
+            v-bind:show_path="(show_path || show_path_search_box)"
           ></lookup-list-item>
         </b-list-group>
       </b-col>
@@ -164,7 +165,7 @@
     'lookup-list-item',
     {
       delimiters: ['[[', ']]'],
-      props: ['item', 'show_item_type', 'show_project', 'show_item_class', 'show_context'],
+      props: ['item', 'show_item_type', 'show_project', 'show_item_class', 'show_context', 'show_path',],
       data() {
         return {
           item: Object,
@@ -173,6 +174,7 @@
           show_project: false,
           show_item_class: false,
           show_context: false,
+          show_path: false,
         };
       },
       template: '#lookup-list-item',
@@ -189,6 +191,9 @@
         },
         meta_items: function() {
           let m_items = [];
+          if(this.show_path){
+            m_items.push(this.item.path);
+          }
           if(this.show_item_type){
             m_items.push(this.item.item_type);
           }
@@ -225,7 +230,8 @@
       delimiters: ['[[', ']]'],
       props: [
         'uuid',
-        'item_type', 
+        'item_type',
+        'data_type',
         'project_id', 
         'item_class_id', 
         'context_id',  
@@ -243,12 +249,14 @@
         'show_project', 
         'show_item_class', 
         'show_context',
+        'show_path',
         'do_meta',
       ],
       data() {
         return {
           uuid: [],
           item_type: [],
+          data_type: [],
           project_id: [],
           item_class_id: [],
           context_id: [],
@@ -338,6 +346,9 @@
           }
           if(this.item_type && this.item_type.length > 0){
             params.item_type = this.item_type.join(this.multi_val_delim);
+          }
+          if(this.data_type && this.data_type.length > 0){
+            params.data_type = this.data_type.join(this.multi_val_delim);
           }
           if(this.project_id && this.project_id.length > 0){
             params.project_id = this.project_id.join(this.multi_val_delim);

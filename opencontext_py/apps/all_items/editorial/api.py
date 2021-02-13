@@ -359,12 +359,14 @@ def make_keyword_search_filter_to_qs(qs, q_term):
     ).distinct(
         'subject',
         'obj_string',
-    ).values(
-        'subject_id',
-        'obj_string',
     ).order_by()
 
-    assert_uuids = set([d['subject_id'] for d in assert_qs])
+    assert_qs_vals = assert_qs.values(
+        'subject_id',
+        'obj_string',
+    )
+
+    assert_uuids = set([d['subject_id'] for d in assert_qs_vals])
     # Now add the list of subjects with alternate label 
     query = query | Q(uuid__in=assert_uuids)
     qs = qs.filter(query)
@@ -482,7 +484,7 @@ def lookup_manifest_objs(request_dict, value_delim=MULTI_VALUE_DELIM, default_ro
     if assert_qs:
         # Yes, a given item may have more than 1 matching alt label, and this will only store
         # one of those alt labels. But that's OK, as this is a convenience only
-        alt_labels = {a['subject_id']:a['obj_string'] for a in assert_qs}
+        alt_labels = {a.subject_id:a.obj_string for a in assert_qs}
     else:
         alt_labels = {}
 
