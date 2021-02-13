@@ -13,257 +13,47 @@ NOTE: Templates and view components to edit an item's manifest object.
 
 
 <template id="edit-manifest">
-  <div v-if="man_obj">
-    <b-card 
-    :title="'Edit Item \'' + man_obj.label + '\''"
-    :sub-title="'UUID: ' + man_obj.uuid">
-      <b-card-text>
+  <b-container fluid v-if="man_obj">
+    <b-row>
+      <b-col cols="12"> 
+        <b-alert show>
 
-        <b-row class="field_row">
-          <b-col cols="1">
-            
-          </b-col>
-          <b-col cols="8">
-            <label for="input-label">Item Label</label>
-            <b-form-input id="input-label" :placeholder="man_obj.label">[[ man_obj.label ]]</b-form-input>
-          </b-col>
-          <b-col cols="3">
-            <small>A label is the primary name used for people to identify an item. 
-              This differs from an item's UUID and URI, both of which are universally 
-              unique identifiers used by software. Changing an item's label does not change 
-              the item's UUID or URI, nor does it change an item's relationships with other items.
-            </small>
-          </b-col>
-        </b-row>
-      
-        <b-row class="field_row">
-          <b-col cols="1">
-            
-          </b-col>
+          <b-row>
+            <b-col cols="12">
+              <h5><strong>Edit </strong> [[ man_obj.label ]]</h5>
+              <p><small><strong>UUID: </strong>[[ man_obj.uuid ]]</small></p>
+              <p><small><strong>Slug: </strong>[[ man_obj.slug ]]</small></p>
+            </b-col>
+          </b-row>
 
-          <b-col cols="4">
-            <b-row>
-              <b-col>
-                <label>Item Class / Category</label><br/>
-                <strong>[[ man_obj.item_class__label ]]</strong>
-              </b-col>
-            </b-row>
-            <b-row>
-              <b-col cols="2" class="text-right">
-                <small><strong>ID:</strong></small>
-              </b-col>
-              <b-col cols="10">
-                <b-form-input id="input-item-class" size="sm" :placeholder="man_obj.item_class_id">[[ man_obj.item_class_id ]]</b-form-input>
-              </b-col>
-            </b-row>
-          </b-col>
-          
-          <b-col cols="4">
-            <b-card
-              header="Assign Item Classifications">
-              <b-card-text>
-                <b-row>
-                  <b-col>
-                    <b-alert show>
-                      <b-row>
-                        <b-col>
-                          Click below to assign a new classification to this item
-                        </b-col>
-                      </b-row>
-                      <b-row>
-                        <b-col>
-                          <b-button 
-                          sm
-                          block
-                          @click="update_item_class"
-                          v-if="selected_class_item"
-                          variant="info">Classify as <strong>[[ selected_class_item.label ]]</strong></b-button>
-                        </b-col>
-                      </b-row>
-                    </b-alert>
-                  </b-col>
-                </b-row>
-               
-                <b-row>
-                  <b-col>
-                    <root-item-tree
-                      v-bind:root_item_id="'oc-gen-' + man_obj.item_type"
-                      v-bind:cached_tree_items="cached_tree_items"
-                      @set_selected_item="set_selected_class_item($event)"
-                    ></root-item-tree>
-                  </b-col>
-                </b-row>
-                
-              </b-card-text>
-            </b-card>
-          </b-col>
+          <b-row>
+            <b-col cols="12">
+              <p v-if="web_url">
+                <strong>URI <b-icon-files></b-icon-files>: </strong>
+                <a :href="web_url" target="_blank">[[ web_url ]]</a>
+              </p>
+            </b-col>
+          </b-row>
 
-          <b-col cols="3">
-            <small>General categories help organize data and media for easier search and browsing.
-            </small>
-          </b-col>
-        </b-row>
+          <b-row>
+            <b-col cols="4">
+              <p><strong>Item Type: </strong> [[ man_obj.item_type ]]</p>
+            </b-col>
+            <b-col cols="8">
+              <small>[[ ITEM_TYPE_EDIT_CONFIG.item_type_note ]]</small>
+            </b-col>
+          </b-row>
 
-        <b-row v-if="show_context" class="field_row">
-          <b-col cols="1">
-            
-          </b-col>
-
-          <b-col cols="4">
-            <b-row>
-              <b-col>
-                <label>Context</label><br/>
-                <strong>[[ man_obj.context__label ]]</strong>
-              </b-col>
-            </b-row>
-            <b-row>
-              <b-col cols="2" class="text-right">
-                <small><strong>ID:</strong></small>
-              </b-col>
-              <b-col cols="10">
-                <b-form-input id="input-item-context" size="sm" :placeholder="man_obj.context_id">[[ man_obj.context_id ]]</b-form-input>
-              </b-col>
-            </b-row>
-          </b-col>
-
-          <b-col cols="4">
-            <b-card
-              header="Assign Item Context">
-              <b-card-text>
-                <b-row>
-                  <b-col>
-                    <b-alert show>
-                      <b-row>
-                        <b-col>
-                          Click below to assign a new context to this item
-                        </b-col>
-                      </b-row>
-                      <b-row>
-                        <b-col>
-                          <b-button 
-                          sm
-                          block
-                          @click="update_item_context"
-                          v-if="selected_context_item"
-                          variant="info">
-                          Change Context to 
-                          <strong>[[ selected_context_item.label ]]</strong> ([[ selected_context_item.item_class__label ]])
-                        </b-button>
-                        </b-col>
-                      </b-row>
-                    </b-alert>
-                  </b-col>
-                </b-row>
-               
-                <b-row>
-                  <b-col>
-                    <lookup-list
-                      key="context-lookup"
-                      v-bind:item_type="lookup_context_item_types"
-                      v-bind:show_label_search_box="true"
-                      v-bind:do_meta="true"
-                      v-bind:show_project="true"
-                      v-bind:show_item_class="true"
-                      v-bind:show_path_search_box="lookup_context_show_path_search"
-                      @set_selected_item="set_selected_context_item($event)"
-                    ></lookup-list>
-                  </b-col>
-                </b-row>
-                
-              </b-card-text>
-            </b-card>
-          </b-col>
-          
-        </b-row>
-
-
-        <b-row v-if="show_project" class="field_row">
-          <b-col cols="1">
-            
-          </b-col>
-
-          <b-col cols="4">
-            <b-row>
-              <b-col>
-                <label>Project</label><br/>
-                <strong>[[ man_obj.project__label ]]</strong>
-              </b-col>
-            </b-row>
-            <b-row>
-              <b-col cols="2" class="text-right">
-                <small><strong>ID:</strong></small>
-              </b-col>
-              <b-col cols="10">
-                <b-form-input id="input-item-project" size="sm" :placeholder="man_obj.project_id">[[ man_obj.project_id ]]</b-form-input>
-              </b-col>
-            </b-row>
-          </b-col>
-
-          <b-col cols="4">
-            <b-card
-              header="Assign Item Project">
-              <b-card-text>
-                <b-row>
-                  <b-col>
-                    <b-alert show>
-                      <b-row>
-                        <b-col>
-                          Click below to assign a new project to this item
-                        </b-col>
-                      </b-row>
-                      <b-row>
-                        <b-col>
-                          <b-button 
-                          sm
-                          block
-                          @click="update_item_project"
-                          v-if="selected_project_item"
-                          variant="info">
-                          Change Project to 
-                          <strong>[[ selected_project_item.label ]]</strong>
-                        </b-button>
-                        </b-col>
-                      </b-row>
-                    </b-alert>
-                  </b-col>
-                </b-row>
-               
-                <b-row>
-                  <b-col>
-                    <lookup-list
-                      key="project-lookup"
-                      v-bind:item_type="lookup_project_item_types"
-                      v-bind:show_label_search_box="true"
-                      @set_selected_item="set_selected_project_item($event)"
-                    ></lookup-list>
-                  </b-col>
-                </b-row>
-                
-              </b-card-text>
-            </b-card>
-          </b-col>
-          
-
-        </b-row>
-
-        <b-row v-if="edit_meta_json" class="field_row">
-          <b-col cols="1">
-            
-          </b-col>
-          <b-col>
-            <meta-json-form
-              v-bind:meta_json="man_obj.meta_json"
-              v-bind:meta_configs="edit_meta_json"
-              v-bind:item_id="man_obj.uuid"
-              @update_metadata="update_metadata($event)"
-              >
-            </meta-json-form>
-          </b-col>
-        </b-row>
-
-      </b-card-text>
-    </b-card>
-  </div>
+        </b-alert>
+      </b-col>
+    </b-row>
+    <edit-manifest-obj
+      v-bind:add_new="false"
+      v-bind:item_type_config="ITEM_TYPE_EDIT_CONFIG"
+      v-bind:project_ids="ITEM_PROJECT_UUIDS"
+      v-bind:man_obj="man_obj">
+    </edit-manifest-obj>
+  </b-container>
 </template>
 
 
@@ -276,22 +66,11 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
         'edit-manifest',
         {
           delimiters: ['[[', ']]'],
-          props: ['uuid'],
+          props: ['uuid', ],
           data() {
             return {
               uuid: null,
               man_obj: null,
-              cached_tree_items: {},
-              new_label: null,
-              selected_class_item: null,
-              selected_context_item: null,
-              selected_project_item: null,
-              vocab_context_item_types: [
-                  'uri',
-                  'property',
-                  'class',
-              ],
-              lookup_project_item_types: ['projects'],
             }
           },
           template: '#edit-manifest',
@@ -299,60 +78,12 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
             this.fetch_api_manifest_obj();
           },
           computed: {
-            show_context: function() {
-              if(!this.man_obj){
-                return false;
-              }
-              if(this.man_obj.item_type == 'subjects'){
-                return true;
-              }
-            },
-            show_project: function() {
-              if(!this.man_obj){
-                return false;
-              }
-              return true;
-            },
-            lookup_context_item_types: function() {
-              if(!this.man_obj){
+            web_url: function() {
+              if(!this.man_obj || !this.man_obj.uri){
                 return null;
               }
-              const vocab_index = this.vocab_context_item_types.indexOf(
-                this.man_obj.item_type
-              );
-              if(vocab_index >= 0){
-                return ['vocabularies'];
-              }
-              else if(this.man_obj.item_type == 'subjects') {
-                // Subjects can be in subject context.
-                return ['subjects'];
-              }
-              else{
-                // We don't assign contexts to other item types.
-                return null;
-              }
-            },
-            lookup_context_show_path_search: function() {
-              if(!this.man_obj){
-                return false;
-              }
-              if(this.man_obj.item_type == 'subjects') {
-                // Subjects can have a path search box.
-                return true;
-              }
-              else{
-                // We don't do path search for other item_types.
-                return false;
-              }
-            },
-            edit_meta_json: function() {
-              if(!this.man_obj || !ITEM_TYPE_EDIT_CONFIG){
-                return [];
-              }
-              if(ITEM_TYPE_EDIT_CONFIG.meta_json_edit.length < 1){
-                return [];
-              }
-              return ITEM_TYPE_EDIT_CONFIG.meta_json_edit;
+              let url = this.trim_prefix(this.man_obj.uri, 'https://');
+              return 'https://' + this.trim_prefix(url, 'http://');
             },
           },
           methods: {
@@ -486,23 +217,21 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
               };
               this.send_manifest_update_request(requestOptions);
             },
-            set_selected_class_item(class_item) {
-              this.selected_class_item = class_item;
-              console.log('Selected class item: ' + this.selected_class_item.label);
+            trim_prefix(str, prefix) {
+              if (str.startsWith(prefix)) {
+                  return str.slice(prefix.length);
+              } else {
+                  return str;
+              }
             },
-            set_selected_context_item(context_item) {
-              this.selected_context_item = context_item;
-              console.log('Selected context item: ' + this.selected_context_item.label);
-            },
-            set_selected_project_item(project_item) {
-              this.selected_project_item = project_item;
-              console.log('Selected project item: ' + this.selected_project_item.label);
+            uri_change(input_value) {
+              input_value = this.trim_prefix(input_value, 'https://');
+              input_value = this.trim_prefix(input_value, 'http://');
+              return input_value;
             },
           },
           components: {
-            'root-item-tree': vs_root_item_tree,
-            'lookup-list': vs_look_up_list,
-            'meta-json-form-item': vc_meta_json_form_item,
+            'edit-manifest-obj': vc_edit_manifest_obj,
           },
         }
     ); 

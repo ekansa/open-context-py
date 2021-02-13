@@ -162,6 +162,15 @@ def item_edit_interface_html(request, uuid):
             item_type_edit_config = copy.deepcopy(act_item_type_config)
 
     item_project_uuids = []
+    if man_obj.item_type == 'projects':
+        # This item itself is a project, which means that we want
+        # to use it as the editing_project in the user interface.
+        item_project_uuids.append(str(man_obj.uuid))
+        editing_project_dict = make_model_object_json_safe_dict(man_obj)
+    else:
+        # The item's project sets the editing project.
+        editing_project_dict = make_model_object_json_safe_dict(man_obj.project)
+
     item_project = man_obj.project
     at_root_proj = False
     while not at_root_proj:
@@ -183,6 +192,9 @@ def item_edit_interface_html(request, uuid):
         # NOTE: ITEM_PROJECT_UUIDS is the list of parent project uuids for an item
         'ITEM_PROJECT_UUIDS': json.dumps(item_project_uuids),
         'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),
+        # NOTE: This is the project that we are currently editing. It will be
+        # the default project for new Open Context items to be created into.
+        'EDITING_PROJECT': json.dumps(editing_project_dict),
         # This is the edit config for the current item type.
         'ITEM_TYPE_EDIT_CONFIG': json.dumps(item_type_edit_config),
         'DEFAULT_OBS': json.dumps(default_obs),

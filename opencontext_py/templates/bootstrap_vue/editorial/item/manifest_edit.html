@@ -1,0 +1,555 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's identifier objects
+-->
+
+<style>
+  .man_obj_field_row {
+   margin-top: 24px;
+   padding-bottom: 12px;
+  }
+</style>
+
+<template id="group-configs">
+  <b-form-group :label="group.label" v-slot="item_type_config">
+    <b-form-radio-group
+      size="sm"
+      :id="'group-' + group.id + '-configs'"
+      v-model="item_type_config"
+      @change="config_select"
+      :options="group.options"
+      name="radio-options"
+    ></b-form-radio-group>
+  </b-form-group>
+</template>
+
+
+<template id="edit-manifest-obj">
+  <div>
+    
+    <b-row class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+      <b-col cols="12">
+        <label for="input-label"><strong>Label</strong></label>
+        <b-form-input size="sm" id="input-label" v-model="man_obj.label">[[ man_obj.label ]]</b-form-input>
+        <small>A label is the primary name used by people to identify an item. 
+          This differs from an item's UUID and URI, both of which are universally 
+          unique identifiers used by software. A label is not necessarily unique.
+        </small>
+      </b-col>
+    </b-row>
+
+
+    <b-row class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+
+      <b-col v-if="item_type_config.edit_uuid">
+        <label for="input-uuid"><strong>UUID</strong></label>
+        <b-form-input size="sm" id="input-uuid" v-model="man_obj.uuid">[[ man_obj.uuid ]]</b-form-input>
+        <small>The primary database identifier for an item. It must be valid and unique without
+          repeated use in Open Context.
+          </small>
+      </b-col>
+
+      <b-col v-if="item_type_config.edit_slug">
+        <label for="input-slug"><strong>Slug</strong></label>
+        <b-form-input size="sm" id="input-slug" v-model="man_obj.slug">[[ man_obj.slug ]]</b-form-input>
+        <small>This is a secondary identifier for an item, intended to make readable URLs. 
+          It must be valid and unique without repeated use in Open Context.
+          </small>
+      </b-col>
+      
+      <b-col v-if="item_type_config.edit_item_key">
+        <label for="input-item-key"><strong>Item Key</strong></label>
+        <b-form-input size="sm" id="input-item-key" v-model="man_obj.item_key">[[ man_obj.item_key ]]</b-form-input>
+        <small>This is an abbreviated identifier for an item, that provides a convenient short
+          way of identifying an entity in JSON-LD representations. For example, 
+          <code>dc-terms:creator</code> is used as an abbreviated identifier of the full
+          URL <code>http://purl.org/dc/terms/creator</code>. It must be valid and unique 
+          without repeated use in Open Context.
+        </small>
+      </b-col>
+
+    </b-row>
+    
+
+    <b-row v-if="item_type_config.edit_uri" class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+      <b-col cols="12">
+        <label for="input-uri"><strong>URI</strong></label>
+        <b-form-input size="sm" id="input-uri" v-model="man_obj.uri">[[ man_obj.uri ]]</b-form-input>
+        <small>This is an item's primary Web identifier (URI). A URI is used to uniquely reference
+          Linked Data resources published outside of Open Context. For these outside
+          Linked Data, Open Context derives a (non-random, deterministic) corresponding UUID 
+          as an internal database identifier. Open Context will always create the same UUID
+          for a given URI.
+        </small>
+      </b-col>
+    </b-row>
+
+
+    <b-row v-if="item_type_config.item_class_lookup" class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+      <b-col cols="6">
+        <label for="input-item-class-id"><strong>Item Class / Category </strong>
+          <span v-if="man_obj.item_class__label">[[ man_obj.item_class__label ]]</span>
+        </label><br/>
+        <b-form-input 
+          size="sm" 
+          id="input-class-id" 
+          v-model="man_obj.item_class_id">[[ man_obj.item_class_id ]]</b-form-input>
+        <small>This is an item's primary classification within an item-type.
+        </small>
+      </b-col>
+      <b-col cols="6">
+        <small>Navigate below to select an item class.</small><br/>
+        <div style="font-size: 75%;">
+          <root-item-tree
+            v-bind:root_item_id="'oc-gen-' + man_obj.item_type"
+            v-bind:cached_tree_items="cached_tree_items"
+            @set_selected_item="set_selected_class_item($event)"
+          ></root-item-tree>
+        </div>
+      </b-col>
+    </b-row>
+
+
+    <b-row v-if="item_type_config.context_lookup" class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+      <b-col cols="6">
+        <label for="input-context-id"><strong>Context </strong>
+          <span v-if="man_obj.context__label">[[ man_obj.context__label ]]</span>
+        </label><br/>
+        <b-form-input 
+          size="sm" 
+          id="input-context-id" 
+          v-model="man_obj.context_id">[[ man_obj.context_id ]]</b-form-input>
+
+        <small v-if="man_obj.item_type == 'subjects'">
+          A location or object item needs to be contained within a broader location or object context.
+        </small>
+        <small v-else-if="man_obj.item_type == 'projects'">
+          A project may be contained in the context of another project.
+        </small>
+        <small v-else-if="man_obj.item_type == 'types'">
+          A descriptive predicate must provide the context for a controlled-vocabulary type item.
+        </small>
+        <small v-else>
+          A vocabulary must be given to provide context for Linked Data resources.
+        </small>
+
+      </b-col>
+      <b-col cols="6">
+        <small>Search and select a context below</small><br/>
+        <lookup-list
+          key="context-lookup"
+          v-bind:project_id="project_ids"
+          v-bind:item_type="item_type_config.context_lookup.item_type"
+          v-bind:data_type="item_type_config.context_lookup.data_type"
+          v-bind:do_meta="true"
+          v-bind:show_project="item_type_config.context_lookup.show_project"
+          v-bind:show_item_class="item_type_config.context_lookup.show_item_class"
+          v-bind:show_total_results="item_type_config.context_lookup.show_total_results"
+          v-bind:show_q_search_box="item_type_config.context_lookup.show_q_search_box"
+          v-bind:show_label_search_box="item_type_config.context_lookup.show_label_search_box"
+          v-bind:show_path_search_box="item_type_config.context_lookup.show_path_search_box"
+          @set_selected_item="set_selected_context_item($event)"
+        ></lookup-list>
+    </b-row>
+
+
+    <b-row v-if="item_type_config.project_lookup" class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+      <b-col cols="6">
+        <label for="input-project-id"><strong>Project </strong>
+          <span v-if="man_obj.project__label">[[ man_obj.project__label ]]</span>
+        </label><br/>
+        <b-form-input 
+          size="sm" 
+          id="input-project-id" 
+          v-model="man_obj.project_id">[[ man_obj.project_id ]]</b-form-input>
+
+        <small>
+          The project or collection into which this item belongs.
+        </small>
+
+      </b-col>
+      <b-col cols="6">
+        <small>Search and select a project below</small><br/>
+        <lookup-list
+          key="project-lookup"
+          v-bind:item_type="item_type_config.project_lookup.item_type"
+          v-bind:do_meta="true"
+          v-bind:show_project="item_type_config.project_lookup.show_project"
+          v-bind:show_total_results="item_type_config.project_lookup.show_total_results"
+          v-bind:show_q_search_box="item_type_config.project_lookup.show_q_search_box"
+          v-bind:show_label_search_box="item_type_config.project_lookup.show_label_search_box"
+          @set_selected_item="set_selected_project_item($event)"
+        ></lookup-list>
+    </b-row>
+
+
+
+    <b-row class="man_obj_field_row" v-if="item_type_config.meta_json_edit">
+      <b-col cols="12">
+        <meta-json-form
+          v-bind:meta_json="man_obj.meta_json"
+          v-bind:meta_configs="item_type_config.meta_json_edit"
+          v-bind:item_id="man_obj.uuid"
+          v-bind:add_new="true"
+          @update_metadata="update_metadata($event)"
+          >
+        </meta-json-form>
+      </b-col>
+    </b-row>
+  </div>
+</template>
+
+
+<template id="add-item">
+  <div>
+    <b-modal
+      size="lg"
+      scrollable
+      ref="add-item-modal"
+      id="add-item-modal" 
+      title="Add Item"
+      @shown="on_shown"
+    >
+      <b-container fluid v-if="configs">
+        <b-row v-if="!item_type_config">
+          <b-col cols="12">
+            <h5>Select Item Type to Create</h5>
+          </b-col>
+        </b-row>
+        <b-row v-if="item_type_config">
+          <b-col cols="9">
+            <b-alert show>
+              <h5>Create <strong>[[ item_type_config.item_type ]]</strong> item</h5>
+              <p>[[ item_type_config.item_type_note ]] </p>
+            </b-alert>
+          </b-col>
+          <b-col cols="3">
+            <b-button
+              sm
+              @click="config_deselect"
+              variant="outline-secondary"
+              title="Select a different item type to create"
+              class="text-center">Change type <b-icon-patch-minus-fill></b-icon-patch-minus-fill>
+            </b-button>
+          </b-col>
+        </b-row>
+        <b-row v-if="!item_type_config">
+          <b-col v-for="(group_config, index) in group_options" cols="3">
+            <group-configs
+              @config_select="config_select($event)"
+              v-bind:group="group_config">
+            </group-configs>
+          </b-col>
+        </b-row>
+        <div v-if="item_type_config">
+          
+          <edit-manifest-obj
+            v-bind:add_new="add_new"
+            v-bind:item_type_config="item_type_config"
+            v-bind:project_ids="project_ids"
+            v-bind:man_obj="man_obj">
+          </edit-manifest-obj>
+
+        </div>
+      </b-container>
+    </b-modal>
+    <b-button
+      sm
+      block
+      @click="toggle_add_new_item"
+      variant="primary">Add New Item <b-icon-plus-circle-fill></b-icon-plus-circle-fill></b-button>
+  </div>
+</template>
+
+
+
+
+
+<script type="text/javascript">
+
+const EDITING_PROJECT = JSON.parse('{{ EDITING_PROJECT|escapejs }}');
+
+var vc_group_configs = Vue.component(
+  'group-configs',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['group'],
+    data() {
+      return {
+        group: null,
+        item_type_config: null,
+      };
+    },
+    template: '#group-configs',
+    methods: {
+      config_select(config){
+        this.item_type_config = config;
+        this.$emit('config_select', this.item_type_config);
+      },
+    },
+  },
+);
+
+
+var vc_edit_manifest_obj = Vue.component(
+  'edit-manifest-obj',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['add_new', 'item_type_config', 'man_obj', 'project_ids',],
+    data() {
+      return {
+        add_new: false,
+        item_type_config: null,
+        man_obj: null,
+        project_ids: [],
+        cached_tree_items: {},
+        original_man_obj_str: null,
+        is_value_changed: false,
+        keyed_value_changes: {checked: false},
+      }
+    },
+    template: '#edit-manifest-obj',
+    mounted() {
+      this.set_original_man_obj();
+    },
+    created() {
+
+    },
+    computed: {
+      web_url: function() {
+        if(!this.man_obj || !this.man_obj.uri){
+          return null;
+        }
+        let url = this.trim_prefix(this.man_obj.uri, 'https://');
+        return 'https://' + this.trim_prefix(url, 'http://');
+      },
+    },
+    methods: {
+      set_original_man_obj: function (){
+        if(!this.add_new && this.man_obj){
+          // Hack to make a deep-copy.
+          this.original_man_obj_str = JSON.stringify(this.man_obj);
+        }
+      },
+      reset_to_original_man_obj: function () {
+        if(this.original_man_obj_str){
+          this.man_obj = JSON.parse(this.original_man_obj_str);
+          this.is_value_changed = false;
+          this.keyed_value_changes = {checked: false};
+        }
+      },
+      trim_prefix(str, prefix) {
+        if (str.startsWith(prefix)) {
+            return str.slice(prefix.length);
+        } else {
+            return str;
+        }
+      },
+      uri_change(input_value) {
+        input_value = this.trim_prefix(input_value, 'https://');
+        input_value = this.trim_prefix(input_value, 'http://');
+        return input_value;
+      },
+      check_value_change: function() {
+        if(this.add_new){
+          this.is_value_changed = true;
+          return this.is_value_changed;
+        }
+        if(!this.original_man_obj_str){
+          this.is_value_changed = false;
+          return this.is_value_changed;
+        }
+        let orig = JSON.parse(this.original_man_obj_str);
+        this.is_value_changed = false;
+        this.keyed_value_changes.checked = true;
+        for (let key in orig) {
+          if (orig.hasOwnProperty(key) && this.man_obj.hasOwnProperty(key)) {
+            this.keyed_value_changes[key] = false;
+            if(orig[key] != this.man_obj[key]){
+              this.is_value_changed = true;
+              this.keyed_value_changes[key] = true;
+            }
+          }
+        }
+        console.log(this.keyed_value_changes);
+        return this.is_value_changed;
+      },
+      set_selected_class_item(class_item) {
+        this.man_obj.item_class_id = class_item.uuid;
+        this.man_obj.item_class__label = class_item.label;
+        this.check_value_change();
+      },
+      set_selected_context_item(context_item) {
+        this.man_obj.context_id = context_item.uuid;
+        this.man_obj.context__label = context_item.label;
+        this.check_value_change();
+      },
+      set_selected_project_item(project_item) {
+        this.man_obj.project_id = project_item.uuid;
+        this.man_obj.project__label = project_item.label;
+        this.check_value_change();
+      },
+      update_item: function() {
+        
+      }
+    },
+    components: {
+      'root-item-tree': vs_root_item_tree,
+      'lookup-list': vs_look_up_list,
+      'meta-json-form-item': vc_meta_json_form_item,
+    },
+  },
+);
+
+var vc_add_item = Vue.component(
+  'add-item',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['project_ids', ],
+    data() {
+      return {
+        configs: null,
+        item_type_config: null,
+        project_ids: [],
+        new_item_template: {
+          uuid: null,
+          slug: null,
+          item_item: null,
+          label: null,
+          item_type: null,
+          uri: null,
+          item_class_id: null,
+          context_id: null,
+          project_id: null,
+          meta_json: {},
+        },
+        cached_tree_items: {},
+        man_obj: null,
+      };
+    },
+    template: '#add-item',
+    created() {
+      this.fetch_api_configs();
+    },
+    computed: {
+      group_options: function() {
+        if(!this.configs){
+          return [];
+        }
+        let grp_options = [];
+        let i = 0;
+        for(let grp_config of this.configs){
+          i += 1;
+          let grp_option = {
+            label: grp_config.group,
+            id: i,
+            options: [],
+          };
+          for(let item_type_config of grp_config.item_types){
+            let option = {
+              value: item_type_config,
+              text: item_type_config.item_type,
+            }
+            grp_option.options.push(option);
+          }
+          grp_options.push(grp_option);
+        }
+        return grp_options;
+      }
+    },
+    methods: {
+      fetch_api_configs: function (){
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/item-add-configs'),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.configs = json;
+          console.log(this.configs);
+        });
+      },
+      on_shown: function() {
+        console.log('show add item modal');
+      },
+      toggle_add_new_item: function() {
+        this.$bvModal.show('add-item-modal');
+      },
+      config_select(config){
+        this.item_type_config = config;
+        let template_str = JSON.stringify(this.new_item_template);
+        this.man_obj = JSON.parse(template_str);
+        this.man_obj.item_type = this.item_type_config.item_type;
+        this.man_obj.project_id = EDITING_PROJECT.uuid;
+        this.man_obj.project__label = EDITING_PROJECT.label;
+        if(this.item_type_config.project_id){
+          this.man_obj.project_id = this.item_type_config.project_id;
+        }
+        if(this.item_type_config.item_class_id && !this.item_type_config.context_lookup){
+          this.man_obj.item_class_id = this.item_type_config.item_class_id;
+        }
+        if(!this.item_type_config.context_lookup){
+          // If there's no context lookup, then the context will be the
+          // same as the item project.
+          this.man_obj.context_id = this.man_obj.project_id;
+        }
+        console.log(this.item_type_config);
+        console.log(this.man_obj);
+      },
+      config_deselect: function (){
+        this.item_type_config = null;
+        this.man_obj = null;
+      },
+    },
+    components: {
+      'group-configs': vc_group_configs,
+      'edit-manifest-obj': vc_edit_manifest_obj,
+    },
+  }
+); 
+  
+</script>
