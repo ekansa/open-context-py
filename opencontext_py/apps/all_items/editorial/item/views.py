@@ -31,6 +31,7 @@ from opencontext_py.apps.all_items.editorial.item import updater_assertions
 from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 from opencontext_py.apps.all_items.editorial.item import updater_resources
 from opencontext_py.apps.all_items.editorial.item import updater_identifiers
+from opencontext_py.apps.all_items.editorial.item import item_validation
 
 from opencontext_py.apps.all_items.representations.item import (
     get_item_assertions,
@@ -195,6 +196,9 @@ def item_edit_interface_html(request, uuid):
         # NOTE: This is the project that we are currently editing. It will be
         # the default project for new Open Context items to be created into.
         'EDITING_PROJECT': json.dumps(editing_project_dict),
+        # This is the oc link class id, used in manifest editing to auto
+        # trigger the data_type to change to 'id'.
+        'OC_LINKS_ID': str(configs.CLASS_OC_LINKS_UUID),
         # This is the edit config for the current item type.
         'ITEM_TYPE_EDIT_CONFIG': json.dumps(item_type_edit_config),
         'DEFAULT_OBS': json.dumps(default_obs),
@@ -289,6 +293,27 @@ def item_manifest_json(request, uuid):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@never_cache
+@cache_control(no_cache=True)
+def item_manifest_validation(request):
+    """JSON representation of a manifest object"""
+    request_dict = {}
+    for key, key_val in request.GET.items():
+        request_dict[key] = request.GET.get(key)
+
+    api_result = item_validation.validate_manifest_attributes(request_dict)
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
 
 
 @cache_control(no_cache=True)

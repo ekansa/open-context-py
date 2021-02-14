@@ -29,7 +29,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       <p><strong>[[ key_config.label ]]</strong> ([[ key_config.key ]])</p>
       <p><small>[[ key_config.note ]]</small></p>
       <b-form-textarea
-        v-if="key_config.data_type == 'xsd:string'"
+        v-if="key_config.data_type == 'xsd:string' & !key_config.options"
         debounce="250"
         @change="html_validate"
         :state="is_valid_html"

@@ -37,7 +37,11 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-left-0">
       <b-col cols="12">
         <label for="input-label"><strong>Label</strong></label>
-        <b-form-input size="sm" id="input-label" v-model="man_obj.label">[[ man_obj.label ]]</b-form-input>
+        <b-form-input 
+          @change="check_value_change" 
+          size="sm" 
+          id="input-label" 
+          v-model="man_obj.label">[[ man_obj.label ]]</b-form-input>
         <small>A label is the primary name used by people to identify an item. 
           This differs from an item's UUID and URI, both of which are universally 
           unique identifiers used by software. A label is not necessarily unique.
@@ -54,9 +58,13 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-right-0
       border-left-0">
 
-      <b-col v-if="item_type_config.edit_uuid">
+      <b-col v-if="add_new & item_type_config.edit_uuid">
         <label for="input-uuid"><strong>UUID</strong></label>
-        <b-form-input size="sm" id="input-uuid" v-model="man_obj.uuid">[[ man_obj.uuid ]]</b-form-input>
+        <b-form-input 
+          @change="check_value_change"
+          size="sm"
+          id="input-uuid" 
+          v-model="man_obj.uuid">[[ man_obj.uuid ]]</b-form-input>
         <small>The primary database identifier for an item. It must be valid and unique without
           repeated use in Open Context.
           </small>
@@ -64,7 +72,11 @@ NOTE: Templates and view components to edit an item's identifier objects
 
       <b-col v-if="item_type_config.edit_slug">
         <label for="input-slug"><strong>Slug</strong></label>
-        <b-form-input size="sm" id="input-slug" v-model="man_obj.slug">[[ man_obj.slug ]]</b-form-input>
+        <b-form-input 
+          @change="check_value_change" 
+          size="sm" 
+          id="input-slug" 
+          v-model="man_obj.slug">[[ man_obj.slug ]]</b-form-input>
         <small>This is a secondary identifier for an item, intended to make readable URLs. 
           It must be valid and unique without repeated use in Open Context.
           </small>
@@ -72,7 +84,11 @@ NOTE: Templates and view components to edit an item's identifier objects
       
       <b-col v-if="item_type_config.edit_item_key">
         <label for="input-item-key"><strong>Item Key</strong></label>
-        <b-form-input size="sm" id="input-item-key" v-model="man_obj.item_key">[[ man_obj.item_key ]]</b-form-input>
+        <b-form-input 
+          @change="check_value_change" 
+          size="sm" 
+          id="input-item-key" 
+          v-model="man_obj.item_key">[[ man_obj.item_key ]]</b-form-input>
         <small>This is an abbreviated identifier for an item, that provides a convenient short
           way of identifying an entity in JSON-LD representations. For example, 
           <code>dc-terms:creator</code> is used as an abbreviated identifier of the full
@@ -84,7 +100,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     </b-row>
     
 
-    <b-row v-if="item_type_config.edit_uri" class="
+    <b-row v-if="add_new & item_type_config.edit_uri" class="
       man_obj_field_row
       border 
       border-secondary
@@ -93,12 +109,39 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-left-0">
       <b-col cols="12">
         <label for="input-uri"><strong>URI</strong></label>
-        <b-form-input size="sm" id="input-uri" v-model="man_obj.uri">[[ man_obj.uri ]]</b-form-input>
+        <b-form-input 
+          @change="check_value_change" 
+          size="sm" 
+          id="input-uri"
+          v-model="man_obj.uri">[[ man_obj.uri ]]</b-form-input>
         <small>This is an item's primary Web identifier (URI). A URI is used to uniquely reference
           Linked Data resources published outside of Open Context. For these outside
           Linked Data, Open Context derives a (non-random, deterministic) corresponding UUID 
           as an internal database identifier. Open Context will always create the same UUID
           for a given URI.
+        </small>
+      </b-col>
+    </b-row>
+
+
+    <b-row v-if="item_type_config.data_type_options" class="
+      man_obj_field_row
+      border 
+      border-secondary
+      border-top-0
+      border-right-0
+      border-left-0">
+      <b-col cols="12">
+        <label for="input-item-class-id"><strong>Data Type </strong>
+          <span v-if="man_obj.data_type">[[ man_obj.data_type ]]</span>
+        </label><br/>
+        <b-form-select
+          v-model="man_obj.data_type"
+          :options="item_type_config.data_type_options"
+          class="mb-3"
+          @change="check_value_change"
+        ></b-form-select>
+        <small>The types of values that can be used with this <em>[[ man_obj.item_type ]]</em> item.
         </small>
       </b-col>
     </b-row>
@@ -115,7 +158,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         <label for="input-item-class-id"><strong>Item Class / Category </strong>
           <span v-if="man_obj.item_class__label">[[ man_obj.item_class__label ]]</span>
         </label><br/>
-        <b-form-input 
+        <b-form-input
+          @change="check_value_change"
           size="sm" 
           id="input-class-id" 
           v-model="man_obj.item_class_id">[[ man_obj.item_class_id ]]</b-form-input>
@@ -146,7 +190,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         <label for="input-context-id"><strong>Context </strong>
           <span v-if="man_obj.context__label">[[ man_obj.context__label ]]</span>
         </label><br/>
-        <b-form-input 
+        <b-form-input
+          @change="check_value_change"
           size="sm" 
           id="input-context-id" 
           v-model="man_obj.context_id">[[ man_obj.context_id ]]</b-form-input>
@@ -195,7 +240,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         <label for="input-project-id"><strong>Project </strong>
           <span v-if="man_obj.project__label">[[ man_obj.project__label ]]</span>
         </label><br/>
-        <b-form-input 
+        <b-form-input
+          @change="check_value_change"
           size="sm" 
           id="input-project-id" 
           v-model="man_obj.project_id">[[ man_obj.project_id ]]</b-form-input>
@@ -281,7 +327,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         <div v-if="item_type_config">
           
           <edit-manifest-obj
-            v-bind:add_new="add_new"
+            @update_metadata="update_metadata($event)"
+            v-bind:add_new="true"
             v-bind:item_type_config="item_type_config"
             v-bind:project_ids="project_ids"
             v-bind:man_obj="man_obj">
@@ -304,6 +351,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
 <script type="text/javascript">
 
+const OC_LINKS_ID = '{{ OC_LINKS_ID }}';
 const EDITING_PROJECT = JSON.parse('{{ EDITING_PROJECT|escapejs }}');
 
 var vc_group_configs = Vue.component(
@@ -360,6 +408,12 @@ var vc_edit_manifest_obj = Vue.component(
         let url = this.trim_prefix(this.man_obj.uri, 'https://');
         return 'https://' + this.trim_prefix(url, 'http://');
       },
+      add_ok: function() {
+        if(!this.add_new || !this.man_obj){
+          return false;
+        }
+        
+      }
     },
     methods: {
       set_original_man_obj: function (){
@@ -388,6 +442,10 @@ var vc_edit_manifest_obj = Vue.component(
         return input_value;
       },
       check_value_change: function() {
+        if(this.man_obj.item_class_id == OC_LINKS_ID){
+          // A predicate link class MUST have a data_type of 'id'
+          this.man_obj.data_type = 'id';
+        }
         if(this.add_new){
           this.is_value_changed = true;
           return this.is_value_changed;
@@ -424,6 +482,10 @@ var vc_edit_manifest_obj = Vue.component(
       set_selected_project_item(project_item) {
         this.man_obj.project_id = project_item.uuid;
         this.man_obj.project__label = project_item.label;
+        this.check_value_change();
+      },
+      update_metadata(meta_json){
+        this.man_obj.meta_json = meta_json;
         this.check_value_change();
       },
       update_item: function() {
@@ -524,6 +586,7 @@ var vc_add_item = Vue.component(
         let template_str = JSON.stringify(this.new_item_template);
         this.man_obj = JSON.parse(template_str);
         this.man_obj.item_type = this.item_type_config.item_type;
+        this.man_obj.data_type = this.item_type_config.data_type;
         this.man_obj.project_id = EDITING_PROJECT.uuid;
         this.man_obj.project__label = EDITING_PROJECT.label;
         if(this.item_type_config.project_id){

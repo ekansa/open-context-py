@@ -21,6 +21,18 @@ from opencontext_py.libs.models import (
 # NOTE: These are configs for handling requests to manually create
 # and edit new items.
 # ---------------------------------------------------------------------
+LITERAL_DATA_TYPE_OPTIONS = [
+    {'value': 'xsd:double', 'text': 'Numeric (decimal)'},
+    {'value': 'xsd:integer', 'text': 'Integer (whole numbers)'},
+    {'value': 'xsd:boolean', 'text': 'Boolean (True/False)'},
+    {'value': 'xsd:date', 'text': 'Calendar date, date-time'},
+    {'value': 'xsd:string', 'text': 'Free alphanumeric text or HTML'},
+]
+
+DATA_TYPE_OPTIONS = [
+    {'value': 'id', 'text': 'Named (identified) entity'},
+] + LITERAL_DATA_TYPE_OPTIONS
+
 
 ITEM_TYPE_META_JSON_CONFIGS = {
     'projects': [
@@ -302,13 +314,17 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'note': (
                 'The data-type allowed for a unit of measure.'
             ),
-            'options': [
-                {'value': 'xsd:double', 'text': 'Numeric (decimal, floating point)',},
-                {'value': 'xsd:integer', 'text': 'Integer (whole-numbers)',},
-                {'value': 'xsd:date', 'text': 'Datetime',},
-                {'value': 'xsd:boolean', 'text': 'Boolean (True/False); xsd:boolean',},
-                {'value': 'xsd:string', 'text': 'Text',},
-            ],
+            'options': LITERAL_DATA_TYPE_OPTIONS,
+        },
+        {
+            'key': 'symbol', 
+            'label': 'Symbol', 
+            'data_type': 'xsd:string',
+            'note': (
+                'A symbol or short abbreviation used to indicate this unit of measurement. '
+                'For example "㎡", indicates a value is in square meters.'
+            ),
+            'options': None,
         },
     ]
 }
@@ -332,6 +348,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'expected_resource_types_ids': [
                     configs.OC_RESOURCE_HERO_UUID,
                 ],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -344,6 +362,10 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'subjects', 
@@ -354,6 +376,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_uri': False,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': {
                     'root_item_id': 'subjects',
@@ -377,6 +401,13 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'item_class_id',
+                    'context_id',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'media', 
@@ -391,6 +422,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.OC_RESOURCE_PREVIEW_UUID,
                     configs.OC_RESOURCE_THUMBNAIL_UUID,
                 ],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': {
                     'root_item_id': 'media',
@@ -405,6 +438,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'item_class_id',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'documents', 
@@ -417,6 +456,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_BIBO_CONTENT_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -429,6 +470,11 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'persons', 
@@ -439,6 +485,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_uri': False,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': {
                     'root_item_id': 'persons',
@@ -453,10 +501,15 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'predicates', 
-                'item_type_note': 'A descriptive attribute or relationship',
+                'item_type_note': 'A project-defined descriptive attribute or relationship',
                 'edit_uuid': True,
                 'edit_slug': True,
                 'edit_item_key': False,
@@ -465,6 +518,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': None,
+                'data_type_options': DATA_TYPE_OPTIONS,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': {
                     'uuid': configs.CLASS_LIST_OC_PREDICATES,
@@ -479,10 +534,15 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'types', 
-                'item_type_note': 'A controlled vocabulary term',
+                'item_type_note': 'A project-defined controlled vocabulary term used with a descriptive attribute',
                 'edit_uuid': True,
                 'edit_slug': True,
                 'edit_item_key': False,
@@ -491,6 +551,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -508,6 +570,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'item_type': ['projects'],
                     'show_project': False,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
         ],
     },
@@ -528,6 +596,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -540,6 +610,11 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'events', 
@@ -552,6 +627,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -564,6 +641,11 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'attribute-groups', 
@@ -576,6 +658,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -589,6 +673,11 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_label_search_box': False,
                     'show_q_search_box': True,
                 },
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
         ],
     },
@@ -605,22 +694,32 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': configs.WIKIDATA_VOCAB_UUID, # Must be in Wikidata
                 'context_lookup': None,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'class', 
-                'item_type_note': 'A Linked Data type',
+                'item_type_note': 'A Linked Data concept used in classification',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -634,16 +733,24 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'property', 
-                'item_type_note': 'A Linked Data attribute or relationship',
+                'item_type_note': 'A Linked Data defined descriptive attribute or relationship',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': None,
+                'data_type_options': DATA_TYPE_OPTIONS,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -657,6 +764,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'uri', 
@@ -671,6 +784,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': None,
@@ -684,6 +799,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'units', 
@@ -694,6 +815,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': configs.WIKIDATA_VOCAB_UUID, # Preference is in Wikidata
@@ -707,6 +830,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'media-types', 
@@ -717,6 +846,8 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_uri': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': configs.IANA_MEDIA_TYPE_VOCAB_UUID, # Preference is in IANA
@@ -730,6 +861,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'context_id',
+                    'data_type',
+                ],
             },
         ],
     },
@@ -752,12 +889,19 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': configs.OPEN_CONTEXT_PROJ_UUID,  # Always in the OC project
                 'context_lookup': None,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
             {
                 'item_type': 'publishers', 
@@ -770,12 +914,19 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
                 'expected_resource_types_ids': [],
+                'data_type': 'id',
+                'data_type_options': None,
                 'item_class_id': configs.DEFAULT_CLASS_UUID,
                 'item_class_lookup': None,
                 'context_id': configs.OPEN_CONTEXT_PROJ_UUID,  # Always in the OC project
                 'context_lookup': None,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
+                'add_required_attributes': [
+                    'label',
+                    'project_id',
+                    'data_type',
+                ],
             },
         ],
     },

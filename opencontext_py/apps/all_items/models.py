@@ -39,7 +39,7 @@ from opencontext_py.libs.models import (
     make_model_object_json_safe_dict
 )
 
-DEFAULT_LABEL_SORT_LEN = 6
+DEFAULT_LABEL_SORT_LEN = 9
 
 # ---------------------------------------------------------------------
 # Generally used validation functions
@@ -103,6 +103,29 @@ def sort_digits(index, digit_length=DEFAULT_LABEL_SORT_LEN):
     if index >= pow(10, digit_length):
         index = pow(10, digit_length) - 1
     return prepend_zeros(str(index), digit_length)
+
+
+def sting_number_splitter(string_to_split):
+    parts = []
+    act_part = ''
+    prior_part_type = None
+    has_number_part = False
+    for char in string_to_split:
+        part_type = char.isdigit()
+        if part_type:
+            has_number_part = True
+        if part_type != prior_part_type and len(act_part):
+            parts.append(
+                (prior_part_type, act_part,)
+            )
+            act_part = ''
+        prior_part_type = part_type
+        act_part += char
+    # The last part
+    parts.append(
+        (part_type, act_part,)
+    )
+    return parts, has_number_part
 
 
 def make_label_sort_val(raw_label):

@@ -141,6 +141,11 @@ urlpatterns = [
         name='editorial_item_manifest_json'
     ),
     url(
+        r'^editorial/item-manifest-validation', 
+        EditorialItemViews.item_manifest_validation, 
+        name='editorial_item_manifest_validation_json'
+    ),
+    url(
         r'^editorial/item-update-manifest', 
         EditorialItemViews.update_manifest_objs, 
         name='editorial_update_manifest_objs'
