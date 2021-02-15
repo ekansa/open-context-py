@@ -114,6 +114,9 @@ var vc_meta_json_form_item = Vue.component(
         is_valid_html: null,
         updating: false,
         errors: null,
+        validations: {
+          current: null, cached: {},
+        },
       };
     },
     template: '#meta-json-form-item',

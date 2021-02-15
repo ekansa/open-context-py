@@ -48,6 +48,7 @@ NOTE: Templates and view components to edit an item's manifest object.
       </b-col>
     </b-row>
     <edit-manifest-obj
+      @manifest_update_done="manifest_update_done($event)"
       v-bind:add_new="false"
       v-bind:item_type_config="ITEM_TYPE_EDIT_CONFIG"
       v-bind:project_ids="ITEM_PROJECT_UUIDS"
@@ -71,6 +72,7 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
             return {
               uuid: null,
               man_obj: null,
+              emit_edit_done: false,
             }
           },
           template: '#edit-manifest',
@@ -101,8 +103,12 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
               .then(this.loading = false)
               .then(response => response.json())
               .then(json => {
-                  this.man_obj = json;
-                  console.log(this.man_obj);
+                this.man_obj = json;
+                console.log(this.man_obj);
+                if(this.emit_edit_done){
+                  this.emit_edit_done = false;
+                  this.$emit('edit_done', true);
+                }
               })
             },
             trim_prefix(str, prefix) {
@@ -116,6 +122,10 @@ const DEFAULT_CLASS = JSON.parse('{{ DEFAULT_CLASS|escapejs }}');
               input_value = this.trim_prefix(input_value, 'https://');
               input_value = this.trim_prefix(input_value, 'http://');
               return input_value;
+            },
+            manifest_update_done(v){
+              this.emit_edit_done = true;
+              this.fetch_api_manifest_obj();
             },
           },
           components: {

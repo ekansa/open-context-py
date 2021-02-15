@@ -107,6 +107,10 @@ def sort_digits(index, digit_length=DEFAULT_LABEL_SORT_LEN):
 
 def sting_number_splitter(string_to_split):
     parts = []
+    if not string_to_split:
+        # Return Nothing
+        return [], False
+
     act_part = ''
     prior_part_type = None
     has_number_part = False

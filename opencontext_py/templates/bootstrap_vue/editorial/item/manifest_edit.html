@@ -25,6 +25,26 @@ NOTE: Templates and view components to edit an item's identifier objects
 </template>
 
 
+<template id="alert-invalid">
+  <b-alert
+    v-if="val_obj"
+    :show="!val_obj.is_valid"
+    variant="danger">
+    <div v-if="val_obj.valid_conflict_examples">
+      <small v-if="val_obj.valid_conflict_examples.length > 0">
+      In use with <a 
+        :href="'/editorial/item-edit/' + val_obj.valid_conflict_examples[0].uuid"
+        target="_blank">
+        [[val_obj.valid_conflict_examples[0].label]] ([[val_obj.valid_conflict_examples[0].uuid]])
+      </a></small>
+    </div>
+    <div v-if="val_obj.errors">
+      <small v-for="(error, index) in val_obj.errors">[[ error ]] <br/></small>
+    </div>
+  </b-alert>
+</template>
+
+
 <template id="edit-manifest-obj">
   <div>
     
@@ -35,17 +55,26 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-top-0
       border-right-0
       border-left-0">
-      <b-col cols="12">
+      <b-col cols="9">
         <label for="input-label"><strong>Label</strong></label>
         <b-form-input 
           @change="check_value_change" 
           size="sm" 
-          id="input-label" 
+          id="input-label"
+          :state="is_attribute_valid('label')"
           v-model="man_obj.label">[[ man_obj.label ]]</b-form-input>
+        <div v-if="validations.label">
+          <alert-invalid
+            v-bind:val_obj="validations.label"
+          ></alert-invalid>
+        </div>
         <small>A label is the primary name used by people to identify an item. 
           This differs from an item's UUID and URI, both of which are universally 
           unique identifiers used by software. A label is not necessarily unique.
         </small>
+      </b-col>
+      <b-col cols="3">
+
       </b-col>
     </b-row>
 
@@ -64,7 +93,13 @@ NOTE: Templates and view components to edit an item's identifier objects
           @change="check_value_change"
           size="sm"
           id="input-uuid" 
+          :state="is_attribute_valid('uuid')"
           v-model="man_obj.uuid">[[ man_obj.uuid ]]</b-form-input>
+        <div v-if="validations.uuid">
+          <alert-invalid
+            v-bind:val_obj="validations.uuid"
+          ></alert-invalid>
+        </div>
         <small>The primary database identifier for an item. It must be valid and unique without
           repeated use in Open Context.
           </small>
@@ -75,8 +110,14 @@ NOTE: Templates and view components to edit an item's identifier objects
         <b-form-input 
           @change="check_value_change" 
           size="sm" 
-          id="input-slug" 
+          id="input-slug"
+          :state="is_attribute_valid('slug')"
           v-model="man_obj.slug">[[ man_obj.slug ]]</b-form-input>
+        <div v-if="validations.slug">
+          <alert-invalid
+            v-bind:val_obj="validations.slug"
+          ></alert-invalid>
+        </div>
         <small>This is a secondary identifier for an item, intended to make readable URLs. 
           It must be valid and unique without repeated use in Open Context.
           </small>
@@ -87,8 +128,14 @@ NOTE: Templates and view components to edit an item's identifier objects
         <b-form-input 
           @change="check_value_change" 
           size="sm" 
-          id="input-item-key" 
+          id="input-item-key"
+          :state="is_attribute_valid('item_key')"
           v-model="man_obj.item_key">[[ man_obj.item_key ]]</b-form-input>
+        <div v-if="validations.item_key">
+          <alert-invalid
+            v-bind:val_obj="validations.item_key"
+          ></alert-invalid>
+        </div>
         <small>This is an abbreviated identifier for an item, that provides a convenient short
           way of identifying an entity in JSON-LD representations. For example, 
           <code>dc-terms:creator</code> is used as an abbreviated identifier of the full
@@ -107,19 +154,28 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-top-0
       border-right-0
       border-left-0">
-      <b-col cols="12">
+      <b-col cols="9">
         <label for="input-uri"><strong>URI</strong></label>
         <b-form-input 
           @change="check_value_change" 
           size="sm" 
           id="input-uri"
+          :state="is_attribute_valid('uri')"
           v-model="man_obj.uri">[[ man_obj.uri ]]</b-form-input>
+        <div v-if="validations.uri">
+          <alert-invalid
+            v-bind:val_obj="validations.uri"
+          ></alert-invalid>
+        </div>
         <small>This is an item's primary Web identifier (URI). A URI is used to uniquely reference
           Linked Data resources published outside of Open Context. For these outside
           Linked Data, Open Context derives a (non-random, deterministic) corresponding UUID 
           as an internal database identifier. Open Context will always create the same UUID
           for a given URI.
         </small>
+      </b-col>
+      <b-col cols="3">
+
       </b-col>
     </b-row>
 
@@ -131,7 +187,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-top-0
       border-right-0
       border-left-0">
-      <b-col cols="12">
+      <b-col cols="9">
         <label for="input-item-class-id"><strong>Data Type </strong>
           <span v-if="man_obj.data_type">[[ man_obj.data_type ]]</span>
         </label><br/>
@@ -144,6 +200,9 @@ NOTE: Templates and view components to edit an item's identifier objects
         <small>The types of values that can be used with this <em>[[ man_obj.item_type ]]</em> item.
         </small>
       </b-col>
+      <b-col cols="3">
+
+      </b-col>
     </b-row>
 
 
@@ -154,7 +213,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-top-0
       border-right-0
       border-left-0">
-      <b-col cols="6">
+      <b-col cols="5">
         <label for="input-item-class-id"><strong>Item Class / Category </strong>
           <span v-if="man_obj.item_class__label">[[ man_obj.item_class__label ]]</span>
         </label><br/>
@@ -166,7 +225,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         <small>This is an item's primary classification within an item-type.
         </small>
       </b-col>
-      <b-col cols="6">
+      <b-col cols="4">
         <small>Navigate below to select an item class.</small><br/>
         <div style="font-size: 75%;">
           <root-item-tree
@@ -175,6 +234,9 @@ NOTE: Templates and view components to edit an item's identifier objects
             @set_selected_item="set_selected_class_item($event)"
           ></root-item-tree>
         </div>
+      </b-col>
+      <b-col cols="3">
+
       </b-col>
     </b-row>
 
@@ -186,7 +248,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-top-0
       border-right-0
       border-left-0">
-      <b-col cols="6">
+      <b-col cols="5">
         <label for="input-context-id"><strong>Context </strong>
           <span v-if="man_obj.context__label">[[ man_obj.context__label ]]</span>
         </label><br/>
@@ -210,7 +272,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         </small>
 
       </b-col>
-      <b-col cols="6">
+      <b-col cols="4">
         <small>Search and select a context below</small><br/>
         <lookup-list
           key="context-lookup"
@@ -226,6 +288,10 @@ NOTE: Templates and view components to edit an item's identifier objects
           v-bind:show_path_search_box="item_type_config.context_lookup.show_path_search_box"
           @set_selected_item="set_selected_context_item($event)"
         ></lookup-list>
+      </b-col>
+      <b-col cols="3">
+
+      </b-col>
     </b-row>
 
 
@@ -236,7 +302,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       border-top-0
       border-right-0
       border-left-0">
-      <b-col cols="6">
+      <b-col cols="5">
         <label for="input-project-id"><strong>Project </strong>
           <span v-if="man_obj.project__label">[[ man_obj.project__label ]]</span>
         </label><br/>
@@ -251,7 +317,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         </small>
 
       </b-col>
-      <b-col cols="6">
+      <b-col cols="4">
         <small>Search and select a project below</small><br/>
         <lookup-list
           key="project-lookup"
@@ -263,6 +329,10 @@ NOTE: Templates and view components to edit an item's identifier objects
           v-bind:show_label_search_box="item_type_config.project_lookup.show_label_search_box"
           @set_selected_item="set_selected_project_item($event)"
         ></lookup-list>
+      </b-col>
+      <b-col cols="3">
+
+      </b-col>
     </b-row>
 
 
@@ -352,6 +422,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 <script type="text/javascript">
 
 const OC_LINKS_ID = '{{ OC_LINKS_ID }}';
+const OPEN_CONTEXT_PROJ_UUID = '{{ OPEN_CONTEXT_PROJ_UUID }}';
 const EDITING_PROJECT = JSON.parse('{{ EDITING_PROJECT|escapejs }}');
 
 var vc_group_configs = Vue.component(
@@ -376,6 +447,23 @@ var vc_group_configs = Vue.component(
 );
 
 
+var vc_alert_invalid = Vue.component(
+  'alert-invalid',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['val_obj'],
+    data() {
+      return {
+        val_obj: null,
+      };
+    },
+    template: '#alert-invalid',
+    methods: {
+    },
+  },
+);
+
+
 var vc_edit_manifest_obj = Vue.component(
   'edit-manifest-obj',
   {
@@ -391,6 +479,14 @@ var vc_edit_manifest_obj = Vue.component(
         original_man_obj_str: null,
         is_value_changed: false,
         keyed_value_changes: {checked: false},
+        validations: {
+          label: null,
+          uuid: null,
+          slug: null,
+          item_key: null,
+          uri: null,
+        },
+        cached_validations: {},
       }
     },
     template: '#edit-manifest-obj',
@@ -412,12 +508,11 @@ var vc_edit_manifest_obj = Vue.component(
         if(!this.add_new || !this.man_obj){
           return false;
         }
-        
-      }
+      },
     },
     methods: {
       set_original_man_obj: function (){
-        if(!this.add_new && this.man_obj){
+        if(this.man_obj){
           // Hack to make a deep-copy.
           this.original_man_obj_str = JSON.stringify(this.man_obj);
         }
@@ -441,14 +536,131 @@ var vc_edit_manifest_obj = Vue.component(
         input_value = this.trim_prefix(input_value, 'http://');
         return input_value;
       },
+      is_attribute_valid(key) {
+        if(!this.validations || !this.validations.hasOwnProperty(key)){
+          return null;
+        }
+        let validation_result = this.validations[key];
+        if(!validation_result){
+          return null;
+        }
+        if(!validation_result.hasOwnProperty('is_valid')){
+          return null;
+        }
+        return validation_result.is_valid;
+      },
+      get_cached_validation(params){
+        let params_str = JSON.stringify(params);
+        if(!this.cached_validations.hasOwnProperty(params_str)){
+          return null;
+        }
+        return this.cached_validations[params_str];
+      },
+      cache_validation(params, validation_result){
+        let params_str = JSON.stringify(params);
+        this.cached_validations[params_str] = validation_result;
+      },
+      fetch_api_validation(key, params){
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        fetch(
+          ('/editorial/item-manifest-validation?' + new URLSearchParams(params)), 
+          requestOptions,
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.cache_validation(params, json);
+          this.validations[key] = json;
+          return this.validations[key];
+        });
+      },
+      validate_label(label){
+        let params = {};
+        if(!this.add_new && this.man_obj){
+          params.uuid = this.man_obj.uuid;
+        }
+        params.label = label;
+        params.item_type = this.man_obj.item_type;
+        params.project_id = this.man_obj.project_id;
+        if(this.item_type_config.context_lookup && this.man_obj.context_id){
+          // Context is significant for labels, so add
+          params.context_id = this.man_obj.context_id;
+        }
+        let valid_result = this.get_cached_validation(params);
+        if(!valid_result){
+          this.fetch_api_validation('label', params);
+        }
+        else{
+          this.validations.label = valid_result;
+        }
+        console.log('validated label');
+        console.log(this.validations);
+      },
+      validate_uuid(uuid){
+        let params = {};
+        if(!this.add_new && this.man_obj){
+          params.uuid = this.man_obj.uuid;
+        }
+        params.new_uuid = uuid;
+        let valid_result = this.get_cached_validation(params);
+        if(!valid_result){
+          this.fetch_api_validation('uuid', params);
+        }
+        else{
+          this.validations.uuid = valid_result;
+        }
+      },
+      validate_slug(slug){
+        let params = {};
+        if(!this.add_new && this.man_obj){
+          params.uuid = this.man_obj.uuid;
+        }
+        params.slug = slug;
+        let valid_result = this.get_cached_validation(params);
+        if(!valid_result){
+          this.fetch_api_validation('slug', params);
+        }
+        else{
+          this.validations.slug = valid_result;
+        }
+      },
+      validate_item_key(item_key){
+        let params = {};
+        if(!this.add_new && this.man_obj){
+          params.uuid = this.man_obj.uuid;
+        }
+        params.item_key = item_key;
+        let valid_result = this.get_cached_validation(params);
+        if(!valid_result){
+          this.fetch_api_validation('item_key', params);
+        }
+        else{
+          this.validations.item_key = valid_result;
+        }
+      },
+      validate_uri(uri){
+        let params = {};
+        if(!this.add_new && this.man_obj){
+          params.uuid = this.man_obj.uuid;
+        }
+        params.uri = uri;
+        let valid_result = this.get_cached_validation(params);
+        if(!valid_result){
+          this.fetch_api_validation('uri', params);
+        }
+        else{
+          this.validations.uri = valid_result;
+        }
+      },
       check_value_change: function() {
         if(this.man_obj.item_class_id == OC_LINKS_ID){
           // A predicate link class MUST have a data_type of 'id'
           this.man_obj.data_type = 'id';
-        }
-        if(this.add_new){
-          this.is_value_changed = true;
-          return this.is_value_changed;
         }
         if(!this.original_man_obj_str){
           this.is_value_changed = false;
@@ -463,10 +675,29 @@ var vc_edit_manifest_obj = Vue.component(
             if(orig[key] != this.man_obj[key]){
               this.is_value_changed = true;
               this.keyed_value_changes[key] = true;
+              if(key == 'label'){
+                this.validate_label(this.man_obj[key]);
+              }
+              if(key == 'uuid'){
+                this.validate_uuid(this.man_obj[key]);
+              }
+              if(key == 'slug'){
+                this.validate_slug(this.man_obj[key]);
+              }
+              if(key == 'item_key'){
+                this.validate_item_key(this.man_obj[key]);
+              }
+              if(key == 'uri'){
+                this.validate_uri(this.man_obj[key]);
+              }
+            }
+            else{
+              if(this.validations.hasOwnProperty(key)){
+                this.validations[key] = null;
+              }
             }
           }
         }
-        console.log(this.keyed_value_changes);
         return this.is_value_changed;
       },
       set_selected_class_item(class_item) {
@@ -489,12 +720,57 @@ var vc_edit_manifest_obj = Vue.component(
         this.check_value_change();
       },
       update_item: function() {
-        
-      }
+        if(this.add_new || !this.is_value_changed){
+          return null;
+        }
+        let orig = JSON.parse(this.original_man_obj_str);
+        let update_obj = {
+          uuid: this.man_obj.uuid,
+        };
+        for (let key in this.man_obj) {
+          if (orig.hasOwnProperty(key) && this.man_obj.hasOwnProperty(key)) {
+            if(orig[key] != this.man_obj[key]){
+              update_obj[key] = this.man_obj[key];
+            }
+          }
+        }
+        console.log(update_obj);
+        let update_objs = [];
+        update_objs.push(update_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(update_objs),
+        };
+        fetch('/editorial/item-update-manifest', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          this.$emit('manifest_update_done', true);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
     },
     components: {
       'root-item-tree': vs_root_item_tree,
       'lookup-list': vs_look_up_list,
+      'alert-invalid': vc_alert_invalid,
       'meta-json-form-item': vc_meta_json_form_item,
     },
   },
@@ -513,7 +789,7 @@ var vc_add_item = Vue.component(
         new_item_template: {
           uuid: null,
           slug: null,
-          item_item: null,
+          item_key: null,
           label: null,
           item_type: null,
           uri: null,
@@ -591,6 +867,9 @@ var vc_add_item = Vue.component(
         this.man_obj.project__label = EDITING_PROJECT.label;
         if(this.item_type_config.project_id){
           this.man_obj.project_id = this.item_type_config.project_id;
+        }
+        if(this.man_obj.project_id == OPEN_CONTEXT_PROJ_UUID){
+          this.man_obj.project__label = 'Open Context (General)';
         }
         if(this.item_type_config.item_class_id && !this.item_type_config.context_lookup){
           this.man_obj.item_class_id = this.item_type_config.item_class_id;
