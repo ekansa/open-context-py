@@ -234,7 +234,8 @@ def update_attribute_objs(request_json):
             if attribute_edit_note and attr.startswith('obj'):
                 attribute_edit_note += f', "{update_assert_obj.predicate.label}",'
                 if not attr.endswith('_id'):
-                    attribute_edit_note += f' from {old_value} to {value}'
+                    attribute_edit_note += f' from "{str(old_value)[:30]}" to "{str(value)[:30]}"'
+                    
             if old_edited_obj and new_edited_obj and attribute_edit_note:
                 attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
             
