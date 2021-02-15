@@ -5,7 +5,10 @@ import uuid as GenUUID
 import reversion
 
 from django.conf import settings
-from django.core.validators import validate_slug as django_validate_slug
+from django.core.validators import (
+    validate_slug as django_validate_slug,
+    URLValidator
+)
 
 from django.db.models import Q
 from django.db import transaction
@@ -356,6 +359,24 @@ def validate_item_key(item_key, exclude_uuid=None):
 def validate_uri(raw_uri, exclude_uuid=None):
     """Validates a uri identifier"""
     uri = AllManifest().clean_uri(raw_uri)
+
+    errors = []
+    try:
+        ok = URLValidator()(f'https://{uri}')
+    except:
+        errors.append(
+            f'"{raw_uri}" invalid.'
+        )
+
+    if errors:
+        return {
+            'is_valid': False,
+            'uri': raw_uri,
+            'errors': errors,
+            'valid_conflict_count': 0,
+            'valid_conflict_examples': [],
+        }
+
     m_qs = AllManifest.objects.filter(
         uri=uri,
     )
