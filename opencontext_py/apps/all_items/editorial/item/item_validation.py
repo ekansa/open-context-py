@@ -197,7 +197,7 @@ def validate_label(check_label, filter_args=None, exclude_uuid=None):
                 'is_valid': False,
                 'label': check_label,
                 'errors': [
-                    f'"{check_label}"" invalid. Item type "subjects" cannot have "/" characters.'
+                    f'"{check_label}"" invalid. Labels for "subjects" items cannot have "/" characters.'
                 ],
                 'valid_conflict_count': 0,
                 'valid_conflict_examples': [],

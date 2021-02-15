@@ -19,16 +19,18 @@ NOTE: Templates and view components to edit an item's manifest object.
     <b-card-header header-tag="header" class="p-1" role="tab">
       Item Edit History
     </b-card-header>
-    <b-card-body>
-      <b-list-group v-if="history">
-        <b-list-group-item
-          v-for="(hist_obj, index) in history"
-          :key="hist_obj.uuid"
-        >
-        [[ hist_obj.meta_json.edit_note ]]
-        </b-list-group-item>
-      </b-list-group>
-    </b-card-body>
+    
+      <b-alert show variant="secondary">
+        <b-list-group v-if="history">
+          <b-list-group-item
+            v-for="(hist_obj, index) in history"
+            :key="hist_obj.uuid"
+          >
+          <small>[[ hist_obj.meta_json.edit_note ]]</small>
+          </b-list-group-item>
+        </b-list-group>
+      </b-alert>
+    
   </b-card>
 </template>
 
