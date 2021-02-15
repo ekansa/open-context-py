@@ -9,6 +9,14 @@ NOTE: Templates and view components to edit an item's identifier objects
    margin-top: 24px;
    padding-bottom: 12px;
   }
+  .meta_form {
+    padding: 24px;
+  }
+  .meta_field_row {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+  }
 </style>
 
 <template id="group-configs">
@@ -32,7 +40,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     variant="danger">
     <div v-if="val_obj.valid_conflict_examples">
       <small v-if="val_obj.valid_conflict_examples.length > 0">
-      In use with <a 
+      Used by: <a 
         :href="'/editorial/item-edit/' + val_obj.valid_conflict_examples[0].uuid"
         target="_blank">
         [[val_obj.valid_conflict_examples[0].label]] ([[val_obj.valid_conflict_examples[0].uuid]])
@@ -42,6 +50,90 @@ NOTE: Templates and view components to edit an item's identifier objects
       <small v-for="(error, index) in val_obj.errors">[[ error ]] <br/></small>
     </div>
   </b-alert>
+</template>
+
+
+<template id="meta-json-form-item">
+  <b-row class="
+    meta_field_row 
+    border 
+    border-info
+    border-top-0
+    border-right-0
+    border-left-0
+  ">
+    <b-col cols="8" v-if="meta_json && key_config">
+      <p><strong>[[ key_config.label ]]</strong> ([[ key_config.key ]])</p>
+      <p><small>[[ key_config.note ]]</small></p>
+      <b-form-textarea
+        v-if="key_config.data_type == 'xsd:string' & !key_config.options"
+        debounce="250"
+        @change="html_validate"
+        :state="is_valid_html"
+        :placeholder="meta_json[key_config.key]"
+        :value="meta_json[key_config.key]"
+      ></b-form-textarea>
+
+      <b-form-select
+        v-if="key_config.options"
+        v-model="meta_json[key_config.key]"
+        :options="key_config.options"
+        class="mb-3"
+        @change="value_change"
+      ></b-form-select>
+
+      <b-form-input
+        v-if="key_config.data_type == 'xsd:integer' && !key_config.options"
+        type="number"
+        @change="value_change"
+        :placeholder="meta_json[key_config.key]"
+        :value="meta_json[key_config.key]"
+      ></b-form-input>
+
+      <div v-if="validation">
+        <alert-invalid
+          v-bind:val_obj="validation"
+        ></alert-invalid>
+      </div>
+
+    </b-col>
+
+    <b-col cols="4">
+      <b-spinner v-if="updating" label="Updating..."></b-spinner>
+      <b-button
+        v-if="is_value_changed && !updating && !add_new"
+        sm
+        block
+        @click="update_meta_field"
+        class="text-center"
+        variant="info">Update
+        <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+      </b-button>
+      <b-list-group v-if="errors">
+        <b-list-group-item v-for="(error, index) in errors"
+        :key="'metadata-error-' + index"
+        variant="warning">
+        <small>[[error]]</small>
+        </b-list-group-item>
+      </b-list-group>
+    </b-col>
+  </b-row>
+</template>
+
+
+<template id="meta-json-form">
+  <b-container fluid v-if="meta_configs.length > 0" class="meta_form alert-secondary">
+    <h5>Administrative Metadata</h5>
+    <meta-json-form-item v-for="(key_config, index) in meta_configs"
+      v-bind:key_config="key_config"
+      v-bind:meta_json="meta_json"
+      v-bind:item_id="item_id"
+      v-bind:add_new="add_new"
+      @get_value_change="get_value_change($event)"
+      @update_metadata="update_metadata($event)"
+    >
+    </meta-json-form-item>
+  </div>
 </template>
 
 
@@ -425,6 +517,7 @@ const OC_LINKS_ID = '{{ OC_LINKS_ID }}';
 const OPEN_CONTEXT_PROJ_UUID = '{{ OPEN_CONTEXT_PROJ_UUID }}';
 const EDITING_PROJECT = JSON.parse('{{ EDITING_PROJECT|escapejs }}');
 
+
 var vc_group_configs = Vue.component(
   'group-configs',
   {
@@ -462,6 +555,211 @@ var vc_alert_invalid = Vue.component(
     },
   },
 );
+
+
+var vc_meta_json_form_item = Vue.component(
+  'meta-json-form-item',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['meta_json', 'key_config', 'item_id', 'add_new'],
+    data() {
+      return {
+        key_config: null,
+        meta_json: null,
+        item_id: null,
+        add_new: false,
+        original_meta_json_str: null,
+        is_value_changed: false,
+        is_valid_html: null,
+        updating: false,
+        errors: null,
+        validation: null,
+      };
+    },
+    template: '#meta-json-form-item',
+    mounted() {
+      this.set_original_meta_json();
+    },
+    computed: {
+      
+    },
+    methods: {
+      set_original_meta_json: function (){
+        if(!this.add_new && this.meta_json){
+          // Hack to make a deep-copy.
+          this.original_meta_json_str = JSON.stringify(this.meta_json);
+          console.log('Original meta_json cached as JSON str');
+        }
+      },
+      reset_to_original_meta_json: function () {
+        if(this.original_meta_json_str){
+          this.meta_json = JSON.parse(this.original_meta_json_str);
+          this.is_value_changed = false;
+          console.log('Reset to original meta_json from cache');
+        }
+      },
+      get_original_value() {
+        if(this.original_meta_json_str){
+          let orig_meta_json = JSON.parse(this.original_meta_json_str);
+          return orig_meta_json[this.key_config.key];
+        }
+        return null;
+      },
+      fetch_api_validation(key, params){
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        fetch(
+          ('/editorial/item-manifest-validation?' + new URLSearchParams(params)), 
+          requestOptions,
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.validation = json;
+          return this.validation;
+        });
+      },
+      validate_short_id(short_id){
+        let params = {};
+        if(this.item_id){
+          params.uuid = this.item_id;
+        }
+        params.short_id = short_id;
+        this.fetch_api_validation('short_id', params);
+      },
+      value_change(input_value) {
+        this.meta_json[this.key_config.key] = input_value;
+        if(!this.add_new){
+          let orig_value = this.get_original_value();
+          this.is_value_changed = (input_value != orig_value);
+        }
+        else{
+          this.is_value_changed = true;
+        }
+
+        if (this.is_value_changed && this.key_config.key == 'short_id'){
+          this.validate_short_id(input_value);
+        }
+
+        let output = {
+          input_value: input_value,
+          is_value_changed: this.is_value_changed,
+          meta_json: this.meta_json,
+          validation: this.validation,
+        };
+        console.log(output);
+        this.$emit('get_value_change', output);
+        return output;
+      },
+      update_meta_field: function () {
+        if(this.add_new || !this.item_id){
+          return null;
+        }
+        this.updating = true;
+        this.$emit('update_metadata', this.meta_json);
+      },
+      html_validate(input_value) {
+        this.input_value = input_value.trim();
+        this.value_change(input_value);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(
+            {str: input_value}
+          ),
+        };
+        fetch('/editorial/html-validate', requestOptions)
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            this.is_valid_html = data.ok;
+            this.errors = data.errors;
+            this.$emit('get_validation_errors', this.errors);
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          }
+        );
+      },
+    },
+    components: {
+      'meta-json-form-item': vc_meta_json_form_item,
+    },
+  }
+); 
+
+var vc_meta_json_form = Vue.component(
+  'meta-json-form',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['meta_json', 'meta_configs', 'item_id', 'add_new'],
+    data() {
+      return {
+        meta_configs: null,
+        meta_json: null,
+        item_id: null,
+        add_new: false,
+      };
+    },
+    template: '#meta-json-form',
+    mounted() {
+      this.set_empty_keys();
+    },
+    computed: {
+      
+    },
+    methods: {
+      set_empty_keys(){
+        if(!this.meta_configs){
+          return null;
+        }
+        if(!this.meta_json){
+          this.meta_json = Object;
+        }
+        for(let key_config of this.meta_configs){
+          let key = key_config.key;
+          if(this.meta_json.hasOwnProperty(key)){
+            continue;
+          }
+          if(key_config.options){
+            this.meta_json[key] = key_config.options[0].value;
+          }
+          else if(key_config.data_type == 'xsd:string'){
+            this.meta_json[key] = '';
+          }
+          else {
+            this.meta_json[key] = false;
+          }
+        }
+
+      },
+      get_value_change(change) {
+        console.log('event get_value_change');
+        console.log(change);
+      },
+      update_metadata(meta_json){
+        this.meta_json = meta_json;
+        this.$emit('update_metadata', this.meta_json);
+      }
+    },
+    components: {
+      'alert-invalid': vc_alert_invalid,
+    },
+  }
+); 
 
 
 var vc_edit_manifest_obj = Vue.component(
