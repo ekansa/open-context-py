@@ -8,6 +8,11 @@ NOTE: Templates and view components to edit assertions made on an item
  .obj_button {
    margin-top: 6px;
  }
+ .obj_edit_exit_button {
+  padding-left: 6px;
+  padding-right: 6px;
+  min-width: 38px;
+ }
  .obs_row {
    margin-top: 48px;
  }
@@ -65,15 +70,15 @@ NOTE: Templates and view components to edit assertions made on an item
             sm
             block
             @click="toggle_object_edit"
-            class="text-center obj_button"
-            variant="info">Edit</b-button>
+            class="text-center obj_button obj_edit_exit_button"
+            variant="info"><small>Edit</small></b-button>
             <b-button
             v-if="is_object_edit_open"
             sm
             block
-            class="text-center obj_button"
+            class="text-center obj_button obj_edit_exit_button"
             @click="toggle_object_edit"
-            variant="outline-secondary">Exit</b-button>
+            variant="outline-secondary"><small>Exit</small></b-button>
         </b-col>
         <b-col cols="10">
           [[assert.object__label]]
