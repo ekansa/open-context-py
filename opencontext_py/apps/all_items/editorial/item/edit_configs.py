@@ -354,6 +354,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -364,7 +365,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'add_required_attributes': [
                     'label',
-                    'data_type',
+                    'project_id',
                 ],
             },
             {
@@ -393,6 +394,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_item_class': True,
                     'show_project': True,
                 },
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -406,7 +408,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'item_class_id',
                     'context_id',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -430,6 +431,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -442,7 +444,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'label',
                     'item_class_id',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -462,6 +463,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -473,7 +475,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'add_required_attributes': [
                     'label',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -493,6 +494,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -504,7 +506,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'add_required_attributes': [
                     'label',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -526,6 +527,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 },
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -564,6 +566,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_q_search_box': True,
                     'show_project': True,
                 },
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -574,7 +577,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'label',
                     'project_id',
                     'context_id',
-                    'data_type',
                 ],
             },
         ],
@@ -602,6 +604,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -613,7 +616,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'add_required_attributes': [
                     'label',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -633,6 +635,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -644,7 +647,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'add_required_attributes': [
                     'label',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -665,6 +667,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'context_id': None,
                 'context_id': None,
                 'context_lookup': None,
+                'pref_editing_project_id': True,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': {
                     'root_item_id': None,
@@ -676,7 +679,6 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'add_required_attributes': [
                     'label',
                     'project_id',
-                    'data_type',
                 ],
             },
         ],
@@ -700,13 +702,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': configs.WIKIDATA_VOCAB_UUID, # Must be in Wikidata
                 'context_lookup': None,
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
                     'context_id',
-                    'data_type',
                 ],
             },
             {
@@ -731,13 +734,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_q_search_box': True,
                     'show_project': False,
                 },
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
                     'context_id',
-                    'data_type',
                 ],
             },
             {
@@ -762,10 +766,12 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_q_search_box': True,
                     'show_project': False,
                 },
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
                     'context_id',
                     'data_type',
@@ -797,13 +803,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_q_search_box': True,
                     'show_project': False,
                 },
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
                     'context_id',
-                    'data_type',
                 ],
             },
             {
@@ -828,13 +835,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_q_search_box': True,
                     'show_project': False,
                 },
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
                     'context_id',
-                    'data_type',
                 ],
             },
             {
@@ -859,13 +867,14 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                     'show_q_search_box': True,
                     'show_project': False,
                 },
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
                     'context_id',
-                    'data_type',
                 ],
             },
         ],
@@ -895,12 +904,13 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': configs.OPEN_CONTEXT_PROJ_UUID,  # Always in the OC project
                 'context_lookup': None,
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
-                    'data_type',
                 ],
             },
             {
@@ -920,12 +930,13 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'item_class_lookup': None,
                 'context_id': configs.OPEN_CONTEXT_PROJ_UUID,  # Always in the OC project
                 'context_lookup': None,
+                'pref_editing_project_id': False,
                 'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
                 'project_lookup': None,
                 'add_required_attributes': [
                     'label',
+                    'uri',
                     'project_id',
-                    'data_type',
                 ],
             },
         ],

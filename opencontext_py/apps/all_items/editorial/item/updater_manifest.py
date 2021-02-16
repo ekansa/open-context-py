@@ -24,6 +24,8 @@ from opencontext_py.apps.all_items import utilities as model_utils
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items.editorial.item import updater_general
+from opencontext_py.apps.all_items.editorial.item import item_validation
+from opencontext_py.apps.all_items.editorial.item.edit_configs import MANIFEST_ADD_EDIT_CONFIGS
 
 from opencontext_py.libs.models import (
     make_dict_json_safe, 
@@ -48,30 +50,6 @@ MANIFEST_ATTRIBUTES_UPDATE_CONFIG = [
 ]
 
 MANIFEST_ATTRIBUTES_UPDATE_ALLOWED = [m_a for m_a, _ in MANIFEST_ATTRIBUTES_UPDATE_CONFIG]
-
-
-
-def validate_label(man_obj, new_label):
-    """Validates that a new label is unique in a context"""
-    if new_label == man_obj.label:
-        # No change, so assume this is valid.
-        return True, None
-    if not len(new_label):
-        return False, f'The label {new_label} cannot be blank'
-    check_qs = AllManifest.objects.filter(
-        context=man_obj.context,
-        item_type=man_obj.item_type,
-        item_class=man_obj.item_class,
-        data_type=man_obj.data_type,
-        label=new_label,
-    ).exclude(
-        uuid=man_obj.uuid
-    ).first()
-    if check_qs:
-        # new_label is already in use, so it is NOT valid within
-        # this context.
-        return False, f'The label {new_label} is already in use in this context'
-    return True, None
 
 
 def recursive_subjects_path_update(man_obj):
@@ -162,10 +140,50 @@ def update_manifest_objs(request_json):
             print('Nothing to update')
             continue
         
+        # Do some update validations.
         if update_dict.get('label'):
-            label_valid, error_message = validate_label(man_obj, update_dict['label'])
-            if not label_valid:
-                errors.append(error_message)
+            update_dict['label'] = str(update_dict['label']).strip()
+            report = item_validation.validate_label(
+                update_dict['label'],
+                filter_args={
+                    'item_type': man_obj.item_type,
+                    'project_id': man_obj.project_id,
+                    'context_id': man_obj.context_id,
+                },
+                exclude_uuid=man_obj.uuid
+            )
+            if not report.get('is_valid'):
+                errors.append(f'Label "{update_dict["label"]}" invalid.')
+                continue
+        
+        if update_dict.get('slug'):
+            update_dict['slug'] = str(update_dict['slug']).strip()
+            report = item_validation.validate_slug(
+                update_dict['slug'],
+                exclude_uuid=man_obj.uuid
+            )
+            if not report.get('is_valid'):
+                errors.append(f'Slug "{update_dict["slug"]}" invalid.')
+                continue
+        
+        if update_dict.get('item_key'):
+            update_dict['item_key'] = str(update_dict['item_key']).strip()
+            report = item_validation.validate_item_key(
+                update_dict['item_key'],
+                exclude_uuid=man_obj.uuid
+            )
+            if not report.get('is_valid'):
+                errors.append(f'Item key "{update_dict["item_key"]}" invalid.')
+                continue
+        
+        if update_dict.get('uri'):
+            update_dict['uri'] = str(update_dict['uri']).strip()
+            report = item_validation.validate_uri(
+                update_dict['uri'],
+                exclude_uuid=man_obj.uuid
+            )
+            if not report.get('is_valid'):
+                errors.append(f'URI "{update_dict["uri"]}" invalid.')
                 continue
             
         # Keep a copy of the old state before saving it.
@@ -202,6 +220,9 @@ def update_manifest_objs(request_json):
                     attribute_edit_note += (
                         f' {key} from "{old_key_value}" to "{new_key_value}"'
                     )
+            elif attribute_edit_note and not attr.endswith('_id'):
+                old_value = getattr(man_obj, attr)
+                attribute_edit_note += f' from "{str(old_value)[:120]}" to "{str(value)[:120]}"'
 
             if attribute_edit_note:
                 edits.append(attribute_edit_note)
@@ -257,6 +278,58 @@ def update_manifest_objs(request_json):
         updated.append(update_dict)
 
     return updated, errors
+
+
+def add_manifest_objs(request_json):
+    """Adds AllManifest objects from attributes given in client request JSON"""
+    errors = []
+    
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to add')
+        return [], errors
+
+    item_type_req_attribs = {}
+    for group in MANIFEST_ADD_EDIT_CONFIGS:
+        for i_type_config in group.get('item_types', []):
+            item_type = i_type_config.get('item_type')
+            item_type_req_attribs[item_type] = i_type_config.get(
+                'add_required_attributes', 
+                []
+            )
+
+    added = []
+    for item_add in request_json:
+        item_type = item_add.get('item_type')
+        if not item_type or not item_type_req_attribs.get(item_type):
+            errors.append('Missing or unrecognized item_type')
+            continue
+
+        # Check to make sure we have all of our required attributes
+        # for this item-type
+        for req_attrib in item_type_req_attribs.get(item_type):
+            if item_add.get(req_attrib):
+                continue
+            errors.append(f'Missing the required attribute "{req_attrib}"')
+        if len(errors):
+            continue
+
+        if item_type in configs.URI_CONTEXT_PREFIX_ITEM_TYPES:
+            # The context (vocabulary) will be the object that will
+            # get an edit history
+            edited_obj = AllManifest.objects.filter(uuid=item_add.get('context_id')).first()
+        else:
+            edited_obj = AllManifest.objects.filter(uuid=item_add.get('project_id')).first()
+        
+        if not edited_obj:
+            errors.append(f'Missing project or context to add into: {str(item_add)}')
+            continue
+
+        
+
+        added.append(item_add)
+
+
+    return added, errors
 
 
 def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None, errors=None):

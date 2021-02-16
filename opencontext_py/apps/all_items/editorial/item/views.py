@@ -315,7 +315,6 @@ def item_manifest_validation(request):
     )
 
 
-
 @cache_control(no_cache=True)
 @never_cache
 @transaction.atomic()
@@ -333,6 +332,35 @@ def update_manifest_objs(request):
     output = {
         'ok': True,
         'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def add_manifest_objs(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    added, errors = updater_manifest.add_manifest_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'added': added,
     }
     json_output = json.dumps(
         output,

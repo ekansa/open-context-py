@@ -234,8 +234,8 @@ def update_attribute_objs(request_json):
             if attribute_edit_note and attr.startswith('obj'):
                 attribute_edit_note += f', "{update_assert_obj.predicate.label}",'
                 if not attr.endswith('_id'):
-                    attribute_edit_note += f' from "{str(old_value)[:30]}" to "{str(value)[:30]}"'
-                    
+                    attribute_edit_note += f' from "{str(old_value)[:120]}" to "{str(value)[:120]}"'
+
             if old_edited_obj and new_edited_obj and attribute_edit_note:
                 attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
             
@@ -295,7 +295,7 @@ def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
     errors = []
     
     if not isinstance(request_json, list):
-        errors.append('Request json must be a list of dictionaries to update')
+        errors.append('Request json must be a list of dictionaries to add')
         return [], errors
 
     added = []

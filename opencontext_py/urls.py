@@ -150,6 +150,11 @@ urlpatterns = [
         EditorialItemViews.update_manifest_objs, 
         name='editorial_update_manifest_objs'
     ),
+     url(
+        r'^editorial/item-add-manifest', 
+        EditorialItemViews.add_manifest_objs, 
+        name='editorial_add_manifest_objs'
+    ),
     url(
         r'^editorial/item-delete-manifest', 
         EditorialItemViews.delete_manifest, 

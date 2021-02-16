@@ -247,7 +247,13 @@ def suggest_project_short_id():
     for m in m_qs:
         if not m.meta_json.get('short_id'):
             continue
-        short_ids.append(m.meta_json.get('short_id'))
+        try:
+            act_short_id = int(float(m.meta_json.get('short_id')))
+        except:
+            act_short_id = None
+        if not act_short_id:
+            continue
+        short_ids.append(act_short_id)
     if not len(short_ids):
         # We don't have any project short ids yet, so suggest the first.
         return 1
@@ -287,6 +293,7 @@ def validate_project_short_id(raw_short_id, exclude_uuid=None):
 
 def validate_slug(slug, exclude_uuid=None):
     """Validates a slug identifier"""
+    slug = str(slug).strip()
     errors = []
     if not slug or slug != slug.lower() or '_' in slug:
         errors.append(
@@ -319,6 +326,7 @@ def validate_slug(slug, exclude_uuid=None):
 
 def validate_uuid(uuid, exclude_uuid=None):
     """Validates a slug identifier"""
+    uuid = str(uuid).strip()
     errors = []
     if not uuid or uuid != uuid.lower() or not '-' in uuid or not is_valid_uuid(uuid):
         errors.append(
@@ -346,6 +354,7 @@ def validate_uuid(uuid, exclude_uuid=None):
 
 def validate_item_key(item_key, exclude_uuid=None):
     """Validates a item_key identifier"""
+    item_key = str(item_key).strip()
     m_qs = AllManifest.objects.filter(
         item_key=item_key,
     )
@@ -359,7 +368,6 @@ def validate_item_key(item_key, exclude_uuid=None):
 def validate_uri(raw_uri, exclude_uuid=None):
     """Validates a uri identifier"""
     uri = AllManifest().clean_uri(raw_uri)
-
     errors = []
     try:
         ok = URLValidator()(f'https://{uri}')

@@ -103,23 +103,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     </b-col>
 
     <b-col cols="4">
-      <b-spinner v-if="updating" label="Updating..."></b-spinner>
-      <b-button
-        v-if="is_value_changed && !updating && !add_new"
-        sm
-        block
-        @click="update_meta_field"
-        class="text-center"
-        variant="info">Update
-        <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
-      </b-button>
-      <b-list-group v-if="errors">
-        <b-list-group-item v-for="(error, index) in errors"
-        :key="'metadata-error-' + index"
-        variant="warning">
-        <small>[[error]]</small>
-        </b-list-group-item>
-      </b-list-group>
+      
     </b-col>
   </b-row>
 </template>
@@ -170,6 +154,26 @@ NOTE: Templates and view components to edit an item's identifier objects
         </small>
       </b-col>
       <b-col cols="3">
+
+        <b-spinner v-if="updating" label="Updating..."></b-spinner>
+
+        <b-button
+          v-if="add_new"
+          sm
+          block
+          :disabled="!add_ok"
+          @click="add_item"
+          variant="primary">Create <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+        </b-button>
+        
+        <b-button
+          v-if="!add_new & is_value_changed"
+          sm
+          block
+          :disabled="!update_ok"
+          @click="update_item"
+          variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
 
       </b-col>
     </b-row>
@@ -439,12 +443,42 @@ NOTE: Templates and view components to edit an item's identifier objects
           v-bind:meta_json="man_obj.meta_json"
           v-bind:meta_configs="item_type_config.meta_json_edit"
           v-bind:item_id="man_obj.uuid"
-          v-bind:add_new="true"
+          v-bind:add_new="add_new"
           @update_metadata="update_metadata($event)"
           >
         </meta-json-form>
       </b-col>
     </b-row>
+
+    <b-row>
+      <b-col cols="9">
+        &nbsp;
+      </b-col>
+      <b-col cols="3">
+        
+        <b-spinner v-if="updating" label="Updating..."></b-spinner>
+
+        <b-button
+          v-if="add_new"
+          sm
+          block
+          :disabled="!add_ok"
+          @click="add_item"
+          variant="primary">Create <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+        </b-button>
+        
+        <b-button
+          v-if="!add_new & is_value_changed"
+          sm
+          block
+          :disabled="!update_ok"
+          @click="update_item"
+          variant="info">Update <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
+        </b-button>
+
+      </b-col>
+    </b-row>
+
   </div>
 </template>
 
@@ -470,6 +504,9 @@ NOTE: Templates and view components to edit an item's identifier objects
             <b-alert show>
               <h5>Create <strong>[[ item_type_config.item_type ]]</strong> item</h5>
               <p>[[ item_type_config.item_type_note ]] </p>
+              <p>Adding to the project: <br/>
+                <small><strong>[[ man_obj.project__label ]]</strong></small>
+              </p>
             </b-alert>
           </b-col>
           <b-col cols="3">
@@ -625,7 +662,14 @@ var vc_meta_json_form_item = Vue.component(
         .then(response => response.json())
         .then(json => {
           this.validation = json;
-          return this.validation;
+          let output = {
+            input_value: this.meta_json[key],
+            key: this.key_config.key,
+            is_value_changed: this.is_value_changed,
+            meta_json: this.meta_json,
+            validation: this.validation,
+          };
+          this.$emit('get_value_change', output);
         });
       },
       validate_short_id(short_id){
@@ -646,26 +690,23 @@ var vc_meta_json_form_item = Vue.component(
           this.is_value_changed = true;
         }
 
+        if(!this.is_value_changed){
+          this.validation = null;
+        }
+
         if (this.is_value_changed && this.key_config.key == 'short_id'){
           this.validate_short_id(input_value);
+          return null;
         }
 
         let output = {
           input_value: input_value,
+          key: this.key_config.key,
           is_value_changed: this.is_value_changed,
           meta_json: this.meta_json,
           validation: this.validation,
         };
-        console.log(output);
         this.$emit('get_value_change', output);
-        return output;
-      },
-      update_meta_field: function () {
-        if(this.add_new || !this.item_id){
-          return null;
-        }
-        this.updating = true;
-        this.$emit('update_metadata', this.meta_json);
       },
       html_validate(input_value) {
         this.input_value = input_value.trim();
@@ -717,6 +758,7 @@ var vc_meta_json_form = Vue.component(
         meta_json: null,
         item_id: null,
         add_new: false,
+        validations: {},
       };
     },
     template: '#meta-json-form',
@@ -754,11 +796,15 @@ var vc_meta_json_form = Vue.component(
       get_value_change(change) {
         console.log('event get_value_change');
         console.log(change);
+        let key = change.key;
+        this.validations[key] = change.validation;
+        this.meta_json = change.meta_json;
+        let meta_update = {
+          validations: this.validations,
+          meta_json: this.meta_json,
+        };
+        this.$emit('update_metadata', meta_update);
       },
-      update_metadata(meta_json){
-        this.meta_json = meta_json;
-        this.$emit('update_metadata', this.meta_json);
-      }
     },
     components: {
       'alert-invalid': vc_alert_invalid,
@@ -789,7 +835,11 @@ var vc_edit_manifest_obj = Vue.component(
           item_key: null,
           uri: null,
         },
+        add_ok: false,
+        update_ok: false,
         cached_validations: {},
+        add_new_result: null,
+        updating: false,
       }
     },
     template: '#edit-manifest-obj',
@@ -807,13 +857,44 @@ var vc_edit_manifest_obj = Vue.component(
         let url = this.trim_prefix(this.man_obj.uri, 'https://');
         return 'https://' + this.trim_prefix(url, 'http://');
       },
-      add_ok: function() {
-        if(!this.add_new || !this.man_obj){
-          return false;
-        }
-      },
     },
     methods: {
+      check_add_ok: function() {
+        this.add_ok = false;
+        if(!this.add_new || !this.man_obj || !this.item_type_config){
+          return this.add_ok;
+        }
+        this.add_ok = true;
+        for (let req_key of this.item_type_config.add_required_attributes) {
+          if(!this.man_obj.hasOwnProperty(req_key)){
+            this.add_ok = false;
+            continue;
+          }
+          if(this.man_obj[req_key] == null || this.man_obj[req_key].length < 1){
+            this.add_ok = false;
+            continue;
+          }
+        }
+        for(let val_key in this.validations){
+          if(this.is_attribute_valid(val_key) != null && this.is_attribute_valid(val_key) === false){
+            this.add_ok = false;
+          }
+        }
+        return this.add_ok;
+      },
+      check_update_ok: function() {
+        this.update_ok = false;
+        if(this.add_new || !this.man_obj){
+          return this.update_ok;
+        }
+        this.update_ok = true;
+        for(let val_key in this.validations){
+          if(this.is_attribute_valid(val_key) != null && this.is_attribute_valid(val_key) === false){
+            this.update_ok = false;
+          }
+        }
+        return this.update_ok;
+      },
       set_original_man_obj: function (){
         if(this.man_obj){
           // Hack to make a deep-copy.
@@ -879,6 +960,8 @@ var vc_edit_manifest_obj = Vue.component(
         .then(json => {
           this.cache_validation(params, json);
           this.validations[key] = json;
+          this.check_add_ok();
+          this.check_update_ok();
           return this.validations[key];
         });
       },
@@ -1001,6 +1084,8 @@ var vc_edit_manifest_obj = Vue.component(
             }
           }
         }
+        this.check_add_ok();
+        this.check_update_ok();
         return this.is_value_changed;
       },
       set_selected_class_item(class_item) {
@@ -1018,14 +1103,21 @@ var vc_edit_manifest_obj = Vue.component(
         this.man_obj.project__label = project_item.label;
         this.check_value_change();
       },
-      update_metadata(meta_json){
-        this.man_obj.meta_json = meta_json;
+      update_metadata(meta_update){
+        console.log(meta_update);
+        this.man_obj.meta_json = meta_update.meta_json;
+        for (let key in meta_update.validations) {
+          if(meta_update.validations.hasOwnProperty(key)){
+            this.validations[key] = meta_update.validations[key];
+          }
+        }
         this.check_value_change();
       },
       update_item: function() {
-        if(this.add_new || !this.is_value_changed){
+        if(!this.update_ok){
           return null;
         }
+        this.updating = true;
         let orig = JSON.parse(this.original_man_obj_str);
         let update_obj = {
           uuid: this.man_obj.uuid,
@@ -1069,6 +1161,43 @@ var vc_edit_manifest_obj = Vue.component(
           console.log(this.errors);
         });
       },
+      add_item: function() {
+        if(!this.add_ok){
+          return null;
+        }
+        this.updating = true;
+        let add_objs = [];
+        add_objs.push(this.man_obj);
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(add_objs),
+        };
+        fetch('/editorial/item-add-manifest', requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          this.updating = false;
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          // Share the news we just did an edit
+          console.log('add done.');
+          console.log(data);
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      }
     },
     components: {
       'root-item-tree': vs_root_item_tree,
@@ -1168,8 +1297,14 @@ var vc_add_item = Vue.component(
         this.man_obj.data_type = this.item_type_config.data_type;
         this.man_obj.project_id = EDITING_PROJECT.uuid;
         this.man_obj.project__label = EDITING_PROJECT.label;
-        if(this.item_type_config.project_id){
+        if(this.item_type_config.project_id 
+           && !this.item_type_config.pref_editing_project_id){
+          // Use config project id because we don't prefer the editing project.
           this.man_obj.project_id = this.item_type_config.project_id;
+        }
+        if(!this.man_obj.project_id){
+          // If not set, default to Open Context as the project id.
+          this.man_obj.project_id = OPEN_CONTEXT_PROJ_UUID;
         }
         if(this.man_obj.project_id == OPEN_CONTEXT_PROJ_UUID){
           this.man_obj.project__label = 'Open Context (General)';
@@ -1182,8 +1317,6 @@ var vc_add_item = Vue.component(
           // same as the item project.
           this.man_obj.context_id = this.man_obj.project_id;
         }
-        console.log(this.item_type_config);
-        console.log(this.man_obj);
       },
       config_deselect: function (){
         this.item_type_config = null;
