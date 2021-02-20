@@ -5,6 +5,13 @@ NOTE: Templates and view components to edit an item's identifier objects
 -->
 
 <style>
+  .add_delete_buttons {
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+  .confirm_delete_button {
+    margin-top: 36px;
+  }
   .invalid_alert {
     margin-top: 6px;
   }
@@ -127,6 +134,42 @@ NOTE: Templates and view components to edit an item's identifier objects
 
 <template id="edit-manifest-obj">
   <div>
+    
+    <b-row v-if="add_result">
+      <b-col cols="12">
+        <b-alert show>
+          <h5>Successfully created new item <strong>[[ add_result.label ]]</strong> ([[add_result.item_type]])</h5>
+          <p>Edit new item: <a 
+            :href="'/editorial/item-edit/' + add_result.uuid"
+            target="_blank">
+            [[add_result.label]] ([[add_result.uuid]])
+          </a></p>
+        </b-alert>
+      </b-col>
+    </b-row>
+
+    <b-row v-if="errors">
+      <b-col cols="12">
+        <b-alert v-if="add_new" show variant="danger">
+          <h5>Errors in attempting to create a new item <strong>[[ man_obj.label ]]</strong> ([[man_obj.item_type]])</h5>
+          <p>Errors:</p>
+          <ul>
+            <li v-for="(error, index) in errors">
+              [[error]]
+            </li>
+          </ul>
+        </b-alert>
+        <b-alert v-else show variant="warning">
+          <h5>Errors in attempting to update <strong>[[ man_obj.label ]]</strong> ([[man_obj.item_type]])</h5>
+          <p>Errors:</p>
+          <ul>
+            <li v-for="(error, index) in errors">
+              [[error]]
+            </li>
+          </ul>
+        </b-alert>
+      </b-col>
+    </b-row>
     
     <b-row class="
       man_obj_field_row
@@ -544,11 +587,200 @@ NOTE: Templates and view components to edit an item's identifier objects
       sm
       block
       @click="toggle_add_new_item"
+      class="add_delete_buttons"
       variant="primary">Add New Item <b-icon-plus-circle-fill></b-icon-plus-circle-fill></b-button>
   </div>
 </template>
 
 
+
+<template id="delete-item">
+  <div v-if="uuid">
+    <b-modal
+      size="lg"
+      scrollable
+      ref="delete-item-modal"
+      id="delete-item-modal" 
+      :title="modal_title"
+      @shown="on_shown"
+    >
+      <div v-if="man_obj">
+        <b-container fluid v-if="!show_result">
+          <b-row>
+            <b-col cols="12">
+              <h5>Delete <strong>[[ man_obj.label ]]</strong> ([[ man_obj.item_type ]])</h5>
+              <p>
+                <small>Open Context organizes data by linking records together. 
+                  This means deleting a given record can impact other related records. For example,
+                  if you delete a descriptive attribute predicate like "Material" used to describe 1000 
+                  other records, then those 1000 other records will be impacted by losing 
+                  "Material" descriptions.</small>
+              </p>
+              <p>
+                <small><em>Please delete records only after careful consideration.</em></small>
+              </p>
+            </b-col>
+          </b-row>
+
+          <b-row class="man_obj_field_row">
+            <b-col cols="5">
+
+              <b-spinner v-if="updating" label="Updating..."></b-spinner>
+
+              <b-button
+                sm
+                v-if="!updating"
+                @click="open_confirm_delete"
+                variant="danger"
+                title="Delete assertion"
+                class="text-center confirm_delete_button">[[ delete_label ]] 
+                <b-icon-arrows-angle-contract v-if="keep_obj"></b-icon-arrows-angle-contract><b-icon-x-circle v-else></b-icon-x-circle>
+              </b-button>
+
+              <b-overlay no-wrap z-index="100" :show="show_confirm_delete" @hidden="on_hide_confirm_delete">
+                <template #overlay>
+                  <b-spinner v-if="updating" label="Deleting..."></b-spinner>
+                  <b-card 
+                    v-else
+                    ref="dialog"
+                    bg-variant="light"
+                    z-index="100"
+                    role="dialog"
+                    aria-modal="false"
+                    variant="warning" opacity="0.90"
+                    :aria-labelledby="'delete-confirm-label-' + man_obj.uuid"
+                    class="text-center p-3"
+                  >
+                    <p>
+                      <strong 
+                        v-if="keep_obj" 
+                        :id="'delete-confirm-label-' + man_obj.uuid">Confirm Merge</strong>
+                      <strong v-else :id="'delete-confirm-label-' + man_obj.uuid">Confirm deletion</strong>
+                    </p>
+                    <p class="text-start" v-if="keep_obj">
+                      <em><small>Confirm merge into <strong>[[keep_obj.label]]</strong> ([[keep_obj.uuid]])</small></em>
+                    </p>
+                    <div class="d-flex">
+                      <b-button variant="outline-secondary" class="mr-3" @click="on_hide_confirm_delete">
+                        Cancel
+                      </b-button>
+                      <b-button 
+                        variant="outline-danger" 
+                        @click="confirm_delete">[[ delete_label ]] 
+                        <b-icon-arrows-angle-contract v-if="keep_obj"></b-icon-arrows-angle-contract><b-icon-x-circle v-else></b-icon-x-circle>
+                      </b-button>
+                    </div>
+                  </b-card>
+                </template>
+              </b-overlay>
+
+            </b-col>
+            <b-col cols="7">
+              <strong>Reason for Deletion</strong>
+              <b-form-textarea
+                :placeholder="reason_note_placeholder"
+                :value="note"
+                @change="note_update"
+              ></b-form-textarea>
+          </b-row>
+
+          <b-alert show variant="secondary">
+            <b-row v-if="!keep_obj">
+              <b-col cols="12">
+                <p><small class="text-muted">
+                  You can optionally merge <strong>[[ man_obj.label ]]</strong> into another item
+                  <strong>PRIOR</strong> to deleting [[ man_obj.label ]].</small></p>
+                <p><small class="text-muted">
+                  This will combine all the data associated with "[[ man_obj.label ]]"
+                  (such as descriptive attributes and linking relations) with the data 
+                  associated with another item. After Open Context combines these
+                  associated data, this record "[[ man_obj.label ]]" ([[ man_obj.uuid ]])
+                  will get deleted. Use the search interface below to select another item to
+                  merge into. This other item will remain and will not get deleted.</small>
+                </p>
+              </b-col>
+            </b-row>
+
+            <b-row class="man_obj_field_row">
+              <b-col cols="5">
+                <div v-if="keep_obj">
+                  Merge [[ man_obj.label ]] into <b-icon-box-arrow-in-right></b-icon-box-arrow-in-right>
+                  <a 
+                    :href="'/editorial/item-edit/' + keep_obj.uuid"
+                    target="_blank">
+                    [[keep_obj.label]] ([[keep_obj.uuid]])
+                  </a>
+                </div>
+                <div v-else>
+                  <p><small class="text-muted"><em>No item selected to merge into</em></small>
+                </div>
+              </b-col>
+              <b-col cols="7">
+                <small>Search and select an item to merge into below</small><br/>
+                <lookup-list
+                  key="keep-item-lookup"
+                  v-bind:project_id="project_ids"
+                  v-bind:item_type="[man_obj.item_type]"
+                  v-bind:data_type="[man_obj.data_type]"
+                  v-bind:do_meta="true"
+                  v-bind:show_total_results="true"
+                  v-bind:show_q_search_box="true"
+                  v-bind:show_path_search_box="(man_obj.item_type == 'subjects')"
+                  @set_selected_item="set_selected_keep_item($event)"
+                ></lookup-list>
+              </b-col>
+            </b-row>
+          </b-alert>
+        </b-container>
+        
+        <b-container fluid v-if="show_result">
+
+          <b-row v-if="delete_result">
+      
+            <b-col cols="12">
+              <b-alert show>
+                <h5>Successfully deleted item <strong>[[ man_obj.label ]]</strong> ([[man_obj.item_type]])</h5>
+                <p v-if="keep_obj">
+                  This item was merged into: <a 
+                    :href="'/editorial/item-edit/' + keep_obj.uuid"
+                    target="_blank">
+                    [[ keep_obj.label ]] ([[ keep_obj.uuid ]])
+                  </a>
+                </p>
+                <p v-else>Go to item context: <a 
+                  :href="'/editorial/item-edit/' + man_obj.context_id"
+                  target="_blank">
+                  [[ man_obj.context__label ]] ([[ man_obj.context_id ]])
+                </a></p>
+              </b-alert>
+            </b-col>
+          </b-row>
+      
+          <b-row v-if="errors">
+            <b-col cols="12">
+              <b-alert show variant="danger">
+                <h5>Errors in attempting to delete item <strong>[[ man_obj.label ]]</strong> ([[man_obj.item_type]])</h5>
+                <p>Errors:</p>
+                <ul>
+                  <li v-for="(error, index) in errors">
+                    [[error]]
+                  </li>
+                </ul>
+              </b-alert>
+            </b-col>
+          </b-row>
+
+        </b-container>
+      </div>
+    </b-modal>
+    <b-button
+      sm
+      block
+      @click="toggle_delete_item"
+      class="add_delete_buttons"
+      variant="outline-danger">Delete Options <b-icon-x-square-fill></b-icon-x-square-fill></b-button>
+  </div>
+</template>
 
 
 
@@ -838,7 +1070,8 @@ var vc_edit_manifest_obj = Vue.component(
         add_ok: false,
         update_ok: false,
         cached_validations: {},
-        add_new_result: null,
+        add_result: null,
+        errors: null,
         updating: false,
       }
     },
@@ -1191,7 +1424,12 @@ var vc_edit_manifest_obj = Vue.component(
           }
           // Share the news we just did an edit
           console.log('add done.');
-          console.log(data);
+          this.add_ok = false;
+          if(data.added.length < 1){
+            this.add_result = null;
+            return null;
+          }
+          this.add_result = data.added[0];
         })
         .catch(error => {
           console.log(error);
@@ -1207,6 +1445,7 @@ var vc_edit_manifest_obj = Vue.component(
     },
   },
 );
+
 
 var vc_add_item = Vue.component(
   'add-item',
@@ -1329,5 +1568,173 @@ var vc_add_item = Vue.component(
     },
   }
 ); 
-  
+
+
+var vc_delete_item = Vue.component(
+  'delete-item',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['project_ids', 'man_obj', 'uuid'],
+    data() {
+      return {
+        project_ids: [],
+        uuid: null,
+        man_obj: null,
+        keep_obj: null,
+        note: null,
+        show_confirm_delete: false,
+        updating: false,
+        show_result: false,
+        delete_result: null,
+        errors: null,
+      };
+    },
+    template: '#delete-item',
+    created() {
+      this.fetch_api_manifest_obj();
+    },
+    computed: {
+      modal_title: function() {
+        if(!this.man_obj){
+          return 'Delete or Merge Item';
+        }
+        return 'Delete or Merge Item "' + this.man_obj.label + '"';
+      },
+      reason_note_placeholder: function() {
+        if(!this.man_obj){
+          return '';
+        }
+        if(!this.keep_obj){
+          return (
+            'Optional note explaining why ' + this.man_obj.label + ' (' + this.man_obj.uuid + ')'
+            + ' would get deleted.'
+          );
+        }
+        return (
+          'Optional note explaining why ' + this.man_obj.label + ' (' + this.man_obj.uuid + ')'
+          + ' would get merged into ' + this.keep_obj.label + ' (' + this.keep_obj.uuid + ') '
+          + ' prior to deleting ' + this.man_obj.label + ' (' + this.man_obj.uuid + ')'
+        );
+      },
+      delete_label: function() {
+        if(!this.keep_obj){
+          return 'Delete Item';
+        }
+        return 'Merge and Delete';
+      },
+    },
+    methods: {
+      fetch_api_manifest_obj: function (){
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/item-manifest/' + this.uuid),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.man_obj = json;
+          console.log(this.man_obj);
+        });
+      },
+      on_shown: function() {
+        if(!this.man_obj){
+          this.fetch_api_manifest_obj();
+        }
+        console.log('show delete item modal');
+      },
+      note_update(val){
+        this.note = val;
+      },
+      toggle_delete_item: function() {
+        this.keep_obj = null;
+        this.$bvModal.show('delete-item-modal');
+      },
+      open_confirm_delete: function() {
+        this.show_confirm_delete = true;
+      },
+      on_hide_confirm_delete: function () {
+        this.show_confirm_delete = false;
+      },
+      set_selected_keep_item(keep_obj){
+        if(keep_obj.uuid == this.man_obj.uuid){
+          this.keep_obj = null;
+        }
+        this.keep_obj = keep_obj;
+      },
+      do_delete_request(delete_objs, endpoint_url){
+        this.show_confirm_delete = false;
+        this.updating = true;
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(delete_objs)
+        };
+        fetch(endpoint_url, requestOptions)
+        .then(async response => {
+          const data = await response.json();
+          // check for error response
+          if (!response.ok) {
+            // get error message from body or default to response status
+            const error = (data && data.message) || response.status;
+            if(data && data.errors){
+              this.updating = false;
+              this.show_result = true;
+              this.errors = data.errors;
+            }
+            return Promise.reject(error);
+          }
+          this.show_result = true;
+          this.updating = false;
+          if(data.hasOwnProperty('deleted')){
+            this.delete_result = data.deleted;
+          }
+          if(data.hasOwnProperty('merges')){
+            this.delete_result = data.merges;
+          }
+        })
+        .catch(error => {
+          this.errorMessage = error;
+          console.error('There was an error!', error);
+        });
+      },
+      delete: function() {
+        let delete_obj = {
+          uuid: this.man_obj.uuid,
+        };
+        let delete_objs = [];
+        delete_objs.push(delete_obj);
+        let endpoint_url = '/editorial/item-delete-manifest';
+        return this.do_delete_request(delete_objs, endpoint_url);
+      },
+      merge_delete: function () {
+        let delete_obj = {
+          delete_id: this.man_obj.uuid,
+          keep_id: this.keep_obj.uuid,
+        };
+        let delete_objs = [];
+        delete_objs.push(delete_obj);
+        let endpoint_url = '/editorial/item-merge-manifest';
+        return this.do_delete_request(delete_objs, endpoint_url);
+      },
+      confirm_delete: function() {
+        if(!this.keep_obj){
+          return this.delete();
+        }
+        return this.merge_delete();
+      },
+    },
+    components: {
+      'lookup-list': vs_look_up_list,
+    },
+  }
+); 
 </script>

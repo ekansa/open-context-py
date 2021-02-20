@@ -160,6 +160,11 @@ urlpatterns = [
         EditorialItemViews.delete_manifest, 
         name='editorial_delete_manifest'
     ),
+    url(
+        r'^editorial/item-merge-manifest', 
+        EditorialItemViews.merge_manifest, 
+        name='editorial_merge_manifest'
+    ),
     # Item assertion editing URLs
     url(
         r'^editorial/item-assertions/(?P<uuid>\S+)', 

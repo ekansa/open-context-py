@@ -43,6 +43,10 @@
                             <add-item
                               v-bind:project_ids="ITEM_PROJECT_UUIDS">
                             </add-item>
+                            <delete-item
+                              v-bind:uuid="ITEM_UUID"
+                              v-bind:project_ids="ITEM_PROJECT_UUIDS">
+                            </delete-item>
                         </b-card-text>
                         </b-card>
                         <br/>
@@ -163,6 +167,7 @@
                     },
                     components: {
                         'add-item': vc_add_item,
+                        'delete-item': vc_delete_item,
                         'edit-manifest': vc_edit_manifest,
                         'edit-history': vc_edit_history,
                         'edit-assertions': vc_edit_assertions,

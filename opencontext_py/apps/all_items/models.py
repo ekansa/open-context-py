@@ -222,7 +222,34 @@ def get_project_short_id(project_id, not_found_default=0):
     return not_found_default
 
 
-def make_sort_label(label, item_type, project_id, item_type_list):
+def suggest_project_short_id():
+    """Suggests a project short id, not already in use"""
+    m_qs = AllManifest.objects.filter(item_type='projects')
+    short_ids = []
+    for m in m_qs:
+        if not m.meta_json.get('short_id'):
+            continue
+        try:
+            act_short_id = int(float(m.meta_json.get('short_id')))
+        except:
+            act_short_id = None
+        if not act_short_id:
+            continue
+        short_ids.append(act_short_id)
+    if not len(short_ids):
+        # We don't have any project short ids yet, so suggest the first.
+        return 1
+    # Suggest 1 plus the max we already have.
+    return max(short_ids) + 1
+
+
+def make_sort_label(
+    label, 
+    item_type, 
+    project_id, 
+    item_type_list, 
+    short_id=None
+):
     """Makes a sort value for a record as a numeric string"""
     sort_parts = []
     if item_type not in item_type_list: 
@@ -232,9 +259,10 @@ def make_sort_label(label, item_type, project_id, item_type_list):
     sort_parts.append(
         prepend_zeros(item_type_num, 2)
     )
-    project_short_id = get_project_short_id(project_id)
+    if not short_id:
+        short_id = get_project_short_id(project_id)
     sort_parts.append(
-        prepend_zeros(project_short_id, 4)
+        prepend_zeros(short_id, 4)
     )
     sort_parts.append(
         make_label_sort_val(label)
@@ -243,16 +271,17 @@ def make_sort_label(label, item_type, project_id, item_type_list):
     return final_sort
 
 
-def make_slug_from_label(label, project_id):
+def make_slug_from_label(label, project_id, short_id=None):
     """Makes a slug from a label for a project item"""
     label = label.strip()
     label = label.replace('_', ' ')
     raw_slug = slugify(unidecode(label[:60]))
-    project_sort_id = get_project_short_id(project_id)
+    if not short_id:
+        short_id = get_project_short_id(project_id)
     if raw_slug == '-' or not len(raw_slug):
         # Slugs are not a dash or are empty
         raw_slug = 'x'
-    raw_slug = str(project_sort_id) + '-' + raw_slug
+    raw_slug = str(short_id) + '-' + raw_slug
     return raw_slug
 
 
@@ -301,7 +330,14 @@ def make_uri_for_oc_item_types(uuid, item_type):
         return None
     return f'{configs.OC_URI_ROOT}/{item_type}/{uuid}'
 
-def make_manifest_slug(label, item_type, uri, project_id):
+
+def make_manifest_slug(
+    label, 
+    item_type, 
+    uri, 
+    project_id, 
+    short_id=None
+):
     """Makes a sort value for a record as a numeric string"""
     
     if item_type in configs.URI_ITEM_TYPES:
@@ -313,7 +349,11 @@ def make_manifest_slug(label, item_type, uri, project_id):
         # project_short_id as a slug prefix. This is used
         # for open context item types or item types for
         # 'nodes' in assertions.
-        raw_slug = make_slug_from_label(label, project_id)
+        raw_slug = make_slug_from_label(
+            label, 
+            project_id,
+            short_id=short_id
+        )
 
     # Make sure no triple dashes, conflicts with solr hierarchy
     # delims.
@@ -577,6 +617,15 @@ class AllManifest(models.Model):
         except ObjectDoesNotExist:
             self.context = None
     
+    def add_default_short_id_for_project(self):
+        """Makes a short_id attribute to projects meta_json"""
+        if not self.item_type == 'projects':
+            return None
+        if not self.meta_json:
+            self.meta_json = {}
+        if not self.meta_json.get('short_id'):
+            self.meta_json['short_id'] = suggest_project_short_id()
+
     def make_slug_and_sort(self):
         """Make slug and sorting values"""
         # Make the slug and sorting
@@ -585,6 +634,10 @@ class AllManifest(models.Model):
         else:
             project_id = None
 
+        short_id = None
+        if self.item_type == 'projects' and self.meta_json:
+            short_id = self.meta_json.get('short_id')
+
         if not self.slug:
             # Generate the item's slug.
             self.slug = make_manifest_slug(
@@ -592,6 +645,7 @@ class AllManifest(models.Model):
                 self.item_type,
                 self.uri, 
                 project_id,
+                short_id=short_id,
             )
 
         # Make the item's sorting.
@@ -599,7 +653,8 @@ class AllManifest(models.Model):
             self.label, 
             self.item_type, 
             project_id, 
-            item_type_list=configs.ITEM_TYPES
+            item_type_list=configs.ITEM_TYPES,
+            short_id=short_id,
         )
         self.sort = sort[:100]
     
@@ -670,7 +725,6 @@ class AllManifest(models.Model):
             )
         return uuid
 
-
     def validate_item_type_class_item(self, item_type, item_class_id, raise_on_fail=True):
         """Validates class_item by item_type"""
         class_configs = {
@@ -695,7 +749,6 @@ class AllManifest(models.Model):
             f'must be: {str(allowed_class_ids)}'
         )
 
-
     def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
@@ -708,12 +761,14 @@ class AllManifest(models.Model):
             uri=self.uri,
         )
         
-
     def make_subjects_path_and_validate(self):
         """Makes a path for subjects items"""
         if self.item_type != 'subjects':
             return self.path
-        if str(self.uuid) == configs.DEFAULT_SUBJECTS_ROOT_UUID:
+        if str(self.uuid) in [
+            configs.DEFAULT_SUBJECTS_ROOT_UUID,
+            configs.DEFAULT_SUBJECTS_OFF_WORLD_UUID,
+        ]:
             # We're at the "root", no path.
             self.path = ''
             return self.path
@@ -726,7 +781,6 @@ class AllManifest(models.Model):
             )
         self.path = self.context.path + '/' + self.label
         return self.path
-
 
     def save(self, *args, **kwargs):
         """
@@ -778,6 +832,8 @@ class AllManifest(models.Model):
                 item_type=self.item_type, 
                 item_class_id=item_class_id
             )
+        # Add a project short_id:
+        self.add_default_short_id_for_project()
         # Make the slug and sort values.
         self.make_slug_and_sort()
         super(AllManifest, self).save(*args, **kwargs)
@@ -1130,7 +1186,6 @@ class AllSpaceTime(models.Model):
             raise ValueError(
                 f'Latitude must be between -90 and 90'
             )
-
 
     def save(self, *args, **kwargs):
         """
@@ -1817,7 +1872,6 @@ class AllAssertion(models.Model):
         )
         return self.uuid
     
-
     def get_display_object(self, add_id=True):
         """Gets the display object for an assertion"""
         if add_id and self.predicate.data_type == 'id':
@@ -1835,7 +1889,6 @@ class AllAssertion(models.Model):
         elif self.predicate.data_type == 'xsd:date':
             return f'{self.obj_datetime}'
         return ''
-
 
     def save(self, *args, **kwargs):
         """

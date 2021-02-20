@@ -12,6 +12,10 @@ from django.utils import timezone
 
 
 from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.defaults import (
+    DEFAULT_ASSERTIONS,
+    DEFAULT_MANIFESTS,
+)
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
@@ -51,13 +55,36 @@ MANIFEST_ATTRIBUTES_UPDATE_CONFIG = [
 
 MANIFEST_ATTRIBUTES_UPDATE_ALLOWED = [m_a for m_a, _ in MANIFEST_ATTRIBUTES_UPDATE_CONFIG]
 
+# Attributes OK when adding OC_ITEM_TYPES
+OC_ITEM_TYPES_ADD_OK_ATTRIBUTES = [
+    'uuid',
+    'slug',
+]
+
+# Attributes OK when adding NODE_ITEM_TYPES
+NODE_ITEM_TYPES_ADD_OK_ATTRUBUTES = OC_ITEM_TYPES_ADD_OK_ATTRIBUTES.copy()
+
+# Attributes OK when adding URI_ITEM_TYPES
+URI_ITEM_TYPES_ADD_OK_ATTRIBUTES = [
+    'slug',
+    'uri',
+    'item_key',
+]
+
+# The source id to use for adding new resource if not provided
+DEFAULT_SOURCE_ID = 'ui-added'
+
+# Make a list of default Manifest objects for which we prohibit 
+# edits.
+EDIT_EXCLUDE_UUIDS = [m.get('uuid') for m in DEFAULT_MANIFESTS if m.get('uuid')]
+
 
 def recursive_subjects_path_update(man_obj):
     """Updates the path attribute of manifest item_type subjects after label changes"""
     if man_obj.item_type != 'subjects':
         # Skip out. not a subjects item.
         return None
-
+    
     man_children = AllManifest.objects.filter(
         context=man_obj
     ).exclude(uuid=man_obj.uuid)
@@ -129,6 +156,10 @@ def update_manifest_objs(request_json):
             errors.append(f'Cannot find manifest object for {uuid}')
             continue
     
+        if uuid in EDIT_EXCLUDE_UUIDS:
+            errors.append(f'Edits prohibited on required item {man_obj}')
+            continue
+
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
             k:item_update.get(k) 
@@ -280,14 +311,8 @@ def update_manifest_objs(request_json):
     return updated, errors
 
 
-def add_manifest_objs(request_json):
-    """Adds AllManifest objects from attributes given in client request JSON"""
-    errors = []
-    
-    if not isinstance(request_json, list):
-        errors.append('Request json must be a list of dictionaries to add')
-        return [], errors
-
+def get_item_type_req_attribs_dict():
+    """Gets a dict keyed by item_type for attributes required to add manifest obj"""
     item_type_req_attribs = {}
     for group in MANIFEST_ADD_EDIT_CONFIGS:
         for i_type_config in group.get('item_types', []):
@@ -296,7 +321,42 @@ def add_manifest_objs(request_json):
                 'add_required_attributes', 
                 []
             )
+    return item_type_req_attribs
 
+
+def get_item_type_ok_attribs_dict():
+    """Gets a dict keyed by item_type for attributes ALLOWED in creating a manifest obj"""
+    item_type_req_attribs = get_item_type_req_attribs_dict()
+    item_type_ok_attribs = {}
+    for item_type_key, _ in item_type_req_attribs.items():
+        item_type_ok_attribs[item_type_key] = MANIFEST_ATTRIBUTES_UPDATE_ALLOWED
+        if item_type_key in configs.OC_ITEM_TYPES:
+            item_type_ok_attribs[item_type_key] += OC_ITEM_TYPES_ADD_OK_ATTRIBUTES
+        elif item_type_key in configs.NODE_ITEM_TYPES:
+            item_type_ok_attribs[item_type_key] += NODE_ITEM_TYPES_ADD_OK_ATTRUBUTES
+        elif item_type_key in configs.URI_ITEM_TYPES:
+            item_type_ok_attribs[item_type_key] += URI_ITEM_TYPES_ADD_OK_ATTRIBUTES
+        else:
+            pass
+    return item_type_ok_attribs
+
+
+def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
+    """Adds AllManifest objects from attributes given in client request JSON"""
+    errors = []
+    
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to add')
+        return [], errors
+
+    # This makes a dict keyed by item_type for attributes we REQUIRE
+    # to create a new manifest item.
+    item_type_req_attribs = get_item_type_req_attribs_dict()
+    
+    # This makes a dict keyed by item_type for attributes we ALLOW
+    # to create a new manifest item.
+    item_type_ok_attribs = get_item_type_ok_attribs_dict()
+        
     added = []
     for item_add in request_json:
         item_type = item_add.get('item_type')
@@ -324,20 +384,92 @@ def add_manifest_objs(request_json):
             errors.append(f'Missing project or context to add into: {str(item_add)}')
             continue
 
+        ok_attributes = item_type_ok_attribs.get(item_type)
+        if not ok_attributes:
+            errors.append(f'Allowed add config missing for: {str(item_type)}')
+            continue
         
+        # Make an add dictionary limited to attributes allowed for adding
+        # for this item type
+        add_dict = {k:item_add.get(k) for k in ok_attributes if item_add.get(k)}
+        # make sure the item_type is part of the add_dict.
+        add_dict['item_type'] = item_type
+        if not add_dict.get('source_id'):
+            add_dict['source_id'] = source_id
+        if not add_dict.get('meta_json'):
+            add_dict['meta_json'] = {}
 
-        added.append(item_add)
+        valid_ok, valid_errors = item_validation.validate_manifest_dict(add_dict)
+        if not valid_ok:
+            errors.append(f'Attribute validation errors: {str(valid_errors)}')
+            continue
 
+        # Check to make sure we can de-reference identified items.
+        for attr, value in add_dict.items():
+            if not attr.endswith('_id'):
+                continue
+            if attr == 'source_id':
+                # Skip this, it's not meant to be a manifest object.
+                continue
+            # Get the label for the attribute that we're changing.
+            ref_obj = AllManifest.objects.filter(uuid=value).first()
+            if ref_obj:
+                continue
+            error = f'Cannot find {attr} object {value}'
+            errors.append(error)
+        
+        if len(errors):
+            continue
+        
+        print(f'add dict is: {str(add_dict)}')
+
+        try:
+            man_obj = AllManifest(**add_dict)
+            man_obj.revised = timezone.now()
+            man_obj.save()
+            ok = True
+        except Exception as e:
+            ok = False
+            if hasattr(e, 'message'):
+                error = e.message
+            else:
+                error = str(e)
+            errors.append(f'Manifest item add error: {error}')
+        if not ok:
+            continue
+
+        # Make a copy of the new state of your model.
+        after_edit_model_dict = updater_general.make_models_dict(item_obj=man_obj)
+        edit_note = (
+            f'Added: {man_obj}'
+        )
+
+        history_obj = updater_general.record_edit_history(
+            edited_obj,
+            edit_note=edit_note,
+            prior_to_edit_model_dict={},
+            after_edit_model_dict=after_edit_model_dict,
+        )
+        
+        # Make an added dict with the manifest item. 
+        final_added = make_model_object_json_safe_dict(man_obj)
+        final_added['history_id'] = str(history_obj.uuid)
+        added.append(final_added)
 
     return added, errors
 
 
-def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None, errors=None):
+def delete_manifest_obj(to_delete_man_obj, context_recursive=False, note=None, deleted=None, errors=None):
     """Deletes a manifest object, optionally recursively for items that use it as context"""
+    if note is None:
+        note = ''
     if deleted == None:
         deleted = []
     if errors == None:
         errors = []
+    if str(to_delete_man_obj.uuid) in EDIT_EXCLUDE_UUIDS:
+        errors.append(f'Edits prohibited on required item {to_delete_man_obj}')
+        return deleted, errors
     context_qs = AllManifest.objects.filter(
         context=to_delete_man_obj
     )
@@ -351,7 +483,8 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None
         for item_in_context in context_qs:
             deleted, errors = delete_manifest_obj(
                 to_delete_man_obj=item_in_context, 
-                context_recursive=context_recursive, 
+                context_recursive=context_recursive,
+                note=note,
                 deleted=deleted, 
                 errors=errors
             )
@@ -360,7 +493,18 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None
         # Stop if there was a problem in deleting child items.
         return deleted, errors
 
-    project_obj = AllManifest.objects.get(uuid=to_delete_man_obj.project.uuid)
+    if to_delete_man_obj.item_type in configs.URI_CONTEXT_PREFIX_ITEM_TYPES:
+        # The context (vocabulary) will be the object that will
+        # get an edit history
+        edited_obj = AllManifest.objects.filter(
+            uuid=to_delete_man_obj.context.uuid
+        ).first()
+    else:
+        edited_obj = AllManifest.objects.filter(
+            uuid=to_delete_man_obj.project.uuid
+        ).first()
+
+
     # Keep a copy of the old state before saving it.
     prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=to_delete_man_obj)
 
@@ -370,21 +514,30 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None
     qs_list.append(
         AllAssertion.objects.filter(
             Q(subject=to_delete_man_obj)
+            | Q(publisher=to_delete_man_obj)
+            | Q(project=to_delete_man_obj)
             | Q(observation=to_delete_man_obj)
             | Q(event=to_delete_man_obj)
             | Q(attribute_group=to_delete_man_obj)
             | Q(predicate=to_delete_man_obj)
             | Q(object=to_delete_man_obj)
+            | Q(language=to_delete_man_obj)
         )
     )
     qs_list.append(
         AllSpaceTime.objects.filter(
             Q(item=to_delete_man_obj)
+            | Q(publisher=to_delete_man_obj)
+            | Q(project=to_delete_man_obj)
             | Q(event=to_delete_man_obj)
         )
     )
     qs_list.append(
-        AllResource.objects.filter(item=to_delete_man_obj)
+        AllResource.objects.filter(
+            Q(item=to_delete_man_obj)
+            | Q(resourcetype=to_delete_man_obj)
+            | Q(mediatype=to_delete_man_obj)
+        )
     )
     qs_list.append(
         AllIdentifier.objects.filter(item=to_delete_man_obj)
@@ -406,13 +559,13 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None
 
     edit_note = (
         f'Deleted item: {to_delete_man_obj.label} ({str(to_delete_man_obj.uuid)}) '
-        f'and {total_objects} associated records.'
+        f'and {total_objects} associated records. {note}'
     )
     # Save the edit note to the meta_json for the project. This makes sure the
     # hash updates for the project so we can save the history of the edit.
-    project_obj.meta_json.setdefault('deleted', [])
-    project_obj.meta_json['deleted'].append(edit_note)
-    project_obj.save()
+    edited_obj.meta_json.setdefault('deleted', [])
+    edited_obj.meta_json['deleted'].append(edit_note)
+    edited_obj.save()
 
     delete_uuid = str(to_delete_man_obj.uuid)
 
@@ -420,7 +573,7 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, deleted=None
     to_delete_man_obj.delete()
 
     history_obj = updater_general.record_edit_history(
-        project_obj,
+        edited_obj,
         edit_note=edit_note,
         prior_to_edit_model_dict=prior_to_edit_model_dict,
         after_edit_model_dict={},
@@ -443,6 +596,7 @@ def delete_manifest_objs(request_json):
 
     for item_delete in request_json:
         uuid = item_delete.get('uuid')
+        note = item_delete.get('note')
         if not uuid:
             errors.append('Must have "uuid" attribute.')
             continue
@@ -450,12 +604,261 @@ def delete_manifest_objs(request_json):
         if not to_delete_man_obj:
             errors.append(f'Cannot find manifest object for {uuid}')
             continue
+        if uuid in EDIT_EXCLUDE_UUIDS:
+            errors.append(f'Edits prohibited on required item {man_obj}')
+            continue
         deleted, errors = delete_manifest_obj(
             to_delete_man_obj=to_delete_man_obj, 
             context_recursive=item_delete.get('context_recursive', False), 
+            note=note,
             deleted=deleted, 
             errors=errors,
         )
     return deleted, errors
 
 
+def get_rank(keep_man_obj, legacy_obj, model):
+    """Gets a ranking value for the legacy_obj for models that use ranking"""
+    models_with_rank = {
+        AllResource: ['resourcetype',],
+        AllIdentifier: ['scheme',],
+    }
+    if not models_with_rank.get(model):
+        return None
+    check_args = {
+        'item': keep_man_obj,
+    }
+    for attrib in models_with_rank.get(model):
+        if not getattr(legacy_obj, attrib, None):
+            continue
+        check_args[attrib] = getattr(legacy_obj, attrib)
+    rank_qs = model.objects.filter(**check_args)
+    rank = len(rank_qs)
+    return rank
+
+
+def merge_manifest_objs(
+    keep_man_obj, 
+    to_delete_man_obj, 
+    note=None, 
+    merges=None, 
+    errors=None, 
+    warnings=None
+):
+    """Merges manifest objects. 
+
+    :param AllManifest keep_man_obj: The manifest object that will be
+        retained.
+    :param AllManifest to_delete_man_obj: The manifest object that
+        will be deleted after merging into the keep_man_obj.
+    """
+    if note is None:
+        note = ''
+    if merges is None:
+        merges = []
+    if errors is None:
+        errors = []
+    if warnings is None:
+        warnings = []
+
+    keep_uuid = str(keep_man_obj.uuid)
+    delete_uuid = str(to_delete_man_obj.uuid)
+    if keep_uuid == delete_uuid:
+        errors.append('Cannot merge an item into itself.')
+        return errors
+    if delete_uuid in EDIT_EXCLUDE_UUIDS:
+        errors.append(f'Edits prohibited on required item {to_delete_man_obj}')
+        return errors
+
+    if keep_man_obj.item_type != to_delete_man_obj.item_type:
+        errors.append('Cannot merge, mismatched item types.')
+        return errors
+    
+    if keep_man_obj.data_type != to_delete_man_obj.data_type:
+        errors.append('Cannot merge, mismatched data types.')
+        return errors
+    
+    exclude_keep_attribs = {
+        AllManifest: 'uuid',
+        AllAssertion: 'subject_id',
+    }
+
+    related_models_attribs = [
+        (
+            AllManifest,
+            [
+                'publisher',
+                'project',
+                'item_class',
+                'context',
+            ],
+        ),
+        (
+            AllSpaceTime, 
+            [
+                'publisher',
+                'project',
+                'item',
+                'event',
+            ],
+        ),
+        (
+            AllAssertion,
+            [
+                'publisher',
+                'project',
+                'subject',
+                'observation',
+                'event',
+                'attribute_group',
+                'predicate',
+                'object',
+                'language',
+            ],
+        ),
+        (
+            AllResource, 
+            [
+                'project',
+                'item',
+                'resourcetype',
+                'mediatype',
+            ],
+        ),
+        (
+            AllIdentifier, 
+            ['item',],
+        ),
+        (
+            AllHistory, 
+            ['item',],
+        ),
+    ]
+
+    # Keep a copy of the old state before saving it.
+    prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=to_delete_man_obj)
+
+     # Make a copy of the new state of your model.
+    after_edit_model_dict = updater_general.make_models_dict(item_obj=keep_man_obj)
+
+    total_objects = 0
+    for model, attrib_list in related_models_attribs:
+        exclude_attrib = exclude_keep_attribs.get(model)
+        for attrib in attrib_list:
+            filter_dict = {
+                attrib: to_delete_man_obj
+            }
+            qs = model.objects.filter(**filter_dict)
+            if exclude_attrib:
+                # This excludes relationships / assertions between the to_delete_man_obj
+                # and the keep_man_obj.
+                qs = qs.exclude(**{exclude_attrib: keep_man_obj.uuid})
+
+            len_objects = len(qs)
+            if len_objects < 1:
+                continue
+            total_objects += len_objects
+            # Record the objects in this query set before we make updates.
+            prior_to_edit_model_dict = updater_general.add_queryset_objs_to_models_dict(
+                prior_to_edit_model_dict, 
+                qs
+            )
+            updated_objs = []
+            for legacy_obj in qs:
+                # First check about 'rank', which we use to allow multiple records
+                # that should otherwise be unique.
+                new_rank = get_rank(keep_man_obj, legacy_obj, model)
+                # Make a deep copy to make a new, updated object from the old.
+                new_obj = copy.deepcopy(legacy_obj)
+                new_obj.uuid = None
+                new_obj.pk = None
+                if new_rank:
+                    new_obj.rank = new_rank
+                # Update the attribute to switch the to_delete_man_obj to the
+                # keep_man_obj
+                setattr(new_obj, attrib, keep_man_obj)
+                try:
+                    new_obj.save()
+                except:
+                    new_obj = None
+                if not new_obj:
+                    warnings.append(f'Could not migrate {legacy_obj} to {keep_man_obj}')
+                    continue
+                updated_objs.append(new_obj)
+
+            after_edit_model_dict = updater_general.add_queryset_objs_to_models_dict(
+                after_edit_model_dict, 
+                updated_objs
+            )
+
+    # Update the path for this item and all child items that may have been
+    # impacted by the merge.
+    recursive_subjects_path_update(keep_man_obj)
+
+    edit_note = f'Merge {to_delete_man_obj} into => {keep_man_obj}. {note}'
+
+    # Now delete the to_delete_man_obj
+    _, del_errors = delete_manifest_obj(
+        to_delete_man_obj=to_delete_man_obj, 
+        context_recursive=False,
+        note=note, 
+    )
+    errors += del_errors
+
+    history_obj = updater_general.record_edit_history(
+        keep_man_obj,
+        edit_note=edit_note,
+        prior_to_edit_model_dict=prior_to_edit_model_dict,
+        after_edit_model_dict=after_edit_model_dict,
+    )
+    merge_dict = {
+        'history_id': str(history_obj.uuid),
+        'keep_id': keep_uuid,
+        'delete_id': delete_uuid,
+    }
+    merges.append(merge_dict)
+    return merges, errors, warnings
+
+
+def api_merge_manifest_objs(request_json):
+    """Merges manifest objects"""
+    merges = []
+    errors = []
+    warnings = []
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return merges, errors, warnings
+
+    for item_merge in request_json:
+        keep_uuid = item_merge.get('keep_id')
+        delete_uuid = item_merge.get('delete_id')
+        note = item_merge.get('note')
+        if not keep_uuid:
+            errors.append('Must specify a "keep_id" attribute.')
+            continue
+        if not delete_uuid:
+            errors.append('Must specify a "delete_id" attribute.')
+            continue
+        if keep_uuid == delete_uuid:
+            errors.append('Cannot merge an item into itself.')
+            continue
+        keep_man_obj = AllManifest.objects.filter(uuid=keep_uuid).first()
+        if not keep_man_obj:
+            errors.append(f'Cannot find manifest object for {keep_uuid}')
+            continue
+        to_delete_man_obj = AllManifest.objects.filter(uuid=delete_uuid).first()
+        if not to_delete_man_obj:
+            errors.append(f'Cannot find manifest object for {delete_uuid}')
+            continue
+        if delete_uuid in EDIT_EXCLUDE_UUIDS:
+            errors.append(f'Edits prohibited on required item {to_delete_man_obj}')
+            continue
+        merges, errors, warnings = merge_manifest_objs(
+            keep_man_obj=keep_man_obj, 
+            to_delete_man_obj=to_delete_man_obj,
+            note=note,
+            merges=merges, 
+            errors=errors, 
+            warnings=warnings,
+        )
+    return merges, errors, warnings

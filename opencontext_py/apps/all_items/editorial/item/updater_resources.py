@@ -239,6 +239,9 @@ def add_resource_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             error = f'Cannot find {attr} object {value}'
             errors.append(error)
 
+        if len(errors):
+            continue
+
         try:
             resource_obj = AllResource(**add_dict)
             resource_obj.uri = AllManifest().clean_uri(resource_obj.uri)

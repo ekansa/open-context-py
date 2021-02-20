@@ -18,6 +18,7 @@ from django.utils import timezone
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     sting_number_splitter,
+    suggest_project_short_id,
     AllManifest,
     AllAssertion,
     AllHistory,
@@ -240,27 +241,6 @@ def validate_label(check_label, filter_args=None, exclude_uuid=None):
     return report
 
 
-def suggest_project_short_id():
-    """Suggests a project short id, not already in use"""
-    m_qs = AllManifest.objects.filter(item_type='projects')
-    short_ids = []
-    for m in m_qs:
-        if not m.meta_json.get('short_id'):
-            continue
-        try:
-            act_short_id = int(float(m.meta_json.get('short_id')))
-        except:
-            act_short_id = None
-        if not act_short_id:
-            continue
-        short_ids.append(act_short_id)
-    if not len(short_ids):
-        # We don't have any project short ids yet, so suggest the first.
-        return 1
-    # Suggest 1 plus the max we already have.
-    return max(short_ids) + 1
-
-
 def validate_project_short_id(raw_short_id, exclude_uuid=None):
     """Validates a (project) short integer id"""
     try:
@@ -326,6 +306,9 @@ def validate_slug(slug, exclude_uuid=None):
 
 def validate_uuid(uuid, exclude_uuid=None):
     """Validates a slug identifier"""
+
+    # NOTE: exclude_uuid is not used, but accepted for sake of consistency.
+
     uuid = str(uuid).strip()
     errors = []
     if not uuid or uuid != uuid.lower() or not '-' in uuid or not is_valid_uuid(uuid):
@@ -345,8 +328,6 @@ def validate_uuid(uuid, exclude_uuid=None):
     m_qs = AllManifest.objects.filter(
         uuid=uuid,
     )
-    if exclude_uuid:
-        m_qs = m_qs.exclude(uuid=exclude_uuid)
     report = report_id_conflicts(m_qs)
     report['uuid'] = uuid
     return report
@@ -395,7 +376,51 @@ def validate_uri(raw_uri, exclude_uuid=None):
     return report
 
 
-def validate_manifest_attributes(request_dict, value_delim=editorial_api.MULTI_VALUE_DELIM):
+def validate_manifest_dict(manifest_dict):
+    """Validates certain fields of a manifest dict"""
+    validation_checks = [
+        ('label', validate_label,),
+        ('slug', validate_slug,),
+        ('uuid', validate_uuid,),
+        ('item_key', validate_item_key,),
+        ('uri', validate_uri,),
+        ('meta_json__short_id', validate_project_short_id,),
+    ]
+    errors = []
+    for check, check_func in validation_checks:
+        meta_json = manifest_dict.get('meta_json', {})
+        if check == 'meta_json__short_id':
+            check_value = meta_json.get('short_id')
+        else:
+            check_value = manifest_dict.get(check)
+        if not check_value:
+            continue
+        filter_args = None
+        if check == 'label':
+            filter_args = {
+                attrib:manifest_dict.get(attrib) 
+                for attrib in LABEL_UNIQUENESS_ATTRIBUTES
+                if manifest_dict.get(attrib)
+            }
+        # Get the validation result
+        result = check_func(
+            check_value, 
+            filter_args=filter_args, 
+            exclude_uuid=manifest_dict.get('uuid')
+        )
+        if result.get('is_valid'):
+            continue
+        errors.append(
+            f'Invalid {check} value "{check_value}"'
+        )
+
+    # Return all the validation results.
+    is_valid = len(errors) == 0
+    return is_valid, errors
+
+
+
+def api_validate_manifest_attributes(request_dict, value_delim=editorial_api.MULTI_VALUE_DELIM):
     """Validates manifest attributes for a request dict"""
     if request_dict.get('label'):
         check_label = request_dict.get('label')
@@ -442,7 +467,7 @@ def validate_manifest_attributes(request_dict, value_delim=editorial_api.MULTI_V
         uuid = request_dict.get('new_uuid')
         return validate_uuid(
             uuid,
-            exclude_uuid=request_dict.get('uuid')
+            exclude_uuid=None,
         )
     
     if request_dict.get('item_key'):

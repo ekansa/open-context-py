@@ -303,7 +303,7 @@ def item_manifest_validation(request):
     for key, key_val in request.GET.items():
         request_dict[key] = request.GET.get(key)
 
-    api_result = item_validation.validate_manifest_attributes(request_dict)
+    api_result = item_validation.api_validate_manifest_attributes(request_dict)
     json_output = json.dumps(
         api_result,
         indent=4,
@@ -375,8 +375,7 @@ def add_manifest_objs(request):
 
 @cache_control(no_cache=True)
 @never_cache
-@transaction.atomic()
-@reversion.create_revision()
+# @reversion.create_revision()
 def delete_manifest(request):
     if request.method != 'POST':
         return HttpResponse(
@@ -401,6 +400,34 @@ def delete_manifest(request):
         content_type="application/json; charset=utf8"
     )
 
+
+@cache_control(no_cache=True)
+@never_cache
+# @reversion.create_revision()
+def merge_manifest(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    merges, errors, warnings = updater_manifest.api_merge_manifest_objs(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'merges': merges,
+        'warnings': warnings,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
 
 # ---------------------------------------------------------------------
 # NOTE: Item Assertion Edit endpoints
