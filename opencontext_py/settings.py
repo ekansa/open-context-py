@@ -285,6 +285,21 @@ DATABASES = {
     }
 }
 
+# Can we connect to the production database?
+CONNECT_PROD_DB = False
+if secrets.get('PROD_DATABASES_HOST'):
+    CONNECT_PROD_DB = True
+    DATABASES['prod'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': secrets.get('PROD_DATABASES_NAME'),
+        'USER': secrets.get('PROD_DATABASES_USER'),
+        'PASSWORD': secrets.get('PROD_DATABASES_PASSWORD'),
+        'HOST': secrets.get('PROD_DATABASES_HOST'),
+        'PORT': secrets.get('PROD_DATABASES_PORT'),
+        'CONN_MAX_AGE': 600,
+    }
+
+
 ADMINS = (
     (get_secret('ADMIN_NAME'), get_secret('ADMIN_EMAIL'))
 )
