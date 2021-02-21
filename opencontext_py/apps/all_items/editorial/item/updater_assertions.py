@@ -5,6 +5,7 @@ import uuid as GenUUID
 import reversion
 
 from django.conf import settings
+from django.core.cache import caches
 
 from django.db.models import Q
 from django.db import transaction
@@ -68,6 +69,35 @@ ASSERTION_ATTRIBUTES_UPDATE_ALLOWED = [
 DEFAULT_SOURCE_ID = 'ui-added'
 
 PREDICATE_OBJECT_SORT_INCREMENT = 0.001
+
+# By default, exclude assertions where subjects have these
+# item types from sorting.
+SORT_EXCLUDE_SUBJ_ITEM_TYPES = [
+    'projects',
+    'tables',
+]
+
+# By default, exclude assertions where predicates have these
+# contexts from sorting.
+SORT_EXCLUDE_PREDICATE_CONTEXT_IDS = [
+    configs.SKOS_VOCAB_UUID,
+    configs.DCTERMS_VOCAB_UUID,
+    configs.BIBO_VOCAB_UUID,
+]
+
+# By default, exclude assertions where objects have these
+# item types from sorting.
+SORT_EXCLUDE_OBJ_ITEM_TYPES = [
+    'types',  # These usually come in order determined by import.
+    'persons', # These are usually significant for authorship
+    'tables',
+    'class',
+    'uri',
+]
+
+PROJECT_SORT_CACHE_LIFE = 60 * 60  # 60 minutes (1 hour)
+PROJECT_SORT_CHUNK_SIZE = 10
+
 
 def get_assert_related_qs(assert_obj):
     """Gets a queryset of assertions in the same node as assert_obj"""
@@ -476,3 +506,313 @@ def delete_assertions(request_json):
         deleted.append(item_delete)
 
     return deleted, errors
+
+
+
+# ---------------------------------------------------------------------
+# NOTE: Below are functions for mass sorting of assertions for
+# individual items (as subjects of assertions) and for 
+# items from entire projects
+# ---------------------------------------------------------------------
+def resort_assertion_objects_for_subject_uuids(
+    subject_uuids,
+    predicate_uuids=None,
+    force_reset=True,
+    predicate_sorts=None,
+    exclude_subj_item_types=SORT_EXCLUDE_SUBJ_ITEM_TYPES,
+    exclude_pred_context_ids=SORT_EXCLUDE_PREDICATE_CONTEXT_IDS,
+    exclude_obj_item_types=SORT_EXCLUDE_OBJ_ITEM_TYPES,
+):
+    """Resorts objects of assertions for a given subject and predicate
+
+    :params AllManifest subject: The subject of the assertions.
+    :params bool force_reset: If True, resort objects for this
+        subject and predicate according to their Manifest table sort order,
+        even if these objects are already sorted.
+    :params dict predicate_sorts: A dict keyed by a string predicate uuid
+        that has starting sort value for a predicate.
+        This sort ranking for all predicates of a given subject. It'll have
+        a bigger magnitude than the sort rankings for objects of this predicate.
+    :params list exclude_subj_item_types: List of item_types of subjects that
+        we EXCLUDE from sorting
+    :params list exclude_pred_context_ids: List of context (vocabulary) uuids
+        that we EXCLUDE from sorting
+    :params list exclude_obj_item_types: List of item_types of objects that we
+        EXCLUDE from sorting.
+    """
+    
+    assert_qs = AllAssertion.objects.filter(
+        subject_id__in=subject_uuids,
+        predicate__data_type='id',
+    )
+    if predicate_uuids:
+        # Add optiona predicate filtering.
+        assert_qs = assert_qs.filter(predicate_id__in=predicate_uuids)
+
+    if exclude_subj_item_types:
+        # Skip excluded subject item types
+        assert_qs = assert_qs.exclude(
+            subject__item_type__in=exclude_subj_item_types
+        )
+    if exclude_pred_context_ids:
+        # Skip predicates from excluded vocabularies.
+        assert_qs = assert_qs.exclude(
+            predicate__context_id__in=exclude_pred_context_ids
+        )
+    
+    if exclude_obj_item_types:
+        # Limit by object item types
+        assert_qs = assert_qs.exclude(
+            object__item_type__in=exclude_obj_item_types
+        )
+
+    assert_qs = assert_qs.select_related(
+        'predicate'
+    )
+    assert_qs = assert_qs.order_by(
+        'subject', 'predicate', 'object__sort',
+    )
+
+
+    if predicate_sorts is None:
+        predicate_sorts = {}
+
+    count_updated = 0
+    sub_pred_obj_ranks = {}
+    for act_assert in assert_qs:
+        subj_uuid = str(act_assert.subject.uuid)
+        pred_uuid = str(act_assert.predicate.uuid)
+        
+        if not predicate_sorts.get(pred_uuid):
+            predicate_sorts[pred_uuid] = act_assert.predicate.meta_json.get(
+                'sort', 
+                len(predicate_sorts)
+            )
+        predicate_sort = predicate_sorts.get(
+            pred_uuid, 
+            len(predicate_sorts)
+        )
+        obj_rank_key = (subj_uuid, pred_uuid,)
+        if sub_pred_obj_ranks.get(obj_rank_key) is None:
+            sub_pred_obj_ranks[obj_rank_key] = 0
+        sub_pred_obj_ranks[obj_rank_key] += 1
+
+        new_sort = (
+            float(predicate_sort) 
+            + (sub_pred_obj_ranks[obj_rank_key] * PREDICATE_OBJECT_SORT_INCREMENT)
+        )
+        if new_sort == act_assert.sort:
+            # Nothing changed, so continue....
+            continue
+        # Do this as update without triggering a save, which has lots of slow
+        # validation logic.
+        AllAssertion.objects.filter(
+            uuid=act_assert.uuid
+        ).update(
+            sort=new_sort
+        )
+        count_updated += 1
+
+    return count_updated
+
+
+def resort_assertion_objects_for_project_subjects(
+    proj_context, 
+    force_reset=True,
+    predicate_sorts=None,
+    exclude_subj_item_types=SORT_EXCLUDE_SUBJ_ITEM_TYPES,
+    exclude_pred_context_ids=SORT_EXCLUDE_PREDICATE_CONTEXT_IDS,
+    exclude_obj_item_types=SORT_EXCLUDE_OBJ_ITEM_TYPES,
+):
+    """Resorts objects of assertions for a given subject and predicate
+
+    :params AllManifest proj_context: A project or context in which to
+        select uuids for sorting.
+    :params bool force_reset: If True, resort objects for this
+        subject and predicate according to their Manifest table sort order,
+        even if these objects are already sorted.
+    :params dict predicate_sorts: A dict keyed by a string predicate uuid
+        that has starting sort value for a predicate.
+        This sort ranking for all predicates of a given subject. It'll have
+        a bigger magnitude than the sort rankings for objects of this predicate.
+    :params list exclude_subj_item_types: List of item_types of subjects that
+        we EXCLUDE from sorting
+    :params list exclude_pred_context_ids: List of context (vocabulary) uuids
+        that we EXCLUDE from sorting
+    :params list exclude_obj_item_types: List of item_types of objects that we
+        EXCLUDE from sorting.
+    """
+
+    if predicate_sorts is None:
+        predicate_sorts = {}
+
+    uuid_qs = AllAssertion.objects.filter(
+        Q(project=proj_context)
+        |Q(subject__project=proj_context)
+        |Q(subject__context=proj_context)
+    ).filter(
+        predicate__data_type='id',
+    )
+
+    if exclude_subj_item_types:
+        # The subject item type is in a lit of excluded item types
+        uuid_qs = uuid_qs.exclude(
+            subject__item_type__in=exclude_subj_item_types
+        )
+    
+    if exclude_pred_context_ids:
+        # The subject item type is in a lit of excluded item types
+        uuid_qs = uuid_qs.exclude(
+            predicate__context_id__in=exclude_pred_context_ids
+        )
+    
+    uuids = [str(u) for u in uuid_qs]
+    uuids = list(set(uuids))
+    chunk_uuids = [chunk for chunk in chunk_list(uuids)]
+
+    count_updated = 0
+    for chunk in chunk_uuids:
+        count_updated += resort_assertion_objects_for_subject_uuids(
+            subject_uuids=chunk, 
+            force_reset=force_reset,
+            predicate_sorts=predicate_sorts,
+            exclude_subj_item_types=exclude_subj_item_types,
+            exclude_pred_context_ids=exclude_pred_context_ids,
+            exclude_obj_item_types=exclude_obj_item_types,
+        )
+    return count_updated
+
+
+def sort_item_assertions(request_json):
+    """Sort AllAssertions objects for items listed in a client request JSON"""
+    count_updated = 0
+    errors = []
+    
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return count_updated, errors
+
+    for item_sort in request_json:
+        uuid = item_sort.get('uuid')
+        if not uuid:
+            errors.append('Must have "uuid" attribute.')
+            continue
+        subject = AllManifest.objects.filter(
+            uuid=uuid
+        ).first()
+        if not subject:
+            errors.append(f'Cannot find {uuid} in the manifest.')
+            continue
+
+        count_updated += resort_assertion_objects_for_subject_uuids(
+            subject_uuids=[uuid], 
+            force_reset=True,
+            predicate_sorts=None,
+        )
+
+    return count_updated, errors
+
+
+def chunk_list(list_name, n=PROJECT_SORT_CHUNK_SIZE):
+    """Breaks a long list into chunks of size n"""
+    for i in range(0, len(list_name), n):
+        yield list_name[i:i + n]
+
+
+def sort_project_assertions(request_json):
+    """Sort AllAssertions objects for items listed in a client request JSON"""
+    sorts_done = None
+    updated = []
+    errors = []
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return sorts_done, updated, errors
+
+    cache = caches['redis']
+    sorts_done = True
+    for proj_sort in request_json:
+        uuid = proj_sort.get('uuid')
+        if not uuid:
+            errors.append('Must have "uuid" attribute.')
+            continue
+
+        proj_context = AllManifest.objects.filter(
+            uuid=uuid,
+            item_type__in=['projects', 'vocabularies'],
+        ).first()
+        if not proj_context:
+            errors.append(f'Cannot find {uuid} as a project or vocab in the manifest.')
+            continue
+        
+        cache_key = f'proj-context-sort-{uuid}'
+        proj_context_sort_stage = cache.get(cache_key)
+        if proj_context_sort_stage is None or proj_sort.get('reset'):
+            # NOTE: We're getting or reseting our sorting process for
+            # items in this project. Set up an object to cache that
+            # will keep track of the progress in our sorting.
+            proj_context_sort_stage = {
+                'done': False,
+                'total_uuids_count': None,
+                'chunk_uuids': None,
+                'last_chunk_index': -1,
+                'total_chunks': None,
+                'count_updated': 0,
+            }
+            
+            # Get a queryset of uuids for this project / context
+            uuid_qs = AllAssertion.objects.filter(
+                Q(project=proj_context)
+                |Q(subject__project=proj_context)
+                |Q(subject__context=proj_context)
+            ).filter(
+                predicate__data_type='id',
+            ).exclude(
+                subject__item_type__in=SORT_EXCLUDE_SUBJ_ITEM_TYPES,
+            ).exclude(
+                object__item_type__in=SORT_EXCLUDE_OBJ_ITEM_TYPES,
+            ).distinct(
+                'subject'
+            ).order_by(
+                'subject'
+            ).values_list('subject', flat=True)
+
+            # Make a list of the UUIDs that we will need to sort
+            uuids = [str(u) for u in uuid_qs]
+            uuids = list(set(uuids))
+            proj_context_sort_stage['total_uuids_count'] = len(uuids)
+            chunk_uuids = [chunk for chunk in chunk_list(uuids)]
+            proj_context_sort_stage['chunk_uuids'] = chunk_uuids
+            proj_context_sort_stage['total_chunks'] = len(chunk_uuids)
+        
+        act_chunk_index = proj_context_sort_stage['last_chunk_index'] + 1
+        if act_chunk_index >= proj_context_sort_stage['total_chunks']:
+            proj_context_sort_stage['done'] = True
+
+        if proj_context_sort_stage['total_chunks'] < 1:
+            proj_context_sort_stage['last_chunk_index'] = 0
+            proj_context_sort_stage['done'] = True
+
+        if not proj_context_sort_stage['done']:
+            proj_context_sort_stage['count_updated'] += resort_assertion_objects_for_subject_uuids(
+                subject_uuids=proj_context_sort_stage['chunk_uuids'][act_chunk_index], 
+                force_reset=True,
+                predicate_sorts=None,
+            )
+        
+        proj_context_sort_stage['last_chunk_index'] = act_chunk_index
+        if proj_context_sort_stage['last_chunk_index'] < proj_context_sort_stage['total_chunks']:
+            # We're not done yet.
+            sorts_done = False
+            proj_context_sort_stage['done'] = False
+        else:
+            proj_context_sort_stage['done'] = True
+        
+        cache.set(
+            cache_key, 
+            proj_context_sort_stage, 
+            timeout=PROJECT_SORT_CACHE_LIFE,
+        )
+        update_dict = {k:v for k,v in proj_context_sort_stage.items() if k != 'chunk_uuids'}
+        updated.append(update_dict)
+
+    return sorts_done, updated, errors

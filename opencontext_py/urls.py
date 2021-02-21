@@ -186,6 +186,16 @@ urlpatterns = [
         EditorialItemViews.delete_assertions, 
         name='editorial_delete_assertions'
     ),
+    url(
+        r'^editorial/item-sort-item-assertions', 
+        EditorialItemViews.sort_item_assertions, 
+        name='editorial_sort_item_assertions'
+    ),
+    url(
+        r'^editorial/item-sort-project-assertions', 
+        EditorialItemViews.sort_project_assertions, 
+        name='editorial_sort_project_assertions'
+    ),
     # Item space-time editing URLs
     url(
         r'^editorial/item-spacetimes/(?P<uuid>\S+)', 

@@ -8,6 +8,7 @@
         {% include '../../editorial/tree.html' %}
         {% include '../../editorial/lookup.html' %}
 
+        {% include './project.html' %}
         {% include './manifest_edit.html' %}
         {% include './history.html' %}
         {% include './manifest.html' %}
@@ -21,6 +22,7 @@
                 <div>
                     <b-nav tabs>
                         <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
+                        <b-nav-item v-if="ITEM_TYPE == 'projects'" :to="{ name: 'project'}" >Entire Project</b-nav-item>
                         <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Media File Resources</b-nav-item>
                         <b-nav-item :to="{ name: 'assertions'}" >Descriptions, Links</b-nav-item>
                         <b-nav-item :to="{ name: 'ld-assertions'}" >Standard, Linked Data</b-nav-item>
@@ -86,6 +88,12 @@
                     path: '/editorial/item-edit/' + ITEM_UUID,
                     name: 'manifest',
                     component: vc_edit_manifest,
+                    props: {uuid: ITEM_UUID, },
+                },
+                {
+                    path: '/editorial/item-edit/' + ITEM_UUID  + '#project',
+                    name: 'project',
+                    component: vc_edit_project,
                     props: {uuid: ITEM_UUID, },
                 },
                 {
@@ -168,6 +176,7 @@
                     components: {
                         'add-item': vc_add_item,
                         'delete-item': vc_delete_item,
+                        'edit-project': vc_edit_project,
                         'edit-manifest': vc_edit_manifest,
                         'edit-history': vc_edit_history,
                         'edit-assertions': vc_edit_assertions,

@@ -429,6 +429,7 @@ def merge_manifest(request):
         content_type="application/json; charset=utf8"
     )
 
+
 # ---------------------------------------------------------------------
 # NOTE: Item Assertion Edit endpoints
 # ---------------------------------------------------------------------
@@ -563,6 +564,62 @@ def delete_assertions(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def sort_item_assertions(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    count_updated, errors = updater_assertions.sort_item_assertions(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'count_updated': count_updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def sort_project_assertions(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    sorts_done, updated, errors = updater_assertions.sort_project_assertions(request_json)
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'complete': sorts_done,
+        'updated': updated,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
 
 # ---------------------------------------------------------------------
 # NOTE: Item Spacetime Edit endpoints

@@ -1,0 +1,269 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+<style>
+ .field_row {
+   margin-top: 48px;
+ }
+</style>
+
+
+
+<template id="edit-project">
+  <b-container fluid v-if="man_obj">
+    <b-row>
+      <b-col cols="12"> 
+        <b-alert show>
+
+          <b-row>
+            <b-col cols="12">
+              <h5><strong>Edit </strong> [[ man_obj.label ]]</h5>
+              <p><small><strong>UUID: </strong>[[ man_obj.uuid ]]</small></p>
+              <p><small><strong>Slug: </strong>[[ man_obj.slug ]]</small></p>
+            </b-col>
+          </b-row>
+
+          <b-row>
+            <b-col cols="12">
+              <p v-if="web_url">
+                <strong>URI <b-icon-files></b-icon-files>: </strong>
+                <a :href="web_url" target="_blank">[[ web_url ]]</a>
+              </p>
+            </b-col>
+          </b-row>
+
+          <b-row>
+            <b-col cols="3">
+              <b-button 
+                block
+                :disabled="sort_started"
+                @click="sort_start"
+                variant="primary">
+                Sort Items in Project
+              </b-button>
+            </b-col>
+            <b-col cols="9">
+              <p v-if="!sort_started">
+                Click the left button to sort all item links in this project
+                according to their label. This should make listed items appear
+                in a reasonable, expected order.
+              </p>
+              <p v-if="sort_started">
+                Sorting process started at <strong>[[ sort_started_display ]]</strong>; 
+                ongoing after <strong>[[ sort_elapsed_time_display ]]</strong>. 
+                <br/>
+                Sorted <strong>[[ sort_count_updated ]]</strong> linking records.
+              </p>
+            </b-col>
+          </b-row>
+
+          <b-row v-if="sort_progress">
+            <b-col cols="12">
+
+              <b-progress max="1" height="2rem" variant="success">
+                <b-progress-bar :value="sort_progress">
+                  <span><strong>[[ (sort_progress * 100).toFixed(1) ]] %</strong> ([[ sort_message ]])</span>
+                </b-progress-bar>
+              </b-progress>
+
+            </b-col>
+          </b-row>
+
+        </b-alert>
+      </b-col>
+    </b-row>
+    
+  </b-container>
+</template>
+
+
+<script type="text/javascript">
+
+  var vc_edit_project = Vue.component(
+    'edit-project',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['uuid', ],
+      data() {
+        return {
+          uuid: null,
+          man_obj: null,
+          errors: null,
+          sort_done: false,
+          sort_started: false,
+          sort_start_time: null,
+          sort_progress_time: null,
+          sort_done_time: null,
+          show_sort_result: false,
+          sort_progress: null,
+          sort_message: null,
+          sort_count_updated: null,
+        }
+      },
+      template: '#edit-project',
+      created() {
+        this.fetch_api_manifest_obj();
+      },
+      computed: {
+        web_url: function() {
+          if(!this.man_obj || !this.man_obj.uri){
+            return null;
+          }
+          let url = this.trim_prefix(this.man_obj.uri, 'https://');
+          return 'https://' + this.trim_prefix(url, 'http://');
+        },
+        sort_started_display: function() {
+          if(!this.sort_start_time){
+            return null;
+          }
+          return this.sort_start_time.toLocaleTimeString();
+        },
+        sort_elapsed_time_display: function() {
+          if(!this.sort_start_time){
+            return null;
+          }
+          let last_time = new Date();
+          if(this.sort_done_time != null){
+            last_time = this.sort_done_time;
+            console.log('done time');
+          }
+          else if(this.sort_progress_time != null){
+            last_time = this.sort_progress_time;
+            console.log('progress time');
+          }
+          
+          let time_diff = last_time - this.sort_start_time;
+          time_diff /= 1000;
+          let min_time_diff = Math.floor(time_diff / 60);
+          let hr_time_diff = Math.floor(min_time_diff / 60);
+          let seconds = Math.floor(time_diff % 60);
+          let seconds_str = seconds < 10 ? "0" + seconds : seconds;
+          let minutes = min_time_diff % 60;
+          let minutes_str = minutes < 10 ? "0" + minutes : minutes;
+          let hours = hr_time_diff % 24;
+          let hours_str = hours < 10 ? "0" + hours : hours;
+          return `${hours}:${minutes_str}:${seconds_str}`;
+        },
+      },
+      methods: {
+        fetch_api_manifest_obj: function (){
+          this.error = null;
+          this.loading = true;
+          fetch(
+            ('/editorial/item-manifest/' + this.uuid),
+              {
+                headers:{
+                    'Accept': 'application/json',
+                }
+              }
+          )
+          .then(this.loading = false)
+          .then(response => response.json())
+          .then(json => {
+            this.man_obj = json;
+            console.log(this.man_obj);
+            if(this.emit_edit_done){
+              this.emit_edit_done = false;
+              this.$emit('edit_done', true);
+            }
+          })
+        },
+        trim_prefix(str, prefix) {
+          if (str.startsWith(prefix)) {
+              return str.slice(prefix.length);
+          } else {
+              return str;
+          }
+        },
+        uri_change(input_value) {
+          input_value = this.trim_prefix(input_value, 'https://');
+          input_value = this.trim_prefix(input_value, 'http://');
+          return input_value;
+        },
+        do_sort_request(sort_objs, endpoint_url){
+          this.sort_started = true;
+          this.updating = true;
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(sort_objs),
+          };
+          fetch(endpoint_url, requestOptions)
+          .then(response => response.json())
+          .then(json => {
+            const data = json;
+            // check for error response
+            if (data.errors) {
+              // get error message from body or default to response status
+              this.updating = false;
+              this.show_sort_result = true;
+              this.errors = data.errors;
+              return Promise.reject(error);
+            }
+            console.log(data);
+            this.sort_done = data.complete;
+            this.sort_progress_time = new Date();
+            this.sort_count_updated = data.updated[0].count_updated;
+            this.sort_progress = data.updated[0].last_chunk_index / data.updated[0].total_chunks;
+            if(data.updated[0].total_chunks <= 1){
+              this.sort_done = true;
+            }
+            if(!this.sort_done){
+              this.sort_message = (`Batch ${data.updated[0].last_chunk_index} `
+              + `of ${data.updated[0].total_chunks}, `
+              + `${data.updated[0].total_uuids_count} total items`
+              );
+              this.fetch_api_project_sort();
+            }
+            else{
+              this.sort_progress = 1;
+              this.sort_message = `Finished sorting ${data.updated[0].total_uuids_count} items`;
+            }
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
+        },
+        fetch_api_reset_project_sort: function (){
+          this.error = null;
+          this.loading = true;
+          let sort_obj = {
+            uuid: this.uuid,
+            reset: true,
+          };
+          let sort_objs = [];
+          sort_objs.push(sort_obj);
+          let endpoint_url = '/editorial/item-sort-project-assertions';
+          this.do_sort_request(sort_objs, endpoint_url);
+        },
+        fetch_api_project_sort: function (){
+          this.error = null;
+          this.loading = true;
+          let sort_obj = {
+            uuid: this.uuid,
+          };
+          let sort_objs = [];
+          sort_objs.push(sort_obj);
+          let endpoint_url = '/editorial/item-sort-project-assertions';
+          this.do_sort_request(sort_objs, endpoint_url);
+        },
+        sort_start: function() {
+          this.sort_started = true;
+          this.sort_start_time = new Date();
+          this.fetch_api_reset_project_sort();
+        },
+      },
+      components: {
+        
+      },
+    }
+  ); 
+  
+  </script>
