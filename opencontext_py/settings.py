@@ -324,7 +324,7 @@ if DEBUG:
             'LOCATION': 'redis://127.0.0.1:6379/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 1000
+                'MAX_ENTRIES': 100000
             }
         },
         'file': {
