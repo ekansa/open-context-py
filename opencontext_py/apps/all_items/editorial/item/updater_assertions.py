@@ -570,7 +570,7 @@ def resort_assertion_objects_for_subject_uuids(
         'predicate'
     )
     assert_qs = assert_qs.order_by(
-        'subject', 'predicate', 'object__sort',
+        'subject', 'predicate', 'object__sort', 'object__label'
     )
 
 
