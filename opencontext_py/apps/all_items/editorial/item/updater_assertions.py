@@ -579,40 +579,39 @@ def resort_assertion_objects_for_subject_uuids(
 
     count_updated = 0
     sub_pred_obj_ranks = {}
-    with transaction.atomic():
-        for act_assert in assert_qs:
-            subj_uuid = str(act_assert.subject.uuid)
-            pred_uuid = str(act_assert.predicate.uuid)
-            
-            if not predicate_sorts.get(pred_uuid):
-                predicate_sorts[pred_uuid] = act_assert.predicate.meta_json.get(
-                    'sort', 
-                    len(predicate_sorts)
-                )
-            predicate_sort = predicate_sorts.get(
-                pred_uuid, 
+    for act_assert in assert_qs:
+        subj_uuid = str(act_assert.subject.uuid)
+        pred_uuid = str(act_assert.predicate.uuid)
+        
+        if not predicate_sorts.get(pred_uuid):
+            predicate_sorts[pred_uuid] = act_assert.predicate.meta_json.get(
+                'sort', 
                 len(predicate_sorts)
             )
-            obj_rank_key = (subj_uuid, pred_uuid,)
-            if sub_pred_obj_ranks.get(obj_rank_key) is None:
-                sub_pred_obj_ranks[obj_rank_key] = 0
-            sub_pred_obj_ranks[obj_rank_key] += 1
+        predicate_sort = predicate_sorts.get(
+            pred_uuid, 
+            len(predicate_sorts)
+        )
+        obj_rank_key = (subj_uuid, pred_uuid,)
+        if sub_pred_obj_ranks.get(obj_rank_key) is None:
+            sub_pred_obj_ranks[obj_rank_key] = 0
+        sub_pred_obj_ranks[obj_rank_key] += 1
 
-            new_sort = (
-                float(predicate_sort) 
-                + (sub_pred_obj_ranks[obj_rank_key] * PREDICATE_OBJECT_SORT_INCREMENT)
-            )
-            if new_sort == act_assert.sort:
-                # Nothing changed, so continue....
-                continue
-            # Do this as update without triggering a save, which has lots of slow
-            # validation logic.
-            AllAssertion.objects.filter(
-                uuid=act_assert.uuid
-            ).update(
-                sort=new_sort
-            )
-            count_updated += 1
+        new_sort = (
+            float(predicate_sort) 
+            + (sub_pred_obj_ranks[obj_rank_key] * PREDICATE_OBJECT_SORT_INCREMENT)
+        )
+        if new_sort == act_assert.sort:
+            # Nothing changed, so continue....
+            continue
+        # Do this as update without triggering a save, which has lots of slow
+        # validation logic.
+        AllAssertion.objects.filter(
+            uuid=act_assert.uuid
+        ).update(
+            sort=new_sort
+        )
+        count_updated += 1
 
     return count_updated
 
