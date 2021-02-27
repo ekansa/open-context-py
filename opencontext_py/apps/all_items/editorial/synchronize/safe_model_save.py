@@ -90,7 +90,7 @@ def prod_safe_save_model_object(model_object, raise_on_error=True):
     return ok
 
 
-def default_safe_save_model_object(model_object, raise_on_error=True):
+def default_safe_save_model_object(model_object, raise_on_error=True, only_insert=False):
     """Safely save a model object from the PROD to the DEFAULT database"""
     if not settings.CONNECT_PROD_DB:
         if raise_on_error:
@@ -105,7 +105,10 @@ def default_safe_save_model_object(model_object, raise_on_error=True):
         with transaction.atomic():
             # NOTE: This allows updates, not just inserts, 
             # so as to sync data from prod to the default (usually local)
-            model_object.save(using='default')
+            if not only_insert:
+                model_object.save(using='default')
+            else:
+                model_object.save(using='default', force_insert=True)
             ok = True
     except Exception as e:
         ok = False
@@ -172,7 +175,7 @@ def prod_safe_save_model_object_and_related(model_object, raise_on_error=True):
     return ok
 
 
-def default_safe_save_model_object_and_related(model_object, raise_on_error=True):
+def default_safe_save_model_object_and_related(model_object, raise_on_error=True, only_insert=False):
     """Safely save a model object, and foreign key related objects to the DEFAULT database"""
     if not settings.CONNECT_PROD_DB:
         if raise_on_error:
@@ -209,7 +212,11 @@ def default_safe_save_model_object_and_related(model_object, raise_on_error=True
     all_fk_ok = True
     for fk_attrib in fk_attribs:
         fk_obj = getattr(model_object, fk_attrib)
-        fk_ok = default_safe_save_model_object_and_related(fk_obj)
+        fk_ok = default_safe_save_model_object_and_related(
+            fk_obj, 
+            raise_on_error=raise_on_error,
+            only_insert=only_insert
+        )
         if not fk_ok:
             # Sadly, we can't save this foreign key refed object.
             all_fk_ok = False
@@ -223,7 +230,11 @@ def default_safe_save_model_object_and_related(model_object, raise_on_error=True
     # NOTE: This will fail if default objects are not yet present in the
     # local default database, because ultimately, those default objects give context
     # to other objects.
-    ok = default_safe_save_model_object(model_object, raise_on_error=raise_on_error)
+    ok = default_safe_save_model_object(
+        model_object, 
+        raise_on_error=raise_on_error,
+        only_insert=only_insert
+    )
     if ok and act_model == AllManifest:
         # Only set the cache if this is a manifest item,
         # which we hit often b/c of foreign key relations
