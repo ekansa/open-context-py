@@ -38,7 +38,8 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj):
     # hierarchy.
     act_man_obj = rel_subjects_man_obj
     while (act_man_obj.context.item_type == 'subjects' 
-       and str(act_man_obj.context.uuid) != configs.DEFAULT_SUBJECTS_ROOT_UUID):
+       and str(act_man_obj.context.uuid) 
+       not in configs.DEFAULT_SUBJECTS_ROOTS):
         context_objs.append(act_man_obj.context)
         act_man_obj = act_man_obj.context
     
