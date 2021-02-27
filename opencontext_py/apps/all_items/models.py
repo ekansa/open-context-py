@@ -765,10 +765,7 @@ class AllManifest(models.Model):
         """Makes a path for subjects items"""
         if self.item_type != 'subjects':
             return self.path
-        if str(self.uuid) in [
-            configs.DEFAULT_SUBJECTS_ROOT_UUID,
-            configs.DEFAULT_SUBJECTS_OFF_WORLD_UUID,
-        ]:
+        if str(self.uuid) in configs.DEFAULT_SUBJECTS_ROOTS:
             # We're at the "root", no path.
             self.path = ''
             return self.path
