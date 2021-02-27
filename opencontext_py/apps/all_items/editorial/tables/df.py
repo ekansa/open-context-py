@@ -42,6 +42,8 @@ exclude_args = {
 assert_qs = tabs_df.get_assert_qs(filter_args, exclude_args)
 assert_df = tabs_df.get_raw_assertion_df(assert_qs)
 df = tabs_df.prepare_df_from_assert_df(assert_df)
+df = tabs_df.expand_context_path(df)
+
 """
 
 
@@ -226,25 +228,80 @@ def get_raw_assertion_df(assert_qs):
     assert_df = pd.DataFrame.from_records(assert_qs)
     return assert_df
 
-def all_but_last_val(series, delim='/'):
-    series_list = str(series).split(delim)
-    return series_list[-1].join(delim)
 
-def extract_context_cols_from_path(df, path_col, col_prefix='context', delim='___'):
-    df_temp = df.copy()
-    p_trim = f'{path_col}__trim'
-    df_temp[p_trim] = df_temp[path_col].apply((lambda x: all_but_last_val))
-    df_p = df_temp[p_trim].str.split(
+def expand_context_path(
+    df, 
+    path_col_prefix='subject', 
+    path_delim='/', 
+    result_col_prefix='context', 
+    result_col_delim='___',
+):
+    """Expand a dataframe context path column into several columns
+
+    :param DataFrame df: The dataframe with context path column to
+        expand.
+    :param str path_col_prefix: The Django model attribute prefix
+        for the particular path column and related label column
+        that we're trying to expand.
+    :param str path_delim: The delimiter string for seperating
+        different parts of the context in the context path.
+    :param str result_col_prefix: The prefix for the resulting
+        expanded columns of contexts
+    :param str result_col_delim: A delimiter between the context
+        column prefix and the context hierarchy level part of
+        the expanded column names.
+    """
+    label_col = f'{path_col_prefix}__label'
+    path_col = f'{path_col_prefix}__path'
+    if not label_col in df.columns or not path_col in df.columns:
+        # This doesn't exist in this dataframe
+        return df
+
+    # NOTE: This is a vectorized (hopefully fast) way of splitting
+    # a context path string column into several columns.
+    # This also removes the last part of the context path which
+    # if it is the same as the item label.
+    p_delim_count_col = f'{path_col}__levels'
+    df[p_delim_count_col] = df[path_col].str.count('/')
+
+    df_p = df[path_col].str.split(
         '/',
         expand=True,
     ).rename(
-        columns=(lambda x: f"{col_prefix}{delim}{x+1}")
+        columns=(lambda x: f"{result_col_prefix}{result_col_delim}{x+1}")
     )
+
+    # Merge in our newly seperated context path columns
     df = df.merge(
         df_p,
         left_index=True,
         right_index=True,
     )
+
+    # Now for some cleanup. Remove the last context path label if
+    # that label is the same as the item label in the label_col.
+    # This makes sure we're only providing columns with the path
+    # of the PARENT item, not the item in the label_col.
+    for delim_count in df[p_delim_count_col].unique():
+        last_col = f"{result_col_prefix}{result_col_delim}{delim_count + 1}"
+        if not last_col in df.columns:
+            continue
+        label_last_index = (
+            (df[p_delim_count_col] == delim_count)
+            & (df[label_col] == df[last_col])
+        )
+        # Remove the last context value if it is the same as the
+        # item label.
+        df.loc[label_last_index, last_col] = np.nan
+        # Now check if this column is completely empty. Drop if
+        # it is.
+        col_not_null = ~df[last_col].isnull()
+        if df[col_not_null].empty:
+            # Drop the empty column.
+            df.drop(columns=[last_col], inplace=True,)
+    
+    df.drop(columns=[p_delim_count_col], inplace=True, errors='ignore')
+
     return df
 
 def prepare_df_from_assert_df(assert_df):
