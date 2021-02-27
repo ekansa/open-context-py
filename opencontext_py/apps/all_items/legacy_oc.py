@@ -104,6 +104,7 @@ LEGACY_ROOT_SUBJECTS = [
     ('f7d43b2c-b033-4cbe-9b87-8df3f3691f9c', 'Borneo', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('34053a4c-44f8-4824-beab-9dadb5a66a82', 'Brazil', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('c75c197b-e532-4968-a4a0-dd11be56bef2', 'Bulgaria', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
+    ('47ed71f2-36ab-4e43-9d91-2257476a725c', 'Cambodia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('994cbb14-e1e1-43be-b179-e3f839b87c4f', 'Cameroon', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('b582c768-0d90-4420-850c-fde4fc2d43fa', 'Canada', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('dae26993-762d-4145-8060-116665674b0e', 'Central African Republic', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
@@ -137,6 +138,7 @@ LEGACY_ROOT_SUBJECTS = [
     ('0cd4d992-caa3-4b00-94ab-7eb15bba7eaf', 'Ivory Coast', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('D9AE02E5-C3F3-41D0-EB3A-39798F63GGGG', 'Jordan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('550f3c41-7456-4ecb-aecd-e20070762261', 'Kenya', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+    ('2658a3bf-622b-4a22-9e65-a586976ee196', 'Liechtenstein', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('251C032B-684D-445E-156B-5710AA407B11', 'Malaysia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('20AF0BD0-B152-4A48-E19D-3A951EEF4A58', 'Mauritius', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('ee431393-7ab1-4d7a-abec-bb05f53babda', 'Mexico', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
@@ -174,6 +176,9 @@ LEGACY_ROOT_SUBJECTS = [
     # This is for the Palestine Authority. Do this last, because we need to have migrated the
     # Palestinian authority first.
     ('4d42c6a0-4e19-48d5-bb1c-493fdec0dd60', 'East Jerusalem', 'bc6fd3bd-d934-0afe-60aa-51d63daf650a'),
+
+    # This is the most weird context
+    ('e1833684-f082-4708-8343-e170b4c4b221', 'International Space Station',  configs.DEFAULT_SUBJECTS_OFF_WORLD_UUID),
 ]
 
 LEGACY_DATA_DATA_TYPES = {
