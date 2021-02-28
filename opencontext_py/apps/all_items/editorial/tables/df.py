@@ -340,11 +340,16 @@ def prepare_df_from_assert_df(assert_df):
 
 
 def get_context_hierarchy_df(uuids):
+    """Make a dataframe of uuids and columns for their context hierarchy
+
+    :param list uuids: A list or other iterator of UUIDs to get
+        their contet hierarchy
+    """
     man_qs = AllManifest.objects.filter(uuid__in=uuids)
     man_qs = add_select_related_contexts_to_qs(
         man_qs,
         context_prefix='',
-        depth=7,
+        depth=10,
     )
     data_dicts = []
     for man_obj in man_qs:
@@ -368,6 +373,11 @@ def get_context_hierarchy_df(uuids):
 
 
 def get_spacetime_df(uuids):
+    """Make a dataframe with spacetime columns for a list of uuids
+
+    :param list uuids: A list or other iterator of UUIDs to get
+        space time attributes for these OR THEIR context parents!
+    """
     spacetime_qs = AllSpaceTime.objects.filter(
         item__in=uuids,
     ).select_related(
@@ -397,6 +407,34 @@ def get_spacetime_df(uuids):
 
 
 def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
+    """Make a dataframe of spacetime columns found in a context hierarchy for 
+    a list of uuids
+
+    :param list uuids: A list or other iterator of UUIDs to get
+        space time attributes for these OR THEIR context parents!
+    :param str main_item_id_col: The column name for the original
+        uuids list.
+    """
+
+    # NOTE: Spatial and chronological information may be either
+    # given for a given manifest item, or it may be inferred via
+    # context relationships to parent items. This function assigns
+    # spacetime attributes to a set of manifest item uuids, by
+    # preferring spacetime atttributes directly assigned to those
+    # manifest items, and if none are assigned, by looking for
+    # spacetime attributes assigned to parent items in the context
+    # hierarchy.
+    # 
+    # This works according to this general approach:
+    # 1. Make df_levels, where we make a dataframe of the
+    #    uuids and columns labeled 'level_{x}' for parent
+    #    contexts.
+    # 2. Iterate through the level columns to assign 
+    #    spacetime attributes to rows. We go from the 
+    #    original uuids (level_0) first, then up the
+    #    context hierarchy to fill in missing spacetime
+    #    attribute values.
+
     df_levels = get_context_hierarchy_df(uuids)
     df_levels['item__latitude'] = np.nan
     df_levels['item__longitude'] = np.nan
@@ -405,11 +443,11 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
     spacetime_done = False
     level_exists = True
     level = -1
-    # import pdb; pdb.set_trace()
     while level_exists and not spacetime_done:
         level += 1
         level_col = f'level_{level}'
         if not level_col in df_levels.columns:
+            # We've exhausted the context hierarchy in df_levels.
             level_exists = False
             break
         # Are we still missing spacetime data?
@@ -465,7 +503,7 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
                 df_levels.loc[l_index, f'item__{x}'] = spacetime_df[sp_index][x].values[0]
                 df_levels.loc[l_index, f'item__{y}'] = spacetime_df[sp_index][y].values[0]
     
-    # Now some cleanup, get rid of all the levels above level 0.
+    # Now some cleanup, get rid of all the context levels above level 0.
     level = 0
     level_cols = []
     level_exists = True
