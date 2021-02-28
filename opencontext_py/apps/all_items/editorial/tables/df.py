@@ -438,8 +438,11 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
     df_levels = get_context_hierarchy_df(uuids)
     df_levels['item__latitude'] = np.nan
     df_levels['item__longitude'] = np.nan
+    df_levels['item__geo_specificity'] = np.nan
+    df_levels['item__geo_source'] = np.nan
     df_levels['item__earliest'] = np.nan
     df_levels['item__latest'] = np.nan
+    df_levels['item__chrono_source'] = np.nan
     spacetime_done = False
     level_exists = True
     level = -1
@@ -489,10 +492,10 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
             )
             sp_index = spacetime_df['item_id'] == uuid
             process_tups = [
-                (l_geo_index, 'latitude', 'longitude'), 
-                (l_time_index, 'earliest', 'latest'),
+                (l_geo_index, 'latitude', 'longitude', True, 'geo'), 
+                (l_time_index, 'earliest', 'latest', False, 'chrono'),
             ]
-            for l_index, x, y in process_tups:
+            for l_index, x, y, geo_sp, t in process_tups:
                 sp_index = (
                     sp_index 
                     & ~spacetime_df[x].isnull()
@@ -502,6 +505,24 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
                     continue
                 df_levels.loc[l_index, f'item__{x}'] = spacetime_df[sp_index][x].values[0]
                 df_levels.loc[l_index, f'item__{y}'] = spacetime_df[sp_index][y].values[0]
+                if geo_sp:
+                    # Go through some convoluted work to assign a geo_specificity value to
+                    # these geo coordinates. We preferr values assigned directly to the item's
+                    # own geospatial data, but as a backup, we look to project metadata where
+                    # a project may have some level of geo_specificity indicated in its 
+                    # meta_json.
+                    item_geo_spec = spacetime_df[sp_index]['geo_specificity'].values[0]
+                    proj_meta = spacetime_df[sp_index]['project__meta_json'].values[0]
+                    proj_geo_spec = proj_meta.get('geo_specificity', 0)
+                    geo_specs = [s for s in [item_geo_spec, proj_geo_spec] if s is not None and s != 0]
+                    if geo_specs:
+                        # We have a geo_specificity value we can use. Now assign it.
+                        df_levels.loc[l_index, 'item__geo_specificity'] = geo_specs[0]
+                # Now share information about the source of this type of information.
+                if level == 0:
+                    df_levels.loc[l_index, f'item__{t}_source'] = 'Given for: ' + spacetime_df[sp_index]['item__label'].values[0]
+                else:
+                    df_levels.loc[l_index, f'item__{t}_source'] = 'Inferred from: ' + spacetime_df[sp_index]['item__label'].values[0]
     
     # Now some cleanup, get rid of all the context levels above level 0.
     level = 0
