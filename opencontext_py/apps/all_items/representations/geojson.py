@@ -26,8 +26,16 @@ GAZETTEER_VOCAB_URIS = [
 ]
 
 
-def get_spacetime_geo_and_chronos(rel_subjects_man_obj):
-    """Gets space time objects for a manifest_obj and parent contexts"""
+def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
+    """Gets space time objects for a manifest_obj and parent contexts
+    
+    :param AllManifest rel_subjects_man_obj: The related manifest item
+        that will hopefully have associated (either directly or through
+        contexts) geospatial and chronology data.
+    :param bool require_geo: If True, return None if there is no
+        geospatial data to return. If False, allow return of chronology
+        absent geospatial data.
+    """
     if not rel_subjects_man_obj:
         return None
     if (rel_subjects_man_obj.item_type != 'subjects'
@@ -51,7 +59,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj):
     ).select_related(
         'event'
     ).select_related( 
-        'event_class'
+        'event__item_class'
     )
     if not len(spacetime_qs):
         # We found no spacetime objects at all. Distressing, but possible
@@ -97,9 +105,13 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj):
             # We have everything we need to end this looping.
             break
     
-    if not len(act_geos):
+    if require_geo and not len(act_geos):
         # We found no geometries, so return None
         return None
+    if not require_geo and not len(act_geos) and len(act_chronos):
+        # We found some chronology data, so return the chronology
+        # absent the geospatial.
+        return act_chronos
     
     inherit_chrono = None
     if len(act_chronos):

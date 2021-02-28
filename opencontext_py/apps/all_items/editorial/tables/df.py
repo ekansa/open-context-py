@@ -8,6 +8,9 @@ import pandas as pd
 from django.db.models import OuterRef, Subquery
 
 from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.defaults import (
+    DEFAULT_MANIFESTS,
+)
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
@@ -17,7 +20,9 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 
-from opencontext_py.apps.all_items.representations import geojson
+from opencontext_py.apps.all_items.representations.item import (
+    add_select_related_contexts_to_qs
+)
 
 # ---------------------------------------------------------------------
 # NOTE: These functions provide a means to export tabular data from
@@ -30,7 +35,9 @@ from opencontext_py.apps.all_items.representations import geojson
 """
 # testing
 
+import importlib
 from opencontext_py.apps.all_items.editorial.tables import df as tabs_df
+importlib.reload(tabs_df)
 
 filter_args = {
     'subject__item_class__label__contains': 'Animal',
@@ -43,12 +50,17 @@ assert_qs = tabs_df.get_assert_qs(filter_args, exclude_args)
 assert_df = tabs_df.get_raw_assertion_df(assert_qs)
 df = tabs_df.prepare_df_from_assert_df(assert_df)
 df = tabs_df.expand_context_path(df)
+df = tabs_df.add_spacetime_to_df(df)
 
 """
 
 
 # How many rows will we get in 1 database query?
 DB_QS_CHUNK_SIZE = 100
+
+# Make a list of default Manifest objects for which we prohibit 
+# edits.
+DEFAULT_UUIDS = [m.get('uuid') for m in DEFAULT_MANIFESTS if m.get('uuid')]
 
 
 def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
@@ -132,6 +144,8 @@ def get_assert_qs(filter_args, exclude_args=None):
         # Add optional exclude args
         qs = qs.exclude(**exclude_args)
     
+    # Add lots of select related objects so we don't
+    # need to do many, many, many future queries.
     qs = qs.select_related(
         'subject'
     ).select_related(
@@ -154,7 +168,10 @@ def get_assert_qs(filter_args, exclude_args=None):
         'object'
     ).select_related( 
         'object__context'
-    ).annotate(
+    )
+
+    # Now add annotations to the query set.
+    qs = qs.annotate(
         object_thumbnail=Subquery(thumbs_qs)
     ).annotate(
         # This will indicate if a predicate is equivalent to a
@@ -182,7 +199,6 @@ def get_assert_qs(filter_args, exclude_args=None):
         object_equiv_ld_uri=Subquery(object_equiv_ld_uri)
     )
     return qs
-
 
 def get_raw_assertion_df(assert_qs):
     assert_qs = assert_qs.values(
@@ -300,9 +316,10 @@ def expand_context_path(
             # Drop the empty column.
             df.drop(columns=[last_col], inplace=True,)
     
+    # Last little clean up of a column temporarily used for processing
     df.drop(columns=[p_delim_count_col], inplace=True, errors='ignore')
-
     return df
+
 
 def prepare_df_from_assert_df(assert_df):
     """Prepares a (final) dataframe from the assert df"""
@@ -319,4 +336,176 @@ def prepare_df_from_assert_df(assert_df):
             'subject__context__uri',
         ]
     ].groupby(by=['subject_id']).first().reset_index()
+    return df
+
+
+def get_context_hierarchy_df(uuids):
+    man_qs = AllManifest.objects.filter(uuid__in=uuids)
+    man_qs = add_select_related_contexts_to_qs(
+        man_qs,
+        context_prefix='',
+        depth=7,
+    )
+    data_dicts = []
+    for man_obj in man_qs:
+        data = {
+            'level_0': man_obj.uuid,
+        }
+        i = 0
+        act_context = man_obj.context
+        while (
+            act_context.item_type == 'subjects' 
+            and str(act_context.uuid) 
+            not in configs.DEFAULT_SUBJECTS_ROOTS
+        ):
+            i += 1
+            data[f'level_{i}'] = act_context.uuid
+            act_context = act_context.context
+
+        data_dicts.append(data)
+    df_levels = pd.DataFrame(data=data_dicts)
+    return df_levels
+
+
+def get_spacetime_df(uuids):
+    spacetime_qs = AllSpaceTime.objects.filter(
+        item__in=uuids,
+    ).select_related(
+        'item'
+    ).select_related(
+        'project'
+    ).select_related(
+        'event'
+    ).select_related( 
+        'event__item_class'
+    ).values(
+        'item_id',
+        'item__label',
+        'item__uri',
+        'event__label',
+        'event__item_class_id',
+        'event__item_class__label',
+        'latitude',
+        'longitude',
+        'earliest',
+        'latest',
+        'geo_specificity',
+        'project__meta_json',
+    )
+    spacetime_df = pd.DataFrame.from_records(spacetime_qs)
+    return spacetime_df
+
+
+def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
+    df_levels = get_context_hierarchy_df(uuids)
+    df_levels['item__latitude'] = np.nan
+    df_levels['item__longitude'] = np.nan
+    df_levels['item__earliest'] = np.nan
+    df_levels['item__latest'] = np.nan
+    spacetime_done = False
+    level_exists = True
+    level = -1
+    # import pdb; pdb.set_trace()
+    while level_exists and not spacetime_done:
+        level += 1
+        level_col = f'level_{level}'
+        if not level_col in df_levels.columns:
+            level_exists = False
+            break
+        # Are we still missing spacetime data?
+        missing_geo = (
+            df_levels['item__latitude'].isnull()
+            | df_levels['item__longitude'].isnull()
+        )
+        missing_time = (
+            df_levels['item__earliest'].isnull()
+            | df_levels['item__latest'].isnull()
+        )
+        missing_index = (missing_geo | missing_time)
+        if df_levels[missing_index].empty:
+            # All the space time data is filled,
+            # so no need to query for spacetime objects.
+            spacetime_done = True
+            break
+        # Now get spacetime objects for the
+        # uuids at this level.
+        ok_l = ~df_levels[level_col].isnull()
+        spacetime_df = get_spacetime_df(
+            uuids=df_levels[ok_l][level_col].unique().tolist()
+        )
+        if spacetime_df is None or spacetime_df.empty:
+            # No data returned, so go to the next level.
+            continue
+        ok_sp = ~spacetime_df['item_id'].isnull()
+        for uuid in spacetime_df[ok_sp]['item_id'].unique():
+            l_uuid_index = df_levels[level_col] == uuid
+            if df_levels[(l_uuid_index & missing_index)].empty:
+                # This particular uuid has filled data,
+                # so skip it.
+                continue
+            l_geo_index = (
+                l_uuid_index & missing_geo
+            )
+            l_time_index = (
+                l_uuid_index & missing_time
+            )
+            sp_index = spacetime_df['item_id'] == uuid
+            process_tups = [
+                (l_geo_index, 'latitude', 'longitude'), 
+                (l_time_index, 'earliest', 'latest'),
+            ]
+            for l_index, x, y in process_tups:
+                sp_index = (
+                    sp_index 
+                    & ~spacetime_df[x].isnull()
+                    & ~spacetime_df[y].isnull()
+                )
+                if spacetime_df[sp_index].empty:
+                    continue
+                df_levels.loc[l_index, f'item__{x}'] = spacetime_df[sp_index][x].values[0]
+                df_levels.loc[l_index, f'item__{y}'] = spacetime_df[sp_index][y].values[0]
+    
+    # Now some cleanup, get rid of all the levels above level 0.
+    level = 0
+    level_cols = []
+    level_exists = True
+    while level_exists:
+        level += 1
+        level_col = f'level_{level}'
+        if not level_col in df_levels.columns:
+            level_exists = False
+            break
+        level_cols.append(level_col)
+    df_levels.drop(columns=level_cols, inplace=True)
+
+    # Now rename the main id column to make it easier
+    # to join/merge with the main df.
+    df_levels.rename(
+        columns={'level_0': main_item_id_col}, 
+        inplace=True
+    )
+    return df_levels
+
+
+def add_spacetime_to_df(df):
+    """Adds spacetime columns to a df"""
+    sp_index = (
+        ~df['subject_id'].isnull()
+        & df['subject__item_type'].isin(
+            ['subjects', 'projects', ]
+        )
+    )
+    chunks = chunk_list(
+        df[sp_index]['subject_id'].unique().tolist(), 
+        n=5000,
+    )
+    df_spacetime_list = []
+    for chunk_uuids in chunks:
+        df_spacetime_chunk = get_spacetime_from_context_levels(chunk_uuids)
+        df_spacetime_list.append(df_spacetime_chunk)
+    
+    # Concatenate all of these chunked spacetime datasets
+    df_spacetime = pd.concat(df_spacetime_list)
+    # Add them to our main, glorious dataframe.
+    df = df.merge(df_spacetime, left_on='subject_id', right_on='subject_id')
     return df
