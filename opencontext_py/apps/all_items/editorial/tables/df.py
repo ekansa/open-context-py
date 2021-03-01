@@ -608,6 +608,10 @@ def add_df_linked_data_from_assert_df(df, assert_df):
     for pred_uri in ld_assert_df[id_index]['predicate_equiv_ld_uri'].unique():
         pred_index = id_index & (ld_assert_df['predicate_equiv_ld_uri'] == pred_uri)
         pred_label = ld_assert_df[pred_index]['predicate_equiv_ld_label'].values[0]
+
+        # NOTE: TODO Maybe add URIs to ALL the predicate columns? That will make
+        # sure they are uniquely labeled, and we can add special output features
+        # to strip them to make a more user friendly output.
         col_uris = f'{pred_label} [URI]'
         col_labels = f'{pred_label} [Label]'
         pred_obj_index = pred_index & ~ld_assert_df['object_equiv_ld_uri'].isnull()
