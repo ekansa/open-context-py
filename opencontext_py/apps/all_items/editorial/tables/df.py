@@ -48,10 +48,12 @@ exclude_args = {
 }
 assert_qs = tabs_df.get_assert_qs(filter_args, exclude_args)
 assert_df = tabs_df.get_raw_assertion_df(assert_qs)
-df = tabs_df.prepare_df_from_assert_df(assert_df)
-df = tabs_df.expand_context_path(df)
-df = tabs_df.add_spacetime_to_df(df)
 
+df = tabs_df.prepare_df_from_assert_df(assert_df)
+df = tabs_df.add_spacetime_to_df(df)
+df = tabs_df.expand_context_path(df)
+
+df = tabs_df.add_df_linked_data_from_assert_df(df, assert_df)
 """
 
 
@@ -224,22 +226,23 @@ def get_raw_assertion_df(assert_qs):
         'sort',
         'language__uri',
         'language__label',
+        'object_id',
         'object__label',
         'object__item_type',
         'object__path',
         'object__uri',
-        "obj_string",
-        "obj_boolean",
-        "obj_integer",
-        "obj_double",
-        "obj_datetime",
-        "object_thumbnail",
-        "predicate_dc_creator",
-        "predicate_dc_contributor",
-        "predicate_equiv_ld_label",
-        "predicate_equiv_ld_uri",
-        "object_equiv_ld_label",
-        "object_equiv_ld_uri",
+        'obj_string',
+        'obj_boolean',
+        'obj_integer',
+        'obj_double',
+        'obj_datetime',
+        'object_thumbnail',
+        'predicate_dc_creator',
+        'predicate_dc_contributor',
+        'predicate_equiv_ld_label',
+        'predicate_equiv_ld_uri',
+        'object_equiv_ld_label',
+        'object_equiv_ld_uri',
     )
     assert_df = pd.DataFrame.from_records(assert_qs)
     return assert_df
@@ -567,4 +570,75 @@ def add_spacetime_to_df(df):
     df_spacetime = pd.concat(df_spacetime_list)
     # Add them to our main, glorious dataframe.
     df = df.merge(df_spacetime, left_on='subject_id', right_on='subject_id')
+    return df
+
+
+def add_df_linked_data_from_assert_df(df, assert_df):
+    """Prepares a (final) dataframe from the assert df"""
+    ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
+    
+    # Make a smaller assertion df that's only got linked
+    # data.
+    ld_assert_df = assert_df[ld_index][
+        [
+            'subject_id',
+            'predicate_equiv_ld_label',
+            'predicate_equiv_ld_uri',
+            'object_equiv_ld_label',
+            'object_equiv_ld_uri',
+            'predicate__data_type',
+            'object_id',
+            'obj_string',
+            'obj_boolean',
+            'obj_integer',
+            'obj_double',
+            'obj_datetime',
+        ]
+    ].copy()
+    
+    # NOTE: TODO - use the pandas merge how="cross" to
+    # add in more equivalent objects for special case predicates
+    # that may have objects with multiple equivalents that we want
+    # to include in this output. That's because, by default, the
+    # 'object_equiv_ld_label' 'object_equiv_ld_uri' are only for the
+    # first equivalent object.
+    
+    # 1: Add linked data where the object is a linked entity (not a literal)
+    id_index = ld_assert_df['predicate__data_type'] == 'id'
+    for pred_uri in ld_assert_df[id_index]['predicate_equiv_ld_uri'].unique():
+        pred_index = id_index & (ld_assert_df['predicate_equiv_ld_uri'] == pred_uri)
+        pred_label = ld_assert_df[pred_index]['predicate_equiv_ld_label'].values[0]
+        col_uris = f'{pred_label} [URI]'
+        col_labels = f'{pred_label} [Label]'
+        pred_obj_index = pred_index & ~ld_assert_df['object_equiv_ld_uri'].isnull()
+
+        # Make a dataframe for this predicate and the equivalent linked
+        # objects.
+        act_ld_df = ld_assert_df[pred_obj_index][
+            [
+                'subject_id',
+                'object_equiv_ld_label',
+                'object_equiv_ld_uri',
+            ]
+        ].groupby(by=['subject_id']).first().reset_index()
+
+        act_ld_df['object_equiv_ld_uri'] = 'https://' + act_ld_df['object_equiv_ld_uri']
+
+        act_ld_df.rename(
+            columns={
+                'object_equiv_ld_label': col_labels,
+                'object_equiv_ld_uri': col_uris,
+            },
+            inplace=True,
+        )
+        # Sort the dataframe columns.
+        act_ld_df = act_ld_df[['subject_id', col_uris, col_labels]]
+        # Add them to our main, glorious dataframe.
+        df = df.merge(
+            act_ld_df,
+            how="left",
+            left_on='subject_id', 
+            right_on='subject_id'
+        )
+
     return df
