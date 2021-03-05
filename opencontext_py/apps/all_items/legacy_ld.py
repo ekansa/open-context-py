@@ -148,6 +148,15 @@ URI_PREFIXES = {
     'http://purl.org/dc/terms/': 'dc-terms',
 }
 
+# Sorts for equivalence asstions for URIs 
+SORTS_FOR_EQUIV_URI_PREFIXES = [
+    # This is used for EOL mappings, but we want GBIF to be
+    # ranked higher and more prominently, so we have a high
+    # sort value here.
+    ('purl.org/NET/biol/ns#term_hasTaxonomy', 100,),
+    # Most EOL URIs should have a high sort to de-emphasize.
+    ('eol.org', 100,),
+]
 
 """
 from opencontext_py.apps.all_items.legacy_ld import *
@@ -536,3 +545,20 @@ def migrate_legacy_link_annotations(
         print('-'*72)
     
     return missing_entities
+
+
+def eol_assertion_fix(
+    project_id=None, 
+    ranking_tuples=SORTS_FOR_EQUIV_URI_PREFIXES
+):
+    """Fixes assertions related to the EOL"""
+    # NOTE: We will continue to support assertions made to
+    # map Open Context published predicates and types to the
+    # EOL, but we want to make these sort as a lower priority
+    # so that GBIF assertions become more prominent.
+
+    print('De-emphasize equivalence assertions for EOL')
+    utilities.update_equivalent_object_uri_sorting(
+        ranking_tuples,
+        project_id=project_id,
+    )

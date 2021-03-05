@@ -72,3 +72,5 @@ def migrate_single_project(old_project_uuid, error_path=''):
         more_filters_dict=None,
         use_cache=True,
     )
+    # Make sure any EOL related assertions are de-emphasized.
+    legacy_ld.eol_assertion_fix(project_id=project.uuid)

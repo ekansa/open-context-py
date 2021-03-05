@@ -123,3 +123,17 @@ def add_string_assertion_simple(
             f'-> {ass_obj.obj_string}'
         )
     return ass_obj
+
+
+def update_equivalent_object_uri_sorting(ranking_tuples, project_id=None):
+    """Updates sorting for equivalence assertions for certain objects, by their URI"""
+    for uri_prefix, new_sort in ranking_tuples:
+        uri_prefix = AllManifest().clean_uri(uri_prefix)
+        qs = AllAssertion.objects.filter(
+            predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+            object__uri__startswith=uri_prefix,
+        )
+        if project_id:
+            qs = qs.filter(subject__project_id=project_id)
+        
+        qs.update(sort=new_sort)

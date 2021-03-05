@@ -1929,7 +1929,11 @@ class AllAssertion(models.Model):
                 'sort', 1
             )
         if not self.attribute_group_sort:
-            self.attribute_group_sort = self.attribute_group_sort.meta_json.get(
+            self.attribute_group_sort = self.attribute_group.meta_json.get(
+                'sort', 1
+            )
+        if not self.sort:
+            self.sort = self.predicate.meta_json.get(
                 'sort', 1
             )
 

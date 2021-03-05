@@ -91,28 +91,14 @@ def get_assert_qs(filter_args, exclude_args=None):
         ]
     ).select_related(
         'object'
+    ).order_by(
+        'sort'
     ).values('object')[:1]
 
     predicate_equiv_ld_label = predicate_equiv_ld_qs.values(
         'object__label'
     )[:1]
     predicate_equiv_ld_uri = predicate_equiv_ld_qs.values(
-        'object__uri'
-    )[:1]
-
-    object_equiv_ld_qs = AllAssertion.objects.filter(
-        subject=OuterRef('object'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        object__item_type__in=['class', 'property', 'uri'],
-        visible=True,
-    ).select_related(
-        'object'
-    ).values('object')[:1]
-    
-    object_equiv_ld_label = object_equiv_ld_qs.values(
-        'object__label'
-    )[:1]
-    object_equiv_ld_uri = object_equiv_ld_qs.values(
         'object__uri'
     )[:1]
 
@@ -191,14 +177,6 @@ def get_assert_qs(filter_args, exclude_args=None):
         # This will add URIs of linked data equivalents to the predicate
         # of the assertion.
         predicate_equiv_ld_uri=Subquery(predicate_equiv_ld_uri)
-    ).annotate(
-        # This will add labels of linked data equivalents to the object
-        # of the assertion.
-        object_equiv_ld_label=Subquery(object_equiv_ld_label)
-    ).annotate(
-        # This will add URIs of linked data equivalents to the object
-        # of the assertion.
-        object_equiv_ld_uri=Subquery(object_equiv_ld_uri)
     )
     return qs
 
@@ -241,8 +219,6 @@ def get_raw_assertion_df(assert_qs):
         'predicate_dc_contributor',
         'predicate_equiv_ld_label',
         'predicate_equiv_ld_uri',
-        'object_equiv_ld_label',
-        'object_equiv_ld_uri',
     )
     assert_df = pd.DataFrame.from_records(assert_qs)
     return assert_df
@@ -573,6 +549,37 @@ def add_spacetime_to_df(df):
     return df
 
 
+def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
+    """Gets a dataframe of linked data equivalence to Open Context ids"""
+
+    # NOTE: Any given Open Context entity many have multiple linked data
+    # equivalents or near equivalents. This creates a dataframe mapping
+    # Open Context ids to their equivalent linked data entities
+
+    object_equiv_ld_qs = AllAssertion.objects.filter(
+        subject__in=oc_entity_ids,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+        object__item_type__in=configs.URI_ITEM_TYPES,
+        visible=True,
+    ).select_related(
+        'object'
+    ).values(
+        'subject_id',
+        'object__label',
+        'object__uri',
+    )
+    equiv_df = pd.DataFrame.from_records(object_equiv_ld_qs)
+    equiv_df.rename(
+        columns={
+            'subject_id': f'{output_col_prefix}_id',
+            'object__label': f'{output_col_prefix}_equiv_ld_label',
+            'object__uri': f'{output_col_prefix}_equiv_ld_uri',
+        },
+        inplace=True,
+    )
+    return equiv_df
+
+
 def add_df_linked_data_from_assert_df(df, assert_df):
     """Prepares a (final) dataframe from the assert df"""
     ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
@@ -584,8 +591,6 @@ def add_df_linked_data_from_assert_df(df, assert_df):
             'subject_id',
             'predicate_equiv_ld_label',
             'predicate_equiv_ld_uri',
-            'object_equiv_ld_label',
-            'object_equiv_ld_uri',
             'predicate__data_type',
             'object_id',
             'obj_string',
@@ -596,15 +601,23 @@ def add_df_linked_data_from_assert_df(df, assert_df):
         ]
     ].copy()
     
-    # NOTE: TODO - use the pandas merge how="cross" to
-    # add in more equivalent objects for special case predicates
-    # that may have objects with multiple equivalents that we want
-    # to include in this output. That's because, by default, the
-    # 'object_equiv_ld_label' 'object_equiv_ld_uri' are only for the
-    # first equivalent object.
+    # Merge in the Linked Data equivalents to all the object_ids
+    obj_index = ~ld_assert_df['object_id'].isnull()
+    obj_equiv_df = get_df_entity_equiv_linked_data(
+        ld_assert_df[obj_index]['object_id'].unique()
+    )
+    ld_assert_df = ld_assert_df.merge(
+        obj_equiv_df,
+        left_on='object_id', 
+        right_on='object_id',
+        how='outer',
+    )
+    obj_index = ~ld_assert_df['object_equiv_ld_uri'].isnull()
+    ld_assert_df.loc[obj_index, 'object_equiv_ld_uri'] = 'https://' + ld_assert_df[obj_index]['object_equiv_ld_uri']
     
     # 1: Add linked data where the object is a linked entity (not a literal)
     id_index = ld_assert_df['predicate__data_type'] == 'id'
+
     for pred_uri in ld_assert_df[id_index]['predicate_equiv_ld_uri'].unique():
         pred_index = id_index & (ld_assert_df['predicate_equiv_ld_uri'] == pred_uri)
         pred_label = ld_assert_df[pred_index]['predicate_equiv_ld_label'].values[0]
@@ -612,8 +625,8 @@ def add_df_linked_data_from_assert_df(df, assert_df):
         # NOTE: TODO Maybe add URIs to ALL the predicate columns? That will make
         # sure they are uniquely labeled, and we can add special output features
         # to strip them to make a more user friendly output.
-        col_uris = f'{pred_label} [URI]'
-        col_labels = f'{pred_label} [Label]'
+        col_uris = f'{pred_label} (URI) [https://{pred_uri}]'
+        col_labels = f'{pred_label} (Label) [https://{pred_uri}]'
         pred_obj_index = pred_index & ~ld_assert_df['object_equiv_ld_uri'].isnull()
 
         # Make a dataframe for this predicate and the equivalent linked
@@ -624,9 +637,10 @@ def add_df_linked_data_from_assert_df(df, assert_df):
                 'object_equiv_ld_label',
                 'object_equiv_ld_uri',
             ]
-        ].groupby(by=['subject_id']).first().reset_index()
+        ].groupby(by=['subject_id']).agg([list]).reset_index()
 
-        act_ld_df['object_equiv_ld_uri'] = 'https://' + act_ld_df['object_equiv_ld_uri']
+        act_ld_df.columns = act_ld_df.columns.get_level_values(0)
+        act_ld_df.reset_index(drop=True, inplace=True)
 
         act_ld_df.rename(
             columns={
