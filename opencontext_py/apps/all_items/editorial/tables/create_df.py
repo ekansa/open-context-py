@@ -413,6 +413,7 @@ def get_spacetime_df(uuids):
         'longitude',
         'earliest',
         'latest',
+        'geometry_type',
         'geo_specificity',
         'project__meta_json',
     )
@@ -452,6 +453,7 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
     df_levels = get_context_hierarchy_df(uuids)
     df_levels['item__latitude'] = np.nan
     df_levels['item__longitude'] = np.nan
+    df_levels['item__geometry_type'] = np.nan
     df_levels['item__geo_specificity'] = np.nan
     df_levels['item__geo_source'] = np.nan
     df_levels['item__earliest'] = np.nan
@@ -520,6 +522,10 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
                 df_levels.loc[l_index, f'item__{x}'] = spacetime_df[sp_index][x].values[0]
                 df_levels.loc[l_index, f'item__{y}'] = spacetime_df[sp_index][y].values[0]
                 if geo_sp:
+                    # First, add the type of geometry to this. Record. In the future, this will make it
+                    # easier to output the output dataframe as GeoJSON, since will know which rows will
+                    # have non-point geometries.
+                    df_levels.loc[l_index, 'item__geometry_type'] = spacetime_df[sp_index]['geometry_type'].values[0]
                     # Go through some convoluted work to assign a geo_specificity value to
                     # these geo coordinates. We preferr values assigned directly to the item's
                     # own geospatial data, but as a backup, we look to project metadata where
