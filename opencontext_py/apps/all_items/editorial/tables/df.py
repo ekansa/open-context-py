@@ -1,11 +1,13 @@
 import os
 import hashlib
 import time
+import uuid as GenUUID
+
 
 import numpy as np
 import pandas as pd
 
-from django.db.models import OuterRef, Subquery
+from django.db.models import Q, OuterRef, Subquery
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.defaults import (
@@ -39,6 +41,12 @@ import importlib
 from opencontext_py.apps.all_items.editorial.tables import df as tabs_df
 importlib.reload(tabs_df)
 
+
+filter_args = {
+    'subject__item_class__label__contains': 'Object',
+    'subject__path__contains': 'Italy',
+}
+
 filter_args = {
     'subject__item_class__label__contains': 'Animal',
     'subject__path__contains': 'Italy',
@@ -50,6 +58,8 @@ assert_qs = tabs_df.get_assert_qs(filter_args, exclude_args)
 assert_df = tabs_df.get_raw_assertion_df(assert_qs)
 
 df = tabs_df.prepare_df_from_assert_df(assert_df)
+df = tabs_df.add_authors_to_df(df, assert_df)
+
 df = tabs_df.add_spacetime_to_df(df)
 df = tabs_df.expand_context_path(df)
 
@@ -84,6 +94,12 @@ def get_assert_qs(filter_args, exclude_args=None):
         predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
         object__item_type__in=['class', 'property'],
         visible=True,
+    ).filter(
+        Q(object__meta_json__deprecated__isnull=True)
+        |Q(object__meta_json__deprecated=False)
+    ).filter(
+        Q(object__context__meta_json__deprecated__isnull=True)
+        |Q(object__context__meta_json__deprecated=False)
     ).exclude(
         object_id__in=[
             configs.PREDICATE_DCTERMS_CREATOR_UUID,
@@ -101,26 +117,6 @@ def get_assert_qs(filter_args, exclude_args=None):
     predicate_equiv_ld_uri = predicate_equiv_ld_qs.values(
         'object__uri'
     )[:1]
-
-    # DC-Creator equivalent predicate
-    dc_creator_qs = AllAssertion.objects.filter(
-        subject=OuterRef('predicate'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        object_id=configs.PREDICATE_DCTERMS_CREATOR_UUID,
-        visible=True,
-    ).select_related(
-        'object'
-    ).values('object__label')[:1]
-
-    # DC-Contributor equivalent predicate
-    dc_contributor_qs = AllAssertion.objects.filter(
-        subject=OuterRef('predicate'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        object_id=configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID,
-        visible=True,
-    ).select_related(
-        'object'
-    ).values('object__label')[:1]
 
     qs = AllAssertion.objects.filter(
         visible=True,
@@ -143,6 +139,8 @@ def get_assert_qs(filter_args, exclude_args=None):
     ).select_related(
         'subject__context'
     ).select_related(
+        'project'
+    ).select_related(
         'observation'
     ).select_related(
         'event'
@@ -162,14 +160,6 @@ def get_assert_qs(filter_args, exclude_args=None):
     qs = qs.annotate(
         object_thumbnail=Subquery(thumbs_qs)
     ).annotate(
-        # This will indicate if a predicate is equivalent to a
-        # dublin core creator label
-        predicate_dc_creator=Subquery(dc_creator_qs)
-    ).annotate(
-        # This will indicate if a predicate is equivalent to a
-        # dublin core contributor label
-        predicate_dc_contributor=Subquery(dc_contributor_qs)
-    ).annotate(
         # This will add labels of linked data equivalents to the predicate
         # of the assertion.
         predicate_equiv_ld_label=Subquery(predicate_equiv_ld_label)
@@ -177,6 +167,13 @@ def get_assert_qs(filter_args, exclude_args=None):
         # This will add URIs of linked data equivalents to the predicate
         # of the assertion.
         predicate_equiv_ld_uri=Subquery(predicate_equiv_ld_uri)
+    )
+    qs = qs.order_by(
+        'subject__sort',
+        'obs_sort', 
+        'event_sort', 
+        'attribute_group_sort', 
+        'sort',
     )
     return qs
 
@@ -186,11 +183,13 @@ def get_raw_assertion_df(assert_qs):
         'subject__label',
         'subject__item_type',
         'subject__item_class__label',
+        'subject__project_id',
         'subject__project__label',
         'subject__project__uri',
         'subject__path',
         'subject__sort',
         'subject__context__uri',
+        'project_id',
         'observation_id',
         'observation__label',
         'event_id',
@@ -215,8 +214,6 @@ def get_raw_assertion_df(assert_qs):
         'obj_double',
         'obj_datetime',
         'object_thumbnail',
-        'predicate_dc_creator',
-        'predicate_dc_contributor',
         'predicate_equiv_ld_label',
         'predicate_equiv_ld_uri',
     )
@@ -305,9 +302,11 @@ def prepare_df_from_assert_df(assert_df):
     df = assert_df[
         [
             'subject_id',
+            'project_id',
             'subject__label',
             'subject__item_type',
             'subject__item_class__label',
+            'subject__project_id',
             'subject__project__label',
             'subject__project__uri',
             'subject__path',
@@ -315,6 +314,12 @@ def prepare_df_from_assert_df(assert_df):
             'subject__context__uri',
         ]
     ].groupby(by=['subject_id']).first().reset_index()
+    df.columns = df.columns.get_level_values(0)
+    df.sort_values(
+        by=['subject__sort', 'subject__path', 'subject__label'],
+        inplace=True,
+    )
+    df.reset_index(drop=True, inplace=True)
     return df
 
 
@@ -549,6 +554,250 @@ def add_spacetime_to_df(df):
     return df
 
 
+def get_df_entities_equiv_to_entity(subject_ids, equiv_entity_id, renames=None):
+    """Get a dataframe of subject entities that are equivalent to another entity
+    
+    :param list subject_ids: List (or iterator) of entities that are
+        the subject of an equivalence relationship (typically open context
+        entities)
+    :param str equiv_entity_id: UUID of the object of the equivalence relation
+        (typically a linked data entity)
+    """
+
+    # NOTE: Use ths function if you know the linked data entity object
+    # and want the subject entities that are equivalent to that linked
+    # data object.
+
+    qs = AllAssertion.objects.filter(
+        subject_id__in=subject_ids,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+        object_id=equiv_entity_id,
+        visible=True,
+    ).distinct(
+        'subject_id'
+    ).order_by(
+        'subject_id'
+    ).values('subject_id')
+    act_df =  pd.DataFrame.from_records(qs)
+    if renames:
+        act_df.rename(columns=renames, inplace=True)
+    return act_df
+
+
+def get_df_project_authors_for_role(
+    project_ids, 
+    role_id=configs.PREDICATE_DCTERMS_CREATOR_UUID
+):
+    """Get a dataframe of project authors based on the uri of their role
+    
+    :param list project_ids: A list (or other iterator) of project ids.
+    :param str role_id: The ID of the predicate for the authorship role
+    """
+    roles_dict = {
+        configs.PREDICATE_DCTERMS_CREATOR_UUID: 'dc_creator',
+        configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID: 'dc_contributor',
+    }
+    role = roles_dict.get(role_id)
+
+    qs = AllAssertion.objects.filter(
+        subject_id__in=project_ids,
+        predicate_id=role_id,
+        visible=True,
+    ).select_related(
+        'object'
+    ).values(
+        'subject_id',
+        'object_id',
+        'object__label',
+    )
+    df_auth = pd.DataFrame.from_records(qs)
+    df_auth.rename(
+        columns={
+            'subject_id': 'project_id',
+            'object_id': f'{role}_id',
+            'object__label': f'{role}_label',
+            # 'object__uri': f'{role}_uri',
+        },
+        inplace=True,
+    )
+    if df_auth is None or df_auth.empty:
+        df_auth = pd.DataFrame(
+            data={'project_id':[], f'{role}_id':[], f'{role}_label':[]}
+        )
+    return df_auth
+
+
+def get_df_project_authors(project_ids):
+    """Get a dataframe of project authors
+    
+    :param list project_ids: A list (or other iterator) of project ids.
+    """
+    df_creator = get_df_project_authors_for_role(
+        project_ids, 
+        role_id=configs.PREDICATE_DCTERMS_CREATOR_UUID,
+    )
+    df_contribs = get_df_project_authors_for_role(
+        project_ids, 
+        role_id=configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID,
+    )
+    df_proj_auths = df_creator.merge(
+        df_contribs,
+        left_on='project_id', 
+        right_on='project_id',
+        how='outer',
+    )
+    return df_proj_auths
+
+
+def df_merge_authors_of_role_from_index(df, assert_df, act_index, role):
+    """Merges in authors of a role into the main dataframe
+
+    :param DataFrame df: The dataframe that we are adding authors of a
+       given role into
+    :param DataFrame assert_df: The raw assertion dataframe that may have
+       authors of a given role
+    :param DataFrame Index act_index: The index of rows in the 
+       assert_df that have authors of a given role.
+    :param str role: The role for these authors (contributor or creator)
+    """
+    if assert_df[act_index].empty:
+        # No authors of this role to add.
+        df[f'{role}_label'] = np.nan
+        return df
+    df_role = assert_df[act_index][
+        [
+            'subject_id',
+            'object_id',
+            'object__label',
+        ]
+    ].groupby(by=['subject_id']).agg([list]).reset_index()
+    df_role.columns = df_role.columns.get_level_values(0)
+    df_role.reset_index(drop=True, inplace=True)
+    df_role.rename(
+        columns={
+            'object_id':  f'{role}_id',
+            'object__label': f'{role}_label',
+        }, inplace=True)
+    # Add them to our main, glorious dataframe.
+    df = df.merge(
+        df_role,
+        how="left",
+        left_on='subject_id', 
+        right_on='subject_id'
+    )
+    return df
+
+
+def clean_lists(col):
+    """Cleans lists of dc_creator, and dc_contributors to remove np.nan values"""
+    if not isinstance(col, list):
+        return np.nan
+    output = [
+        x for x in col if isinstance(x, str) or isinstance(x, GenUUID.UUID)
+    ]
+    if not output:
+        return np.nan
+    return output
+
+
+def combine_author_lists(x, col):
+    """Combine weird numpy series of lists, adding creators to contribs"""
+    contribs = x['dc_contributor_label']
+    creators = x['dc_creator_label']
+    output = [
+        x for x in contribs if isinstance(auth, str) or instance(aut)
+    ]
+    output += [
+        auth 
+        for auth in creators if isinstance(auth, str) and auth not in contribs
+    ]
+    return output
+
+
+def add_authors_to_df(df, assert_df, drop_roles=True):
+    """Adds authorship columns to a df"""
+    
+    pred_roles_tups = [
+        (configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID, 'dc_contributor'),
+        (configs.PREDICATE_DCTERMS_CREATOR_UUID, 'dc_creator'),
+    ]
+    for role_id, role in pred_roles_tups:
+        # Get dc-contributors directly assigned to the subject item.
+        df_role_preds = get_df_entities_equiv_to_entity(
+            subject_ids=assert_df['predicate_id'].unique().tolist(),
+            equiv_entity_id=role_id,
+            renames={'subject_id': 'predicate_id'},
+        )
+        if df_role_preds is not None and not df_role_preds.empty:
+            role_index = (
+                (assert_df['object__item_type'] == 'persons')
+                & (
+                    (assert_df['predicate_id'] == GenUUID.UUID(role_id))
+                    | assert_df['predicate_id'].isin(df_role_preds['predicate_id'].unique())
+                )
+            )
+            df = df_merge_authors_of_role_from_index(df, assert_df, role_index, role)
+        else:
+            df[f'{role}_id'] = np.nan
+            df[f'{role}_label'] = np.nan
+
+    # Get the project authorship roles
+    df_proj_auths = get_df_project_authors(
+        assert_df['project_id'].unique().tolist()
+    )
+    df_proj_auths_grp = df_proj_auths.groupby(
+        by=['project_id']
+    ).agg([list]).reset_index()
+    df_proj_auths_grp.columns = df_proj_auths_grp.columns.get_level_values(0)
+    
+    # Do a little clean up to remove columns with a list of np.nan, and remove the np.nan's
+    # if they are inside lists with otherwise valid values.
+    for col in ['dc_contributor_id', 'dc_contributor_label', 'dc_creator_id', 'dc_creator_label']:
+        l_null = ~df_proj_auths_grp[col].isnull()
+        df_proj_auths_grp.loc[l_null, col] = df_proj_auths_grp[l_null].apply(
+            lambda row: clean_lists(row[col]), axis=1
+        )
+
+    no_item_roles = df['dc_contributor_label'].isnull() & df['dc_creator_label'].isnull()
+    for has_missing_proj_id in df[no_item_roles]['project_id'].unique():
+        # Add missing contributor, creator names from projects for items that are missing
+        # BOTH contributors and creators.
+        act_index = no_item_roles & (df['project_id'] == has_missing_proj_id)
+        proj_index = df_proj_auths_grp['project_id'] == has_missing_proj_id
+        
+        df.loc[act_index, 'dc_contributor_id'] = df_proj_auths_grp[proj_index]['dc_contributor_id'].iloc[0]
+        df.loc[act_index, 'dc_contributor_label'] = df_proj_auths_grp[proj_index]['dc_contributor_label'].iloc[0]
+        df.loc[act_index, 'dc_creator_id'] = df_proj_auths_grp[proj_index]['dc_creator_id'].iloc[0]
+        df.loc[act_index, 'dc_creator_label'] = df_proj_auths_grp[proj_index]['dc_creator_label'].iloc[0]
+
+    # Now combine the contributors and the creators into a single author column
+    df['authors'] = np.nan
+
+    # Make authors for where either the contributor or the creator columns
+    # are not null, but not both.
+    null_tups = [
+        ('dc_contributor_label', 'dc_creator_label',),
+        ('dc_creator_label', 'dc_contributor_label'),
+    ]
+    for not_null, is_null in null_tups:
+        act_index = ~df[not_null].isnull() & df[is_null].isnull()
+        df.loc[act_index, 'authors'] = df[act_index][not_null]
+
+    # Now, for where there are both contributors and creators, combine them together.
+    act_index = (
+        ~df['dc_contributor_label'].isnull() 
+        & ~df['dc_creator_label'].isnull()
+        & df['authors'].isnull()
+    )
+    df.loc[act_index, 'authors'] = df[act_index].apply(lambda x: combine_author_lists, axis=1)
+ 
+    if drop_roles:
+        # Remove the columns for the roles that fed our author information.
+        df.drop(columns=['dc_contributor_label', 'dc_creator_label'], inplace=True)
+
+    return df
+
+
 def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
     """Gets a dataframe of linked data equivalence to Open Context ids"""
 
@@ -561,6 +810,13 @@ def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
         predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
         object__item_type__in=configs.URI_ITEM_TYPES,
         visible=True,
+        object__meta_json__deprecated__isnull=True,
+    ).filter(
+        Q(object__meta_json__deprecated__isnull=True)
+        |Q(object__meta_json__deprecated=False)
+    ).filter(
+        Q(object__context__meta_json__deprecated__isnull=True)
+        |Q(object__context__meta_json__deprecated=False)
     ).select_related(
         'object'
     ).values(
@@ -577,6 +833,14 @@ def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
         },
         inplace=True,
     )
+    if equiv_df is None or equiv_df.empty:
+        equiv_df = pd.DataFrame(
+            data={
+                f'{output_col_prefix}_id':[], 
+                f'{output_col_prefix}_equiv_ld_label':[], 
+                f'{output_col_prefix}_equiv_ld_uri':[]
+            }
+        )
     return equiv_df
 
 
@@ -617,7 +881,6 @@ def add_df_linked_data_from_assert_df(df, assert_df):
     
     # 1: Add linked data where the object is a linked entity (not a literal)
     id_index = ld_assert_df['predicate__data_type'] == 'id'
-
     for pred_uri in ld_assert_df[id_index]['predicate_equiv_ld_uri'].unique():
         pred_index = id_index & (ld_assert_df['predicate_equiv_ld_uri'] == pred_uri)
         pred_label = ld_assert_df[pred_index]['predicate_equiv_ld_label'].values[0]
@@ -658,5 +921,55 @@ def add_df_linked_data_from_assert_df(df, assert_df):
             left_on='subject_id', 
             right_on='subject_id'
         )
+    
+    # 2: Add linked data where the object is a literal value. For different data-types
+    # the literal value will be in different columns. So the mappings between data-types
+    # and object literal value columns is in the list of tuples below.
+    literal_type_tups = [
+        ('xsd:string', 'obj_string',),
+        ('xsd:boolean', 'obj_boolean',),
+        ('xsd:integer', 'obj_integer',),
+        ('xsd:double', 'obj_double',),
+        ('xsd:date', 'obj_datetime',),
+    ]
+    for literal_type, object_col in literal_type_tups:
+        lit_index = ld_assert_df['predicate__data_type'] == literal_type
+        for pred_uri in ld_assert_df[lit_index]['predicate_equiv_ld_uri'].unique():
+            pred_index = lit_index & (ld_assert_df['predicate_equiv_ld_uri'] == pred_uri)
+            pred_label = ld_assert_df[pred_index]['predicate_equiv_ld_label'].values[0]
+
+            # NOTE: TODO Maybe add URIs to ALL the predicate columns? That will make
+            # sure they are uniquely labeled, and we can add special output features
+            # to strip them to make a more user friendly output.
+            col_value = f'{pred_label} (Value) [https://{pred_uri}]'
+            pred_obj_index = pred_index & ~ld_assert_df[object_col].isnull()
+
+            # Make a dataframe for this predicate and the equivalent linked
+            # objects.
+            act_ld_df = ld_assert_df[pred_obj_index][
+                [
+                    'subject_id',
+                    object_col,
+                ]
+            ].groupby(by=['subject_id']).agg([list]).reset_index()
+
+            act_ld_df.columns = act_ld_df.columns.get_level_values(0)
+            act_ld_df.reset_index(drop=True, inplace=True)
+
+            act_ld_df.rename(
+                columns={
+                    object_col: col_value,
+                },
+                inplace=True,
+            )
+            # Sort the dataframe columns.
+            act_ld_df = act_ld_df[['subject_id', col_value]]
+            # Add them to our main, glorious dataframe.
+            df = df.merge(
+                act_ld_df,
+                how="left",
+                left_on='subject_id', 
+                right_on='subject_id'
+            )
 
     return df
