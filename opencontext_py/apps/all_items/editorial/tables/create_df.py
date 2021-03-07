@@ -38,8 +38,8 @@ from opencontext_py.apps.all_items.representations.item import (
 # testing
 
 import importlib
-from opencontext_py.apps.all_items.editorial.tables import df as tabs_df
-importlib.reload(tabs_df)
+from opencontext_py.apps.all_items.editorial.tables import create_df
+importlib.reload(create_df)
 
 
 filter_args = {
@@ -54,16 +54,23 @@ filter_args = {
 exclude_args = {
     'subject__path__contains': 'Vescovado',
 }
-assert_qs = tabs_df.get_assert_qs(filter_args, exclude_args)
-assert_df = tabs_df.get_raw_assertion_df(assert_qs)
+assert_qs = create_df.get_assert_qs(filter_args, exclude_args)
+assert_df = create_df.get_raw_assertion_df(assert_qs)
 
-df = tabs_df.prepare_df_from_assert_df(assert_df)
-df = tabs_df.add_authors_to_df(df, assert_df)
+df = create_df.prepare_df_from_assert_df(assert_df)
 
-df = tabs_df.add_spacetime_to_df(df)
-df = tabs_df.expand_context_path(df)
 
-df = tabs_df.add_df_linked_data_from_assert_df(df, assert_df)
+df = create_df.add_authors_to_df(df, assert_df)
+
+df = create_df.add_spacetime_to_df(df)
+df = create_df.expand_context_path(df)
+
+df = create_df.add_df_linked_data_from_assert_df(df, assert_df)
+
+preds_df = create_df.get_sort_preds_df(assert_df)
+
+df = create_df.add_attribute_data_to_df(df, assert_df)
+
 """
 
 
@@ -73,6 +80,21 @@ DB_QS_CHUNK_SIZE = 100
 # Make a list of default Manifest objects for which we prohibit 
 # edits.
 DEFAULT_UUIDS = [m.get('uuid') for m in DEFAULT_MANIFESTS if m.get('uuid')]
+
+
+# List of tuples that associate a literal data type with the 
+# object column that has values for that data type
+LITERAL_DATA_TYPE_COL_TUPS = [
+    ('xsd:string', 'obj_string', ),
+    ('xsd:boolean', 'obj_boolean', ),
+    ('xsd:integer', 'obj_integer', ),
+    ('xsd:double', 'obj_double', ),
+    ('xsd:date', 'obj_datetime', ),
+]
+
+PRED_DATA_TYPE_COLS = {dt: (col, None,) for dt, col in LITERAL_DATA_TYPE_COL_TUPS}
+PRED_DATA_TYPE_COLS['id'] = ('object__label', 'object__uri',)
+
 
 
 def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
@@ -177,6 +199,7 @@ def get_assert_qs(filter_args, exclude_args=None):
     )
     return qs
 
+
 def get_raw_assertion_df(assert_qs):
     assert_qs = assert_qs.values(
         'subject_id',
@@ -192,10 +215,13 @@ def get_raw_assertion_df(assert_qs):
         'project_id',
         'observation_id',
         'observation__label',
+        'obs_sort',
         'event_id',
         'event__label',
+        'event_sort',
         'attribute_group_id',
         'attribute_group__label',
+        'attribute_group_sort',
         'predicate_id',
         'predicate__label',
         'predicate__uri',
@@ -298,7 +324,11 @@ def expand_context_path(
 
 
 def prepare_df_from_assert_df(assert_df):
-    """Prepares a (final) dataframe from the assert df"""
+    """Prepares a (final) dataframe from the assert df
+    
+    :param DataFrame assert_df: The dataframe of raw assertions and
+        referenced attributes of foreign key referenced objects
+    """
     df = assert_df[
         [
             'subject_id',
@@ -531,7 +561,11 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
 
 
 def add_spacetime_to_df(df):
-    """Adds spacetime columns to a df"""
+    """Adds spacetime columns to a df
+    
+    :param DataFrame df: The main dataframe for the export we want to
+        create
+    """
     sp_index = (
         ~df['subject_id'].isnull()
         & df['subject__item_type'].isin(
@@ -715,7 +749,13 @@ def combine_author_lists(x, col):
 
 
 def add_authors_to_df(df, assert_df, drop_roles=True):
-    """Adds authorship columns to a df"""
+    """Adds authorship columns to a df
+    
+    :param DataFrame df: The dataframe that we are adding authors of a
+       given role into
+    :param DataFrame assert_df: The raw assertion dataframe that may have
+       authors of a given role
+    """
     
     pred_roles_tups = [
         (configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID, 'dc_contributor'),
@@ -844,27 +884,37 @@ def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
     return equiv_df
 
 
-def add_df_linked_data_from_assert_df(df, assert_df):
-    """Prepares a (final) dataframe from the assert df"""
-    ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
+def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
+    """Add named entity (id) linked data to the export dataframe
+
+    :param DataFrame df: The dataframe that we are adding linked data 
+         entities to
+    :param DataFrame assert_df: The raw assertion dataframe. This can be None
+        if we already have the ld_assert_df defined.
+    :param DataFrame ld_assert_df: A subset of the raw assertion dataframe 
+        that is filtered to only have rows and columns relevant to linked
+        data.
+    """
+    if ld_assert_df is None:
+        ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
     
-    # Make a smaller assertion df that's only got linked
-    # data.
-    ld_assert_df = assert_df[ld_index][
-        [
-            'subject_id',
-            'predicate_equiv_ld_label',
-            'predicate_equiv_ld_uri',
-            'predicate__data_type',
-            'object_id',
-            'obj_string',
-            'obj_boolean',
-            'obj_integer',
-            'obj_double',
-            'obj_datetime',
-        ]
-    ].copy()
-    
+        # Make a smaller assertion df that's only got linked
+        # data.
+        ld_assert_df = assert_df[ld_index][
+            [
+                'subject_id',
+                'predicate_equiv_ld_label',
+                'predicate_equiv_ld_uri',
+                'predicate__data_type',
+                'object_id',
+                'obj_string',
+                'obj_boolean',
+                'obj_integer',
+                'obj_double',
+                'obj_datetime',
+            ]
+        ].copy()
+
     # Merge in the Linked Data equivalents to all the object_ids
     obj_index = ~ld_assert_df['object_id'].isnull()
     obj_equiv_df = get_df_entity_equiv_linked_data(
@@ -921,18 +971,52 @@ def add_df_linked_data_from_assert_df(df, assert_df):
             left_on='subject_id', 
             right_on='subject_id'
         )
+
+    return df
+
+
+def add_df_literal_linked_data_from_assert_df(
+    df, 
+    assert_df=None, 
+    ld_assert_df=None, 
+    literal_type_tups=LITERAL_DATA_TYPE_COL_TUPS
+):
+    """Add literal value (not named entity) linked data to the export dataframe
+
+    :param DataFrame df: The dataframe that we are adding linked data 
+        literal values to
+    :param DataFrame assert_df: The raw assertion dataframe. This can be None
+        if we already have the ld_assert_df defined.
+    :param DataFrame ld_assert_df: A subset of the raw assertion dataframe 
+        that is filtered to only have rows and columns relevant to linked
+        data.
+    :param list literal_type_tups: List of tuples that associate a literal
+        data type with the object column that has values for that data type
+    """
+    if ld_assert_df is None:
+        ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
     
-    # 2: Add linked data where the object is a literal value. For different data-types
+        # Make a smaller assertion df that's only got linked
+        # data.
+        ld_assert_df = assert_df[ld_index][
+            [
+                'subject_id',
+                'predicate_equiv_ld_label',
+                'predicate_equiv_ld_uri',
+                'predicate__data_type',
+                'object_id',
+                'obj_string',
+                'obj_boolean',
+                'obj_integer',
+                'obj_double',
+                'obj_datetime',
+            ]
+        ].copy()
+
+    # Add linked data where the object is a literal value. For different data-types
     # the literal value will be in different columns. So the mappings between data-types
     # and object literal value columns is in the list of tuples below.
-    literal_type_tups = [
-        ('xsd:string', 'obj_string',),
-        ('xsd:boolean', 'obj_boolean',),
-        ('xsd:integer', 'obj_integer',),
-        ('xsd:double', 'obj_double',),
-        ('xsd:date', 'obj_datetime',),
-    ]
-    for literal_type, object_col in literal_type_tups:
+    for literal_type, object_col, in literal_type_tups:
         lit_index = ld_assert_df['predicate__data_type'] == literal_type
         for pred_uri in ld_assert_df[lit_index]['predicate_equiv_ld_uri'].unique():
             pred_index = lit_index & (ld_assert_df['predicate_equiv_ld_uri'] == pred_uri)
@@ -962,7 +1046,7 @@ def add_df_linked_data_from_assert_df(df, assert_df):
                 },
                 inplace=True,
             )
-            # Sort the dataframe columns.
+            # Just include the columns we care about.
             act_ld_df = act_ld_df[['subject_id', col_value]]
             # Add them to our main, glorious dataframe.
             df = df.merge(
@@ -971,5 +1055,193 @@ def add_df_linked_data_from_assert_df(df, assert_df):
                 left_on='subject_id', 
                 right_on='subject_id'
             )
+
+    return df
+
+
+def add_df_linked_data_from_assert_df(df, assert_df, add_literal_ld=True):
+    """Prepares a (final) dataframe from the assert df
+    
+    :param DataFrame df: The dataframe that we are adding linked data 
+        literal values to
+    :param DataFrame assert_df: The raw assertion dataframe. This can be None
+        if we already have the ld_assert_df defined.
+    """
+    ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
+    
+    # Make a smaller assertion df that's only got linked
+    # data.
+    ld_assert_df = assert_df[ld_index][
+        [
+            'subject_id',
+            'predicate_equiv_ld_label',
+            'predicate_equiv_ld_uri',
+            'predicate__data_type',
+            'object_id',
+            'obj_string',
+            'obj_boolean',
+            'obj_integer',
+            'obj_double',
+            'obj_datetime',
+        ]
+    ].copy()
+       
+    # 1: Add linked data where the object is a linked entity (not a literal)
+    df = add_df_id_linked_data_from_assert_df(df, ld_assert_df=ld_assert_df)
+    
+    if not add_literal_ld:
+        # We don't want to add the literal linked data, so we can
+        # skip out.
+        return df
+
+    # 2: Add linked data where the object is a literal value. For different data-types
+    # the literal value will be in different columns. So the mappings between data-types
+    # and object literal value columns is in the list of tuples below.
+    df = add_df_literal_linked_data_from_assert_df(df, ld_assert_df=ld_assert_df)
+    return df
+
+
+def get_sort_preds_df(assert_df):
+    """Gets and sorts a dataframe of predicates sorted by node groupings
+
+    :param DataFrame assert_df: The raw assertion dataframe. This can be None
+        if we already have the ld_assert_df defined.
+    """
+    preds_df = assert_df[
+        [
+            'observation_id',
+            'observation__label',
+            'obs_sort',
+            'event_id',
+            'event__label',
+            'event_sort',
+            'attribute_group_id',
+            'attribute_group__label',
+            'attribute_group_sort',
+            'predicate_id',
+            'predicate__label',
+            'predicate__uri',
+            'predicate__data_type',
+            'sort',
+        ]
+    ].groupby(
+        by = [
+            'observation_id',
+            'event_id',
+            'attribute_group_id',
+            'predicate_id',
+        ]
+    ).agg(
+        {
+            'observation__label' : 'first',
+            'obs_sort': 'mean',
+            'event__label': 'first',
+            'event_sort': 'mean',
+            'attribute_group__label': 'first',
+            'attribute_group_sort': 'mean',
+            'predicate__label': 'first',
+            'predicate__uri': 'first',
+            'predicate__data_type': 'first',
+            'sort': 'mean',
+        }
+    ).reset_index()
+
+    preds_df.columns = preds_df.columns.get_level_values(0)
+    preds_df.sort_values(
+        by=['obs_sort', 'event_sort', 'attribute_group_sort', 'sort'],
+        inplace=True,
+    )
+    return preds_df
+
+
+def add_attribute_data_to_df(
+    df, 
+    assert_df,
+    add_object_uris=True,
+    node_delim='::',
+    pred_data_type_cols=PRED_DATA_TYPE_COLS
+):
+    """Adds (project specific) attribute data to the output df
+
+    :param DataFrame df: The dataframe that will get the attribute data.
+    :param DataFrame assert_df: The raw assertion dataframe. This can be None
+        if we already have the ld_assert_df defined.
+    :param dict pred_data_type_cols: A dict keyed by predicate data type
+        that identifies object columns.
+    """
+
+    # Get a dataframe of all the predicates, sorted by
+    # observation, event, attribute group, and finally by 
+    # individual sort order. 
+    preds_df = get_sort_preds_df(assert_df)
+    for _, prow in preds_df.iterrows():
+        p_index = (
+            (assert_df['observation_id'] == prow['observation_id'])
+            & (assert_df['event_id'] == prow['event_id'])
+            & (assert_df['attribute_group_id'] == prow['attribute_group_id'])
+            & (assert_df['predicate_id'] == prow['predicate_id'])
+        )
+        object_col, obj_uri = pred_data_type_cols.get(
+            prow['predicate__data_type'],
+            (None, None,)
+        )
+        act_cols = [
+            'subject_id',
+            object_col,
+        ]
+        if add_object_uris and obj_uri:
+            act_cols.append(obj_uri)
+        
+        # Get the values for this predicate
+        act_df = assert_df[p_index][act_cols].groupby(
+            by=['subject_id'],
+        ).agg([list]).reset_index()
+        act_df.columns = act_df.columns.get_level_values(0)
+
+        # The following several lines are all about naming the columns
+        # for the predicates.
+        col_prefix = ''
+        if str(prow['event_id']) != configs.DEFAULT_EVENT_UUID:
+            col_prefix += f'{str(prow["event__label"])}{node_delim}'
+        if str(prow['attribute_group_id']) != configs.DEFAULT_ATTRIBUTE_GROUP_UUID:
+            col_prefix += f'{str(prow["attribute_group__label"])}{node_delim}'
+
+        if add_object_uris and obj_uri:
+            # For cases where we named entities and we want to have their
+            # URIs.
+            col_uri = (
+                f'{col_prefix}{str(prow["predicate__label"])} '
+                f'(URI) [https://{str(prow["predicate__uri"])}]'
+            )
+            col_label = (
+                f'{col_prefix}{str(prow["predicate__label"])} '
+                f'(Label) [https://{str(prow["predicate__uri"])}]'
+            )
+            renames = {
+                object_col: col_label,
+                obj_uri: col_uri,
+            }
+        else:
+            # For literals or for cases where we don't want to include
+            # object URIs.
+            col_label = (
+                f'{col_prefix}{str(prow["predicate__label"])} '
+                f'[https://{str(prow["predicate__uri"])}]'
+            )
+            renames = {
+                object_col: col_label,
+            }
+        
+        # Rename the columns to use the prefixed, predicate label
+        # names.
+        act_df.rename(columns=renames, inplace=True)
+
+        # Add them to our main, glorious dataframe.
+        df = df.merge(
+            act_df,
+            how="left",
+            left_on='subject_id', 
+            right_on='subject_id'
+        )
 
     return df
