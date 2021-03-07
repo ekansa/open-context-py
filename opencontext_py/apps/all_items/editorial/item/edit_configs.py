@@ -326,7 +326,67 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
-    ]
+    ],
+    'class': [
+        {
+            'key': 'deprecated', 
+            'label': 'Deprecated', 
+            'data_type': 'xsd:boolean',
+            'note': (
+                'Is this item is deprecated, and while it is stored, it is not suitable for current use.'
+            ),
+            'options': [
+                {'value': None, 'text': 'Not set',},
+                {'value': True, 'text': 'Deprecated (stored but not current, retired)',},
+                {'value': False, 'text': 'Not Deprecated (still current)',},
+            ],
+        },
+    ],
+    'property': [
+        {
+            'key': 'deprecated', 
+            'label': 'Deprecated', 
+            'data_type': 'xsd:boolean',
+            'note': (
+                'Is this item is deprecated, and while it is stored, it is not suitable for current use.'
+            ),
+            'options': [
+                {'value': None, 'text': 'Not set',},
+                {'value': True, 'text': 'Deprecated (stored but not current, retired)',},
+                {'value': False, 'text': 'Not Deprecated (still current)',},
+            ],
+        },
+    ],
+    'uri': [
+        {
+            'key': 'deprecated', 
+            'label': 'Deprecated', 
+            'data_type': 'xsd:boolean',
+            'note': (
+                'Is this item is deprecated, and while it is stored, it is not suitable for current use.'
+            ),
+            'options': [
+                {'value': None, 'text': 'Not set',},
+                {'value': True, 'text': 'Deprecated (stored but not current, retired)',},
+                {'value': False, 'text': 'Not Deprecated (still current)',},
+            ],
+        },
+    ],
+    'vocabularies': [
+        {
+            'key': 'deprecated', 
+            'label': 'Deprecated', 
+            'data_type': 'xsd:boolean',
+            'note': (
+                'Items in this vocabulary are deprecated, and while it is stored, this is not suitable for current use.'
+            ),
+            'options': [
+                {'value': None, 'text': 'Not set',},
+                {'value': True, 'text': 'Deprecated (stored but not current, retired)',},
+                {'value': False, 'text': 'Not Deprecated (still current)',},
+            ],
+        },
+    ],
 }
 
 
