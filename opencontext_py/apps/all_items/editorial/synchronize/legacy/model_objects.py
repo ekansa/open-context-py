@@ -33,9 +33,9 @@ import importlib
 from opencontext_py.apps.all_items.editorial.synchronize.legacy import model_objects
 importlib.reload(model_objects)
 
-after_date = '2021-02-20'
+after_date = '2021-03-01'
 
-model_objects.update_prod_from_default(after_date=after_date)
+model_objects.update_prod_from_default(project_uuid='8e7fee33-8ec7-4707-910b-6ace9d70d032', after_date=after_date)
 
 # model_objects.update_default_from_prod(after_date=after_date)
 
