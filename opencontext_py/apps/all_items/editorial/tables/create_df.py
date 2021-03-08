@@ -3,7 +3,6 @@ import hashlib
 import time
 import uuid as GenUUID
 
-
 import numpy as np
 import pandas as pd
 
@@ -54,6 +53,10 @@ filter_args = {
 exclude_args = {
     'subject__path__contains': 'Vescovado',
 }
+df = create_df.make_export_df(filter_args, exclude_args=exclude_args)
+
+
+
 assert_qs = create_df.get_assert_qs(filter_args, exclude_args)
 assert_df = create_df.get_raw_assertion_df(assert_qs)
 
@@ -73,6 +76,37 @@ df = create_df.add_attribute_data_to_df(df, assert_df)
 
 """
 
+
+PROCESS_STAGES = [
+    (
+        'prepare_assert_df', 
+        'Initial query of items, their attributes and links',
+    ),
+    (
+        'prepare_df_from_assert_df', 
+        'Consolidate items and basic metadata',
+    ),
+    (
+        'add_authors_to_df', 
+        'Add authorship metadata',
+    ),
+    (
+        'add_spacetime_to_df', 
+        'Add location and chronology metadata',
+    ),
+    (
+        'expand_context_path', 
+        'Add context hierarchy columns',
+    ),
+    (
+        'add_df_linked_data_from_assert_df', 
+        'Add equivalent linked data columns',
+    ),
+    (
+        'add_attribute_data_to_df', 
+        'Add project-specific attribute and relationships columns',
+    ),
+]
 
 # How many rows will we get in 1 database query?
 DB_QS_CHUNK_SIZE = 100
@@ -95,6 +129,8 @@ LITERAL_DATA_TYPE_COL_TUPS = [
 PRED_DATA_TYPE_COLS = {dt: (col, None,) for dt, col in LITERAL_DATA_TYPE_COL_TUPS}
 PRED_DATA_TYPE_COLS['id'] = ('object__label', 'object__uri',)
 
+# Delimiter between different 'nodes' that may contain predicates in assertions.
+DEFAULT_NODE_DELIM = '::'
 
 
 def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
@@ -104,7 +140,17 @@ def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
 
 
 def get_assert_qs(filter_args, exclude_args=None):
-    """Creates an assertion queryset"""
+    """Creates an assertion queryset
+    
+    :param dict filter_args: A dictionary of filter arguments
+        needed to filter the AllAssertion model to make
+        the AllAssertion queryset used to generate the
+        output dataframe.
+    :param dict exclude_args: An optional dict of exclude
+        arguments to with exclusion criteria for the 
+        AllAssertion model to make the AllAssertion queryset 
+        used to generate the output dataframe.
+    """
      # Limit this subquery to only 1 result, the first.
     thumbs_qs = AllResource.objects.filter(
         item=OuterRef('object'),
@@ -212,6 +258,8 @@ def get_raw_assertion_df(assert_qs):
         'subject__path',
         'subject__sort',
         'subject__context__uri',
+        'subject__published',
+        'subject__revised',
         'project_id',
         'observation_id',
         'observation__label',
@@ -242,9 +290,42 @@ def get_raw_assertion_df(assert_qs):
         'object_thumbnail',
         'predicate_equiv_ld_label',
         'predicate_equiv_ld_uri',
+        'updated',
     )
     assert_df = pd.DataFrame.from_records(assert_qs)
     return assert_df
+
+
+def prepare_df_from_assert_df(assert_df):
+    """Prepares a (final) dataframe from the assert df
+    
+    :param DataFrame assert_df: The dataframe of raw assertions and
+        referenced attributes of foreign key referenced objects
+    """
+    df = assert_df[
+        [
+            'subject_id',
+            'project_id',
+            'subject__label',
+            'subject__item_type',
+            'subject__item_class__label',
+            'subject__project_id',
+            'subject__project__label',
+            'subject__project__uri',
+            'subject__path',
+            'subject__sort',
+            'subject__context__uri',
+            'subject__published',
+            'subject__revised',
+        ]
+    ].groupby(by=['subject_id']).first().reset_index()
+    df.columns = df.columns.get_level_values(0)
+    df.sort_values(
+        by=['subject__sort', 'subject__path', 'subject__label'],
+        inplace=True,
+    )
+    df.reset_index(drop=True, inplace=True)
+    return df
 
 
 def expand_context_path(
@@ -320,36 +401,6 @@ def expand_context_path(
     
     # Last little clean up of a column temporarily used for processing
     df.drop(columns=[p_delim_count_col], inplace=True, errors='ignore')
-    return df
-
-
-def prepare_df_from_assert_df(assert_df):
-    """Prepares a (final) dataframe from the assert df
-    
-    :param DataFrame assert_df: The dataframe of raw assertions and
-        referenced attributes of foreign key referenced objects
-    """
-    df = assert_df[
-        [
-            'subject_id',
-            'project_id',
-            'subject__label',
-            'subject__item_type',
-            'subject__item_class__label',
-            'subject__project_id',
-            'subject__project__label',
-            'subject__project__uri',
-            'subject__path',
-            'subject__sort',
-            'subject__context__uri',
-        ]
-    ].groupby(by=['subject_id']).first().reset_index()
-    df.columns = df.columns.get_level_values(0)
-    df.sort_values(
-        by=['subject__sort', 'subject__path', 'subject__label'],
-        inplace=True,
-    )
-    df.reset_index(drop=True, inplace=True)
     return df
 
 
@@ -1065,14 +1116,28 @@ def add_df_literal_linked_data_from_assert_df(
     return df
 
 
-def add_df_linked_data_from_assert_df(df, assert_df, add_literal_ld=True):
+def add_df_linked_data_from_assert_df(
+    df, 
+    assert_df, 
+    add_entity_ld=True, 
+    add_literal_ld=True
+):
     """Prepares a (final) dataframe from the assert df
     
     :param DataFrame df: The dataframe that we are adding linked data 
         literal values to
     :param DataFrame assert_df: The raw assertion dataframe. This can be None
         if we already have the ld_assert_df defined.
+    :param bool add_entity_ld: If true, add any linked data 
+        equivalents for named entities
+    :param bool add_literal_ld: If true, add any linked data 
+        equivalents for literal values
     """
+    if not add_entity_ld and not add_literal_ld:
+        # We don't want to add linked data, so skip out without
+        # changing the df
+        return df
+
     ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
     
     # Make a smaller assertion df that's only got linked
@@ -1092,8 +1157,9 @@ def add_df_linked_data_from_assert_df(df, assert_df, add_literal_ld=True):
         ]
     ].copy()
        
-    # 1: Add linked data where the object is a linked entity (not a literal)
-    df = add_df_id_linked_data_from_assert_df(df, ld_assert_df=ld_assert_df)
+    if add_entity_ld:
+        # 1: Add linked data where the object is a linked entity (not a literal)
+        df = add_df_id_linked_data_from_assert_df(df, ld_assert_df=ld_assert_df)
     
     if not add_literal_ld:
         # We don't want to add the literal linked data, so we can
@@ -1164,7 +1230,7 @@ def add_attribute_data_to_df(
     df, 
     assert_df,
     add_object_uris=True,
-    node_delim='::',
+    node_delim=DEFAULT_NODE_DELIM,
     pred_data_type_cols=PRED_DATA_TYPE_COLS
 ):
     """Adds (project specific) attribute data to the output df
@@ -1172,6 +1238,8 @@ def add_attribute_data_to_df(
     :param DataFrame df: The dataframe that will get the attribute data.
     :param DataFrame assert_df: The raw assertion dataframe. This can be None
         if we already have the ld_assert_df defined.
+    :param bool add_object_uris: If true, add URI columns for named entities.
+    :param str node_delim: Delimiter for nodes that contain predicates
     :param dict pred_data_type_cols: A dict keyed by predicate data type
         that identifies object columns.
     """
@@ -1251,3 +1319,89 @@ def add_attribute_data_to_df(
         )
 
     return df
+
+
+def make_export_df(
+    filter_args, 
+    exclude_args=None,
+    add_entity_ld=True,
+    add_literal_ld=True,
+    add_object_uris=True,
+    node_delim=DEFAULT_NODE_DELIM,
+):
+    """Makes a dataframe prepared for exports
+
+    :param dict filter_args: A dictionary of filter arguments
+        needed to filter the AllAssertion model to make
+        the AllAssertion queryset used to generate the
+        output dataframe.
+    :param dict exclude_args: An optional dict of exclude
+        arguments to with exclusion criteria for the 
+        AllAssertion model to make the AllAssertion queryset 
+        used to generate the output dataframe.
+    :param bool add_entity_ld: If true, add any linked data 
+        equivalents for named entities
+    :param bool add_literal_ld: If true, add any linked data 
+        equivalents for literal values
+    :param bool add_object_uris: If true, add URI columns for 
+        named entities.
+    :param str node_delim: Delimiter for nodes that contain 
+        predicates
+    """
+
+    # NOTE: This function can take lots of time to execute. 
+    # Only invoke this command from the inside the manage.py shell
+    # It is not suitable to be used with a Web interface without
+    # a worker/que system.
+
+    # Make the AllAssertion queryset based on filter arguments
+    # and optional exclusion critera.
+    assert_qs = get_assert_qs(filter_args, exclude_args=exclude_args)
+
+    # Turn the AllAssertion queryset into a "tall" dataframe.
+    assert_df = get_raw_assertion_df(assert_qs)
+
+    # Make the output dataframe, where there's a single row
+    # for each "subject" of the assertions.
+    df = prepare_df_from_assert_df(assert_df)
+
+    # Add author information to the output dataframe, either directly
+    # added as dublin core properties on the subject item, inferred
+    # from equivalence relations between other predicates and 
+    # dublin core authors, or inferred from dublin core authors 
+    # assigned to the parent projects.
+    df = add_authors_to_df(df, assert_df)
+
+    # Add geometry and chronology information to the output dataframe,
+    # either directly added to the subject item, or inferred by 
+    # spatial containment relationships.
+    df = add_spacetime_to_df(df)
+
+    # Expand the context path of the subject item into multiple
+    # columns.
+    df = expand_context_path(df)
+
+    # Add equivalent linked data descriptions to the subject.
+    df = add_df_linked_data_from_assert_df(
+        df, 
+        assert_df, 
+        add_entity_ld=add_entity_ld,
+        add_literal_ld=add_literal_ld,
+    )
+
+    # Finally, add the project specific attributes asserted about
+    # the subject items.
+    df = add_attribute_data_to_df(
+        df, 
+        assert_df, 
+        add_object_uris=add_object_uris,
+        node_delim=node_delim,
+    )
+    return df
+
+
+def make_hash_id_from_args(args):
+    """Turns args into a hash identifier"""
+    hash_obj = hashlib.sha1()
+    hash_obj.update(str(args).encode('utf-8'))
+    return hash_obj.hexdigest()
