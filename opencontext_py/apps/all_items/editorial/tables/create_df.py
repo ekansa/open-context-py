@@ -1428,6 +1428,8 @@ def get_sort_preds_df(assert_df, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PRE
 
     :param DataFrame assert_df: The raw assertion dataframe. This can be None
         if we already have the ld_assert_df defined.
+    :param list node_pred_unique_prefixing: A list configuring what nodes count for
+        making a node_prefix
     """
     preds_df = assert_df[
         [
@@ -1474,6 +1476,18 @@ def get_sort_preds_df(assert_df, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PRE
         inplace=True,
     )
     
+    # NOTE: We need to drop repeats.
+    # The "same" predicate may be in multiple observations, events, and
+    # attribute groups nodes. The default config selects event labels 
+    # and attribute group labels to prefix predicates to make unique 
+    # columns for the same predicates that may come in different events 
+    # or attribute groups.
+
+    # However, the default config treats observations somewhat differently. 
+    # So we can drop repeated combos of events-attribute-predicates if 
+    # they come in different observations, because we don't care 
+    # about observations in the export dump.
+
     # Make an index where the columns used to figure out node prefixes are
     # not null.
     act_index = ~preds_df['predicate__uri'].isnull()
@@ -1490,16 +1504,9 @@ def get_sort_preds_df(assert_df, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PRE
         axis=1
     )
     
-    # NOTE: We need to drop repeats.
-    # The "same" predicate may be in multiple observations, events, and
-    # attribute groups. We use event labels and attribute group labels
-    # to prefix predicates to make unique columns for the same predicates
-    # that may come in different events or attribute groups.
-    #
-    # However, we (generally) treat observations somewhat differently. So we can
-    # drop repeated combos of events-attribute-predicates if they come
-    # in different observations, because we don't care about observations
-    # in the export dump.
+    # Drop rows that aren't unique by 'node_prefix', 'predicate__uri'.
+    # If you want some different config to determine node_prefix,
+    # change the node_pred_unique_prefixing values.
     preds_df.drop_duplicates(
         subset=['node_prefix', 'predicate__uri'], 
         keep='first', 
@@ -1513,7 +1520,7 @@ def add_attribute_data_to_df(
     df, 
     assert_df,
     add_object_uris=True,
-    node_delim=DEFAULT_NODE_DELIM,
+    node_pred_unique_prefixing=NODE_PRED_UNIQUE_PREDFIXING,
     pred_data_type_cols=PRED_DATA_TYPE_COLS
 ):
     """Adds (project specific) attribute data to the output df
@@ -1521,7 +1528,8 @@ def add_attribute_data_to_df(
     :param DataFrame df: The dataframe that will get the attribute data.
     :param DataFrame assert_df: The raw assertion dataframe. 
     :param bool add_object_uris: If true, add URI columns for named entities.
-    :param str node_delim: Delimiter for nodes that contain predicates
+    :param list node_pred_unique_prefixing: A list configuring what nodes count for
+        making a node_prefix
     :param dict pred_data_type_cols: A dict keyed by predicate data type
         that identifies object columns.
     """
@@ -1529,7 +1537,10 @@ def add_attribute_data_to_df(
     # Get a dataframe of all the predicates, sorted by
     # observation, event, attribute group, and finally by 
     # individual sort order. 
-    preds_df = get_sort_preds_df(assert_df)
+    preds_df = get_sort_preds_df(
+        assert_df,
+        node_pred_unique_prefixing=node_pred_unique_prefixing
+    )
 
     for _, prow in preds_df.iterrows():
         p_index = (
@@ -1716,7 +1727,7 @@ def make_export_df(
     add_entity_ld=True,
     add_literal_ld=True,
     add_object_uris=True,
-    node_delim=DEFAULT_NODE_DELIM,
+    node_pred_unique_prefixing=NODE_PRED_UNIQUE_PREDFIXING,
     resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
 ):
     """Makes a dataframe prepared for exports
@@ -1735,8 +1746,8 @@ def make_export_df(
         equivalents for literal values
     :param bool add_object_uris: If true, add URI columns for 
         named entities.
-    :param str node_delim: Delimiter for nodes that contain 
-        predicates
+    :param list node_pred_unique_prefixing: A list configuring what nodes count for
+        making a node_prefix
     """
 
     # NOTE: This function can take lots of time to execute. 
@@ -1791,7 +1802,7 @@ def make_export_df(
         df, 
         assert_df, 
         add_object_uris=add_object_uris,
-        node_delim=node_delim,
+        node_pred_unique_prefixing=node_pred_unique_prefixing,
     )
 
     # Now drop all the empty columns.
@@ -1938,7 +1949,7 @@ def make_clean_export_df(
     add_entity_ld=True,
     add_literal_ld=True,
     add_object_uris=True,
-    node_delim=DEFAULT_NODE_DELIM,
+    node_pred_unique_prefixing=NODE_PRED_UNIQUE_PREDFIXING,
     resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
     delim=DEFAULT_LIST_JOIN_DELIM,
     delim_sub=DEFAULT_DELIM_ELEMENT_REPLACE,
@@ -1962,8 +1973,8 @@ def make_clean_export_df(
         equivalents for literal values
     :param bool add_object_uris: If true, add URI columns for 
         named entities.
-    :param str node_delim: Delimiter for nodes that contain 
-        predicates
+    :param list node_pred_unique_prefixing: A list configuring what nodes count for
+        making a node_prefix
     :param str delim: A string delimiter between multiple values
         of joined list elements.
     :param str delim_sub: A string to substitute in cases where
@@ -1984,7 +1995,7 @@ def make_clean_export_df(
         add_entity_ld=add_entity_ld,
         add_literal_ld=add_literal_ld,
         add_object_uris=add_object_uris,
-        node_delim=node_delim,
+        node_pred_unique_prefixing=node_pred_unique_prefixing,
         resource_type_ids=resource_type_ids,
     )
     

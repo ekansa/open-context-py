@@ -66,12 +66,12 @@ def test_export(request, export_id=None):
 
     kwargs = {
         'filter_args': {
-            'subject__item_class__label__contains': 'Object',
+            'subject__item_class__label__contains': 'Animal',
             'subject__path__contains': 'Italy',
         },
         'exclude_args': {'subject__path__contains': 'Vescovado'},
         'add_entity_ld': True,
-        'add_literal_ld': False,
+        'add_literal_ld': True,
         'add_object_uris': True,
         'reset_cache': True,
         'export_id': export_id,

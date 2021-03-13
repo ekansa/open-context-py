@@ -236,7 +236,7 @@ def staged_make_export_df(
     add_entity_ld=True,
     add_literal_ld=True,
     add_object_uris=True,
-    node_delim=create_df.DEFAULT_NODE_DELIM,
+    node_pred_unique_prefixing=create_df.NODE_PRED_UNIQUE_PREDFIXING,
     reset_cache=False,
     export_id=None,
 ):
@@ -247,7 +247,7 @@ def staged_make_export_df(
         'add_entity_ld': add_entity_ld,
         'add_literal_ld': add_literal_ld,
         'add_object_uris': add_object_uris,
-        'node_delim': node_delim,
+        'node_pred_unique_prefixing': node_pred_unique_prefixing,
     }
     
     if not export_id:
@@ -271,8 +271,8 @@ def staged_make_export_df(
     else:
         act_stages = raw_stages.copy()
     
-    df = cache.get(f'df__{export_id}')
-    assert_df = cache.get(f'assert_df__{export_id}')
+    df = None
+    assert_df = None
     do_next_stage = True
     for process_stage, label, expect_assert_df, expect_df in PROCESS_STAGES:
         stage_status = act_stages.get(process_stage)
@@ -289,16 +289,23 @@ def staged_make_export_df(
         if stage_status.get('done') or not do_next_stage:
             # This stage is done, so continue to the next stage
             continue
-        
-        if expect_assert_df and assert_df is None:
-            stage_status['error'] = f'Failed to get assert_df for {export_id}'
-            do_next_stage = False
-            continue
 
-        if expect_df and df is None:
-            stage_status['error'] = f'Failed to get df for {export_id}'
-            do_next_stage = False
-            continue
+        if not stage_status.get('job_id'):
+            # Only fetch these big objects from the cache
+            # if we haven't yet started a job for this current
+            # status stage.
+            df = cache.get(f'df__{export_id}')
+            assert_df = cache.get(f'assert_df__{export_id}')
+        
+            if expect_assert_df and assert_df is None:
+                stage_status['error'] = f'Failed to get assert_df for {export_id}'
+                do_next_stage = False
+                continue
+
+            if expect_df and df is None:
+                stage_status['error'] = f'Failed to get df for {export_id}'
+                do_next_stage = False
+                continue
 
         if do_next_stage and process_stage == 'prepare_assert_df':
             # Make the initial assertion query and output the
@@ -480,7 +487,7 @@ def staged_make_export_df(
                     'df': df,
                     'assert_df': assert_df,
                     'add_object_uris': add_object_uris,
-                    'node_delim': node_delim,
+                    'node_pred_unique_prefixing': node_pred_unique_prefixing,
                 },
                 job_id=stage_status.get('job_id'),
             )
