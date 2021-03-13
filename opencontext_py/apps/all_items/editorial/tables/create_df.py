@@ -110,6 +110,7 @@ DEFAULT_NODE_DELIM = '::'
 
 # Config for making predicates within nodes have unique labels.
 NODE_PRED_UNIQUE_PREDFIXING = [
+    # ('observation_id', configs.DEFAULT_OBS_UUID, 'observation__label', DEFAULT_NODE_DELIM,),
     ('event_id', configs.DEFAULT_EVENT_UUID, 'event__label', DEFAULT_NODE_DELIM,),
     ('attribute_group_id', configs.DEFAULT_ATTRIBUTE_GROUP_UUID, 'attribute_group__label', DEFAULT_NODE_DELIM,),
 ]
@@ -1472,7 +1473,14 @@ def get_sort_preds_df(assert_df, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PRE
 
     preds_df.columns = preds_df.columns.get_level_values(0)
     preds_df.sort_values(
-        by=['obs_sort', 'event_sort', 'attribute_group_sort', 'sort'],
+        by=[
+            'obs_sort',
+            'event_sort', 
+            'attribute_group_sort', 
+            'sort', 
+            'predicate__data_type',
+            'predicate__label',
+        ],
         inplace=True,
     )
     
