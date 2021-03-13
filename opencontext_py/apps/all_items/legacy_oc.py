@@ -39,6 +39,7 @@ from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.geospace.models import Geospace as OldGeospace
 from opencontext_py.apps.ocitems.events.models import Event as OldEvent
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer as OldIdentifier
 
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 
@@ -51,6 +52,7 @@ migrate_legacy_spacetime_for_project(project_uuid='0')
 murlo = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 migrate_legacy_manifest_for_project(project_uuid=murlo)
 migrate_legacy_spacetime_for_project(project_uuid=murlo)
+migrate_legacy_identifiers_for_project(project=murlo)
 orig_assert_migrate_errors = migrate_legacy_assertions_for_project(murlo)
 new_assert_mirgrate_errors = migrate_legacy_assertions_from_csv(
     project_uuid=murlo,
@@ -386,7 +388,7 @@ def migrated_item_proj_check(old_man_obj, item_type):
     project = AllManifest.objects.filter(uuid=new_proj_uuid).first()
     if not project:
         print(
-            f'Legacy {old_man_obj.item_type}, {old_man_obj.uuid}: {old_man_pred.label} '
+            f'Legacy {old_man_obj.item_type}, {old_man_obj.uuid}: {old_man_obj.label} '
             f'missing project {old_proj_id}.'
         )
         return None, None
@@ -1423,6 +1425,44 @@ def migrate_legacy_subjects_for_project(project_uuid='0'):
     )
     for old_man_obj in old_qs:
         new_man_obj = migrate_legacy_subject(old_man_obj)
+
+
+def migrate_legacy_id(old_id_obj, use_cache=True):
+    """Migrates a legacy StableIdentifier object"""
+    man_obj = get_cache_new_manifest_obj_from_old_id(
+        old_id_obj.uuid, 
+        use_cache=use_cache
+    )
+    if not man_obj:
+        # Missing needed data.
+        return None
+    id_dict = {
+        'item': man_obj,
+        'scheme': old_id_obj.stable_type.lower(),
+        'id': old_id_obj.stable_id,
+        'meta_json': {
+            'legacy_hash_id': old_id_obj.hash_id,
+        }
+    }
+    new_id_obj, _ = AllIdentifier.objects.get_or_create(
+        # Make the new assertion object with a deterministically
+        # generated uuid primary key.
+        uuid=AllIdentifier().primary_key_create(
+            item_id=man_obj.uuid, scheme=id_dict['scheme'],
+        ),
+        defaults=id_dict
+    )
+    print(f'Migrated: {new_id_obj}')
+    return new_id_obj
+
+
+def migrate_legacy_identifiers_for_project(project_uuid='0'):
+    """Migrates a queryset of old stable identifier objects"""
+    old_qs = OldIdentifier.objects.filter(
+        project_uuid=project_uuid
+    )
+    for old_id_obj in old_qs:
+        new_id_obj = migrate_legacy_id(old_id_obj)
 
 
 def migrate_legacy_assertions_for_project(project_uuid, use_cache=True):

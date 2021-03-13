@@ -843,7 +843,12 @@ class AllManifest(models.Model):
 
 
 
-# OCstring stores string content, with each string unique to a project
+# NOTE: AllSpaceTime keeps geospatial and chronology records.
+# Some records have both geospatial and chronology components,
+# some only have geospatial, and some only have chronology.
+# Each record is linked to an item and an event. An event is 
+# basically some identified entity in space and/or time that
+# involves the item.
 @reversion.register  # records in this model under version control
 class AllSpaceTime(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
@@ -890,6 +895,7 @@ class AllSpaceTime(models.Model):
     latitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
     longitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
     geo_specificity = models.IntegerField(default=0, null=True)
+    # The geometry is a GeoJSON geometry object.
     geometry = JSONField(default=dict, null=True)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -2358,6 +2364,23 @@ class AllIdentifier(models.Model):
         },
     }
 
+
+    def make_id_url(self, scheme, id, protocol_prefix=''):
+        """Makes a URL from a scheme and id"""
+        # NOTE: this can be invoked without a 
+        # model object
+        conf = self.SCHEME_CONFIGS.get(scheme, {})
+        url_root = conf.get('url_root')
+        if not url_root:
+            return None
+        return f'{protocol_prefix}{url_root}{id}'
+
+
+    @property
+    def url(self):
+        """Make a url based on the scheme and id"""
+        return self.make_id_url(self.scheme, self.id)
+
     def make_hash_id(self, item_id, scheme, rank=0):
         """Makes a hash_id for an assertion"""
         hash_obj = hashlib.sha1()
@@ -2401,8 +2424,7 @@ class AllIdentifier(models.Model):
             rank=self.rank
         )
 
-    
-    
+
     def save(self, *args, **kwargs):
         """
         Makes the primary key sorted for the first part
@@ -2421,6 +2443,14 @@ class AllIdentifier(models.Model):
             obj_role='item'
         )
         super(AllIdentifier, self).save(*args, **kwargs)
+
+    def __str__(self):
+        out = (
+            f'{self.uuid}: {self.item.label} [{self.item.uuid}] '
+            f'-> {self.scheme}: {self.id} [{self.rank}] -> '
+        )
+        return out
+
 
     class Meta:
         db_table = 'oc_all_identifiers'
