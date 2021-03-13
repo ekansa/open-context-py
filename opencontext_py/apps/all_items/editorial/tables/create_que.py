@@ -555,3 +555,81 @@ def staged_make_export_df(
     return act_stages
 
 
+def single_stage_make_export_df(
+    filter_args=None, 
+    exclude_args=None,
+    add_entity_ld=True,
+    add_literal_ld=True,
+    add_object_uris=True,
+    node_pred_unique_prefixing=create_df.NODE_PRED_UNIQUE_PREDFIXING,
+    reset_cache=False,
+    export_id=None,
+):
+    
+    kwargs = {
+        'filter_args': filter_args,
+        'exclude_args': exclude_args,
+        'add_entity_ld': add_entity_ld,
+        'add_literal_ld': add_literal_ld,
+        'add_object_uris': add_object_uris,
+        'node_pred_unique_prefixing': node_pred_unique_prefixing,
+    }
+    if not export_id:
+        export_id = make_hash_id_from_args(
+            args=kwargs
+        )
+    
+    if reset_cache:
+        # Eliminate any cached items relevant to this export_id
+        reset_export_process_cache(export_id)
+    
+    cache = caches['redis']
+    cache_key_status = f'export-no-stages-{export_id}'
+    raw_status = cache.get(cache_key_status)
+    if raw_status is None:
+        status = {
+            'export_id': export_id,
+            'creation_args': kwargs,
+            'df__key': f'df__{export_id}',
+            'df_no_style__key': f'df_no_style__{export_id}',
+        }
+    else:
+        status = raw_stages.copy()
+    
+    job_done = None
+    if not status.get('done') or not status.get('complete'):
+        # Now actually do the work to fix style issues.
+        job_id, job_done, df_tup = wrap_func_for_rq(
+            func=create_df.make_clean_export_df, 
+            kwargs=kwargs,
+            job_id=status.get('job_id'),
+        )
+        status = add_job_metadata_to_stage_status(
+            job_id, 
+            job_done, 
+            status
+        )
+
+    if job_done and df_tup is not None:
+        df, df_no_style = df_tup
+        cache_item_and_cache_key_for_export(
+            export_id, 
+            cache_key=f'df__{export_id}', 
+            object_to_cache=df
+        )
+        cache_item_and_cache_key_for_export(
+            export_id, 
+            cache_key=f'df__{export_id}', 
+            object_to_cache=df_no_style
+        )
+        status['info'] = df.info
+        status['complete'] = True
+    
+    # Save this stake of the process to the cache.
+    cache_item_and_cache_key_for_export(
+        export_id, 
+        cache_key=cache_key_status, 
+        object_to_cache=status,
+    )
+    return status
+    

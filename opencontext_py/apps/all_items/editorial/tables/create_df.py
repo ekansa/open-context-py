@@ -61,7 +61,7 @@ filter_args = {
 exclude_args = None
 
 
-df = create_df.make_clean_export_df(filter_args, exclude_args=exclude_args)
+df, _ = create_df.make_clean_export_df(filter_args, exclude_args=exclude_args)
 
 
 assert_qs = create_df.get_assert_qs(filter_args, exclude_args)
@@ -2007,8 +2007,9 @@ def make_clean_export_df(
         resource_type_ids=resource_type_ids,
     )
     
+    df_no_style = df.copy()
     # Now do some styling to make the output more legible.
-    return stylize_df(
+    df = stylize_df(
         df=df, 
         delim=delim, 
         delim_sub=delim_sub,
@@ -2016,3 +2017,4 @@ def make_clean_export_df(
         context_col_renames=context_col_renames,
         col_renames=col_renames,
     )
+    return df, df_no_style
