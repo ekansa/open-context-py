@@ -226,6 +226,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'debug_toolbar',
     'django_user_agents',
+
+    # New for editorial interfaces to make export tables.
+    'django_rq',
 )
 
 MIDDLEWARE = (
@@ -353,7 +356,7 @@ else:
             }
         },
         'redis': {
-            'BACKEND': 'redis_cache.RedisCache',
+            'BACKEND': 'redis_cache.cache.RedisCache',
             'LOCATION': 'redis://127.0.0.1:6379/1',
             'TIMEOUT': (60 * 60),  # 1 hour for cache
             'OPTIONS': {
@@ -381,6 +384,15 @@ else:
 
 # user agents cache, memory cache for speed
 USER_AGENTS_CACHE = 'redis'
+
+RQ_QUEUES = {
+    'high': {
+        'USE_REDIS_CACHE': 'redis',
+    },
+    'low': {
+        'USE_REDIS_CACHE': 'redis',
+    },
+}
 
 # -----------------------
 # EMAIL settings
