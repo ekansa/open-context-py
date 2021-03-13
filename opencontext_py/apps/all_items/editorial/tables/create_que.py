@@ -8,6 +8,8 @@ import uuid as GenUUID
 import numpy as np
 import pandas as pd
 
+import django_rq
+
 from django.core.cache import caches
 
 from opencontext_py.apps.all_items import configs
@@ -50,12 +52,6 @@ PROCESS_STAGES = [
         False,
     ),
     (
-        'add_authors_to_df', 
-        'Add authorship metadata',
-        True,
-        True,
-    ),
-    (
         'add_spacetime_to_df', 
         'Add location and chronology metadata',
         True,
@@ -68,6 +64,18 @@ PROCESS_STAGES = [
         True,
     ),
     (
+        'add_authors_to_df', 
+        'Add authorship metadata',
+        True,
+        True,
+    ),
+    (
+        'add_media_resource_files_to_df',
+        'Add media resource file columns (if applicable)',
+        True,
+        True,
+    ),
+    (
         'add_df_linked_data_from_assert_df', 
         'Add equivalent linked data columns',
         True,
@@ -76,6 +84,12 @@ PROCESS_STAGES = [
     (
         'add_attribute_data_to_df', 
         'Add project-specific attribute and relationships columns',
+        True,
+        True,
+    ),
+    (
+        'stylize_df', 
+        'Stylize the output data to be more user-friendly',
         True,
         True,
     ),
@@ -97,7 +111,34 @@ s3_resource.Object(bucket, key).put(Body=pickle_buffer.getvalue())
 
 """
 
+def wrap_func_for_rq(func, kwargs, job_id=None):
+    """Wraps a function for use with the django redis queue
 
+    :param str process_stage: The export stage that we are
+        currently wrapping in a redis que
+    :param str export_id: A unique ID for this specific export
+        process
+    :param Object func: The function that we are wrapping
+        in the django redis que
+    :param dict kwargs: Keyword argument dict that we're
+        passing to the function func
+    """
+    queue = django_rq.get_queue('high')
+    job = None
+    if job_id:
+        job = queue.fetch_job(job_id)
+
+    if job is None:
+        job = queue.enqueue(func, **kwargs)
+        logger.info(f'Start queue for job: {job.id}')
+        return job.id, False, None
+
+    if job.result is None:
+        # Still working on this job...
+        return job.id, False, None
+    
+    logger.info(f'Finished job: {job.id}')
+    return job.id, True, job.result
 
 
 def make_hash_id_from_args(args):
@@ -167,6 +208,28 @@ def cache_item_and_cache_key_for_export(export_id, cache_key, object_to_cache):
     return object_to_cache
 
 
+def add_job_metadata_to_stage_status(job_id, job_done, stage_status):
+    """Adds job metadata to the stage_status dict
+
+    :param str job_id: String UUID for the redis queue job assoctiated
+        with a stage_status
+    :param bool job_done: Boolean value, True if the job is completed
+    :param dict stage_status: Dictionary describing the work of an
+        export process stage
+    """
+    stage_status['job_id'] = job_id
+    if not stage_status.get('job_started'):
+        stage_status['job_started'] = time.time()
+        stage_status['job_finish_duration'] = None
+    if job_done:
+        stage_status['job_finish_duration'] = time.time() - stage_status.get('job_started', 0)
+        stage_status['done'] = True
+    else:
+        stage_status['done'] = False
+    return stage_status
+
+
+
 def staged_make_export_df(
     filter_args=None, 
     exclude_args=None,
@@ -177,16 +240,19 @@ def staged_make_export_df(
     reset_cache=False,
     export_id=None,
 ):
+    
+    args = {
+        'filter_args': filter_args,
+        'exclude_args': exclude_args,
+        'add_entity_ld': add_entity_ld,
+        'add_literal_ld': add_literal_ld,
+        'add_object_uris': add_object_uris,
+        'node_delim': node_delim,
+    }
+    
     if not export_id:
         export_id = make_hash_id_from_args(
-            args={
-                'filter_args': filter_args,
-                'exclude_args': exclude_args,
-                'add_entity_ld': add_entity_ld,
-                'add_literal_ld': add_literal_ld,
-                'add_object_uris': add_object_uris,
-                'node_delim': node_delim,
-            }
+            args=args
         )
     
     if reset_cache:
@@ -201,6 +267,7 @@ def staged_make_export_df(
             k:{'done': False, 'label': label, 'export_id': export_id,} 
             for k, label, _, _ in PROCESS_STAGES
         }
+        act_stages['creation_args'] = args
     else:
         act_stages = raw_stages.copy()
     
@@ -213,6 +280,12 @@ def staged_make_export_df(
             # Weird! We should have this, but if we don't
             # continue
             continue
+
+        # Redundant, but easy!
+        stage_status['export_id'] = export_id
+        stage_status['df__key'] = f'df__{export_id}'
+        stage_status['df_assert__key'] = f'assert_df__{export_id}'
+    
         if stage_status.get('done') or not do_next_stage:
             # This stage is done, so continue to the next stage
             continue
@@ -228,32 +301,97 @@ def staged_make_export_df(
             continue
 
         if do_next_stage and process_stage == 'prepare_assert_df':
-            # Make the initial assertion queryset.
-            assert_qs = create_df.get_assert_qs(
-                filter_args, 
-                exclude_args=exclude_args
+            # Make the initial assertion query and output the
+            # resulting AllAssertion queryset into a "tall" dataframe.
+            job_id, job_done, assert_df = wrap_func_for_rq(
+                func=create_df.get_raw_assert_df_by_making_query, 
+                kwargs={'filter_args':filter_args, 'exclude_args': exclude_args},
+                job_id=stage_status.get('job_id'),
             )
-            # Turn the AllAssertion queryset into a "tall" dataframe.
-            assert_df = create_df.get_raw_assertion_df(assert_qs)
-            cache_item_and_cache_key_for_export(
-                export_id, 
-                cache_key=f'assert_df__{export_id}', 
-                object_to_cache=assert_df
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
             )
-            stage_status['done'] = True
+
+            if job_done and assert_df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'assert_df__{export_id}', 
+                    object_to_cache=assert_df
+                )
+                
             do_next_stage = False
 
         elif do_next_stage and process_stage == 'prepare_df_from_assert_df':
             
             # Make the output dataframe, where there's a single row
             # for each "subject" of the assertions.
-            df = create_df.prepare_df_from_assert_df(assert_df)
-            cache_item_and_cache_key_for_export(
-                export_id, 
-                cache_key=f'df__{export_id}', 
-                object_to_cache=df
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.prepare_df_from_assert_df, 
+                kwargs={'assert_df': assert_df},
+                job_id=stage_status.get('job_id'),
             )
-            stage_status['done'] = True
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
+            )
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+            do_next_stage = False
+        
+        elif do_next_stage and process_stage == 'add_spacetime_to_df':
+            
+            # Add geometry and chronology information to the output dataframe,
+            # either directly added to the subject item, or inferred by 
+            # spatial containment relationships.
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.add_spacetime_to_df, 
+                kwargs={'df': df,},
+                job_id=stage_status.get('job_id'),
+            )
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
+            )
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
+            do_next_stage = False
+        
+        elif do_next_stage and process_stage == 'expand_context_path':
+            
+            # OK. Add all of the spatial context columns
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.expand_context_path, 
+                kwargs={'df': df,},
+                job_id=stage_status.get('job_id'),
+            )
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
+            )
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
             do_next_stage = False
         
         elif do_next_stage and process_stage == 'add_authors_to_df':
@@ -263,74 +401,134 @@ def staged_make_export_df(
             # from equivalence relations between other predicates and 
             # dublin core authors, or inferred from dublin core authors 
             # assigned to the parent projects.
-            df = create_df.add_authors_to_df(df, assert_df)
-            cache_item_and_cache_key_for_export(
-                export_id, 
-                cache_key=f'df__{export_id}', 
-                object_to_cache=df
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.add_authors_to_df, 
+                kwargs={'df': df, 'assert_df': assert_df},
+                job_id=stage_status.get('job_id'),
             )
-            stage_status['done'] = True
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
+            )
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
             do_next_stage = False
         
-        elif do_next_stage and process_stage == 'add_spacetime_to_df':
-            
-            # Add geometry and chronology information to the output dataframe,
-            # either directly added to the subject item, or inferred by 
-            # spatial containment relationships.
-            df = create_df.add_spacetime_to_df(df)
-            cache_item_and_cache_key_for_export(
-                export_id, 
-                cache_key=f'df__{export_id}', 
-                object_to_cache=df
+        elif do_next_stage and process_stage == 'add_media_resource_files_to_df':
+            # Add media resource files to media items, if present.
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.add_media_resource_files_to_df, 
+                kwargs={'df': df,},
+                job_id=stage_status.get('job_id'),
             )
-            stage_status['done'] = True
-            do_next_stage = False
-        
-        elif do_next_stage and process_stage == 'expand_context_path':
-            
-            # OK. Add all of the spatial context columns
-            df = create_df.expand_context_path(df)
-            cache_item_and_cache_key_for_export(
-                export_id, 
-                cache_key=f'df__{export_id}', 
-                object_to_cache=df
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
             )
-            stage_status['done'] = True
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
             do_next_stage = False
         
         elif do_next_stage and process_stage == 'add_df_linked_data_from_assert_df':
-            
             # Add equivalent linked data descriptions to the subject.
-            df = create_df.add_df_linked_data_from_assert_df(
-                df, 
-                assert_df, 
-                add_entity_ld=add_entity_ld,
-                add_literal_ld=add_literal_ld,
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.add_df_linked_data_from_assert_df, 
+                kwargs={
+                    'df': df,
+                    'assert_df': assert_df,
+                    'add_entity_ld': add_entity_ld,
+                    'add_literal_ld': add_literal_ld,
+                },
+                job_id=stage_status.get('job_id'),
             )
-            cache_item_and_cache_key_for_export(
-                export_id, 
-                cache_key=f'df__{export_id}', 
-                object_to_cache=df
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
             )
-            stage_status['done'] = True
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
             do_next_stage = False
         
         elif do_next_stage and process_stage == 'add_attribute_data_to_df':
             
             # Add the project specific attributes asserted about
             # the subject items.
-            df = create_df.add_attribute_data_to_df(
-                df, 
-                assert_df, 
-                add_object_uris=add_object_uris,
-                node_delim=node_delim,
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.add_attribute_data_to_df, 
+                kwargs={
+                    'df': df,
+                    'assert_df': assert_df,
+                    'add_object_uris': add_object_uris,
+                    'node_delim': node_delim,
+                },
+                job_id=stage_status.get('job_id'),
             )
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
+            )
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
+            do_next_stage = False
+        
+        elif do_next_stage and process_stage == 'stylize_df':
+            
+            # Stylize the dataframe and then we are finished!!
+            # First, let's cache the pre-styled dataframe
             cache_item_and_cache_key_for_export(
                 export_id, 
-                cache_key=f'df__{export_id}', 
+                cache_key=f'df__no_style_{export_id}', 
                 object_to_cache=df
             )
-            stage_status['done'] = True
+            stage_status['df_no_style__key'] = f'df_no_style__{export_id}'
+
+            # Now actually do the work to fix style issues.
+            job_id, job_done, df = wrap_func_for_rq(
+                func=create_df.stylize_df, 
+                kwargs={'df': df,},
+                job_id=stage_status.get('job_id'),
+            )
+            stage_status = add_job_metadata_to_stage_status(
+                job_id, 
+                job_done, 
+                stage_status
+            )
+
+            if job_done and df is not None:
+                cache_item_and_cache_key_for_export(
+                    export_id, 
+                    cache_key=f'df__{export_id}', 
+                    object_to_cache=df
+                )
+
             do_next_stage = False
     
     # Check if we're all complete with this export process.

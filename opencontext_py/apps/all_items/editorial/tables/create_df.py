@@ -51,10 +51,17 @@ filter_args = {
     'subject__path__contains': 'Italy',
 }
 exclude_args = {
-    'subject__path__contains': 'Vescovado',
+    'predicate__label': 'Links',
 }
-df = create_df.make_export_df(filter_args, exclude_args=exclude_args)
 
+filter_args = {
+    'subject__item_type': 'subjects',
+    'subject__project_id': 'e682f907-6e4a-44cc-8a5f-3e2c73001673',
+}
+exclude_args = None
+
+
+df = create_df.make_clean_export_df(filter_args, exclude_args=exclude_args)
 
 
 assert_qs = create_df.get_assert_qs(filter_args, exclude_args)
@@ -75,38 +82,6 @@ preds_df = create_df.get_sort_preds_df(assert_df)
 df = create_df.add_attribute_data_to_df(df, assert_df)
 
 """
-
-
-PROCESS_STAGES = [
-    (
-        'prepare_assert_df', 
-        'Initial query of items, their attributes and links',
-    ),
-    (
-        'prepare_df_from_assert_df', 
-        'Consolidate items and basic metadata',
-    ),
-    (
-        'add_authors_to_df', 
-        'Add authorship metadata',
-    ),
-    (
-        'add_spacetime_to_df', 
-        'Add location and chronology metadata',
-    ),
-    (
-        'expand_context_path', 
-        'Add context hierarchy columns',
-    ),
-    (
-        'add_df_linked_data_from_assert_df', 
-        'Add equivalent linked data columns',
-    ),
-    (
-        'add_attribute_data_to_df', 
-        'Add project-specific attribute and relationships columns',
-    ),
-]
 
 # How many rows will we get in 1 database query?
 DB_QS_CHUNK_SIZE = 100
@@ -129,8 +104,65 @@ LITERAL_DATA_TYPE_COL_TUPS = [
 PRED_DATA_TYPE_COLS = {dt: (col, None,) for dt, col in LITERAL_DATA_TYPE_COL_TUPS}
 PRED_DATA_TYPE_COLS['id'] = ('object__label', 'object__uri',)
 
+
 # Delimiter between different 'nodes' that may contain predicates in assertions.
 DEFAULT_NODE_DELIM = '::'
+
+# Config for making predicates within nodes have unique labels.
+NODE_PRED_UNIQUE_PREDFIXING = [
+    ('event_id', configs.DEFAULT_EVENT_UUID, 'event__label', DEFAULT_NODE_DELIM,),
+    ('attribute_group_id', configs.DEFAULT_ATTRIBUTE_GROUP_UUID, 'attribute_group__label', DEFAULT_NODE_DELIM,),
+]
+
+# Multivalue attributes get mushed together into lists when 
+# we make an export table. This sets a delimiter between different
+# values of these lists. 
+DEFAULT_LIST_JOIN_DELIM = ' +++ '
+
+# This makes sure we don't have confusion, where our multi-value
+# delimiter is inside an individual value.
+DEFAULT_DELIM_ELEMENT_REPLACE = '--'
+
+DEFAULT_DROP_COLS = [
+    'subject_id',
+    'subject__project_id',
+    'project_id',
+    'subject__item_type',
+    'subject__sort',
+    'subject__revised',
+    'subject__path',
+    'dc_creator_id',
+    'dc_creator_label',
+    'dc_contributor_id',
+    'dc_contributor_label',
+    'item__geometry_type',
+]
+
+CONTEXT_COL_RENAMES = {f'context___{i}': f'Context [{i}]' for i in range(1, 30)}
+
+DEFAULT_COL_RENAMES = {
+    'subject__uri': 'Item URI',
+    'subject__label': 'Item Label',
+    'persistent_doi': 'Persistent ID (DOI)',
+    'persistent_ark': 'Persistent ID (ARK)',
+    'persistent_orcid': 'Identifier (ORCID)',
+    'subject__item_class__label': 'Item Category',
+    'subject__project__label': 'Project Label',
+    'subject__project__uri': 'Project URI',
+    'authors': 'Authors / Contributors',
+    'subject__context__uri': 'Item Context URI',
+    'subject__published': 'Item Published Date',
+    'subject__revised': 'Item Revised Date',
+    'item__latitude': 'Latitude (WGS-84)',
+    'item__longitude': 'Longitude (WGS-84)',
+    'item__geo_specificity': 'Geospatial Note',
+    'item__geo_source': 'Geospatial Inference',
+    'item__earliest': 'Earliest Year (-BCE/+CE)',
+    'item__latest': 'Latest Year (-BCE/+CE)',
+    'item__chrono_source': 'Chronology Inference',
+}
+
+
 
 
 def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
@@ -156,6 +188,24 @@ def get_assert_qs(filter_args, exclude_args=None):
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
     ).values('uri')[:1]
+
+    # Get the 3 major ID schemes we would want to 
+    # export.
+    doi_qs = AllIdentifier.objects.filter(
+        item=OuterRef('subject'),
+        scheme='doi',
+    ).values('id')[:1]
+
+    ark_qs = AllIdentifier.objects.filter(
+        item=OuterRef('subject'),
+        scheme='ark',
+    ).values('id')[:1]
+
+    orcid_qs = AllIdentifier.objects.filter(
+        item=OuterRef('subject'),
+        scheme='orcid',
+    ).values('id')[:1]
+
 
     predicate_equiv_ld_qs = AllAssertion.objects.filter(
         subject=OuterRef('predicate'),
@@ -228,6 +278,15 @@ def get_assert_qs(filter_args, exclude_args=None):
     qs = qs.annotate(
         object_thumbnail=Subquery(thumbs_qs)
     ).annotate(
+        # Add DOI identifiers to subject items, if they exist
+        persistent_doi=Subquery(doi_qs)
+    ).annotate(
+        # Add ARK identifiers to subject items, if they exist
+        persistent_ark=Subquery(ark_qs)
+    ).annotate(
+        # Add ORCID identifiers to subject items, if they exist
+        persistent_orcid=Subquery(orcid_qs)
+    ).annotate(
         # This will add labels of linked data equivalents to the predicate
         # of the assertion.
         predicate_equiv_ld_label=Subquery(predicate_equiv_ld_label)
@@ -246,10 +305,86 @@ def get_assert_qs(filter_args, exclude_args=None):
     return qs
 
 
-def get_raw_assertion_df(assert_qs):
+def add_prefix_to_uri_col_values(
+    act_df, 
+    suffixes_uri_col=['_uri'], 
+    prefix_uris='https://'
+):
+    """Adds a prefix to URIs in columns that end with a uri col suffix
+
+    :param DataFrame act_df: The dataframe that will get prefixes
+       on URI columns
+    :param list suffixes_uri_col: A list of suffixes that indicate a
+       column has URIs that need prefixes
+    :param str prefix_uris: The URI prefix to add to URI values.
+    """
+    if not prefix_uris or act_df is None or act_df.empty:
+        # We're not wanting to change anything
+        return act_df
+    
+    for col in act_df.columns:
+        suffix_found = False
+        for col_suffix in suffixes_uri_col:
+            if col.endswith(col_suffix):
+                suffix_found = True
+        if not suffix_found:
+            continue
+        # This makes sure we only add the prefix to non-blank rows
+        # that don't already have that prefix.
+        col_index = (
+            ~act_df[col].isnull()
+            & ~act_df[col].str.startswith(prefix_uris, na=False)
+        )
+        act_df.loc[col_index, col] = prefix_uris + act_df[col_index][col]
+    return act_df
+
+
+def make_urls_from_persistent_ids(act_df, prefix_uris='https://'):
+    """Make URLs from persistent ids for a dataframe
+
+    :param DataFrame act_df: The dataframe we want to
+       edit so persistent IDs become URLs.
+    """
+    cols_schemes = [
+        ('persistent_doi', 'doi',),
+        ('persistent_ark', 'ark',),
+        ('persistent_orcid', 'orcid',),
+    ]
+    if act_df is None or act_df.empty:
+        # Empty data, so change nothing.
+        return act_df
+    
+    if not prefix_uris:
+        prefix_uris = ''
+
+    for col, scheme in cols_schemes:
+        if col not in act_df.columns:
+            # this column is missing, so skip
+            continue
+        conf = AllIdentifier.SCHEME_CONFIGS.get(scheme, {})
+        url_root = conf.get('url_root')
+        if not url_root:
+            # We don't have a URL root configured for
+            # this scheme
+            continue
+
+        prefix = prefix_uris + url_root
+        col_index = (
+            ~act_df[col].isnull()
+            & ~act_df[col].str.startswith(prefix, na=False)
+        )
+        act_df.loc[col_index, col] = prefix + act_df[col_index][col]
+    return act_df
+
+
+def get_raw_assertion_df(assert_qs, prefix_uris='https://'):
     assert_qs = assert_qs.values(
         'subject_id',
+        'subject__uri',
         'subject__label',
+        'persistent_doi',
+        'persistent_ark',
+        'persistent_orcid',
         'subject__item_type',
         'subject__item_class__label',
         'subject__project_id',
@@ -293,7 +428,44 @@ def get_raw_assertion_df(assert_qs):
         'updated',
     )
     assert_df = pd.DataFrame.from_records(assert_qs)
+    assert_df = add_prefix_to_uri_col_values(
+        assert_df,
+        prefix_uris=prefix_uris,
+    )
+    assert_df = make_urls_from_persistent_ids(
+        assert_df,
+        prefix_uris=prefix_uris,
+    )
     return assert_df
+
+
+def get_raw_assert_df_by_making_query(
+    filter_args, 
+    exclude_args=None, 
+    prefix_uris='https://'
+):
+    """Makes a query on the AllAssertion model and related models
+
+    :param dict filter_args: A dictionary of filter arguments
+        needed to filter the AllAssertion model to make
+        the AllAssertion queryset used to generate the
+        output dataframe.
+    :param dict exclude_args: An optional dict of exclude
+        arguments to with exclusion criteria for the 
+        AllAssertion model to make the AllAssertion queryset 
+        used to generate the output dataframe.
+    """ 
+    # Make the AllAssertion queryset based on filter arguments
+    # and optional exclusion critera.
+    assert_qs = get_assert_qs(
+        filter_args=filter_args, 
+        exclude_args=exclude_args
+    )
+
+    # Turn the AllAssertion queryset into a "tall" dataframe.
+    # Each row is a row for an assertion, so there will be many 
+    # assertions possible for each subject of the assertions.
+    return get_raw_assertion_df(assert_qs, prefix_uris=prefix_uris)
 
 
 def prepare_df_from_assert_df(assert_df):
@@ -305,8 +477,12 @@ def prepare_df_from_assert_df(assert_df):
     df = assert_df[
         [
             'subject_id',
+            'subject__uri',
             'project_id',
             'subject__label',
+            'persistent_doi',
+            'persistent_ark',
+            'persistent_orcid',
             'subject__item_type',
             'subject__item_class__label',
             'subject__project_id',
@@ -355,16 +531,25 @@ def expand_context_path(
     if not label_col in df.columns or not path_col in df.columns:
         # This doesn't exist in this dataframe
         return df
+    
+    path_col_index = ~df[path_col].isnull()
+    if df[path_col_index].empty:
+        # All the paths are empty, so skip out
+        return df
+
+    # Remove any leading or trailing blanks
+    df[path_col] = df[path_col].str.strip()
+    df[path_col] = df[path_col].str.strip(path_delim)
 
     # NOTE: This is a vectorized (hopefully fast) way of splitting
     # a context path string column into several columns.
     # This also removes the last part of the context path which
     # if it is the same as the item label.
     p_delim_count_col = f'{path_col}__levels'
-    df[p_delim_count_col] = df[path_col].str.count('/')
-
+    df[p_delim_count_col] = df[path_col].str.count(path_delim)
+    
     df_p = df[path_col].str.split(
-        '/',
+        path_delim,
         expand=True,
     ).rename(
         columns=(lambda x: f"{result_col_prefix}{result_col_delim}{x+1}")
@@ -638,6 +823,9 @@ def add_spacetime_to_df(df):
         df_spacetime_chunk = get_spacetime_from_context_levels(chunk_uuids)
         df_spacetime_list.append(df_spacetime_chunk)
     
+    if not len(df_spacetime_list):
+        # No spacetime items to merge in.
+        return df
     # Concatenate all of these chunked spacetime datasets
     df_spacetime = pd.concat(df_spacetime_list)
     # Add them to our main, glorious dataframe.
@@ -791,12 +979,12 @@ def clean_lists(col):
     return output
 
 
-def combine_author_lists(x, col):
+def combine_author_lists(x):
     """Combine weird numpy series of lists, adding creators to contribs"""
     contribs = x['dc_contributor_label']
     creators = x['dc_creator_label']
     output = [
-        x for x in contribs if isinstance(auth, str) or instance(aut)
+        x for x in contribs if isinstance(auth, str)
     ]
     output += [
         auth 
@@ -818,6 +1006,14 @@ def add_authors_to_df(df, assert_df, drop_roles=True):
         (configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID, 'dc_contributor'),
         (configs.PREDICATE_DCTERMS_CREATOR_UUID, 'dc_creator'),
     ]
+
+    dc_cols = [
+        'dc_contributor_id', 
+        'dc_contributor_label', 
+        'dc_creator_id', 
+        'dc_creator_label'
+    ]
+
     for role_id, role in pred_roles_tups:
         # Get dc-contributors directly assigned to the subject item.
         df_role_preds = get_df_entities_equiv_to_entity(
@@ -838,6 +1034,7 @@ def add_authors_to_df(df, assert_df, drop_roles=True):
             df[f'{role}_id'] = np.nan
             df[f'{role}_label'] = np.nan
 
+   
     # Get the project authorship roles
     df_proj_auths = get_df_project_authors(
         assert_df['project_id'].unique().tolist()
@@ -846,26 +1043,43 @@ def add_authors_to_df(df, assert_df, drop_roles=True):
         by=['project_id']
     ).agg([list]).reset_index()
     df_proj_auths_grp.columns = df_proj_auths_grp.columns.get_level_values(0)
-    
-    # Do a little clean up to remove columns with a list of np.nan, and remove the np.nan's
-    # if they are inside lists with otherwise valid values.
-    for col in ['dc_contributor_id', 'dc_contributor_label', 'dc_creator_id', 'dc_creator_label']:
-        l_null = ~df_proj_auths_grp[col].isnull()
-        df_proj_auths_grp.loc[l_null, col] = df_proj_auths_grp[l_null].apply(
-            lambda row: clean_lists(row[col]), axis=1
-        )
 
-    no_item_roles = df['dc_contributor_label'].isnull() & df['dc_creator_label'].isnull()
-    for has_missing_proj_id in df[no_item_roles]['project_id'].unique():
-        # Add missing contributor, creator names from projects for items that are missing
-        # BOTH contributors and creators.
-        act_index = no_item_roles & (df['project_id'] == has_missing_proj_id)
-        proj_index = df_proj_auths_grp['project_id'] == has_missing_proj_id
-        
-        df.loc[act_index, 'dc_contributor_id'] = df_proj_auths_grp[proj_index]['dc_contributor_id'].iloc[0]
-        df.loc[act_index, 'dc_contributor_label'] = df_proj_auths_grp[proj_index]['dc_contributor_label'].iloc[0]
-        df.loc[act_index, 'dc_creator_id'] = df_proj_auths_grp[proj_index]['dc_creator_id'].iloc[0]
-        df.loc[act_index, 'dc_creator_label'] = df_proj_auths_grp[proj_index]['dc_creator_label'].iloc[0]
+    
+    if not df_proj_auths_grp.empty:
+        # Do a little clean up to remove columns with a list of np.nan, and remove the np.nan's
+        # if they are inside lists with otherwise valid values.
+        for col in dc_cols:
+            l_null = ~df_proj_auths_grp[col].isnull()
+            if df_proj_auths_grp[l_null].empty:
+                # This is empty, so continue
+                continue
+            df_proj_auths_grp.loc[l_null, col] = df_proj_auths_grp[l_null].apply(
+                lambda row: clean_lists(row[col]), axis=1
+            )
+
+        no_item_roles = df['dc_contributor_label'].isnull() & df['dc_creator_label'].isnull()
+        for has_missing_proj_id in df[no_item_roles]['project_id'].unique():
+            # Add missing contributor, creator names from projects for items that are missing
+            # BOTH contributors and creators.
+            act_index = no_item_roles & (df['project_id'] == has_missing_proj_id)
+            proj_index = df_proj_auths_grp['project_id'] == has_missing_proj_id
+            
+            for col in dc_cols:
+                col_act_index = act_index & df[col].isnull()
+                col_proj_index = proj_index & ~df_proj_auths_grp[col].isnull()
+                if df[col_act_index].empty or df_proj_auths_grp[col_proj_index].empty:
+                    # We don't need or don't have data to fill, so skip.
+                    continue
+                # OK! Fill in the dc author column with values from the project authorship
+                # metadata. not df.loc[col_act_index, col] fails when the col_values
+                # is a list.
+                col_values = df_proj_auths_grp[col_proj_index][col].values[0]
+                if isinstance(col_values, list):
+                    df[col] = df[col].astype(object)
+                for i, _ in df[col_act_index].iterrows():
+                    # This weirdness sets 1 column at a time without errors
+                    # involved on setting a col_values (which may be a list).
+                    df.at[i, col] = col_values
 
     # Now combine the contributors and the creators into a single author column
     df['authors'] = np.nan
@@ -895,7 +1109,11 @@ def add_authors_to_df(df, assert_df, drop_roles=True):
     return df
 
 
-def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
+def get_df_entity_equiv_linked_data(
+    oc_entity_ids, 
+    output_col_prefix='object',
+    prefix_uris='https://'
+    ):
     """Gets a dataframe of linked data equivalence to Open Context ids"""
 
     # NOTE: Any given Open Context entity many have multiple linked data
@@ -922,6 +1140,13 @@ def get_df_entity_equiv_linked_data(oc_entity_ids, output_col_prefix='object'):
         'object__uri',
     )
     equiv_df = pd.DataFrame.from_records(object_equiv_ld_qs)
+
+    # Add the https:// prefix to the uris
+    equiv_df = add_prefix_to_uri_col_values(
+        equiv_df,
+        prefix_uris=prefix_uris,
+    )
+
     equiv_df.rename(
         columns={
             'subject_id': f'{output_col_prefix}_id',
@@ -977,6 +1202,11 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
     obj_equiv_df = get_df_entity_equiv_linked_data(
         ld_assert_df[obj_index]['object_id'].unique()
     )
+    if obj_equiv_df is None or obj_equiv_df.empty:
+        # There are no equivalent linked data objects to
+        # add
+        return df
+
     ld_assert_df = ld_assert_df.merge(
         obj_equiv_df,
         left_on='object_id', 
@@ -984,8 +1214,7 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
         how='outer',
     )
     obj_index = ~ld_assert_df['object_equiv_ld_uri'].isnull()
-    ld_assert_df.loc[obj_index, 'object_equiv_ld_uri'] = 'https://' + ld_assert_df[obj_index]['object_equiv_ld_uri']
-    
+      
     # 1: Add linked data where the object is a linked entity (not a literal)
     id_index = ld_assert_df['predicate__data_type'] == 'id'
     for pred_uri in ld_assert_df[id_index]['predicate_equiv_ld_uri'].unique():
@@ -995,8 +1224,8 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
         # NOTE: TODO Maybe add URIs to ALL the predicate columns? That will make
         # sure they are uniquely labeled, and we can add special output features
         # to strip them to make a more user friendly output.
-        col_uris = f'{pred_label} (URI) [https://{pred_uri}]'
-        col_labels = f'{pred_label} (Label) [https://{pred_uri}]'
+        col_uris = f'{pred_label} (URI) [{pred_uri}]'
+        col_labels = f'{pred_label} (Label) [{pred_uri}]'
         pred_obj_index = pred_index & ~ld_assert_df['object_equiv_ld_uri'].isnull()
 
         # Make a dataframe for this predicate and the equivalent linked
@@ -1082,7 +1311,7 @@ def add_df_literal_linked_data_from_assert_df(
             # NOTE: TODO Maybe add URIs to ALL the predicate columns? That will make
             # sure they are uniquely labeled, and we can add special output features
             # to strip them to make a more user friendly output.
-            col_value = f'{pred_label} (Value) [https://{pred_uri}]'
+            col_value = f'{pred_label} (Value) [{pred_uri}]'
             pred_obj_index = pred_index & ~ld_assert_df[object_col].isnull()
 
             # Make a dataframe for this predicate and the equivalent linked
@@ -1173,7 +1402,28 @@ def add_df_linked_data_from_assert_df(
     return df
 
 
-def get_sort_preds_df(assert_df):
+
+def make_node_prefix(row, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PREDFIXING):
+    """Makes a node prefix string from values of different columns in a dataframe row
+
+    :param row row: A dataframe row object.
+    :param list node_pred_unique_prefixing: A list configuring what nodes count for
+        making a node_prefix
+    """
+    node_prefix = ''
+    for node_id_col, default_node_id, node_label_col, node_delim in node_pred_unique_prefixing:
+        if not node_id_col in row or not node_label_col in row:
+            continue
+        if str(row[node_id_col]) == default_node_id:
+            # The node id is the default, so do not add a special prefix.
+            continue
+        if not isinstance(row[node_label_col], str):
+            continue
+        node_prefix += f'{row[node_label_col]}{node_delim}'
+    return node_prefix
+
+
+def get_sort_preds_df(assert_df, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PREDFIXING):
     """Gets and sorts a dataframe of predicates sorted by node groupings
 
     :param DataFrame assert_df: The raw assertion dataframe. This can be None
@@ -1223,6 +1473,39 @@ def get_sort_preds_df(assert_df):
         by=['obs_sort', 'event_sort', 'attribute_group_sort', 'sort'],
         inplace=True,
     )
+    
+    # Make an index where the columns used to figure out node prefixes are
+    # not null.
+    act_index = ~preds_df['predicate__uri'].isnull()
+    for node_id_col, _, node_label_col, _ in node_pred_unique_prefixing:
+        act_index &= ~preds_df[node_id_col].isnull()
+        act_index &= ~preds_df[node_label_col].isnull()
+
+    preds_df['node_prefix'] = ''
+    preds_df.loc[act_index, 'node_prefix'] = preds_df[act_index].apply(
+        lambda row: make_node_prefix(
+            row, 
+            node_pred_unique_prefixing=node_pred_unique_prefixing
+        ),
+        axis=1
+    )
+    
+    # NOTE: We need to drop repeats.
+    # The "same" predicate may be in multiple observations, events, and
+    # attribute groups. We use event labels and attribute group labels
+    # to prefix predicates to make unique columns for the same predicates
+    # that may come in different events or attribute groups.
+    #
+    # However, we (generally) treat observations somewhat differently. So we can
+    # drop repeated combos of events-attribute-predicates if they come
+    # in different observations, because we don't care about observations
+    # in the export dump.
+    preds_df.drop_duplicates(
+        subset=['node_prefix', 'predicate__uri'], 
+        keep='first', 
+        inplace=True,
+    )
+
     return preds_df
 
 
@@ -1236,8 +1519,7 @@ def add_attribute_data_to_df(
     """Adds (project specific) attribute data to the output df
 
     :param DataFrame df: The dataframe that will get the attribute data.
-    :param DataFrame assert_df: The raw assertion dataframe. This can be None
-        if we already have the ld_assert_df defined.
+    :param DataFrame assert_df: The raw assertion dataframe. 
     :param bool add_object_uris: If true, add URI columns for named entities.
     :param str node_delim: Delimiter for nodes that contain predicates
     :param dict pred_data_type_cols: A dict keyed by predicate data type
@@ -1248,6 +1530,7 @@ def add_attribute_data_to_df(
     # observation, event, attribute group, and finally by 
     # individual sort order. 
     preds_df = get_sort_preds_df(assert_df)
+
     for _, prow in preds_df.iterrows():
         p_index = (
             (assert_df['observation_id'] == prow['observation_id'])
@@ -1274,22 +1557,17 @@ def add_attribute_data_to_df(
 
         # The following several lines are all about naming the columns
         # for the predicates.
-        col_prefix = ''
-        if str(prow['event_id']) != configs.DEFAULT_EVENT_UUID:
-            col_prefix += f'{str(prow["event__label"])}{node_delim}'
-        if str(prow['attribute_group_id']) != configs.DEFAULT_ATTRIBUTE_GROUP_UUID:
-            col_prefix += f'{str(prow["attribute_group__label"])}{node_delim}'
-
+        col_prefix = prow['node_prefix']
         if add_object_uris and obj_uri:
             # For cases where we named entities and we want to have their
             # URIs.
             col_uri = (
                 f'{col_prefix}{str(prow["predicate__label"])} '
-                f'(URI) [https://{str(prow["predicate__uri"])}]'
+                f'(URI) [{str(prow["predicate__uri"])}]'
             )
             col_label = (
                 f'{col_prefix}{str(prow["predicate__label"])} '
-                f'(Label) [https://{str(prow["predicate__uri"])}]'
+                f'(Label) [{str(prow["predicate__uri"])}]'
             )
             renames = {
                 object_col: col_label,
@@ -1300,7 +1578,7 @@ def add_attribute_data_to_df(
             # object URIs.
             col_label = (
                 f'{col_prefix}{str(prow["predicate__label"])} '
-                f'[https://{str(prow["predicate__uri"])}]'
+                f'[{str(prow["predicate__uri"])}]'
             )
             renames = {
                 object_col: col_label,
@@ -1321,6 +1599,117 @@ def add_attribute_data_to_df(
     return df
 
 
+def get_media_resource_file_df(
+    uuids, 
+    resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS):
+    """Gets a dataframe of Resources associated with uuids identified items
+
+    :param list uuids: Ids for items associated with resource files.
+    :param list resource_type_ids: Identifiers for the types of resources
+        that we want to include, if present in the dataframe
+    """
+    qs = AllResource.objects.filter(
+        item_id__in=uuids,
+        resourcetype_id__in=resource_type_ids,
+    ).values(
+        'item_id',
+        'resourcetype__label',
+        'uri',
+        'rank'
+    )
+    res_df = pd.DataFrame.from_records(qs)
+    res_df.rename(
+        columns={
+            'item_id': 'subject_id',
+        },
+        inplace=True,
+    )
+    if res_df is None or res_df.empty:
+        res_df = pd.DataFrame(
+            data={
+                'subject_id':[], 
+                'resourcetype__label':[], 
+                'uri':[]
+            }
+        )
+        return res_df
+    # Sort by rank
+    res_df.sort_values(
+        by=['rank', 'subject_id', 'resourcetype__label'],
+        inplace=True
+    )
+    # Drop the rows that duplicates, keeping only the default
+    res_df.drop_duplicates(
+        subset=['subject_id', 'resourcetype__label'],
+        inplace=True,
+    )
+
+    # Make sure the file URIs have a protocol prefix
+    res_df = add_prefix_to_uri_col_values(
+        res_df, 
+        suffixes_uri_col=['uri'], 
+        prefix_uris='https://'
+    )
+    # Drop the rank column.
+    res_df.drop(columns=['rank'], inplace=True)
+    return res_df
+
+
+def add_media_resource_files_to_df(
+    df, 
+    resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS
+):
+    """Adds media files to a dataframe
+
+    :param DataFrame df: The dataframe that will get the attribute data.
+    :param list resource_type_ids: Identifiers for the types of resources
+        that we want to include, if present in the dataframe
+    """
+    media_index = df['subject__item_type'] == 'media'
+    if df[media_index].empty:
+        # No media, so nothing to add.
+        return df
+
+    chunks = chunk_list(
+        df[media_index]['subject_id'].unique().tolist(), 
+        n=5000,
+    )
+    df_res_list = []
+    for chunk_uuids in chunks:
+        chunk_res_df = get_media_resource_file_df(chunk_uuids)
+        if chunk_res_df is None or chunk_res_df.empty:
+            continue
+        df_res_list.append(chunk_res_df)
+    if not df_res_list:
+        # No resources of these types found, nothing to add
+        return df
+
+    
+    # Combine all the resource dataframes into one
+    df_res = pd.concat(df_res_list)
+    df_res_piv = df_res.pivot(
+        index='subject_id', 
+        columns='resourcetype__label',
+        values='uri'
+    )
+
+    # Set up some common merge keys of the same type.
+    df_res_piv['subject_id_str'] = df_res_piv.index
+    df_res_piv.reset_index(drop=True, inplace=True)
+    df_res_piv['subject_id_str'] = df_res_piv['subject_id_str'].astype(str)
+    df['subject_id_str'] = df['subject_id'].astype(str)
+    
+    # Now merge
+    df = df.merge(
+        df_res_piv,
+        how='left',
+        left_on='subject_id_str',
+        right_on='subject_id_str',
+    )
+    df.drop(columns=['subject_id_str'], inplace=True)
+    return df
+
+
 def make_export_df(
     filter_args, 
     exclude_args=None,
@@ -1328,6 +1717,7 @@ def make_export_df(
     add_literal_ld=True,
     add_object_uris=True,
     node_delim=DEFAULT_NODE_DELIM,
+    resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
 ):
     """Makes a dataframe prepared for exports
 
@@ -1365,13 +1755,6 @@ def make_export_df(
     # for each "subject" of the assertions.
     df = prepare_df_from_assert_df(assert_df)
 
-    # Add author information to the output dataframe, either directly
-    # added as dublin core properties on the subject item, inferred
-    # from equivalence relations between other predicates and 
-    # dublin core authors, or inferred from dublin core authors 
-    # assigned to the parent projects.
-    df = add_authors_to_df(df, assert_df)
-
     # Add geometry and chronology information to the output dataframe,
     # either directly added to the subject item, or inferred by 
     # spatial containment relationships.
@@ -1380,6 +1763,19 @@ def make_export_df(
     # Expand the context path of the subject item into multiple
     # columns.
     df = expand_context_path(df)
+
+    # Add author information to the output dataframe, either directly
+    # added as dublin core properties on the subject item, inferred
+    # from equivalence relations between other predicates and 
+    # dublin core authors, or inferred from dublin core authors 
+    # assigned to the parent projects.
+    df = add_authors_to_df(df, assert_df)
+
+    # Add media resource files to media items, if present.
+    df = add_media_resource_files_to_df(
+        df, 
+        resource_type_ids=resource_type_ids
+    )
 
     # Add equivalent linked data descriptions to the subject.
     df = add_df_linked_data_from_assert_df(
@@ -1397,11 +1793,207 @@ def make_export_df(
         add_object_uris=add_object_uris,
         node_delim=node_delim,
     )
+
+    # Now drop all the empty columns.
+    df.dropna(how='all', axis=1, inplace=True)
+
     return df
 
 
-def make_hash_id_from_args(args):
-    """Turns args into a hash identifier"""
-    hash_obj = hashlib.sha1()
-    hash_obj.update(str(args).encode('utf-8'))
-    return hash_obj.hexdigest()
+def join_by_delim(
+    cell_val, 
+    delim=DEFAULT_LIST_JOIN_DELIM, 
+    delim_sub=DEFAULT_DELIM_ELEMENT_REPLACE
+):
+    """Joins values by a delim
+    
+    :param Object cell_val: A value from a dataframe
+        cell
+    :param str delim: A string delimiter to mark different elements 
+        of the list when joined to a string
+    :param str delim_sub: A string to substitute in cases where
+        an individual value in a list has the delimiter present.
+    """
+    if not isinstance(cell_val, list):
+        return cell_val
+    str_cell_val = [
+        str(v).replace(delim.strip(), delim_sub) 
+        for v in cell_val
+        if v is not None and v is not np.nan
+    ]
+    return delim.join(str_cell_val)
+
+
+def merge_lists_in_df_by_delim(
+    df, 
+    delim=DEFAULT_LIST_JOIN_DELIM,
+    delim_sub=DEFAULT_DELIM_ELEMENT_REPLACE,
+):
+    """Changes lists to strings seperated by a delim
+    
+    :param DataFrame df: The export dataframe that we're modifying.
+    :param str delim: A string delimiter to mark different elements 
+        of the list when joined to a string
+    :param str delim_sub: A string to substitute in cases where
+        an individual value in a list has the delimiter present.
+    """
+    for col in df.columns:
+        if df['authors'].dtypes != object:
+            continue
+        no_null = ~df[col].isnull()
+        if df[no_null].empty:
+            continue
+        df.loc[no_null, col] = df[no_null].apply(
+            lambda row: join_by_delim(
+                row[col], 
+                delim=delim,
+                delim_sub=delim_sub,
+            ), 
+            axis=1
+        )
+    return df
+
+
+def make_cols_readable(
+    df, 
+    drop_cols=DEFAULT_DROP_COLS,
+    context_col_renames=CONTEXT_COL_RENAMES,
+    col_renames=DEFAULT_COL_RENAMES,
+):
+    """Cleans up columns for more readable output
+    
+    :param DataFrame: The export dataframe getting edited.
+    :param list drop_cols: A list of columns to drop from
+        the export dataframe.
+    :param dict context_col_renames: A dictionary for
+        renaming context columns (or any other)
+    :param dict col_renames: A dictionary for other 
+        column renaming
+    """
+
+    # Drop specified columns if they actually exist in the
+    # df.
+    act_drop = [c for c in drop_cols if c in df.columns]
+    df.drop(columns=act_drop, inplace=True)
+
+    # Rename Context (Path) columns if they exist.
+    act_context_rename = {
+        c:r for c,r in context_col_renames.items() 
+        if c in df.columns
+    }
+    df.rename(
+        columns=act_context_rename, 
+        inplace=True
+    )
+
+    act_renames =  {
+        c:r for c,r in col_renames.items() 
+        if c in df.columns
+    }
+    df.rename(
+        columns=act_renames, 
+        inplace=True
+    )
+    return df
+
+
+def stylize_df(
+    df, 
+    delim=DEFAULT_LIST_JOIN_DELIM,
+    delim_sub=DEFAULT_DELIM_ELEMENT_REPLACE,
+    drop_cols=DEFAULT_DROP_COLS,
+    context_col_renames=CONTEXT_COL_RENAMES,
+    col_renames=DEFAULT_COL_RENAMES,
+    ):
+    """Stylize an export dataframe nicely for wider use
+    
+    :param DataFrame: The export dataframe getting edited.
+    :param str delim: A string delimiter between multiple values
+        of joined list elements.
+    :param str delim_sub: A string to substitute in cases where
+        an individual value in a list has the delimiter present.
+    :param list drop_cols: A list of columns to drop from
+        the export dataframe.
+    :param dict context_col_renames: A dictionary for
+        renaming context columns (or any other)
+    :param dict col_renames: A dictionary for other 
+        column renaming
+    """
+    df = merge_lists_in_df_by_delim(
+        df=df, 
+        delim=delim, 
+        delim_sub=delim_sub
+    )
+    return make_cols_readable(
+        df=df,
+        drop_cols=drop_cols,
+        context_col_renames=context_col_renames,
+        col_renames=col_renames,
+    )
+
+
+def make_clean_export_df(
+    filter_args, 
+    exclude_args=None,
+    add_entity_ld=True,
+    add_literal_ld=True,
+    add_object_uris=True,
+    node_delim=DEFAULT_NODE_DELIM,
+    resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
+    delim=DEFAULT_LIST_JOIN_DELIM,
+    delim_sub=DEFAULT_DELIM_ELEMENT_REPLACE,
+    drop_cols=DEFAULT_DROP_COLS,
+    context_col_renames=CONTEXT_COL_RENAMES,
+    col_renames=DEFAULT_COL_RENAMES,
+):
+    """Makes a dataframe prepared for exports
+
+    :param dict filter_args: A dictionary of filter arguments
+        needed to filter the AllAssertion model to make
+        the AllAssertion queryset used to generate the
+        output dataframe.
+    :param dict exclude_args: An optional dict of exclude
+        arguments to with exclusion criteria for the 
+        AllAssertion model to make the AllAssertion queryset 
+        used to generate the output dataframe.
+    :param bool add_entity_ld: If true, add any linked data 
+        equivalents for named entities
+    :param bool add_literal_ld: If true, add any linked data 
+        equivalents for literal values
+    :param bool add_object_uris: If true, add URI columns for 
+        named entities.
+    :param str node_delim: Delimiter for nodes that contain 
+        predicates
+    :param str delim: A string delimiter between multiple values
+        of joined list elements.
+    :param str delim_sub: A string to substitute in cases where
+        an individual value in a list has the delimiter present.
+    :param list drop_cols: A list of columns to drop from
+        the export dataframe.
+    :param dict context_col_renames: A dictionary for
+        renaming context columns (or any other)
+    :param dict col_renames: A dictionary for other 
+        column renaming
+    """
+
+    # Do the hard, complicated job of making the export
+    # dataframe. This is not styled at all yet.
+    df = make_export_df(
+        filter_args=filter_args, 
+        exclude_args=exclude_args,
+        add_entity_ld=add_entity_ld,
+        add_literal_ld=add_literal_ld,
+        add_object_uris=add_object_uris,
+        node_delim=node_delim,
+        resource_type_ids=resource_type_ids,
+    )
+    
+    # Now do some styling to make the output more legible.
+    return stylize_df(
+        df=df, 
+        delim=delim, 
+        delim_sub=delim_sub,
+        drop_cols=drop_cols,
+        context_col_renames=context_col_renames,
+        col_renames=col_renames,
+    )

@@ -38,6 +38,8 @@ from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchView
 from opencontext_py.apps.all_items import views as AllItemsViews
 from opencontext_py.apps.all_items.editorial import views as EditorialViews
 from opencontext_py.apps.all_items.editorial.item import views as EditorialItemViews
+# Testing views for making export tables
+from opencontext_py.apps.all_items.editorial.tables import views as EditorialExportViews
 
 # Testing new ETL views. These are for GET requests
 from opencontext_py.apps.etl.importer import views as etlViews
@@ -259,6 +261,13 @@ urlpatterns = [
         EditorialItemViews.delete_identifiers, 
         name='editorial_delete_identifiers'
     ),
+    # New Export data editorial views
+    url(
+        r'^editorial/export-test/(?P<export_id>\S+)', 
+        EditorialExportViews.test_export,
+        name='ed_export_test_export'
+    ),
+
 
     # New ETL views
     url(r'^etl-importer/prepare/(?P<source_id>\S+)', etlViews.home_html, name='etl_home_html'),
@@ -300,6 +309,7 @@ urlpatterns = [
         etlTransformsViews.etl_transform_load,
         name='etl_transform_load_json'
     ),
+
 
     
     url(r'^search.json?', SearchViews.json_view, name='search_json_d'),
