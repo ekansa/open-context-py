@@ -430,7 +430,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
             },
             {
                 'item_type': 'subjects', 
-                'item_type_note': 'A location or object. The main subject of description and observational data in Open Context.',
+                'item_type_note': 'A location or object. The main subject of description and observational data in Open Context',
                 'edit_uuid': True,
                 'edit_slug': True,
                 'edit_item_key': False,
@@ -1002,6 +1002,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
         ],
     },
 ]
+
 
 
 def api_config_response():

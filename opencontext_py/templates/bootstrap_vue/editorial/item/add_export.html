@@ -1,0 +1,291 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+<style>
+ .export_field_row {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+ }
+ .export_field_button {
+    margin-bottom: 12px;
+ }
+</style>
+
+
+<template id="export-param">
+  <b-row v-if="config" class="
+    export_field_row
+    border 
+    border-info
+    border-top-0
+    border-right-0
+    border-left-0
+  ">
+    <b-col cols="8">
+      <strong>[[ config.label ]]</strong><span v-if="config.count"> ([[ config.count ]])</span> <br/>
+
+      <b-form-input
+        :id="'export-param-' + config.arg_param"
+        v-if="config.do_text_input"
+        v-model="text_value"
+        type="text"
+        debounce="250"
+        @change="text_change"
+        :value="null"
+        name="text_value"
+      ></b-form-input>
+
+      <b-form-checkbox-group
+        :id="'export-param-' + config.arg_param"
+        size="sm"
+        v-if="config.options"
+        v-model="selected_options"
+        :options="config.options"
+        name="selected_options"
+        @change="opts_change"
+      ></b-form-checkbox-group>
+
+    </b-col>
+    <b-col cols="4">
+        <b-button
+          sm
+          block
+          class="export_field_button"
+          @click="add_to_filters"
+          :disabled="disable_buttons"
+          variant="dark">Add Filter <b-icon-bag-check-fill></b-icon-bag-check-fill></b-button>
+        
+        <b-button
+          sm
+          block
+          class="export_field_button"
+          @click="add_to_excludes"
+          :disabled="disable_buttons"
+          variant="secondary">Add Exclusion <b-icon-bag-x-fill></b-icon-bag-x-fill></b-button>
+    </b-col>
+  </b-row>
+</template>
+
+
+<template id="add-export">
+  <div>
+    <b-modal
+      size="lg"
+      scrollable
+      ref="add-export-modal"
+      id="add-export-modal" 
+      title="Add Export"
+      @shown="on_shown"
+    >
+    <b-container fluid>
+      <b-row>
+        <b-col cols="12">
+
+        </b-col>
+      </b-row>
+      <b-row v-if="act_configs">
+        <b-col cols="12">
+          <b-container fluid>
+
+            <export-param v-for="(config, index) in act_configs"
+            :key="'export-config-' + index"
+            v-bind:config="config"
+            @update_args="update_args($event)"
+            >
+          </export-param>
+
+          </b-container>
+        </b-col>
+      </b-row>
+    </b-container>
+    </b-modal>
+
+    <b-button
+      sm
+      block
+      @click="toggle_add_export"
+      class="add_delete_buttons"
+      variant="primary">Export Table <b-icon-table></b-icon-table></b-button>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+
+var vc_export_param = Vue.component(
+  'export-param',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['config'],
+    data() {
+      return {
+        config: null,
+        // disable_buttons: true,
+        text_value: '',
+        selected_options: [],
+      }
+    },
+    template: '#export-param',
+    created() {
+      
+    },
+    computed: {
+      disable_buttons: function() {
+        console.log(this.text_value);
+        console.log(this.selected_options);
+        let disable_buttons = true;
+        if(this.selected_options.length > 0){
+          disable_buttons = false;
+        }
+        if(this.text_value != null){
+          if(this.text_value.length > 2) {
+            disable_buttons = false;
+          }
+        }
+        return disable_buttons;
+     },
+    },
+    methods: {
+      opts_change() {
+        // do nothing
+      },
+      text_change(val) {
+        this.text_value = val;
+      },
+      update_args(type) {
+        let arg_update = {
+          type: type,
+          config: this.config,
+          text_value: this.text_value,
+          selected_options: this.selected_options,
+        };
+        this.$emit('update_args', arg_update);
+      },
+      add_to_filters: function() {
+        this.update_args('filters');
+      },
+      add_to_excludes: function() {
+        this.update_args('excludes');
+      },
+    },
+    components: {
+      'lookup-list': vc_add_export,
+    },
+  }
+); 
+
+
+var vc_add_export = Vue.component(
+  'add-export',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['project_ids'],
+    data() {
+      return {
+        project_ids: null,
+        act_configs: null,
+        filter_args: null,
+        exclude_args: null,
+      }
+    },
+    template: '#add-export',
+    created() {
+      this.fetch_api_configs();
+    },
+    computed: {
+     
+    },
+    methods: {
+      make_default_proj_filter: function () {
+        if(this.filter_args != null || !this.project_ids){
+          // We already have filter args in place, or we
+          // don't have project ids to filter by
+          return null;
+        }
+        this.filter_args = {
+          project_id__in: this.project_ids,
+        };
+      },
+      make_request_params: function () {
+        if(!this.filter_args && !this.exclude_args){
+          return null;
+        }
+        let params = {};
+        if(this.filter_args){
+          params.filter_args = JSON.stringify(this.filter_args);
+        }
+        if(this.exclude_args){
+          params.exclude_args = JSON.stringify(this.exclude_args);
+        }
+        return params;
+      },
+      fetch_api_configs: function (){
+        this.error = null;
+        this.loading = true;
+        this.make_default_proj_filter();
+        let params = this.make_request_params();
+        let url = '/editorial/export-configs';
+        if (params){
+          url += '?' + new URLSearchParams(params);
+        }
+        const requestOptions = {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
+        fetch(
+          (url), requestOptions,
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.act_configs = json;
+          console.log(this.act_configs);
+        });
+      },
+      update_arg_dict(args_obj, arg_update){
+        let arg_param = arg_update.config.arg_param;
+        if(args_obj == null){
+          args_obj = {};
+        }
+        if(arg_update.selected_options.length > 0){
+          args_obj[arg_param] = arg_update.selected_options;
+        }
+        else{
+          args_obj[arg_param] = arg_update.text_value;
+        }
+        return args_obj;
+      },
+      update_args(arg_update){
+        let selected_opts = arg_update.selected_options;
+        let arg_param = arg_update.config.arg_param;
+        if(arg_update.type == 'filters'){
+          this.filter_args = this.update_arg_dict(this.filter_args, arg_update);
+        }
+        else{
+          this.exclude_args = this.update_arg_dict(this.exclude_args, arg_update);
+        }
+        this.fetch_api_configs();
+      },
+      on_shown: function() {
+        console.log('show add export modal');
+        this.fetch_api_configs();
+      },
+      toggle_add_export: function() {
+        this.$bvModal.show('add-export-modal');
+      },
+    },
+    components: {
+      'lookup-list': vs_look_up_list,
+      'export-param': vc_export_param,
+    },
+  }
+); 
+  
+</script>

@@ -25,9 +25,10 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
+from opencontext_py.apps.all_items.editorial.item import edit_configs
 from opencontext_py.apps.all_items.editorial.tables import create_df
 from opencontext_py.apps.all_items.editorial.tables import create_que
-
+from opencontext_py.apps.all_items.editorial.tables import ui_utilities
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -40,11 +41,22 @@ from django.utils.cache import patch_vary_headers
 # export tables.
 # ---------------------------------------------------------------------
 
-def make_error_response(errors):
-    output = {
-        'message': f'Errors: {len(errors)}',
-        'errors': errors,
-    }
+@cache_control(no_cache=True)
+@never_cache
+def export_configs(request):
+    """Get export configurations"""
+    filter_args = None
+    if request.GET.get('filter_args'):
+        filter_args = json.loads(request.GET.get('filter_args'))
+    exclude_args = None
+    if request.GET.get('exclude_args'):
+        exclude_args = json.loads(request.GET.get('exclude_args'))
+    
+    output = ui_utilities.make_export_config_dict(
+        filter_args=filter_args, 
+        exclude_args=exclude_args,
+    )
+
     json_output = json.dumps(
         output,
         indent=4,
@@ -52,9 +64,10 @@ def make_error_response(errors):
     )
     return HttpResponse(
         json_output,
-        content_type="application/json; charset=utf8",
-        status=400
+        content_type="application/json; charset=utf8"
     )
+
+
 
 
 @cache_control(no_cache=True)
@@ -69,7 +82,10 @@ def test_export(request, export_id=None):
             'subject__item_class__label__contains': 'Animal',
             'subject__path__contains': 'Italy',
         },
-        'exclude_args': {'subject__path__contains': 'Vescovado'},
+        'exclude_args': {
+            'project__label__contains': 'Blubbie',
+            'subject__path__contains': 'Vescovado',
+        },
         'add_entity_ld': True,
         'add_literal_ld': True,
         'add_object_uris': True,
@@ -79,7 +95,7 @@ def test_export(request, export_id=None):
     if kwargs.get('export_id'):
         kwargs['reset_cache'] = False
 
-    output = create_que.staged_make_export_df(**kwargs)
+    output = create_que.single_stage_make_export_df(**kwargs)
     json_output = json.dumps(
         output,
         indent=4,

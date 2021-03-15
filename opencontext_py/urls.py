@@ -263,9 +263,14 @@ urlpatterns = [
     ),
     # New Export data editorial views
     url(
+        r'^editorial/export-configs', 
+        EditorialExportViews.export_configs,
+        name='editorial_export_configs'
+    ),
+    url(
         r'^editorial/export-test/(?P<export_id>\S+)', 
         EditorialExportViews.test_export,
-        name='ed_export_test_export'
+        name='editorial_export_test_export'
     ),
 
 

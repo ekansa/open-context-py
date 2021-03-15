@@ -9,6 +9,7 @@
         {% include '../../editorial/lookup.html' %}
 
         {% include './project.html' %}
+        {% include './add_export.html' %}
         {% include './manifest_edit.html' %}
         {% include './history.html' %}
         {% include './manifest.html' %}
@@ -45,6 +46,9 @@
                             <add-item
                               v-bind:project_ids="ITEM_PROJECT_UUIDS">
                             </add-item>
+                            <add-export
+                              v-bind:project_ids="ITEM_PROJECT_UUIDS">
+                            </add-export>
                             <delete-item
                               v-bind:uuid="ITEM_UUID"
                               v-bind:project_ids="ITEM_PROJECT_UUIDS">
@@ -175,6 +179,7 @@
                     },
                     components: {
                         'add-item': vc_add_item,
+                        'add-export': vc_add_export,
                         'delete-item': vc_delete_item,
                         'edit-project': vc_edit_project,
                         'edit-manifest': vc_edit_manifest,

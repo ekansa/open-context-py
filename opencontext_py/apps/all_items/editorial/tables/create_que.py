@@ -32,11 +32,18 @@ from opencontext_py.apps.all_items.editorial.tables import create_df
 # export of tabular data in a que / worker. Exports functions can take
 # lots of time, so they need to be able to run in the context of a 
 # queing system. 
+#
+#
+# NOTE: Don't forget to start the worker to make redis queue actually
+# work:
+#
+# python manage.py rqworker high
+#
 # ---------------------------------------------------------------------
 logger = logging.getLogger("tab-exporter-logger")
 
 EXPORT_CACHE_LIFE = 60 * 60 * 6 # 6 hours. 
-
+DEFAULT_TIMEOUT = 60 * 30   # 30 minutes.
 
 PROCESS_STAGES = [
     (
@@ -111,7 +118,7 @@ s3_resource.Object(bucket, key).put(Body=pickle_buffer.getvalue())
 
 """
 
-def wrap_func_for_rq(func, kwargs, job_id=None):
+def wrap_func_for_rq(func, kwargs, job_id=None, default_timeout=DEFAULT_TIMEOUT):
     """Wraps a function for use with the django redis queue
 
     :param str process_stage: The export stage that we are
@@ -123,7 +130,7 @@ def wrap_func_for_rq(func, kwargs, job_id=None):
     :param dict kwargs: Keyword argument dict that we're
         passing to the function func
     """
-    queue = django_rq.get_queue('high')
+    queue = django_rq.get_queue('high', default_timeout=default_timeout)
     job = None
     if job_id:
         job = queue.fetch_job(job_id)
@@ -594,7 +601,7 @@ def single_stage_make_export_df(
             'df_no_style__key': f'df_no_style__{export_id}',
         }
     else:
-        status = raw_stages.copy()
+        status = raw_status.copy()
     
     job_done = None
     if not status.get('done') or not status.get('complete'):
@@ -619,11 +626,13 @@ def single_stage_make_export_df(
         )
         cache_item_and_cache_key_for_export(
             export_id, 
-            cache_key=f'df__{export_id}', 
+            cache_key=f'df_no_style__{export_id}', 
             object_to_cache=df_no_style
         )
-        status['info'] = df.info
         status['complete'] = True
+        status['count_columns'] = len(df.columns)
+        status['count_rows'] = len(df.index)
+        status['columns'] = df.columns.tolist()
     
     # Save this stake of the process to the cache.
     cache_item_and_cache_key_for_export(
