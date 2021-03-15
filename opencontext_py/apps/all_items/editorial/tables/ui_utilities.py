@@ -144,8 +144,8 @@ def give_arg_config_and_options(qs, arg_param, arg_label, data_type, attrib_to_c
         }
         options.append(option_dict)
     
-    # Add the options lit to the output.
-    output['count'] = count
+    # Add the options list to the output.
+    output['count'] = len(options)
     output['options'] = options
     return output
     
