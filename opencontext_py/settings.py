@@ -526,6 +526,15 @@ if DEBUG is False:
     if 'PIWIK_DOMAIN_PATH' in secrets:
         PIWIK_DOMAIN_PATH = get_secret('PIWIK_DOMAIN_PATH')        
 
+
+# Cloud Storage (S3, Google, etc.) Credentials
+# NOTE: The CLOUD_STORAGE_SERVICE constant must be named by
+# Apache Libcloud as a cloud storage service provider
+CLOUD_STORAGE_SERVICE = secrets.get("CLOUD_STORAGE_SERVICE")
+CLOUD_KEY = secrets.get("CLOUD_KEY")
+CLOUD_SECRET = secrets.get("CLOUD_SECRET")
+CLOUD_CONTAINER_EXPORTS = secrets.get("CLOUD_CONTAINER_EXPORTS")
+
 # Internet Archive Credentials
 # generate keys at: https://archive.org/account/s3.php
 if 'INTERNET_ARCHIVE_ACCESS_KEY' in secrets:
