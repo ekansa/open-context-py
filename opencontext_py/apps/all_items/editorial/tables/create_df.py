@@ -1857,7 +1857,7 @@ def merge_lists_in_df_by_delim(
         an individual value in a list has the delimiter present.
     """
     for col in df.columns:
-        if df['authors'].dtypes != object:
+        if df[col].dtypes != object:
             continue
         no_null = ~df[col].isnull()
         if df[no_null].empty:

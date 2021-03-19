@@ -42,15 +42,68 @@ EXPORT_ITEM_TYPE_TEXTS = {
 EXPORT_QUERY_ATTRIBUTE_CONFIGS = [
     ('subject__item_type__in', 'Item types', 'xsd:string', 'subject__item_type',),
     ('project_id__in', 'Projects', 'id', 'project',),
-    ('project_id__label__icontains', 'Projects (label)', 'xsd:string', None,),
+    ('project_id__label__icontains', 'Projects (label match)', 'xsd:string', None,),
     ('subject__item_class_id__in', 'Classes / categories', 'id', 'subject__item_class',),
-    ('subject__item_class__label__icontains', 'Classes / categories (label)', 'xsd:string', None,),
+    ('subject__item_class__label__icontains', 'Classes / categories (label match)', 'xsd:string', None,),
     ('predicate_id__in', 'Descriptive attribute and relations', 'id', 'predicate',),
     ('predicate__item_class_id__in', 'Attribute or relation types', 'id', 'predicate__item_class',),
     ('observation_id__in', 'Observation', 'id', 'observation',),
-    ('subject__path__contains', 'Context path', 'xsd:string', None,),
+    ('subject__path__contains', 'Context path (text match)', 'xsd:string', None,),
     ('source_id__in', 'Data sources', 'xsd:string', 'source_id',),
 ]
+
+HUMAN_READABLE_ATTRIBUTE_DICT = {
+    k:{'label': l, 'data_type': dt,}  
+    for k, l, dt, _ in EXPORT_QUERY_ATTRIBUTE_CONFIGS
+}
+
+
+def make_human_readable_query_args(query_arg_dict):
+    """Makes a human readable list of args from a query_arg_dict"""
+    arg_list = []
+    if not query_arg_dict:
+        return arg_list
+    for attrib_key, q_val in query_arg_dict.items():
+        hr_conf = HUMAN_READABLE_ATTRIBUTE_DICT.get(attrib_key, {})
+        hr_arg_dict = {
+            'arg_param': attrib_key,
+            'label': hr_conf.get('label', attrib_key),
+        }
+
+        # Deal with the case where the q_val is not a list
+        if not isinstance(q_val, list):
+            # First we assume a literal.
+            hr_arg_dict['values'] = [{'value': q_val, 'text': q_val}]
+            if hr_conf.get('data_type') == 'id':
+                m = AllManifest.objects.filter(uuid=q_val).first()
+                if m:
+                    # Update to have the item label in text of the values.
+                    hr_arg_dict['values'] = [{'value': str(q_val), 'text': m.label}]
+            arg_list.append(hr_arg_dict)
+            continue
+
+        # At this point, q_val is a list, so default that it is a list
+        # of literal values
+        hr_arg_dict['values'] = [
+            {'value':v, 'text':v} 
+            for v in q_val
+        ]
+
+        if hr_conf.get('data_type') == 'id' and attrib_key.endswith('_id__in'):
+            # OK, now we can look up a list of entities instead.
+            
+            mqs = AllManifest.objects.filter(
+                uuid__in=q_val,
+            )
+            if len(mqs):
+                # We have dereferenced these items.
+                hr_arg_dict['values'] = [
+                    {'value': str(m.uuid), 'text':m.label} 
+                    for m in mqs
+                ]
+
+        arg_list.append(hr_arg_dict)
+    return arg_list
 
 
 def give_arg_config_and_options(qs, arg_param, arg_label, data_type, attrib_to_count, max_opt_count=20):
@@ -89,7 +142,7 @@ def give_arg_config_and_options(qs, arg_param, arg_label, data_type, attrib_to_c
     count = qs.values(
         attrib_to_count,
     ).distinct().order_by().count()
-    if count == 1 or count > max_opt_count:
+    if count == 0 or count > max_opt_count:
         return output
     
     if attrib_to_count == 'source_id':
@@ -163,8 +216,12 @@ def make_export_config_dict(
         AllAssertion model queryset.
     :param dict exclude_args: Arguments for making exclusions in
         an AllAssertion model queryset.
+    :param list ui_configs: List of config tuples that give options
+        and some description to filter and exclude options
     """
     qs = None
+    filter_hr_list = make_human_readable_query_args(filter_args)
+    exclude_hr_list = make_human_readable_query_args(exclude_args)
     if filter_args or exclude_args:
         qs = AllAssertion.objects.all()
         if filter_args:
@@ -181,7 +238,13 @@ def make_export_config_dict(
             predicate_id=configs.PREDICATE_CONTAINS_UUID,
         )
 
-    output_configs = []
+    # Get the total count of subjects of exported description
+    if qs is not None:
+        total_count = qs.values('subject').distinct().order_by().count()
+    else:
+        total_count = None
+
+    act_configs = []
     for arg_param, arg_label, data_type, attrib_to_count in ui_configs:
         act_config = give_arg_config_and_options(
             qs, 
@@ -190,5 +253,13 @@ def make_export_config_dict(
             data_type,
             attrib_to_count,
         )
-        output_configs.append(act_config)
-    return output_configs
+        if not act_config.get('options') and not act_config.get('do_text_input'):
+            # No option
+            continue
+        act_configs.append(act_config)
+    return {
+        'total_count': total_count,
+        'exist_filters': filter_hr_list,
+        'exist_excludes': exclude_hr_list,
+        'act_configs': act_configs,
+    }

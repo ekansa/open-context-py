@@ -13,7 +13,30 @@ NOTE: Templates and view components to edit an item's manifest object.
  .export_field_button {
     margin-bottom: 12px;
  }
+ .export_existing_options {
+   font-size: 50%;
+ }
 </style>
+
+
+<template id="export-existing-arg">
+  <b-row v-if="exist_arg">
+    <b-col cols="12">
+      [[ exist_arg.label ]]
+      <div class="export_existing_options">
+        <b-form-checkbox-group
+          :id="'export-act-arg-' + exist_arg.arg_param + '-' + type"
+          size="sm"
+          v-if="exist_arg.values"
+          v-model="selected_options"
+          :options="exist_arg.values"
+          name="selected_options"
+          @change="opts_change"
+        ></b-form-checkbox-group>
+      </div>
+    </b-col>
+  </b-row>
+</template>
 
 
 <template id="export-param">
@@ -39,18 +62,22 @@ NOTE: Templates and view components to edit an item's manifest object.
         name="text_value"
       ></b-form-input>
 
-      <b-form-checkbox-group
-        :id="'export-param-' + config.arg_param"
-        size="sm"
-        v-if="config.options"
-        v-model="selected_options"
-        :options="config.options"
-        name="selected_options"
-        @change="opts_change"
-      ></b-form-checkbox-group>
+      <div v-if="config.options">
+        <b-form-checkbox-group
+          :id="'export-param-' + config.arg_param"
+          size="sm"
+          v-if="config.options.length > 1"
+          v-model="selected_options"
+          :options="config.options"
+          name="selected_options"
+          @change="opts_change"
+        ></b-form-checkbox-group>
+        <small v-if="is_single_option">[[ config.options[0].text ]]</small>
+    </div>
 
     </b-col>
     <b-col cols="4">
+      <div v-if="!is_single_option">
         <b-button
           sm
           block
@@ -66,7 +93,8 @@ NOTE: Templates and view components to edit an item's manifest object.
           @click="add_to_excludes"
           :disabled="disable_buttons"
           variant="secondary">Add Exclusion <b-icon-bag-x-fill></b-icon-bag-x-fill></b-button>
-    </b-col>
+        </div>  
+      </b-col>
   </b-row>
 </template>
 
@@ -78,25 +106,106 @@ NOTE: Templates and view components to edit an item's manifest object.
       scrollable
       ref="add-export-modal"
       id="add-export-modal" 
-      title="Add Export"
+      title="Export Tabular Data"
       @shown="on_shown"
     >
     <b-container fluid>
       <b-row>
         <b-col cols="12">
+          <b-alert variant="info" show>
+            <h5 v-if="export_done"><strong>Made an Export Table with: [[ total_count ]] Rows</strong></h5>
+            <h5 v-else-if="making_export"><strong>Making an Export Table with: [[ total_count ]] Rows</strong></h5>
+            <h5 v-else-if="!making_export && total_count > 0"><strong>Make an Export Table with: [[ total_count ]] Rows</strong></h5>
+            <h5 v-else><strong>Make an Export Table</strong></h5>
+            <small>
+              <p>Because Open Context publishes data from many different sources, and each source may
+              have its own unique set of descriptive attributes and relations, Open Context mainly organizes
+              data in "graph" structures. While a graph structure suites heterogenous data, it is 
+              unfamiliar and hard for analysis or visualization by typical users. This feature exports
+              data into more convenient and user-friendly tables.</p>
+            
+              <p>Change filter and exclusion criteria below to set limits on data included in the export table.</p>
+            </small>
+            <b-container  v-if="!export_done && !making_export && total_count > 0">
+              <b-row>
+                <b-col>
 
+                  <b-form-checkbox size="sm" v-model="add_entity_ld" name="add_entity_ld" switch>
+                    Add Entity Linked Data <b>([[ add_entity_ld ]])</b>
+                  </b-form-checkbox>
+
+                </b-col>
+                <b-col>
+
+                  <b-form-checkbox size="sm" v-model="add_literal_ld" name="add_literal_ld" switch>
+                    Add Linked Data Literals (Text, Numbers) <b>([[ add_literal_ld ]])</b>
+                  </b-form-checkbox>
+
+                </b-col>
+                <b-col>
+                  
+                  <b-form-checkbox size="sm" v-model="add_object_uris" name="add_object_uris" switch>
+                    Add URIs for project-specific attributes, links <b>([[ add_object_uris ]])</b>
+                  </b-form-checkbox>
+
+                </b-col>
+                <b-col>
+
+                  <b-button
+                    block
+                    @click="make_export"
+                    class="add_delete_buttons"
+                    variant="primary">Export Data <b-icon-table></b-icon-table></b-button>
+                    <small>Click to export these <strong>[[ total_count ]] rows</strong> of data selected with the filters and exclusions below.</small>
+
+                </b-col>
+              </b-row>
+            </b-container>
+            <b-container v-if="export_done" fluid>
+              Finished making an export
+            </b-container>
+          </b-alert>
         </b-col>
       </b-row>
-      <b-row v-if="act_configs">
+      <b-row>
+        <b-col cols="6">
+          <b-alert variant="dark" show>
+            <h5>Existing Filters</h5>
+            <b-container fluid v-if="exist_filters">
+
+              <export-existing-arg v-for="(exist_arg, efi) in exist_filters"
+                :key="'exist-filter-' + efi"
+                :type="'filters'"
+                v-bind:exist_arg="exist_arg"
+                @update_args="update_args($event)"></export-existing-arg>
+
+            </b-container>
+          </b-alert>
+        </b-col>
+        <b-col cols="6">
+          <b-alert variant="secondary"show>
+            <h5>Existing Exclusions</h5>
+            <b-container fluid v-if="exist_excludes">
+              
+              <export-existing-arg v-for="(exist_arg, eei) in exist_excludes"
+                :key="'exist-exclude-' + eei"
+                :type="'excludes'"
+                v-bind:exist_arg="exist_arg"
+                @update_args="update_args($event)"></export-existing-arg>
+
+            </b-container>
+          </b-alert>
+        </b-col>
+      </b-row>
+
+      <b-row v-if="!export_done && !making_export && act_configs">
         <b-col cols="12">
           <b-container fluid>
 
             <export-param v-for="(config, index) in act_configs"
-            :key="'export-config-' + index"
-            v-bind:config="config"
-            @update_args="update_args($event)"
-            >
-          </export-param>
+              :key="'export-config-' + index"
+              v-bind:config="config"
+              @update_args="update_args($event)"></export-param>
 
           </b-container>
         </b-col>
@@ -115,6 +224,54 @@ NOTE: Templates and view components to edit an item's manifest object.
 
 
 <script type="text/javascript">
+
+var vc_export_existing_arg = Vue.component(
+  'export-existing-arg',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['exist_arg', 'type'],
+    data() {
+      return {
+        exist_arg: null,
+        type: null,
+        selected_options: [],
+      }
+    },
+    template: '#export-existing-arg',
+    created() {
+      this.select_all();
+    },
+    computed: {
+    },
+    methods: {
+      select_all: function() {
+        if(!this.exist_arg){
+          return null;
+        }
+        if(this.selected_options.length > 0){
+          return null;
+        }
+        for (let item of this.exist_arg.values) {
+          this.selected_options.push(item.value);
+        }
+      },
+      update_args() {
+        let arg_update = {
+          type: this.type,
+          config: this.exist_arg,
+          selected_options: this.selected_options,
+        };
+        this.$emit('update_args', arg_update);
+      },
+      opts_change() {
+        this.update_args();
+      },
+    },
+    components: {
+      
+    },
+  }
+);
 
 
 var vc_export_param = Vue.component(
@@ -135,6 +292,18 @@ var vc_export_param = Vue.component(
       
     },
     computed: {
+      is_single_option: function() {
+        if(!this.config){
+          return false;
+        }
+        if(!this.config.options){
+          return false;
+        }
+        if(this.config.options.length == 1){
+          return true;
+        }
+        return false;
+      },
       disable_buttons: function() {
         console.log(this.text_value);
         console.log(this.selected_options);
@@ -191,6 +360,16 @@ var vc_add_export = Vue.component(
         act_configs: null,
         filter_args: null,
         exclude_args: null,
+        exist_filters: null,
+        exist_excludes: null,
+        total_count: null,
+        add_entity_ld: true,
+        add_literal_ld: true,
+        add_object_uris: true,
+        making_export: false,
+        export_done: false,
+        export_id: null,
+        errors: null,
       }
     },
     template: '#add-export',
@@ -207,8 +386,15 @@ var vc_add_export = Vue.component(
           // don't have project ids to filter by
           return null;
         }
+        let proj_ids = [];
+        for(let proj_id of this.project_ids){
+          if (proj_id == OPEN_CONTEXT_PROJ_UUID){
+            continue
+          }
+          proj_ids.push(proj_id);
+        }
         this.filter_args = {
-          project_id__in: this.project_ids,
+          project_id__in: proj_ids,
         };
       },
       make_request_params: function () {
@@ -245,7 +431,10 @@ var vc_add_export = Vue.component(
         .then(this.loading = false)
         .then(response => response.json())
         .then(json => {
-          this.act_configs = json;
+          this.total_count = json.total_count;
+          this.exist_filters = json.exist_filters;
+          this.exist_excludes = json.exist_excludes;
+          this.act_configs = json.act_configs;
           console.log(this.act_configs);
         });
       },
@@ -257,8 +446,15 @@ var vc_add_export = Vue.component(
         if(arg_update.selected_options.length > 0){
           args_obj[arg_param] = arg_update.selected_options;
         }
-        else{
+        else if (arg_update.hasOwnProperty('text_value')){
           args_obj[arg_param] = arg_update.text_value;
+        }
+        else if (args_obj.hasOwnProperty(arg_param)){
+          // remove this totally.
+          delete args_obj[arg_param];
+        }
+        else{
+          // nothing to do!
         }
         return args_obj;
       },
@@ -279,6 +475,58 @@ var vc_add_export = Vue.component(
       },
       toggle_add_export: function() {
         this.$bvModal.show('add-export-modal');
+      },
+      make_export_args: function() {
+        return {
+          filter_args: this.filter_args,
+          exclude_args: this.exclude_arg,
+          add_entity_ld: this.add_entity_ld,
+          add_literal_ld: this.add_literal_ld,
+          add_object_uris: this.add_object_uris,
+        };
+      },
+      api_making_export_request(export_args) {
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(export_args),
+        };
+        fetch('/editorial/export-make', requestOptions)
+        .then(response => response.json())
+        .then(json => {
+          console.log(json);
+          this.export_id = json.export_id;
+          if(json.complete){
+            this.making_export = false;
+            this.export_done = true;
+            return true;
+          }
+          else {
+            // Wait 500 milliseconds before doing this again.
+            setTimeout(() => {  this.check_make_export(); }, 500);
+          }
+        })
+        .catch(error => {
+          console.log(error);
+          console.log(this.errors);
+        });
+      },
+      check_make_export: function () {
+        this.making_export = true;
+        let export_args = this.make_export_args();
+        export_args.reset_cache = false;
+        export_args.export_id = this.export_id;
+        this.api_making_export_request(export_args);
+      },
+      make_export: function() {
+        this.making_export = true;
+        let export_args = this.make_export_args();
+        export_args.reset_cache = true;
+        export_args.export_id = null;
+        this.api_making_export_request(export_args);
       },
     },
     components: {

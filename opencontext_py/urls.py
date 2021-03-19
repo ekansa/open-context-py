@@ -268,6 +268,12 @@ urlpatterns = [
         name='editorial_export_configs'
     ),
     url(
+        r'^editorial/export-make', 
+        EditorialExportViews.make_export,
+        name='editorial_export_make_export'
+    ),
+
+    url(
         r'^editorial/export-test/(?P<export_id>\S+)', 
         EditorialExportViews.test_export,
         name='editorial_export_test_export'

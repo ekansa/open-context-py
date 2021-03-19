@@ -26,6 +26,7 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.all_items.editorial.tables import create_df
+from opencontext_py.apps.all_items.editorial.tables import ui_utilities
 
 # ---------------------------------------------------------------------
 # NOTE: These functions provide a means to wrap functions for the 
@@ -641,4 +642,57 @@ def single_stage_make_export_df(
         object_to_cache=status,
     )
     return status
+
+
+def queued_export_config_dict(
+    filter_args=None, 
+    exclude_args=None,
+):
+    """Wraps the ui_utilities.make_export_config_dict in a job queue
     
+    :param dict filter_args: Arguments for filtering an
+        AllAssertion model queryset.
+    :param dict exclude_args: Arguments for making exclusions in
+        an AllAssertion model queryset.
+    :param str job_id: String UUID for the redis queue job assoctiated
+        with a stage_status
+    :param list ui_configs: List of config tuples that give options
+        and some description to filter and exclude options
+    """
+    kwargs = {
+        'filter_args': filter_args,
+        'exclude_args': exclude_args,
+    }
+    config_id = make_hash_id_from_args(
+        args=kwargs
+    )
+
+    cache = caches['redis']
+    cache_key_status = f'export-config-{config_id}'
+    raw_status = cache.get(cache_key_status)
+    if raw_status is None:
+        status = {
+            'config_id': config_id,
+        }
+    else:
+        status = raw_status.copy()
+    
+    job_done = None
+    config_dict = None
+    if not status.get('done') or not status.get('complete'):
+        job_id, job_done, config_dict = wrap_func_for_rq(
+            func=ui_utilities.make_export_config_dict, 
+            kwargs=kwargs,
+            job_id=status.get('job_id'),
+        )
+        status = add_job_metadata_to_stage_status(
+            job_id, 
+            job_done, 
+            status
+        )
+
+    if job_done and config_dict is not None:
+        for key, values in config_dict.items():
+            status[key] = values
+    
+    return status
