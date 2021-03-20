@@ -27,6 +27,7 @@ from opencontext_py.apps.all_items.models import (
 
 from opencontext_py.apps.all_items.editorial.tables import create_df
 from opencontext_py.apps.all_items.editorial.tables import ui_utilities
+from opencontext_py.apps.all_items.editorial.tables import cloud_utilities
 
 # ---------------------------------------------------------------------
 # NOTE: These functions provide a means to wrap functions for the 
@@ -103,21 +104,6 @@ PROCESS_STAGES = [
     ),
 ]
 
-"""
-Note: We'll want to pickle a dataframe for cloud storage.
-
-Here's an amazon example:
-
-import io
-import boto3
-
-pickle_buffer = io.BytesIO()
-s3_resource = boto3.resource('s3')
-
-new_df.to_pickle(pickle_buffer)
-s3_resource.Object(bucket, key).put(Body=pickle_buffer.getvalue())
-
-"""
 
 def wrap_func_for_rq(func, kwargs, job_id=None, default_timeout=DEFAULT_TIMEOUT):
     """Wraps a function for use with the django redis queue
