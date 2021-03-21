@@ -109,108 +109,167 @@ NOTE: Templates and view components to edit an item's manifest object.
       title="Export Tabular Data"
       @shown="on_shown"
     >
-    <b-container fluid>
-      <b-row>
-        <b-col cols="12">
-          <b-alert variant="info" show>
-            <h5 v-if="export_done"><strong>Made an Export Table with: [[ total_count ]] Rows</strong></h5>
-            <h5 v-else-if="making_export"><strong>Making an Export Table with: [[ total_count ]] Rows</strong></h5>
-            <h5 v-else-if="!making_export && total_count > 0"><strong>Make an Export Table with: [[ total_count ]] Rows</strong></h5>
-            <h5 v-else><strong>Make an Export Table</strong></h5>
-            <small>
-              <p>Because Open Context publishes data from many different sources, and each source may
-              have its own unique set of descriptive attributes and relations, Open Context mainly organizes
-              data in "graph" structures. While a graph structure suites heterogenous data, it is 
-              unfamiliar and hard for analysis or visualization by typical users. This feature exports
-              data into more convenient and user-friendly tables.</p>
-            
-              <p>Change filter and exclusion criteria below to set limits on data included in the export table.</p>
-            </small>
-            <b-container  v-if="!export_done && !making_export && total_count > 0">
-              <b-row>
-                <b-col>
-
-                  <b-form-checkbox size="sm" v-model="add_entity_ld" name="add_entity_ld" switch>
-                    Add Entity Linked Data <b>([[ add_entity_ld ]])</b>
-                  </b-form-checkbox>
-
-                </b-col>
-                <b-col>
-
-                  <b-form-checkbox size="sm" v-model="add_literal_ld" name="add_literal_ld" switch>
-                    Add Linked Data Literals (Text, Numbers) <b>([[ add_literal_ld ]])</b>
-                  </b-form-checkbox>
-
-                </b-col>
-                <b-col>
-                  
-                  <b-form-checkbox size="sm" v-model="add_object_uris" name="add_object_uris" switch>
-                    Add URIs for project-specific attributes, links <b>([[ add_object_uris ]])</b>
-                  </b-form-checkbox>
-
-                </b-col>
-                <b-col>
-
-                  <b-button
-                    block
-                    @click="make_export"
-                    class="add_delete_buttons"
-                    variant="primary">Export Data <b-icon-table></b-icon-table></b-button>
-                    <small>Click to export these <strong>[[ total_count ]] rows</strong> of data selected with the filters and exclusions below.</small>
-
-                </b-col>
-              </b-row>
-            </b-container>
-            <b-container v-if="export_done" fluid>
-              Finished making an export
-            </b-container>
-          </b-alert>
-        </b-col>
-      </b-row>
-      <b-row>
-        <b-col cols="6">
-          <b-alert variant="dark" show>
-            <h5>Existing Filters</h5>
-            <b-container fluid v-if="exist_filters">
-
-              <export-existing-arg v-for="(exist_arg, efi) in exist_filters"
-                :key="'exist-filter-' + efi"
-                :type="'filters'"
-                v-bind:exist_arg="exist_arg"
-                @update_args="update_args($event)"></export-existing-arg>
-
-            </b-container>
-          </b-alert>
-        </b-col>
-        <b-col cols="6">
-          <b-alert variant="secondary"show>
-            <h5>Existing Exclusions</h5>
-            <b-container fluid v-if="exist_excludes">
+      <b-container v-if="!publish_ui_open" fluid>
+        <b-row>
+          <b-col cols="12">
+            <b-alert variant="info" show>
+              <h5 v-if="export_done"><strong>Made an Export Table with: [[ total_count ]] Rows</strong></h5>
+              <h5 v-else-if="making_export"><strong>Making an Export Table with: [[ total_count ]] Rows</strong></h5>
+              <h5 v-else-if="!making_export && total_count > 0"><strong>Make an Export Table with: [[ total_count ]] Rows</strong></h5>
+              <h5 v-else><strong>Make an Export Table</strong></h5>
+              <small>
+                <p>Because Open Context publishes data from many different sources, and each source may
+                have its own unique set of descriptive attributes and relations, Open Context mainly organizes
+                data in "graph" structures. While a graph structure suites heterogenous data, it is 
+                unfamiliar and hard for analysis or visualization by typical users. This feature exports
+                data into more convenient and user-friendly tables.</p>
               
-              <export-existing-arg v-for="(exist_arg, eei) in exist_excludes"
-                :key="'exist-exclude-' + eei"
-                :type="'excludes'"
-                v-bind:exist_arg="exist_arg"
-                @update_args="update_args($event)"></export-existing-arg>
+                <p>Change filter and exclusion criteria below to set limits on data included in the export table.</p>
+              </small>
+              <b-container  v-if="!export_done && !making_export && total_count > 0">
+                <b-row>
+                  <b-col>
+
+                    <b-form-checkbox size="sm" v-model="add_entity_ld" name="add_entity_ld" switch>
+                      Add Entity Linked Data <b>([[ add_entity_ld ]])</b>
+                    </b-form-checkbox>
+
+                  </b-col>
+                  <b-col>
+
+                    <b-form-checkbox size="sm" v-model="add_literal_ld" name="add_literal_ld" switch>
+                      Add Linked Data Literals (Text, Numbers) <b>([[ add_literal_ld ]])</b>
+                    </b-form-checkbox>
+
+                  </b-col>
+                  <b-col>
+                    
+                    <b-form-checkbox size="sm" v-model="add_object_uris" name="add_object_uris" switch>
+                      Add URIs for project-specific attributes, links <b>([[ add_object_uris ]])</b>
+                    </b-form-checkbox>
+
+                  </b-col>
+                  <b-col>
+
+                    <b-button
+                      block
+                      @click="make_export"
+                      class="add_delete_buttons"
+                      variant="primary">Export Data <b-icon-table></b-icon-table></b-button>
+                      <small>Click to export these <strong>[[ total_count ]] rows</strong> of data selected with the filters and exclusions below.</small>
+
+                  </b-col>
+                </b-row>
+              </b-container>
+              <b-container v-if="export_done" fluid>
+                <b-row>
+                  <b-col cols="12"><strong>Finished making an export table!</strong></b-col>
+                </b-row>
+                <b-row>
+                  <b-col cols="6">
+                    <p>Download and review the table here:</p>
+                    <b-button block :href="'/editorial/export-temp-tables/' + export_id" target="_blank">
+                      Temporary Download <b-icon-cloud-download></b-icon-cloud-download>
+                    </b-button>
+                  </b-col>
+                  <b-col cols="6">
+                    <p>Save and publish export table:</p>
+                    <b-button
+                      sm
+                      block
+                      @click="open_publish_ui"
+                      class="add_delete_buttons"
+                      variant="primary">Publish Export Table <b-icon-table></b-icon-table>
+                    </b-button>
+                  </b-col>
+                </b-row>
+                <b-row>
+                  <b-col cols="12">
+                    <small>The export you just made (ID: [[ export_id ]]) is temporary 
+                    and will only be cached for about 5 hours after creation. Use this 
+                    opportunity to review the exported table. If you are satisfied with
+                    the results, you can save and publish the export as a "table" item 
+                    linked to other published projects and records in Open Context.
+                    </small>
+                  </b-col>
+                </b-row>
+              </b-container>
+            </b-alert>
+          </b-col>
+        </b-row>
+        <b-row>
+          <b-col cols="6">
+            <b-alert variant="dark" show>
+              <h5>Existing Filters</h5>
+              <b-container fluid v-if="exist_filters">
+
+                <export-existing-arg v-for="(exist_arg, efi) in exist_filters"
+                  :key="'exist-filter-' + efi"
+                  :type="'filters'"
+                  v-bind:exist_arg="exist_arg"
+                  @update_args="update_args($event)"></export-existing-arg>
+
+              </b-container>
+            </b-alert>
+          </b-col>
+          <b-col cols="6">
+            <b-alert variant="secondary"show>
+              <h5>Existing Exclusions</h5>
+              <b-container fluid v-if="exist_excludes">
+                
+                <export-existing-arg v-for="(exist_arg, eei) in exist_excludes"
+                  :key="'exist-exclude-' + eei"
+                  :type="'excludes'"
+                  v-bind:exist_arg="exist_arg"
+                  @update_args="update_args($event)"></export-existing-arg>
+
+              </b-container>
+            </b-alert>
+          </b-col>
+        </b-row>
+
+        <b-row v-if="!export_done && !making_export && act_configs">
+          <b-col cols="12">
+            <b-container fluid>
+
+              <export-param v-for="(config, index) in act_configs"
+                :key="'export-config-' + index"
+                v-bind:config="config"
+                @update_args="update_args($event)"></export-param>
 
             </b-container>
-          </b-alert>
-        </b-col>
-      </b-row>
-
-      <b-row v-if="!export_done && !making_export && act_configs">
-        <b-col cols="12">
-          <b-container fluid>
-
-            <export-param v-for="(config, index) in act_configs"
-              :key="'export-config-' + index"
-              v-bind:config="config"
-              @update_args="update_args($event)"></export-param>
-
-          </b-container>
-        </b-col>
-      </b-row>
-    </b-container>
+          </b-col>
+        </b-row>
+      </b-container>
+    
+      <b-container v-if="publish_ui_open" fluid>
+        <b-row>
+          <b-col cols="4">
+            <strong>Save and Publish an Export Table</strong>
+            <b-button sm block :href="'/editorial/export-temp-tables/' + export_id" target="_blank">
+              Temporary Download (for review) <b-icon-cloud-download></b-icon-cloud-download>
+            </b-button>
+          </b-col>
+          <b-col cols="8">
+            <small>Use this interface to save and publish your export as an 
+              Open Context "tables" item type. Once saved, you can add additional 
+              descriptions and link this export table with one or more projects or
+              other items.
+            </small>
+          </b-col>
+        </b-row>
+        <b-row>
+          <b-cols cols="12">
+            <edit-manifest-obj
+              @update_metadata="update_metadata($event)"
+              v-bind:add_new="true"
+              v-bind:item_type_config="item_type_config"
+              v-bind:project_ids="project_ids"
+              v-bind:man_obj="man_obj">
+            </edit-manifest-obj>
+          </b-cols>
+        </b-row>
+      </b-container>
     </b-modal>
 
     <b-button
@@ -353,10 +412,11 @@ var vc_add_export = Vue.component(
   'add-export',
   {
     delimiters: ['[[', ']]'],
-    props: ['project_ids'],
+    props: ['project_ids', 'item_type_config',],
     data() {
       return {
         project_ids: null,
+        item_type_config: null,
         act_configs: null,
         filter_args: null,
         exclude_args: null,
@@ -370,29 +430,48 @@ var vc_add_export = Vue.component(
         export_done: false,
         export_id: null,
         errors: null,
+        publish_ui_open: false,
+        man_obj: {
+          uuid: null,
+          slug: null,
+          item_key: null,
+          label: null,
+          item_type: null,
+          uri: null,
+          item_class_id: null,
+          context_id: null,
+          project_id: null,
+          export_id: null,
+          meta_json: {},
+        },
       }
     },
     template: '#add-export',
     created() {
       this.fetch_api_configs();
+      this.fetch_api_add_item_type_configs();
     },
     computed: {
      
     },
     methods: {
+      remove_oc_proj_id(project_ids){
+        let filtered_proj_ids = [];
+        for(let proj_id of project_ids){
+          if (proj_id == OPEN_CONTEXT_PROJ_UUID){
+            continue
+          }
+          filtered_proj_ids.push(proj_id);
+        }
+        return filtered_proj_ids;
+      },
       make_default_proj_filter: function () {
         if(this.filter_args != null || !this.project_ids){
           // We already have filter args in place, or we
           // don't have project ids to filter by
           return null;
         }
-        let proj_ids = [];
-        for(let proj_id of this.project_ids){
-          if (proj_id == OPEN_CONTEXT_PROJ_UUID){
-            continue
-          }
-          proj_ids.push(proj_id);
-        }
+        let proj_ids = this.remove_oc_proj_id(this.project_ids);
         this.filter_args = {
           project_id__in: proj_ids,
         };
@@ -409,6 +488,23 @@ var vc_add_export = Vue.component(
           params.exclude_args = JSON.stringify(this.exclude_args);
         }
         return params;
+      },
+      fetch_api_add_item_type_configs: function (){
+        let url = '/editorial/item-add-configs?item_type=tables';
+        const requestOptions = {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
+        fetch(
+          (url), requestOptions,
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.item_type_config = json;
+        });
       },
       fetch_api_configs: function (){
         this.error = null;
@@ -523,15 +619,55 @@ var vc_add_export = Vue.component(
       },
       make_export: function() {
         this.making_export = true;
+        this.export_id = null;
         let export_args = this.make_export_args();
         export_args.reset_cache = true;
         export_args.export_id = null;
         this.api_making_export_request(export_args);
       },
+      close_publish_ui: function() {
+        this.publish_ui_open = false;
+      },
+      open_publish_ui: function() {
+        this.publish_ui_open = true;
+        this.man_obj = {
+          uuid: null,
+          slug: null,
+          item_key: null,
+          label: null,
+          item_type: 'table',
+          uri: null,
+          item_class_id: null,
+          context_id: null,
+          project_id: OPEN_CONTEXT_PROJ_UUID,
+          export_id: this.export_id,
+          meta_json: {},
+        };
+        if (!this.act_configs){
+          return null;
+        }
+        for(let config of this.act_configs){
+          if (!config.hasOwnProperty('arg_param')){
+            continue;
+          }
+          if (!config.options || config.arg_param != 'project_id__in'){
+            continue;
+          }
+          let project_ids = [];
+          for(let opt of config.options){
+            project_ids.push(opt.value);
+          }
+          let filtered_proj_ids = this.remove_oc_proj_id(project_ids);
+          if(filtered_proj_ids.length == 1){
+            this.man_obj.project_id = filtered_proj_ids[0];
+          }
+        }
+      },
     },
     components: {
       'lookup-list': vs_look_up_list,
       'export-param': vc_export_param,
+      'edit-manifest-obj': vc_edit_manifest_obj,
     },
   }
 ); 
