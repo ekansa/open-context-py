@@ -272,6 +272,11 @@ urlpatterns = [
         EditorialExportViews.make_export,
         name='editorial_export_make_export'
     ),
+    url(
+        r'^editorial/export-temp-tables/(?P<export_id>\S+)', 
+        EditorialExportViews.get_temp_export_table,
+        name='editorial_export_get_temp_export_table'
+    ),
 
     url(
         r'^editorial/export-test/(?P<export_id>\S+)', 
