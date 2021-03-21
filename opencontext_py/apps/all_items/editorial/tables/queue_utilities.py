@@ -105,6 +105,32 @@ PROCESS_STAGES = [
 ]
 
 
+def get_cached_export_df(export_id):
+    """Gets an export dataframe object from the cache
+    
+    :param str export_id: The identifier for a specific 
+        cached export process.
+    """
+    cache = caches['redis']
+    df = cache.get(f'df__{export_id}')
+    if df is not None:
+        return df
+    df = cache.get(export_id)
+    return df
+
+
+def get_cached_export_args(export_id):
+    """Gets cached argument dict used to make an export
+
+    :param str export_id: The identifier for a specific 
+        cached export process.
+    """
+    cache = caches['redis']
+    # Key for cache the arguments used to generate an export.
+    export_args_key = f'export-args-{export_id}'
+    return cache.get(export_args_key)
+
+
 def wrap_func_for_rq(func, kwargs, job_id=None, default_timeout=DEFAULT_TIMEOUT):
     """Wraps a function for use with the django redis queue
 
@@ -254,6 +280,16 @@ def staged_make_export_df(
         reset_export_process_cache(export_id)
     
     cache = caches['redis']
+
+    # Cache the arguments used to generate this export.
+    export_args_key = f'export-args-{export_id}'
+    if not cache.get(export_args_key) and kwargs:
+        cache_item_and_cache_key_for_export(
+            export_id, 
+            cache_key=export_args_key, 
+            object_to_cache=args,
+        )
+
     cache_key_stages = f'export-stages-{export_id}'
     raw_stages = cache.get(cache_key_stages)
     if raw_stages is None:
@@ -578,6 +614,16 @@ def single_stage_make_export_df(
         reset_export_process_cache(export_id)
     
     cache = caches['redis']
+
+    # Cache the arguments used to generate this export.
+    export_args_key = f'export-args-{export_id}'
+    if not cache.get(export_args_key) and kwargs:
+        cache_item_and_cache_key_for_export(
+            export_id, 
+            cache_key=export_args_key, 
+            object_to_cache=kwargs,
+        )
+
     cache_key_status = f'export-no-stages-{export_id}'
     raw_status = cache.get(cache_key_status)
     if raw_status is None:
@@ -589,6 +635,7 @@ def single_stage_make_export_df(
         }
     else:
         status = raw_status.copy()
+    
     
     job_done = None
     if not status.get('done') or not status.get('complete'):
@@ -680,5 +727,6 @@ def queued_export_config_dict(
     if job_done and config_dict is not None:
         for key, values in config_dict.items():
             status[key] = values
-    
+
     return status
+
