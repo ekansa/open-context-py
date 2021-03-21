@@ -534,6 +534,7 @@ CLOUD_STORAGE_SERVICE = secrets.get("CLOUD_STORAGE_SERVICE")
 CLOUD_KEY = secrets.get("CLOUD_KEY")
 CLOUD_SECRET = secrets.get("CLOUD_SECRET")
 CLOUD_CONTAINER_EXPORTS = secrets.get("CLOUD_CONTAINER_EXPORTS")
+CLOUD_BASE_URL = secrets.get("CLOUD_BASE_URL")
 
 # Internet Archive Credentials
 # generate keys at: https://archive.org/account/s3.php
