@@ -39,7 +39,7 @@ from opencontext_py.apps.all_items.representations.item import (
 import importlib
 from opencontext_py.apps.all_items.editorial.tables import create_df
 importlib.reload(create_df)
-
+importlib.reload(cloud_utilities)
 
 filter_args = {
     'subject__item_class__label__contains': 'Object',

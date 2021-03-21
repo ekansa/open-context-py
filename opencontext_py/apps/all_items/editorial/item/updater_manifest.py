@@ -29,7 +29,13 @@ from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items.editorial.item import updater_general
 from opencontext_py.apps.all_items.editorial.item import item_validation
-from opencontext_py.apps.all_items.editorial.item.edit_configs import MANIFEST_ADD_EDIT_CONFIGS
+from opencontext_py.apps.all_items.editorial.item.edit_configs import (
+    MANIFEST_ADD_EDIT_CONFIGS,
+    TABLES_ADD_EDIT_CONFIG,
+)
+
+from opencontext_py.apps.all_items.editorial.tables import cloud_utilities
+from opencontext_py.apps.all_items.editorial.tables import metadata as tables_metadata
 
 from opencontext_py.libs.models import (
     make_dict_json_safe, 
@@ -313,7 +319,9 @@ def update_manifest_objs(request_json):
 
 def get_item_type_req_attribs_dict():
     """Gets a dict keyed by item_type for attributes required to add manifest obj"""
-    item_type_req_attribs = {}
+    item_type_req_attribs = {
+        'tables': TABLES_ADD_EDIT_CONFIG,
+    }
     for group in MANIFEST_ADD_EDIT_CONFIGS:
         for i_type_config in group.get('item_types', []):
             item_type = i_type_config.get('item_type')
@@ -403,6 +411,33 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
         if not valid_ok:
             errors.append(f'Attribute validation errors: {str(valid_errors)}')
             continue
+        
+        # NOTE: We will want to save a table export CSV data to cloud storage
+        # before we go on to make the item.
+        cloud_obj = None
+        export_id = None
+        if item_add.get('export_id') and item_type == 'tables':
+            # Get the export table uuid, if set. At this point, we know
+            # it will be valid (if set).
+            export_id = item_add.get('export_id')
+            uuid, full_cloud_obj = cloud_utilities.cloud_store_csv_from_cached_export(
+                export_id=export_id, 
+                uuid=add_dict.get('uuid'),
+            )
+            if not uuid or not full_cloud_obj:
+                errors.append(f'Cloud storage failure for full csv: {export_id}')
+                continue
+
+            # Make sure the uuid is synced so the preview has the correct key / object name
+            add_dict['uuid'] = uuid
+            uuid, preview_cloud_obj = cloud_utilities.cloud_store_csv_from_cached_export(
+                export_id=export_id, 
+                uuid=add_dict.get('uuid'),
+                preview_rows=cloud_utilities.DEFAULT_PREVIEW_ROW_SIZE,
+            )
+            if not uuid or not preview_cloud_obj:
+                errors.append(f'Cloud storage failure for preview csv: {export_id}')
+                continue
 
         # Check to make sure we can de-reference identified items.
         for attr, value in add_dict.items():
@@ -437,6 +472,16 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             errors.append(f'Manifest item add error: {error}')
         if not ok:
             continue
+
+        if full_cloud_obj and preview_cloud_obj and man_obj.item_type == 'tables':
+            # We succeeded in making a table and have a cloud_obj
+            # so, time to add some related resources.
+            tables_metadata.add_table_metadata_and_resources(
+                man_obj, 
+                export_id, 
+                full_cloud_obj=full_cloud_obj,
+                preview_cloud_obj=preview_cloud_obj,
+            )
 
         # Make a copy of the new state of your model.
         after_edit_model_dict = updater_general.make_models_dict(item_obj=man_obj)
