@@ -1,11 +1,13 @@
 import copy
+import io
 import json
 import reversion
 import uuid as GenUUID
 
 from django.conf import settings
+from django.core.cache import caches
 from django.shortcuts import redirect
-from django.http import HttpResponse, Http404
+from django.http import StreamingHttpResponse, HttpResponse, Http404
 
 from django.db.models import Q
 from django.db import transaction
@@ -27,7 +29,7 @@ from opencontext_py.apps.all_items.editorial import api as editorial_api
 
 from opencontext_py.apps.all_items.editorial.item import edit_configs
 from opencontext_py.apps.all_items.editorial.tables import create_df
-from opencontext_py.apps.all_items.editorial.tables import create_que
+from opencontext_py.apps.all_items.editorial.tables import queue_utilities
 from opencontext_py.apps.all_items.editorial.tables import ui_utilities
 
 from django.views.decorators.cache import cache_control
@@ -77,7 +79,7 @@ def make_export(request):
             'Must be a POST request', status=405
         )
     request_kwargs = json.loads(request.body)
-    output = create_que.single_stage_make_export_df(**request_kwargs)
+    output = queue_utilities.single_stage_make_export_df(**request_kwargs)
     json_output = json.dumps(
         output,
         indent=4,
@@ -87,6 +89,27 @@ def make_export(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def get_temp_export_table(request, export_id):
+    """Gets a temporarily cached export result"""
+    df = queue_utilities.get_cached_export_df(export_id)
+    if df is None:
+        raise Http404
+    
+    stream = io.StringIO()
+    df.to_csv(stream, index=False, encoding='utf-8')
+
+    response = StreamingHttpResponse(
+        stream.getvalue(),
+        content_type="text/csv; charset=utf8"
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="oc-temp-export-{export_id}.csv"'
+    )
+    return response
 
 
 
@@ -115,7 +138,7 @@ def test_export(request, export_id=None):
     if kwargs.get('export_id'):
         kwargs['reset_cache'] = False
 
-    output = create_que.single_stage_make_export_df(**kwargs)
+    output = queue_utilities.single_stage_make_export_df(**kwargs)
     json_output = json.dumps(
         output,
         indent=4,
@@ -125,30 +148,4 @@ def test_export(request, export_id=None):
         json_output,
         content_type="application/json; charset=utf8"
     )
-
-
-
-@cache_control(no_cache=True)
-@never_cache
-@reversion.create_revision()
-def save_export(request):
-    """Save an export as an Open Context item_type tables object"""
-    if request.method != 'POST':
-        return HttpResponse(
-            'Must be a POST request', status=405
-        )
-    request_json = json.loads(request.body)
-    output = {
-        'ok': True,
-    }
-    json_output = json.dumps(
-        output,
-        indent=4,
-        ensure_ascii=False
-    )
-    return HttpResponse(
-        json_output,
-        content_type="application/json; charset=utf8"
-    )
-
 
