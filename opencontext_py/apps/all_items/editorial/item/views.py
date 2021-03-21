@@ -77,7 +77,12 @@ def make_error_response(errors):
 @cache_control(no_cache=True)
 def item_add_configs_json(request):
     """JSON representation of item add configuration"""
-    configs = edit_configs.api_config_response()
+    if request.GET.get('item_type') == 'tables':
+        configs = edit_configs.api_single_item_type_config_response(
+            edit_configs.TABLES_ADD_EDIT_CONFIG.copy()
+        )
+    else:
+        configs = edit_configs.api_all_item_types_config_response()
     json_output = json.dumps(
         configs,
         indent=4,
@@ -156,7 +161,7 @@ def item_edit_interface_html(request, uuid):
     )
 
     item_type_edit_config = {}
-    for group_configs in edit_configs.api_config_response():
+    for group_configs in edit_configs.api_all_item_types_config_response():
         for act_item_type_config in group_configs.get('item_types', []):
             if act_item_type_config.get('item_type') != man_obj.item_type:
                 continue
