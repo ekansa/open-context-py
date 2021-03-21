@@ -2161,7 +2161,7 @@ class AllResource(models.Model):
         # Make sure the associated item has the right types
         validate_related_manifest_item_type(
             man_obj=self.item,
-            allowed_types=['projects', 'media', 'uri',],
+            allowed_types=['projects', 'tables', 'media', 'uri',],
             obj_role='item'
         )
         # Make sure the resource type is in a pre-configured

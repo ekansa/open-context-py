@@ -1,5 +1,6 @@
 import os
 import hashlib
+import json
 import time
 import uuid as GenUUID
 
@@ -61,7 +62,7 @@ filter_args = {
 exclude_args = None
 
 
-df, _ = create_df.make_clean_export_df(filter_args, exclude_args=exclude_args)
+df, df_ns = create_df.make_clean_export_df(filter_args, exclude_args=exclude_args)
 
 
 assert_qs = create_df.get_assert_qs(filter_args, exclude_args)
@@ -103,6 +104,15 @@ LITERAL_DATA_TYPE_COL_TUPS = [
 
 PRED_DATA_TYPE_COLS = {dt: (col, None,) for dt, col in LITERAL_DATA_TYPE_COL_TUPS}
 PRED_DATA_TYPE_COLS['id'] = ('object__label', 'object__uri',)
+
+
+DC_AUTHOR_ROLES_TUPS = [
+    (configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID, 'dc_contributor'),
+    (configs.PREDICATE_DCTERMS_CREATOR_UUID, 'dc_creator'),
+]
+
+DC_AUTHOR_ROLES_DICT = {k:v for k,v in DC_AUTHOR_ROLES_TUPS}
+
 
 
 # Delimiter between different 'nodes' that may contain predicates in assertions.
@@ -866,17 +876,14 @@ def get_df_entities_equiv_to_entity(subject_ids, equiv_entity_id, renames=None):
 
 def get_df_project_authors_for_role(
     project_ids, 
-    role_id=configs.PREDICATE_DCTERMS_CREATOR_UUID
+    role_id=configs.PREDICATE_DCTERMS_CREATOR_UUID,
+    roles_dict=DC_AUTHOR_ROLES_DICT,
 ):
     """Get a dataframe of project authors based on the uri of their role
     
     :param list project_ids: A list (or other iterator) of project ids.
     :param str role_id: The ID of the predicate for the authorship role
     """
-    roles_dict = {
-        configs.PREDICATE_DCTERMS_CREATOR_UUID: 'dc_creator',
-        configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID: 'dc_contributor',
-    }
     role = roles_dict.get(role_id)
 
     qs = AllAssertion.objects.filter(
@@ -994,7 +1001,7 @@ def combine_author_lists(x):
     return output
 
 
-def add_authors_to_df(df, assert_df, drop_roles=True):
+def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_ROLES_TUPS):
     """Adds authorship columns to a df
     
     :param DataFrame df: The dataframe that we are adding authors of a

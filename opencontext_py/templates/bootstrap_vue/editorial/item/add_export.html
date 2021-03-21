@@ -124,8 +124,15 @@ NOTE: Templates and view components to edit an item's manifest object.
                 unfamiliar and hard for analysis or visualization by typical users. This feature exports
                 data into more convenient and user-friendly tables.</p>
               
-                <p>Change filter and exclusion criteria below to set limits on data included in the export table.</p>
+                <p v-if="!export_done && !making_export">Change filter and exclusion criteria below to set limits on data included in the export table.</p>
               </small>
+              <p v-if="making_export">
+                Export process started at <strong>[[ export_started_display ]]</strong> 
+                on ongoing after <strong>[[ export_elapsed_time_display ]]</strong>.
+              </p>
+              <p v-if="export_done">
+                Export process completed after <strong>[[ export_elapsed_time_display ]]</strong>.
+              </p>
               <b-container  v-if="!export_done && !making_export && total_count > 0">
                 <b-row>
                   <b-col>
@@ -427,6 +434,9 @@ var vc_add_export = Vue.component(
         add_literal_ld: true,
         add_object_uris: true,
         making_export: false,
+        export_start_time: null,
+        export_progress_time: null,
+        export_done_time: null,
         export_done: false,
         export_id: null,
         errors: null,
@@ -452,7 +462,38 @@ var vc_add_export = Vue.component(
       this.fetch_api_add_item_type_configs();
     },
     computed: {
-     
+      export_started_display: function() {
+        if(!this.export_start_time){
+          return null;
+        }
+        return this.export_start_time.toLocaleTimeString();
+      },
+      export_elapsed_time_display: function() {
+        if(!this.export_start_time){
+          return null;
+        }
+        let last_time = new Date();
+        if(this.export_done_time != null){
+          last_time = this.export_done_time;
+          console.log('done time');
+        }
+        else if(this.export_progress_time != null){
+          last_time = this.export_progress_time;
+          console.log('progress time');
+        }
+        
+        let time_diff = last_time - this.export_start_time;
+        time_diff /= 1000;
+        let min_time_diff = Math.floor(time_diff / 60);
+        let hr_time_diff = Math.floor(min_time_diff / 60);
+        let seconds = Math.floor(time_diff % 60);
+        let seconds_str = seconds < 10 ? "0" + seconds : seconds;
+        let minutes = min_time_diff % 60;
+        let minutes_str = minutes < 10 ? "0" + minutes : minutes;
+        let hours = hr_time_diff % 24;
+        let hours_str = hours < 10 ? "0" + hours : hours;
+        return `${hours}:${minutes_str}:${seconds_str}`;
+      },
     },
     methods: {
       remove_oc_proj_id(project_ids){
@@ -593,15 +634,16 @@ var vc_add_export = Vue.component(
         fetch('/editorial/export-make', requestOptions)
         .then(response => response.json())
         .then(json => {
-          console.log(json);
           this.export_id = json.export_id;
           if(json.complete){
+            this.export_done_time = new Date();
             this.making_export = false;
             this.export_done = true;
             return true;
           }
           else {
             // Wait 500 milliseconds before doing this again.
+            this.export_progress_time = new Date();
             setTimeout(() => {  this.check_make_export(); }, 500);
           }
         })
@@ -623,6 +665,7 @@ var vc_add_export = Vue.component(
         let export_args = this.make_export_args();
         export_args.reset_cache = true;
         export_args.export_id = null;
+        this.export_start_time = new Date();
         this.api_making_export_request(export_args);
       },
       close_publish_ui: function() {
@@ -635,7 +678,7 @@ var vc_add_export = Vue.component(
           slug: null,
           item_key: null,
           label: null,
-          item_type: 'table',
+          item_type: 'tables',
           uri: null,
           item_class_id: null,
           context_id: null,

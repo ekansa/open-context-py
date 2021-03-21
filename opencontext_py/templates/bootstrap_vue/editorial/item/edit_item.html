@@ -24,7 +24,7 @@
                     <b-nav tabs>
                         <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
                         <b-nav-item v-if="ITEM_TYPE == 'projects'" :to="{ name: 'project'}" >Entire Project</b-nav-item>
-                        <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Media File Resources</b-nav-item>
+                        <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'tables' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Media File Resources</b-nav-item>
                         <b-nav-item :to="{ name: 'assertions'}" >Descriptions, Links</b-nav-item>
                         <b-nav-item :to="{ name: 'ld-assertions'}" >Standard, Linked Data</b-nav-item>
                         <b-nav-item :to="{ name: 'spacetime'}" >Location, Chronology</b-nav-item>

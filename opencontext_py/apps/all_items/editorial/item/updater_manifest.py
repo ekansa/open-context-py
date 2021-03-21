@@ -320,7 +320,10 @@ def update_manifest_objs(request_json):
 def get_item_type_req_attribs_dict():
     """Gets a dict keyed by item_type for attributes required to add manifest obj"""
     item_type_req_attribs = {
-        'tables': TABLES_ADD_EDIT_CONFIG,
+        'tables': TABLES_ADD_EDIT_CONFIG.get(
+            'add_required_attributes', 
+            []
+        ),
     }
     for group in MANIFEST_ADD_EDIT_CONFIGS:
         for i_type_config in group.get('item_types', []):
