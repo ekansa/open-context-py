@@ -1,172 +1,169 @@
-<!DOCTYPE html>
+{% extends '../page.html' %}
 
-<html lang="en">
-    {% include '../../bootstrap_vue/etl/head.html' %}
-    <body>
+{% block content %}
 
-        <!-- Include the more general components first-->
-        {% include '../../bootstrap_vue/editorial/tree.html' %}
-        {% include '../../bootstrap_vue/editorial/lookup.html' %}
+<!-- Include the more general components first-->
+{% include '../../bootstrap_vue/editorial/tree.html' %}
+{% include '../../bootstrap_vue/editorial/lookup.html' %}
 
-        {% include '../../bootstrap_vue/etl/ds_fields_cells.html' %}
-        {% include '../../bootstrap_vue/etl/ds_fields_general.html' %}
-        {% include '../../bootstrap_vue/etl/ds_fields_specific.html' %}
+{% include '../../bootstrap_vue/etl/ds_fields_cells.html' %}
+{% include '../../bootstrap_vue/etl/ds_fields_general.html' %}
+{% include '../../bootstrap_vue/etl/ds_fields_specific.html' %}
 
-        {% include '../../bootstrap_vue/etl/ds_annotations.html' %}
-        {% include '../../bootstrap_vue/etl/ds_annotations_links.html' %}
-        {% include '../../bootstrap_vue/etl/ds_annotations_describes.html' %}
-    
-        {% include '../../bootstrap_vue/etl/etl_finalize.html' %}
+{% include '../../bootstrap_vue/etl/ds_annotations.html' %}
+{% include '../../bootstrap_vue/etl/ds_annotations_links.html' %}
+{% include '../../bootstrap_vue/etl/ds_annotations_describes.html' %}
 
-        <div id="main">
-            <b-container fluid id="app">
-                <b-row>
-                    <b-col cols="7">
-                        <h1>[[ message ]]</h1>
-                    </b-col>
-                    <b-col cols="5">
-                        <b-container fluid>
-                            <dl class="row">
-                                <dt class="col-sm-4">
-                                    Data Source
-                                </dt>
-                                <dd class="col-sm-8">[[ source_id ]]</dd>
-                                <dt class="col-sm-4">
-                                    Project
-                                </dt>
-                                <dd class="col-sm-8">[[ PROJECT_LABEL ]]</dd>
-                            </dl>
-                        </b-container>
-                    </b-col>
-                </b-row>
-                <div>
-                    <b-nav pills>
-                      <b-nav-item :to="{ name: 'home'}" >Home</b-nav-item>
-                      <b-nav-item :to="{ name: 'ds-fields-general'}">Fields</b-nav-item>
-                      <b-nav-item :to="{ name: 'ds-fields-specific'}">Fields Specifics</b-nav-item>
-                      <b-nav-item :to="{ name: 'link-rels'}">Link Relations</b-nav-item>
-                      <b-nav-item :to="{ name: 'describe-rels'}">Descriptive Relations</b-nav-item>
-                      <b-nav-item :to="{ name: 'finalize'}">Finalize</b-nav-item>
-                    </b-nav>
-                </div>
-                
-                <router-view></router-view>
-                
+{% include '../../bootstrap_vue/etl/etl_finalize.html' %}
+
+
+<b-container fluid id="app">
+    <b-row>
+        <b-col cols="7">
+            <h1>[[ message ]]</h1>
+        </b-col>
+        <b-col cols="5">
+            <b-container fluid>
+                <dl class="row">
+                    <dt class="col-sm-4">
+                        Data Source
+                    </dt>
+                    <dd class="col-sm-8">[[ source_id ]]</dd>
+                    <dt class="col-sm-4">
+                        Project
+                    </dt>
+                    <dd class="col-sm-8">[[ PROJECT_LABEL ]]</dd>
+                </dl>
             </b-container>
-        </div>
+        </b-col>
+    </b-row>
+    <div>
+        <b-nav pills>
+            <b-nav-item :to="{ name: 'home'}" >Home</b-nav-item>
+            <b-nav-item :to="{ name: 'ds-fields-general'}">Fields</b-nav-item>
+            <b-nav-item :to="{ name: 'ds-fields-specific'}">Fields Specifics</b-nav-item>
+            <b-nav-item :to="{ name: 'link-rels'}">Link Relations</b-nav-item>
+            <b-nav-item :to="{ name: 'describe-rels'}">Descriptive Relations</b-nav-item>
+            <b-nav-item :to="{ name: 'finalize'}">Finalize</b-nav-item>
+        </b-nav>
+    </div>
+    
+    <router-view></router-view>
+    
+</b-container>
 
 
 
-        <script type="text/javascript">
 
-            // A hacky solution for scaling the height of tables
-            var body = document.body;
-            var html = document.documentElement;
-            var page_height = Math.max(
-                body.scrollHeight, body.offsetHeight, 
-                html.clientHeight, html.scrollHeight, html.offsetHeight
-            );
-            var table_height = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
+<script type="text/javascript">
 
-            // Populated by Django.
-            const csrftoken = Vue.$cookies.get('csrftoken');
-            const base_url = '{{ base_url|safe }}';
-            const source_id = '{{ ds_source.source_id }}';
-            const source_uuid = '{{ ds_source.uuid }}';
-            const PROJECT_LABEL = '{{ ds_source.project.label }}';
-            const PROJECT_UUID = '{{ ds_source.project.uuid }}';
+    // A hacky solution for scaling the height of tables
+    var body = document.body;
+    var html = document.documentElement;
+    var page_height = Math.max(
+        body.scrollHeight, body.offsetHeight, 
+        html.clientHeight, html.scrollHeight, html.offsetHeight
+    );
+    var table_height = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
 
-            const routes = [
-                // NOTE: The name for the route is in the hash of the path URL. This enables linking directly
-                // to a given route/component.
-                {
-                    path: '/etl-importer/prepare/' + source_uuid,
-                    name: 'home',
-                    component: vc_ds_fields_general,
-                    props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+    // Populated by Django.
+    const csrftoken = Vue.$cookies.get('csrftoken');
+    const base_url = '{{ base_url|safe }}';
+    const source_id = '{{ ds_source.source_id }}';
+    const source_uuid = '{{ ds_source.uuid }}';
+    const PROJECT_LABEL = '{{ ds_source.project.label }}';
+    const PROJECT_UUID = '{{ ds_source.project.uuid }}';
+
+    const routes = [
+        // NOTE: The name for the route is in the hash of the path URL. This enables linking directly
+        // to a given route/component.
+        {
+            path: '/etl-importer/prepare/' + source_uuid,
+            name: 'home',
+            component: vc_ds_fields_general,
+            props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+        },
+        {
+            path: '/etl-importer/prepare/' + source_uuid + '#ds-fields-general',
+            name: 'ds-fields-general',
+            component: vc_ds_fields_general,
+            props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+        },
+        {
+            path: '/etl-importer/prepare/' + source_uuid + '#ds-fields-specific',
+            name: 'ds-fields-specific',
+            component: vc_ds_fields_specific,
+            props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
+        },
+        {
+            path: '/etl-importer/prepare/' + source_uuid + '#link-rels',
+            name: 'link-rels',
+            component: vc_ds_annotations_links,
+            props: {source_uuid: source_uuid, project_uuid: PROJECT_UUID, ds_annos_table_height: table_height},
+        },
+        {
+            path: '/etl-importer/prepare/' + source_uuid + '#describe-rels',
+            name: 'describe-rels',
+            component: vc_ds_annotations_describes,
+            props: {source_uuid: source_uuid, project_uuid: PROJECT_UUID, ds_annos_table_height: table_height},
+        },
+        {
+            path: '/etl-importer/prepare/' + source_uuid + '#finalize',
+            name: 'finalize',
+            component: vc_etl_finalize,
+            props: {source_uuid: source_uuid},
+        }
+    ];
+
+    const router = new VueRouter({
+        mode: 'history',
+        linkExactActiveClass: 'active',
+        routes: routes,
+    });
+
+    var vm = new Vue(
+        {
+            router: router,
+            delimiters: ['[[', ']]'],
+            ref: 'etl_app',
+            el: '#app',
+            data: {
+                message: 'Open Context ETL',
+                source_id: source_id,
+                source_uuid: source_uuid,
+                project_uuid: PROJECT_UUID,
+                page_height: page_height,
+                ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
+            },
+            computed: {
+                act_route: function () {
+                    return this.$route;
                 },
-                {
-                    path: '/etl-importer/prepare/' + source_uuid + '#ds-fields-general',
-                    name: 'ds-fields-general',
-                    component: vc_ds_fields_general,
-                    props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
-                },
-                {
-                    path: '/etl-importer/prepare/' + source_uuid + '#ds-fields-specific',
-                    name: 'ds-fields-specific',
-                    component: vc_ds_fields_specific,
-                    props: {source_uuid: source_uuid, ds_fields_table_height: table_height},
-                },
-                {
-                    path: '/etl-importer/prepare/' + source_uuid + '#link-rels',
-                    name: 'link-rels',
-                    component: vc_ds_annotations_links,
-                    props: {source_uuid: source_uuid, project_uuid: PROJECT_UUID, ds_annos_table_height: table_height},
-                },
-                {
-                    path: '/etl-importer/prepare/' + source_uuid + '#describe-rels',
-                    name: 'describe-rels',
-                    component: vc_ds_annotations_describes,
-                    props: {source_uuid: source_uuid, project_uuid: PROJECT_UUID, ds_annos_table_height: table_height},
-                },
-                {
-                    path: '/etl-importer/prepare/' + source_uuid + '#finalize',
-                    name: 'finalize',
-                    component: vc_etl_finalize,
-                    props: {source_uuid: source_uuid},
+            },
+            watch: {
+                $route(to, from) {
+                // react to route changes...
                 }
-            ];
+            },
+            created() {
+                console.log(this.act_route);
+                if(this.act_route.hash.length > 0){
+                    // This makes sure that we change the route based on what's in the
+                    // request URL hash.
+                    router.replace(
+                        {name: this.act_route.hash.replace('#', '')}
+                    );
+                }
+            },
+            components: {
+                'ds-fields-general': vc_ds_fields_general,
+                'ds-fields-specific': vc_ds_fields_specific,
+                'ds-annotations-links': vc_ds_annotations_links,
+                'ds-annotations-describes': vc_ds_annotations_describes,
+                'etl-finalize': vc_etl_finalize,
+            },
+        },
+    ).$mount('#app');
 
-            const router = new VueRouter({
-                mode: 'history',
-                linkExactActiveClass: 'active',
-                routes: routes,
-            });
-
-            var vm = new Vue(
-                {
-                    router: router,
-                    delimiters: ['[[', ']]'],
-                    ref: 'etl_app',
-                    el: '#app',
-                    data: {
-                        message: 'Open Context ETL',
-                        source_id: source_id,
-                        source_uuid: source_uuid,
-                        project_uuid: PROJECT_UUID,
-                        page_height: page_height,
-                        ds_fields_table_height: `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`,
-                    },
-                    computed: {
-                        act_route: function () {
-                            return this.$route;
-                        },
-                    },
-                    watch: {
-                        $route(to, from) {
-                        // react to route changes...
-                        }
-                    },
-                    created() {
-                        console.log(this.act_route);
-                        if(this.act_route.hash.length > 0){
-                            // This makes sure that we change the route based on what's in the
-                            // request URL hash.
-                            router.replace(
-                                {name: this.act_route.hash.replace('#', '')}
-                            );
-                        }
-                    },
-                    components: {
-                        'ds-fields-general': vc_ds_fields_general,
-                        'ds-fields-specific': vc_ds_fields_specific,
-                        'ds-annotations-links': vc_ds_annotations_links,
-                        'ds-annotations-describes': vc_ds_annotations_describes,
-                        'etl-finalize': vc_etl_finalize,
-                    },
-                },
-            ).$mount('#app');
-
-        </script>
-    </body>
-</html>
+</script>
+{% endblock %}

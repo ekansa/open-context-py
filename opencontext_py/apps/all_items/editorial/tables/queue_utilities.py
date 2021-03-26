@@ -119,20 +119,6 @@ def get_cached_export_df(export_id):
     return df
 
 
-def get_cached_export_df(export_id):
-    """Gets an export dataframe object from the cache
-    
-    :param str export_id: The identifier for a specific 
-        cached export process.
-    """
-    cache = caches['redis']
-    df = cache.get(f'df__{export_id}')
-    if df is not None:
-        return df
-    df = cache.get(export_id)
-    return df
-
-
 def get_cached_no_style_df(export_id):
     """Gets an export dataframe object before final styling
     

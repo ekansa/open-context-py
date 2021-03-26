@@ -193,7 +193,8 @@ def item_edit_interface_html(request, uuid):
 
     rp = RootPath()
     context = {
-        'base_url': rp.get_baseurl(),
+        'BASE_URL': rp.get_baseurl(),
+        'PAGE_TITLE': f'Open Context Edit: {man_obj.label}',
         'man_obj': man_obj,
         # NOTE: ITEM_PROJECT_UUIDS is the list of parent project uuids for an item
         'ITEM_PROJECT_UUIDS': json.dumps(item_project_uuids),

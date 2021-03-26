@@ -90,7 +90,8 @@ def home_html(request, source_id):
     )
 
     context = {
-        'base_url': rp.get_baseurl(),
+        'BASE_URL': rp.get_baseurl(),
+        'PAGE_TITLE': f'Open Context ETL: {ds_source.label}',
         'ds_source': ds_source,
         'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),
         'DEFAULT_CLASS_UUID': str(configs.DEFAULT_CLASS_UUID),

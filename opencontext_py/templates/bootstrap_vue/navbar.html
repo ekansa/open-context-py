@@ -1,66 +1,35 @@
 {% block navbar %}
-<nav id="oc-nav-bar" class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark" role="navigation">
+
+<style type="text/css">
+    #oc-bv-nav {
+        background-color: #141518;
+    }
+    #oc-bv-nav li.active a {
+        background-color: #141518;
+    }
+    #oc-nav-branding {
+        padding-top:0px;
+        padding-left:0px;
+    }
+</style>
+
+<nav id="oc-bv-nav" class="navbar sticky-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <div class="navbar-header">
-            {% if 'opencontext.dainst.org' in base_url %}
-            <a id="oc-nav-branding" class="navbar-brand" href="{{ base_url }}">
-                <img style="margin-top: 14px; margin-left: 12px; height: 22px;" src="{{ base_url }}/static/oc/images/nav/oc-nav-logo.png" alt="Open Context DAI-Mirror Logo" />
+            {% if 'opencontext.dainst.org' in BASE_URL %}
+            <a id="oc-nav-branding" class="navbar-brand" href="{{ BASE_URL }}">
+                <img style="margin-top: 14px; margin-left: 12px; height: 22px;" src="{{ BASE_URL }}/static/oc/images/nav/oc-nav-logo.png" alt="Open Context DAI-Mirror Logo" />
             </a>
             {% else %}
-            <a id="oc-nav-branding" class="navbar-brand" href="{{ base_url }}">
-                <img style="margin-top: 14px; margin-left: 12px; height: 22px;" src="{{ base_url }}/static/oc/images/nav/oc-nav-dai-inst-logo.png" alt="Open Context DAI-Mirror Logo" />
+            <a id="oc-nav-branding" class="navbar-brand" href="{{ BASE_URL }}">
+                <img style="margin-top: 14px; margin-left: 12px; height: 22px;" src="{{ BASE_URL }}/static/oc/images/nav/oc-nav-dai-inst-logo.png" alt="Open Context DAI-Mirror Logo" />
             </a>
             {%endif%}
         </div>
         <ul class="nav navbar-nav">
-        {% for nav_dict in nav_items %}
-        {% if nav_dict.link == None %}
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ nav_dict.display }} <span class="caret"></span></a>
-                <ul class="dropdown-menu" role="menu">
-                {% for drop_item in nav_dict.urls %}
-                    <li><a href="{{ base_url }}{{ drop_item.link }}">{{ drop_item.display }}</a></li>
-                {% endfor %}   
-                </ul>
-            </li>
-        {% else %}
-            {% if nav_dict.always %}
-                {% if nav_dict.key == act_nav %}
-                <li class="active">{% else %}<li>{%endif%}<a href="{{ base_url }}{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
-            {% else %}
-                {% if nav_dict.key == act_nav %}
-                <li class="active"><a href="{{ base_url }}{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
-                {%endif%}
-            {%endif%}
-        {%endif%}
-        {% endfor %}
         
-		{% if user.is_authenticated %}
-			<li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Edit<span class="caret"></span></a>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a href="{{ base_url }}/edit/">Edit (Home)</a></li>
-					{% if item %}
-					{% if item.project_uuid != False %}
-					<li><a href="{% url 'edit_projects_status' item.project_uuid %}">Edit Project</a></li>
-					{%endif%}
-					{% if item.uuid != False %}
-					<li><a href="{% url 'edit_item_html_view' item.uuid %}">Edit Item</a></li>
-					{%endif%}
-					{%endif%}
-                </ul>
-            </li>
-		{%endif%}
-			<li>
-				
-				<button class="btn navbar-btn btn-primary" title="Support Open Context with a donation to the Alexandria Archive Institute" onclick="window.open('https://alexandriaarchive.org/contribute/?ref=opencontext', '_blank');"><span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span> Donate</button>
-				
-				<!--
-				<a href="https://alexandriaarchive.org/contribute/?ref=opencontext" title="Support Open Context with a donation to the Alexandria Archive Institute" target="_blank"><span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span> Donate</a>
-			    -->
-			</li>
         </ul>
-        <form class="navbar-form navbar-right" role="search" method="get" action="{{ base_url }}/search">
+        <form class="navbar-form navbar-right" role="search" method="get" action="{{ BASE_URL }}/search">
             <div class="form-group">
               <input type="text" class="form-control" placeholder="Search whole site" name="q" title="Text search box" />
             <button alt="Search Button" id="nav-search-button" type="submit" class="btn btn-default" title="Submit search request" >

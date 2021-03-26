@@ -12,17 +12,21 @@ class AssertionObservations():
 
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.ocitems.assertions.observations import AssertionObservations
+last_obs = ObsMetadata.objects.all().order_by('id').last()
 ometa = ObsMetadata()
-ometa.source_id = 'ref:2281183845891'
-ometa.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-ometa.obs_num = 5
-ometa.label = 'Grid Coordinates'
+ometa.id = last_obs.id + 1
+ometa.source_id = 'ref:2164606804233'
+ometa.project_uuid = '0db006e9-7d27-47b9-aea8-7b0019a7e81a'
+ometa.obs_num = 6
+ometa.label = 'Other Taxa and Descriptions'
 ometa.obs_type = 'oc-gen:primary'
-ometa.note = 'X, Y, and sometimes Z spatial coordinates'
+ometa.note = 'Other Taxa and Description'
 ometa.save()
-class_uri = 'oc-gen:cat-object'
+class_uri = 'oc-gen:cat-sample'
 aos = AssertionObservations()
 aos.change_obs_num_by_source_id(ometa.obs_num, ometa.source_id, class_uri)
+
+
 class_uris = [
 'oc-gen:cat-object',
 'oc-gen:cat-arch-element',

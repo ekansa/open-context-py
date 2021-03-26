@@ -1,198 +1,198 @@
-<!DOCTYPE html>
+{% extends '../../page.html' %}
 
-<html lang="en">
-    {% include './head.html' %}
-    <body>
+{% block content %}
 
-        <!-- Include the more general components first-->
-        {% include '../../editorial/tree.html' %}
-        {% include '../../editorial/lookup.html' %}
 
-        {% include './project.html' %}
-        {% include './manifest_edit.html' %}
-        {% include './add_export.html' %}
-        {% include './history.html' %}
-        {% include './manifest.html' %}
-        {% include './assertions.html' %}
-        {% include './spacetime.html' %}
-        {% include './resources.html' %}
-        {% include './identifiers.html' %}
+<!-- Include the more general components first-->
+{% include '../../editorial/tree.html' %}
+{% include '../../editorial/lookup.html' %}
 
-        <div id="main">
-            <b-container fluid id="app">
-                <div>
-                    <b-nav tabs>
-                        <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
-                        <b-nav-item v-if="ITEM_TYPE == 'projects'" :to="{ name: 'project'}" >Entire Project</b-nav-item>
-                        <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'tables' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Media File Resources</b-nav-item>
-                        <b-nav-item :to="{ name: 'assertions'}" >Descriptions, Links</b-nav-item>
-                        <b-nav-item :to="{ name: 'ld-assertions'}" >Standard, Linked Data</b-nav-item>
-                        <b-nav-item :to="{ name: 'spacetime'}" >Location, Chronology</b-nav-item>
-                        <b-nav-item :to="{ name: 'identifiers'}" >Stable IDs</b-nav-item>
-                    </b-nav>
-                </div>
-                <b-row>
-                    <b-col cols="9">
-                        <router-view
-                        :key="name + history_key"
-                        @edit_done="edit_done"
-                        ></router-view>
-                    </b-col>
-                    <b-col cols="3">
-                        <b-card
-                            header="Editing Options"
-                        >
-                        <b-card-text>
-                            <add-item
-                              v-bind:project_ids="ITEM_PROJECT_UUIDS">
-                            </add-item>
-                            <add-export
-                              v-bind:project_ids="ITEM_PROJECT_UUIDS">
-                            </add-export>
-                            <delete-item
-                              v-bind:uuid="ITEM_UUID"
-                              v-bind:project_ids="ITEM_PROJECT_UUIDS">
-                            </delete-item>
-                        </b-card-text>
-                        </b-card>
-                        <br/>
-                        <edit-history
-                         :key="history_key"
-                         v-bind:uuid="uuid">
-                        </edit-history>
-                    </b-col>
-                </b-row>
-            </b-container>
-        </div>
+{% include './project.html' %}
+{% include './manifest_edit.html' %}
+{% include './add_export.html' %}
+{% include './history.html' %}
+{% include './manifest.html' %}
+{% include './assertions.html' %}
+{% include './spacetime.html' %}
+{% include './resources.html' %}
+{% include './identifiers.html' %}
 
-        <script type="text/javascript">
 
-            // A hacky solution for scaling the height of tables
-            var body = document.body;
-            var html = document.documentElement;
-            var page_height = Math.max(
-                body.scrollHeight, body.offsetHeight, 
-                html.clientHeight, html.scrollHeight, html.offsetHeight
-            );
-            var TABLE_HEIGHT = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
+<b-container fluid id="app">
+    <div>
+        <b-nav tabs>
+            <b-nav-item :to="{ name: 'manifest'}" >Edit Item</b-nav-item>
+            <b-nav-item v-if="ITEM_TYPE == 'projects'" :to="{ name: 'project'}" >Entire Project</b-nav-item>
+            <b-nav-item v-if="ITEM_TYPE == 'media' || ITEM_TYPE == 'tables' || ITEM_TYPE == 'projects'" :to="{ name: 'resources'}" >Media File Resources</b-nav-item>
+            <b-nav-item :to="{ name: 'assertions'}" >Descriptions, Links</b-nav-item>
+            <b-nav-item :to="{ name: 'ld-assertions'}" >Standard, Linked Data</b-nav-item>
+            <b-nav-item :to="{ name: 'spacetime'}" >Location, Chronology</b-nav-item>
+            <b-nav-item :to="{ name: 'identifiers'}" >Stable IDs</b-nav-item>
+        </b-nav>
+    </div>
+    <b-row>
+        <b-col cols="9">
+            <router-view
+            :key="name + history_key"
+            @edit_done="edit_done"
+            ></router-view>
+        </b-col>
+        <b-col cols="3">
+            <b-card
+                header="Editing Options"
+            >
+            <b-card-text>
+                <add-item
+                    v-bind:project_ids="ITEM_PROJECT_UUIDS">
+                </add-item>
+                <add-export
+                    v-bind:project_ids="ITEM_PROJECT_UUIDS">
+                </add-export>
+                <delete-item
+                    v-bind:uuid="ITEM_UUID"
+                    v-bind:project_ids="ITEM_PROJECT_UUIDS">
+                </delete-item>
+            </b-card-text>
+            </b-card>
+            <br/>
+            <edit-history
+                :key="history_key"
+                v-bind:uuid="uuid">
+            </edit-history>
+        </b-col>
+    </b-row>
+</b-container>
 
-            // Populated by Django.
-            const csrftoken = Vue.$cookies.get('csrftoken');
-            const base_url = '{{ base_url|safe }}';
-            const ITEM_UUID = '{{ man_obj.uuid }}';
-            const ITEM_TYPE = '{{ man_obj.item_type }}';
-            const PROJECT_LABEL = '{{ man_obj.project.label }}';
-            const PROJECT_UUID = '{{ man_obj.project.uuid }}';
-            const ITEM_PROJECT_UUIDS = JSON.parse('{{ ITEM_PROJECT_UUIDS|escapejs }}');
 
-            const routes = [
-                // NOTE: The name for the route is in the hash of the path URL. This enables linking directly
-                // to a given route/component.
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID,
-                    name: 'manifest',
-                    component: vc_edit_manifest,
-                    props: {uuid: ITEM_UUID, },
+<script type="text/javascript">
+
+    // A hacky solution for scaling the height of tables
+    var body = document.body;
+    var html = document.documentElement;
+    var page_height = Math.max(
+        body.scrollHeight, body.offsetHeight, 
+        html.clientHeight, html.scrollHeight, html.offsetHeight
+    );
+    var TABLE_HEIGHT = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
+
+    // Populated by Django.
+    const csrftoken = Vue.$cookies.get('csrftoken');
+    const base_url = '{{ base_url|safe }}';
+    const ITEM_UUID = '{{ man_obj.uuid }}';
+    const ITEM_TYPE = '{{ man_obj.item_type }}';
+    const PROJECT_LABEL = '{{ man_obj.project.label }}';
+    const PROJECT_UUID = '{{ man_obj.project.uuid }}';
+    const ITEM_PROJECT_UUIDS = JSON.parse('{{ ITEM_PROJECT_UUIDS|escapejs }}');
+
+    const routes = [
+        // NOTE: The name for the route is in the hash of the path URL. This enables linking directly
+        // to a given route/component.
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID,
+            name: 'manifest',
+            component: vc_edit_manifest,
+            props: {uuid: ITEM_UUID, },
+        },
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID  + '#project',
+            name: 'project',
+            component: vc_edit_project,
+            props: {uuid: ITEM_UUID, },
+        },
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID + '#assertions',
+            name: 'assertions',
+            component: vc_edit_assertions,
+            props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+        },
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID + '#ld-assertions',
+            name: 'ld-assertions',
+            component: vc_edit_ld_assertions,
+            props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+        },
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID + '#spacetime',
+            name: 'spacetime',
+            component: vc_edit_spacetime,
+            props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+        },
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID + '#resources',
+            name: 'resources',
+            component: vc_edit_resources,
+            props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+        },
+        {
+            path: '/editorial/item-edit/' + ITEM_UUID + '#identifiers',
+            name: 'identifiers',
+            component: vc_edit_identifiers,
+            props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
+        },
+    ];
+
+    const router = new VueRouter({
+        mode: 'history',
+        linkExactActiveClass: 'active',
+        routes: routes,
+    });
+
+    var vm = new Vue(
+        {
+            router: router,
+            delimiters: ['[[', ']]'],
+            ref: 'edit_item_app',
+            el: '#app',
+            data: {
+                uuid: ITEM_UUID,
+                project_uuid: PROJECT_UUID,
+                page_height: page_height,
+                history_key: 1,
+                table_height: TABLE_HEIGHT,
+            },
+            computed: {
+                act_route: function () {
+                    return this.$route;
                 },
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID  + '#project',
-                    name: 'project',
-                    component: vc_edit_project,
-                    props: {uuid: ITEM_UUID, },
+            },
+            watch: {
+                $route(to, from) {
+                // react to route changes...
+                }
+            },
+            methods: {
+                edit_done(ok){
+                    console.log('Edit done emit caught');
+                    this.history_key += 1;
                 },
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID + '#assertions',
-                    name: 'assertions',
-                    component: vc_edit_assertions,
-                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
-                },
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID + '#ld-assertions',
-                    name: 'ld-assertions',
-                    component: vc_edit_ld_assertions,
-                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
-                },
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID + '#spacetime',
-                    name: 'spacetime',
-                    component: vc_edit_spacetime,
-                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
-                },
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID + '#resources',
-                    name: 'resources',
-                    component: vc_edit_resources,
-                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
-                },
-                {
-                    path: '/editorial/item-edit/' + ITEM_UUID + '#identifiers',
-                    name: 'identifiers',
-                    component: vc_edit_identifiers,
-                    props: {uuid: ITEM_UUID, table_height:TABLE_HEIGHT },
-                },
-            ];
+            },
+            created() {
+                console.log(this.act_route);
+                if(this.act_route.hash.length > 0){
+                    // This makes sure that we change the route based on what's in the
+                    // request URL hash.
+                    router.replace(
+                        {name: this.act_route.hash.replace('#', '')}
+                    );
+                }
+            },
+            components: {
+                'add-item': vc_add_item,
+                'add-export': vc_add_export,
+                'delete-item': vc_delete_item,
+                'edit-project': vc_edit_project,
+                'edit-manifest': vc_edit_manifest,
+                'edit-history': vc_edit_history,
+                'edit-assertions': vc_edit_assertions,
+                'edit-ld-assertions': vc_edit_ld_assertions,
+                'edit-spacetime': vc_edit_spacetime,
+                'edit-resources': vc_edit_resources,
+                'edit-identifiers': vc_edit_identifiers,
+            },
+        },
+    ).$mount('#app');
 
-            const router = new VueRouter({
-                mode: 'history',
-                linkExactActiveClass: 'active',
-                routes: routes,
-            });
+</script>
 
-            var vm = new Vue(
-                {
-                    router: router,
-                    delimiters: ['[[', ']]'],
-                    ref: 'edit_item_app',
-                    el: '#app',
-                    data: {
-                        uuid: ITEM_UUID,
-                        project_uuid: PROJECT_UUID,
-                        page_height: page_height,
-                        history_key: 1,
-                        table_height: TABLE_HEIGHT,
-                    },
-                    computed: {
-                        act_route: function () {
-                            return this.$route;
-                        },
-                    },
-                    watch: {
-                        $route(to, from) {
-                        // react to route changes...
-                        }
-                    },
-                    methods: {
-                        edit_done(ok){
-                            console.log('Edit done emit caught');
-                            this.history_key += 1;
-                        },
-                    },
-                    created() {
-                        console.log(this.act_route);
-                        if(this.act_route.hash.length > 0){
-                            // This makes sure that we change the route based on what's in the
-                            // request URL hash.
-                            router.replace(
-                                {name: this.act_route.hash.replace('#', '')}
-                            );
-                        }
-                    },
-                    components: {
-                        'add-item': vc_add_item,
-                        'add-export': vc_add_export,
-                        'delete-item': vc_delete_item,
-                        'edit-project': vc_edit_project,
-                        'edit-manifest': vc_edit_manifest,
-                        'edit-history': vc_edit_history,
-                        'edit-assertions': vc_edit_assertions,
-                        'edit-ld-assertions': vc_edit_ld_assertions,
-                        'edit-spacetime': vc_edit_spacetime,
-                        'edit-resources': vc_edit_resources,
-                        'edit-identifiers': vc_edit_identifiers,
-                    },
-                },
-            ).$mount('#app');
 
-        </script>
-    </body>
-</html>
+{% endblock %}
