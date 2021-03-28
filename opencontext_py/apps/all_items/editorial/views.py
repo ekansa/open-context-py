@@ -61,6 +61,29 @@ def item_children_json(request, identifier):
 
 @never_cache
 @cache_control(no_cache=True)
+def project_descriptions_tree_json(request, identifier):
+    """ API for getting an item and immediate children items """
+    api_result = editorial_api.project_descriptions_tree(identifier)
+    if not api_result:
+        return HttpResponse(
+            json.dumps([]),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@never_cache
+@cache_control(no_cache=True)
 def item_look_up_json(request):
     """API for looking up an item based on a wide range of search criteria"""
     request_dict = {}
@@ -134,3 +157,5 @@ def html_validate(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+

@@ -75,7 +75,73 @@ NOTE: Templates and view components to edit an item's manifest object.
         </b-alert>
       </b-col>
     </b-row>
-    
+
+    <b-row>
+      <b-col cols="12">
+        <div class="accordion" role="tablist" id="proj_nav_accordion"></div>
+
+        <b-card no-body>
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'proj_nav_accordion_spatial_tree'" 
+              variant="outline-info">
+              <strong>Locations and Objects in Context</strong>
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="proj_nav_accordion_spatial_tree" 
+            visible="true" 
+            accordion="proj_nav_accordion" 
+            role="tabpanel">
+            <b-card-body>
+              <root-item-tree
+                :id="'proj_spatial_tree'"
+                :key="'proj_spatial_tree'"
+                v-bind:project_id="man_obj.uuid"
+                v-bind:proj_spatial_tree="true"
+                v-bind:do_edit_links="true"
+                v-bind:cached_tree_items="cached_tree_items"
+                @cache_fetched_item="cache_fetched_item($event)"
+              >
+              </root-item-tree>
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+        <b-card no-body>
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'proj_nav_accordion_descriptions_relations'" 
+              variant="outline-info">
+              <strong>Descriptions and Relations</strong>
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="proj_nav_accordion_descriptions_relations" 
+            visible="false" 
+            accordion="proj_nav_accordion" 
+            role="tabpanel">
+            <b-card-body>
+              <root-item-tree
+                :id="'proj_description_tree'"
+                :key="'proj_description_tree'"
+                v-bind:project_id="man_obj.uuid"
+                v-bind:proj_description_tree="true"
+                v-bind:do_edit_links="true"
+                v-bind:cached_tree_items="cached_tree_items"
+                @cache_fetched_item="cache_fetched_item($event)"
+              >
+              </root-item-tree>
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+
+      </b-col>
+    </b-row>
+
   </b-container>
 </template>
 
@@ -101,6 +167,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           sort_progress: null,
           sort_message: null,
           sort_count_updated: null,
+          cached_tree_items: {},
         }
       },
       template: '#edit-project',
@@ -259,9 +326,22 @@ NOTE: Templates and view components to edit an item's manifest object.
           this.sort_start_time = new Date();
           this.fetch_api_reset_project_sort();
         },
+        cache_fetched_item(item){
+          if(typeof this.cached_tree_items === 'undefined'){
+            this.cached_tree_items = {};
+          }
+          if(item){
+            if(item.hasOwnProperty('no_root_cache')){
+              if(item.no_root_cache){
+                return null;
+              }
+            }
+            this.cached_tree_items[item.uuid] = item;
+          }
+        },
       },
       components: {
-        
+        'root-item-tree': vs_root_item_tree,
       },
     }
   ); 

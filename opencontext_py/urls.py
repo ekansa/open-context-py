@@ -261,6 +261,16 @@ urlpatterns = [
         EditorialItemViews.delete_identifiers, 
         name='editorial_delete_identifiers'
     ),
+    url(
+        r'^editorial/proj-descriptions-tree/(?P<identifier>\S+)', 
+        EditorialItemViews.project_descriptions_tree_json, 
+        name='editorial_project_descriptions_tree_json',
+    ),
+    url(
+        r'^editorial/proj-spatial-tree/(?P<identifier>\S+)', 
+        EditorialItemViews.project_spatial_tree_json, 
+        name='editorial_project_spatial_tree_json',
+    ),
     # New Export data editorial views
     url(
         r'^editorial/export-configs', 
@@ -276,12 +286,6 @@ urlpatterns = [
         r'^editorial/export-temp-tables/(?P<export_id>\S+)', 
         EditorialExportViews.get_temp_export_table,
         name='editorial_export_get_temp_export_table'
-    ),
-
-    url(
-        r'^editorial/export-test/(?P<export_id>\S+)', 
-        EditorialExportViews.test_export,
-        name='editorial_export_test_export'
     ),
 
 

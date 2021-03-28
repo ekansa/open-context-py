@@ -314,7 +314,7 @@ def get_item_children(identifier):
         children_objs = AllManifest.objects.filter(
             item_type='types',
             context=man_obj,
-        )
+        ).order_by('label')
 
     output = manifest_obj_to_json_safe_dict(man_obj)
     output['children'] = []
@@ -586,3 +586,4 @@ def lookup_up_and_group_general_distinct_metadata(request_dict, value_delim=MULT
                 continue
             meta_dict[dict_key].append(group_dict)
     return meta_dict
+

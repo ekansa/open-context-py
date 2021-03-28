@@ -29,7 +29,8 @@
         <span v-if="!has_children & loading" class="text-muted">[[ item.label ]]</span>
         <span v-if="!has_children & !loading">[[ item.label ]]</span>
       </span>
-      <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <a v-if="item_link && !do_edit_links" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <a v-if="item_link && do_edit_links" :href="item_link" target="_blank"><b-icon-tools></b-icon-tools></a>
     </div>
     <ul v-show="is_open" v-if="is_open && has_children" class="tree_list">
       <tree-item
@@ -40,21 +41,24 @@
         :item="child"
         v-bind:cached_tree_items="cached_tree_items"
         v-bind:etl_source_id="etl_source_id"
+        v-bind:do_edit_links="do_edit_links"
       ></tree-item>
     </ul>
   </li>
 </template>
 
 <template id='root-item-tree'>
-  <ul class="tree_list">
+  <ul class="tree_list" v-if="!loading">
     <tree-item
       @cache_fetched_item="cache_fetched_item($event)"
       @set_selected_item="set_selected_item($event)"
       v-bind:cached_tree_items="cached_tree_items"
       v-bind:root_item_id="root_item_id"
       v-bind:etl_source_id="etl_source_id"
+      v-bind:do_edit_links="do_edit_links"
     ></tree-item>
   </ul>
+  <b-spinner v-else variant="info" label="Fetching tree"></b-spinner>
 </template>
 
 
@@ -64,7 +68,13 @@
     'tree-item',
     {
       delimiters: ['[[', ']]'],
-      props: ['root_item_id', 'item', 'cached_tree_items', 'etl_source_id'],
+      props: [
+        'root_item_id', 
+        'item', 
+        'cached_tree_items', 
+        'etl_source_id',
+        'do_edit_links',
+      ],
       data() {
         return {
           item: Object,
@@ -74,6 +84,7 @@
           fetch_url_oc: '/editorial/item-children/',
           etl_source_id: null,
           fetch_url_etl: '/etl-importer/spatial-contained-examples/',
+          do_edit_links: false,
         };
       },
       template: '#tree-item',
@@ -88,8 +99,11 @@
           return this.item.children && this.item.children.length;
         },
         item_link: function() {
-          if(this.item && this.item.uri){
+          if(!this.do_edit_links && this.item && this.item.uri){
             return 'https://' + this.item.uri;
+          }
+          if(this.do_edit_links && this.item && this.item.uri){
+            return '/editorial/item-edit/' + this.item.uuid;
           }
           return null;
         }
@@ -203,19 +217,44 @@
   var vs_root_item_tree = Vue.component(
     'root-item-tree',
     {
-      props: ['root_item_id', 'cached_tree_items', 'etl_source_id'],
+      props: [
+        'root_item_id', 
+        'cached_tree_items', 
+        'etl_source_id',
+        'project_id',
+        'proj_description_tree',
+        'proj_spatial_tree',
+        'do_edit_links',
+      ],
       data() {
         return {
           root_item_id: null,
           selected_item: null,
           cached_tree_items: {},
           etl_source_id: null,
+          project_id: null,
+          proj_description_tree: false,
+          proj_spatial_tree: false,
+          loading: false,
+          do_edit_links: false,
         };
       },
       template: '#root-item-tree',
+      created(){
+        this.fetch_api_project_description_tree();
+        this.fetch_api_project_spatial_tree();
+      },
       methods: {
         cache_fetched_item(item){
+          if(typeof this.cached_tree_items === 'undefined'){
+            this.cached_tree_items = {};
+          }
           if(item){
+            if(item.hasOwnProperty('no_root_cache')){
+              if(item.no_root_cache){
+                return null;
+              }
+            }
             this.cached_tree_items[item.uuid] = item;
             this.$emit('set_cached_tree_items', this.cached_tree_items);
           }
@@ -228,6 +267,78 @@
             // parent components.
             this.$emit('set_selected_item', this.selected_item);
           }
+        },
+        recursively_cache_items(item) {
+          this.cache_fetched_item(item);
+          if(!item.hasOwnProperty('children')){
+            return null;
+          }
+          if(item.children.length < 1){
+            return null;
+          }
+          for(let child of item.children){
+            this.recursively_cache_items(child);
+          }
+        },
+        fetch_api_project_description_tree: function() {
+          if(!this.proj_description_tree || !this.project_id){
+            return null;
+          }
+          this.loading = true;
+          fetch(
+            ('/editorial/proj-descriptions-tree/' + this.project_id),
+              {
+                headers:{
+                  'Accept': 'application/json',
+                }
+              }
+          )
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            this.recursively_cache_items(data);
+            this.root_item_id = data.uuid;
+            this.loading = false;
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
+        },
+        fetch_api_project_spatial_tree: function() {
+          if(!this.proj_spatial_tree || !this.project_id){
+            return null;
+          }
+          this.loading = true;
+          fetch(
+            ('/editorial/proj-spatial-tree/' + this.project_id),
+              {
+                headers:{
+                  'Accept': 'application/json',
+                }
+              }
+          )
+          .then(async response => {
+            const data = await response.json();
+            // check for error response
+            if (!response.ok) {
+              // get error message from body or default to response status
+              const error = (data && data.message) || response.status;
+              return Promise.reject(error);
+            }
+            this.cache_fetched_item(data);
+            this.root_item_id = data.uuid;
+            this.loading = false;
+          })
+          .catch(error => {
+            this.errorMessage = error;
+            console.error('There was an error!', error);
+          });
         },
       },
       components: {

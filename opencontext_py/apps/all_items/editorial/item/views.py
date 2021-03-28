@@ -32,6 +32,7 @@ from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 from opencontext_py.apps.all_items.editorial.item import updater_resources
 from opencontext_py.apps.all_items.editorial.item import updater_identifiers
 from opencontext_py.apps.all_items.editorial.item import item_validation
+from opencontext_py.apps.all_items.editorial.item import projects_api
 
 from opencontext_py.apps.all_items.representations.item import (
     get_item_assertions,
@@ -1014,6 +1015,56 @@ def delete_identifiers(request):
     }
     json_output = json.dumps(
         output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+# ---------------------------------------------------------------------
+# NOTE: The views below support user interfaces for navigating the
+# content of projects
+# ---------------------------------------------------------------------
+@never_cache
+@cache_control(no_cache=True)
+def project_descriptions_tree_json(request, identifier):
+    """ API for getting a project's tree of descriptive predicates """
+    api_result = projects_api.project_descriptions_tree(identifier)
+    if not api_result:
+        return HttpResponse(
+            json.dumps([]),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@never_cache
+@cache_control(no_cache=True)
+def project_spatial_tree_json(request, identifier):
+    """ API for getting a project's tree of spatial/subjects items """
+    api_result = projects_api.project_spatial_tree(identifier)
+    if not api_result:
+        return HttpResponse(
+            json.dumps([]),
+            content_type="application/json; charset=utf8",
+            status=404
+        )
+
+    json_output = json.dumps(
+        api_result,
         indent=4,
         ensure_ascii=False
     )
