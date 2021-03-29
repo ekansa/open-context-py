@@ -19,14 +19,14 @@
 <template id='lookup-list-item'>
   <b-list-group-item action class="d-flex justify-content-between align-items-center result_list_item">
     <div v-if="meta_items.length > 0">
-      <span @click="toggle">[[ item.label ]]</span> <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <span @click="toggle">[[ item.label ]]</span> <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill v-if="!do_edit_links"></b-icon-info-circle-fill><b-icon-tools v-else></b-icon-tools></a>
       <small class="text-muted" v-for="(m_item, index) in meta_items">
         <br/>[[ m_item ]]
       </small>
     </div>
     <div v-else>
       <span @click="toggle">[[ item.label ]]</span>
-      <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill v-if="!do_edit_links"></b-icon-info-circle-fill><b-icon-tools v-else></b-icon-tools></a>
     </div>
   </b-list-group-item>
 </template>
@@ -144,6 +144,7 @@
             v-bind:show_item_class="show_item_class"
             v-bind:show_context="show_context"
             v-bind:show_path="(show_path || show_path_search_box)"
+            v-bind:do_edit_links="do_edit_links"
           ></lookup-list-item>
         </b-list-group>
       </b-col>
@@ -165,7 +166,15 @@
     'lookup-list-item',
     {
       delimiters: ['[[', ']]'],
-      props: ['item', 'show_item_type', 'show_project', 'show_item_class', 'show_context', 'show_path',],
+      props: [
+        'item', 
+        'show_item_type', 
+        'show_project', 
+        'show_item_class', 
+        'show_context', 
+        'show_path',
+        'do_edit_links',
+      ],
       data() {
         return {
           item: Object,
@@ -175,14 +184,19 @@
           show_item_class: false,
           show_context: false,
           show_path: false,
+          do_edit_links: false,
         };
       },
       template: '#lookup-list-item',
       computed: {
         item_link: function() {
-          if(this.item){
+          if(this.item && !this.do_edit_links){
             return 'https://' + this.item.uri;
           }
+          if(this.item && this.do_edit_links){
+            return '/editorial/item-edit/' + this.item.uuid;
+          }
+          return null;
         },
         context_link: function() {
           if(this.item && this.item.context__item_type == 'vocabularies'){
@@ -251,6 +265,7 @@
         'show_context',
         'show_path',
         'do_meta',
+        'do_edit_links',
       ],
       data() {
         return {
@@ -286,6 +301,7 @@
           using_filters: false,
           selected_contexts: [],
           selected_projects: [],
+          do_edit_links: false,
         };
       },
       template: '#lookup-list',
@@ -352,6 +368,9 @@
           }
           if(this.project_id && this.project_id.length > 0){
             params.project_id = this.project_id.join(this.multi_val_delim);
+          }
+          if(this.selected_projects && this.selected_projects.length > 0){
+            params.project_id = this.selected_projects.join(this.multi_val_delim);
           }
           if(this.item_class_id && this.item_class_id.length > 0){
             params.item_class_id = this.item_class_id.join(this.multi_val_delim);

@@ -6,6 +6,7 @@
 <!-- Include the more general components first-->
 {% include '../../editorial/tree.html' %}
 {% include '../../editorial/lookup.html' %}
+{% include '../../editorial/assert_examples.html' %}
 
 {% include './project.html' %}
 {% include './manifest_edit.html' %}
@@ -52,6 +53,17 @@
                     v-bind:uuid="ITEM_UUID"
                     v-bind:project_ids="ITEM_PROJECT_UUIDS">
                 </delete-item>
+            </b-card-text>
+            </b-card>
+            <br/>
+            <b-card
+                header="Examples in Assertions"
+            >
+            <b-card-text>
+                <assert-example-list
+                    v-bind:uuid="uuid"
+                    v-bind:do_edit_links="true"
+                ></assert-example-list>
             </b-card-text>
             </b-card>
             <br/>
@@ -177,6 +189,7 @@
                 }
             },
             components: {
+                'assert-example-list': vs_assert_example_list,
                 'add-item': vc_add_item,
                 'add-export': vc_add_export,
                 'delete-item': vc_delete_item,

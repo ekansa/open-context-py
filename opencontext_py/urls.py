@@ -117,7 +117,16 @@ urlpatterns = [
     url(r'^all-items/(?P<uuid>\S+)', AllItemsViews.test_html, name='all_items_html'),
 
     # New add_items administrative (for editing, etl) views
-    url(r'^editorial/item-children/(?P<identifier>\S+)', EditorialViews.item_children_json, name='editorial_item_children'),
+    url(
+        r'^editorial/item-children/(?P<identifier>\S+)', 
+        EditorialViews.item_children_json, 
+        name='editorial_item_children'
+    ),
+    url(
+        r'^editorial/item-assert-examples/(?P<identifier>\S+)', 
+        EditorialViews.item_assert_examples_json,
+        name='editorial_item_assert_examples_json'
+    ),
     url(r'^editorial/item-look-up', EditorialViews.item_look_up_json, name='editorial_item_look_up'),
     url(r'^editorial/item-meta-look-up', EditorialViews.item_meta_look_up_json, name='editorial_item_meta_look_up'),
     url(r'^editorial/html-validate', EditorialViews.html_validate, name='editorial_html_validate'),
@@ -270,6 +279,16 @@ urlpatterns = [
         r'^editorial/proj-spatial-tree/(?P<identifier>\S+)', 
         EditorialItemViews.project_spatial_tree_json, 
         name='editorial_project_spatial_tree_json',
+    ),
+    url(
+        r'^editorial/proj-persons/(?P<identifier>\S+)', 
+        EditorialItemViews.project_persons_json, 
+        name='editorial_project_persons_json',
+    ),
+    url(
+        r'^editorial/proj-data-sources/(?P<identifier>\S+)', 
+        EditorialItemViews.project_data_sources_json, 
+        name='editorial_project_data_sources_json',
     ),
     # New Export data editorial views
     url(

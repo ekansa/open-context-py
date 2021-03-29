@@ -1,0 +1,150 @@
+{% load humanize %}
+<!--
+  This code block provides a general interface for lookups of Manifest
+  items
+-->
+<style>
+  .result_list {
+    max-height: 250px;
+    overflow: scroll;
+    font-size: 66%;
+  }
+  .result_list_item {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+ 
+</style>
+
+<template id='assert-example-list-item'>
+  <b-list-group-item action class="d-flex justify-content-between align-items-center result_list_item">
+    <div v-if="!do_edit_links">
+      <span>[[ item.label ]]</span> <a v-if="item_link" :href="item_link" target="_blank"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
+      <small class="text-muted"><br/>
+        [[ item.item_class__label ]]
+      </small>
+    </div>
+    <div v-else>
+      <span>[[ item.label ]]</span>
+      <a v-if="item_link" :href="item_link" target="_blank"><b-icon-tools></b-icon-tools></a>
+      <small class="text-muted"><br/>
+        [[ item.item_class__label ]]
+      </small>
+    </div>
+  </b-list-group-item>
+</template>
+
+
+<template id='assert-example-list'>
+  <div>
+    <div v-if="!loading">
+      <b-list-group flush v-if="items.length > 0" class="result_list">
+        <assert-example-list-item
+          @set_selected_item="set_selected_item($event)"
+          v-for="(item, index) in items"
+          :key="'assert-example-' + item.uuid"
+          :item="item"
+          v-bind:do_edit_links="do_edit_links"
+        ></assert-example-list-item>
+      </b-list-group>
+      <p v-else>No examples</p>
+    </div>
+    <b-spinner v-else variant="info" label="Fetching examples"></b-spinner>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+var vs_assert_example_list_item = Vue.component(
+  'assert-example-list-item',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['item', 'do_edit_links',],
+    data() {
+      return {
+        item: null,
+        do_edit_links: false,
+      };
+    },
+    template: '#assert-example-list-item',
+    computed: {
+      item_link: function() {
+        if(this.item && !this.do_edit_links){
+          return 'https://' + this.item.uri;
+        }
+        if(this.item && this.do_edit_links){
+          return '/editorial/item-edit/' + this.item.uuid;
+        }
+        return null;
+      },
+    },
+    methods: {
+      set_selected_item(item){
+        if(item){
+          this.selected_item = item;
+          // This will go up parent components recursively.
+          this.$emit('set_selected_item', this.selected_item);
+        }
+      },
+      toggle: function() {
+        this.set_selected_item(this.item);
+      },
+    }
+  },
+);
+
+var vs_assert_example_list = Vue.component(
+  'assert-example-list',
+  {
+    delimiters: ['[[', ']]'],
+    props: [
+      'uuid',
+      'do_edit_links',
+    ],
+    data() {
+      return {
+        uuid: null,
+        do_edit_links: false,
+        items: [],
+        loading: false,
+      };
+    },
+    template: '#assert-example-list',
+    computed: {
+      
+    },
+    created(){
+      this.fetch_api_item_assert_examples();
+    },
+    methods: {
+      fetch_api_item_assert_examples: function (){
+        if(!this.uuid){
+          return null;
+        }
+        this.error = null;
+        this.loading = true;
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        fetch(
+          ('/editorial/item-assert-examples/' + this.uuid), 
+          requestOptions,
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.items = json;
+        });
+      },
+    },
+    components: {
+      'assert-example-list-item': vs_assert_example_list_item,
+    },
+  },
+);
+
+</script>

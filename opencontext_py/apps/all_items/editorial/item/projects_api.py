@@ -29,6 +29,10 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
 )
+from opencontext_py.apps.etl.importer.models import (
+    DataSource,
+)
+
 from opencontext_py.apps.all_items import utilities as model_utils
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial.api import manifest_obj_to_json_safe_dict
@@ -194,6 +198,8 @@ def project_descriptions_tree(project_id):
                 continue
             key_label_dict[key] = item.get(key_label)
 
+    key_label_dict[None] = '(Node not labeled)'
+
     index_list = [
         'subject__item_type', 
         'subject__item_class_id', 
@@ -214,20 +220,27 @@ def project_spatial_tree(project_id):
     if not proj_obj:
         return None
     
-    m_qs = AllManifest.objects.filter(
-        item_type='subjects',
-        project_id=project_id,
-    ).exclude(
-        context__project_id=project_id
-    )
-    count_m_qs = len(m_qs)
-    while count_m_qs > 20:
-        level_uuids = [m.context.uuid for m in m_qs]
+    if project_id != configs.OPEN_CONTEXT_PROJ_UUID:
+        # Normal case, not for the root project.
         m_qs = AllManifest.objects.filter(
             item_type='subjects',
-            uuid__in=level_uuids
+            project_id=project_id,
+        ).exclude(
+            context__project_id=project_id
         )
         count_m_qs = len(m_qs)
+        while count_m_qs > 20:
+            level_uuids = [m.context.uuid for m in m_qs]
+            m_qs = AllManifest.objects.filter(
+                item_type='subjects',
+                uuid__in=level_uuids
+            )
+            count_m_qs = len(m_qs)
+    else:
+        m_qs = AllManifest.objects.filter(
+            item_type='subjects',
+            context_id__in=configs.DEFAULT_SUBJECTS_ROOTS
+        )
 
     proj_root = manifest_obj_to_json_safe_dict(proj_obj)
     _, proj_root_uuid = update_old_id(f'project_spatial_tree_{project_id}')
@@ -239,3 +252,62 @@ def project_spatial_tree(project_id):
         child_item['no_root_cache'] = True
         proj_root['children'].append(child_item)
     return proj_root
+
+
+def project_data_sources(project_id):
+    """Returns ETL data sources for a project"""
+    ds_qs = DataSource.objects.all()
+    if project_id != configs.OPEN_CONTEXT_PROJ_UUID:
+        # Only filter if we're not the Open Context project.
+        ds_qs = ds_qs.filter(
+            project_id=project_id,
+        )
+    ds_qs = ds_qs.order_by(
+        '-updated'
+    )
+    output = [make_model_object_json_safe_dict(ds) for ds in ds_qs]
+    return output
+
+
+def project_persons(project_id):
+    """Returns ETL data sources for a project"""
+    p_qs = AllManifest.objects.filter(
+        item_type='persons'
+    ).select_related(
+        'project'
+    )
+    if project_id != configs.OPEN_CONTEXT_PROJ_UUID:
+
+        subj_ids = AllAssertion.objects.filter(
+            subject__item_type='persons',
+            project_id=project_id,
+        ).distinct(
+            'subject'
+        ).order_by(
+            'subject'
+        ).values_list(
+            'subject_id',
+            flat=True
+        )
+
+        obj_ids = AllAssertion.objects.filter(
+            object__item_type='persons',
+            project_id=project_id,
+        ).distinct(
+            'object'
+        ).order_by(
+            'object'
+        ).values_list(
+            'object_id',
+            flat=True
+        )
+        p_qs = p_qs.filter(
+            Q(uuid__in=subj_ids)
+            | Q(uuid__in=obj_ids)
+        )
+
+    output = [
+        make_model_object_json_safe_dict(p, more_attributes=['project__label']) 
+        for p in p_qs
+    ]
+    return output

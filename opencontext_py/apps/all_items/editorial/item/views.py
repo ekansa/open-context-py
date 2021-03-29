@@ -1072,3 +1072,36 @@ def project_spatial_tree_json(request, identifier):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@never_cache
+@cache_control(no_cache=True)
+def project_data_sources_json(request, identifier):
+    """ API for getting a project's ETL data sources """
+    api_result = projects_api.project_data_sources(identifier)
+
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@never_cache
+@cache_control(no_cache=True)
+def project_persons_json(request, identifier):
+    """ API for getting a project's people """
+    api_result = projects_api.project_persons(identifier)
+    json_output = json.dumps(
+        api_result,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )

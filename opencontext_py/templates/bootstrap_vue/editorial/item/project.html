@@ -11,6 +11,80 @@ NOTE: Templates and view components to edit an item's manifest object.
 </style>
 
 
+<template id="project-persons">
+  <div>
+    <div v-if="!loading">
+      <b-table
+        ref="proj_persons_table"
+        small
+        striped
+        table-variant="secondary"
+        :items="person_objs"
+        :fields="fields"
+        :sort-by.sync="sortBy"
+        :sort-desc.sync="sortDesc"
+        responsive="lg"
+        v-if="person_objs && person_objs.length > 0"
+      >
+        <template #cell(uuid)="data">
+          <b-button variant="secondary" :href="'/editorial/item-edit/' + data.value" target="_blank">
+            <b-icon-tools></b-icon-tools>
+          </b-button>
+        </template>
+        <template #cell()="data">
+          [[ data.value ]]
+        </template>
+        <template #cell(project_id)="data">
+          <small>
+            <a 
+              :href="'/editorial/item-edit/' + data.item.project_id" 
+              target="_blank">[[ data.item.project__label ]] <b-icon-tools></b-icon-tools>
+            </a>
+          </small>
+        </template>
+
+      </b-table>
+      <p v-else>No 'persons' records for this project</p>
+    </div>
+    <b-spinner v-else variant="info" label="Fetching persons records"></b-spinner>
+  </div>
+</template>
+
+
+<template id="project-data-sources">
+  <div>
+    <div v-if="!loading">
+      <b-table
+        ref="proj_ds_table"
+        small
+        striped
+        table-variant="secondary"
+        :items="data_sources"
+        :fields="fields"
+        :sort-by.sync="sortBy"
+        :sort-desc.sync="sortDesc"
+        responsive="lg"
+        v-if="data_sources && data_sources.length > 0"
+      >
+        <template #cell(uuid)="data">
+          <b-button variant="secondary" :href="'/etl-importer/prepare/' + data.value" target="_blank">
+            <b-icon-tools></b-icon-tools>
+          </b-button>
+        </template>
+        <template #cell()="data">
+          [[ data.value ]]
+        </template>
+        <template #cell(updated)="data">
+          [[ data.value | formatDate ]]
+        </template>
+      </b-table>
+      <p v-else>No record of ETL data sources</p>
+    </div>
+    <b-spinner v-else variant="info" label="Fetching data sources"></b-spinner>
+  </div>
+</template>
+
+
 
 <template id="edit-project">
   <b-container fluid v-if="man_obj">
@@ -139,6 +213,148 @@ NOTE: Templates and view components to edit an item's manifest object.
         </b-card>
 
 
+        <b-card no-body>
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'proj_nav_accordion_proj_hierarchy'" 
+              variant="outline-info">
+              <strong>Projects and Sub-Projects</strong>
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="proj_nav_accordion_proj_hierarchy" 
+            visible="false" 
+            accordion="proj_nav_accordion" 
+            role="tabpanel">
+            <b-card-body>
+              
+              <div v-if="man_obj.uuid != man_obj.context_id">
+                <p>
+                  <strong>This project is contained in:
+                  <br/>
+                    <a 
+                      :href="'/editorial/item-edit/' + man_obj.context_id" 
+                      target="_blank">[[ man_obj.context__label ]] <b-icon-tools></b-icon-tools></a>
+                  </strong>
+                </p>
+              </div>
+              <p>Projects within:</p>
+              <root-item-tree
+                :id="'proj_hierarchy_tree'"
+                :key="'proj_hierarchy_tree'"
+                v-bind:root_item_id="man_obj.uuid"
+                v-bind:do_edit_links="true"
+                v-bind:cached_tree_items="cached_tree_items"
+                @cache_fetched_item="cache_fetched_item($event)"
+              >
+              </root-item-tree>
+
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+        <b-card no-body>
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'proj_nav_project_persons'" 
+              variant="outline-info">
+              <strong>Persons / Organizations</strong>
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="proj_nav_project_persons" 
+            visible="false" 
+            accordion="proj_nav_accordion" 
+            role="tabpanel">
+            <b-card-body>
+              
+              <project-persons
+                v-bind:man_obj="man_obj"
+              ></project-persons>
+
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+        <b-card no-body>
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'proj_nav_accordion_data_sources'" 
+              variant="outline-info">
+              <strong>ETL Data Sources</strong>
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="proj_nav_accordion_data_sources" 
+            visible="false" 
+            accordion="proj_nav_accordion" 
+            role="tabpanel">
+            <b-card-body>
+              
+              <project-data-sources
+                v-bind:man_obj="man_obj"
+              ></project-data-sources>
+
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
+
+        <b-card no-body>
+          <b-card-header header-tag="header" class="p-1" role="tab">
+            <b-button 
+              block 
+              v-b-toggle="'proj_nav_accordion_proj_search'" 
+              variant="outline-info">
+              <strong>Project Search</strong>
+            </b-button>
+          </b-card-header>
+          <b-collapse 
+            id="proj_nav_accordion_proj_search" 
+            visible="false" 
+            accordion="proj_nav_accordion" 
+            role="tabpanel">
+            <b-card-body>
+              
+              <small>Search project items below</small><br/>
+              <div v-if="man_obj.uuid != OPEN_CONTEXT_PROJ_UUID">
+                <lookup-list
+                  key="project-lookup"
+                  v-bind:project_id="[man_obj.uuid]"
+                  v-bind:do_meta="true"
+                  v-bind:show_project="true"
+                  v-bind:show_item_class="true"
+                  v-bind:show_total_results="true"
+                  v-bind:show_q_search_box="true"
+                  v-bind:show_label_search_box="false"
+                  v-bind:show_path_search_box="true"
+                  v-bind:do_edit_links="true"
+                  @set_selected_item="set_selected_context_item($event)"
+                ></lookup-list>
+              </div>
+              <div v-else>
+                <lookup-list
+                  key="project-lookup"
+                  v-bind:project_id="[]"
+                  v-bind:do_meta="true"
+                  v-bind:show_project="true"
+                  v-bind:show_item_class="true"
+                  v-bind:show_total_results="true"
+                  v-bind:show_q_search_box="true"
+                  v-bind:show_label_search_box="false"
+                  v-bind:show_path_search_box="true"
+                  v-bind:do_edit_links="true"
+                  @set_selected_item="set_selected_context_item($event)"
+                ></lookup-list>
+              </div>
+
+            </b-card-body>
+          </b-collapse>
+        </b-card>
+
       </b-col>
     </b-row>
 
@@ -148,202 +364,333 @@ NOTE: Templates and view components to edit an item's manifest object.
 
 <script type="text/javascript">
 
-  var vc_edit_project = Vue.component(
-    'edit-project',
-    {
-      delimiters: ['[[', ']]'],
-      props: ['uuid', ],
-      data() {
-        return {
-          uuid: null,
-          man_obj: null,
-          errors: null,
-          sort_done: false,
-          sort_started: false,
-          sort_start_time: null,
-          sort_progress_time: null,
-          sort_done_time: null,
-          show_sort_result: false,
-          sort_progress: null,
-          sort_message: null,
-          sort_count_updated: null,
-          cached_tree_items: {},
+var vc_project_persons = Vue.component(
+  'project-persons',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['man_obj'],
+    data() {
+      return {
+        man_obj: null,
+        errors: null,
+        loading: false,
+        person_objs: null,
+        sortBy: 'label',
+        sortDesc: false,
+        fields: [
+          {key: 'uuid', label: 'ID', sortable: false},
+          {key: 'label', sortable: true },
+          {key: 'given_name', sortable: true },
+          {key: 'surname', sortable: true },
+          {key: 'project_id', label: 'Project', sortable: true },
+        ],
+        items: [],
+      }
+    },
+    template: '#project-persons',
+    created() {
+      this.fetch_api_project_persons();
+    },
+    methods: {
+      fetch_api_project_persons: function (){
+        if(!this.man_obj){
+          return null;
+        }
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/proj-persons/' + this.man_obj.uuid),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.person_objs = [];
+          for(let p_obj of json){
+            if(!p_obj.meta_json.hasOwnProperty('given_name')){
+              p_obj.meta_json.given_name = '';
+            }
+            if(!p_obj.meta_json.hasOwnProperty('surname')){
+              p_obj.meta_json.surname = '';
+            }
+            p_obj.given_name = p_obj.meta_json.given_name;
+            p_obj.surname = p_obj.meta_json.surname;
+            this.person_objs.push(p_obj);
+          }
+        });
+      },
+    },
+  }
+);
+
+
+var vc_project_data_sources = Vue.component(
+  'project-data-sources',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['man_obj'],
+    data() {
+      return {
+        man_obj: null,
+        errors: null,
+        loading: false,
+        data_sources: null,
+        sortBy: 'updated',
+        sortDesc: true,
+        fields: [
+          {key: 'uuid', label: 'ID', sortable: false},
+          {key: 'label', sortable: true },
+          {key: 'field_count', sortable: true},
+          {key: 'row_count', sortable: true},
+          {key: 'source_type', sortable: true},
+          {key: 'status', sortable: true},
+          {key: 'updated', sortable: true},
+        ],
+        items: [],
+      }
+    },
+    template: '#project-data-sources',
+    created() {
+      this.fetch_api_data_sources();
+    },
+    filters: {
+      formatDate: function (date) {
+        return moment(date).format('YYYY-MM-DD hh:mm');
+      }
+    },
+    methods: {
+      moment: function () {
+        return moment();
+      },
+      fetch_api_data_sources: function (){
+        if(!this.man_obj){
+          return null;
+        }
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/proj-data-sources/' + this.man_obj.uuid),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.data_sources = json;
+        });
+      },
+    },
+  }
+);
+
+var vc_edit_project = Vue.component(
+  'edit-project',
+  {
+    delimiters: ['[[', ']]'],
+    props: ['uuid', ],
+    data() {
+      return {
+        uuid: null,
+        man_obj: null,
+        errors: null,
+        sort_done: false,
+        sort_started: false,
+        sort_start_time: null,
+        sort_progress_time: null,
+        sort_done_time: null,
+        show_sort_result: false,
+        sort_progress: null,
+        sort_message: null,
+        sort_count_updated: null,
+        cached_tree_items: {},
+        data_sources: null,
+      }
+    },
+    template: '#edit-project',
+    created() {
+      this.fetch_api_manifest_obj();
+    },
+    computed: {
+      web_url: function() {
+        if(!this.man_obj || !this.man_obj.uri){
+          return null;
+        }
+        let url = this.trim_prefix(this.man_obj.uri, 'https://');
+        return 'https://' + this.trim_prefix(url, 'http://');
+      },
+      sort_started_display: function() {
+        if(!this.sort_start_time){
+          return null;
+        }
+        return this.sort_start_time.toLocaleTimeString();
+      },
+      sort_elapsed_time_display: function() {
+        if(!this.sort_start_time){
+          return null;
+        }
+        let last_time = new Date();
+        if(this.sort_done_time != null){
+          last_time = this.sort_done_time;
+          console.log('done time');
+        }
+        else if(this.sort_progress_time != null){
+          last_time = this.sort_progress_time;
+          console.log('progress time');
+        }
+        
+        let time_diff = last_time - this.sort_start_time;
+        time_diff /= 1000;
+        let min_time_diff = Math.floor(time_diff / 60);
+        let hr_time_diff = Math.floor(min_time_diff / 60);
+        let seconds = Math.floor(time_diff % 60);
+        let seconds_str = seconds < 10 ? "0" + seconds : seconds;
+        let minutes = min_time_diff % 60;
+        let minutes_str = minutes < 10 ? "0" + minutes : minutes;
+        let hours = hr_time_diff % 24;
+        let hours_str = hours < 10 ? "0" + hours : hours;
+        return `${hours}:${minutes_str}:${seconds_str}`;
+      },
+    },
+    methods: {
+      fetch_api_manifest_obj: function (){
+        this.error = null;
+        this.loading = true;
+        fetch(
+          ('/editorial/item-manifest/' + this.uuid),
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.man_obj = json;
+          console.log(this.man_obj);
+          if(this.emit_edit_done){
+            this.emit_edit_done = false;
+            this.$emit('edit_done', true);
+          }
+        })
+      },
+      trim_prefix(str, prefix) {
+        if (str.startsWith(prefix)) {
+            return str.slice(prefix.length);
+        } else {
+            return str;
         }
       },
-      template: '#edit-project',
-      created() {
-        this.fetch_api_manifest_obj();
+      uri_change(input_value) {
+        input_value = this.trim_prefix(input_value, 'https://');
+        input_value = this.trim_prefix(input_value, 'http://');
+        return input_value;
       },
-      computed: {
-        web_url: function() {
-          if(!this.man_obj || !this.man_obj.uri){
-            return null;
+      do_sort_request(sort_objs, endpoint_url){
+        this.sort_started = true;
+        this.updating = true;
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(sort_objs),
+        };
+        fetch(endpoint_url, requestOptions)
+        .then(response => response.json())
+        .then(json => {
+          const data = json;
+          // check for error response
+          if (data.errors) {
+            // get error message from body or default to response status
+            this.updating = false;
+            this.show_sort_result = true;
+            this.errors = data.errors;
+            return Promise.reject(error);
           }
-          let url = this.trim_prefix(this.man_obj.uri, 'https://');
-          return 'https://' + this.trim_prefix(url, 'http://');
-        },
-        sort_started_display: function() {
-          if(!this.sort_start_time){
-            return null;
+          console.log(data);
+          this.sort_done = data.complete;
+          this.sort_progress_time = new Date();
+          this.sort_count_updated = data.updated[0].count_updated;
+          this.sort_progress = data.updated[0].last_chunk_index / data.updated[0].total_chunks;
+          if(data.updated[0].total_chunks <= 1){
+            this.sort_done = true;
           }
-          return this.sort_start_time.toLocaleTimeString();
-        },
-        sort_elapsed_time_display: function() {
-          if(!this.sort_start_time){
-            return null;
+          if(!this.sort_done){
+            this.sort_message = (`Batch ${data.updated[0].last_chunk_index} `
+            + `of ${data.updated[0].total_chunks}, `
+            + `${data.updated[0].total_uuids_count} total items`
+            );
+            this.fetch_api_project_sort();
           }
-          let last_time = new Date();
-          if(this.sort_done_time != null){
-            last_time = this.sort_done_time;
-            console.log('done time');
+          else{
+            this.sort_progress = 1;
+            this.sort_message = `Finished sorting ${data.updated[0].total_uuids_count} items`;
           }
-          else if(this.sort_progress_time != null){
-            last_time = this.sort_progress_time;
-            console.log('progress time');
-          }
-          
-          let time_diff = last_time - this.sort_start_time;
-          time_diff /= 1000;
-          let min_time_diff = Math.floor(time_diff / 60);
-          let hr_time_diff = Math.floor(min_time_diff / 60);
-          let seconds = Math.floor(time_diff % 60);
-          let seconds_str = seconds < 10 ? "0" + seconds : seconds;
-          let minutes = min_time_diff % 60;
-          let minutes_str = minutes < 10 ? "0" + minutes : minutes;
-          let hours = hr_time_diff % 24;
-          let hours_str = hours < 10 ? "0" + hours : hours;
-          return `${hours}:${minutes_str}:${seconds_str}`;
-        },
+        })
+        .catch(error => {
+          this.errorMessage = error;
+          console.error('There was an error!', error);
+        });
       },
-      methods: {
-        fetch_api_manifest_obj: function (){
-          this.error = null;
-          this.loading = true;
-          fetch(
-            ('/editorial/item-manifest/' + this.uuid),
-              {
-                headers:{
-                    'Accept': 'application/json',
-                }
-              }
-          )
-          .then(this.loading = false)
-          .then(response => response.json())
-          .then(json => {
-            this.man_obj = json;
-            console.log(this.man_obj);
-            if(this.emit_edit_done){
-              this.emit_edit_done = false;
-              this.$emit('edit_done', true);
-            }
-          })
-        },
-        trim_prefix(str, prefix) {
-          if (str.startsWith(prefix)) {
-              return str.slice(prefix.length);
-          } else {
-              return str;
-          }
-        },
-        uri_change(input_value) {
-          input_value = this.trim_prefix(input_value, 'https://');
-          input_value = this.trim_prefix(input_value, 'http://');
-          return input_value;
-        },
-        do_sort_request(sort_objs, endpoint_url){
-          this.sort_started = true;
-          this.updating = true;
-          const requestOptions = {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrftoken,
-            },
-            body: JSON.stringify(sort_objs),
-          };
-          fetch(endpoint_url, requestOptions)
-          .then(response => response.json())
-          .then(json => {
-            const data = json;
-            // check for error response
-            if (data.errors) {
-              // get error message from body or default to response status
-              this.updating = false;
-              this.show_sort_result = true;
-              this.errors = data.errors;
-              return Promise.reject(error);
-            }
-            console.log(data);
-            this.sort_done = data.complete;
-            this.sort_progress_time = new Date();
-            this.sort_count_updated = data.updated[0].count_updated;
-            this.sort_progress = data.updated[0].last_chunk_index / data.updated[0].total_chunks;
-            if(data.updated[0].total_chunks <= 1){
-              this.sort_done = true;
-            }
-            if(!this.sort_done){
-              this.sort_message = (`Batch ${data.updated[0].last_chunk_index} `
-              + `of ${data.updated[0].total_chunks}, `
-              + `${data.updated[0].total_uuids_count} total items`
-              );
-              this.fetch_api_project_sort();
-            }
-            else{
-              this.sort_progress = 1;
-              this.sort_message = `Finished sorting ${data.updated[0].total_uuids_count} items`;
-            }
-          })
-          .catch(error => {
-            this.errorMessage = error;
-            console.error('There was an error!', error);
-          });
-        },
-        fetch_api_reset_project_sort: function (){
-          this.error = null;
-          this.loading = true;
-          let sort_obj = {
-            uuid: this.uuid,
-            reset: true,
-          };
-          let sort_objs = [];
-          sort_objs.push(sort_obj);
-          let endpoint_url = '/editorial/item-sort-project-assertions';
-          this.do_sort_request(sort_objs, endpoint_url);
-        },
-        fetch_api_project_sort: function (){
-          this.error = null;
-          this.loading = true;
-          let sort_obj = {
-            uuid: this.uuid,
-          };
-          let sort_objs = [];
-          sort_objs.push(sort_obj);
-          let endpoint_url = '/editorial/item-sort-project-assertions';
-          this.do_sort_request(sort_objs, endpoint_url);
-        },
-        sort_start: function() {
-          this.sort_started = true;
-          this.sort_start_time = new Date();
-          this.fetch_api_reset_project_sort();
-        },
-        cache_fetched_item(item){
-          if(typeof this.cached_tree_items === 'undefined'){
-            this.cached_tree_items = {};
-          }
-          if(item){
-            if(item.hasOwnProperty('no_root_cache')){
-              if(item.no_root_cache){
-                return null;
-              }
-            }
-            this.cached_tree_items[item.uuid] = item;
-          }
-        },
+      fetch_api_reset_project_sort: function (){
+        this.error = null;
+        this.loading = true;
+        let sort_obj = {
+          uuid: this.uuid,
+          reset: true,
+        };
+        let sort_objs = [];
+        sort_objs.push(sort_obj);
+        let endpoint_url = '/editorial/item-sort-project-assertions';
+        this.do_sort_request(sort_objs, endpoint_url);
       },
-      components: {
-        'root-item-tree': vs_root_item_tree,
+      fetch_api_project_sort: function (){
+        this.error = null;
+        this.loading = true;
+        let sort_obj = {
+          uuid: this.uuid,
+        };
+        let sort_objs = [];
+        sort_objs.push(sort_obj);
+        let endpoint_url = '/editorial/item-sort-project-assertions';
+        this.do_sort_request(sort_objs, endpoint_url);
       },
-    }
-  ); 
-  
-  </script>
+      sort_start: function() {
+        this.sort_started = true;
+        this.sort_start_time = new Date();
+        this.fetch_api_reset_project_sort();
+      },
+      cache_fetched_item(item){
+        if(typeof this.cached_tree_items === 'undefined'){
+          this.cached_tree_items = {};
+        }
+        if(item){
+          if(item.hasOwnProperty('no_root_cache')){
+            if(item.no_root_cache){
+              return null;
+            }
+          }
+          this.cached_tree_items[item.uuid] = item;
+        }
+      },
+
+    },
+    components: {
+      'root-item-tree': vs_root_item_tree,
+      'lookup-list': vs_look_up_list,
+      'project-persons': vc_project_persons,
+      'project-data-sources': vc_project_data_sources,
+    },
+  }
+); 
+
+</script>

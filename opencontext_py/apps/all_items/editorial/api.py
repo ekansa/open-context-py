@@ -2,8 +2,11 @@
 import copy
 import datetime
 import hashlib
+
 from lxml import etree
 import lxml.html
+
+from random import sample
 import uuid as GenUUID
 
 from django.db.models import Q
@@ -302,6 +305,15 @@ def get_item_children(identifier):
         children_objs =  get_immediate_context_children_objs_db(
             man_obj
         )
+    elif man_obj.item_type == 'projects':
+        children_objs = AllManifest.objects.filter(
+            item_type='projects',
+            context=man_obj
+        ).exclude(
+            uuid=man_obj.uuid
+        ).order_by(
+            'label'
+        )
     else:
         # Gets concept hierarchy children.
         children_objs =  get_immediate_concept_children_objs_db(
@@ -322,6 +334,37 @@ def get_item_children(identifier):
         child_dict = manifest_obj_to_json_safe_dict(child_obj)
         output['children'].append(child_dict)
     
+    return output
+
+
+def get_item_assertion_examples(identifier):
+    """Gets random example list of item as predicate or object of assertions"""
+    _, new_uuid = update_old_id(identifier)
+    
+    man_obj = AllManifest.objects.filter(
+        Q(uuid=new_uuid)
+        |Q(slug=identifier)
+        |Q(uri=AllManifest().clean_uri(identifier))
+        |Q(item_key=identifier)
+    ).first()
+    if not man_obj:
+        return None
+
+    example_qs = AllAssertion.objects.filter(
+        Q(object=man_obj)
+        |Q(predicate=man_obj)
+    ).distinct(
+        'subject'
+    ).order_by(
+        'subject'
+    )[:1000]
+    output = []
+    objs = [o for o in example_qs]
+    if len(objs) > 10:
+        objs = sample(objs, 10)
+    for example_ass in objs:
+        example_dict = manifest_obj_to_json_safe_dict(example_ass.subject)
+        output.append(example_dict)
     return output
 
 

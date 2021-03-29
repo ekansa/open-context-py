@@ -61,9 +61,9 @@ def item_children_json(request, identifier):
 
 @never_cache
 @cache_control(no_cache=True)
-def project_descriptions_tree_json(request, identifier):
-    """ API for getting an item and immediate children items """
-    api_result = editorial_api.project_descriptions_tree(identifier)
+def item_assert_examples_json(request, identifier):
+    """ API for getting examples of an item when used in assertions """
+    api_result = editorial_api.get_item_assertion_examples(identifier)
     if not api_result:
         return HttpResponse(
             json.dumps([]),
