@@ -342,7 +342,10 @@ def update_manifest_objs(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_manifest.update_manifest_objs(request_json)
+    updated, errors = updater_manifest.update_manifest_objs(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -520,7 +523,10 @@ def update_assertions_objs(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_assertions.update_attribute_objs(request_json)
+    updated, errors = updater_assertions.update_attribute_objs(
+        request_json, 
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -549,7 +555,10 @@ def add_assertions(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    added, errors = updater_assertions.add_assertions(request_json)
+    added, errors = updater_assertions.add_assertions(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -578,7 +587,10 @@ def delete_assertions(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    deleted, errors = updater_assertions.delete_assertions(request_json)
+    deleted, errors = updater_assertions.delete_assertions(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -605,7 +617,10 @@ def sort_item_assertions(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    count_updated, errors = updater_assertions.sort_item_assertions(request_json)
+    count_updated, errors = updater_assertions.sort_item_assertions(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -632,7 +647,10 @@ def sort_project_assertions(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    sorts_done, updated, errors = updater_assertions.sort_project_assertions(request_json)
+    sorts_done, updated, errors = updater_assertions.sort_project_assertions(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -709,7 +727,10 @@ def update_space_time_objs(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    updated, errors = updater_spacetime.update_spacetime_objs(request_json)
+    updated, errors = updater_spacetime.update_spacetime_objs(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -727,6 +748,7 @@ def update_space_time_objs(request):
         content_type="application/json; charset=utf8"
     )
 
+
 @cache_control(no_cache=True)
 @never_cache
 @transaction.atomic()
@@ -737,7 +759,10 @@ def add_space_time(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    added, errors = updater_spacetime.add_spacetime_objs(request_json)
+    added, errors = updater_spacetime.add_spacetime_objs(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -765,7 +790,10 @@ def delete_space_time(request):
             'Must be a POST request', status=405
         )
     request_json = json.loads(request.body)
-    deleted, errors = updater_spacetime.delete_spacetime_objs(request_json)
+    deleted, errors = updater_spacetime.delete_spacetime_objs(
+        request_json,
+        request=request,
+    )
     if len(errors):
         # We failed.
         return make_error_response(errors)
@@ -835,6 +863,10 @@ def item_resources_json(request, uuid):
 @transaction.atomic()
 @reversion.create_revision()
 def update_resource_objs(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -864,6 +896,10 @@ def update_resource_objs(request):
 @transaction.atomic()
 @reversion.create_revision()
 def add_resources(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -893,6 +929,10 @@ def add_resources(request):
 @transaction.atomic()
 @reversion.create_revision()
 def delete_resources(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405

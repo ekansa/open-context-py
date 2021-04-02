@@ -142,7 +142,7 @@ def update_subjects_context_containment_assertion(man_obj):
     return assert_obj, None
 
 
-def update_manifest_objs(request_json):
+def update_manifest_objs(request_json, request=None):
     """Updates AllManifest fields based on listed attributes in client request JSON"""
     errors = []
     
@@ -162,6 +162,15 @@ def update_manifest_objs(request_json):
         man_obj = AllManifest.objects.filter(uuid=uuid).first()
         if not man_obj:
             errors.append(f'Cannot find manifest object for {uuid}')
+            continue
+    
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {man_obj}')
             continue
     
         if uuid in EDIT_EXCLUDE_UUIDS:

@@ -12,8 +12,18 @@ from opencontext_py.apps.all_items.models import (
 
 
 
-def get_request_user_permissions(request, man_obj):
+def get_request_user_permissions(request, man_obj, null_request_ok=False):
     """Provides (ok_view, ok_edit) tuple for a manifest object """
+    if not man_obj:
+        # No item to determine permissions
+        return None, None
+
+    if request is None:
+        if null_request_ok:
+            # We're not doing this in the context of an HTTP request,
+            # but via the terminal. Make the permissions OK.
+            return True, True
+        return None, None
 
     if request.user.is_superuser:
         # Super-users get to do everything.

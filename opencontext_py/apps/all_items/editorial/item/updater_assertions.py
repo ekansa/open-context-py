@@ -190,7 +190,7 @@ def move_sort_placement(assert_obj, move_sort, increment=PREDICATE_OBJECT_SORT_I
     return assert_obj
     
 
-def update_attribute_objs(request_json):
+def update_attribute_objs(request_json, request=None):
     """Updates AllAssertion fields based on listed attributes in client request JSON"""
     errors = []
     
@@ -210,6 +210,21 @@ def update_attribute_objs(request_json):
         assert_obj = AllAssertion.objects.filter(uuid=uuid).first()
         if not assert_obj:
             errors.append(f'Cannot find assertion object for {uuid}')
+            continue
+
+        # Get the subject of the assertion's manifest object. This
+        # will be used for history tracking. We also need to check permissions for
+        # making an edit.
+        man_obj = AllManifest.objects.filter(
+            uuid=assert_obj.subject.uuid
+        ).first()
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {man_obj}')
             continue
 
         # Update if the item_update has attributes that we allow to update.
@@ -279,8 +294,6 @@ def update_attribute_objs(request_json):
         # Keep a copy of the old state before saving it.
         prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=assert_obj)
 
-
-
         try:
             update_assert_obj.save()
             ok = True
@@ -293,12 +306,6 @@ def update_attribute_objs(request_json):
             errors.append(f'Assertion item {uuid} update error: {error}')
         if not ok:
             continue
-
-        # Get the subject of the assertion's manifest object. This
-        # will be used for history tracking.
-        man_obj = AllManifest.objects.filter(
-            uuid=assert_obj.subject.uuid
-        ).first()
 
         if not move_sort:
             # Delete the assertion that we just changed. The UUID will be different.
@@ -322,7 +329,7 @@ def update_attribute_objs(request_json):
     return updated, errors
 
 
-def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
+def add_assertions(request_json, request=None, source_id=DEFAULT_SOURCE_ID):
     """Add AllAssertions and from a client request JSON"""
     errors = []
     
@@ -340,6 +347,15 @@ def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
 
         if not subj_man_obj:
             errors.append(f'Cannot find subject for assertion {str(item_add)}')
+            continue
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            subj_man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {subj_man_obj}')
             continue
 
         # Update if the item_update has attributes that we allow to update.
@@ -462,7 +478,7 @@ def add_assertions(request_json, source_id=DEFAULT_SOURCE_ID):
     return added, errors
 
 
-def delete_assertions(request_json):
+def delete_assertions(request_json, request=None):
     """Delete AllAssertions and from a client request JSON"""
     deleted = []
     errors = []
@@ -486,6 +502,15 @@ def delete_assertions(request_json):
         subj_man_obj = AllManifest.objects.filter(
             uuid=assert_obj.subject.uuid
         ).first()
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            subj_man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {subj_man_obj}')
+            continue
 
         # Keep a copy of the old state before saving it.
         prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=assert_obj)
@@ -685,7 +710,7 @@ def resort_assertion_objects_for_project_subjects(
     return count_updated
 
 
-def sort_item_assertions(request_json):
+def sort_item_assertions(request_json, request=None):
     """Sort AllAssertions objects for items listed in a client request JSON"""
     count_updated = 0
     errors = []
@@ -706,6 +731,15 @@ def sort_item_assertions(request_json):
             errors.append(f'Cannot find {uuid} in the manifest.')
             continue
 
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            subject, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {subject}')
+            continue
+
         count_updated += resort_assertion_objects_for_subject_uuids(
             subject_uuids=[uuid], 
             force_reset=True,
@@ -721,7 +755,7 @@ def chunk_list(list_name, n=PROJECT_SORT_CHUNK_SIZE):
         yield list_name[i:i + n]
 
 
-def sort_project_assertions(request_json):
+def sort_project_assertions(request_json, request=None):
     """Sort AllAssertions objects for items listed in a client request JSON"""
     sorts_done = None
     updated = []
@@ -744,6 +778,15 @@ def sort_project_assertions(request_json):
         ).first()
         if not proj_context:
             errors.append(f'Cannot find {uuid} as a project or vocab in the manifest.')
+            continue
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            proj_context, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {proj_context}')
             continue
         
         cache_key = f'proj-context-sort-{uuid}'

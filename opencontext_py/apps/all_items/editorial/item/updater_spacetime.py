@@ -109,8 +109,7 @@ def make_spacetime_note_string(spacetime_obj):
     return note
 
 
-
-def update_spacetime_objs(request_json):
+def update_spacetime_objs(request_json, request=None):
     """Updates AllSpaceTime fields based on listed attributes in client request JSON"""
     errors = []
     
@@ -137,6 +136,15 @@ def update_spacetime_objs(request_json):
         man_obj = AllManifest.objects.filter(
             uuid=spt_obj.item.uuid
         ).first()
+        
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {man_obj}')
+            continue
     
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
@@ -211,7 +219,7 @@ def update_spacetime_objs(request_json):
 
 
 
-def add_spacetime_objs(request_json, source_id=DEFAULT_SOURCE_ID):
+def add_spacetime_objs(request_json, request=None, source_id=DEFAULT_SOURCE_ID):
     """Add AllSpaceTime and from a client request JSON"""
     errors = []
     
@@ -229,6 +237,15 @@ def add_spacetime_objs(request_json, source_id=DEFAULT_SOURCE_ID):
 
         if not man_obj:
             errors.append(f'Cannot find manifest object for location/chronology {str(item_add)}')
+            continue
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {man_obj}')
             continue
 
         # Update if the item_update has attributes that we allow to update.
@@ -326,7 +343,7 @@ def add_spacetime_objs(request_json, source_id=DEFAULT_SOURCE_ID):
     return added, errors
 
 
-def delete_spacetime_objs(request_json):
+def delete_spacetime_objs(request_json, request=None):
     """Deletes a list of spacetime objects"""
     errors = []
     deleted = []
@@ -349,6 +366,15 @@ def delete_spacetime_objs(request_json):
         man_obj = AllManifest.objects.filter(
             uuid=to_delete_spt_obj.item.uuid
         ).first()
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {man_obj}')
+            continue
 
         # Keep a copy of the old state before saving it.
         prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=to_delete_spt_obj)
