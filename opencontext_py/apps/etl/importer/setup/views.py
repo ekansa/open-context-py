@@ -58,6 +58,10 @@ def make_error_response(errors):
 @cache_control(no_cache=True)
 @never_cache
 def etl_update_fields(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -85,6 +89,10 @@ def etl_update_fields(request):
 @cache_control(no_cache=True)
 @never_cache
 def etl_delete_annotations(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -119,6 +127,10 @@ def etl_delete_annotations(request):
 @cache_control(no_cache=True)
 @never_cache
 def etl_add_annotations(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405

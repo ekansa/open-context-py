@@ -74,6 +74,10 @@ def export_configs(request):
 @never_cache
 def make_export(request):
     """Makes an export that is temporarily cached"""
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -95,6 +99,11 @@ def make_export(request):
 @never_cache
 def get_temp_export_table(request, export_id):
     """Gets a temporarily cached export result"""
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
+
     df = queue_utilities.get_cached_export_df(export_id)
     if df is None:
         raise Http404
@@ -110,42 +119,4 @@ def get_temp_export_table(request, export_id):
         f'attachment; filename="oc-temp-export-{export_id}.csv"'
     )
     return response
-
-
-
-@cache_control(no_cache=True)
-@never_cache
-def test_export(request, export_id=None):
-    """Makes tests an export that is temporarily cached"""
-    if export_id == 'start':
-        export_id = None
-
-    kwargs = {
-        'filter_args': {
-            'subject__item_class__label__contains': 'Animal',
-            'subject__path__contains': 'Italy',
-        },
-        'exclude_args': {
-            'project__label__contains': 'Blubbie',
-            'subject__path__contains': 'Vescovado',
-        },
-        'add_entity_ld': True,
-        'add_literal_ld': True,
-        'add_object_uris': True,
-        'reset_cache': True,
-        'export_id': export_id,
-    }
-    if kwargs.get('export_id'):
-        kwargs['reset_cache'] = False
-
-    output = queue_utilities.single_stage_make_export_df(**kwargs)
-    json_output = json.dumps(
-        output,
-        indent=4,
-        ensure_ascii=False
-    )
-    return HttpResponse(
-        json_output,
-        content_type="application/json; charset=utf8"
-    )
 
