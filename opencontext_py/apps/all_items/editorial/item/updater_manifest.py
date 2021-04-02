@@ -24,6 +24,8 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
 )
+
+from opencontext_py.apps.all_items import permissions
 from opencontext_py.apps.all_items import utilities as model_utils
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api

@@ -25,6 +25,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
+from opencontext_py.apps.all_items import permissions
 from opencontext_py.apps.all_items.editorial.item import edit_configs
 from opencontext_py.apps.all_items.editorial.item import updater_manifest
 from opencontext_py.apps.all_items.editorial.item import updater_assertions
@@ -103,6 +104,15 @@ def item_edit_interface_html(request, uuid):
     man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
     if not man_obj:
         raise Http404
+    
+    _, ok_edit = permissions.get_request_user_permissions(
+        request,
+        man_obj
+    )
+    if not ok_edit:
+        return HttpResponse(
+            'Must have edit permissions', status=403
+        )
 
     # NOTE: Used to get the default observation
     default_obs = editorial_api.get_manifest_item_dict_by_uuid(
@@ -356,6 +366,10 @@ def update_manifest_objs(request):
 @transaction.atomic()
 @reversion.create_revision()
 def add_manifest_objs(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -384,6 +398,10 @@ def add_manifest_objs(request):
 @never_cache
 # @reversion.create_revision()
 def delete_manifest(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -412,6 +430,12 @@ def delete_manifest(request):
 @never_cache
 # @reversion.create_revision()
 def merge_manifest(request):
+    if not request.user.is_superuser:
+        # This can really mess things up, so only let this work
+        # for super users
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -942,6 +966,10 @@ def item_identifiers_json(request, uuid):
 @transaction.atomic()
 @reversion.create_revision()
 def update_identifier_objs(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -971,6 +999,10 @@ def update_identifier_objs(request):
 @transaction.atomic()
 @reversion.create_revision()
 def add_identifiers(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -1000,6 +1032,10 @@ def add_identifiers(request):
 @transaction.atomic()
 @reversion.create_revision()
 def delete_identifiers(request):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405

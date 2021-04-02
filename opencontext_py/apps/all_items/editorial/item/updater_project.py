@@ -30,6 +30,7 @@ from opencontext_py.apps.all_items import utilities as model_utils
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
+from opencontext_py.apps.all_items import permissions
 from opencontext_py.apps.all_items.editorial.item import edit_configs
 from opencontext_py.apps.all_items.editorial.item import updater_general
 from opencontext_py.apps.all_items.editorial.item import updater_manifest

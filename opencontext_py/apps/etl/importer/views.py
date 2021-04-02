@@ -48,6 +48,10 @@ from django.utils.cache import patch_vary_headers
 @cache_control(no_cache=True)
 @never_cache
 def home_html(request, source_id):
+    if not request.user.is_superuser:
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
     _, valid_uuid = update_old_id(source_id)
     ds_source = DataSource.objects.filter(
         Q(source_id=source_id)|Q(uuid=valid_uuid)
