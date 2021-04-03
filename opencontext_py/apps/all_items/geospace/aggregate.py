@@ -4,8 +4,11 @@ import hashlib
 
 
 import numpy as np
-from numpy import vstack, array
-from scipy.cluster.vq import kmeans, vq
+import pandas as pd
+
+from sklearn.cluster import KMeans, AffinityPropagation, SpectralClustering
+from shapely.geometry import mapping, shape
+
 from math import radians, cos, sin, asin, sqrt
 
 from django.db.models import Avg, Max, Min
@@ -20,42 +23,75 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllSpaceTime,
+    AllAssertion,
 )
 
+"""
+# testing
+
+import importlib
+import pandas as pd
+import random
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllSpaceTime,
+)
+from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
+importlib.reload(geo_agg)
+
+
+data = {
+    'longitude': (
+        [(random.randint(30, 50) + random.random()) for _ in range(50) ] 
+        + [(random.randint(55, 65) + random.random()) for _ in range(20)]
+        + [(random.randint(20, 25) + random.random()) for _ in range(50)]
+    ),
+    'latitude': (
+        [(random.randint(30, 50) + random.random()) for _ in range(50)] 
+        + [(random.randint(20, 25) + random.random()) for _ in range(20)]
+        + [(random.randint(20, 25) + random.random()) for _ in range(50)]
+    ), 
+}
+df = pd.DataFrame(data=data)
+r_l = geo_agg.cluster_geo_centroids(df)
+
+"""
 
 
 MAX_CLUSTERS = 15
 MIN_CLUSTER_SIZE_KM = 5  # diagonal length in KM between min(lat/lon) and max(lat/lon)
-LENGTH_CENTROID_FACTOR = 0.75  # for comparing cluster diagonal length with centroid distances
+
+
+DEFAULT_CLUSTER_METHOD = 'KMeans'
+CLUSTER_METHODS = [
+    DEFAULT_CLUSTER_METHOD, 
+    'AffinityPropagation', 
+    'SpectralClustering',
+]
 
 
 
-def get_centroid_clusters(lon_lat_array, act_cluster_count=MAX_CLUSTERS)
-    """Makes clusters from an array of lon lat centroid coordinates
+def get_centroid_of_coord_box(bbox_coordinates):
+    """Gets a centroid tuple from a coordinate box
+    
+    :param list bbox_coordinates: A list of coordinate
+        lists that meet GeoJSON geometry.coordinates expectations
 
-    :param np.array lon_lat_array: A numpy array of lon_lat (in that 
-        order) coordinate pairs to cluster into regions. Note! This
-        can also be a two column dataframe, provided the longitude
-        is column index 0, and latitude is column index 1
-    :param int act_cluster_count: The max number of clusters we will
-        attempt to make
+    returns tuple(longitude, latitude)
     """
-    make_new_clusters = True
-    lon_lat_clusters = None
-    while make_new_clusters and act_cluster_count > 0:
-        try:
-            lon_lat_clusters, _ = kmeans(lon_lat_array, act_cluster_count)
-            make_new_clusters = False
-        except:
-            make_new_clusters = True
-        if make_new_clusters:
-            act_cluster_count -= 1
-    return lon_lat_clusters, act_cluster_count
+    geometry = {
+        'type': 'Polygon',
+        'coordinates': bbox_coordinates,
+    }
+    s = shape(geometry)
+    coords = s.centroid.coords[0]
+    # Longitude, Latitude order
+    return coords[0], coords[1]
 
 
 def make_geojson_coord_box(min_lon, min_lat, max_lon, max_lat):
     """ Makes geojson coordinates list for a bounding feature """
-    coords = []
+    bbox_coordinates = []
     outer_coords = []
     # Right hand rule, counter clockwise outside
     outer_coords.append([min_lon, min_lat])
@@ -63,8 +99,8 @@ def make_geojson_coord_box(min_lon, min_lat, max_lon, max_lat):
     outer_coords.append([max_lon, max_lat])
     outer_coords.append([min_lon, max_lat])
     outer_coords.append([min_lon, min_lat])
-    coords.append(outer_coords)
-    return coords
+    bbox_coordinates.append(outer_coords)
+    return bbox_coordinates
 
 
 def make_min_size_region(region_dict, min_distance=MIN_CLUSTER_SIZE_KM):
@@ -230,68 +266,107 @@ def check_cluster_contains_enough(region_dict, lone_point_check_uuid=None):
 
 
 def cluster_geo_centroids(
-    lon_lat_array, 
+    df, 
     max_clusters=MAX_CLUSTERS,
     min_cluster_size_km=MIN_CLUSTER_SIZE_KM,
-    length_centroid_factor=LENGTH_CENTROID_FACTOR,
+    cluster_method=DEFAULT_CLUSTER_METHOD,
     lone_point_check_uuid=None,
 ):
     """Clusters centroids of items in a space_time_qs
 
-    :param np.array lon_lat_array: A numpy array of lon_lat (in that 
-        order) coordinate pairs to cluster into regions. Note! This
-        can also be a two column dataframe, provided the longitude
-        is column index 0, and latitude is column index 1
+    :param DataFrame df: A Pandas DataFrame with longitude and
+        latitude columns and values.
     :param int max_clusters: The maximum number of clusters
         to return
     :param float min_cluster_size_km: The minimum diagonal 
         length in KM between min(lat/lon) and max(lat/lon)
-    :param float length_centroid_factor: for comparing cluster diagonal
-        length with centroid distances
+    :param str cluster_method: A string that names the sklearn
+        clustering method to use on these data.
+    :param UUID lone_point_check_uuid: A UUID or string UUID that 
+        needs to be checked to see if this point is representative
+        of enough items to be its own cluster.
     """
+    if cluster_method not in CLUSTER_METHODS:
+        raise ValueError(f'Unsupported cluster method {cluster_method}')
+
+    if df.empty: 
+        return None
+    
+    if not set(['longitude', 'latitude']).issubset(set(df.columns)):
+        # We're missing the required columns
+        return None
+    
+    # Remove null values, including "null island"
+    ok_index = (
+        ~df['longitude'].isnull()
+        & ~df['latitude'].isnull()
+        & ~((df['longitude'] == 0) & (df['latitude'] == 0))
+    )
+    if df[ok_index].empty:
+        # We don't have any coordinates, despite having the columns
+        return None
+    
+    # Throw out everything missing coordinates.
+    df = df[ok_index].copy()
+
+    gm = GlobalMercator()
+    max_dataset_distance = gm.distance_on_unit_sphere(
+        df['latitude'].max(),
+        df['longitude'].min(),
+        df['latitude'].min(),
+        df['longitude'].max(),
+    )
+    if min_cluster_size_km > max_dataset_distance * 0.05:
+        min_cluster_size_km = max_dataset_distance * 0.05
     
     region_dicts = []
     reasonable_clusters = False
     act_cluster_count = max_clusters
     while not reasonable_clusters:
-        lon_lat_clusters, act_cluster_count = get_centroid_clusters(
-            lon_lat_array, 
-            act_cluster_count=act_cluster_count,
-        )
-        if not lon_lat_clusters:
-            return None
+
+        if cluster_method == 'AffinityPropagation':
+            # NOTE: We can't pass an argument to ask for a certain number of
+            # starting clusters.
+            aff_p = AffinityPropagation(random_state=None)
+            cluster_ids = aff_p.fit_predict(df[['longitude', 'latitude']])
+        elif cluster_method == 'SpectralClustering':
+            # NOTE: This may be more error prone and weird.
+            spectral = SpectralClustering(
+                n_clusters=act_cluster_count, 
+                random_state=None
+            )
+            cluster_ids = spectral.fit_predict(df[['longitude', 'latitude']])
+        else:
+            kmeans = KMeans(n_clusters=act_cluster_count)
+            cluster_ids = kmeans.fit_predict(df[['longitude', 'latitude']])
+        df['geo_cluster'] = cluster_ids
         
         # Assume we made reasonable clusters.
         reasonable_clusters = True
-        
-        # Make an index to lookup coordinate ranges in the
-        # clusters.
-        idx, _ = vq(lon_lat_array, lon_lat_clusters)
-        # first make check boxes, which will be used to
-        # see if there is an overlap with another cluster
-        i = 0
+
         region_dicts = []
-        for lon_lat_cluster in lon_lat_clusters:
+        for cluster_id in df['geo_cluster'].unique():
+            cluster_index = df['geo_cluster'] == cluster_id
             region_dict = {}
-            region_dict['index'] = i
-            region_dict['id'] = i + 1
-            region_dict['cent_lon'] = lon_lat_cluster[0]
-            region_dict['cent_lat'] = lon_lat_cluster[1]
-            region_dict['count_points'] = len(lon_lat_array[idx == i])
-            region_dict['max_lon'] = max(lon_lat_array[idx == i, 0])
-            region_dict['max_lat'] = max(lon_lat_array[idx == i, 1])
-            region_dict['min_lon'] = min(lon_lat_array[idx == i, 0])
-            region_dict['min_lat'] = min(lon_lat_array[idx == i, 1])
+            region_dict['id'] = cluster_id
+            region_dict['count_points'] = len(df[cluster_index].index)
+            region_dict['max_lon'] = df[cluster_index]['longitude'].max()
+            region_dict['max_lat'] = df[cluster_index]['latitude'].max()
+            region_dict['min_lon'] = df[cluster_index]['longitude'].min()
+            region_dict['min_lat'] = df[cluster_index]['latitude'].min()
             # ensure a minimum sized region
             region_dict = make_min_size_region(
                 region_dict, 
                 min_distance=min_cluster_size_km
             )
-            region_dict['box'] = make_geojson_coord_box(
+            region_dict['coordinates'] = make_geojson_coord_box(
                 region_dict['min_lon'],
                 region_dict['min_lat'],
                 region_dict['max_lon'],
                 region_dict['max_lat'],
+            )
+            region_dict['cent_lon'], region_dict['cent_lat'] = (
+                get_centroid_of_coord_box(region_dict['coordinates'])
             )
             contains_enough = check_cluster_contains_enough(
                 region_dict, 
@@ -300,7 +375,6 @@ def cluster_geo_centroids(
             if not contains_enough:
                 reasonable_clusters = False
             region_dicts.append(region_dict)
-            i += 1
 
         # Now check if we did in face make reasonable clusters.
         overlapping_regions = check_region_overlaps(region_dicts)
@@ -309,35 +383,131 @@ def cluster_geo_centroids(
 
         # OK done with looping through centroids to check on them.
         if not reasonable_clusters:
-            number_clusters = number_clusters - 1
-        if number_clusters < 1:
-            resonable_clusters = True
+            act_cluster_count = act_cluster_count - 1
+        if act_cluster_count < 1:
+            reasonable_clusters = True
+        if cluster_method == 'AffinityPropagation':
+            reasonable_clusters = True
     
     return region_dicts
 
 
-def make_lon_lat_array_from_qs(space_time_qs):
-    """Make a Numpy array from Space-time queryset lon, lat coordinates
+def make_geo_json_geometry_from_region_dicts(region_dicts):
+    """Make a geo_json geometry object from a list of region_dicts
+
+    :param list region_dicts: List of region_dicts generated from
+        a clustering method
+    """
+    if not region_dicts:
+        return None
+    
+    if len(region_dicts) == 1:
+        geometry = {
+            'type': 'Polygon',
+            'coordinates': region_dicts[0].get('coordinates'),
+        }
+        return geometry
+    
+    geometry = {
+        'type': 'MultiPolygon',
+        'coordinates': [r.get('coordinates') for r in region_dicts],
+    }
+    return geometry
+
+
+def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
+    """Make a latidue, longitude dataframe a spacetime query string
     
     :param queryset space_time_qs: The query set of
         space-time instances that we want to cluster
     
-    return Numpy array of [lon, lat] coordinate pairs
+    return DataFrame
     """
-    lon_lats = []
-    for space_time_obj in space_time_qs:
-        if not space_time_obj.longitude or not space_time_obj.latitude:
-            continue
-        dpoint = np.fromiter(
-            [float(space_time_obj.longitude), float(space_time_obj.latitude)], 
-            np.dtype('float')
+    space_time_qs = space_time_qs.values(*cols)
+    df = pd.DataFrame.from_records(space_time_qs)
+    df['longitude'] = df['longitude'].astype(float)
+    df['latitude'] = df['latitude'].astype(float)
+    return df
+
+
+def make_geo_json_of_regions_for_man_obj(
+    man_obj,
+    max_clusters=MAX_CLUSTERS,
+    min_cluster_size_km=MIN_CLUSTER_SIZE_KM,
+    cluster_method=DEFAULT_CLUSTER_METHOD,
+):
+    """Make aggregate geospatial regions for an entity
+
+    :param AllManifest man_obj: The AllManifest object instance that
+        for which we will generate aggregate spatial regions
+    :param int max_clusters: The maximum number of clusters
+        to return
+    :param float min_cluster_size_km: The minimum diagonal 
+        length in KM between min(lat/lon) and max(lat/lon)
+    :param str cluster_method: A string that names the sklearn
+        clustering method to use on these data.
+    """
+    
+    if man_obj.item_type == 'projects':
+        space_time_qs = AllSpaceTime.objects.filter(
+            Q(project=man_obj)
+            |Q(item__project=man_obj)
         )
-        lon_lats.append(dpoint)
+    elif man_obj.item_type == 'subjects':
+        space_time_qs = AllSpaceTime.objects.filter(
+           item__path__startswith=man_obj.path
+        )
+    elif man_obj.item_type == 'predicates':
+        assert_qs = AllAssertion.objects.filter(
+            predicate=man_obj,
+        ).distinct(
+            'subject'
+        ).order_by(
+            'subject'
+        ).values(
+            'subject'
+        )
+        space_time_qs = AllSpaceTime.objects.filter(
+           item__in=assert_qs,
+        )
+    elif man_obj.item_type in [
+            'types',
+            'media', 
+            'documents', 
+            'persons',
+        ]:
+        assert_qs = AllAssertion.objects.filter(
+            object=man_obj,
+        ).distinct(
+            'subject'
+        ).order_by(
+            'subject'
+        ).values(
+            'subject'
+        )
+        space_time_qs = AllSpaceTime.objects.filter(
+           item__in=assert_qs,
+        )
+    else:
+        return None, None
     
-    if not lon_lats:
-        # We have no geospatial lon_lat_array to cluster.
-        return None
+    # Now make a longitude, latitude dataframe.
+    df = make_df_from_space_time_qs(space_time_qs)
+
+    # Do the fancy math of clustering.
+    region_dicts = cluster_geo_centroids(
+        df, 
+        max_clusters=max_clusters,
+        min_cluster_size_km=min_cluster_size_km,
+        cluster_method=cluster_method,
+        lone_point_check_uuid=item_id,
+    )
+    if region_dicts is None:
+        return None, None
     
-    # Create a Numpy array object from my list of float coordinates
-    lon_lat_array = array(lon_lats)
-    return lon_lat_array
+    # OK Process all of these different regions into a
+    # single GeoJSON geometry (Polygon or MultiPolygon)
+    geometry = make_geo_json_geometry_from_region_dicts(
+        region_dicts
+    )
+    return geometry, len(df.index)
