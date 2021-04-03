@@ -29,6 +29,15 @@ from opencontext_py.apps.all_items.editorial.tables import create_df
 from opencontext_py.apps.all_items.editorial.tables import ui_utilities
 from opencontext_py.apps.all_items.editorial.tables import cloud_utilities
 
+from opencontext_py.libs.queue_utilities import (
+    wrap_func_for_rq,
+    make_hash_id_from_args,
+    reset_request_process_cache,
+    add_cache_key_to_request_cache_key_list,
+    cache_item_and_cache_key_for_request,
+)
+
+
 # ---------------------------------------------------------------------
 # NOTE: These functions provide a means to wrap functions for the 
 # export of tabular data in a que / worker. Exports functions can take
@@ -142,43 +151,6 @@ def get_cached_export_args(export_id):
     return cache.get(export_args_key)
 
 
-def wrap_func_for_rq(func, kwargs, job_id=None, default_timeout=DEFAULT_TIMEOUT):
-    """Wraps a function for use with the django redis queue
-
-    :param str process_stage: The export stage that we are
-        currently wrapping in a redis que
-    :param str export_id: A unique ID for this specific export
-        process
-    :param Object func: The function that we are wrapping
-        in the django redis que
-    :param dict kwargs: Keyword argument dict that we're
-        passing to the function func
-    """
-    queue = django_rq.get_queue('high', default_timeout=default_timeout)
-    job = None
-    if job_id:
-        job = queue.fetch_job(job_id)
-
-    if job is None:
-        job = queue.enqueue(func, **kwargs)
-        logger.info(f'Start queue for job: {job.id}')
-        return job.id, False, None
-
-    if job.result is None:
-        # Still working on this job...
-        return job.id, False, None
-    
-    logger.info(f'Finished job: {job.id}')
-    return job.id, True, job.result
-
-
-def make_hash_id_from_args(args):
-    """Turns args into a hash identifier"""
-    hash_obj = hashlib.sha1()
-    hash_obj.update(str(args).encode('utf-8'))
-    return hash_obj.hexdigest()
-
-
 def make_hash_id_from_df(df):
     """Makes a hash identifier from a dataframe"""
     hash_obj = hashlib.sha1()
@@ -192,46 +164,11 @@ def make_uuid_from_df_hash(df):
     return GenUUID.UUID(hex=hash_id[:32])
 
 
-def reset_export_process_cache(export_id):
-    """Resets the cached items relating to the export process"""
-    cache = caches['redis']
-    key_list_cache_key = f'all-export-cache-key-{export_id}'  
-    keys = cache.get(key_list_cache_key)
-    if not keys:
-        # We don't have any cached items relating to the ETL process
-        # of this data source.
-        return 0
-    # Delete the cached items by their keys.
-    cache.delete_many(keys)
-    # Now delete the cached list of cache keys for this data_source.
-    cache.delete(key_list_cache_key)
-    return len(keys)
 
-
-def add_cache_key_to_export_cache_key_list(export_id, new_key):
-    """Adds a cache key to the the process cache key list for this data source etl"""
-    cache = caches['redis']
-    key_list_cache_key = f'all-export-cache-key-{export_id}'  
-    keys = cache.get(key_list_cache_key)
-    if not keys:
-        # Initial set up a list of keys.
-        keys = []
-
-    if new_key in keys:
-        # We already have this new_key in our cached key list.
-        return None
-
-    keys.append(new_key)
-    try:
-        cache.set(key_list_cache_key, keys, timeout=EXPORT_CACHE_LIFE)
-    except:
-        logger.info(f'Cache failure with: {key_list_cache_key}')
-
-
-def cache_item_and_cache_key_for_export(export_id, cache_key, object_to_cache):
+def cache_item_and_cache_key_for_request(export_id, cache_key, object_to_cache):
     """Caches an item and saves the key to our ETL key list for this data source"""
     cache = caches['redis']
-    add_cache_key_to_export_cache_key_list(export_id, cache_key)
+    add_cache_key_to_request_cache_key_list(export_id, cache_key)
     try:
         cache.set(cache_key, object_to_cache, timeout=EXPORT_CACHE_LIFE)
     except:
@@ -288,14 +225,14 @@ def staged_make_export_df(
     
     if reset_cache:
         # Eliminate any cached items relevant to this export_id
-        reset_export_process_cache(export_id)
+        reset_request_process_cache(export_id)
     
     cache = caches['redis']
 
     # Cache the arguments used to generate this export.
     export_args_key = f'export-args-{export_id}'
     if not cache.get(export_args_key) and kwargs:
-        cache_item_and_cache_key_for_export(
+        cache_item_and_cache_key_for_request(
             export_id, 
             cache_key=export_args_key, 
             object_to_cache=args,
@@ -363,7 +300,7 @@ def staged_make_export_df(
             )
 
             if job_done and assert_df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'assert_df__{export_id}', 
                     object_to_cache=assert_df
@@ -387,7 +324,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -411,7 +348,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -434,7 +371,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -461,7 +398,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -483,7 +420,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -510,7 +447,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -539,7 +476,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -551,7 +488,7 @@ def staged_make_export_df(
             
             # Stylize the dataframe and then we are finished!!
             # First, let's cache the pre-styled dataframe
-            cache_item_and_cache_key_for_export(
+            cache_item_and_cache_key_for_request(
                 export_id, 
                 cache_key=f'df__no_style_{export_id}', 
                 object_to_cache=df
@@ -571,7 +508,7 @@ def staged_make_export_df(
             )
 
             if job_done and df is not None:
-                cache_item_and_cache_key_for_export(
+                cache_item_and_cache_key_for_request(
                     export_id, 
                     cache_key=f'df__{export_id}', 
                     object_to_cache=df
@@ -588,7 +525,7 @@ def staged_make_export_df(
     act_stages['complete'] = all_done
 
     # Save this stake of the process to the cache.
-    cache_item_and_cache_key_for_export(
+    cache_item_and_cache_key_for_request(
         export_id, 
         cache_key=cache_key_stages, 
         object_to_cache=act_stages
@@ -622,14 +559,14 @@ def single_stage_make_export_df(
     
     if reset_cache:
         # Eliminate any cached items relevant to this export_id
-        reset_export_process_cache(export_id)
+        reset_request_process_cache(export_id)
     
     cache = caches['redis']
 
     # Cache the arguments used to generate this export.
     export_args_key = f'export-args-{export_id}'
     if not cache.get(export_args_key) and kwargs:
-        cache_item_and_cache_key_for_export(
+        cache_item_and_cache_key_for_request(
             export_id, 
             cache_key=export_args_key, 
             object_to_cache=kwargs,
@@ -664,12 +601,12 @@ def single_stage_make_export_df(
 
     if job_done and df_tup is not None:
         df, df_no_style = df_tup
-        cache_item_and_cache_key_for_export(
+        cache_item_and_cache_key_for_request(
             export_id, 
             cache_key=f'df__{export_id}', 
             object_to_cache=df
         )
-        cache_item_and_cache_key_for_export(
+        cache_item_and_cache_key_for_request(
             export_id, 
             cache_key=f'df_no_style__{export_id}', 
             object_to_cache=df_no_style
@@ -680,7 +617,7 @@ def single_stage_make_export_df(
         status['columns'] = df.columns.tolist()
     
     # Save this stake of the process to the cache.
-    cache_item_and_cache_key_for_export(
+    cache_item_and_cache_key_for_request(
         export_id, 
         cache_key=cache_key_status, 
         object_to_cache=status,
