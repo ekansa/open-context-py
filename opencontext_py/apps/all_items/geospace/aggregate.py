@@ -26,6 +26,11 @@ from opencontext_py.apps.all_items.models import (
     AllAssertion,
 )
 
+from opencontext_py.apps.all_items import permissions
+from opencontext_py.apps.all_items.editorial.item import updater_spacetime
+
+from opencontext_py.apps.etl.importer.utilities import validate_transform_data_type_value
+
 """
 # testing
 
@@ -69,6 +74,7 @@ CLUSTER_METHODS = [
     'SpectralClustering',
 ]
 
+DEFAULT_SOURCE_ID = 'geospace-aggregate'
 
 
 def get_centroid_of_coord_box(bbox_coordinates):
@@ -255,7 +261,7 @@ def check_cluster_contains_enough(region_dict, lone_point_check_uuid=None):
 
     count_contexts = AllManifest.objects.filter(
         project_id__in=item_project_uuids,
-        context_in=spt_qs
+        context__in=spt_qs
     ).count()
     if count_contexts > 1:
         return True
@@ -500,7 +506,7 @@ def make_geo_json_of_regions_for_man_obj(
         max_clusters=max_clusters,
         min_cluster_size_km=min_cluster_size_km,
         cluster_method=cluster_method,
-        lone_point_check_uuid=item_id,
+        lone_point_check_uuid=man_obj.uuid,
     )
     if region_dicts is None:
         return None, None
@@ -511,3 +517,82 @@ def make_geo_json_of_regions_for_man_obj(
         region_dicts
     )
     return geometry, len(df.index)
+
+
+def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_ID):
+    """Add AllSpaceTime and from a client request JSON"""
+    errors = []
+    
+    if not isinstance(request_list, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return [], errors
+
+    add_list = []
+    for item_add in request_list:
+        man_obj = None
+        if item_add.get('item_id'):
+            man_obj = AllManifest.objects.filter(
+                uuid=item_add.get('item_id')
+            ).first()
+
+        if not man_obj:
+            errors.append(f'Cannot find manifest object for location/chronology {str(item_add)}')
+            continue
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request, 
+            man_obj, 
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission to edit manifest object {man_obj}')
+            continue
+
+        max_clusters = item_add.get('max_clusters', MAX_CLUSTERS)
+        if isinstance(max_clusters, str):
+            max_clusters = validate_transform_data_type_value(
+                max_clusters,
+                'xsd:integer'
+            )
+        if not max_clusters:
+            errors.append(f'Max clusters must be an integer, not {max_clusters}')
+            continue
+
+        min_cluster_size_km = item_add.get('min_cluster_size_km', MIN_CLUSTER_SIZE_KM)
+        if isinstance(min_cluster_size_km, str):
+            min_cluster_size_km = validate_transform_data_type_value(
+                min_cluster_size_km,
+                'xsd:double'
+            )
+        if not min_cluster_size_km:
+            errors.append(f'Min cluster size must be a number, not {min_cluster_size_km}')
+            continue
+        
+        geometry, count_points = make_geo_json_of_regions_for_man_obj(
+            man_obj,
+            max_clusters=max_clusters,
+            min_cluster_size_km=min_cluster_size_km,
+            cluster_method=item_add.get('cluster_method', DEFAULT_CLUSTER_METHOD),
+        )
+        if geometry is None:
+            errors.append(f'Could not make aggregate geometry for manifest object {man_obj}')
+            continue
+        
+        item_add['geometry_type'] = geometry.get('type')
+        item_add['geometry'] = geometry
+        item_add['meta_json'] = {
+            'function': 'geo_agg.make_geo_json_of_regions_for_man_obj',
+            'max_clusters': max_clusters,
+            'min_cluster_size_km': min_cluster_size_km,
+            'cluster_method': item_add.get('cluster_method', DEFAULT_CLUSTER_METHOD),
+            'count_points': count_points,
+        }
+        add_list.append(item_add)
+    
+    # Now add all of these results to the database!
+    added, new_errors = updater_spacetime.add_spacetime_objs(
+        add_list,
+        request=None,
+        source_id=source_id,
+    )
+    return added, (errors + new_errors)

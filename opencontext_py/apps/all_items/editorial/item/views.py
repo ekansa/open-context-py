@@ -25,6 +25,10 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
+# These imports are for making aggregate geospatial regions.
+from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
+from opencontext_py.apps.all_items.geospace import queue_utilities as geo_queue
+
 from opencontext_py.apps.all_items import permissions
 from opencontext_py.apps.all_items.editorial.item import edit_configs
 from opencontext_py.apps.all_items.editorial.item import updater_manifest
@@ -228,6 +232,7 @@ def item_edit_interface_html(request, uuid):
         'OC_LINKS': json.dumps(oc_links),
         'OC_PRED_LINK_OK_ITEM_TYPES': json.dumps(configs.OC_PRED_LINK_OK_ITEM_TYPES),
         'GEOMETRY_TYPES': json.dumps(AllSpaceTime.GEOMETRY_TYPES),
+        'GEO_AGG_CLUSTER_METHODS': json.dumps(geo_agg.CLUSTER_METHODS),
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
         'OC_RESOURCE_FULLFILE': json.dumps(oc_resource_fullfile),
         'OC_RESOURCE_PREVIEW': json.dumps(oc_resource_preview),
@@ -779,6 +784,41 @@ def add_space_time(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@cache_control(no_cache=True)
+@never_cache
+@transaction.atomic()
+@reversion.create_revision()
+def add_aggregate_space_time(request):
+    if not request.user.is_superuser:
+        # Since this uses a worker, safer to make it only
+        # for super users.
+        return HttpResponse(
+            'Must be an authenticated super-user', status=403
+        )
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    output = geo_queue.worker_add_agg_spacetime_objs(
+        **request_json
+    )
+    if len(output.get('errors', [])):
+        # We failed.
+        return make_error_response(errors)
+    
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
 
 @cache_control(no_cache=True)
 @never_cache

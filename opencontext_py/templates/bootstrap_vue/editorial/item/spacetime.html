@@ -74,59 +74,115 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
     <b-row>
       <b-col>
         <label :for="'geotype-' + spacetime.uuid">Geometry Type</label>
-        <b-form-input
+        <b-form-select
           v-model="spacetime.geometry_type"
           :id="'geotype-' + spacetime.uuid"
           @change="value_change"
-          :list="'geotypes-' + spacetime.uuid"
+          :options="geo_type_options"
           :value="spacetime.geometry_type"
-        ></b-form-input>
-        <datalist :id="'geotypes-' + spacetime.uuid">
-          <option title="No geo-spatial data">None</option>
-          <option v-for="geo_type in GEOMETRY_TYPES">[[ geo_type ]]</option>
-        </datalist>
+        ></b-form-select>
         <small class="text-muted">Enter 'None' to remove geo-spatial data.</small>
       </b-col>
     </b-row>
 
-    <b-row>
-      <b-col v-if="spacetime.geometry_type == 'Point'">
-        <label :for="'lat-' + spacetime.uuid">Latitude</label>
-        <b-form-input
-          v-model="spacetime.latitude"
-          :id="'lat-' + spacetime.uuid"
-          type="number"
-          @change="value_change"
-          :value="spacetime.latitude"
-        ></b-form-input>
-      </b-col>
-    </b-row>
+    <div v-if="add_new && spacetime.geometry_type == 'aggregate'">
+      
+      <b-row>
+        <b-col>
+          <label :for="'geo-cluster-method-' + spacetime.uuid">Cluster Method</label>
+          <b-form-select
+            v-model="spacetime.cluster_method"
+            :id="'geo-cluster-method-' + spacetime.uuid"
+            @change="value_change"
+            :options="geo_agg_options"
+            :value="spacetime.cluster_method"
+          ></b-form-select>
+          <small class="text-muted">The Python <code>sklearn</code> library powers the 
+          automated clustering of geo-spatial points into clusters of regions that 
+          would summarize the spatial extent or coverage of this item. 
+          <a href="https://sklearn.org/modules/clustering.html" target="_blank">
+            Click here <b-icon-info-circle-fill></b-icon-info-circle-fill>
+          </a> to learn more about the clustering methods available.
+          </small>
+        </b-col>
+      </b-row>
 
-    <b-row>
-      <b-col v-if="spacetime.geometry_type == 'Point'">
-        <label :for="'lon-' + spacetime.uuid">Longitude</label>
-        <b-form-input
-          v-model="spacetime.longitude"
-          :id="'lon-' + spacetime.uuid"
-          type="number"
-          @change="value_change"
-          :value="spacetime.longitude"
-        ></b-form-input>
-      </b-col>
-    </b-row>
+      <b-row>
+        <b-col>
+          <label :for="'max_clusters-' + spacetime.uuid">Maximum Number of Region Clusters</label>
+          <b-form-input
+            v-model="spacetime.max_clusters"
+            :id="'max_clusters-' + spacetime.uuid"
+            type="number"
+            @change="value_change"
+            :value="spacetime.max_clusters"
+          ></b-form-input>
+          <small class="text-muted">
+            Set a are the maximum number of region clusters. If blank, Open Context
+            will use a default value.
+          </small>
+        </b-col>
+      </b-row>
 
-    <b-row>
-      <b-col v-if="spacetime.geometry_type != null && spacetime.geometry_type != 'None'">
-        <label :for="'geometry-' + spacetime.uuid">Geometry (GeoJSON)</label>
-        <b-form-textarea
-          :id="'geometry-' + spacetime.uuid"
-          debounce="250"
-          @change="value_change"
-          v-model="spacetime.geometry"
-          :value="spacetime.geometry"
-        ></b-form-textarea>
-      </b-col>
-    </b-row>
+      <b-row>
+        <b-col>
+          <label :for="'min_cluster_size_km-' + spacetime.uuid">Minium Cluster Size (KM)</label>
+          <b-form-input
+            v-model="spacetime.min_cluster_size_km"
+            :id="'min_cluster_size_km-' + spacetime.uuid"
+            type="number"
+            @change="value_change"
+            :value="spacetime.min_cluster_size_km"
+          ></b-form-input>
+          <small class="text-muted">
+            If set, this sets a lower limit for the minimum size, calculated by the distance,
+            (kilometers) between the south-western most and north-eastern most point of a 
+            given region.
+          </small>
+        </b-col>
+      </b-row>
+
+    </div>
+    <div v-else>
+      <b-row>
+        <b-col v-if="spacetime.geometry_type == 'Point'">
+          <label :for="'lat-' + spacetime.uuid">Latitude</label>
+          <b-form-input
+            v-model="spacetime.latitude"
+            :id="'lat-' + spacetime.uuid"
+            type="number"
+            @change="value_change"
+            :value="spacetime.latitude"
+          ></b-form-input>
+        </b-col>
+      </b-row>
+
+      <b-row>
+        <b-col v-if="spacetime.geometry_type == 'Point'">
+          <label :for="'lon-' + spacetime.uuid">Longitude</label>
+          <b-form-input
+            v-model="spacetime.longitude"
+            :id="'lon-' + spacetime.uuid"
+            type="number"
+            @change="value_change"
+            :value="spacetime.longitude"
+          ></b-form-input>
+        </b-col>
+      </b-row>
+
+      <b-row>
+        <b-col v-if="spacetime.geometry_type != null && spacetime.geometry_type != 'None'">
+          <label :for="'geometry-' + spacetime.uuid">Geometry (GeoJSON)</label>
+          <b-form-textarea
+            :id="'geometry-' + spacetime.uuid"
+            debounce="250"
+            @change="value_change"
+            v-model="spacetime.geometry"
+            :value="spacetime.geometry"
+          ></b-form-textarea>
+        </b-col>
+      </b-row>
+    </div>
 
     <b-row class="spacetime_row">
 
@@ -161,6 +217,10 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           class="text-center"
           variant="info">Add <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
         </b-button>
+        <p v-if="making_agg">
+          Region clustering process started at <strong>[[ agg_started_display ]]</strong> 
+          on ongoing after <strong>[[ agg_elapsed_time_display ]]</strong>.
+        </p>
       </b-col>
 
     </b-row>
@@ -270,6 +330,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           </b-col>
 
         </b-row>
+
       </b-container>
     </b-modal>
   </div>
@@ -344,6 +405,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
   );
   // Set up some base map tile sources.
   const GEOMETRY_TYPES = JSON.parse('{{ GEOMETRY_TYPES|escapejs }}');
+  const GEO_AGG_CLUSTER_METHODS = JSON.parse('{{ GEO_AGG_CLUSTER_METHODS|escapejs }}');
   const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
   const TILE_PROVIDERS = [
     {
@@ -475,6 +537,13 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           is_value_changed: false,
           updating: false,
           errors: null,
+          add_aggregate: false,
+          request_id: null,
+          making_agg: false,
+          agg_start_time: null,
+          agg_progress_time: null,
+          agg_done_time: null,
+          agg_done: false,
         }
       },
       template: '#spacetime-form',
@@ -482,7 +551,61 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         this.set_original_spacetime();
       },
       computed: {
-        
+        geo_type_options: function() {
+          let options = [
+            {value: null, text: 'None'},
+          ];
+          if(this.add_new){
+            options.push({value:'aggregate', text: 'Aggregate, summary'});
+          }
+          for(let geo_type of GEOMETRY_TYPES){
+            options.push(
+              {value: geo_type, text: geo_type}
+            );
+          }
+          return options;
+        },
+        geo_agg_options: function() {
+          let options = [];
+          for(let geo_agg of GEO_AGG_CLUSTER_METHODS){
+            options.push(
+              {value: geo_agg, text: geo_agg}
+            );
+          }
+          return options;
+        },
+        agg_started_display: function() {
+          if(!this.agg_start_time){
+            return null;
+          }
+          return this.agg_start_time.toLocaleTimeString();
+        },
+        agg_elapsed_time_display: function() {
+          if(!this.agg_start_time){
+            return null;
+          }
+          let last_time = new Date();
+          if(this.agg_done_time != null){
+            last_time = this.aggt_done_time;
+            console.log('done time');
+          }
+          else if(this.agg_progress_time != null){
+            last_time = this.agg_progress_time;
+            console.log('progress time');
+          }
+          
+          let time_diff = last_time - this.agg_start_time;
+          time_diff /= 1000;
+          let min_time_diff = Math.floor(time_diff / 60);
+          let hr_time_diff = Math.floor(min_time_diff / 60);
+          let seconds = Math.floor(time_diff % 60);
+          let seconds_str = seconds < 10 ? "0" + seconds : seconds;
+          let minutes = min_time_diff % 60;
+          let minutes_str = minutes < 10 ? "0" + minutes : minutes;
+          let hours = hr_time_diff % 24;
+          let hours_str = hours < 10 ? "0" + hours : hours;
+          return `${hours}:${minutes_str}:${seconds_str}`;
+        },
       },
       methods: {
         set_original_spacetime: function (){
@@ -586,21 +709,63 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
             console.log(this.errors);
           });
         },
-        add_spacetime: function (){
-          this.error = null;
-          this.updating = true;
-          console.log('add_spacetime');
+        make_add_object: function() {
           let add_obj = {
             item_id: ITEM_UUID,
           };
+          this.add_aggregate = false;
           for (let key in this.spacetime) {
             if (this.spacetime.hasOwnProperty(key) && this.spacetime[key] != null) {
-              add_obj[key] = this.spacetime[key];
+              add_obj[key] = this.spacetime[key]; 
+              if(key == 'geometry_type' && this.spacetime[key] == 'aggregate'){
+                this.add_aggregate = true;
+              }
             }
           }
-          console.log(add_obj);
-          let add_objs = [];
-          add_objs.push(add_obj);
+          return add_obj;
+        },
+        check_add_agg: function () {
+          this.making_agg = true;
+          let add_obj = this.make_add_object();
+          let agg_args = {
+            request_id: this.request_id,
+            reset_cache: false,
+            request_list: [add_obj],
+          };
+          this.api_add_agg_spacetime(agg_args);
+        },
+        api_add_agg_spacetime(agg_args) {
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(agg_args),
+          };
+          fetch('/editorial/item-add-aggregate-space-time', requestOptions)
+          .then(response => response.json())
+          .then(json => {
+            this.request_id = json.request_id;
+            if(json.complete){
+              this.agg_done_time = new Date();
+              this.making_agg = false;
+              this.agg_done = true;
+              this.$emit('spacetime_update_done', true);
+            }
+            else {
+              // Wait 500 milliseconds before doing this again.
+              this.agg_progress_time = new Date();
+              setTimeout(() => {  this.check_add_agg(); }, 500);
+            }
+          })
+          .catch(error => {
+            console.log(error);
+            console.log(this.errors);
+          });
+        },
+        api_add_space_time(add_obj){
+          let add_objs = [add_obj];
           const requestOptions = {
             method: 'POST',
             headers: {
@@ -629,6 +794,25 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
             console.log(error);
             console.log(this.errors);
           });
+        },
+        add_spacetime: function (){
+          this.error = null;
+          this.updating = true;
+          console.log('add_spacetime');
+          let add_obj = this.make_add_object();
+          if(!this.add_aggregate){
+            // For non-aggregate adds, there's no queuing
+            this.api_add_space_time(add_obj);
+          }
+          else{
+            this.request_id = null;
+            let agg_args = {
+              request_id: null,
+              reset_cache: true,
+              request_list: [add_obj],
+            };
+            this.api_add_agg_spacetime(agg_args);
+          }
         },
       },
       components: {

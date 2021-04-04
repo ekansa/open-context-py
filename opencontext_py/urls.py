@@ -223,6 +223,11 @@ urlpatterns = [
         EditorialItemViews.add_space_time, 
         name='editorial_add_space_time'
     ),
+     url(
+        r'^editorial/item-add-aggregate-space-time', 
+        EditorialItemViews.add_aggregate_space_time, 
+        name='editorial_add_aggregate_space_time'
+    ),
     url(
         r'^editorial/item-delete-space-time', 
         EditorialItemViews.delete_space_time, 

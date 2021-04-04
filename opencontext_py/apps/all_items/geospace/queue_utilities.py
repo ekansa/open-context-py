@@ -11,8 +11,6 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 
-from opencontext_py.apps.all_items import permissions
-from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 
 from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
 
@@ -66,49 +64,22 @@ def add_job_metadata_to_stage_status(job_id, job_done, stage_status):
     return stage_status
 
 
-def make_geo_json_of_regions_for_item_id(
-    item_id,
+def worker_add_agg_spacetime_objs(
+    request_list,
     request=None,
-    max_clusters=geo_agg.MAX_CLUSTERS,
-    min_cluster_size_km=geo_agg.MIN_CLUSTER_SIZE_KM,
-    cluster_method=geo_agg.DEFAULT_CLUSTER_METHOD,
     request_id=None,
     reset_cache=False,
 ):
     """Use worker and cache to make aggregate geospatial regions for item
 
-    :param UUID item_id: A UUID or string UUID for an AllManifest object.
+    :param list request_list: A list of dictionary kwargs with items
+        to get new aggregate geospatial objects.
     :param request request: A Django request object with authentication,
         user information to determine permissions
-    :param int max_clusters: The maximum number of clusters
-        to return
-    :param float min_cluster_size_km: The minimum diagonal 
-        length in KM between min(lat/lon) and max(lat/lon)
-    :param str cluster_method: A string that names the sklearn
-        clustering method to use on these data.
     :param str request_id: An identifier for this specific request.
     """
-    man_obj = AllManifest.objects.filter(
-        uuid=item_id,
-    ).first()
-    if not man_obj:
-        # No manifest object to make aggregate spatial
-        # regions!
-        return None
-    
-    _, ok_edit = permissions.get_request_user_permissions(
-        request, 
-        man_obj, 
-        null_request_ok=True
-    )
-    if not ok_edit:
-        return None
-
     kwargs = {
-        'man_obj': man_obj,
-        'max_clusters': max_clusters,
-        'min_cluster_size_km': min_cluster_size_km,
-        'cluster_method': cluster_method,
+        'request_list': request_list,
     }
     if not request_id:
         request_id = make_hash_id_from_args(
@@ -142,9 +113,13 @@ def make_geo_json_of_regions_for_item_id(
     
     job_done = None
     if not status.get('done') or not status.get('complete'):
-        # Now actually do the work to fix style issues.
+        # Now actually do the work cluster regions.
+
+        # Add the request object after, since we only need
+        # it for authentication.
+
         job_id, job_done, geo_tup = wrap_func_for_rq(
-            func=geo_agg.make_geo_json_of_regions_for_man_obj, 
+            func=geo_agg.add_agg_spacetime_objs, 
             kwargs=kwargs,
             job_id=status.get('job_id'),
         )
@@ -155,25 +130,7 @@ def make_geo_json_of_regions_for_item_id(
         )
 
     if job_done and geo_tup is not None:
-        geometry, count_points = geo_tup
-        add_list = [
-            {
-                'item_id': item_id,
-                'geometry': geometry,
-                'source_id': 'geospace-aggregate-function',
-                'meta_json': {
-                    'function': 'geo_agg.make_geo_json_of_regions_for_man_obj',
-                    'max_clusters': max_clusters,
-                    'min_cluster_size_km': min_cluster_size_km,
-                    'cluster_method': cluster_method,
-                    'count_points': count_points,
-                }
-            }
-        ]
-
-        added, errors = updater_spacetime.add_spacetime_objs(
-            add_list
-        )
+        added, errors = geo_tup
         status['complete'] = True
         status['added'] = added
         status['errors'] = errors
