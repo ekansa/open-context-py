@@ -806,6 +806,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           }
           else{
             this.request_id = null;
+            this.agg_start_time = new Date();
             let agg_args = {
               request_id: null,
               reset_cache: true,
