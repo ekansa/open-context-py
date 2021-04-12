@@ -54,6 +54,14 @@
                         {%else%}
                         <div class="preview-image">
                             <img class="img-responsive" src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
+                            <script type="application/ld+json">
+                                {
+                                  "@context": "https://schema.org/",
+                                  "@type": "ImageObject",
+                                  "contentUrl": "{{ item.content.preview }}",
+                                  "license": "{{ item.license.id }}"
+                                }
+                            </script>
                         </div>
                         {%endif%}
                         {% include 'items/accordion-group-panel-end.html' %}
@@ -99,6 +107,16 @@
                         {%else%}
                         <div class="preview-image">
                             <img class="img-responsive" src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
+
+                            <script type="application/ld+json">
+                                {
+                                  "@context": "https://schema.org/",
+                                  "@type": "ImageObject",
+                                  "contentUrl": "{{ item.content.preview }}",
+                                  "license": "{{ item.license.id }}"
+                                }
+                            </script>
+
                         </div>
                         {%endif%}
                         {% include 'items/plain-panel-end.html' %}
