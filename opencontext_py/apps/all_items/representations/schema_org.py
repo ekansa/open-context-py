@@ -30,7 +30,7 @@ CC_DEFAULT_LICENSE_CC_BY_SCHEMA_DICT  = {
 }
 
 MAINTAINER_PUBLISHER_DICT = {
-    'id': f'https://{configs.OC_URI_ROOT}',
+    '@id': f'https://{configs.OC_URI_ROOT}',
     'url': f'https://{configs.OC_URI_ROOT}',
     '@type': 'Organization',
     'name': 'Open Context',
@@ -43,6 +43,7 @@ MAINTAINER_PUBLISHER_DICT = {
 def make_schema_org_org_person_dict(oc_dict):
     """Makes a Schema.org Organization or Person dict from Open Context dict"""
     schema_dict = {
+        '@id': oc_dict.get('id'),
         'identifier': oc_dict.get('id'),
         'name': oc_dict.get('label'),
     }
@@ -76,11 +77,12 @@ def make_schema_org_json_ld(rep_dict):
         for p in rep_dict.get('dc-terms:creator', rep_dict.get('dc-terms:contributor', []))
     ]
     if not len(creators):
-        creators = MAINTAINER_PUBLISHER_DICT
+        creators = MAINTAINER_PUBLISHER_DICT.copy()
 
     schema = {
         '@context': 'http://schema.org/',
         '@type': 'Dataset',
+        '@id': '#schema-org',
         'name': rep_dict.get('dc-terms:title'),
         'description': description,
         'creator': creators,
@@ -90,8 +92,8 @@ def make_schema_org_json_ld(rep_dict):
             'dc-terms:license', 
             [CC_DEFAULT_LICENSE_CC_BY_SCHEMA_DICT]
         )[0].get('id'),
-        'maintainer': MAINTAINER_PUBLISHER_DICT,
-        'publisher': MAINTAINER_PUBLISHER_DICT,
+        'maintainer': MAINTAINER_PUBLISHER_DICT.copy(),
+        'publisher': MAINTAINER_PUBLISHER_DICT.copy(),
         'identifier': identifiers,
     }
     return schema
