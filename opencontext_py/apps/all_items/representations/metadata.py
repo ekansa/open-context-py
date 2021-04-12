@@ -29,6 +29,8 @@ DC_CREATOR_CONTRIBUTOR_OBJECTS = {
     configs.PREDICATE_DCTERMS_CREATOR_UUID: AllManifest(**configs.DCTERMS_CREATOR_MANIFEST_DICT),
 }
 
+DC_DEFAULT_LICENSE_OBJECT = AllManifest(**configs.CC_DEFAULT_LICENSE_CC_BY_DICT)
+
 
 def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
     """Makes a dictionary keyed by DC creator or contributor id with
@@ -134,4 +136,20 @@ def add_dublin_core_literal_metadata(item_man_obj, rel_subjects_man_obj=None, ac
         act_dict['dc-terms:issued'] = item_man_obj.published.date().isoformat()
     if item_man_obj.revised:
         act_dict['dc-terms:modified'] = item_man_obj.revised.date().isoformat()
+    return act_dict
+
+
+def check_add_default_license(act_dict=None):
+    """Adds a default license if no license already exists"""
+    if not act_dict:
+        act_dict = LastUpdatedOrderedDict()
+    if len(act_dict.get('dc-terms:license', [])) > 0:
+        return act_dict
+    
+    lic_uri = AllManifest().clean_uri(DC_DEFAULT_LICENSE_OBJECT.uri)
+    lic_dict = LastUpdatedOrderedDict()
+    lic_dict['id'] = f'https://{lic_uri}'
+    lic_dict['slug'] = DC_DEFAULT_LICENSE_OBJECT.slug
+    lic_dict['label'] = DC_DEFAULT_LICENSE_OBJECT.label
+    act_dict['dc-terms:license'] = [lic_dict]
     return act_dict

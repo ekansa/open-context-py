@@ -17,6 +17,12 @@ from opencontext_py.apps.all_items.models import (
 )
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
+from opencontext_py.apps.all_items.representations.template_prep import (
+    make_template_ready_dict_obj
+)
+from opencontext_py.apps.all_items.representations.schema_org import (
+    make_schema_org_json_ld
+)
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from django.views.decorators.cache import cache_control
@@ -56,16 +62,20 @@ def test_html(request, uuid):
         indent=4,
         ensure_ascii=False
     )
-    ouptut = (
-        "<html>"
-        "<head><title>Test All Items</title>"
-        "</head>"
-        "<body>"
-        f"<p>{json_output}</p>"
-        "</body>"
-        "</html>"
-    )
-    return HttpResponse(
-        ouptut,
-        content_type="text/html; charset=utf8"
-    )
+    schema_org_meta = make_schema_org_json_ld(rep_dict)
+    rp = RootPath()
+    context = {
+        'BASE_URL': rp.get_baseurl(),
+        'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
+        'SCHEMA_ORG_JSON_LD': json.dumps(
+            schema_org_meta,
+            indent=4,
+            ensure_ascii=False
+        ),
+        'rep_dict': make_template_ready_dict_obj(rep_dict),
+        'json_output': json_output,
+    }
+    template = loader.get_template('bootstrap_vue/item/item.html')
+    response = HttpResponse(template.render(context, request))
+    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+    return response

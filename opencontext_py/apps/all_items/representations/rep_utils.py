@@ -3,6 +3,8 @@ import copy
 import hashlib
 import uuid as GenUUID
 
+from django.conf import settings
+
 from django.db.models import OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict

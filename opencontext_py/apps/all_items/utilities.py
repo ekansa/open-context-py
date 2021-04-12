@@ -3,6 +3,8 @@ import copy
 import datetime
 import uuid as GenUUID
 
+from django.conf import settings
+
 from django.db.models import Q
 
 from opencontext_py.apps.all_items import configs
@@ -11,6 +13,19 @@ from opencontext_py.apps.all_items.models import (
     AllAssertion,
     AllHistory,
 )
+
+
+def get_oc_item_type_from_uri(uri):
+    """Gets an Open Context item_type from a URI if matches"""
+    if not uri:
+        return None
+    oc_root = AllManifest().clean_uri(settings.CANONICAL_HOST)
+    clean_uri = AllManifest().clean_uri(uri)
+    for item_type in configs.OC_ITEM_TYPES:
+        if clean_uri.startswith(f'{oc_root}/{item_type}'):
+            # This uri matches an open context item type uri pattern.
+            return item_type
+    return None
 
 
 def uri_to_common_prefix(uri, uri_prefixes):

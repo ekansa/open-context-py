@@ -368,6 +368,7 @@ def add_to_parent_context_list(manifest_obj, context_list=None):
 def start_item_representation_dict(item_man_obj):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
+    rep_dict['id'] = f'https://{item_man_obj.uri}'
     rep_dict['uuid'] = str(item_man_obj.uuid)
     rep_dict['slug'] = item_man_obj.slug
     rep_dict['label'] = item_man_obj.label
@@ -404,6 +405,7 @@ def make_representation_dict(subject_id):
         # object contexts to get the spatial hierarchy of related
         # item_type subjects.
         select_related_object_contexts = True
+    
     # Get the assertion query set for this item
     assert_qs = get_item_assertions(
         subject_id=item_man_obj.uuid,
@@ -446,8 +448,21 @@ def make_representation_dict(subject_id):
     if item_man_obj.item_type in ['subjects', 'media', 'documents', 'persons', 'projects']:
         # These types of items have nested nodes of observations, 
         # events, and attribute-groups
-        observations = get_observations_attributes_from_assertion_qs(assert_qs)
+        obs_assert_qs = [ass for ass in assert_qs if ass.predicate.item_type == 'predicates']
+        observations = get_observations_attributes_from_assertion_qs(obs_assert_qs)
         rep_dict['oc-gen:has-obs'] = observations
+
+        # The linked data (non 'predicates' assertions) get associated without
+        # nested nodes.
+        ld_assert_qs = [ass for ass in assert_qs if ass.predicate.item_type != 'predicates']
+        pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
+            qs=ld_assert_qs, 
+            index_list=['predicate']
+        )
+        rep_dict = rep_utils.add_predicates_assertions_to_dict(
+            pred_keyed_assert_objs, 
+            act_dict=rep_dict
+        )
     else:
         # The following is for other types of items that don't have lots
         # of nested observation, event, and attribute nodes.
@@ -486,4 +501,7 @@ def make_representation_dict(subject_id):
         act_dict=rep_dict,
         add_objs_to_existing_pred=False,
     )
+    # Adds the default license if a license is still missing.
+    rep_dict = metadata.check_add_default_license(rep_dict)
+
     return rep_dict

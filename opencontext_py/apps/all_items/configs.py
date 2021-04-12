@@ -570,6 +570,22 @@ CC_LICENSE_VOCAB_UUID = '00000000-25ef-fb4e-d901-9b9276b89b86'
 CC_PUBLIC_DOMAIN_VOCAB_UUID = '00000000-c973-13ad-bf66-b41772ad85b0'
 # CC Default License (cc-by)
 CC_DEFAULT_LICENSE_CC_BY_UUID = '00000000-25ef-426d-ea02-1804e08f2e87'
+CC_DEFAULT_LICENSE_CC_BY_URI = 'https://creativecommons.org/licenses/by/4.0/'
+
+CC_DEFAULT_LICENSE_CC_BY_DICT = {
+    'uuid': CC_DEFAULT_LICENSE_CC_BY_UUID,
+    'publisher_id': CC_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'uri',
+    'data_type': 'id',
+    'slug': 'cc-by-4',
+    'label': 'Attribution 4.0 International (CC BY 4.0)',
+    'uri': CC_DEFAULT_LICENSE_CC_BY_URI,
+    'context_id': CC_LICENSE_VOCAB_UUID,
+}
+
 
 # ---------------------------------------------------------------------
 

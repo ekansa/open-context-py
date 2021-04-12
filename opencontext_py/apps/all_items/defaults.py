@@ -2291,19 +2291,7 @@ DEFAULT_MANIFESTS = [
         'uri': 'creativecommons.org/publicdomain',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
     },
-    {
-        'uuid': CC_DEFAULT_LICENSE_CC_BY_UUID,
-        'publisher_id': CC_PUB_UUID,
-        'project_id': OPEN_CONTEXT_PROJ_UUID,
-        'item_class_id': DEFAULT_CLASS_UUID,
-        'source_id': DEFAULT_SOURCE_ID,
-        'item_type': 'uri',
-        'data_type': 'id',
-        'slug': 'cc-by-4',
-        'label': 'Attribution 4.0 International (CC BY 4.0)',
-        'uri': 'https://creativecommons.org/licenses/by/4.0/',
-        'context_id': CC_LICENSE_VOCAB_UUID,
-    },
+    CC_DEFAULT_LICENSE_CC_BY_DICT,
     # FOAF publisher, vocabulary, classes and properties
     {
         'uuid': FOAF_PUB_UUID,
