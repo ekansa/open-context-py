@@ -1,0 +1,87 @@
+{% block observations %}
+
+{% if item.oc_gen__has_obs %}
+
+<ul class="nav nav-tabs" id="obs-tabs-nav" role="tablist">
+
+{% spaceless %}
+{% for act_obs in item.oc_gen__has_obs %}
+
+  {% if forloop.first %}  
+  <li class="nav-item" role="presentation">
+    <a 
+      class="nav-link active" 
+      id="tab-{{ act_obs.id|cut:'#' }}" 
+      data-toggle="tab"
+      href="{{ act_obs.id }}" 
+      aria-controls="{{ act_obs.id|cut:'#' }}" 
+      aria-selected="true">{{ act_obs.label }}</a>
+  </li>
+  {% else %}
+  <li class="nav-item" role="presentation">
+    <a 
+      class="nav-link" 
+      id="tab-{{ act_obs.id|cut:'#' }}" 
+      data-toggle="tab" 
+      href="{{ act_obs.id }}" 
+      aria-controls="{{ act_obs.id|cut:'#' }}" 
+      aria-selected="false">{{ act_obs.label }}</a>
+  </li>
+  {% endif %}
+
+{% endfor %}
+{% endspaceless %}
+</ul>
+
+
+<div class="tab-content" id="all-observations">
+{% for act_obs in item.oc_gen__has_obs %}
+
+  {% if forloop.first %}  
+  <div 
+    class="tab-pane fade show active"
+    id="{{ act_obs.id|cut:'#' }}" 
+    role="tabpanel" 
+    aria-labelledby="tab-{{ act_obs.id|cut:'#' }}">
+  {% else %}
+  <div 
+    class="tab-pane fade" 
+    id="{{ act_obs.id|cut:'#' }}" 
+    role="tabpanel" 
+    aria-labelledby="tab-{{ act_obs.id|cut:'#' }}">
+  {% endif %}
+
+    {% with act_obs=act_obs %}
+    {% include './observation.html' %}
+    {% endwith %}
+
+  </div>
+
+{% endfor %}
+</div>
+
+
+
+<script type="application/javascript">
+
+  $('#obs-tabs-nav a').on('click', function (e) {
+    e.preventDefault()
+    $(this).tab('show')
+  });
+  var url = document.location.toString();
+  if (url.match('#')) {
+      $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
+      scroll(0,0);
+  }
+      
+  // Change hash for page-reload
+  $('.nav-tabs a').on('shown', function (e) {
+      window.location.hash = e.target.hash;
+      scroll(0,0);
+  });
+
+</script>
+
+{%endif%}
+
+{% endblock %}

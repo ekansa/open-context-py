@@ -1,0 +1,55 @@
+{% block observation %}
+
+{% for act_event in act_obs.oc_gen__has_events %}
+
+  {% if act_event.has_descriptions %}
+  <table class="table table-responsive-sm table-hover table-striped">
+    {% if not act_event.default %}
+    <caption>{{ act_event.label }}</caption>
+    {% endif %}
+    <thead>
+        <tr>
+            <th scope="col" style="width:33%;" class="col-sm-4">Descriptive Attribute</th>
+            <th scope="col" class="col-sm-8">Value(s)</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for act_atr_grp in act_event.oc_gen__has_attribute_groups %}
+      {% if not act_atr_grp.default %}
+      <tr><td class="table-info" colspan="2">{{ act_atr_grp.label }}</td></tr>
+      {% endif %}
+      {% for pred_key, vals in act_atr_grp.descriptions.items %}
+      <tr>
+        <td>
+          <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label }}</a>
+        </td>
+        <td>
+        {% if vals|length < 2 %}
+        
+          {% with act_val=vals.0 %}
+          {% include './attribute_value.html' %}
+          {% endwith %}
+
+        {% else %}
+        
+          <ul>
+          {% for act_val in vals %}
+            <li>
+              {% with act_val=act_val %}
+              {% include './attribute_value.html' %}
+              {% endwith %}
+            </li>
+          {% endfor %}
+          </ul>
+        {%endif%}
+        </td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+{% endfor %}
+
+{% endblock %}

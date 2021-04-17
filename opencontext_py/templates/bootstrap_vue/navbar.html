@@ -11,11 +11,15 @@
         padding-top:0px;
         padding-left:0px;
     }
+    #nav-search-button {
+        margin-left:4px;
+    }
 </style>
 
 <nav id="oc-bv-nav" class="navbar sticky-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
-        <div class="navbar-header">
+        
+        <div class="navbar-brand navbar-left">
             {% if 'opencontext.dainst.org' in BASE_URL %}
             <a id="oc-nav-branding" class="navbar-brand" href="{{ BASE_URL }}">
                 <img style="margin-top: 14px; margin-left: 12px; height: 22px;" src="{{ BASE_URL }}/static/oc/images/nav/oc-nav-logo.png" alt="Open Context DAI-Mirror Logo" />
@@ -26,17 +30,23 @@
             </a>
             {%endif%}
         </div>
-        <ul class="nav navbar-nav">
+            
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li>#</li>
+            </ul>
         
-        </ul>
-        <form class="navbar-form navbar-right" role="search" method="get" action="{{ BASE_URL }}/search">
-            <div class="form-group">
-              <input type="text" class="form-control" placeholder="Search whole site" name="q" title="Text search box" />
-            <button alt="Search Button" id="nav-search-button" type="submit" class="btn btn-default" title="Submit search request" >
-                <span alt="Search Icon" class="glyphicon glyphicon-search" aria-hidden="true"></span>
-            </button>
-			</div>
-        </form>
+        </div>
+            <form class="navbar-form navbar-right d-flex" role="search" method="get" action="{{ BASE_URL }}/search">
+                
+                <input type="text" class="form-control me-2" placeholder="Search whole site" name="q" title="Text search box" />
+                <button alt="Search Button" id="nav-search-button" type="submit" class="btn btn-light" title="Submit search request" >
+                    <i alt="Search Icon" class="bi-search"></i>
+                </button>
+                
+            </form>
+        
+            
     </div>
 </nav>
 

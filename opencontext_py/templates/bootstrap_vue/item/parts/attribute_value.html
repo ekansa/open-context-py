@@ -1,0 +1,42 @@
+{% block attribute_value %}
+
+{% if act_val.predicate__data_type == 'id' and act_val.object__item_type == 'types' %}
+
+  <a href="https://{{ object__uri }}">{{ act_val.object__label }}</a>
+
+
+{% elif act_val.predicate__data_type == 'id' and act_val.object__item_type != 'types' %}
+
+  <a href="https://{{ object__uri }}">{{ act_val.object__label }}</a>
+  <br/><small>Standard: <a href="https://{{act_val.object__context__uri }}">{{ act_val.object__context__label }}</a></small>
+
+
+{% elif act_val.predicate__data_type == 'xsd:string' %}
+
+  {%  autoescape off %}
+  {{ act_val.obj_string }}
+  {%  endautoescape %}
+
+{% elif act_val.predicate__data_type == 'xsd:boolean' %}
+
+  {{ act_val.obj_boolean }}
+
+
+{% elif act_val.predicate__data_type == 'xsd:integer' %}
+
+  {{ act_val.obj_integer }}
+
+
+{% elif act_val.predicate__data_type == 'xsd:double' %}
+
+  {{ act_val.obj_double }}
+
+
+{% elif act_val.predicate__data_type == 'xsd:date' %}
+
+  {{ act_val.obj_datetime|truncatechars:10 }}
+
+{% else %}
+{% endif %}
+
+{% endblock %}

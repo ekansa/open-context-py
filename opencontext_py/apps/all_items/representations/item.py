@@ -251,7 +251,11 @@ def get_related_subjects_item_assertion(item_man_obj, assert_qs):
     return rel_subj_item_assetion.subject
 
 
-def get_observations_attributes_from_assertion_qs(assert_qs, for_edit=False):
+def get_observations_attributes_from_assertion_qs(
+    assert_qs,
+    for_edit=False, 
+    for_html=False
+):
     """Gets observations and attributes in observations
     
     :param bool for_edit: Do we want an output with additional identifiers
@@ -265,14 +269,17 @@ def get_observations_attributes_from_assertion_qs(assert_qs, for_edit=False):
     observations = []
     for observation, events in grouped_asserts.items():
         act_obs = LastUpdatedOrderedDict()
-        act_obs['id'] = f'#-obs-{observation.slug}'
+        act_obs['id'] = f'#obs-{observation.slug}'
         act_obs['label'] = observation.label
+        if for_html:
+            # Let our template know we've got a default observation
+            act_obs['default'] = (str(observation.uuid) == configs.DEFAULT_OBS_UUID)
         # NOTE: we've added act_obs to the observations list, but
         # we are continuing to modify it, even though it is part this
         # observations list already. 
         observations.append(act_obs)
         for event, attrib_groups in events.items():
-            if str(event.uuid) == configs.DEFAULT_EVENT_UUID:
+            if not for_html and str(event.uuid) == configs.DEFAULT_EVENT_UUID:
                 # NOTE: No event node is specified here, so all the
                 # attribute groups and predicates will just be added
                 # directly to the act_obs dictionary.
@@ -285,13 +292,16 @@ def get_observations_attributes_from_assertion_qs(assert_qs, for_edit=False):
                 # Make a new act_event dictionary, because we're
                 # specifying a new node within this observation.
                 act_event = LastUpdatedOrderedDict()
-                act_event['id'] = f'#-event-{event.slug}'
+                act_event['id'] = f'#event-{event.slug}'
                 act_event['label'] = event.label
                 act_event['type'] = 'oc-gen:events'
+                if for_html:
+                    # Let our template know we've got a default event.
+                    act_event['default'] = (str(event.uuid) == configs.DEFAULT_EVENT_UUID)
                 act_obs.setdefault('oc-gen:has-events', [])
                 act_obs['oc-gen:has-events'].append(act_event)
             for attrib_group, preds in attrib_groups.items():
-                if str(attrib_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID:
+                if not for_html and str(attrib_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID:
                     # NOTE: no attribute group node is specified here, so all
                     # the predicates will be added to the act_event dictionary.
                     #
@@ -300,9 +310,14 @@ def get_observations_attributes_from_assertion_qs(assert_qs, for_edit=False):
                     act_attrib_grp = act_event
                 else:
                     act_attrib_grp = LastUpdatedOrderedDict()
-                    act_attrib_grp['id'] = f'#-attribute-group-{attrib_group.slug}'
+                    act_attrib_grp['id'] = f'#attribute-group-{attrib_group.slug}'
                     act_attrib_grp['label'] = attrib_group.label
                     act_attrib_grp['type'] = 'oc-gen:attribute-groups'
+                    if for_html:
+                        # Let our template know we've got a default attribute group
+                         act_attrib_grp['default'] = (
+                            str(attrib_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID
+                        )
                     act_event.setdefault('oc-gen:has-attribute-groups', [])
                     act_event['oc-gen:has-attribute-groups'].append(act_attrib_grp)
                 # Now add the predicate keys and their assertion objects to
@@ -311,6 +326,7 @@ def get_observations_attributes_from_assertion_qs(assert_qs, for_edit=False):
                     pred_keyed_assert_objs=preds, 
                     act_dict=act_attrib_grp,
                     for_edit=for_edit,
+                    for_html=for_html,
                 )
 
     return observations
@@ -348,7 +364,16 @@ def add_related_media_files_dicts(item_man_obj, act_dict=None):
     return act_dict
 
 
-def add_to_parent_context_list(manifest_obj, context_list=None):
+def add_to_parent_context_list(manifest_obj, context_list=None, for_html=False):
+    """Recursively add to a list of parent contexts
+
+    :param AllManifest manifest_obj: Instance of the AllManifest model that
+        we want to see context information
+    :param list context_list: A list context dictionaries that gets extended
+        by this function
+    :param bool for_html: A boolean flag, if True add additional keys useful
+        for HTML tempating
+    """
     if context_list is None:
         context_list = []
     if manifest_obj.item_type != 'subjects':
@@ -358,14 +383,22 @@ def add_to_parent_context_list(manifest_obj, context_list=None):
     item_dict['slug'] = manifest_obj.slug
     item_dict['label'] = manifest_obj.label
     item_dict['type'] = rep_utils.get_item_key_or_uri_value(manifest_obj.item_class)
+    if for_html:
+        item_dict['uuid'] = str(manifest_obj.uuid)
+        item_dict['item_class_id'] = str(manifest_obj.item_class.uuid)
+        item_dict['item_class__label'] = manifest_obj.item_class.label
     context_list.append(item_dict)
     if (manifest_obj.context.item_type == 'subjects' 
        and str(manifest_obj.context.uuid) != configs.DEFAULT_SUBJECTS_ROOT_UUID):
-        context_list = add_to_parent_context_list(manifest_obj.context, context_list=context_list)
+        context_list = add_to_parent_context_list(
+            manifest_obj.context, 
+            context_list=context_list,
+            for_html=for_html,
+        )
     return context_list
 
 
-def start_item_representation_dict(item_man_obj):
+def start_item_representation_dict(item_man_obj, for_html=False):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
     rep_dict['id'] = f'https://{item_man_obj.uri}'
@@ -377,10 +410,12 @@ def start_item_representation_dict(item_man_obj):
             rep_dict['category'] = item_man_obj.item_class.item_key
         else:
             rep_dict['category'] = f'https://{item_man_obj.item_class.uri}'
+    if for_html:
+        rep_dict['item_class__label'] = item_man_obj.item_class.label
     return rep_dict
 
 
-def make_representation_dict(subject_id):
+def make_representation_dict(subject_id, for_html=False):
     """Makes a representation dict for a subject id"""
     # This will most likely get all the context hierarchy in 1 query, thereby
     # limiting the number of times we hit the database.
@@ -396,8 +431,11 @@ def make_representation_dict(subject_id):
     )
     item_man_obj = item_man_obj_qs.first()
     if not item_man_obj:
-        return None
-    rep_dict = start_item_representation_dict(item_man_obj)
+        return None, None
+    rep_dict = start_item_representation_dict(
+        item_man_obj,
+        for_html=for_html
+    )
 
     select_related_object_contexts = False
     if item_man_obj.item_type in ['media', 'documents']:
@@ -431,14 +469,20 @@ def make_representation_dict(subject_id):
     rep_dict = add_related_media_files_dicts(item_man_obj, act_dict=rep_dict)
 
     if item_man_obj.item_type == 'subjects':
-        parent_list = add_to_parent_context_list(item_man_obj.context)
+        parent_list = add_to_parent_context_list(
+            item_man_obj.context,
+            for_html=for_html
+        )
         if parent_list:
             # The parent order needs to be reversed to make the most
             # general first, followed by the most specific.
             parent_list.reverse()
             rep_dict['oc-gen:has-contexts'] = parent_list
     elif rel_subjects_man_obj:
-        parent_list = add_to_parent_context_list(rel_subjects_man_obj)
+        parent_list = add_to_parent_context_list(
+            rel_subjects_man_obj,
+            for_html=for_html
+        )
         if parent_list:
             # The parent order needs to be reversed to make the most
             # general first, followed by the most specific.
@@ -449,7 +493,10 @@ def make_representation_dict(subject_id):
         # These types of items have nested nodes of observations, 
         # events, and attribute-groups
         obs_assert_qs = [ass for ass in assert_qs if ass.predicate.item_type == 'predicates']
-        observations = get_observations_attributes_from_assertion_qs(obs_assert_qs)
+        observations = get_observations_attributes_from_assertion_qs(
+            obs_assert_qs, 
+            for_html=for_html
+        )
         rep_dict['oc-gen:has-obs'] = observations
 
         # The linked data (non 'predicates' assertions) get associated without
@@ -461,7 +508,8 @@ def make_representation_dict(subject_id):
         )
         rep_dict = rep_utils.add_predicates_assertions_to_dict(
             pred_keyed_assert_objs, 
-            act_dict=rep_dict
+            act_dict=rep_dict,
+            for_edit=for_html
         )
     else:
         # The following is for other types of items that don't have lots
@@ -472,7 +520,8 @@ def make_representation_dict(subject_id):
         )
         rep_dict = rep_utils.add_predicates_assertions_to_dict(
             pred_keyed_assert_objs, 
-            act_dict=rep_dict
+            act_dict=rep_dict,
+            for_edit=for_html
         )
     
     # NOTE: This adds Dublin Core metadata
@@ -500,8 +549,9 @@ def make_representation_dict(subject_id):
         pred_keyed_assert_objs, 
         act_dict=rep_dict,
         add_objs_to_existing_pred=False,
+        for_edit=for_html,
     )
     # Adds the default license if a license is still missing.
     rep_dict = metadata.check_add_default_license(rep_dict)
 
-    return rep_dict
+    return item_man_obj, rep_dict

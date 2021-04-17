@@ -2505,6 +2505,7 @@ DEFAULT_MANIFESTS = [
         'item_type': 'property',
         'data_type': 'xsd:string',
         'slug': 'bibo-content',
+        'item_key': 'bibo:content',
         'label': 'Content',
         'uri': 'http://purl.org/ontology/bibo/content',
         'context_id': BIBO_VOCAB_UUID,

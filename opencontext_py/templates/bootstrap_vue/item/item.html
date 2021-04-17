@@ -4,10 +4,35 @@
 
 
 <!-- General template for views of Open Context items -->
-<h1>Hello</h1>
+<div class="container-fluid">
+
+
+    {% include '../item/parts/contexts.html' %}
+    
+    <div class="row">
+        <div class="col-9">
+
+        {% include '../item/parts/observations.html' %}
+
+        </div>
+
+        <div class="col-3">
+
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col">
+            <label for="item_json" class="form-label">Item JSON</label>
+            <textarea class="form-control form-control-sm" id="item_json" rows="25">{{ item_json|safe }}
+            </textarea>
+        </div>
+    </div>
+
+</div>
 
 <script type="application/ld+json">
     {{ SCHEMA_ORG_JSON_LD|safe }}
 </script>
-
 {% endblock %}

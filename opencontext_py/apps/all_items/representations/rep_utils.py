@@ -49,7 +49,7 @@ def get_item_key_or_uri_value(manifest_obj):
     return f"https://{manifest_obj.uri}"
 
 
-def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
+def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html=False):
     """Makes a list of assertion objects for a predicate
     
     :param AllManifest predicate: An all manifest object for the
@@ -76,8 +76,9 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
                 )
             if getattr(assert_obj, 'object_thumbnail', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
-            if for_edit:
+            if for_edit or for_html:
                 obj['object_id'] = str(assert_obj.object.uuid)
+                obj['object__item_type'] = assert_obj.object.item_type
                 obj['object__label'] = assert_obj.object.label
                 obj['object__uri'] = assert_obj.object.uri
                 obj['object__context_id'] = str(assert_obj.object.context.uuid)
@@ -89,7 +90,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
             obj = {
                 f'@{assert_obj.language.item_key}': assert_obj.obj_string
             }
-            if for_edit:
+            if for_edit or for_html:
                 obj['obj_string'] = assert_obj.obj_string
         else:
             act_attrib = ASSERTION_DATA_TYPE_LITERAL_MAPPINGS.get(
@@ -100,10 +101,10 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
                 obj = float(obj)
             elif predicate.data_type == 'xsd:date':
                 obj = obj.date().isoformat()
-            if for_edit:
+            if for_edit or for_html:
                 obj = {act_attrib: obj}
         
-        if for_edit:
+        if for_edit or for_html:
             # Add lots of extra information about the assertion to make editing easier.
             obj['uuid'] = str(assert_obj.uuid)
             obj['subject_id'] = str(assert_obj.subject.uuid)
@@ -118,9 +119,9 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False):
             obj['predicate__label'] = predicate.label
             obj['predicate__data_type'] = predicate.data_type
             obj['predicate__item_class_id'] = str(predicate.item_class.uuid)
+            obj['predicate__item_class__label'] = predicate.item_class.label
             obj['predicate__uri'] = predicate.uri
             obj['predicate__context_id'] = str(predicate.context.uuid)
-            obj['predicate__context__label'] = predicate.context.label
             obj['predicate__context__uri'] = predicate.context.uri
             obj['language_id'] = str(assert_obj.language.uuid)
             obj['language__label'] = assert_obj.language.label
@@ -142,6 +143,7 @@ def add_predicates_assertions_to_dict(
     act_dict=None, 
     add_objs_to_existing_pred=True,
     for_edit=False,
+    for_html=False
 ):
     """Adds predicates with their grouped objects to a dictionary, keyed by each pred
     
@@ -164,7 +166,12 @@ def add_predicates_assertions_to_dict(
             # So skip the rest.
             continue
         # Make list of dicts and literal values for the predicate objects.
-        pred_objects = make_predicate_objects_list(predicate, assert_objs, for_edit=for_edit)
+        pred_objects = make_predicate_objects_list(
+            predicate,
+            assert_objs, 
+            for_edit=for_edit,
+            for_html=for_html,
+        )
         # Set a default list for the pred_key. This lets us add to an
         # already existing list.
         act_dict.setdefault(pred_key, [])

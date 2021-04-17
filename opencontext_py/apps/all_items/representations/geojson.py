@@ -185,7 +185,7 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
         properties = LastUpdatedOrderedDict()
         properties["id"] = f"#feature-props-{feature_id}"
         properties["href"] = f"https://{item_man_obj.uri}"
-        properties["type"] = rep_utils.get_item_key_or_uri_value(spacetime_obj.event_class)
+        properties["type"] = rep_utils.get_item_key_or_uri_value(spacetime_obj.event.item_class)
         if str(spacetime_obj.event.uuid) != configs.DEFAULT_EVENT_UUID:
             # We have a non-standard event for this feature, so update the feature id.
             feature["id"] = f'#-event-{spacetime_obj.event.slug}'

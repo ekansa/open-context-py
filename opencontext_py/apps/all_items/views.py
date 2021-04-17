@@ -18,7 +18,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
-    make_template_ready_dict_obj
+    prepare_for_item_dict_html_template
 )
 from opencontext_py.apps.all_items.representations.schema_org import (
     make_schema_org_json_ld
@@ -37,8 +37,8 @@ from django.utils.cache import patch_vary_headers
 @never_cache
 def test_json(request, uuid):
     """ API for searching Open Context """
-    _, new_uuid = update_old_id(uuid)
-    rep_dict = item.make_representation_dict(subject_id=new_uuid)
+    _, ok_uuid = update_old_id(uuid)
+    _, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
     json_output = json.dumps(
         rep_dict,
         indent=4,
@@ -55,10 +55,14 @@ def test_html(request, uuid):
     """HTML representation for searching Open Context """
     # NOTE: There is NO templating here, this is strictly so we can 
     # use the Django debugger to optimize queries
-    _, new_uuid = update_old_id(uuid)
-    rep_dict = item.make_representation_dict(subject_id=new_uuid)
+    _, ok_uuid = update_old_id(uuid)
+    man_obj, rep_dict = item.make_representation_dict(
+        subject_id=ok_uuid,
+        for_html=True,
+    )
+    item_dict = prepare_for_item_dict_html_template(man_obj, rep_dict)
     json_output = json.dumps(
-        rep_dict,
+        item_dict,
         indent=4,
         ensure_ascii=False
     )
@@ -72,8 +76,9 @@ def test_html(request, uuid):
             indent=4,
             ensure_ascii=False
         ),
-        'rep_dict': make_template_ready_dict_obj(rep_dict),
-        'json_output': json_output,
+        'man_obj': man_obj,
+        'item': item_dict,
+        'item_json': json_output,
     }
     template = loader.get_template('bootstrap_vue/item/item.html')
     response = HttpResponse(template.render(context, request))
