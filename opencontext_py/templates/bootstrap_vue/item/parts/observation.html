@@ -3,7 +3,7 @@
 {% for act_event in act_obs.oc_gen__has_events %}
 
   {% if act_event.has_descriptions %}
-  <table class="table table-responsive-sm table-hover table-striped">
+  <table class="table table-responsive-sm table-hover table-striped table-active">
     {% if not act_event.default %}
     <caption>{{ act_event.label }}</caption>
     {% endif %}
@@ -22,6 +22,9 @@
       <tr>
         <td>
           <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label }}</a>
+          {% if vals.0.predicate__context__item_type != "projects" %}
+          <br/><small>Vocabulary: <a href="https://{{vals.0.predicate__context__uri }}">{{ vals.0.predicate__context__label }}</a></small>
+          {% endif %}
         </td>
         <td>
         {% if vals|length < 2 %}

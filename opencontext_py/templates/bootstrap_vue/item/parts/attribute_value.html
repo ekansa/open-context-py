@@ -8,7 +8,7 @@
 {% elif act_val.predicate__data_type == 'id' and act_val.object__item_type != 'types' %}
 
   <a href="https://{{ object__uri }}">{{ act_val.object__label }}</a>
-  <br/><small>Standard: <a href="https://{{act_val.object__context__uri }}">{{ act_val.object__context__label }}</a></small>
+  <br/><small>Vocabulary: <a href="https://{{act_val.object__context__uri }}">{{ act_val.object__context__label }}</a></small>
 
 
 {% elif act_val.predicate__data_type == 'xsd:string' %}

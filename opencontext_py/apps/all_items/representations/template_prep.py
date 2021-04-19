@@ -53,6 +53,9 @@ SPECIAL_KEYS = [
     'dc-terms:title',
     'dc-terms:issued',
     'dc-terms:modified',
+    'dc-terms:license',
+    'dc-terms:isPartOf',
+    'dc-terms:hasPart',
     'contexts',
 ]
 

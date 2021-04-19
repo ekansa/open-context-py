@@ -17,6 +17,8 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 from opencontext_py.apps.all_items import utilities
+from opencontext_py.apps.all_items.project_contexts import context
+
 from opencontext_py.apps.all_items.representations import geojson
 from opencontext_py.apps.all_items.representations import metadata
 from opencontext_py.apps.all_items.representations import rep_utils
@@ -258,6 +260,7 @@ def get_observations_attributes_from_assertion_qs(
 ):
     """Gets observations and attributes in observations
     
+    :param QuerySet assert_qs: A query set of assertions made on the item
     :param bool for_edit: Do we want an output with additional identifiers
         useful for editing.
     """
@@ -551,6 +554,12 @@ def make_representation_dict(subject_id, for_html=False):
         add_objs_to_existing_pred=False,
         for_edit=for_html,
     )
+    # Add the project relationship if it is missing
+    rep_dict = metadata.check_add_project(
+        project=item_man_obj.project,
+        act_dict=rep_dict,
+    )
+
     # Adds the default license if a license is still missing.
     rep_dict = metadata.check_add_default_license(rep_dict)
 

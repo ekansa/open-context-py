@@ -64,7 +64,7 @@ def make_schema_org_json_ld(rep_dict):
     if not item_type:
         return None
     
-    description = f'An Open Context "{item_type}" item'
+    description = f'An Open Context "{item_type}" dataset item'
     for des_dict in rep_dict.get('dc-terms:description', [])[:1]:
         for _, v in des_dict.items():
             description = v

@@ -403,14 +403,103 @@ OCZOO_VOCAB_UUID = '00000000-61ca-2d03-1a84-57bdee155cf5'
 
 # Default for different types of 'nodes' that organize assertions
 DEFAULT_CLASS_UUID = '00000000-0000-0000-0000-000000000002'
+DEFAULT_CLASS_DICT = {
+    'uuid': DEFAULT_CLASS_UUID,
+    'publisher_id': OPEN_CONTEXT_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'class',
+    'data_type': 'id',
+    'slug': 'oc-default-class',
+    'label': 'Default (null) class',
+    'uri': 'opencontext.org/vocabularies/oc-general/default-class',
+    'context_id': OC_GEN_VOCAB_UUID,
+}
+
 DEFAULT_OBS_UUID = '00000000-0000-0000-0000-000000000003'
+DEFAULT_OBS_DICT = {
+    'uuid': DEFAULT_OBS_UUID,
+    'publisher_id': OPEN_CONTEXT_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'observations',
+    'data_type': 'id',
+    'slug': 'oc-default-obs',
+    'label': 'Main Observation',
+    'uri': 'opencontext.org/vocabularies/oc-general/observations#obs-1',
+    'item_key': '#obs-1',
+    'context_id': OC_GEN_VOCAB_UUID,
+    'meta_json': {
+        'sort': 1,
+    }
+}
+DEFAULT_EQUIV_OBS_UUID = '00000000-0000-0000-0000-0000000000f3'
+DEFAULT_EQUIV_OBS_DICT = {
+    'uuid': DEFAULT_EQUIV_OBS_UUID,
+    'publisher_id': OPEN_CONTEXT_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'observations',
+    'data_type': 'id',
+    'slug': 'oc-equiv-ld-obs',
+    'label': 'Standards Annotations',
+    'uri': 'opencontext.org/vocabularies/oc-general/observations#obs-equiv-ld',
+    'item_key': '#obs-equiv-ld',
+    'context_id': OC_GEN_VOCAB_UUID,
+    'meta_json': {
+        'sort': 1,
+    }
+}
+
 DEFAULT_EVENT_UUID = '00000000-0000-0000-0000-000000000004'
+DEFAULT_EVENT_DICT = {
+    'uuid': DEFAULT_EVENT_UUID,
+    'publisher_id': OPEN_CONTEXT_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': OC_EVENT_TYPE_GENERAL_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'events',
+    'data_type': 'id',
+    'slug': 'oc-default-event',
+    'label': 'Default Event',
+    'uri': 'opencontext.org/vocabularies/oc-general/events-default',
+    'item_key': '#events-default',
+    'context_id': OC_GEN_VOCAB_UUID,
+    'meta_json': {
+        'sort': 1,
+    }
+}
+
 DEFAULT_EVENT_CURRENT_UUID = '00000000-0000-0000-0000-000000000014'
 DEFAULT_EVENT_ORIGINS_UUID = '00000000-0000-0000-0000-000000000024'
 DEFAULT_EVENT_COVERAGE_UUID = '00000000-0000-0000-0000-000000000034'
 DEFAULT_ATTRIBUTE_GROUP_UUID = '00000000-0000-0000-0000-000000000005'
+DEFAULT_ATTRIBUTE_GROUP_DICT = {
+    'uuid': DEFAULT_ATTRIBUTE_GROUP_UUID,
+    'publisher_id': OPEN_CONTEXT_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'attribute-groups',
+    'data_type': 'id',
+    'slug': 'oc-default-attrib-group',
+    'label': 'Default (Single) Attribute Group',
+    'uri': 'opencontext.org/vocabularies/oc-general/attribute-group#group-1',
+    'context_id': OC_GEN_VOCAB_UUID,
+    'meta_json': {
+        'sort': 1,
+    }
+}
+
+
+
 DEFAULT_NULL_OBJECT_UUID = '00000000-0000-0000-0000-000000000006'
 DEFAULT_NULL_STRING_UUID = '00000000-cdd8-bc9b-1985-c3babee8ea6c'
+
+
 
 # ID for a the oc-gen:cat-region (region) subjects class
 CLASS_OC_REGION_UUID = '00000000-6e24-e55c-6c25-5d7204d9115c'
@@ -557,6 +646,34 @@ DCTERMS_CREATOR_MANIFEST_DICT =  {
     'label': 'Creator',
     'item_key': 'dc-terms:creator',
     'uri': 'http://purl.org/dc/terms/creator',
+    'context_id': DCTERMS_VOCAB_UUID,
+}
+DCTERMS_CREATOR_IS_PART_OF_DICT =  {
+    'uuid': PREDICATE_DCTERMS_IS_PART_OF_UUID,
+    'publisher_id': DCMI_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'property',
+    'data_type': 'id',
+    'slug': 'dc-terms-is-part-of',
+    'label': 'Is Part Of',
+    'item_key': 'dc-terms:isPartOf',
+    'uri': 'http://purl.org/dc/terms/isPartOf',
+    'context_id': DCTERMS_VOCAB_UUID,
+}
+DCTERMS_CREATOR_HAS_PART_DICT =  {
+    'uuid': PREDICATE_DCTERMS_HAS_PART_UUID,
+    'publisher_id': DCMI_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'property',
+    'data_type': 'id',
+    'slug': 'dc-terms-has-part',
+    'label': 'Has Part',
+    'item_key': 'dc-terms:hasPart',
+    'uri': 'http://purl.org/dc/terms/hasPart',
     'context_id': DCTERMS_VOCAB_UUID,
 }
 

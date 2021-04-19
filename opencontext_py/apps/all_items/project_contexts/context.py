@@ -1,0 +1,263 @@
+
+import copy
+import hashlib
+import logging
+import uuid as GenUUID
+
+import numpy as np
+import pandas as pd
+
+from django.core.cache import caches
+
+from django.db.models import OuterRef, Subquery
+
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+
+from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllAssertion,
+)
+from opencontext_py.apps.all_items import utilities
+
+
+logger = logging.getLogger("project-context-logger")
+
+DEFAULT_TIMEOUT = 60 * 60   # 60 minutes.
+
+
+def get_project_context_predicates(project_id):
+    """Gets an assertion queryset for a project context"""
+
+    pred_qs = AllAssertion.objects.filter(
+        subject__project_id=project_id,
+        visible=True,
+    )
+
+    if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
+        # Exclude predicates from the Open Context
+        # project.
+        pred_qs = pred_qs.exclude(
+            predicate__project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+        )
+
+    pred_qs = pred_qs.distinct(
+        'predicate'
+    ).order_by(
+        'predicate'
+    ).select_related(
+        'predicate'
+    ).values(
+        'predicate_id',
+        'predicate__uri',
+        'predicate__slug',
+        'predicate__item_type',
+        'predicate__data_type',
+        'predicate__label',
+        'predicate__item_class_id',
+    )
+    return pred_qs
+
+
+def get_project_context_object_types(project_id):
+    """Gets an assertion queryset for a project context"""
+    obj_qs = AllAssertion.objects.filter(
+        subject__project_id=project_id,
+        object__item_type='types',
+        visible=True,
+    )
+    
+    if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
+        # Exclude predicates from the Open Context
+        # project.
+        obj_qs = obj_qs.exclude(
+            object__project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+        )
+
+    obj_qs = obj_qs.distinct(
+        'object'
+    ).order_by(
+        'object'
+    ).select_related(
+        'object'
+    ).values(
+        'object_id',
+        'object__uri',
+        'object__slug',
+        'object__item_type',
+        'object__data_type',
+        'object__label',
+        'object__item_class_id',
+    )
+    return obj_qs
+
+
+def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
+    """Gets linked data assertions on a list of items
+    
+    :param list subject_id_list: A list of assertion
+        subject identifiers
+    :param str project_id: A project's UUID or string UUID primary key
+        identifier
+    """
+    ld_qs = AllAssertion.objects.filter(
+        subject_id__in=subject_id_list,
+        predicate__context__item_type='vocabularies',
+    )
+    if project_id and project_id != configs.OPEN_CONTEXT_PROJ_UUID:
+        ld_qs = ld_qs.exclude(
+            subject__project_id=configs.OPEN_CONTEXT_PROJ_UUID
+        )
+
+    ld_qs = ld_qs.select_related(
+        'subject'
+    ).select_related(
+        'predicate'
+    ).select_related(
+        'predicate__context'
+    ).select_related(
+        'object'
+    ).select_related(
+        'object__context',
+    ).values(
+        'subject_id',
+        'subject__uri',
+        'subject__slug',
+        'subject__item_type',
+        'subject__data_type',
+        'subject__label',
+        'subject__item_class_id',
+        'predicate_id',
+        'predicate__item_key',
+        'predicate__uri',
+        'predicate__slug',
+        'predicate__item_type',
+        'predicate__data_type',
+        'predicate__label',
+        'predicate__context_id',
+        'predicate__context__label',
+        'predicate__context__uri',
+        'predicate__context__meta_json',
+        'object_id',
+        'object__uri',
+        'object__slug',
+        'object__item_type',
+        'object__data_type',
+        'object__label',
+        'object__context_id',
+        'object__context__label',
+        'object__context__uri',
+        'object__context__meta_json',
+    )
+    return ld_qs
+
+
+def rename_pred_obj_df_cols(df, df_type):
+    """Renames pred_df and obj_df columns to be consistent"""
+    rename_dict = {
+       c: ('subject__' + c.split(f'{df_type}__')[-1])
+       for c in df.columns if c.startswith(f'{df_type}__')
+    }
+    rename_dict[f'{df_type}_id'] = 'subject_id'
+    df.rename(
+        columns=rename_dict, 
+        inplace=True
+    )
+    return df
+
+
+def db_make_project_context_df(project_id):
+    """Make a dataframe for a project context"""
+    pred_qs = get_project_context_predicates(project_id)
+    pred_df = pd.DataFrame.from_records(pred_qs)
+    pred_df = rename_pred_obj_df_cols(pred_df, 'predicate')
+
+    obj_qs = get_project_context_object_types(project_id)
+    obj_df = pd.DataFrame.from_records(obj_qs)
+    obj_df = rename_pred_obj_df_cols(obj_df, 'object')
+
+    df = pd.concat([obj_df, obj_df])
+
+    ld_qs = get_ld_assertions_on_item_qs(df['subject_id'].unique().tolist())
+    df_ld = pd.DataFrame.from_records(ld_qs)
+    
+    # Avoid duplicating columns already in df
+    drop_cols = [c for c in df_ld.columns if c.startswith('subject__')]
+    df_ld.drop(columns=drop_cols, inplace=True)
+
+    df = df.merge(
+        df_ld, 
+        how='left',
+        left_on='subject_id', 
+        right_on='subject_id'
+    )
+
+    # Now make all the uuids simple strings.
+    for col in df.columns:
+        if col.endswith('_id'):
+            df[col] = df[col].astype(str)
+    return df
+
+
+def get_cache_project_context_df(project_id, use_cache=True, reset_cache=False):
+    """Gets and caches a project context dataframe
+
+    :param str project_id: A project's UUID or string UUID primary key
+        identifier
+    :param bool use_cache: Boolean flag to use the cache or not
+    :param bool reset_cache: Force the cache to be reset.
+    """
+    if not use_cache:
+        return db_make_project_context_df(project_id)
+
+    cache = caches['redis']
+    df = None
+    cache_key = f'project-context-df-{str(project_id)}'
+    if not reset_cache:
+        df = cache.get(cache_key)
+    
+    if df is not None:
+        return df
+
+    df = db_make_project_context_df(project_id)
+    try:
+        cache.set(cache_key, df, timeout=DEFAULT_TIMEOUT)
+    except:
+        logger.info(f'Cache failure with: {cache_key}')
+    return df
+
+
+def get_project_context_df_from_cache(project_id):
+    """Gets a project context df from the cache, if it exists
+
+    :param str project_id: A project's UUID or string UUID primary key
+        identifier
+    """
+    cache = caches['redis']
+    cache_key = f'project-context-df-{str(project_id)}'
+    return cache.get(cache_key)
+
+
+def get_item_context_df(subject_id_list, project_id):
+    """Gets an item's context dataframe if a project df is not cached
+
+    :param list subject_id_list: A list of assertion
+        subject identifiers
+    :param str project_id: A project's UUID or string UUID primary key
+        identifier
+    """
+    df = get_project_context_df_from_cache(project_id)
+    if df is not None:
+        # The requirement is satisfied because we have the
+        # project's context df
+        return df
+    
+    # As a fallback, make a dataframe of linked data
+    # relating to items in the subject_id_list. These
+    # are relevant to an item's context.
+    ld_qs = get_ld_assertions_on_item_qs(
+        subject_id_list,
+        project_id=project_id,
+    )
+    df_ld = pd.DataFrame.from_records(ld_qs)
+    return df_ld

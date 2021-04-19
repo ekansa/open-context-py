@@ -31,6 +31,9 @@ DC_CREATOR_CONTRIBUTOR_OBJECTS = {
 
 DC_DEFAULT_LICENSE_OBJECT = AllManifest(**configs.CC_DEFAULT_LICENSE_CC_BY_DICT)
 
+DC_IS_PART_OF_OBJECT = AllManifest(**configs.DCTERMS_CREATOR_IS_PART_OF_DICT)
+DC_HAS_PART_OBJECT = AllManifest(**configs.DCTERMS_CREATOR_HAS_PART_DICT)
+
 
 def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
     """Makes a dictionary keyed by DC creator or contributor id with
@@ -152,4 +155,19 @@ def check_add_default_license(act_dict=None):
     lic_dict['slug'] = DC_DEFAULT_LICENSE_OBJECT.slug
     lic_dict['label'] = DC_DEFAULT_LICENSE_OBJECT.label
     act_dict['dc-terms:license'] = [lic_dict]
+    return act_dict
+
+
+def check_add_project(project, act_dict=None):
+    """Adds a Dublin Core Part-of relationship for the project"""
+    if not act_dict:
+        act_dict = LastUpdatedOrderedDict()
+    if len(act_dict.get('dc-terms:isPartOf', [])) > 0:
+        return act_dict
+    
+    proj_dict = LastUpdatedOrderedDict()
+    proj_dict['id'] = f'https://{project.uri}'
+    proj_dict['slug'] = project.slug
+    proj_dict['label'] = project.label
+    act_dict['dc-terms:isPartOf'] = [proj_dict]
     return act_dict
