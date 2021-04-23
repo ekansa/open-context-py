@@ -21,6 +21,7 @@ from opencontext_py.apps.all_items.project_contexts import context
 
 from opencontext_py.apps.all_items.representations import geojson
 from opencontext_py.apps.all_items.representations import metadata
+from opencontext_py.apps.all_items.representations import equivalent_ld
 from opencontext_py.apps.all_items.representations import rep_utils
 
 
@@ -427,6 +428,8 @@ def make_representation_dict(subject_id, for_html=False):
     ).select_related(
         'project'
     ).select_related(
+        'project__project'
+    ).select_related(
         'item_class'
     )
     item_man_obj_qs = add_select_related_contexts_to_qs(
@@ -496,6 +499,18 @@ def make_representation_dict(subject_id, for_html=False):
         # These types of items have nested nodes of observations, 
         # events, and attribute-groups
         obs_assert_qs = [ass for ass in assert_qs if ass.predicate.item_type == 'predicates']
+
+        # Make some linked data assertion analogs based on the obs_assert_qs.
+        # If they exist, equiv_assertions are non-database stored objects
+        # that have attributes just like normal assertion objects. This
+        # commonality allows common processing.
+        equiv_assertions = equivalent_ld.make_ld_equivalent_assertions(
+            item_man_obj, 
+            obs_assert_qs
+        )
+        if equiv_assertions:
+            obs_assert_qs += equiv_assertions
+
         observations = get_observations_attributes_from_assertion_qs(
             obs_assert_qs, 
             for_html=for_html

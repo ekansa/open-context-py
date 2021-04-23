@@ -33,10 +33,13 @@ MAINTAINER_PUBLISHER_DICT = {
     '@id': f'https://{configs.OC_URI_ROOT}',
     'url': f'https://{configs.OC_URI_ROOT}',
     '@type': 'Organization',
-    'name': 'Open Context',
+    'name': configs.OPEN_CONTEXT_PROJ_LABEL,
     'nonprofitStatus': 'Nonprofit501c3',
     'ethicsPolicy': 'https://opencontext.org/about/terms',
-    'brand': ['Open Context', 'Alexandria Archive Institute'],
+    'brand': [
+        configs.OPEN_CONTEXT_PROJ_LABEL, 
+        'Alexandria Archive Institute'
+    ],
 }
 
 

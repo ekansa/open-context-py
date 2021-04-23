@@ -95,7 +95,7 @@ DEFAULT_MANIFESTS = [
         'item_type': 'projects',
         'data_type': 'id',
         'slug': 'open-context',
-        'label': 'Open Context',
+        'label': OPEN_CONTEXT_PROJ_LABEL,
         'uri': 'opecontext.org/projects/open-context',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
         'meta_json': {

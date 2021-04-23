@@ -26,6 +26,37 @@ logger = logging.getLogger("project-context-logger")
 DEFAULT_TIMEOUT = 60 * 60   # 60 minutes.
 
 
+# ---------------------------------------------------------------------
+# NOTE: About context
+#
+# Open Context emphasizes JSON-LD for publishing structured data to the
+# Web. Because each project defines its own set of descriptive 
+# attributes and linking relations (project-specific "predicates") and
+# controlled vocabulary terms (project-specific "types"), each project
+# needs a project-specific "context" dictionary for JSON-LD outputs.
+#
+# The functions here query the database to populate a dataframe that
+# describes all of the "predicates" and "types" items used in a 
+# project. Please note! Some predicates and types items are SHARED by
+# multiple projects, and so the context output will include these
+# shared items, even if they come from a different project.
+#
+# Gathering context data to populate the dataframe requires a slow
+# query, so it dataframe should be cached if it does not exist. 
+# Consider setting up a worker process to pre-cache project data
+# in scenarios where a JSON-LD or HTML representations of many items
+# from the same project will be requested.
+#
+# Internally, the easiest to use representation of project "context"
+# data is a dataframe. Externally, the "context" data gets expressed
+# as a JSON-LD context object.
+#
+# The Solr indexer and the item representation (esp. equivalent_ld) 
+# features both use project-context dataframes.
+# 
+# ---------------------------------------------------------------------
+
+
 def get_project_context_predicates(project_id):
     """Gets an assertion queryset for a project context"""
 
@@ -134,6 +165,7 @@ def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
         'predicate__item_type',
         'predicate__data_type',
         'predicate__label',
+        'predicate__meta_json',
         'predicate__context_id',
         'predicate__context__label',
         'predicate__context__uri',
@@ -141,9 +173,11 @@ def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
         'object_id',
         'object__uri',
         'object__slug',
+        'object__item_key',
         'object__item_type',
         'object__data_type',
         'object__label',
+        'object__meta_json',
         'object__context_id',
         'object__context__label',
         'object__context__uri',
@@ -260,4 +294,7 @@ def get_item_context_df(subject_id_list, project_id):
         project_id=project_id,
     )
     df_ld = pd.DataFrame.from_records(ld_qs)
+    for col in df_ld.columns:
+        if col.endswith('_id'):
+            df_ld[col] = df_ld[col].astype(str)
     return df_ld
