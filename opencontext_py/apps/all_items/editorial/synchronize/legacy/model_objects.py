@@ -30,12 +30,18 @@ from opencontext_py.apps.all_items.editorial.synchronize import safe_model_save
 # Invocation:
 
 import importlib
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.all_items.editorial.synchronize.legacy import model_objects
 importlib.reload(model_objects)
 
 after_date = '2021-03-01'
 
-model_objects.update_prod_from_default(project_uuid='8e7fee33-8ec7-4707-910b-6ace9d70d032', after_date=after_date)
+update_models=[
+    (StableIdentifer, 'updated', True,),
+]
+model_objects.update_prod_from_default(
+    project_uuid='8e7fee33-8ec7-4707-910b-6ace9d70d032', after_date=after_date, update_models=update_models
+)
 
 # model_objects.update_default_from_prod(after_date=after_date)
 
@@ -73,6 +79,7 @@ def update_default_from_prod(
     after_date=None, 
     only_insert=True,
     raise_on_error=True,
+    update_models=LEGACY_MODELS,
 ):
     if not project_uuid and not after_date:
         raise ValueError('Must limit sync by project, date, or both')
@@ -83,7 +90,7 @@ def update_default_from_prod(
         return None
     
     all_migrated_objs = 0
-    for model, update_attrib, has_project_attrib in LEGACY_MODELS:
+    for model, update_attrib, has_project_attrib in update_models:
         filter_args = {}
         if has_project_attrib and project_uuid:
             filter_args['project_uuid'] = project_uuid
@@ -116,6 +123,7 @@ def update_prod_from_default(
     project_uuid=None, 
     after_date=None, 
     raise_on_error=True,
+    update_models=LEGACY_MODELS,
 ):
     if not project_uuid and not after_date:
         raise ValueError('Must limit sync by project, date, or both')
@@ -126,7 +134,7 @@ def update_prod_from_default(
         return None
     
     all_migrated_objs = 0
-    for model, update_attrib, has_project_attrib in LEGACY_MODELS:
+    for model, update_attrib, has_project_attrib in update_models:
         filter_args = {}
         if has_project_attrib and project_uuid:
             filter_args['project_uuid'] = project_uuid

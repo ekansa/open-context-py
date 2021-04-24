@@ -3,31 +3,59 @@
 {% block content %}
 
 
+<div id="project_hero_banner">
+    {% if man_obj.hero %}
+        <img class="img-fluid" 
+             alt="project banner image" 
+             src="https://{{ man_obj.hero }}" />
+    {% elif man_obj.proj_hero %}
+        <img class="img-fluid" 
+            alt="project banner image" 
+            src="https://{{ man_obj.proj_hero }}" />
+    {% elif man_obj.proj_proj_hero %}
+        <img class="img-fluid" 
+            alt="project banner image" 
+            src="https://{{ man_obj.proj_proj_hero }}" />
+    {% else %}
+        <img class="img-fluid" 
+            alt="default project banner image" 
+            src="https://opencontext.org/static/oc/images/projects/project-default-hero.png" />
+    {%endif%}
+</div>
+
+
 <!-- General template for views of Open Context items -->
-<div class="container-fluid">
+<div id="main">
+
+    <div class="container-fluid">
+
+        {% include '../item/parts/contexts.html' %}
+        
+        <div class="row">
+            <div class="col-8">
+
+            {% include '../item/parts/observations.html' %}
+
+            </div>
+
+            <div class="col-4">
+                {% include '../item/parts/citation.html' %}
+
+                {% include '../item/parts/project_context.html' %}
 
 
-    {% include '../item/parts/contexts.html' %}
-    
-    <div class="row">
-        <div class="col-8">
-
-        {% include '../item/parts/observations.html' %}
-
+            </div>
         </div>
 
-        <div class="col-4">
 
+        <div class="row">
+            <div class="col">
+                <label for="item_json" class="form-label">Item JSON</label>
+                <textarea class="form-control form-control-sm" id="item_json" rows="25">{{ item_json|safe }}
+                </textarea>
+            </div>
         </div>
-    </div>
 
-
-    <div class="row">
-        <div class="col">
-            <label for="item_json" class="form-label">Item JSON</label>
-            <textarea class="form-control form-control-sm" id="item_json" rows="25">{{ item_json|safe }}
-            </textarea>
-        </div>
     </div>
 
 </div>

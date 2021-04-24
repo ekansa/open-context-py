@@ -1,0 +1,169 @@
+/* Open Context Layout Main */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
+body {
+	font-family: 'Open Sans';	
+}
+
+
+/*
+---------------------------------------------------------
+TOP NAVIGATION
+---------------------------------------------------------
+*/
+
+#oc-nav-bar {
+	background-color: #141518;
+}
+#oc-nav-bar li.active a {
+	background-color: #141518;
+}
+#oc-nav-branding {
+	padding-top:0px;
+    padding-left:0px;
+}
+
+
+/*
+---------------------------------------------------------
+FOOTER 
+---------------------------------------------------------
+*/
+#footer-upper {
+	margin-top: 10%;
+	pading-top: 10px;
+	background-color: #141518;
+	margin-right:-45px;
+	margin-left:-45px;
+}
+div.footer-cell {
+	display: table-cell;
+	vertical-align: middle;
+	text-align: center;
+	padding: 2%;
+}
+div.footer-cell img {
+	max-height: 75px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#footer-lower {
+	/*
+	background-color: #333333;
+	*/
+	background-color: #141518;
+	color: #fff;
+	text-align: center;
+	font-size: 85%;
+	margin-right:-45px;
+	margin-left:-45px;
+	margin-top:-2px;
+	padding: 2%;
+}
+
+
+/*
+---------------------------------------------------------
+General Page
+---------------------------------------------------------
+*/
+#project_hero_banner {
+
+}
+#project_hero_banner .img-fluid {
+	width:100%;
+	height:100%;
+	object-fit: contain;
+	margin-bottom: -24px;
+	z-index: -1000;
+}
+#main {
+	width:98%;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+
+/*
+---------------------------------------------------------
+Item Context
+---------------------------------------------------------
+*/
+#context-start {
+	margin-right: 1em;
+}
+#main_item_label_in_context {
+	font-size: 16px;
+	font-family: "Open Sans";
+	font-weight: bold;
+	box-sizing: border-box;
+	color: black;
+	line-height: normal;
+	padding-top: 0.8%;
+}
+#rel_item_in_context::before {
+    content: "\2194"; 
+}
+
+
+/*
+---------------------------------------------------------
+Item Citation
+---------------------------------------------------------
+*/
+#item_title {
+	max-width:200px;
+    word-wrap:break-word;
+}
+/* So long uri in Citation has good wrapping */
+span.cite_id {
+   max-width:200px;
+   word-wrap:break-word;
+}
+
+
+/*
+---------------------------------------------------------
+Item Part of Project (Project Context)
+---------------------------------------------------------
+*/
+#project_context {
+	border: none;
+}
+.project_editorial_level {
+	color: #EE7600;
+}
+a.project_editorial_level:link {
+	color: #EE7600;
+}
+a.project_editorial_level:visited {
+	color: #EE7600;
+}
+a.project_editorial_level:hover {
+	color: #EE7600;
+}
+
+
+
+
+
+
+
+
+
+
+div.subject-list-row {
+	padding-top: 1%;
+	padding-bottom: 1%;
+}
+div.media-list-row {
+	padding-top: 1%;
+	padding-bottom: 1%;
+}
+div.subject-list-row img {
+	height: 30px;
+	width: 30px;
+}
+div.subject-list-text {
+	padding-top: 2%;
+}

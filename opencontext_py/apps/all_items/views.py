@@ -23,6 +23,7 @@ from opencontext_py.apps.all_items.representations.template_prep import (
 from opencontext_py.apps.all_items.representations.schema_org import (
     make_schema_org_json_ld
 )
+from opencontext_py.apps.all_items.representations import citation
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from django.views.decorators.cache import cache_control
@@ -76,7 +77,9 @@ def test_html(request, uuid):
             indent=4,
             ensure_ascii=False
         ),
+        'citation':citation.make_citation_dict(rep_dict),
         'man_obj': man_obj,
+        'edit_status': man_obj.project.meta_json.get('edit_status'),
         'item': item_dict,
         'item_json': json_output,
     }

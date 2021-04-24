@@ -15,9 +15,13 @@
             {% endif %}
           {% endfor %}
           {% if man_obj.item_type == 'subjects' %}
-          <li class="breadcrumb-item active">{{ item.label }} ({{ item.item_class__label }})</li>
+          <li class="breadcrumb-item active">
+            <h1 id="main_item_label_in_context">{{ item.label }} ({{ item.item_class__label }})</h1>
+          </li>
           {% else %}
-          <li class="breadcrumb-item active" id="rel-item-in-context">{{ item.label }}</li>
+          <li class="breadcrumb-item active" id="rel_item_in_context">
+            <h1 id="main_item_label_in_context">{{ item.label }}</h1>
+          </li>
           {% endif %}
         </ol>
     </nav>

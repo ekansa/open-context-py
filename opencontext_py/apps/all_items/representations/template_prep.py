@@ -47,6 +47,7 @@ SPECIAL_KEYS = [
     'oc-gen:has-obs',
     'oc-gen:has-contexts',
     'oc-gen:has-linked-contexts',
+    'oc-gen:has-files',
     'dc-terms:abstract',
     'dc-terms:description',
     'bibo:content',

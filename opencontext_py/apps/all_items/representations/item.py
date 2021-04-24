@@ -3,7 +3,7 @@ import copy
 import hashlib
 import uuid as GenUUID
 
-from django.db.models import OuterRef, Subquery
+from django.db.models import Q, OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
@@ -173,6 +173,8 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         subject_id=subject_id,
         visible=True,
     ).select_related(
+        'subject'
+    ).select_related(
         'observation'
     ).select_related(
         'event'
@@ -181,11 +183,17 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
     ).select_related(
         'predicate'
     ).select_related(
+        'predicate__item_class'
+    ).select_related(
+        'predicate__context'
+    ).select_related(
         'language'
     ).select_related( 
         'object'
     ).select_related( 
         'object__item_class'
+    ).select_related( 
+        'object__context'
     ).annotate(
         object_thumbnail=Subquery(thumbs_qs)
     ).annotate(
@@ -225,6 +233,8 @@ def get_related_subjects_item_from_object_id(object_id):
         'subject'
     ).select_related(
         'subject__item_class'
+    ).select_related(
+        'subject__context'
     )
     rel_subj_item_assetion_qs = add_select_related_contexts_to_qs(
         rel_subj_item_assetion_qs, 
@@ -419,10 +429,27 @@ def start_item_representation_dict(item_man_obj, for_html=False):
     return rep_dict
 
 
-def make_representation_dict(subject_id, for_html=False):
-    """Makes a representation dict for a subject id"""
-    # This will most likely get all the context hierarchy in 1 query, thereby
-    # limiting the number of times we hit the database.
+def get_annotate_item_manifest_obj(subject_id):
+    """Gets an annotated item manifest object and joined objects
+
+    :param str subject_id: UUID or string UUID for the item
+    """
+    # Limit this subquery to only 1 result, the first.
+    item_hero_qs = AllResource.objects.filter(
+        item_id=OuterRef('uuid'),
+        resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
+    ).values('uri')[:1]
+
+    proj_hero_qs = AllResource.objects.filter(
+        item_id=OuterRef('project'),
+        resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
+    ).values('uri')[:1]
+
+    proj_proj_hero_qs = AllResource.objects.filter(
+        item_id=OuterRef('project__project'),
+        resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
+    ).values('uri')[:1]
+
     item_man_obj_qs = AllManifest.objects.filter(
         uuid=subject_id
     ).select_related(
@@ -431,13 +458,31 @@ def make_representation_dict(subject_id, for_html=False):
         'project__project'
     ).select_related(
         'item_class'
+    ).annotate(
+        hero=Subquery(item_hero_qs)
+    ).annotate(
+        proj_hero=Subquery(proj_hero_qs)
+    ).annotate(
+        proj_proj_hero=Subquery(proj_proj_hero_qs)
     )
+    
     item_man_obj_qs = add_select_related_contexts_to_qs(
         item_man_obj_qs
     )
+
     item_man_obj = item_man_obj_qs.first()
+    return item_man_obj
+
+
+def make_representation_dict(subject_id, for_html=False):
+    """Makes a representation dict for a subject id"""
+    # This will most likely get all the context hierarchy in 1 query, thereby
+    # limiting the number of times we hit the database.
+    
+    item_man_obj = get_annotate_item_manifest_obj(subject_id)
     if not item_man_obj:
         return None, None
+
     rep_dict = start_item_representation_dict(
         item_man_obj,
         for_html=for_html

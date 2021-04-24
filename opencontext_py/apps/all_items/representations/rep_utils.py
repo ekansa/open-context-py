@@ -81,6 +81,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
                 obj['object__item_type'] = assert_obj.object.item_type
                 obj['object__label'] = assert_obj.object.label
                 obj['object__uri'] = assert_obj.object.uri
+                obj['object__meta_json'] = assert_obj.object.meta_json
                 obj['object__context_id'] = str(assert_obj.object.context.uuid)
                 obj['object__context__label'] = assert_obj.object.context.label
                 obj['object__context__uri'] = assert_obj.object.context.uri

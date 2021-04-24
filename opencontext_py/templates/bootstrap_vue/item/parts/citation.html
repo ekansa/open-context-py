@@ -1,0 +1,35 @@
+{% block citation %}
+
+{% if citation %}
+
+<div class="card">
+  <div class="card-header">
+    <h5>Suggested Citation</h5>
+  </div>
+  <div class="card-body">
+    <p class="card-text">
+      {{ citation.authors|join:", " }}. ({{ citation.year_published }})
+      "<span id="item_title">{{ citation.title }}</span>". In <em>{{ citation.part_of_label }}</em>. 
+      {% if citation.editors %}
+        {{ citation.editors|join:", " }}
+        {% if citation.editors.length > 1 %}
+          (Eds).
+        {%else%}
+          (Ed).
+        {%endif%}
+      {%endif%}
+      Released: {{ citation.date_published|truncatechars:10 }}. Open Context.
+      &lt;<span id="item_uri" class="cite_id">{{ citation.id }}</span>&gt;
+      {% if citation.doi %}
+      DOI: <span class="cite_id">{{ citation.doi }}</span>
+      {%endif%}
+      {% if citation.ark %}
+      ARK (Archive): <span class="cite_id">{{ citation.ark }}</span>
+      {%endif%}
+    </p>
+  </div>
+</div>
+
+{%endif%}
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% block contexts %}
+
+{% if item.contexts %}
+<div id="project_context" class="card">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-sm-6">
+        <h5>Editorial Status</h5>
+        {% include './editorial_symbols.html' %}
+      </div>
+      <div class="col-sm-6">
+        <h5>Part of Project</h5>
+        <p>
+          <a href="{% url 'all_items_html' man_obj.project.slug %}">{{ man_obj.project.label }}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{%endif%}
+
+{% endblock %}

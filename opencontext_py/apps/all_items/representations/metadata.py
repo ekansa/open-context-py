@@ -82,16 +82,38 @@ def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
 
 
 def db_get_project_metadata_qs(project_id):
-    """Get Dublin Core project metadata"""
+    """Get Dublin Core project metadata
+    
+    :param str project_id: UUID or string UUID for a project
+        that may have Dublin Core metadata.
+    """
     qs = AllAssertion.objects.filter(
         subject_id=project_id,
         predicate__context_id=configs.DCTERMS_VOCAB_UUID,
         predicate__data_type='id',
         visible=True,
     ).select_related(
+        'subject'
+    ).select_related(
+        'observation'
+    ).select_related(
+        'event'
+    ).select_related( 
+        'attribute_group'
+    ).select_related(
         'predicate'
+    ).select_related(
+        'predicate__item_class'
+    ).select_related(
+        'predicate__context'
+    ).select_related(
+        'language'
     ).select_related( 
         'object'
+    ).select_related( 
+        'object__item_class'
+    ).select_related( 
+        'object__context'
     )
     return qs
 
@@ -107,7 +129,7 @@ def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
         # Skip the case, just use the database.
         return db_get_project_metadata_qs(project_id=project.uuid)
 
-    cache_key = f'proj-meta-{project.slug}'
+    cache_key = f'proj-dc-meta-{project.slug}'
     cache = caches['memory']
 
     proj_meta_qs = cache.get(cache_key)
