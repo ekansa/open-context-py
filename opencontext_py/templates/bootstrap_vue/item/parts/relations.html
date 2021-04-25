@@ -1,0 +1,65 @@
+{% block relations %}
+
+
+{% for ordered_obj_item_type in order_of_related_item_types %}
+    {% for obj_item_type, rel_asserts in relations.items %}
+
+        {% if ordered_obj_item_type != obj_item_type %}
+
+        {%else%}
+
+        <div class="row item_relations_row">
+            <div class="col-12">
+        
+                {% with act_obs_id=act_obs_id %}
+                {% with act_event_id=act_event_id %}
+                {% with act_atr_grp_id=act_atr_grp_id %}
+                {% with rel_asserts=rel_asserts %}
+                {% with obj_item_type=obj_item_type %}
+                {% include './relations_item_type.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+        
+            </div>
+        </div>
+
+        {%endif%}
+    {% endfor %}
+{% endfor %}
+
+
+
+
+{% for obj_item_type, rel_asserts in relations.items %}
+
+    {% if obj_item_type in order_of_related_item_types %}
+        <!-- {{ obj_item_type }} templated above -->
+    {%else%}
+
+    <div class="row item_relations_row">
+        <div class="col-12">
+
+            {% with act_obs_id=act_obs_id %}
+            {% with act_event_id=act_event_id %}
+            {% with act_atr_grp_id=act_atr_grp_id %}
+            {% with rel_asserts=rel_asserts %}
+            {% with obj_item_type=obj_item_type %}
+            {% include './relations_item_type.html' %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+
+        </div>
+    </div>
+
+    {%endif%}
+
+{% endfor %}
+
+
+{% endblock %}

@@ -220,6 +220,11 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
             act_item_type = act_val.get('object__item_type')
             if act_item_type not in configs.OC_PRED_LINK_OK_ITEM_TYPES:
                 continue
+            if act_item_type == 'subjects' and pred_key == 'oc-pred:oc-gen-contains':
+                # NOTE: We're treating the (children) subjects of 
+                # spatial containment relations somewhat differently in our
+                # tempate
+                act_item_type = 'subjects_children'
             new_attrib_group['relations'].setdefault(
                 act_item_type,
                 LastUpdatedOrderedDict()

@@ -77,6 +77,15 @@ def test_html(request, uuid):
             indent=4,
             ensure_ascii=False
         ),
+        # Expected order of related item_types
+        'order_of_related_item_types': [
+            'subjects', 
+            'media', 
+            'documents', 
+            'tables', 
+            'persons', 
+            'subjects_children'
+        ],
         'citation':citation.make_citation_dict(rep_dict),
         'man_obj': man_obj,
         'edit_status': man_obj.project.meta_json.get('edit_status'),

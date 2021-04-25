@@ -1,0 +1,40 @@
+{% block relations_item_type %}
+
+
+<div class="card">
+  <div class="card-header" 
+    id="header-rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}">
+    <a data-toggle="collapse" 
+       href="#rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" 
+       aria-expanded="true" 
+       aria-controls="rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" >
+      {% if obj_item_type == 'subjects' %}
+      <h5>Related Locations and Objects</h5>
+      {%elif obj_item_type == 'subjects_children' %}
+      <h5>Contents</h5>
+      {%else%}
+      <h5>Related {{ obj_item_type|title }}</h5>
+      {%endif%}
+    </a>
+  </div>
+  <div class="collapse show" 
+    aria-labelledby="header-rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" 
+    id="rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" >
+    <div class="card-body">
+      {% for pred_key, vals in rel_asserts.items %}
+      <div class="row">
+        <div class="col-4">
+          <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label|capfirst }}</a>
+        </div>
+        <div class="col-8">
+          {{ vals|length }}}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}

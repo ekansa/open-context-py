@@ -128,7 +128,7 @@ Item Part of Project (Project Context)
 ---------------------------------------------------------
 */
 #project_context {
-	border: none;
+	
 }
 .project_editorial_level {
 	color: #EE7600;
@@ -145,8 +145,15 @@ a.project_editorial_level:hover {
 
 
 
-
-
+/*
+---------------------------------------------------------
+Item Relationships
+---------------------------------------------------------
+*/
+.item_relations_row {
+	padding-top: 2%;
+	padding-bottom: 2%;
+}
 
 
 

@@ -21,7 +21,7 @@
       {% for pred_key, vals in act_atr_grp.descriptions.items %}
       <tr>
         <td>
-          <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label }}</a>
+          <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label|capfirst }}</a>
           {% if vals.0.predicate__context__item_type != "projects" %}
           <br/><small>Vocabulary: <a href="https://{{vals.0.predicate__context__uri }}">{{ vals.0.predicate__context__label }}</a></small>
           {% endif %}
@@ -53,6 +53,25 @@
   </table>
   {% endif %}
 
+{% endfor %}
+
+
+{% for act_event in act_obs.oc_gen__has_events %}
+  {% for act_atr_grp in act_event.oc_gen__has_attribute_groups %}
+    {% if act_atr_grp.relations %}
+
+      {% with act_obs_id=act_obs.id %}
+      {% with act_event_id=act_event.id %}
+      {% with act_atr_grp_id=act_atr_grp.id %}
+      {% with relations=act_atr_grp.relations %}
+      {% include './relations.html' %}
+      {% endwith %}
+      {% endwith %}
+      {% endwith %}
+      {% endwith %}
+
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 
 {% endblock %}
