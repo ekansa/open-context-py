@@ -64,6 +64,16 @@ ITEM_METADATA_OBS_ID = '#item-metadata'
 ITEM_METADATA_OBS_LABEL = 'Item Metadata'
 
 
+DEFAULT_ITEM_TYPE_ICONS = {
+    'documents': '../../static/oc/icons-v2/noun-document-3183378.svg',
+    'persons': '../../static/oc/icons-v2/noun-people-3393687.svg',
+    'projects': '../../static/oc/icons-v2/noun-research-project-2341022.svg',
+    'subjects': '../../static/oc/icons-v2/noun-object-3504999.svg',
+    'subjects_children': '../../static/oc/icons-v2/noun-object-3504999.svg',
+    'tables': '../../static/oc/icons-v2/noun-table-4305.svg',
+}
+
+
 def _make_key_template_ok(key, key_find_replaces=KEY_FIND_REPLACES):
     """Makes a key OK for a template"""
     if not isinstance(key, str):
@@ -225,6 +235,15 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
                 # spatial containment relations somewhat differently in our
                 # tempate
                 act_item_type = 'subjects_children'
+            if pred_key in ['oc-pred:oc-gen-links', 'oc-pred:oc-gen-contains']:
+                # The predicate is a default type that does not need to be
+                # displayed in the HTML UI.
+                act_val['no_display_pred'] = True
+            
+            # Add a default icon to an item type if missing and default exists.
+            if not act_val.get('object_class_icon') and DEFAULT_ITEM_TYPE_ICONS.get(act_item_type):
+                act_val['object_class_icon'] = DEFAULT_ITEM_TYPE_ICONS.get(act_item_type)
+
             new_attrib_group['relations'].setdefault(
                 act_item_type,
                 LastUpdatedOrderedDict()

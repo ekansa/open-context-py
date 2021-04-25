@@ -146,6 +146,8 @@ class NotStoredAssertion():
         self.updated = None
         self.created = None
         self.meta_json = {}
+        self.object_class_icon = None
+
 
     @property
     def hash_id(self):
@@ -346,6 +348,8 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs):
             # assertion.
             ns_ass.updated = real_assert.updated
             ns_ass.created = real_assert.created 
+            if hasattr(real_assert, 'object_class_icon'):
+                ns_ass.object_class_icon = real_assert.object_class_icon
 
             if real_assert.predicate.data_type != 'id':
                 # This assertion has a literal value. Copy this into the ns_ass.

@@ -87,6 +87,12 @@ def db_get_project_metadata_qs(project_id):
     :param str project_id: UUID or string UUID for a project
         that may have Dublin Core metadata.
     """
+
+    class_icon_qs = AllResource.objects.filter(
+        item=OuterRef('object__item_class'),
+        resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
+    ).values('uri')[:1]
+
     qs = AllAssertion.objects.filter(
         subject_id=project_id,
         predicate__context_id=configs.DCTERMS_VOCAB_UUID,
@@ -114,6 +120,8 @@ def db_get_project_metadata_qs(project_id):
         'object__item_class'
     ).select_related( 
         'object__context'
+    ).annotate(
+        object_class_icon=Subquery(class_icon_qs)
     )
     return qs
 

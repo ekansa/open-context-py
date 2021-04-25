@@ -23,12 +23,50 @@
     <div class="card-body">
       {% for pred_key, vals in rel_asserts.items %}
       <div class="row">
+        {% if vals.0.no_display_pred %}
+        <div class="col-12">
+          {% if obj_item_type == 'media' %}
+
+            {% with max_cols=4 %}
+            {% with vals=vals %}
+            {% include './relations_media.html' %}
+            {% endwith %}
+            {% endwith %}
+
+          {%else%}
+
+            {% with max_cols=4 %}
+            {% with vals=vals %}
+            {% include './relations_other.html' %}
+            {% endwith %}
+            {% endwith %}
+
+          {%endif%}
+        </div>
+        {%else%}
         <div class="col-4">
           <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label|capfirst }}</a>
         </div>
         <div class="col-8">
-          {{ vals|length }}}
+          {% if obj_item_type == 'media' %}
+
+            {% with max_cols=3 %}
+            {% with vals=vals %}
+            {% include './relations_media.html' %}
+            {% endwith %}
+            {% endwith %}
+
+          {%else%}
+            
+            {% with max_cols=3 %}
+            {% with vals=vals %}
+            {% include './relations_other.html' %}
+            {% endwith %}
+            {% endwith %}
+
+          {%endif%}
         </div>
+        {%endif%}
       </div>
       {% endfor %}
     </div>

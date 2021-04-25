@@ -153,6 +153,11 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
     ).values('uri')[:1]
 
+    class_icon_qs = AllResource.objects.filter(
+        item=OuterRef('object__item_class'),
+        resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
+    ).values('uri')[:1]
+
     # DC-Creator equivalent predicate
     dc_creator_qs = AllAssertion.objects.filter(
         subject=OuterRef('predicate'),
@@ -196,6 +201,8 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         'object__context'
     ).annotate(
         object_thumbnail=Subquery(thumbs_qs)
+    ).annotate(
+        object_class_icon=Subquery(class_icon_qs)
     ).annotate(
         # This will indicate if a predicate is equivalent to a
         # dublin core creator.
@@ -371,7 +378,8 @@ def add_related_media_files_dicts(item_man_obj, act_dict=None):
         res_dict = LastUpdatedOrderedDict()
         res_dict['id'] = f'https://{res_obj.uri}'
         res_dict['type'] = rep_utils.get_item_key_or_uri_value(res_obj.resourcetype)
-        res_dict['dc-terms:hasFormat'] = f'https://{res_obj.mediatype.uri}'
+        if res_obj.mediatype:
+            res_dict['dc-terms:hasFormat'] = f'https://{res_obj.mediatype.uri}'
         if res_obj.filesize > 1:
             res_dict['dcat:size'] = int(res_obj.filesize)
         act_dict["oc-gen:has-files"].append(res_dict)

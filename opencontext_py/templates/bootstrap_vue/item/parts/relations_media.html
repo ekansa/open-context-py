@@ -1,0 +1,23 @@
+{% block relations_media %}
+
+<div class="row align-items-center item_rel_obj_val_row">
+  {% for val in vals %}    
+      <div class="col">
+        <figure class="figure text-center">
+          <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
+            <img src="{{ val.oc_gen__thumbnail_uri }}" class="rounded" alt="Thumbnail for {{ val.label }}"/>
+          </a>
+          <figcaption class="figure-caption text-center">{{ val.label }}</figcaption>
+        </figure>
+      </div>
+      {% if forloop.counter|divisibleby:max_cols %}
+  </div>    
+  <div class="row align-items-center item_rel_obj_val_row">
+      {%endif%}
+  {% endfor %}
+</div>
+
+
+
+
+{% endblock %}
