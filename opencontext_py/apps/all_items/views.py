@@ -77,6 +77,7 @@ def test_html(request, uuid):
             indent=4,
             ensure_ascii=False
         ),
+        'GEO_JSON': rep_dict.get('features'),
         # Expected order of related item_types
         'order_of_related_item_types': [
             'subjects', 
@@ -91,7 +92,10 @@ def test_html(request, uuid):
         'edit_status': man_obj.project.meta_json.get('edit_status'),
         'item': item_dict,
         'item_json': json_output,
+        # for debugging.
+        'show_json': request.GET.get('json', False),
     }
+
     template = loader.get_template('bootstrap_vue/item/item.html')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])

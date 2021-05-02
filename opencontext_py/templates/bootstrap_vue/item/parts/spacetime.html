@@ -1,0 +1,182 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's space-time (event) object.
+-->
+
+
+<template id='item_map'>
+  <div v-if="spacetime.feature && spacetime.geometry_type != null && spacetime.geometry_type != 'None'">          
+    <l-map
+      style="min-height: 300px;"
+      :ref="'map-' + spacetime.uuid" 
+      :zoom="spacetime.map_config.zoom"
+      :center="spacetime.map_config.center"
+      :load-tiles-while-animating="true" 
+      :load-tiles-while-interacting="true">
+      <l-control-layers position="topright"></l-control-layers>
+      <l-tile-layer
+        v-for="tp in tileProviders"
+        :key="tp.name"
+        :name="tp.name"
+        :visible="tp.visible"
+        :url="tp.url"
+        :attribution="tp.attribution"
+        layer-type="base"></l-tile-layer>
+      <l-geo-json
+        :key="'geojson-' + spacetime.uuid + map_key"
+        :ref="'geojson-' + spacetime.uuid"
+        :options="options"
+        :geojson="spacetime.feature"
+      >
+        </l-popup>
+      </l-geo-json>
+    </l-map>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+  // Import Vue2Leaflet components. 
+  const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
+  const l_tile_layer = Vue.component(
+    'l-tile-layer', 
+    window.Vue2Leaflet.LTileLayer,
+  );
+  const l_geo_json = Vue.component(
+    'l-geo-json', 
+    window.Vue2Leaflet.LGeoJson,
+  );
+  const l_control_layers = Vue.component(
+    'l-control-layers', 
+    window.Vue2Leaflet.LControlLayers,
+  );
+  const l_marker = Vue.component(
+    'l-marker', 
+    window.Vue2Leaflet.LMarker,
+  );
+  const l_map = Vue.component(
+    'l-map', 
+    window.Vue2Leaflet.LMap,
+  );
+  
+  const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
+  const TILE_PROVIDERS = [
+    {
+      name: 'OpenStreetMap',
+      visible: true,
+      id: 'osm',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    },
+    {
+      name: 'OpenTopoMap',
+      visible: false,
+      id: 'otm',
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: 'Map data: © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+    },
+    {
+      name: 'MapBox Light',
+      visible: false,
+      id: 'mapbox-light',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    },
+    {
+      name: 'MapBox Dark',
+      visible: false,
+      id: 'mapbox-dark',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    },
+    {
+      name: 'MapBox Satellite',
+      visible: false,
+      id: 'mapbox-satellite',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    }
+  ];
+
+
+  // Now make a Vue component of for a leaflet map.
+  var vc_item_map = Vue.component(
+    'item_map', 
+    {
+      props: ['spacetime', 'map_key'],
+      data() {
+        return {
+            // Map Options
+            map_key: 0,
+            zoom_def: 13,
+            layers: [],
+            selectedTileSet: TILE_PROVIDERS[0], 
+            tileProviders: TILE_PROVIDERS,
+            minZoom_def: 1,
+            maxZoom_def: 30,
+            show_mapsets_default: true,
+            map_ref: ('map-' + this.spacetime.uuid)
+        };
+      },
+      template: '#item_map',
+      created() {
+        this.get_map_ref();
+      },
+      mounted() {
+        this.get_map_ref();
+      },
+      computed: {
+        options() {
+          return {
+            onEachFeature: this.onEachFeatureFunction
+          };
+        },
+        onEachFeatureFunction() {
+          return (feature, layer) => {
+            layer.bindPopup(
+              `<dl class="row">
+                <dt class="col-sm-4">Item</dt>
+                <dd class="col-sm-8">${this.spacetime.item__label}</dd>
+                <dt class="col-sm-4">Record</dt>
+                <dd class="col-sm-8">${this.spacetime.event__label}</dd>
+                <dt class="col-sm-4">Type</dt>
+                <dd class="col-sm-8">${this.spacetime.event__item_class__label}</dd>
+                <dt class="col-sm-4">Geometry</dt>
+                <dd class="col-sm-8">${this.spacetime.geometry_type}</dd>
+              </dl>`
+            );
+            layer.bindTooltip(
+              ("<div>" + feature.properties.item__label + "</div>"),
+              { permanent: false, sticky: true }
+            );
+          };
+        },
+      },
+      methods: {
+        get_map_ref: function() {
+          console.log(this.$refs);
+          console.log(this.$refs[this.map_ref]);
+        },
+      },
+      components: {
+        'l-popup': l_popup,
+        'l-tile-layer': l_tile_layer,
+        'l-geo-json': l_geo_json,
+        'l-marker': l_marker,
+        'l-map': l_map,
+      },
+  });
+
+
+  </script>
