@@ -89,26 +89,37 @@ MANIFEST_META_JSON_KEYS = {
     ('projects', 'edit_group_id', int,),
     ('projects', 'geo_specificity', int,),
     ('projects', 'geo_note', str,),
+    ('projects', 'flag_human_remains', bool,),
 
     ('subjects', 'edit_status', int,),
     ('subjects', 'view_group_id', int,),
     ('subjects', 'edit_group_id', int,),
     ('subjects', 'geo_specificity', int,),
     ('subjects', 'geo_note', str,),
+    ('subjects', 'flag_human_remains', bool,),
 
     ('media', 'edit_status', int,),
     ('media', 'view_group_id', int,),
     ('media', 'edit_group_id', int,),
+    ('media', 'flag_human_remains', bool,),
     
     ('documents', 'edit_status', int,),
     ('documents', 'view_group_id', int,),
     ('documents', 'edit_group_id', int,),
+    ('documents', 'flag_human_remains', bool,),
 
     ('tables', 'edit_status', int,),
     ('tables', 'view_group_id', int,),
     ('tables', 'edit_group_id', int,),
+    ('tables', 'flag_human_remains', bool,),
 
     ('predicates', 'sort', int,),
+    ('predicates', 'flag_human_remains', bool,),
+
+    ('types', 'flag_human_remains', bool,),
+    ('class', 'flag_human_remains', bool,),
+    ('property', 'flag_human_remains', bool,),
+    ('uri', 'flag_human_remains', bool,),
     
     # Persons related metadata keys.
     ('persons', 'combined_name', str,),
@@ -116,6 +127,8 @@ MANIFEST_META_JSON_KEYS = {
     ('persons', 'given_name', str,),
     ('persons', 'initials', str,),
     ('persons', 'mid_init', str,),
+    # Yes, I guess for dead people!
+    ('persons', 'flag_human_remains', bool,),
 
     # Languages
     ('languages', 'label_localized', str,),

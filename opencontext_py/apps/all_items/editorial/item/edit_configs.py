@@ -34,6 +34,22 @@ DATA_TYPE_OPTIONS = [
 ] + LITERAL_DATA_TYPE_OPTIONS
 
 
+# A commonly used attribute to add to meta_json. We also have automated
+# ways of triggering this flag, but main way to remove the flag will be through
+# a manual interface.
+FLAG_HUMAN_REMAINS = {
+    'key': 'flag_human_remains', 
+    'label': 'Flag Human Remains', 
+    'data_type': 'xsd:boolean',
+    'note': 'Flag to warn users of human remains related content.',
+    'options': [
+        {'value': None, 'text': 'Not set',},
+        {'value': True, 'text': 'Flag Human Remains',},
+        {'value': False, 'text': 'Un-flag and remove Human Remains flag',},
+    ],
+}
+
+
 ITEM_TYPE_META_JSON_CONFIGS = {
     'projects': [
         {
@@ -80,6 +96,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'subjects': [
         {
@@ -122,6 +139,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'media': [
         {
@@ -142,6 +160,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': 5, 'text': 'Peer-reviewed',},
             ],
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'documents': [
         {
@@ -162,6 +181,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': 5, 'text': 'Peer-reviewed',},
             ],
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'tables': [
         {
@@ -182,6 +202,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': 5, 'text': 'Peer-reviewed',},
             ],
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'predicates': [
         {
@@ -194,6 +215,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options':None,
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'observations': [
         {
@@ -274,6 +296,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options':None,
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'languages': [
         {
@@ -341,6 +364,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': False, 'text': 'Not Deprecated (still current)',},
             ],
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'property': [
         {
@@ -356,6 +380,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': False, 'text': 'Not Deprecated (still current)',},
             ],
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'uri': [
         {
@@ -371,6 +396,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': False, 'text': 'Not Deprecated (still current)',},
             ],
         },
+        FLAG_HUMAN_REMAINS.copy(),
     ],
     'vocabularies': [
         {
