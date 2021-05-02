@@ -25,6 +25,10 @@ GAZETTEER_VOCAB_URIS = [
     'pleiades.stoa.org',
 ]
 
+DEFAULT_LOCATION_NOTE = 'Location data available with no intentional reduction in precision.'
+DEFAULT_LOCATION_LOW_PRECISION_NOTE = 'Location data has known limits on precision.'
+DEFAULT_LOCATION_SECURITY_NOTE = 'Location data approximated as a security precaution.'
+
 
 def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     """Gets space time objects for a manifest_obj and parent contexts
@@ -56,6 +60,8 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         item__in=context_objs,
     ).select_related(
         'item'
+    ).select_related(
+        'item__project'
     ).select_related(
         'event'
     ).select_related( 
@@ -143,6 +149,100 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     ]
 
 
+def get_meta_json_value_from_item_hierarchy(item_man_obj, meta_json_key='geo_note', default=None):
+    """Gets a value from a key in the meta_json field up a hierarchy of inheritance
+
+    :param AllManifest item_man_obj: An instance of the AllManifest model
+        that is getting geospatial data.
+    :param str meta_json_key: A string meta_json key to lookup
+    :param * default: the default value to return if a key lookup fails
+    """
+    key_val = item_man_obj.meta_json.get(
+        meta_json_key,
+        item_man_obj.project.meta_json.get(
+            meta_json_key,
+        )
+    )
+    if not key_val and str(item_man_obj.project.project.uuid) != configs.OPEN_CONTEXT_PROJ_UUID:
+        key_val = item_man_obj.project.project.meta_json.get(
+            meta_json_key,
+            default,
+        )
+    return key_val
+
+
+def add_precision_properties(properties, item_man_obj, spacetime_obj):
+    """Adds geospatial precision notes
+
+    :param dict properties: A GeoJSON properties dictionary.
+    :param AllManifest item_man_obj: An instance of the AllManifest model
+        that is getting geospatial data.
+    :param AllSpaceTime spacetime_obj: A spacetime object with location
+        precision information
+    """
+
+    # First, attempt to get a geospatial precision note from the item
+    # itself, or the project for this item, or this item's project__project!
+    item_precision_specificity = get_meta_json_value_from_item_hierarchy(
+        item_man_obj, 
+        meta_json_key='geo_specificity', 
+        default=0
+    )
+    item_precision_note = get_meta_json_value_from_item_hierarchy(
+        item_man_obj, 
+        meta_json_key='geo_note', 
+        default=None
+    )
+
+    # If we don't have an item precision note for this item (including
+    # parent projects, use the note associated with the spatial inference)
+    if not item_precision_note and spacetime_obj.item.uuid != item_man_obj.uuid:
+        item_precision_note = spacetime_obj.item.meta_json.get(
+            'geo_note',
+            spacetime_obj.item.project.meta_json.get(
+                'geo_note',
+            )
+        )
+    if not item_precision_note:
+        item_precision_note = None
+
+    
+    if spacetime_obj.geo_specificity and spacetime_obj.geo_specificity != 0:
+        # Use the geo specificity actually from the geo data.
+        item_precision_specificity = spacetime_obj.geo_specificity
+
+    if not item_precision_specificity:
+        item_precision_specificity = 0
+    
+    if item_precision_specificity == 0:
+        # Case of no known attempt to obscure location data, no statement
+        # about any uncertainty.
+        if item_precision_note:
+            properties["location-precision-note"] = item_precision_note
+        else:
+            properties["location-precision-note"] = DEFAULT_LOCATION_NOTE
+    elif item_precision_specificity < 0:
+        # Case of intentionally obscured location data.
+        properties["location-precision"] = abs(item_precision_specificity)
+        if item_precision_note:
+            properties["location-precision-note"] = item_precision_note
+        else:
+            properties["location-precision-note"] = DEFAULT_LOCATION_SECURITY_NOTE
+
+        properties["location-precision"] = abs(item_precision_specificity)
+    elif item_precision_specificity > 0:
+        # Case of otherwise uncertain / low precision location data.
+        properties["location-precision"] = abs(item_precision_specificity)
+        if item_precision_note:
+            properties["location-precision-note"] = item_precision_note
+        else:
+            properties["location-precision-note"] = DEFAULT_LOCATION_LOW_PRECISION_NOTE
+
+        properties["location-precision"] = abs(item_precision_specificity)
+    else:
+        pass
+    
+    return properties
 
 
 def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None):
@@ -195,6 +295,12 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
             # is associated directly to the item_man_obj for which we're building a
             # GeoJSON representation.
             properties["reference-type"] = "specified"
+            # Add the location precision note.
+            properties = add_precision_properties(
+                properties, 
+                item_man_obj, 
+                spacetime_obj
+            )
             feature["geometry"] = spacetime_obj.geometry.copy()
             feature["geometry"]["id"] = f"#feature-geom-{spacetime_obj.uuid}"
         else:
@@ -221,6 +327,14 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
                 properties["location-region-note"] = "This point represents the center of the region containing this item."
             else:
                 properties["contained-in-region"] = False
+            
+            # Add the location precision note.
+            properties = add_precision_properties(
+                properties, 
+                item_man_obj, 
+                ref_spacetime_obj
+            )
+
             geomtry = LastUpdatedOrderedDict()
             geomtry["id"] = f"#geo-geom-{ref_spacetime_obj.uuid}"
             geomtry["type"] = "Point"
