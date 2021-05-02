@@ -68,9 +68,22 @@ DEFAULT_ITEM_TYPE_ICONS = {
     'documents': '../../static/oc/icons-v2/noun-document-3183378.svg',
     'persons': '../../static/oc/icons-v2/noun-people-3393687.svg',
     'projects': '../../static/oc/icons-v2/noun-research-project-2341022.svg',
-    'subjects': '../../static/oc/icons-v2/noun-object-3504999.svg',
-    'subjects_children': '../../static/oc/icons-v2/noun-object-3504999.svg',
+    # 'subjects': '../../static/oc/icons-v2/noun-object-3504999.svg',
+    # 'subjects_children': '../../static/oc/icons-v2/noun-object-3504999.svg',
+    'subjects': '../../static/oc/icons-v2/object-icon-draft-1.svg',
+    'subjects_children': '../../static/oc/icons-v2/object-icon-draft-1.svg',
     'tables': '../../static/oc/icons-v2/noun-table-4305.svg',
+}
+
+DEFAULT_LICENSE_ICONS = {
+    'creativecommons.org/licenses/by/': '../../static/oc/cc-icons/cc-by.svg',
+    'creativecommons.org/licenses/by-nc/': '../../static/oc/cc-icons/cc-by-nc.svg',
+    'creativecommons.org/licenses/by-nc-nd/': '../../static/oc/cc-icons/cc-by-nc-nd.svg',
+    'creativecommons.org/licenses/by-nc-sa/': '../../static/oc/cc-icons/cc-by-nc-sa.svg',
+    'creativecommons.org/licenses/by-nd/': '../../static/oc/cc-icons/by-nd.svg',
+    'creativecommons.org/licenses/by-sa/': '../../static/oc/cc-icons/by-sa.svg',
+    'creativecommons.org/publicdomain/mark/': '../../static/oc/cc-icons/cc-publicdomain.svg',
+    'creativecommons.org/publicdomain/zero/': '../../static/oc/cc-icons/cc-zero.svg',
 }
 
 
@@ -316,6 +329,32 @@ def template_reorganize_all_obs(rep_dict):
     return rep_dict
 
 
+def add_license_icons_public_domain_flag(rep_dict, icon_dict=DEFAULT_LICENSE_ICONS):
+    """Adds licensing icons to license assertions
+
+    :param dict rep_dict: The item's JSON-LD representation dict
+    """
+    if not rep_dict.get('dc-terms:license'):
+        return rep_dict
+    
+    for lic_dict in rep_dict.get('dc-terms:license'):
+        if '/publicdomain/' in lic_dict.get('id', ''):
+            lic_dict['is_publicdomain'] = True
+        else:
+            lic_dict['is_publicdomain'] = False
+
+        if lic_dict.get('object_class_icon'):
+            # This license dict already has an icon
+            continue
+        for uri_key, icon_url in icon_dict.items():
+            if not uri_key in lic_dict.get('id', ''):
+                # The URI key is not a substring of the license
+                # URI (id)
+                continue
+            lic_dict['object_class_icon'] = icon_url
+    return rep_dict
+
+
 def prepare_for_item_dict_html_template(man_obj, rep_dict):
     """Prepares a representation dict for HTML templating"""
 
@@ -335,6 +374,8 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
     # them more consistent and easier to use in the template
     rep_dict = template_reorganize_all_obs(rep_dict)
 
+    # Add licensing icons to licenses in the rep_dict
+    rep_dict = add_license_icons_public_domain_flag(rep_dict)
 
     # Now ensure easy to template characters in the keys
     # in this dict
