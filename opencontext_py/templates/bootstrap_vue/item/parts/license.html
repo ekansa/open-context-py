@@ -1,0 +1,48 @@
+{% block license %}
+
+{% if item.dc_terms__license %}
+
+<div id="item_license" class="card border-0">
+    <div class="card-header">
+        <h5>Copyright License</h5>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col col-sm-4 text-center" id="item_license_icon_div">
+                <a href="{{ item.dc_terms__license.0.id }}" target="_blank">
+                    <img class="img-responsive"
+                        id="item_license_icon"
+                        src="{{ item.dc_terms__license.0.object_class_icon }}"
+                        alt="Icon for {{ item.dc_terms__license.0.label }}" />
+                </a>
+            </div>
+            <div class="col col-sm-8" id="item_license_label_div">
+                <a href="{{ item.dc_terms__license.0.id }}" 
+                   target="_blank">
+                    {{ item.dc_terms__license.0.label }}
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                {% if item.dc_terms__license.0.is_publicdomain %}
+                <p class="small">While this content is in the public domain,
+                please appropriately cite the contributors and Open Context
+                </p>
+                {%else%}
+                <p class="small">To the extent to which copyright applies, this content
+                carries the above license. Follow the link to understand specific permissions
+                and requirements.
+                <br/>
+                <br/>
+                <em>Required Attribution</em>: Citation and reference of URIs (hyperlinks)
+                </p>
+                {%endif%}
+            </div>
+        </div>
+    </div>
+</div>
+
+{%endif%}
+
+{% endblock %}

@@ -43,11 +43,11 @@
 
                 {% include '../item/parts/project_context.html' %}
 
-
+                {% include '../item/parts/license.html' %}
             </div>
         </div>
 
-
+        {% if show_json %}
         <div class="row">
             <div class="col">
                 <label for="item_json" class="form-label">Item JSON</label>
@@ -55,6 +55,7 @@
                 </textarea>
             </div>
         </div>
+        {%endif%}
 
     </div>
 
