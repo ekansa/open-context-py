@@ -211,20 +211,23 @@ def db_make_project_context_df(project_id):
     obj_df = rename_pred_obj_df_cols(obj_df, 'object')
 
     df = pd.concat([obj_df, obj_df])
+    if df.empty:
+        return df
 
     ld_qs = get_ld_assertions_on_item_qs(df['subject_id'].unique().tolist())
     df_ld = pd.DataFrame.from_records(ld_qs)
     
     # Avoid duplicating columns already in df
-    drop_cols = [c for c in df_ld.columns if c.startswith('subject__')]
-    df_ld.drop(columns=drop_cols, inplace=True)
+    if len(ld_qs) and not df_ld.empty:
+        drop_cols = [c for c in df_ld.columns if c.startswith('subject__')]
+        df_ld.drop(columns=drop_cols, inplace=True)
 
-    df = df.merge(
-        df_ld, 
-        how='left',
-        left_on='subject_id', 
-        right_on='subject_id'
-    )
+        df = df.merge(
+            df_ld, 
+            how='left',
+            left_on='subject_id', 
+            right_on='subject_id'
+        )
 
     # Now make all the uuids simple strings.
     for col in df.columns:

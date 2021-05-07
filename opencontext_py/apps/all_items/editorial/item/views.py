@@ -22,6 +22,7 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
 )
+
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
@@ -36,6 +37,7 @@ from opencontext_py.apps.all_items.editorial.item import updater_assertions
 from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 from opencontext_py.apps.all_items.editorial.item import updater_resources
 from opencontext_py.apps.all_items.editorial.item import updater_identifiers
+from opencontext_py.apps.all_items.editorial.item import updater_project
 from opencontext_py.apps.all_items.editorial.item import item_validation
 from opencontext_py.apps.all_items.editorial.item import projects_api
 
@@ -647,6 +649,11 @@ def sort_item_assertions(request):
 @cache_control(no_cache=True)
 @never_cache
 def sort_project_assertions(request):
+
+    # NOTE: This request inputs and outputs have the same standard as
+    # other project-wide editorial commands that require use of the
+    # cache and / or queue.
+
     if request.method != 'POST':
         return HttpResponse(
             'Must be a POST request', status=405
@@ -659,10 +666,37 @@ def sort_project_assertions(request):
     if len(errors):
         # We failed.
         return make_error_response(errors)
+
+    count_updated = 0
+    progress = 0
+    message = 'Sort started'
+    if updated and len(updated):
+        complete = sorts_done
+        for update in updated:
+            count_updated = update.get('last_chunk_index', 0)
+            complete &= update.get('done', False)
+            progress = (
+                updated[0].get('last_chunk_index', 0) 
+                / updated[0].get('total_chunks', 1)
+            )
+            if complete:
+                message = (
+                    f"Finished sort of {update.get('total_uuids_count', 1)} items"
+                )
+            else:
+                message = (
+                    f"Batch {update.get('last_chunk_index', 0)} "
+                    f"of {update.get('total_chunks', 1)}, "
+                    f"{update.get('total_uuids_count', 1)} total items"
+                )
+
     output = {
         'ok': True,
-        'complete': sorts_done,
+        'complete': complete,
         'updated': updated,
+        'count_updated': count_updated,
+        'progress': progress,
+        'message': message,
     }
     json_output = json.dumps(
         output,
@@ -986,6 +1020,73 @@ def delete_resources(request):
         'ok': True,
         'deleted': deleted,
     }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+
+# ---------------------------------------------------------------------
+# NOTE: Flag human remains in a project's records
+# ---------------------------------------------------------------------
+@cache_control(no_cache=True)
+@never_cache
+def flag_project_human_remains(request):
+
+    # NOTE: This request inputs and outputs have the same standard as
+    # other project-wide editorial commands that require use of the
+    # cache and / or queue.
+
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    hr_done, updated, errors = updater_project.queued_flag_project_human_remains(
+        request_json, 
+        request=request
+    )
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+
+    count_updated = 0
+    progress = 0
+    message = 'Flagging started'
+    job_id = None
+    if updated and len(updated):
+        complete = hr_done
+        for update in updated:
+            count_updated += update.get('count_updated', 0)
+            job_id = update.get('job_id')
+            if not update.get('done', False):
+                complete = False
+                progress = 0.45
+            if complete:
+                message = (
+                    f"Finished human remains flagging of {count_updated} records"
+                )
+                progress = 1
+            else:
+                message = (
+                   f"Continuing to flag human remains records..."
+                )
+    output = {
+        'ok': True,
+        'complete': complete,
+        'updated': updated,
+        'count_updated': count_updated,
+        'progress': progress,
+        'message': message,
+        'job_id': job_id,
+    }
+
     json_output = json.dumps(
         output,
         indent=4,

@@ -8,6 +8,9 @@ NOTE: Templates and view components to edit an item's manifest object.
  .field_row {
    margin-top: 48px;
  }
+ .progress_row {
+   margin-bottom: 24px;
+ }
 </style>
 
 
@@ -85,6 +88,45 @@ NOTE: Templates and view components to edit an item's manifest object.
 </template>
 
 
+<template id="edit-project-method">
+  <div>
+    <b-row>
+      <b-col cols="3">
+        <b-button 
+          block
+          :disabled="rq_started"
+          @click="request_start"
+          variant="primary">
+          [[ button_label ]]
+        </b-button>
+      </b-col>
+      <b-col cols="9">
+        <p v-if="!rq_started">
+          [[ rq_description ]]
+        </p>
+        <p v-if="rq_started">
+          [[ rq_name ]] process started at <strong>[[ rq_started_display ]]</strong>; 
+          ongoing after <strong>[[ rq_elapsed_time_display ]]</strong>. 
+          <br/>
+          Updated: <strong>[[ rq_count_updated ]]</strong> [[ rq_batch_name ]], [[ rq_count ]] server requests.
+        </p>
+      </b-col>
+    </b-row>
+
+    <b-row v-if="rq_progress" class="progress_row">
+      <b-col cols="12">
+
+        <b-progress max="1" height="2rem" variant="success">
+          <b-progress-bar :value="rq_progress">
+            <span><strong>[[ (rq_progress * 100).toFixed(1) ]] %</strong> ([[ rq_message ]])</span>
+          </b-progress-bar>
+        </b-progress>
+
+      </b-col>
+    </b-row>
+  </div>
+</template>
+
 
 <template id="edit-project">
   <b-container fluid v-if="man_obj">
@@ -108,43 +150,29 @@ NOTE: Templates and view components to edit an item's manifest object.
               </p>
             </b-col>
           </b-row>
-
-          <b-row>
-            <b-col cols="3">
-              <b-button 
-                block
-                :disabled="sort_started"
-                @click="sort_start"
-                variant="primary">
-                Sort Items in Project
-              </b-button>
-            </b-col>
-            <b-col cols="9">
-              <p v-if="!sort_started">
-                Click the left button to sort all item links in this project
-                according to their label. This should make listed items appear
-                in a reasonable, expected order.
-              </p>
-              <p v-if="sort_started">
-                Sorting process started at <strong>[[ sort_started_display ]]</strong>; 
-                ongoing after <strong>[[ sort_elapsed_time_display ]]</strong>. 
-                <br/>
-                Sorted <strong>[[ sort_count_updated ]]</strong> linking records.
-              </p>
-            </b-col>
-          </b-row>
-
-          <b-row v-if="sort_progress">
-            <b-col cols="12">
-
-              <b-progress max="1" height="2rem" variant="success">
-                <b-progress-bar :value="sort_progress">
-                  <span><strong>[[ (sort_progress * 100).toFixed(1) ]] %</strong> ([[ sort_message ]])</span>
-                </b-progress-bar>
-              </b-progress>
-
-            </b-col>
-          </b-row>
+          
+          <edit-project-method
+            v-bind:rq_args="sort_rq_args"
+            rq_url="/editorial/item-sort-project-assertions"
+            button_label="Sort Items in Project"
+            rq_description="Click the left button to sort all item links in this 
+            project according to their label. This should make listed items appear 
+            in a reasonable, expected order."
+            rq_name="Project Sort"
+            rq_batch_name="batches"
+          >
+          </edit-project-method>
+          
+          <edit-project-method
+            v-bind:rq_args="human_remains_rq_args"
+            rq_url="/editorial/flag-project-human-remains"
+            button_label="Flag Project Human Remains"
+            rq_description="Click the left button to use associated metadata about items 
+            in this project to flag records as relating to human-remains or burials."
+            rq_name="Human Remains Flag"
+            rq_batch_name="records"
+          >
+          </edit-project-method>
 
         </b-alert>
       </b-col>
@@ -490,6 +518,157 @@ var vc_project_data_sources = Vue.component(
   }
 );
 
+
+var vc_edit_project_method = Vue.component(
+  'edit-project-method',
+  {
+    delimiters: ['[[', ']]'],
+    props: [
+      'rq_args',
+      'rq_url',
+      'button_label',
+      'rq_description', 
+      'rq_name',
+      'rq_batch_name',
+    ],
+    data() {
+      return {
+        rq_args: [],
+        rq_url: null,
+        button_label: 'Long Request',
+        rq_description: 'Request description',
+        rq_name: 'Request name',
+        rq_batch_name: 'batches',
+        rq_message: null,
+        man_obj: null,
+        errors: null,
+        rq_done: false,
+        rq_started: false,
+        rq_start_time: null,
+        rq_progress_time: null,
+        rq_done_time: null,
+        rq_show_result: false,
+        rq_progress: null,
+        rq_message: null,
+        rq_count_updated: null,
+        updating: false,
+        loading: false,
+        rq_count: 0,
+      }
+    },
+    template: '#edit-project-method',
+    computed: {
+      rq_started_display: function() {
+        if(!this.rq_start_time){
+          return null;
+        }
+        return this.rq_start_time.toLocaleTimeString();
+      },
+      rq_elapsed_time_display: function() {
+        if(!this.rq_start_time){
+          return null;
+        }
+        let last_time = new Date();
+        if(this.rq_done_time != null){
+          last_time = this.rq_done_time;
+          console.log('done time');
+        }
+        else if(this.rq_progress_time != null){
+          last_time = this.rq_progress_time;
+          console.log('progress time');
+        }
+        
+        let time_diff = last_time - this.rq_start_time;
+        time_diff /= 1000;
+        let min_time_diff = Math.floor(time_diff / 60);
+        let hr_time_diff = Math.floor(min_time_diff / 60);
+        let seconds = Math.floor(time_diff % 60);
+        let seconds_str = seconds < 10 ? "0" + seconds : seconds;
+        let minutes = min_time_diff % 60;
+        let minutes_str = minutes < 10 ? "0" + minutes : minutes;
+        let hours = hr_time_diff % 24;
+        let hours_str = hours < 10 ? "0" + hours : hours;
+        return `${hours}:${minutes_str}:${seconds_str}`;
+      },
+    },
+    methods: {
+      do_rq_request(rq_act_args){
+        this.rq_count +=1;
+        this.rq_started = true;
+        this.updating = true;
+        this.loading = true;
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify(rq_act_args),
+        };
+        fetch(this.rq_url, requestOptions)
+        .then(response => response.json())
+        .then(json => {
+          const data = json;
+          // check for error response
+          if (data.errors) {
+            // get error message from body or default to response status
+            this.updating = false;
+            this.rq_show_result = true;
+            this.errors = data.errors;
+            return Promise.reject(error);
+          }
+          console.log(data);
+          this.rq_done = data.complete;
+          this.rq_progress_time = new Date();
+          
+          this.rq_count_updated = data.count_updated;
+          this.rq_progress = data.progress;
+          this.rq_message = data.message;
+          this.rq_done = data.complete;
+          console.log('Number of requests: ' + this.rq_count);
+          if(!this.rq_done){
+            setTimeout(() => {  this.fetch_api_without_reset(); }, 500);
+          }
+          else{
+            this.rq_progress = 1;
+          }
+        })
+        .catch(error => {
+          this.errorMessage = error;
+          console.error('There was an error!', error);
+        });
+      },
+      fetch_api_with_reset: function (){
+        this.error = null;
+        this.rq_count = 0;
+        let rq_act_args = [];
+        for(let arg_obj of this.rq_args){
+          arg_obj.reset = true;
+          rq_act_args.push(arg_obj);
+        }
+        this.do_rq_request(rq_act_args);
+      },
+      fetch_api_without_reset: function (){
+        let rq_act_args = [];
+        for(let arg_obj of this.rq_args){
+          arg_obj.reset = false;
+          rq_act_args.push(arg_obj);
+        }
+        this.do_rq_request(rq_act_args);
+      },
+      request_start: function() {
+        this.rq_started = true;
+        this.rq_start_time = new Date();
+        this.fetch_api_with_reset();
+      },
+    },
+    components: {
+      
+    },
+  }
+);
+
+
 var vc_edit_project = Vue.component(
   'edit-project',
   {
@@ -500,15 +679,6 @@ var vc_edit_project = Vue.component(
         uuid: null,
         man_obj: null,
         errors: null,
-        sort_done: false,
-        sort_started: false,
-        sort_start_time: null,
-        sort_progress_time: null,
-        sort_done_time: null,
-        show_sort_result: false,
-        sort_progress: null,
-        sort_message: null,
-        sort_count_updated: null,
         cached_tree_items: {},
         data_sources: null,
       }
@@ -525,37 +695,11 @@ var vc_edit_project = Vue.component(
         let url = this.trim_prefix(this.man_obj.uri, 'https://');
         return 'https://' + this.trim_prefix(url, 'http://');
       },
-      sort_started_display: function() {
-        if(!this.sort_start_time){
-          return null;
-        }
-        return this.sort_start_time.toLocaleTimeString();
+      sort_rq_args: function() {
+        return [{uuid: this.uuid}];
       },
-      sort_elapsed_time_display: function() {
-        if(!this.sort_start_time){
-          return null;
-        }
-        let last_time = new Date();
-        if(this.sort_done_time != null){
-          last_time = this.sort_done_time;
-          console.log('done time');
-        }
-        else if(this.sort_progress_time != null){
-          last_time = this.sort_progress_time;
-          console.log('progress time');
-        }
-        
-        let time_diff = last_time - this.sort_start_time;
-        time_diff /= 1000;
-        let min_time_diff = Math.floor(time_diff / 60);
-        let hr_time_diff = Math.floor(min_time_diff / 60);
-        let seconds = Math.floor(time_diff % 60);
-        let seconds_str = seconds < 10 ? "0" + seconds : seconds;
-        let minutes = min_time_diff % 60;
-        let minutes_str = minutes < 10 ? "0" + minutes : minutes;
-        let hours = hr_time_diff % 24;
-        let hours_str = hours < 10 ? "0" + hours : hours;
-        return `${hours}:${minutes_str}:${seconds_str}`;
+      human_remains_rq_args: function() {
+        return [{uuid: this.uuid}];
       },
     },
     methods: {
@@ -593,82 +737,6 @@ var vc_edit_project = Vue.component(
         input_value = this.trim_prefix(input_value, 'http://');
         return input_value;
       },
-      do_sort_request(sort_objs, endpoint_url){
-        this.sort_started = true;
-        this.updating = true;
-        const requestOptions = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken,
-          },
-          body: JSON.stringify(sort_objs),
-        };
-        fetch(endpoint_url, requestOptions)
-        .then(response => response.json())
-        .then(json => {
-          const data = json;
-          // check for error response
-          if (data.errors) {
-            // get error message from body or default to response status
-            this.updating = false;
-            this.show_sort_result = true;
-            this.errors = data.errors;
-            return Promise.reject(error);
-          }
-          console.log(data);
-          this.sort_done = data.complete;
-          this.sort_progress_time = new Date();
-          this.sort_count_updated = data.updated[0].count_updated;
-          this.sort_progress = data.updated[0].last_chunk_index / data.updated[0].total_chunks;
-          if(data.updated[0].total_chunks <= 1){
-            this.sort_done = true;
-          }
-          if(!this.sort_done){
-            this.sort_message = (`Batch ${data.updated[0].last_chunk_index} `
-            + `of ${data.updated[0].total_chunks}, `
-            + `${data.updated[0].total_uuids_count} total items`
-            );
-            this.fetch_api_project_sort();
-          }
-          else{
-            this.sort_progress = 1;
-            this.sort_message = `Finished sorting ${data.updated[0].total_uuids_count} items`;
-          }
-        })
-        .catch(error => {
-          this.errorMessage = error;
-          console.error('There was an error!', error);
-        });
-      },
-      fetch_api_reset_project_sort: function (){
-        this.error = null;
-        this.loading = true;
-        let sort_obj = {
-          uuid: this.uuid,
-          reset: true,
-        };
-        let sort_objs = [];
-        sort_objs.push(sort_obj);
-        let endpoint_url = '/editorial/item-sort-project-assertions';
-        this.do_sort_request(sort_objs, endpoint_url);
-      },
-      fetch_api_project_sort: function (){
-        this.error = null;
-        this.loading = true;
-        let sort_obj = {
-          uuid: this.uuid,
-        };
-        let sort_objs = [];
-        sort_objs.push(sort_obj);
-        let endpoint_url = '/editorial/item-sort-project-assertions';
-        this.do_sort_request(sort_objs, endpoint_url);
-      },
-      sort_start: function() {
-        this.sort_started = true;
-        this.sort_start_time = new Date();
-        this.fetch_api_reset_project_sort();
-      },
       cache_fetched_item(item){
         if(typeof this.cached_tree_items === 'undefined'){
           this.cached_tree_items = {};
@@ -689,6 +757,7 @@ var vc_edit_project = Vue.component(
       'lookup-list': vs_look_up_list,
       'project-persons': vc_project_persons,
       'project-data-sources': vc_project_data_sources,
+      'edit-project-method': vc_edit_project_method,
     },
   }
 ); 

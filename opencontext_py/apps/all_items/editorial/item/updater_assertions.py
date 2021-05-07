@@ -861,6 +861,8 @@ def sort_project_assertions(request_json, request=None):
             timeout=PROJECT_SORT_CACHE_LIFE,
         )
         update_dict = {k:v for k,v in proj_context_sort_stage.items() if k != 'chunk_uuids'}
+        if update_dict.get('total_chunks', 1) <= 1:
+            update_dict['done'] = True
         updated.append(update_dict)
 
     return sorts_done, updated, errors

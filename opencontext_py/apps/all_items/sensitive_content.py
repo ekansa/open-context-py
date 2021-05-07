@@ -155,6 +155,8 @@ def flag_human_remains_items_in_project(
     :param bool reset_cache: Force the cache to be reset.
     """
 
+    count_flagged = 0
+
     hr_class_uris = [
         AllManifest().clean_uri(uri) 
         for uri in HUMAN_REMAINS_ITEM_CLASS_URIS
@@ -167,34 +169,37 @@ def flag_human_remains_items_in_project(
     # Get the project context, which has equivalence and other
     # linked data relations for all predicates and types used in
     # project.
+    print(f'Fetching Project context for {project_id}')
     df_context = context.get_cache_project_context_df(
-        project_id,
+        str(project_id),
         use_cache=use_cache,
         reset_cache=reset_cache,
     )
     print(f'Project context has {len(df_context.index)} rows.')
 
-    hr_equiv_index = (
-        df_context['predicate_id'].isin(
-            # Equivalent or sub-class of human remains related
-            # linked data uris
-            configs.PREDICATE_LIST_SBJ_EQUIV_OBJ
-            + configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ
+    hr_equiv_ids = []
+    if set(['predicate_id', 'object__uri']).issubset(set(df_context.columns)):
+        hr_equiv_index = (
+            df_context['predicate_id'].isin(
+                # Equivalent or sub-class of human remains related
+                # linked data uris
+                configs.PREDICATE_LIST_SBJ_EQUIV_OBJ
+                + configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ
+            )
+            & df_context['object__uri'].isin(
+                hr_class_uris + ld_uris
+            )
         )
-        & df_context['object__uri'].isin(
-            hr_class_uris + ld_uris
-        )
-    )
-    # Get all of the types, etc that have some sort of equivalence or 
-    # sub-class relationship to linked data entities about human remains.
-    hr_equiv_ids = df_context[hr_equiv_index]['subject_id'].unique().tolist()
+        # Get all of the types, etc that have some sort of equivalence or 
+        # sub-class relationship to linked data entities about human remains.
+        hr_equiv_ids = df_context[hr_equiv_index]['subject_id'].unique().tolist()
+
+    print(f'Project context has: {len(hr_equiv_ids)} human-remains related types.')
 
     hr_qs = AllManifest.objects.filter(
         project_id=project_id,
-        meta_json__flag_human_remains__isnull=True,
         uuid__in=AllAssertion.objects.filter(
             subject__project_id=project_id,
-            subject__meta_json__flag_human_remains__isnull=True,
             visible=True,
         ).filter(
             Q(subject__item_class__uri__in=hr_class_uris)
@@ -215,6 +220,7 @@ def flag_human_remains_items_in_project(
     for man_obj in hr_qs:
         man_obj.meta_json['flag_human_remains'] = True
         man_obj.save()
+        count_flagged += 1
         print(
             f'Added human remains flag to {man_obj.item_type}: {man_obj.label} '
             f'({man_obj.uuid}): {man_obj.uri}'
@@ -226,13 +232,11 @@ def flag_human_remains_items_in_project(
     
     hr_rel_qs = AllManifest.objects.filter(
         project_id=project_id,
-        meta_json__flag_human_remains__isnull=True,
     ).filter(
         # Look up media and documents items that are objects of relationships
         # with human remains flagged items.
         Q(uuid__in=AllAssertion.objects.filter(
                 object__item_type__in=['media', 'documents'],
-                object__meta_json__flag_human_remains__isnull=True,
             ).filter(
                 Q(subject__in=human_remains_subjs)
                 |Q(
@@ -247,7 +251,6 @@ def flag_human_remains_items_in_project(
         )
         |Q(uuid__in=AllAssertion.objects.filter(
                 subject__item_type__in=['media', 'documents'],
-                subject__meta_json__flag_human_remains__isnull=True,
             ).filter(
                 Q(object__in=human_remains_subjs)
                 |Q(
@@ -266,7 +269,9 @@ def flag_human_remains_items_in_project(
     for man_obj in hr_rel_qs:
         man_obj.meta_json['flag_human_remains'] = True
         man_obj.save()
+        count_flagged += 1
         print(
             f'Added human remains flag to {man_obj.item_type}: {man_obj.label} '
             f'({man_obj.uuid}): {man_obj.uri}'
         )
+    return count_flagged

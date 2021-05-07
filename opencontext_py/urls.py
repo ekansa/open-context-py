@@ -255,7 +255,7 @@ urlpatterns = [
         EditorialItemViews.delete_resources, 
         name='editorial_delete_resources'
     ),
-    # Item space-time editing URLs
+    # Item identifier editing URLs
     url(
         r'^editorial/item-identifiers/(?P<uuid>\S+)', 
         EditorialItemViews.item_identifiers_json, 
@@ -276,6 +276,13 @@ urlpatterns = [
         EditorialItemViews.delete_identifiers, 
         name='editorial_delete_identifiers'
     ),
+    # Project Human-Remains flagging
+    url(
+        r'^editorial/flag-project-human-remains', 
+        EditorialItemViews.flag_project_human_remains, 
+        name='editorial_flag_project_human_remains'
+    ),
+
     url(
         r'^editorial/proj-descriptions-tree/(?P<identifier>\S+)', 
         EditorialItemViews.project_descriptions_tree_json, 
