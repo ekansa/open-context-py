@@ -3,10 +3,10 @@
 {% if item.contexts %}
 
 <div class="row">
-  <div class="col-sm-12">
-    <nav aria-label="breadcrumb">
+  <div class="col-sm-12" id="item_context">
+    <nav aria-label="breadcrumb" id="item_context_nav">
         <ol class="breadcrumb">
-          <li id="context-start">Context: </li>
+          <li id="context_start">Context: </li>
           {% for act_con in item.contexts %}
             {% if forloop.first %}  
             <li class="breadcrumb-item"><a href="{% url 'all_items_html' act_con.uuid %}">{{ act_con.label }}</a></li>

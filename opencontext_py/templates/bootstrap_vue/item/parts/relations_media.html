@@ -5,9 +5,21 @@
       <div class="col">
         <figure class="figure text-center">
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
+            {% if val.object__meta_json.flag_human_remains %}
+            <img src="{{ val.oc_gen__thumbnail_uri }}" 
+            class="rounded human_remains_thumb_burr" 
+            alt="Thumbnail for {{ val.label }}"/>
+            {%else%}
             <img src="{{ val.oc_gen__thumbnail_uri }}" class="rounded" alt="Thumbnail for {{ val.label }}"/>
+            {%endif%}
           </a>
-          <figcaption class="figure-caption text-center">{{ val.label }}</figcaption>
+          <figcaption class="figure-caption text-center">{{ val.label }}
+          {% if val.object__meta_json.flag_human_remains %}
+          <br/><span class="badge badge-pill badge-warning human_remains_warn text-center">
+            <i class="bi bi-exclamation-circle-fill"></i> Human Remains
+          </span>
+          {%endif%}
+          </figcaption>
         </figure>
       </div>
       {% if forloop.counter|divisibleby:max_cols %}

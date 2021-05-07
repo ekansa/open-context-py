@@ -2,10 +2,10 @@
 
 <div class="row align-items-center item_rel_obj_val_row">
   {% for val in vals %}    
-    <div class="col-xs-6 col-sd-4 col-md-3">
+    <div class="col-{{ col_width }}">
       {% if val.object_class_icon %}
       <div class="row align-items-center">
-        <div class="col-xs-1">
+        <div class="col-1 item_rel_cell_obj_class_icon">
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
             <img 
             role="img" 
@@ -14,12 +14,22 @@
             alt="Icon for {{ val.object__item_type }}, {{ val.object__item_class__label }} ,{{ val.label }}"/>
           </a>
         </div>
-        <div class="col-xs-11">
+        <div class="col">
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
+          {% if val.object__meta_json.flag_human_remains %}
+          <br/><span class="badge badge-pill badge-warning human_remains_warn">
+            <i class="bi bi-exclamation-circle-fill"></i> Human Remains
+          </span>
+          {%endif%}
         </div>
       </div>
       {%else%}
         <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
+        {% if val.object__meta_json.flag_human_remains %}
+        <br/><span class="badge badge-pill badge-warning human_remains_warn">
+          <i class="bi bi-exclamation-circle-fill"></i> Human Remains
+        </span>
+        {%endif%}
       {%endif%}
     </div>
     {% if forloop.counter|divisibleby:max_cols %}

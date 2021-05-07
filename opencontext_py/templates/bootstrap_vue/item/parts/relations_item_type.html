@@ -36,8 +36,10 @@
           {%else%}
 
             {% with max_cols=4 %}
+            {% with col_width=3 %}
             {% with vals=vals %}
             {% include './relations_other.html' %}
+            {% endwith %}
             {% endwith %}
             {% endwith %}
 
@@ -59,8 +61,10 @@
           {%else%}
             
             {% with max_cols=3 %}
+            {% with col_width=4 %}
             {% with vals=vals %}
             {% include './relations_other.html' %}
+            {% endwith %}
             {% endwith %}
             {% endwith %}
 

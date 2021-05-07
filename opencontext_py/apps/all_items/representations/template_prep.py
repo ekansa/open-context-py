@@ -70,8 +70,8 @@ DEFAULT_ITEM_TYPE_ICONS = {
     'projects': '../../static/oc/icons-v2/noun-research-project-2341022.svg',
     # 'subjects': '../../static/oc/icons-v2/noun-object-3504999.svg',
     # 'subjects_children': '../../static/oc/icons-v2/noun-object-3504999.svg',
-    'subjects': '../../static/oc/icons-v2/object-icon-draft-1.svg',
-    'subjects_children': '../../static/oc/icons-v2/object-icon-draft-1.svg',
+    'subjects': '../../static/oc/icons-v2/object-icon-draft-2.svg',
+    'subjects_children': '../../static/oc/icons-v2/object-icon-draft-2.svg',
     'tables': '../../static/oc/icons-v2/noun-table-4305.svg',
 }
 
