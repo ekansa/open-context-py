@@ -35,7 +35,7 @@ DC_IS_PART_OF_OBJECT = AllManifest(**configs.DCTERMS_CREATOR_IS_PART_OF_DICT)
 DC_HAS_PART_OBJECT = AllManifest(**configs.DCTERMS_CREATOR_HAS_PART_DICT)
 
 
-def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
+def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None, for_html=False):
     """Makes a dictionary keyed by DC creator or contributor id with
     equivalent assertion objects
 
@@ -43,6 +43,8 @@ def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
         that describe the item for which we're creating a representation
     :param dict act_dict: The dictionary object that is being created as 
         a representation of an item.
+    :param bool for_html: Do we want an output with additional attributes
+        useful for HTML templating.
     """
     equiv_dict = {}
     for assert_obj in assert_qs:
@@ -78,7 +80,11 @@ def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None):
         return act_dict
     # Return the act_dict with the Dublin core creator and/or contributors
     # added.
-    return rep_utils.add_predicates_assertions_to_dict(equiv_dict, act_dict=act_dict)
+    return rep_utils.add_predicates_assertions_to_dict(
+        equiv_dict, 
+        act_dict=act_dict, 
+        for_html=for_html
+    )
 
 
 def db_get_project_metadata_qs(project_id):

@@ -604,7 +604,8 @@ def make_representation_dict(subject_id, for_html=False):
     # First add item-specific Dublin Core creators, contributors.
     rep_dict = metadata.add_dc_creator_contributor_equiv_metadata(
         assert_qs, 
-        act_dict=rep_dict
+        act_dict=rep_dict,
+        for_html=for_html
     )
     # NOTE: This add project Dublin Core metadata.
     proj_metadata_qs = metadata.get_project_metadata_qs(

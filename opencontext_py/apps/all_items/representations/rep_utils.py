@@ -161,6 +161,8 @@ def add_predicates_assertions_to_dict(
     :param dict act_dict: A dictionary that gets the predicate object list
     :param bool for_edit: Do we want an output with additional identifiers
         useful for editing.
+    :param bool for_html: Do we want an output with additional attributes
+        useful for HTML templating.
     """
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
