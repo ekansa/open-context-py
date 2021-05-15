@@ -111,6 +111,7 @@ def worker_add_agg_spacetime_objs(
     else:
         status = raw_status.copy()
     
+    print(f'Working on: {str(status)}')
     job_done = None
     if not status.get('done') or not status.get('complete'):
         # Now actually do the work cluster regions.

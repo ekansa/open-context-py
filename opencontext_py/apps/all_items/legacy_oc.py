@@ -129,6 +129,7 @@ LEGACY_ROOT_SUBJECTS = [
     ('337eef63-9258-4fb7-834a-ebe723a089eb', 'Ghana', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('1e13889f-188b-408f-ac1e-133cda2c7482', 'Guinea', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('367616d7-9dd4-41ff-b072-704abf72da29', 'Guinea-Bissau', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+    ('82916fcc-04b8-47b2-97b1-31f7019b862e', 'Greece', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('cc5a7f34-ef5e-4650-af7b-f30a74a31007', 'Iceland', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('6_global_India', 'India', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('0519B7C7-1973-4D55-17FE-6D97176B1001', 'Indian Ocean', configs.DEFAULT_SUBJECTS_OCEANIA_UUID),

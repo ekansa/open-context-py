@@ -68,6 +68,16 @@ def test_html(request, uuid):
         ensure_ascii=False
     )
     schema_org_meta = make_schema_org_json_ld(rep_dict)
+    geo_json = None
+    if rep_dict.get('features'):
+        geo_json = json.dumps(
+            {
+                'type': 'FeatureCollection',
+                'features': rep_dict.get('features'),
+            },
+            indent=4,
+            ensure_ascii=False
+        )
     rp = RootPath()
     context = {
         'BASE_URL': rp.get_baseurl(),
@@ -77,7 +87,8 @@ def test_html(request, uuid):
             indent=4,
             ensure_ascii=False
         ),
-        'GEO_JSON': rep_dict.get('features'),
+        'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
+        'GEO_JSON': geo_json,
         # Expected order of related item_types
         'order_of_related_item_types': [
             'subjects', 
