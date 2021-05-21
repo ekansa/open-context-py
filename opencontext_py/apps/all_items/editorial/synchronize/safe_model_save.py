@@ -125,16 +125,16 @@ def prod_safe_save_model_object_and_related(model_object, raise_on_error=True):
         if raise_on_error:
             raise ValueError('Model object has no "primary key" cannot safely insert.')
         return False
+    
+    act_model = model_object._meta.model
 
     cache = caches['redis']
-    cache_key = f'prod-pk-{str(model_object.pk)}'
+    cache_key = f'prod-pk-{str(act_model._meta.label)}-{str(model_object.pk)}'
     prod_exists = cache.get(cache_key)
     if prod_exists:
         # Our work is done, we know this already exists on prod, 
         # because we cached our knowledge that it does exist.
         return True
-    
-    act_model = model_object._meta.model
 
     # Check the production database to see if this object already exists there.
     prod_obj = act_model.objects.using('prod').filter(pk=model_object.pk).first()

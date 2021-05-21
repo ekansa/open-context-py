@@ -34,7 +34,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.all_items.editorial.synchronize.legacy import model_objects
 importlib.reload(model_objects)
 
-after_date = '2021-03-01'
+after_date = '2021-05-12'
 
 update_models=[
     (StableIdentifer, 'updated', True,),
@@ -50,7 +50,6 @@ model_objects.update_prod_from_default(
 
 LEGACY_MODELS = [
     (Manifest, 'record_updated', True,),        
-    (Assertion, 'updated', True,),
     (Event, 'updated', True,),
     (Geospace, 'updated', True,),
     (ObsMetadata, 'updated', True,),
@@ -65,6 +64,7 @@ LEGACY_MODELS = [
     (StableIdentifer, 'updated', True,),
     (LinkAnnotation, 'updated', True,),
     (LinkEntity, 'updated', False,),
+    (Assertion, 'updated', True,),
 ]
 
 LEGACT_EXTABLE_MODELS = [
@@ -110,6 +110,7 @@ def update_default_from_prod(
                 only_insert=True,
             )
             if not ok:
+                print(f'Failed to save: {model_object}')
                 continue
             migrated_model_objs += 1
             all_migrated_objs += 1
@@ -156,6 +157,7 @@ def update_prod_from_default(
                 raise_on_error=True,
             )
             if not ok:
+                print(f'Failed to save: {model_object}')
                 continue
             migrated_model_objs += 1
             all_migrated_objs += 1

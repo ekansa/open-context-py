@@ -187,7 +187,6 @@ class ProcessDescriptions():
                 if distinct_records is not False:
                     pg = ProcessGeneral(self.source_id)
                     distinct_records = pg.order_distinct_records(distinct_records)
-                    # print(str(distinct_records))
                     for row_key, dist_rec in distinct_records.items():
                         if dist_rec['imp_cell_obj'].cell_ok:
                             subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
@@ -514,11 +513,11 @@ class ProcessDescriptions():
                 if isinstance(valueof_field, ImportField):
                     # it is not an integer, but an ImportField object
                     valueof_field = valueof_field.field_num
-                print('Value of field: ' + str(valueof_field))
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 cells = pc.get_field_row_records(valueof_field,
                                                  in_rows)
+                print(f'Value of field: {valueof_field}, got {len(cells)}')
                 for cell in cells:
                     object_imp_cell_objs.append(cell)
         else:
@@ -871,6 +870,7 @@ class CandidateString():
             self.content = self.oc_string.content
             # self.source_id = self.oc_string.source_id
             if self.uuid != imp_cell.l_uuid:
+                print(f'UUID {self.uuid} for string: {self.content}')
                 # update the reconcilted UUID for import cells with same rec_hash
                 up_cells = ImportCell.objects\
                                      .filter(source_id=self.source_id,
