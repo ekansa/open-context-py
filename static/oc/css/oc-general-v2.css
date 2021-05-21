@@ -98,6 +98,9 @@ Item Context
 #item_context_nav {
 	line-height: 24px;
 }
+#item_context_ol {
+	background-color: #fff;
+}
 #context_start {
 	margin-left: 0.50em;
 	margin-right: 1em;
