@@ -35,6 +35,14 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         <l-popup></l-popup>
         </l-geo-json>
       </l-map>
+      <div v-if="location_precision_note">
+        <b-alert v-if="location_precision_factor" show variant="warning">
+          <small>[[location_precision_note]]</small>
+        </b-alert>
+        <b-alert v-else show variant="info">
+          <small>[[location_precision_note]]</small>
+        </b-alert>
+      </div>
     </div> 
   </div>
 </template>
@@ -143,18 +151,23 @@ var vc_item_map = Vue.component(
           geojson_ref: ('geojson-' + ITEM_UUID),
           center: null,
           geo_json: null,
+          location_precision_factor: null,
+          location_precision_note: null,
       };
     },
     template: '#item_map',
+    delimiters: ['[[', ']]'],
     created() {
       this.get_map_ref();
     },
     mounted() {
       this.get_map_ref();
       this.fit_bounds();
+      this.get_location_info();
     },
     updated(){
       this.fit_bounds();
+      this.get_location_info();
     },
     computed: {
       options() {
@@ -166,8 +179,8 @@ var vc_item_map = Vue.component(
         return (feature, layer) => {
           layer.bindPopup(
             `<dl class="row">
-              <dt class="col-sm-4">Item</dt>
-              <dd class="col-sm-8">${item_json.label}</dd>
+              <dt class="col">Item</dt>
+              <dd class="col">${item_json.label}</dd>
             </dl>`
           );
           layer.bindTooltip(
@@ -193,6 +206,25 @@ var vc_item_map = Vue.component(
         let bounds = l_geo_json.getBounds();
         this.$refs[this.map_ref].mapObject.fitBounds(bounds);
         console.log(bounds);
+      },
+      get_location_info: function() {
+        if(!this.geo_json){
+          return null;
+        }
+        for(let feat of this.geo_json.features){
+          if(!feat.properties.hasOwnProperty('href')){
+            continue;
+          }
+          if(feat.properties.href != item_json.id){
+            continue;
+          }
+          if(feat.properties.hasOwnProperty('location_precision_factor')){
+            this.location_precision_factor = feat.properties.location_precision_factor;
+          }
+          if(feat.properties.hasOwnProperty('location_precision_note')){
+            this.location_precision_note = feat.properties.location_precision_note;
+          }
+        }
       },
     },
     components: {

@@ -25,8 +25,13 @@ GAZETTEER_VOCAB_URIS = [
     'pleiades.stoa.org',
 ]
 
-DEFAULT_LOCATION_NOTE = 'Location data available with no intentional reduction in precision.'
-DEFAULT_LOCATION_LOW_PRECISION_NOTE = 'Location data has known limits on precision.'
+DEFAULT_LOCATION_NOTE = (
+    'Location data available with no intentional reduction in precision, '
+    'and no documented estimates of precision or accuracy.'
+)
+DEFAULT_LOCATION_LOW_PRECISION_NOTE = (
+    'Location data has known limits on precision and/or accuracy.'
+)
 DEFAULT_LOCATION_SECURITY_NOTE = 'Location data approximated as a security precaution.'
 
 
@@ -218,27 +223,27 @@ def add_precision_properties(properties, item_man_obj, spacetime_obj):
         # Case of no known attempt to obscure location data, no statement
         # about any uncertainty.
         if item_precision_note:
-            properties["location-precision-note"] = item_precision_note
+            properties["location_precision_note"] = item_precision_note
         else:
-            properties["location-precision-note"] = DEFAULT_LOCATION_NOTE
+            properties["location_precision_note"] = DEFAULT_LOCATION_NOTE
     elif item_precision_specificity < 0:
         # Case of intentionally obscured location data.
-        properties["location-precision"] = abs(item_precision_specificity)
+        properties["location_precision_factor"] = abs(item_precision_specificity)
         if item_precision_note:
-            properties["location-precision-note"] = item_precision_note
+            properties["location_precision_note"] = item_precision_note
         else:
-            properties["location-precision-note"] = DEFAULT_LOCATION_SECURITY_NOTE
+            properties["location_precision_note"] = DEFAULT_LOCATION_SECURITY_NOTE
 
-        properties["location-precision"] = abs(item_precision_specificity)
+        properties["location_precision_factor"] = abs(item_precision_specificity)
     elif item_precision_specificity > 0:
         # Case of otherwise uncertain / low precision location data.
-        properties["location-precision"] = abs(item_precision_specificity)
+        properties["location_precision_factor"] = abs(item_precision_specificity)
         if item_precision_note:
-            properties["location-precision-note"] = item_precision_note
+            properties["location_precision_note"] = item_precision_note
         else:
-            properties["location-precision-note"] = DEFAULT_LOCATION_LOW_PRECISION_NOTE
+            properties["location_precision_note"] = DEFAULT_LOCATION_LOW_PRECISION_NOTE
 
-        properties["location-precision"] = abs(item_precision_specificity)
+        properties["location_precision_factor"] = abs(item_precision_specificity)
     else:
         pass
     
@@ -294,7 +299,7 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
             # This spacetime object has it's own geometry, and that geometry
             # is associated directly to the item_man_obj for which we're building a
             # GeoJSON representation.
-            properties["reference-type"] = "specified"
+            properties["reference_type"] = "specified"
             # Add the location precision note.
             properties = add_precision_properties(
                 properties, 
@@ -318,15 +323,15 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
 
             # This spacetime object has geometry intereted from another spacetime
             # object. We only do Point inheritance however.
-            properties["reference-type"] = "inferred"
-            properties["reference-uri"] = f"https://{ref_spacetime_obj.item.uri}"
-            properties["reference-label"] = ref_spacetime_obj.item.label
-            properties["reference-slug"] = ref_spacetime_obj.item.slug
+            properties["reference_type"] = "inferred"
+            properties["reference_uri"] = f"https://{ref_spacetime_obj.item.uri}"
+            properties["reference_label"] = ref_spacetime_obj.item.label
+            properties["reference_slug"] = ref_spacetime_obj.item.slug
             if ref_spacetime_obj.geometry_type != "Point":
-                properties["contained-in-region"] = True
-                properties["location-region-note"] = "This point represents the center of the region containing this item."
+                properties["contained_in_region"] = True
+                properties["location_region_note"] = "This point represents the center of the region containing this item."
             else:
-                properties["contained-in-region"] = False
+                properties["contained_in_region"] = False
             
             # Add the location precision note.
             properties = add_precision_properties(
@@ -368,12 +373,12 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
             float(chrono_spacetime_obj.latest)
         )
         if chrono_spacetime_obj.item == item_man_obj:
-            when["reference-type"] = "specified"
+            when["reference_type"] = "specified"
         else:
-            when["reference-type"] = "inferred"
-            when["reference-uri"] = f"https://{chrono_spacetime_obj.item.uri}"
-            when["reference-label"] = chrono_spacetime_obj.item.label
-            when["reference-slug"] = chrono_spacetime_obj.item.slug
+            when["reference_type"] = "inferred"
+            when["reference_uri"] = f"https://{chrono_spacetime_obj.item.uri}"
+            when["reference_label"] = chrono_spacetime_obj.item.label
+            when["reference_slug"] = chrono_spacetime_obj.item.slug
 
         feature["when"] = when
         features.append(feature)
