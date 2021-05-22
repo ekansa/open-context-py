@@ -743,7 +743,7 @@ def migrate_legacy_document(old_man_obj):
     # Add the document contents.
     utilities.add_string_assertion_simple(
         subject_obj=new_man_obj,
-        predicate_id=configs.PREDICATE_BIBO_CONTENT_UUID,
+        predicate_id=configs.PREDICATE_SCHEMA_ORG_TEXT_UUID,
         str_content=old_doc.content,
         publisher_id=new_man_obj.publisher.uuid,
         project_id=new_man_obj.project.uuid,

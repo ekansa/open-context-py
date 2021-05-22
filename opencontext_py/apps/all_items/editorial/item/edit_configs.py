@@ -577,7 +577,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_item_key': False,
                 'edit_uri': False,
                 'expected_assert_pred_ids': [
-                    configs.PREDICATE_BIBO_CONTENT_UUID,
+                    configs.PREDICATE_SCHEMA_ORG_TEXT_UUID,
                 ],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',

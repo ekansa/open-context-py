@@ -2427,8 +2427,8 @@ DEFAULT_MANIFESTS = [
             'vocab_file_uri': 'http://purl.org/ontology/bibo/',
         },
     },
-    # NOTE: Yes, this is a deprecated property, but it is still
-    # useful for expressing the content of Open Context's documents items.
+    # NOTE: This is a deprecated property that should no longer
+    # be used for the content of Open Context's documents items.
     {
         'uuid': PREDICATE_BIBO_CONTENT_UUID,
         'publisher_id': BIBO_PUB_UUID,
@@ -2443,6 +2443,63 @@ DEFAULT_MANIFESTS = [
         'uri': 'http://purl.org/ontology/bibo/content',
         'context_id': BIBO_VOCAB_UUID,
     },
+    # Schema.org
+    {
+        'uuid': SCHEMA_ORG_PUB_UUID,
+        'publisher_id': SCHEMA_ORG_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'publishers',
+        'data_type': 'id',
+        'slug': 'schema-org-community-group',
+        'label': 'Schema.org Community Group',
+        'uri': 'https://www.w3.org/community/schemaorg/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': SCHEMA_ORG_VOCAB_UUID,
+        'publisher_id': SCHEMA_ORG_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'vocabularies',
+        'data_type': 'id',
+        'slug': 'schema-org',
+        'label': 'Schema.org',
+        'uri': 'https://schema.org/',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
+    {
+        'uuid': SCHEMA_ORG_CREATIVEWORK_VOCAB_UUID,
+        'publisher_id': SCHEMA_ORG_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'vocabularies',
+        'data_type': 'id',
+        'slug': 'schema-org-creativework',
+        'label': 'CreativeWork: a Schema.org Type',
+        'uri': 'https://schema.org/CreativeWork',
+        'context_id': SCHEMA_ORG_VOCAB_UUID,
+    },
+    # NOTE: this property is useful for expressing the content 
+    # of Open Context's documents items.
+    {
+        'uuid': PREDICATE_SCHEMA_ORG_TEXT_UUID,
+        'publisher_id': SCHEMA_ORG_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'property',
+        'data_type': 'xsd:string',
+        'slug': 'schema-org-text',
+        'item_key': 'schema:text',
+        'label': 'Text',
+        'uri': 'https://schema.org/text',
+        'context_id': SCHEMA_ORG_CREATIVEWORK_VOCAB_UUID,
+    },
+
     # CIDOC-CRM Ontology, publisher, and predicates
     {
         'uuid': CIDOC_PUB_UUID,
