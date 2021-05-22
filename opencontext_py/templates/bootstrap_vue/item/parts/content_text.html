@@ -1,0 +1,54 @@
+{% block content_text %}
+
+{% if man_obj.item_type == 'documents' %}
+
+{% for text_obj in item.schema__text %}
+<div class="card">
+  <div class="card-header">
+    <h5>Document Content</h5>
+  </div>
+  <div class="card-body">
+    {% autoescape off %}
+      {{ text_obj.obj_string }}
+    {% endautoescape %}
+  </div>
+</div>
+{% endfor %}
+
+
+{%endif%}
+
+
+
+{% if man_obj.item_type == 'projects' %}
+
+{% if item.dc_terms__description %}
+<div class="jumbotron" id="project_description">
+  <h1 class="display-4">{{ item.label }}</h1>
+  {% with item.dc_terms__description|first as first_desc %}
+  <p class="lead"> {{ first_desc.obj_string }} </p>
+  {% endwith %}
+</div>
+{%endif%}
+
+
+{% if item.dc_terms__abstract %}
+<div class="card">
+  <div class="card-header">
+    <h5>Project Abstract</h5>
+  </div>
+  <div class="card-body">
+    {% with item.dc_terms__abstract|first as proj_abstract %}
+    {% autoescape off %}
+      {{ proj_abstract.obj_string }}
+    {% endautoescape %}
+    {% endwith %}
+  </div>
+</div>
+{%endif%}
+
+{%endif%}
+
+
+
+{% endblock %}

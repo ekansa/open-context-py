@@ -7,10 +7,10 @@
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
             {% if val.object__meta_json.flag_human_remains %}
             <img src="{{ val.oc_gen__thumbnail_uri }}" 
-            class="rounded human_remains_thumb_burr" 
+            class="rounded human_remains_thumb_blur item_thumb" 
             alt="Thumbnail for {{ val.label }}"/>
             {%else%}
-            <img src="{{ val.oc_gen__thumbnail_uri }}" class="rounded" alt="Thumbnail for {{ val.label }}"/>
+            <img src="{{ val.oc_gen__thumbnail_uri }}" class="rounded item_thumb" alt="Thumbnail for {{ val.label }}"/>
             {%endif%}
           </a>
           <figcaption class="figure-caption text-center">{{ val.label }}

@@ -193,11 +193,19 @@ Item Relationships
 	color: black;
 	font-size: small;
 }
-.human_remains_thumb_burr {
+.human_remains_thumb_blur {
 	filter: blur(8px) opacity(50%) saturate(10%)
 }
 
 
+/*
+---------------------------------------------------------
+Item Media Thumbnails
+---------------------------------------------------------
+*/
+.item_thumb {
+	max-width: 200px;
+}
 
 
 div.subject-list-row {
@@ -214,4 +222,13 @@ div.subject-list-row img {
 }
 div.subject-list-text {
 	padding-top: 2%;
+}
+
+
+#project_description {
+	margin-top: 0px;
+	margin-bottom: 24px;
+	padding-top: 12px;
+	padding-bottom: 12px;
+	background-color: #fff;
 }
