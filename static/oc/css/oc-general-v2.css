@@ -5,6 +5,7 @@ body {
 	font-family: 'Open Sans';
 }
 body a {
+	color: #337ab7;
 	text-decoration: none;
 }
 
@@ -124,6 +125,9 @@ Item Context
 Item Citation
 ---------------------------------------------------------
 */
+#item_citation {
+	background-color: #f8f8f8;
+}
 #item_title {
 	max-width:200px;
     word-wrap:break-word;
@@ -140,6 +144,9 @@ span.cite_id {
 Item Part of Project (Project Context)
 ---------------------------------------------------------
 */
+#project_context {
+	margin-top: 24px;
+}
 .project_editorial_level {
 	color: #EE7600;
 }
@@ -159,6 +166,9 @@ a.project_editorial_level:hover {
 Item License
 ---------------------------------------------------------
 */
+#item_license {
+	margin-top: 24px;
+}
 #item_license_icon_div {
 	min-width: 120px;
 }
@@ -231,4 +241,10 @@ div.subject-list-text {
 	padding-top: 12px;
 	padding-bottom: 12px;
 	background-color: #fff;
+}
+#project_abstract {
+	margin-bottom: 36px;
+}
+.documents_text {
+	margin-bottom: 36px;
 }

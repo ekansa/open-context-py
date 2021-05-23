@@ -3,7 +3,7 @@
 {% if man_obj.item_type == 'documents' %}
 
 {% for text_obj in item.schema__text %}
-<div class="card">
+<div class="card documents_text">
   <div class="card-header">
     <h5>Document Content</h5>
   </div>
@@ -33,7 +33,7 @@
 
 
 {% if item.dc_terms__abstract %}
-<div class="card">
+<div class="card" id="project_abstract">
   <div class="card-header">
     <h5>Project Abstract</h5>
   </div>
