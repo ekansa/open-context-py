@@ -190,6 +190,7 @@ LEGACY_DATA_DATA_TYPES = {
 
 LEGACY_MANIFEST_MAPPINGS = {
     'oc-gen:has-note': configs.PREDICATE_NOTE_UUID,
+    'oc-gen:has-geo-overlay': configs.PREDICATE_GEO_OVERLAY_UUID,
 }
 
 # Data types for literal values.

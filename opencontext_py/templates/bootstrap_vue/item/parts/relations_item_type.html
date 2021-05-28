@@ -5,15 +5,16 @@
   <div class="card-header" 
     id="header-rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}">
     <a data-toggle="collapse" 
+       class="text-dark"
        href="#rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" 
        aria-expanded="true" 
        aria-controls="rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" >
       {% if obj_item_type == 'subjects' %}
-      <h5>Related Locations and Objects</h5>
+      <h5>Related Locations and Objects <i class="bi bi-arrows-expand"></i></h5>
       {%elif obj_item_type == 'subjects_children' %}
-      <h5>Contents</h5>
+      <h5>Contents <i class="bi bi-arrows-expand"></i></h5>
       {%else%}
-      <h5>Related {{ obj_item_type|title }}</h5>
+      <h5>Related {{ obj_item_type|title }} <i class="bi bi-arrows-expand"></i></h5>
       {%endif%}
     </a>
   </div>
@@ -22,8 +23,8 @@
     id="rels-{{ act_obs_id|cut:"#" }}-{{ act_event_id|cut:"#" }}-{{ act_atr_grp_id|cut:"#" }}-{{ obj_item_type }}" >
     <div class="card-body">
       {% for pred_key, vals in rel_asserts.items %}
-      <div class="row">
         {% if vals.0.no_display_pred %}
+        <div class="row">
         <div class="col-12">
           {% if obj_item_type == 'media' %}
 
@@ -46,10 +47,18 @@
           {%endif%}
         </div>
         {%else%}
-        <div class="col-4">
+
+        {% if forloop.counter|divisibleby:2 %}
+        <div class="row bg-light item_relations_even_row">
+        {% else %}
+        <div class="row">
+        {% endif %}
+        
+        
+        <div class="col-3">
           <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label|capfirst }}</a>
         </div>
-        <div class="col-8">
+        <div class="col-9">
           {% if obj_item_type == 'media' %}
 
             {% with max_cols=3 %}

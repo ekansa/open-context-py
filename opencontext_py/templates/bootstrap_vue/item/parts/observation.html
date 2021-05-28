@@ -3,7 +3,7 @@
 {% for act_event in act_obs.oc_gen__has_events %}
 
   {% if act_event.has_descriptions %}
-  <table class="table table-responsive-sm table-hover table-striped table-active">
+  <table class="table table-responsive-sm table-hover table-secondary table-striped">
     {% if not act_event.default %}
     <caption>{{ act_event.label }}</caption>
     {% endif %}

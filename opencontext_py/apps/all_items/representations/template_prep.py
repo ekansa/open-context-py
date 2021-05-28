@@ -50,6 +50,7 @@ SPECIAL_KEYS = [
     'oc-gen:has-files',
     'dc-terms:abstract',
     'dc-terms:description',
+    'schema:text',
     'bibo:content',
     'dc-terms:title',
     'dc-terms:issued',
@@ -62,7 +63,6 @@ SPECIAL_KEYS = [
 
 ITEM_METADATA_OBS_ID = '#item-metadata'
 ITEM_METADATA_OBS_LABEL = 'Item Metadata'
-
 
 DEFAULT_ITEM_TYPE_ICONS = {
     'documents': '../../static/oc/icons-v2/noun-document-3183378.svg',
@@ -86,6 +86,10 @@ DEFAULT_LICENSE_ICONS = {
     'creativecommons.org/publicdomain/zero/': '../../static/oc/cc-icons/cc-zero.svg',
 }
 
+# The key for Geo-overlays in a JSON-LD rep_dict
+GEO_OVERLAYS_JSON_LD_KEY = 'oc-pred:oc-gen-has-geo-overlay'
+TEMPLATE_GEO_OVERLAY_KEY = 'geo_overlays'
+GEO_OVERLAY_OPACITY_DEFAULT = 0.9
 
 def _make_key_template_ok(key, key_find_replaces=KEY_FIND_REPLACES):
     """Makes a key OK for a template"""
@@ -355,6 +359,87 @@ def add_license_icons_public_domain_flag(rep_dict, icon_dict=DEFAULT_LICENSE_ICO
     return rep_dict
 
 
+def add_geo_overlay_images(
+    rep_dict, 
+    geo_over_key=GEO_OVERLAYS_JSON_LD_KEY,
+    template_key=TEMPLATE_GEO_OVERLAY_KEY,
+    default_opacity=GEO_OVERLAY_OPACITY_DEFAULT
+):
+    """Adds geo-overlay images formatted for easy use by Leaflet, Vue
+
+    :param dict rep_dict: The item's JSON-LD representation dict
+    :param str geo_over_key: The default predicate key for geo
+        overlay objects
+    :param str template_key: The HTML template key for geo-overlay
+        objects.
+    :param float default_opacity: The default opacity of an overlay
+        image if now configured in meta_json.
+    """
+    if not rep_dict.get(geo_over_key):
+        # There are no geo-overlay images.
+        return rep_dict
+    
+    required_obj_keys = [
+        'object__meta_json',
+        'object__geo_overlay',
+    ]
+    required_meta_json_leaflet_keys = [
+        'bounds'
+    ]
+    overlays = []
+    for over_dict in rep_dict.get(geo_over_key):
+        # Do a little validation to make sure we
+        # have the object keys we need.
+        keys_ok = True
+        for req_key in required_obj_keys:
+            if not over_dict.get(req_key):
+                keys_ok = False
+        if not keys_ok:
+            # We're missing some data, so don't
+            # include this in the overlays
+            continue
+        # Make the object_meta_json keys all nice and lower-case for easy handling.
+        obj_meta_json = make_template_ready_dict_obj(
+            over_dict['object__meta_json']
+        )
+        if not obj_meta_json.get('leaflet'):
+            # We're missing leaflet expected JSON
+            continue
+        # We'll use the 'leaflet' dict object from the object__meta_json
+        # (which ultimately comes from the Manifest object for the 
+        # overlay image item-type 'media' meta_json).
+        overlay = copy.deepcopy(
+            obj_meta_json['leaflet']
+        )
+        for req_key_leaflet in required_meta_json_leaflet_keys:
+            if not overlay.get(req_key_leaflet):
+                keys_ok = False
+        if not keys_ok:
+            # We're missing required leaflet JSON keys
+            continue
+        # At this point, we've got partially validated overlay
+        # data, so we can start making an object ready for the
+        # HTML template and leaflet vue.js
+        if not overlay.get('label'):
+            # Fill in a label from the object label, or use a default
+            overlay['label'] = over_dict.get('object__label', 'Map overlay')
+        if not overlay.get('opacity'):
+            overlay['opacity'] = default_opacity
+        if not overlay.get('visible'):
+            overlay['visible'] = True
+        overlay['id'] = over_dict.get("id")
+        overlay['url'] = over_dict.get('object__geo_overlay')
+        attribution = (
+            f'See: <a href="{over_dict.get("id")}">{over_dict.get("object__label")}</a>'
+        )
+        overlay['attribution'] = attribution
+        overlays.append(overlay)
+
+    # Add these processed overlays to the rep_dict
+    rep_dict[template_key] = overlays
+    return rep_dict
+
+
 def prepare_for_item_dict_html_template(man_obj, rep_dict):
     """Prepares a representation dict for HTML templating"""
 
@@ -376,6 +461,10 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
 
     # Add licensing icons to licenses in the rep_dict
     rep_dict = add_license_icons_public_domain_flag(rep_dict)
+
+    # Make any geospatial overlay images more convenient to use
+    # in the HTML template with leaflet and vue.js
+    rep_dict = add_geo_overlay_images(rep_dict)
 
     # Now ensure easy to template characters in the keys
     # in this dict

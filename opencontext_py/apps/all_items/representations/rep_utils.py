@@ -76,6 +76,8 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
                 )
             if getattr(assert_obj, 'object_thumbnail', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
+            if getattr(assert_obj, 'object_geo_overlay_thumb', None):
+                obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_geo_overlay_thumb}'
             if for_edit or for_html:
                 obj['object_id'] = str(assert_obj.object.uuid)
                 obj['object__item_type'] = assert_obj.object.item_type
@@ -89,7 +91,9 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
                 if assert_obj.object.item_class:
                     obj['object__item_class__label'] = assert_obj.object.item_class.label
                 if hasattr(assert_obj, 'object_class_icon'):
-                    obj['object__item_class__icon'] = assert_obj.object_class_icon
+                    obj['object__item_class__icon'] = f'https://{assert_obj.object_class_icon}'
+                if hasattr(assert_obj, 'object_geo_overlay'):
+                    obj['object__geo_overlay'] = f'https://{assert_obj.object_geo_overlay}'
         elif predicate.data_type == 'xsd:string':
             # A string gets a language code key, so it's not just a naked
             # literal returned in the pred_objects list.

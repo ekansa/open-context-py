@@ -148,7 +148,10 @@ def make_citation_dict(rep_dict):
     if (not citation_dict.get('contributor') 
         and not citation_dict.get('creator')):
         citation_dict['creator'] = [
-            f"{configs.OPEN_CONTEXT_PROJ_LABEL} Staff"
+            {
+                'label': f"{configs.OPEN_CONTEXT_PROJ_LABEL} Staff",
+                'combined_name': f"{configs.OPEN_CONTEXT_PROJ_LABEL} Staff",
+            },
         ]
 
     if not citation_dict.get('contributor'):

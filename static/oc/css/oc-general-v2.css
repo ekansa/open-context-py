@@ -183,6 +183,19 @@ Item License
 Item Relationships
 ---------------------------------------------------------
 */
+.item_relations_even_row {
+	/* background-color: #e2e3e5; */
+	border-top-color: rgb(203, 204, 206);
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-bottom-color: rgb(203, 204, 206);
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+	margin-top: 0.5%;
+	margin-bottom: 0.5%;
+	padding-top: 0.5%;
+	padding-bottom: 0.5%;
+}
 .item_relations_row {
 	padding-top: 2%;
 	padding-bottom: 2%;

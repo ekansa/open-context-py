@@ -26,6 +26,17 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           :url="tp.url"
           :attribution="tp.attribution"
           layer-type="base"></l-tile-layer>
+        <l-img-overlay
+          v-if="item_json.geo_overlays"
+          v-for="ov in item_json.geo_overlays"
+          :key="ov.id"
+          :name="ov.label"
+          :visible="ov.visible"
+          :url="ov.url"
+          :attribution="ov.attribution"
+          :bounds="ov.bounds"
+          layer-type="overlay"
+        ></l-img-overlay>
         <l-geo-json
           :key="'geojson-' + ITEM_UUID + map_key"
           :ref="'geojson-' + ITEM_UUID"
@@ -65,6 +76,10 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
     'l-tile-layer', 
     window.Vue2Leaflet.LTileLayer,
   );
+  const l_img_overlay = Vue.component(
+    'l-img-overlay', 
+    window.Vue2Leaflet.LImageOverlay,
+  );
   const l_geo_json = Vue.component(
     'l-geo-json', 
     window.Vue2Leaflet.LGeoJson,
@@ -85,8 +100,18 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
   const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
   const TILE_PROVIDERS = [
     {
-      name: 'OpenStreetMap',
+      name: 'MapBox Satellite',
       visible: true,
+      id: 'mapbox-satellite',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+    },
+    {
+      name: 'OpenStreetMap',
+      visible: false,
       id: 'osm',
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
@@ -118,16 +143,6 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
       ),
       attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
     },
-    {
-      name: 'MapBox Satellite',
-      visible: false,
-      id: 'mapbox-satellite',
-      url: (
-        'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
-        + MAPBOX_PUBLIC_ACCESS_TOKEN
-      ),
-      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
-    }
   ];
 
 var MAP_OBJ = null;
@@ -229,6 +244,7 @@ var vc_item_map = Vue.component(
     },
     components: {
       'l-popup': l_popup,
+      'l-img-overlay' :l_img_overlay,
       'l-tile-layer': l_tile_layer,
       'l-geo-json': l_geo_json,
       'l-marker': l_marker,

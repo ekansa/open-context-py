@@ -4,7 +4,7 @@ import hashlib
 import uuid as GenUUID
 
 from django.core.cache import caches
-from django.db.models import OuterRef, Subquery
+from django.db.models import Q, OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
@@ -99,11 +99,25 @@ def db_get_project_metadata_qs(project_id):
         resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
     ).values('uri')[:1]
 
+    # NOTE: Some projects have digitized raster images
+    # georeference and used as an overlay.
+    geo_overlay_qs = AllResource.objects.filter(
+        item=OuterRef('object'),
+        resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID,
+    ).values('uri')[:1]
+    geo_overlay_thumb_qs = AllResource.objects.filter(
+        item=OuterRef('object'),
+        resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
+    ).values('uri')[:1]
+
     qs = AllAssertion.objects.filter(
         subject_id=project_id,
-        predicate__context_id=configs.DCTERMS_VOCAB_UUID,
         predicate__data_type='id',
         visible=True,
+    ).filter(
+        # Get dublin core metadate or a project geo-overlay image
+        Q(predicate__context_id=configs.DCTERMS_VOCAB_UUID)
+        |Q(predicate_id=configs.PREDICATE_GEO_OVERLAY_UUID)
     ).select_related(
         'subject'
     ).select_related(
@@ -128,6 +142,10 @@ def db_get_project_metadata_qs(project_id):
         'object__context'
     ).annotate(
         object_class_icon=Subquery(class_icon_qs)
+    ).annotate(
+        object_geo_overlay=Subquery(geo_overlay_qs)
+    ).annotate(
+        object_geo_overlay_thumb=Subquery(geo_overlay_thumb_qs)
     )
     return qs
 
