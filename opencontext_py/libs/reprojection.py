@@ -22,6 +22,7 @@ class ReprojectUtilities():
     def __init__(self):
         self.input_crs = None
         self.output_crs = None
+        self.invert_x_y_pairs = False
         pass
     
     def set_in_out_crs(self, input_crs_id, output_crs_id):
@@ -99,6 +100,9 @@ class ReprojectUtilities():
         y_in = [c_pair[1]]
         # Do the transformation
         x_list, y_list = self.reproject_coordinates(x_in, y_in)
+        if self.invert_x_y_pairs:
+            # See if this works?
+            return [y_list[0], x_list[0]]
         return [x_list[0], y_list[0]]
     
     def reproject_coordinate_ring(self, ring_list):

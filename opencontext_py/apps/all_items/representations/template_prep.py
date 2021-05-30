@@ -34,6 +34,10 @@ KEY_FIND_REPLACES = [
     ('/', '_',),
 ]
 
+# The key for Geo-overlays in a JSON-LD rep_dict
+GEO_OVERLAYS_JSON_LD_KEY = 'oc-pred:oc-gen-has-geo-overlay'
+TEMPLATE_GEO_OVERLAY_KEY = 'geo_overlays'
+GEO_OVERLAY_OPACITY_DEFAULT = 0.9
 
 SPECIAL_KEYS = [
     'id',
@@ -59,6 +63,7 @@ SPECIAL_KEYS = [
     'dc-terms:isPartOf',
     'dc-terms:hasPart',
     'contexts',
+    GEO_OVERLAYS_JSON_LD_KEY,
 ]
 
 ITEM_METADATA_OBS_ID = '#item-metadata'
@@ -86,10 +91,6 @@ DEFAULT_LICENSE_ICONS = {
     'creativecommons.org/publicdomain/zero/': '../../static/oc/cc-icons/cc-zero.svg',
 }
 
-# The key for Geo-overlays in a JSON-LD rep_dict
-GEO_OVERLAYS_JSON_LD_KEY = 'oc-pred:oc-gen-has-geo-overlay'
-TEMPLATE_GEO_OVERLAY_KEY = 'geo_overlays'
-GEO_OVERLAY_OPACITY_DEFAULT = 0.9
 
 def _make_key_template_ok(key, key_find_replaces=KEY_FIND_REPLACES):
     """Makes a key OK for a template"""
