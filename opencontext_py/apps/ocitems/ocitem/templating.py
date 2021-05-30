@@ -402,6 +402,12 @@ class TemplateItem():
                             self.content['gis_file']  = file_item['id']
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = rp.convert_to_https(file_item['id'])
+                    if 'vnd.geo+json' in file_item['dc-terms:hasFormat']:
+                        # this is a geojson file that can be previewed
+                        rp = RootPath()
+                        target_url = rp.convert_to_https(file_item['id'])
+                        self.geojson_file = self.make_cors_ok_url(target_url)
+                        self.content['gis_file']  = file_item['id']
                 elif file_item['type'] == 'oc-gen:thumbnail':
                     self.content['thumbnail'] = rp.convert_to_https(file_item['id'])
                 elif file_item['type'] == 'oc-gen:iiif':
