@@ -21,6 +21,7 @@ from opencontext_py.apps.all_items import legacy_oc
 from pathlib import Path
 from opencontext_py.apps.all_items.migrate import *
 home = str(Path.home())
+project_uuids = ['3585b372-8d2d-436c-9a4c-b5c10fce3ccd', 'a52bd40a-9ac8-4160-a9b0-bd2795079203',]
 migrate_single_project('3', error_path=f'{home}/migration-errors')
 """
 

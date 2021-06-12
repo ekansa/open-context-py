@@ -6,8 +6,11 @@ import uuid as GenUUID
 from django.conf import settings
 from django.core.cache import caches
 from django.db.models import OuterRef, Subquery
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 
+from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.rootpath import RootPath
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
@@ -317,6 +320,39 @@ def template_reorganize_obs(old_obs_dict):
     return new_obs_dict
 
 
+def get_units_from_obs(new_obs_dict, units_of_measurement_dict):
+    """Extracts units of measurement from assertions in an observation
+    
+    :param dict new_obs_dict: An observation assertion dict already
+        reorganized for templating
+    :parma dict unit_of_measurement_dict: A dictionary of unique
+        units of measurement in the all observation assertions.
+    """
+
+    unit_obj_keys = [
+        'id',
+        'slug',
+        'label',
+        'object_id',
+        'object__meta_json',
+        'object__context__label',
+        'object__context__uri'
+    ]
+    for event_dict in new_obs_dict.get('oc-gen:has-events', []):
+        for attrib_group in event_dict.get('oc-gen:has-attribute-groups', []):
+            for _, obj_list in attrib_group.get('descriptions', {}).items():
+                for obj_dict in obj_list:
+                    if obj_dict.get('object__item_type') != 'units':
+                        continue
+                    units_obj = {k: obj_dict.get(k) for k in unit_obj_keys}
+                    units_obj['symbol'] = obj_dict.get(
+                        'object__meta_json',
+                        {}
+                    ).get('symbol')
+                    units_of_measurement_dict[units_obj.get('id')] = units_obj
+    return units_of_measurement_dict
+
+
 def template_reorganize_all_obs(rep_dict):
     """Iterates through all observations to make easy to template groups
 
@@ -325,13 +361,23 @@ def template_reorganize_all_obs(rep_dict):
     if not rep_dict.get('oc-gen:has-obs'):
         return rep_dict
     
+    units_of_measurement_dict = {}
     all_new_obs = []
     for old_obs_dict in rep_dict.get('oc-gen:has-obs'):
         new_obs_dict = template_reorganize_obs(old_obs_dict)
+        units_of_measurement_dict = get_units_from_obs(
+            new_obs_dict, 
+            units_of_measurement_dict
+        )
         all_new_obs.append(new_obs_dict)
     
     rep_dict['oc-gen:has-obs'] = all_new_obs
+    if units_of_measurement_dict:
+        # Make the units of measurement seen in these observation
+        # assertions easily accessible for templating.
+        rep_dict['units_of_measurement'] = [v for _,v in units_of_measurement_dict.items()]
     return rep_dict
+
 
 
 def add_license_icons_public_domain_flag(rep_dict, icon_dict=DEFAULT_LICENSE_ICONS):
@@ -441,8 +487,88 @@ def add_geo_overlay_images(
     return rep_dict
 
 
+def check_cors_ok_or_proxy_url(url):
+    """Checks if a URL is CORS ok, or proxy a URL"""
+    for cors_ok_domain in settings.CORS_OK_DOMAINS:
+        if cors_ok_domain in url:
+            return url
+    # Use our proxy to make this CORS ok.
+    rp = RootPath()
+    url = rp.get_baseurl() + '/entities/proxy/' + urlquote(url)
+    return url
+
+
+def gather_media_links(man_obj, rep_dict):
+    """Gathers all media links for images, 3D models, GIS previews and downloads
+    
+    :param AllManifest man_obj: A instance of the AllManifest model for the
+        the item that is getting a representation.
+    :param dict rep_dict: The item's JSON-LD representation dict
+    """
+    if man_obj.item_type != 'media':
+        # Not a media item, so this is not relevant.
+        return rep_dict
+    if not rep_dict.get('oc-gen:has-files'):
+        # This media item currently lacks files, so skip out.
+        return rep_dict
+    for file_dict in rep_dict.get('oc-gen:has-files'):
+        format = file_dict.get('dc-terms:hasFormat', '')
+        type = file_dict.get('type')
+        uri = file_dict.get('id')
+        filesize = file_dict.get('dcat:size')
+        if type == 'oc-gen:preview':
+            if format.endswith('geo+json'):
+                uri = check_cors_ok_or_proxy_url(uri)
+                rep_dict['media_preview_geojson'] = uri
+            elif format.endswith('application/pdf') or uri.lower().endswith('.pdf'):
+                uri = check_cors_ok_or_proxy_url(uri)
+                rep_dict['media_preview_pdf'] = uri
+            elif (
+                'image' in format 
+                or str(man_obj.item_class.uuid) == configs.CLASS_OC_IMAGE_MEDIA
+            ):
+                if rep_dict.get('media_preview_image'):
+                    rep_dict['media_preview_fallback_image'] = uri
+                else:
+                    rep_dict['media_preview_image'] = uri
+            else:
+                continue
+        elif type == 'oc-gen:nexus-3d':
+            rep_dict['media_nexus_3d'] = uri
+        elif type == 'oc-gen:x3dom-model':
+            rep_dict['media_x3dom_model'] = uri
+        elif type == 'oc-gen:x3dom-texture':
+            rep_dict['media_x3dom_texture'] = uri
+        elif type == 'oc-gen:fullfile':
+            if not rep_dict.get('media_download'):
+                rep_dict['media_download'] = uri
+            if filesize and not rep_dict.get('media_filesize'):
+                rep_dict['media_filesize'] = float(filesize)
+        elif type == 'oc-gen:ia-fullfille':
+            rep_dict['media_download'] = uri
+            if filesize:
+                rep_dict['media_filesize'] = float(filesize)
+        elif type == 'oc-gen:archive':
+            rep_dict['media_download'] = uri
+            if filesize:
+                rep_dict['media_filesize'] = float(filesize)
+        else:
+            pass
+    if rep_dict.get('media_filesize'):
+        fmath = FileMath()
+        rep_dict['media_filesize_human'] = fmath.approximate_size(
+            rep_dict.get('media_filesize')
+        )
+    return rep_dict
+
+
 def prepare_for_item_dict_html_template(man_obj, rep_dict):
-    """Prepares a representation dict for HTML templating"""
+    """Prepares a representation dict for HTML templating
+    
+    :param AllManifest man_obj: A instance of the AllManifest model for the
+        the item that is getting a representation.
+    :param dict rep_dict: The item's JSON-LD representation dict
+    """
 
     # Consolidate the contexts paths
     rep_dict['contexts'] = (
@@ -466,6 +592,9 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
     # Make any geospatial overlay images more convenient to use
     # in the HTML template with leaflet and vue.js
     rep_dict = add_geo_overlay_images(rep_dict)
+
+    # Gather links for different types of media.
+    rep_dict = gather_media_links(man_obj, rep_dict)
 
     # Now ensure easy to template characters in the keys
     # in this dict

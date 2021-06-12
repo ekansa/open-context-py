@@ -205,9 +205,9 @@ class Entity():
                                .extra(tables=[ch_tab], where=[filters])[:1]
             if len(par_rows) > 0:
                 self.par_proj_man_obj = par_rows[0]
-        elif (manifest_item.item_type == 'subjects'
-              and self.get_context
-              and not self.context):
+        if (manifest_item.item_type == 'subjects'
+              and self.get_context):
+            print('get context!')
             subj = Subject.objects.filter(uuid=manifest_item.uuid).first()
             if subj:
                 self.context = subj.context

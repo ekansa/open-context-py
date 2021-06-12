@@ -1,0 +1,162 @@
+{% block preview_nexus_3d %}
+
+{% if item.media_nexus_3d %}
+<link type="text/css" rel="stylesheet" href="{{ BASE_URL }}/static/3Dhop-4-3/stylesheet/3dhop.css"/> 
+<script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/spidergl.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/presenter.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/nexus.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/ply.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/trackball_sphere.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/trackball_turntable.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/trackball_turntable_pan.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/trackball_pantilt.js"> </script>
+<script type="text/javascript" src="{{ BASE_URL }}/static/3Dhop-4-3/js/init.js"> </script>
+
+<div class="card media_preview">
+  <div class="card-header">
+    <h5>Interactive 3D Model</h5>
+  </div>
+  <div class="card-body">
+    
+    <div id="3dhop-outer" style="width:100%;">
+      <div id="3dhop" class="tdhop" onmousedown="if (event.preventDefault) event.preventDefault();">
+        <div id="tdhlg"></div>
+        <div id="toolbar">
+          <img id="home"     title="Home"                  src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/home.png"   /><br/>
+          <img id="zoomin"   title="Zoom In"               src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/zoomin.png" /><br/>
+          <img id="zoomout"  title="Zoom Out"              src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/zoomout.png"/><br/>
+          <img id="light_on" title="Disable Light Control" src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/light_on.png" style="position:absolute; visibility:hidden;"/>
+          <img id="light"    title="Enable Light Control"  src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/light.png"/><br/>
+          <img id="measure_on" title="Disable Measure Tool"  src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/measure_on.png" style="position:absolute; visibility:hidden;"/>
+          <img id="measure"    title="Enable Measure Tool"   src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/measure.png"/><br/>
+      
+          <img id="full_on"  title="Exit Full Screen"      src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/full_on.png" style="position:absolute; visibility:hidden;"/>
+          <img id="full"     title="Full Screen"           src="{{ BASE_URL }}/static/3Dhop-4-3/skins/dark/full.png"   />
+        </div>
+        <div id="measure-box" class="output-box">Measured length<hr/>
+          <span id="measure-output" class="output-text" onmousedown="event.stopPropagation();">0.0</span>
+        </div>
+  
+        <canvas id="draw-canvas" style="background-image: url('{{ BASE_URL }}/static/3Dhop-4-3/skins/backgrounds/oc-grey.jpg')" ></canvas>
+        
+      </div>
+    </div>
+
+
+
+
+
+  </div>
+</div>
+
+
+<script type="text/javascript">
+
+{% if item.units_of_measurement and item.units_of_measurement|length == 1 %}
+
+  const  UNIT_MEASURE_URI = "{{item.units_of_measurement.0.id}}";
+  const  UNIT_MEASURE_LABEL = "{{item.units_of_measurement.0.label}}";
+  const  UNIT_MEASURE_SYMBOL = "{{item.units_of_measurement.0.symbol}}";
+
+{%else%}
+
+  const  UNIT_MEASURE_URI = null;
+  const  UNIT_MEASURE_LABEL = null;
+  const  UNIT_MEASURE_SYMBOL = null;
+
+{%endif%}
+
+  const CONTAINER_DOM_ID = "3dhop-outer";
+  const TITLE_SPAN_DOM_ID = "preview-1-file-panel-title";
+  const CANVAS_DOM_ID = "draw-canvas";
+  const MEASURE_OUTPUT_DOM_ID = "measure-output";
+
+  let presenter = new Presenter(CANVAS_DOM_ID);
+  var canvas_width = 400;
+	var canvas_height = 500;
+
+  function set_canvas_title(){
+    var act_dom = document.getElementById(TITLE_SPAN_DOM_ID);
+    if(act_dom){
+      act_dom.innerHTML = 'Interactive 3D Model';
+    }
+  }
+
+  function set_canvas_dimensions(){
+    var act_dom = document.getElementById(CONTAINER_DOM_ID);
+    canvas_width = act_dom.offsetWidth;
+    if (canvas_width < window.innerWidth * 0.33){
+      canvas_width = window.innerWidth * 0.5;
+    }
+    canvas_height = canvas_width * 1.15;
+  }
+
+  function actionsToolbar(action) {
+    if(action=='home') presenter.resetTrackball(); 
+    else if(action=='zoomin') presenter.zoomIn();
+    else if(action=='zoomout') presenter.zoomOut(); 
+    else if(action=='light' || action=='light_on') { presenter.enableLightTrackball(!presenter.isLightTrackballEnabled()); lightSwitch(); }
+    else if(action=='measure' || action=='measure_on') {
+      presenter.enableMeasurementTool(
+        !presenter.isMeasurementToolEnabled()
+      );
+      measureSwitch();
+    }
+    else if(action=='full'  || action=='full_on') fullscreenSwitch(); 
+  }
+
+  function onEndMeasure(measure) {
+		// measure.toFixed(2) sets the number of decimals when displaying the measure
+    // depending on the model measure units, use "mm","m","km" or whatever you have
+    if(UNIT_MEASURE_LABEL == null){
+      return null;
+    }
+    console.log(measure);
+    $('#measure-output').html(measure.toFixed(2) + " (" + UNIT_MEASURE_LABEL + ")");
+  }
+
+  function onWindowResize() {
+    set_canvas_dimensions();
+    resizeCanvas(canvas_width, canvas_height);
+  }
+
+  window.addEventListener( 'resize', onWindowResize, false );
+
+  function setup3dhop() { 
+    presenter.setScene({
+      meshes: {
+        "{{ item.label }}" : { url: "{{ item.media_nexus_3d }}" }
+      },
+      modelInstances : {
+        "Model1" : { mesh : "{{ item.label }}" } 
+      },
+      trackball: {
+        type: SphereTrackball,  // wider range of rotation?
+        trackOptions : {		
+          // startDistance : 1.8,
+        }	,
+      },
+    });
+    presenter._onEndMeasurement = onEndMeasure;
+  }
+
+  $(document).ready(function(){
+    init3dhop();
+    setup3dhop();
+    set_canvas_dimensions();
+    resizeCanvas(canvas_width, canvas_height);
+    moveToolbar(20,20);
+    set_canvas_title();
+	});
+
+</script>
+
+
+{%endif%}
+
+
+{% endblock %}

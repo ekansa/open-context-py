@@ -542,6 +542,7 @@ def migrate_legacy_type(old_man_obj):
 
     old_type = OCtype.objects.filter(uuid=old_id).first()
     type_rank = 0
+    old_man_pred = None
     if old_type:
         old_pred_uuid = old_type.predicate_uuid
         type_rank = old_type.rank

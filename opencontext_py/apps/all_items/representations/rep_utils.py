@@ -128,8 +128,12 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
             obj['predicate_id'] = str(predicate.uuid)
             obj['predicate__label'] = predicate.label
             obj['predicate__data_type'] = predicate.data_type
-            obj['predicate__item_class_id'] = str(predicate.item_class.uuid)
-            obj['predicate__item_class__label'] = predicate.item_class.label
+            if predicate.item_class:
+                obj['predicate__item_class_id'] = str(predicate.item_class.uuid)
+                obj['predicate__item_class__label'] = predicate.item_class.label
+            else:
+                obj['predicate__item_class_id'] = None
+                obj['predicate__item_class__label'] = None
             obj['predicate__uri'] = predicate.uri
             obj['predicate__context_id'] = str(predicate.context.uuid)
             obj['predicate__context__item_type'] = predicate.context.item_type

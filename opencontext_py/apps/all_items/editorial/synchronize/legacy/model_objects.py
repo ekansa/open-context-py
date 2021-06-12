@@ -34,13 +34,21 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.all_items.editorial.synchronize.legacy import model_objects
 importlib.reload(model_objects)
 
-after_date = '2021-05-12'
+after_date = '2021-05-30'
+update_models_prod = [(Project, 'updated', True,),]
+model_objects.update_default_from_prod(
+    project_uuid='bc71c724-eb1e-47d6-9d45-b586ddafdcfe', after_date=after_date, update_models=update_models_prod
+)
 
 update_models=[
-    (StableIdentifer, 'updated', True,),
+    (Manifest, 'record_updated', True,),
+    (Geospace, 'updated', True,),
+    (Mediafile, 'updated', True,),
+    (OCstring, 'updated', True,),
+    (Assertion, 'updated', True,),
 ]
 model_objects.update_prod_from_default(
-    project_uuid='8e7fee33-8ec7-4707-910b-6ace9d70d032', after_date=after_date, update_models=update_models
+    project_uuid='bc71c724-eb1e-47d6-9d45-b586ddafdcfe', after_date=after_date, update_models=update_models
 )
 
 # model_objects.update_default_from_prod(after_date=after_date)
@@ -57,14 +65,14 @@ LEGACY_MODELS = [
     (OCtype, 'updated', True,),
     (OCstring, 'updated', True,),
     (Subject, 'updated', True,),
-    (Mediafile, 'updated', True,),
     (OCdocument, 'updated', True,),
     (Person, 'updated', True,),
-    (Project, 'updated', True,),
+    # (Project, 'updated', True,),
     (StableIdentifer, 'updated', True,),
     (LinkAnnotation, 'updated', True,),
     (LinkEntity, 'updated', False,),
     (Assertion, 'updated', True,),
+    (Mediafile, 'updated', True,),
 ]
 
 LEGACT_EXTABLE_MODELS = [

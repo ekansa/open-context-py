@@ -4,6 +4,7 @@ import datetime
 from dateutil.parser import parse
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.predicatetype import PredicateTypeAssertions
@@ -22,6 +23,15 @@ from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
+
+
+
+CHRONOTYPE_PROJECTS = [
+    '3F6DCD13-A476-488E-ED10-47D25513FCB2', # PKAP I
+    'b9472eec-e622-4838-b6d8-5a2958b9d4d3', # PKAP II
+    'bc71c724-eb1e-47d6-9d45-b586ddafdcfe', # EKAS
+]
+CHRONOTYPE_UUID = '13D92295-65EA-47F7-EBF2-56C7667C6E5F'
 
 
 # Processes to generate descriptions
@@ -472,6 +482,9 @@ class ProcessDescriptions():
                             if len(val_dist_rec['imp_cell_obj'].record) > 0:
                                 # found a non-blank type item
                                 cs = CandidateString()
+                                if recon_predicate['predicate'] is not False:
+                                    predicate = recon_predicate['predicate']
+                                    cs.chronotype_field = (predicate.uuid == CHRONOTYPE_UUID)
                                 cs.source_id = self.source_id
                                 cs.project_uuid = self.project_uuid
                                 cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
@@ -816,15 +829,21 @@ class CandidateDescriptivePredicate():
         """
         output = False
         self.setup_field(des_field_obj)
+        predicate = None
         if len(self.label) > 0:
             output = True
-            pm = PredicateManagement()
-            pm.project_uuid = self.project_uuid
-            pm.source_id = self.source_id
-            pm.sort = self.sort
-            predicate = pm.get_make_predicate(self.label,
-                                              'variable',
-                                              self.data_type)
+            if self.project_uuid in CHRONOTYPE_PROJECTS and self.label == 'Chronotype':
+                predicate = Predicate.objects.filter(uuid=CHRONOTYPE_UUID).first()
+                if predicate:
+                   predicate.sort = self.sort
+            if not predicate:
+                pm = PredicateManagement()
+                pm.project_uuid = self.project_uuid
+                pm.source_id = self.source_id
+                pm.sort = self.sort
+                predicate = pm.get_make_predicate(self.label,
+                                                'variable',
+                                                self.data_type)
             self.uuid = predicate.uuid
             self.predicate = predicate
             self.sort = predicate.sort
@@ -855,17 +874,26 @@ class CandidateString():
         self.source_id = False
         self.uuid = False
         self.oc_string = False
+        self.chronotype_field = False
 
     def reconcile_string_cell(self, imp_cell):
         """ reconciles a predicate variable from the Import Field
         """
         output = False
+        str_obj = None
+        if len(imp_cell.record) > 0 and self.chronotype_field:
+            self.oc_string = OCstring.objects.filter(
+                project_uuid__in=CHRONOTYPE_PROJECTS,
+                content=imp_cell.record,
+            ).first()
+
         if len(imp_cell.record) > 0:
             output = True
-            sm = StringManagement()
-            sm.project_uuid = imp_cell.project_uuid
-            sm.source_id = imp_cell.source_id
-            self.oc_string = sm.get_make_string(imp_cell.record)
+            if not self.oc_string:
+                sm = StringManagement()
+                sm.project_uuid = imp_cell.project_uuid
+                sm.source_id = imp_cell.source_id
+                self.oc_string = sm.get_make_string(imp_cell.record)
             self.uuid = self.oc_string.uuid
             self.content = self.oc_string.content
             # self.source_id = self.oc_string.source_id
@@ -905,11 +933,29 @@ class CandidateType():
            and predicate_uuid is not False \
            and content_uuid is not False:
             output = True
-            tm = TypeManagement()
-            tm.project_uuid = imp_cell.project_uuid
-            tm.source_id = imp_cell.source_id
-            self.oc_type = tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,
-                                                                   content_uuid)
+            if predicate_uuid == CHRONOTYPE_UUID:
+                mt = None
+                str_content = OCstring.objects.filter(uuid=content_uuid).first()
+                if str_content:
+
+                    mt_uuids = Manifest.objects.filter(
+                        item_type='types',
+                        project_uuid__in=CHRONOTYPE_PROJECTS,
+                        label=str_content.content,
+                    ).values_list('uuid', flat=True)
+                    self.oc_type = OCtype.objects.filter(
+                        predicate_uuid=CHRONOTYPE_UUID,
+                    ).filter(
+                        Q(uuid__in=mt_uuids)|Q(content_uuid=content_uuid)
+                    ).first()
+            if not self.oc_type:
+                tm = TypeManagement()
+                tm.project_uuid = imp_cell.project_uuid
+                tm.source_id = imp_cell.source_id
+                self.oc_type = tm.get_make_type_pred_uuid_content_uuid(
+                    predicate_uuid,
+                    content_uuid
+                )
             # self.source_id = self.oc_type.source_id
             if self.oc_type.uuid != imp_cell.fl_uuid \
                or self.oc_type.content_uuid != imp_cell.l_uuid:    # update the reconcilted UUID for import cells with same rec_hash

@@ -1,0 +1,19 @@
+{% block preview_image %}
+
+{% if item.media_preview_image %}
+
+<div class="card media_preview">
+  <div class="card-header">
+    <h5>Image Preview</h5>
+  </div>
+  <div class="card-body">
+    <img src="{{ item.media_preview_image }}" 
+      class="img-fluid rounded mx-auto d-block" 
+      alt="Preview image" />
+  </div>
+</div>
+
+{%endif%}
+
+
+{% endblock %}

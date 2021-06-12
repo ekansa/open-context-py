@@ -993,6 +993,13 @@ class CandidateSubject():
                 subject_match = Subject.objects.get(context=context)
             except Subject.DoesNotExist:
                 subject_match = False
+        if not subject_match and self.project_uuid == 'bc71c724-eb1e-47d6-9d45-b586ddafdcfe':
+            subject_match = Subject.objects.filter(
+                project_uuid=self.project_uuid,
+                context__endswith=context,
+            ).first()
+            if not subject_match:
+                subject_match = False
         if subject_match is not False:
             print('Found: {} as {}'.format(context, subject_match.uuid))
             match_found = True

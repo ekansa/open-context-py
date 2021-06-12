@@ -1,0 +1,18 @@
+{% block preview_pdf %}
+
+{% if item.media_preview_pdf %}
+
+<div class="card media_preview">
+  <div class="card-header">
+    <h5>Portable Document Format (PDF) Preview</h5>
+  </div>
+  <div class="card-body">
+    <iframe src="{{ BASE_URL }}/static/viewerjs/index.html#{{ item.media_preview_pdf }}"
+      width="90%" height="800" allowfullscreen webkitallowfullscreen></iframe>
+  </div>
+</div>
+
+{%endif%}
+
+
+{% endblock %}
