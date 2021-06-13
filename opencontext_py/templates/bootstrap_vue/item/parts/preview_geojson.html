@@ -1,0 +1,287 @@
+{% block preview_pdf %}
+
+{% if item.media_preview_geojson %}
+
+
+
+<template id='media_map'>
+  <div>
+    <l-map
+      v-if="geo_json"
+      style="min-height: 800px;"
+      :ref="'media-map-' + ITEM_UUID" 
+      :zoom="11"
+      :load-tiles-while-animating="true" 
+      :load-tiles-while-interacting="true">
+      <l-control-layers
+        :ref="'media-map-l-controls-' + ITEM_UUID"
+        position="topright"></l-control-layers>
+      <l-tile-layer
+        v-for="tp in tileProviders"
+        :key="tp.name"
+        :name="tp.name"
+        :visible="tp.visible"
+        :url="tp.url"
+        :attribution="tp.attribution"
+        :maxZoom="tp.maxZoom"
+        :maxNativeZoom="tp.maxNativeZoom"
+        layer-type="base"></l-tile-layer>
+      <l-img-overlay
+        v-if="item_json.geo_overlays"
+        v-for="ov in item_json.geo_overlays"
+        :key="ov.id"
+        :name="ov.label"
+        :visible="ov.visible"
+        :url="ov.url"
+        :attribution="ov.attribution"
+        :bounds="ov.bounds"
+        layer-type="overlay"
+      ></l-img-overlay>
+      <l-geo-json
+        :key="'media-geojson-' + ITEM_UUID + map_key"
+        :ref="'media-geojson-' + ITEM_UUID"
+        :options="options"
+        v-bind:geojson="geo_json"
+      >
+      <l-popup></l-popup>
+      </l-geo-json>
+    </l-map>
+    <div v-else class="text-center mb-3 d-flex justify-content-between">
+      <b-spinner
+        :variant="primary"
+        style="width: 3rem; height: 3rem;" label="Large Spinner"></b-spinner>
+    </div>
+  </div>
+</template>
+
+
+
+
+
+
+
+<div class="card media_preview">
+  <div class="card-header">
+    <h5>GIS (GeoJSON) Preview</h5>
+  </div>
+  <div class="card-body">
+    <div id="app_media">
+      <media_map
+        v-bind:geo_json_url="geo_json_url"
+        :map_key="0"></media_map>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<script type="text/javascript">
+
+// Assume Import Vue2Leaflet components are 
+const GEO_JSON_URL = "{{ item.media_preview_geojson }}";
+  
+
+  // Now make a Vue component of for a leaflet map.
+var vc_media_map = Vue.component(
+  'media_map', 
+  {
+    props: ['map_key', 'geo_json_url'],
+    data() {
+      return {
+        // Map Options
+        map_key: 0,
+        zoom_def: 13,
+        layers: [],
+        selectedTileSet: TILE_PROVIDERS[0], 
+        tileProviders: TILE_PROVIDERS,
+        google_aerial: $.extend(true, {}, GOOGLE_SAT),
+        google_tiles: GOOGLE_TILES,
+        added_google_tiles: false,
+        minZoom_def: 1,
+        maxZoom_def: MAX_ZOOM,
+        show_mapsets_default: true,
+        map_ref: ('media-map-' + ITEM_UUID),
+        l_controls_ref: ('media-map-l-controls-' + ITEM_UUID),
+        geojson_ref: ('media-geojson-' + ITEM_UUID),
+        center: null,
+        geo_json: null,
+        geo_json_url: null,
+      };
+    },
+    template: '#media_map',
+    delimiters: ['[[', ']]'],
+    created() {
+      this.add_google_tiles();
+      this.fetch_geojson();
+      this.get_map_ref();
+    },
+    mounted() {
+      this.add_google_tiles();
+      this.fetch_geojson();
+      this.get_map_ref();
+      this.fit_bounds();
+      this.get_location_info();
+    },
+    updated(){
+      this.fit_bounds();
+      this.get_location_info();
+    },
+    computed: {
+      options() {
+        return {
+          onEachFeature: this.onEachFeatureFunction
+        };
+      },
+      onEachFeatureFunction() {
+        return (feature, layer) => {
+          var prop_content = [];
+          var props = [];
+          for (var prop in feature.properties) {
+            let prop_str = add_links(feature.properties[prop]);
+            props.push({k: prop, v:feature.properties[prop]});
+            prop_content.push(
+                `<dl class="row">
+                 <dt class="col">${prop}</dt>
+                 <dd class="col">${prop_str}</dd>
+                 </dl>
+                `
+              );
+          }
+          var all_props = prop_content.join('\n');
+          var popup_content = (
+            `<div class="container geo_feature_popup">${all_props}</div>`
+          );
+          layer.bindPopup(popup_content);
+          var tooltip_content = '<div>GeoJSON Feature</div>';
+          if(props.length > 0){
+            tooltip_content = `<div>${props[0].k}: ${props[0].v}</div>`;
+          }
+          layer.bindTooltip(tooltip_content);
+        };
+      },
+    },
+    methods: {
+      get_map_ref: function() {
+        // console.log(this.$refs);
+      },
+      add_google_tiles: function() {
+        if(this.added_google_tiles){
+          return null;
+        }
+        if(this.$refs[this.l_controls_ref] == null){
+          console.log('no: ' + this.l_controls_ref);
+          return null;
+        }
+        if(this.$refs[this.map_ref] == null){
+          console.log('no: ' + this.map_ref);
+          return null;
+        }
+        // Add the Google Satellite tile layer because this
+        // supports over-zooming.
+        this.$refs[this.map_ref].mapObject.addLayer(this.google_aerial);
+        for(let gtile of this.google_tiles){
+          let cloned_gtile = $.extend(true, {}, gtile);
+          this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
+            cloned_gtile, cloned_gtile.options.name
+          );
+        }
+        this.added_google_tiles = true;
+      },
+      fit_bounds: function(){
+        if(!this.geo_json){
+          return null;
+        }
+        let l_geo_json = this.$refs[this.geojson_ref];
+        if(l_geo_json == null){
+          console.log('no: ' + this.geojson_ref);
+          return null;
+        }
+        let bounds = l_geo_json.getBounds();
+        this.$refs[this.map_ref].mapObject.fitBounds(bounds);
+        this.add_google_tiles();
+        this.$refs[this.map_ref].mapObject._layersMaxZoom = MAX_ZOOM;
+      },
+      get_location_info: function() {
+        if(!this.geo_json){
+          return null;
+        }
+      },
+      fetch_geojson: function() {
+        console.log('check fetch geojson from: ' + this.geo_json_url);
+        if(!this.geo_json_url){
+          return null;
+        }
+        if(this.geo_json){
+          return null;
+        }
+        console.log('fetch geojson from: ' + this.geo_json_url);
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        fetch(
+          (this.geo_json_url), 
+          requestOptions,
+        )
+        .then(this.loading = false)
+        .then(response => response.json())
+        .then(json => {
+          this.geo_json = json;
+          console.log('fetched geojson');
+        });
+      },
+    },
+    components: {
+      'l-popup': l_popup,
+      'l-img-overlay' :l_img_overlay,
+      'l-tile-layer': l_tile_layer,
+      'l-geo-json': l_geo_json,
+      'l-marker': l_marker,
+      'l-map': l_map,
+    },
+});
+
+var vm_media = new Vue(
+  {
+    router: router,
+    delimiters: ['[[', ']]'],
+    ref: 'media_app',
+    el: '#app_media',
+    data: {
+      uuid: ITEM_UUID,
+      geo_json_url: GEO_JSON_URL,
+    },
+    methods: {
+      
+    },
+    created() {
+     
+    },
+    components: {
+      'media_map': vc_media_map,
+    },
+  },
+).$mount('#app_media');
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+{%endif%}
+
+
+{% endblock %}

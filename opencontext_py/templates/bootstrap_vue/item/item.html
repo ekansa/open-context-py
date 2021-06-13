@@ -2,6 +2,7 @@
 
 {% block content %}
 
+{% include '../item/parts/vue_shared.html' %}
 
 <div id="project_hero_banner">
     {% if man_obj.hero %}
@@ -37,6 +38,7 @@
             {% include '../item/parts/preview_image.html' %}
             {% include '../item/parts/preview_pdf.html' %}
             {% include '../item/parts/preview_nexus.html' %}
+            {% include '../item/parts/preview_geojson.html' %}
             {% include '../item/parts/content_text.html' %}
             {% include '../item/parts/observations.html' %}
 

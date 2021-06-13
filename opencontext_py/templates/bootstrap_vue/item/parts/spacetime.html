@@ -17,7 +17,9 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         :zoom="11"
         :load-tiles-while-animating="true" 
         :load-tiles-while-interacting="true">
-        <l-control-layers position="topright"></l-control-layers>
+        <l-control-layers 
+        :ref="'map-l-controls-' + ITEM_UUID"
+        position="topright"></l-control-layers>
         <l-tile-layer
           v-for="tp in tileProviders"
           :key="tp.name"
@@ -67,86 +69,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
 
 <script type="text/javascript">
 
-  // Import Vue2Leaflet components. 
-  const GEO_JSON = JSON.parse('{{ GEO_JSON|escapejs }}');
-  const item_json = JSON.parse('{{ item_json|escapejs }}');
-  const ITEM_UUID = item_json.uuid;
-  const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
-  const l_tile_layer = Vue.component(
-    'l-tile-layer', 
-    window.Vue2Leaflet.LTileLayer,
-  );
-  const l_img_overlay = Vue.component(
-    'l-img-overlay', 
-    window.Vue2Leaflet.LImageOverlay,
-  );
-  const l_geo_json = Vue.component(
-    'l-geo-json', 
-    window.Vue2Leaflet.LGeoJson,
-  );
-  const l_control_layers = Vue.component(
-    'l-control-layers', 
-    window.Vue2Leaflet.LControlLayers,
-  );
-  const l_marker = Vue.component(
-    'l-marker', 
-    window.Vue2Leaflet.LMarker,
-  );
-  const l_map = Vue.component(
-    'l-map', 
-    window.Vue2Leaflet.LMap,
-  );
-  
-  const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
-  const TILE_PROVIDERS = [
-    {
-      name: 'MapBox Satellite',
-      visible: true,
-      id: 'mapbox-satellite',
-      url: (
-        'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
-        + MAPBOX_PUBLIC_ACCESS_TOKEN
-      ),
-      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
-    },
-    {
-      name: 'OpenStreetMap',
-      visible: false,
-      id: 'osm',
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-    },
-    {
-      name: 'OpenTopoMap',
-      visible: false,
-      id: 'otm',
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      attribution: 'Map data: © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-    },
-    {
-      name: 'MapBox Light',
-      visible: false,
-      id: 'mapbox-light',
-      url: (
-        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
-        + MAPBOX_PUBLIC_ACCESS_TOKEN
-      ),
-      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
-    },
-    {
-      name: 'MapBox Dark',
-      visible: false,
-      id: 'mapbox-dark',
-      url: (
-        'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token='
-        + MAPBOX_PUBLIC_ACCESS_TOKEN
-      ),
-      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
-    },
-  ];
-
-var MAP_OBJ = null;
-  // Now make a Vue component of for a leaflet map.
+// Now make a Vue component of for a leaflet map.
 var vc_item_map = Vue.component(
   'item_map', 
   {
@@ -159,10 +82,14 @@ var vc_item_map = Vue.component(
           layers: [],
           selectedTileSet: TILE_PROVIDERS[0], 
           tileProviders: TILE_PROVIDERS,
+          google_aerial: GOOGLE_SAT,
+          google_tiles: GOOGLE_TILES,
+          added_google_tiles: false,
           minZoom_def: 1,
           maxZoom_def: 30,
           show_mapsets_default: true,
           map_ref: ('map-' + ITEM_UUID),
+          l_controls_ref: ('map-l-controls-' + ITEM_UUID),
           geojson_ref: ('geojson-' + ITEM_UUID),
           center: null,
           geo_json: null,
@@ -174,15 +101,18 @@ var vc_item_map = Vue.component(
     delimiters: ['[[', ']]'],
     created() {
       this.get_map_ref();
+      this.add_google_tiles();
     },
     mounted() {
       this.get_map_ref();
       this.fit_bounds();
       this.get_location_info();
+      this.add_google_tiles();
     },
     updated(){
       this.fit_bounds();
       this.get_location_info();
+      this.add_google_tiles();
     },
     computed: {
       options() {
@@ -199,7 +129,7 @@ var vc_item_map = Vue.component(
             </dl>`
           );
           layer.bindTooltip(
-            ("<div>" + feature.properties.item__label + "</div>"),
+            ("<div>" + item_json.label + "</div>"),
             { permanent: false, sticky: true }
           );
         };
@@ -209,17 +139,40 @@ var vc_item_map = Vue.component(
       get_map_ref: function() {
         // console.log(this.$refs);
       },
+      add_google_tiles: function() {
+        if(this.added_google_tiles){
+          return null;
+        }
+        if(this.$refs[this.l_controls_ref] == null){
+          console.log('no item: ' + this.l_controls_ref);
+          return null;
+        }
+        if(this.$refs[this.map_ref] == null){
+          console.log('no item: ' + this.map_ref);
+          return null;
+        }
+        // Add the Google Satellite tile layer because this
+        // supports over-zooming.
+        this.$refs[this.map_ref].mapObject.addLayer(this.google_aerial);
+        for(let gtile of this.google_tiles){
+          this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
+            gtile, gtile.options.name
+          );
+        }
+        this.added_google_tiles = true;
+      },
       fit_bounds: function(){
         if(!this.geo_json){
           this.geo_json = GEO_JSON;
         }
         let l_geo_json = this.$refs[this.geojson_ref];
         if(l_geo_json == null){
-          console.log('no: ' + this.geojson_ref);
+          console.log('no item: ' + this.geojson_ref);
           return null;
         }
         let bounds = l_geo_json.getBounds();
         this.$refs[this.map_ref].mapObject.fitBounds(bounds);
+        this.$refs[this.map_ref].mapObject._layersMaxZoom = MAX_ZOOM;
         console.log(bounds);
       },
       get_location_info: function() {
@@ -251,14 +204,6 @@ var vc_item_map = Vue.component(
       'l-map': l_map,
     },
 });
-
-
-const router = new VueRouter({
-  mode: 'history',
-  linkExactActiveClass: 'active',
-  routes: [],
-});
-
 
 var vm = new Vue(
   {
