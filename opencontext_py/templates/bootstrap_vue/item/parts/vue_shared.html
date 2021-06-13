@@ -39,39 +39,32 @@
   const GOOGLE_API_KEY = 'AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo';
   const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
   
-  var GOOGLE_ROAD = L.gridLayer.googleMutant({
+
+  const GOOGLE_TILE_CONFIGS = [
+    {
       maxZoom: MAX_ZOOM_TILES,
       name: "Google Road",
       type: "roadmap",
       attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
-    });
-
-  var GOOGLE_SAT = L.gridLayer.googleMutant({
-    maxZoom: MAX_ZOOM_TILES,
-    name: "Google Aerial",
-    type: "satellite",
-    attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
-  });
-
-  var GOOGLE_TERRAIN = L.gridLayer.googleMutant({
-    maxZoom: MAX_ZOOM_TILES,
-    name: "Google Terrain",
-    type: "terrain",
-    attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
-  });
-
-  var GOOGLE_HYBRID = L.gridLayer.googleMutant({
-    maxZoom: MAX_ZOOM_TILES,
-    name: "Google Hybrid",
-    type: "hybrid",
-    attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
-  });
-
-  var GOOGLE_TILES = [
-    GOOGLE_SAT,
-    GOOGLE_TERRAIN,
-    GOOGLE_ROAD,
-    GOOGLE_HYBRID,
+    },
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Aerial",
+      type: "satellite",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Terrain",
+      type: "terrain",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Hybrid",
+      type: "hybrid",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
   ];
 
 
@@ -95,7 +88,7 @@
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: MAX_ZOOM,
-      maxNativeZoom: MAX_ZOOM_TILES,
+      maxNativeZoom: 18,
     },
     {
       name: 'OpenTopoMap',
@@ -103,8 +96,8 @@
       id: 'otm',
       url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
       attribution: 'Map data: © <a target="_blank" href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-      maxZoom: MAX_ZOOM,
-      maxNativeZoom: MAX_ZOOM_TILES,
+      maxZoom: 16,
+      maxNativeZoom: 16,
     },
     {
       name: 'MapBox Light',

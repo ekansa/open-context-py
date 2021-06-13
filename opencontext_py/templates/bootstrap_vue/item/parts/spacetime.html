@@ -82,8 +82,7 @@ var vc_item_map = Vue.component(
           layers: [],
           selectedTileSet: TILE_PROVIDERS[0], 
           tileProviders: TILE_PROVIDERS,
-          google_aerial: GOOGLE_SAT,
-          google_tiles: GOOGLE_TILES,
+          google_tile_configs: GOOGLE_TILE_CONFIGS,
           added_google_tiles: false,
           minZoom_def: 1,
           maxZoom_def: 30,
@@ -151,10 +150,12 @@ var vc_item_map = Vue.component(
           console.log('no item: ' + this.map_ref);
           return null;
         }
-        // Add the Google Satellite tile layer because this
-        // supports over-zooming.
-        this.$refs[this.map_ref].mapObject.addLayer(this.google_aerial);
-        for(let gtile of this.google_tiles){
+        for(let gtile_config of this.google_tile_configs){
+          let gtile = L.gridLayer.googleMutant(gtile_config);
+          if(gtile_config.type == 'satellite'){
+            // Add support for over-zooming satellite.
+            this.$refs[this.map_ref].mapObject.addLayer(gtile);
+          }
           this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
             gtile, gtile.options.name
           );
