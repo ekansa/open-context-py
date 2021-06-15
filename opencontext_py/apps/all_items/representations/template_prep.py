@@ -518,6 +518,8 @@ def gather_media_links(man_obj, rep_dict):
         filesize = file_dict.get('dcat:size')
         if type == 'oc-gen:preview':
             if format.endswith('geo+json'):
+                # Works for the obsoleted "application/vnd.geo+json"
+                # and the current "application/geo+json"
                 uri = check_cors_ok_or_proxy_url(uri)
                 rep_dict['media_preview_geojson'] = uri
             elif format.endswith('application/pdf') or uri.lower().endswith('.pdf'):

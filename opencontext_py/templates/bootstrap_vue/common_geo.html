@@ -1,0 +1,459 @@
+{% block common_geo %}
+
+{% load humanize %}
+
+
+<template id='common_map'>
+    <div>
+        <l-map
+            v-if="geo_json"
+            :class="map_class"
+            :style="'min-height: ' + min_height + 'px;'"
+            :ref="'map-' + ref_suffix" 
+            :zoom="11"
+            :load-tiles-while-animating="true" 
+            :load-tiles-while-interacting="true">
+            <l-control-layers
+                :ref="'map-l-controls-' + ref_suffix"
+                position="topright"></l-control-layers>
+            <l-tile-layer
+                v-for="tp in tileProviders"
+                :key="tp.name"
+                :name="tp.name"
+                :visible="tp.visible"
+                :url="tp.url"
+                :attribution="tp.attribution"
+                :maxZoom="tp.maxZoom"
+                :maxNativeZoom="tp.maxNativeZoom"
+                layer-type="base"></l-tile-layer>
+            <l-img-overlay
+                v-if="geo_overlays"
+                v-for="ov in geo_overlays"
+                :key="ov.id"
+                :name="ov.label"
+                :visible="ov.visible"
+                :url="ov.url"
+                :attribution="ov.attribution"
+                :bounds="ov.bounds"
+                layer-type="overlay"
+            ></l-img-overlay>
+            <l-geo-json
+                :key="'map-geojson-' + ref_suffix + '-' + map_key"
+                :ref="'map-geojson-' + ref_suffix"
+                :options="options"
+                v-bind:geojson="geo_json"
+            >
+            <l-popup></l-popup>
+            </l-geo-json>
+        </l-map>
+        <div v-else class="text-center mb-3 d-flex justify-content-between">
+            <b-spinner
+                :variant="primary"
+                style="width: 3rem; height: 3rem;" label="Large Spinner"></b-spinner>
+        </div>
+        <div v-if="location_precision_note">
+            <b-alert v-if="location_precision_factor" show variant="warning">
+              <small>[[location_precision_note]]</small>
+            </b-alert>
+            <b-alert v-else show variant="info">
+              <small>[[location_precision_note]]</small>
+            </b-alert>
+        </div>
+    </div>
+</template>
+
+
+<script type="text/javascript">
+  // Import Vue2Leaflet components. 
+  const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
+  const l_tile_layer = Vue.component(
+    'l-tile-layer', 
+    window.Vue2Leaflet.LTileLayer,
+  );
+  const l_img_overlay = Vue.component(
+    'l-img-overlay', 
+    window.Vue2Leaflet.LImageOverlay,
+  );
+  const l_geo_json = Vue.component(
+    'l-geo-json', 
+    window.Vue2Leaflet.LGeoJson,
+  );
+  const l_control_layers = Vue.component(
+    'l-control-layers', 
+    window.Vue2Leaflet.LControlLayers,
+  );
+  const l_marker = Vue.component(
+    'l-marker', 
+    window.Vue2Leaflet.LMarker,
+  );
+  const l_map = Vue.component(
+    'l-map', 
+    window.Vue2Leaflet.LMap,
+  );
+
+  const MAX_ZOOM_TILES = 26;
+  const MAX_ZOOM = 30;
+  
+  const GOOGLE_API_KEY = 'AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo';
+  const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
+  
+  const GOOGLE_TILE_CONFIGS = [
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Road",
+      type: "roadmap",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Aerial",
+      type: "satellite",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Terrain",
+      type: "terrain",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
+    {
+      maxZoom: MAX_ZOOM_TILES,
+      name: "Google Hybrid",
+      type: "hybrid",
+      attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
+    },
+  ];
+
+
+  const TILE_PROVIDERS = [
+    {
+      name: 'MapBox Satellite',
+      visible: true,
+      id: 'mapbox-satellite',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a target="_blank" href="https://MapBox.com">MapBox.com</a>',
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: MAX_ZOOM_TILES,
+    },
+    {
+      name: 'OpenStreetMap',
+      visible: false,
+      id: 'osm',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '© <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: 18,
+    },
+    {
+      name: 'OpenTopoMap',
+      visible: false,
+      id: 'otm',
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: 'Map data: © <a target="_blank" href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: © <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+      maxZoom: 16,
+      maxNativeZoom: 16,
+    },
+    {
+      name: 'MapBox Light',
+      visible: false,
+      id: 'mapbox-light',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a target="_blank" href="https://MapBox.com">MapBox.com</a>',
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: MAX_ZOOM_TILES,
+    },
+    {
+      name: 'MapBox Dark',
+      visible: false,
+      id: 'mapbox-dark',
+      url: (
+        'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/{z}/{x}/{y}?access_token='
+        + MAPBOX_PUBLIC_ACCESS_TOKEN
+      ),
+      attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: MAX_ZOOM_TILES,
+    },
+  ];
+
+
+
+
+
+var vc_common_map = Vue.component(
+  'common_map', 
+  {
+    props: [
+        'map_key',
+        'ref_suffix',
+        'geo_json_url',
+        'geo_json',
+        'geo_overlays',
+        'item_json',
+        'map_type',
+        'map_class',
+        'min_height',
+    ],
+    data() {
+      return {
+          // Map Options
+          map_key: 0,
+          zoom_def: 13,
+          layers: [],
+          selectedTileSet: TILE_PROVIDERS[0], 
+          tileProviders: TILE_PROVIDERS,
+          google_tile_configs: GOOGLE_TILE_CONFIGS,
+          added_google_tiles: false,
+          minZoom_def: 1,
+          maxZoom_def: MAX_ZOOM,
+          show_mapsets_default: true,
+          center: null,
+          geo_json_url: null,
+          geo_json: null,
+          geo_overlays: null,
+          location_precision_factor: null,
+          location_precision_note: null,
+          item_json: null,
+          map_type: 'generic',
+          map_class: 'item',
+          min_height: 300,
+      };
+    },
+    template: '#common_map',
+    delimiters: ['[[', ']]'],
+    created() {
+        this.fetch_geojson();
+        this.add_google_tiles();
+    },
+    mounted() {
+        this.fetch_geojson();
+        this.fit_bounds();
+        this.get_item_location_info();
+        this.add_google_tiles();
+    },
+    updated(){
+        this.fit_bounds();
+        this.get_item_location_info();
+        this.add_google_tiles();
+    },
+    computed: {
+        map_ref(){return 'map-' + this.ref_suffix},
+        l_controls_ref(){return 'map-l-controls-' + this.ref_suffix},
+        geojson_ref(){return 'map-geojson-' + this.ref_suffix},
+        options() {
+            return {
+                onEachFeature: this.onEachFeatureFunction
+            };
+        },
+        onEachFeatureFunction() {
+            return (feature, layer) => {
+                let popup_content = this.make_feature_popup(feature);
+                let tooltip_content = this.make_feature_tooltip(feature);
+                layer.bindPopup(popup_content);
+                layer.bindTooltip(
+                    tooltip_content, 
+                    { permanent: false, sticky: true }
+                );
+            };
+        },
+    },
+    methods: {
+        add_links(str){
+            if (!(typeof str === 'string' || str instanceof String)){
+                return str;
+            }
+            if(str.startsWith("https://")||str.startsWith("http://")){
+                return `<a target="_blank" href="${str}">${str}</a>`;
+            }
+            return str;
+        },
+        make_generic_feature_popup(feature){
+            if(!feature.hasOwnProperty('properties')){
+                return '';
+            }
+            if(feature.properties.length < 1){
+                return '';
+            }
+            var prop_content = [];
+            for (var prop in feature.properties) {
+                let prop_str = this.add_links(feature.properties[prop]);
+                prop_content.push(
+                    `<dl class="row">
+                    <dt class="col">${prop}</dt>
+                    <dd class="col">${prop_str}</dd>
+                    </dl>
+                    `
+                );
+            }
+            var all_props = prop_content.join('\n');
+            var popup_content = (
+                `<div class="container geo_feature_popup">${all_props}</div>`
+            );
+            return popup_content;
+        },
+        make_item_feature_popup(feature){
+            if(!this.item_json){
+                return '';
+            }
+            return (
+                `<dl class="row">
+                <dt class="col">Item</dt>
+                <dd class="col">${this.item_json.label}</dd>
+                </dl>`
+            );
+        },
+        make_feature_popup(feature){
+            if(this.map_type == 'generic' || !this.item_json){
+                return this.make_generic_feature_popup(feature);
+            }
+            return this.make_item_feature_popup(feature);
+        },
+        make_generic_feature_tooltip(feature){
+            if(!feature.hasOwnProperty('properties')){
+                return '';
+            }
+            if(feature.properties.length < 1){
+                return '';
+            }
+            let act_prop_val = null;
+            for (var prop in feature.properties) {
+                act_prop_val = {k: prop, v:feature.properties[prop]};
+                break;
+            }
+            if(!act_prop_val){
+                return '';
+            }
+            return `<div>${act_prop_val.k}: ${act_prop_val.v}</div>`;
+        },
+        make_item_feature_tooltip(feature){
+            if(!this.item_json){
+                return '';
+            }
+            return ("<div>" + item_json.label + "</div>");
+        },
+        make_feature_tooltip(feature){
+            if(this.map_type == 'generic' || !this.item_json){
+                return this.make_generic_feature_tooltip(feature);
+            }
+            return this.make_item_feature_tooltip(feature);
+        },
+        add_google_tiles: function() {
+            if(this.added_google_tiles){
+                return null;
+            }
+            if(this.$refs[this.l_controls_ref] == null){
+                console.log('no item: ' + this.l_controls_ref);
+                return null;
+            }
+            if(this.$refs[this.map_ref] == null){
+                console.log('no item: ' + this.map_ref);
+                return null;
+            }
+            for(let gtile_config of this.google_tile_configs){
+                let gtile = L.gridLayer.googleMutant(gtile_config);
+                if(gtile_config.type == 'satellite'){
+                // Add support for over-zooming satellite.
+                    this.$refs[this.map_ref].mapObject.addLayer(gtile);
+                }
+                this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
+                    gtile, gtile.options.name
+                );
+            }
+            this.added_google_tiles = true;
+        },
+        fit_bounds: function(){
+            if(!this.geo_json){
+                this.geo_json = GEO_JSON;
+            }
+            let l_geo_json = this.$refs[this.geojson_ref];
+            if(l_geo_json == null){
+                console.log('no item: ' + this.geojson_ref);
+                return null;
+            }
+            let bounds = l_geo_json.getBounds();
+            this.$refs[this.map_ref].mapObject.fitBounds(bounds);
+            this.$refs[this.map_ref].mapObject._layersMaxZoom = MAX_ZOOM;
+            console.log(bounds);
+        },
+        get_item_location_info: function() {
+            if(!this.geo_json || !this.item_json){
+                return null;
+            }
+            for(let feat of this.geo_json.features){
+                if(!feat.hasOwnProperty('properties')){
+                    continue;
+                }
+                if(!feat.properties.hasOwnProperty('href')){
+                    continue;
+                }
+                if(feat.properties.href != this.item_json.id){
+                    continue;
+                }
+                if(feat.properties.hasOwnProperty('location_precision_factor')){
+                    this.location_precision_factor = feat.properties.location_precision_factor;
+                }
+                if(feat.properties.hasOwnProperty('location_precision_note')){
+                    this.location_precision_note = feat.properties.location_precision_note;
+                }
+            }
+        },
+        fetch_geojson: function() {
+            if(!this.geo_json_url){
+                return null;
+            }
+            if(this.geo_json){
+                return null;
+            }
+            console.log('fetch geojson from: ' + this.geo_json_url);
+            const requestOptions = {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json, application/geo+json, application/vnd.geo+json,',
+                    },
+                };
+            fetch(
+                (this.geo_json_url), 
+                requestOptions,
+            )
+            .then(this.loading = false)
+            .then(response => response.json())
+            .then(json => {
+                this.geo_json = json;
+                console.log('fetched geojson');
+            });
+        },
+    },
+    components: {
+      'l-popup': l_popup,
+      'l-img-overlay' : l_img_overlay,
+      'l-tile-layer': l_tile_layer,
+      'l-geo-json': l_geo_json,
+      'l-marker': l_marker,
+      'l-map': l_map,
+    },
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+{% endblock %}

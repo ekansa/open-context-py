@@ -265,6 +265,13 @@ div.subject-list-text {
 .media_preview {
 	margin-bottom: 36px;
 }
+
+.map_item {
+	min-height: 300px;
+}
+.map_preview {
+	min-height: 800px;
+}
 .geo_feature_popup {
 	max-height: 300px;
 	overflow-y: scroll;

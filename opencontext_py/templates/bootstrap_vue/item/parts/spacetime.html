@@ -1,210 +1,20 @@
 {% load humanize %}
 
-<!-- 
-NOTE: Templates and view components to edit an item's space-time (event) object.
--->
-
-
-<template id='item_map'>
-  <div v-if="GEO_JSON" class="card">
-    <div class="card-header">
-      <h5>Mapping Data</h5>
-    </div>
-    <div class="card-body">
-      <l-map
-        style="min-height: 300px;"
-        :ref="'map-' + ITEM_UUID" 
-        :zoom="11"
-        :load-tiles-while-animating="true" 
-        :load-tiles-while-interacting="true">
-        <l-control-layers 
-        :ref="'map-l-controls-' + ITEM_UUID"
-        position="topright"></l-control-layers>
-        <l-tile-layer
-          v-for="tp in tileProviders"
-          :key="tp.name"
-          :name="tp.name"
-          :visible="tp.visible"
-          :url="tp.url"
-          :attribution="tp.attribution"
-          layer-type="base"></l-tile-layer>
-        <l-img-overlay
-          v-if="item_json.geo_overlays"
-          v-for="ov in item_json.geo_overlays"
-          :key="ov.id"
-          :name="ov.label"
-          :visible="ov.visible"
-          :url="ov.url"
-          :attribution="ov.attribution"
-          :bounds="ov.bounds"
-          layer-type="overlay"
-        ></l-img-overlay>
-        <l-geo-json
-          :key="'geojson-' + ITEM_UUID + map_key"
-          :ref="'geojson-' + ITEM_UUID"
-          :options="options"
-          v-bind:geojson="geo_json"
-        >
-        <l-popup></l-popup>
-        </l-geo-json>
-      </l-map>
-      <div v-if="location_precision_note">
-        <b-alert v-if="location_precision_factor" show variant="warning">
-          <small>[[location_precision_note]]</small>
-        </b-alert>
-        <b-alert v-else show variant="info">
-          <small>[[location_precision_note]]</small>
-        </b-alert>
-      </div>
-    </div> 
-  </div>
-</template>
-
 
 
 <div id="app">
-  <item_map :map_key="0"></item_map>
+  <common_map
+    :map_key="0"
+    :map_class="'map_item'"
+    :min_height="300"
+    :ref_suffix="'item-' + ITEM_UUID"
+    :geo_json="GEO_JSON"
+    :map_type="'item'"
+    :item_json="item_json"></common_map>
 </div>
 
 
 <script type="text/javascript">
-
-// Now make a Vue component of for a leaflet map.
-var vc_item_map = Vue.component(
-  'item_map', 
-  {
-    props: ['map_key'],
-    data() {
-      return {
-          // Map Options
-          map_key: 0,
-          zoom_def: 13,
-          layers: [],
-          selectedTileSet: TILE_PROVIDERS[0], 
-          tileProviders: TILE_PROVIDERS,
-          google_tile_configs: GOOGLE_TILE_CONFIGS,
-          added_google_tiles: false,
-          minZoom_def: 1,
-          maxZoom_def: 30,
-          show_mapsets_default: true,
-          map_ref: ('map-' + ITEM_UUID),
-          l_controls_ref: ('map-l-controls-' + ITEM_UUID),
-          geojson_ref: ('geojson-' + ITEM_UUID),
-          center: null,
-          geo_json: null,
-          location_precision_factor: null,
-          location_precision_note: null,
-      };
-    },
-    template: '#item_map',
-    delimiters: ['[[', ']]'],
-    created() {
-      this.get_map_ref();
-      this.add_google_tiles();
-    },
-    mounted() {
-      this.get_map_ref();
-      this.fit_bounds();
-      this.get_location_info();
-      this.add_google_tiles();
-    },
-    updated(){
-      this.fit_bounds();
-      this.get_location_info();
-      this.add_google_tiles();
-    },
-    computed: {
-      options() {
-        return {
-          onEachFeature: this.onEachFeatureFunction
-        };
-      },
-      onEachFeatureFunction() {
-        return (feature, layer) => {
-          layer.bindPopup(
-            `<dl class="row">
-              <dt class="col">Item</dt>
-              <dd class="col">${item_json.label}</dd>
-            </dl>`
-          );
-          layer.bindTooltip(
-            ("<div>" + item_json.label + "</div>"),
-            { permanent: false, sticky: true }
-          );
-        };
-      },
-    },
-    methods: {
-      get_map_ref: function() {
-        // console.log(this.$refs);
-      },
-      add_google_tiles: function() {
-        if(this.added_google_tiles){
-          return null;
-        }
-        if(this.$refs[this.l_controls_ref] == null){
-          console.log('no item: ' + this.l_controls_ref);
-          return null;
-        }
-        if(this.$refs[this.map_ref] == null){
-          console.log('no item: ' + this.map_ref);
-          return null;
-        }
-        for(let gtile_config of this.google_tile_configs){
-          let gtile = L.gridLayer.googleMutant(gtile_config);
-          if(gtile_config.type == 'satellite'){
-            // Add support for over-zooming satellite.
-            this.$refs[this.map_ref].mapObject.addLayer(gtile);
-          }
-          this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
-            gtile, gtile.options.name
-          );
-        }
-        this.added_google_tiles = true;
-      },
-      fit_bounds: function(){
-        if(!this.geo_json){
-          this.geo_json = GEO_JSON;
-        }
-        let l_geo_json = this.$refs[this.geojson_ref];
-        if(l_geo_json == null){
-          console.log('no item: ' + this.geojson_ref);
-          return null;
-        }
-        let bounds = l_geo_json.getBounds();
-        this.$refs[this.map_ref].mapObject.fitBounds(bounds);
-        this.$refs[this.map_ref].mapObject._layersMaxZoom = MAX_ZOOM;
-        console.log(bounds);
-      },
-      get_location_info: function() {
-        if(!this.geo_json){
-          return null;
-        }
-        for(let feat of this.geo_json.features){
-          if(!feat.properties.hasOwnProperty('href')){
-            continue;
-          }
-          if(feat.properties.href != item_json.id){
-            continue;
-          }
-          if(feat.properties.hasOwnProperty('location_precision_factor')){
-            this.location_precision_factor = feat.properties.location_precision_factor;
-          }
-          if(feat.properties.hasOwnProperty('location_precision_note')){
-            this.location_precision_note = feat.properties.location_precision_note;
-          }
-        }
-      },
-    },
-    components: {
-      'l-popup': l_popup,
-      'l-img-overlay' :l_img_overlay,
-      'l-tile-layer': l_tile_layer,
-      'l-geo-json': l_geo_json,
-      'l-marker': l_marker,
-      'l-map': l_map,
-    },
-});
 
 var vm = new Vue(
   {
@@ -232,7 +42,7 @@ var vm = new Vue(
 
     },
     components: {
-      'item_map': vc_item_map,
+      'common_map': vc_common_map,
     },
   },
 ).$mount('#app');
