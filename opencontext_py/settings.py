@@ -229,7 +229,15 @@ INSTALLED_APPS = (
 
     # New for editorial interfaces to make export tables.
     'django_rq',
+    'django_extensions',
 )
+
+# For graphing ORM relations.
+GRAPH_MODELS = {
+    'pygraphviz': True,
+    'app_labels': ["all_items"],
+}
+
 
 MIDDLEWARE = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',

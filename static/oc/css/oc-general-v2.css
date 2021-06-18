@@ -72,13 +72,16 @@ General Page
 ---------------------------------------------------------
 */
 #project_hero_banner {
-
+	background-color: #141518;
+	height: 20%;
+	max-height: 290px;
+	overflow-y: hidden;
+	margin-bottom: -24px;
+	z-index: -1001;
 }
 #project_hero_banner .img-fluid {
-	width:100%;
-	height:100%;
+	width: 100%;
 	object-fit: contain;
-	margin-bottom: -24px;
 	z-index: -1000;
 }
 #main {

@@ -103,6 +103,7 @@ def test_html(request, uuid):
         'edit_status': man_obj.project.meta_json.get('edit_status'),
         'item': item_dict,
         'item_json': json_output,
+        'full_media': request.GET.get('full', False),
         # for debugging.
         'show_json': request.GET.get('json', False),
     }

@@ -7,19 +7,19 @@
 
 <div id="project_hero_banner">
     {% if man_obj.hero %}
-        <img class="img-fluid" 
+        <img class="img-fluid mx-auto d-block" 
              alt="project banner image" 
              src="https://{{ man_obj.hero }}" />
     {% elif man_obj.proj_hero %}
-        <img class="img-fluid" 
+        <img class="img-fluid mx-auto d-block" 
             alt="project banner image" 
             src="https://{{ man_obj.proj_hero }}" />
     {% elif man_obj.proj_proj_hero %}
-        <img class="img-fluid" 
+        <img class="img-fluid mx-auto d-block" 
             alt="project banner image" 
             src="https://{{ man_obj.proj_proj_hero }}" />
     {% else %}
-        <img class="img-fluid" 
+        <img class="img-fluid mx-auto d-block" 
             alt="default project banner image" 
             src="https://opencontext.org/static/oc/images/projects/project-default-hero.png" />
     {%endif%}
@@ -32,14 +32,28 @@
     <div class="container-fluid">
 
         {% include '../item/parts/contexts.html' %}
+
+        {% if full_media %}
+        
+            {% include '../item/parts/preview_iiif.html' %}
+            {% include '../item/parts/preview_pdf.html' %}
+            {% include '../item/parts/preview_nexus.html' %}
+            {% include '../item/parts/preview_geojson.html' %}
+
+        {%endif%}
         
         <div class="row">
             <div class="col-8">
+
+        {% if not full_media %}
 
             {% include '../item/parts/preview_image.html' %}
             {% include '../item/parts/preview_pdf.html' %}
             {% include '../item/parts/preview_nexus.html' %}
             {% include '../item/parts/preview_geojson.html' %}
+
+        {%endif%}
+
             {% include '../item/parts/content_text.html' %}
             {% include '../item/parts/observations.html' %}
 

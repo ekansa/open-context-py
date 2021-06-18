@@ -535,6 +535,8 @@ def gather_media_links(man_obj, rep_dict):
                     rep_dict['media_preview_image'] = uri
             else:
                 continue
+        elif type == 'oc-gen:iiif':
+            rep_dict['media_iiif'] = uri
         elif type == 'oc-gen:nexus-3d':
             rep_dict['media_nexus_3d'] = uri
         elif type == 'oc-gen:x3dom-model':

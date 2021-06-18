@@ -954,12 +954,12 @@ DEFAULT_MANIFESTS = [
         'item_type': 'media-types',
         'data_type': 'id',
         'slug': 'media-type-geo-json',
-        'item_key':'media-type:application/vnd.geo+json',
+        'item_key':'media-type:application/geo+json',
         'label': 'GeoJSON',
-        'uri': 'https://www.iana.org/assignments/media-types/application/vnd.geo+json',
+        'uri': 'https://www.iana.org/assignments/media-types/application/geo+json',
         'context_id': IANA_MEDIA_TYPE_VOCAB_UUID,
         'meta_json': {
-            'template': 'application/vnd.geo+json'
+            'template': 'application/geo+json'
         },
     },
     {

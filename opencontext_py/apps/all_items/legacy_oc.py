@@ -816,6 +816,14 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
             item_type='media-types',
             meta_json__template=media_type,
         ).first()
+        if not new_mt and media_type.endswith('geo+json'):
+            # There's been some churn in the geojson media type,
+            # so make sure we're consistent and map to the current
+            # media type.
+            new_mt = AllManifest.objects.filter(
+                uuid=configs.MEDIA_TYPE_GEO_JSON_UUID,
+                item_type='media-types',
+            ).first()
         if new_mt:
             media_file_dict['mediatype_id'] = new_mt.uuid
 
