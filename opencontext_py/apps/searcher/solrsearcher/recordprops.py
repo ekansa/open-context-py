@@ -353,7 +353,10 @@ class RecordProperties():
                             parsed_val = self.parse_solr_value_parts(val)
                             if self.add_attribute_uris:
                                 attribute_dict["values_list"].append(
-                                    {'id': parsed_val['uri'], 'label': parsed_val['label']}
+                                    {
+                                        'id': self.make_url_from_val_string(parsed_val['uri'], True), 
+                                        'label': parsed_val['label']
+                                    }
                                 )
                             else:
                                 attribute_dict["values_list"].append(parsed_val['label'])
