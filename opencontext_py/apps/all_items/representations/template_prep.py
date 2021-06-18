@@ -570,8 +570,8 @@ def gather_media_links(man_obj, rep_dict):
     return rep_dict
 
 
-def prepare_for_item_dict_html_template(man_obj, rep_dict):
-    """Prepares a representation dict for HTML templating
+def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
+    """Prepares a representation dict for Solr indexing and HTML templating
     
     :param AllManifest man_obj: A instance of the AllManifest model for the
         the item that is getting a representation.
@@ -603,6 +603,23 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
 
     # Gather links for different types of media.
     rep_dict = gather_media_links(man_obj, rep_dict)
+
+    return rep_dict
+
+
+def prepare_for_item_dict_html_template(man_obj, rep_dict):
+    """Prepares a representation dict for HTML templating
+    
+    :param AllManifest man_obj: A instance of the AllManifest model for the
+        the item that is getting a representation.
+    :param dict rep_dict: The item's JSON-LD representation dict
+    """
+
+    # Do the main reorganization to make convenient for HTML templating
+    rep_dict = prepare_for_item_dict_solr_and_html_template(
+        man_obj, 
+        rep_dict
+    )
 
     # Now ensure easy to template characters in the keys
     # in this dict
