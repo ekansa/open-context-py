@@ -139,6 +139,12 @@
     can be joined with dynamic fields that end with _id.  -->
     <field name="slug_type_uri_label" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
+    <!-- general item type ('subjects', 'media', 'documents', etc.) -->
+    <field name="item_type" type="strings" indexed="true" stored="true" multiValued="false"/>
+
+    <!-- general item class (as slug_type_uri_label). Single valued, so sortable. -->
+    <field name="item_class" type="strings" indexed="true" stored="true" multiValued="false"/>
+
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
@@ -149,9 +155,6 @@
     <!-- has_table_id identifies a downloadable table associated with this project.
     not required. don't store, since only want facets of these -->
     <field name="has_table_id" type="strings" indexed="true" stored="false" multiValued="true" />
-
-    <!-- general item type ('subjects', 'media', 'documents', etc.) -->
-    <field name="item_type" type="strings" indexed="true" stored="true" multiValued="true"/>
 
     <!-- interest score for items -->
     <field name="interest_score" type="pdouble" indexed="true" stored="false" required="true" multiValued="false"/>
@@ -213,6 +216,13 @@
     <!-- current location geospatial point. can have multiple types of points, but only one point per type. -->
     <field name="current_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
 
+    <!-- Other types of location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
+    but only one path per type. Only want facets, not specific tiles -->
+    <dynamicField name="*___geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
+
+    <!-- Other types of geospatial point. can have multiple types of points, but only one point per type. -->
+    <dynamicField name="*___geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
+
     <!-- chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <field name="form_use_life_chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
 
@@ -222,6 +232,17 @@
     <!-- chronological latest date in Julian dates BCE  -->
     <field name="form_use_life_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
+    <!-- other chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
+    <dynamicField name="*___chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
+
+    <!-- other chronological earliest date in Julian dates BCE  -->
+    <dynamicField name="*___chrono_earliest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
+
+    <!-- other chronological latest date in Julian dates BCE  -->
+    <dynamicField name="*___chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
+
+
+
     <!-- 3 integer media types -->
 	  <field name="image_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
 	  <field name="other_binary_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
@@ -229,6 +250,10 @@
     
     <!-- link to a thumbnail, if present -->
     <field name="thumbnail_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
+    <!-- link to a preview, if present -->
+    <field name="preview_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
+    <!-- link to a full file, if present -->
+    <field name="full_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
     <!-- link to a iiif info json resource, if present -->
     <field name="iiif_json_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
 
