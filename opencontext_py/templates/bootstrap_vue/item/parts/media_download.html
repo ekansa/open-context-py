@@ -1,0 +1,19 @@
+{% block media_download %}
+
+{% if item.media_download %}
+
+<a href="{{ item.media_download }}" 
+  role="button" 
+  aria-disabled="true" 
+  class="btn btn-primary btn-lg btn-block media_download">
+  Download File
+  {% if item.media_filesize_human %}
+  ({{ item.media_filesize_human }})
+  {%endif%}
+  <i class="bi bi-cloud-arrow-down-fill"></i>
+</a>
+
+{%endif%}
+
+
+{% endblock %}

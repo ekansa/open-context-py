@@ -544,15 +544,19 @@ def gather_media_links(man_obj, rep_dict):
         elif type == 'oc-gen:x3dom-texture':
             rep_dict['media_x3dom_texture'] = uri
         elif type == 'oc-gen:fullfile':
+            # Use the fullfile as the download if the download is
+            # not already set.
             if not rep_dict.get('media_download'):
                 rep_dict['media_download'] = uri
             if filesize and not rep_dict.get('media_filesize'):
                 rep_dict['media_filesize'] = float(filesize)
         elif type == 'oc-gen:ia-fullfille':
+            # A more preferred download source.
             rep_dict['media_download'] = uri
             if filesize:
                 rep_dict['media_filesize'] = float(filesize)
         elif type == 'oc-gen:archive':
+            # A more preferred download source.
             rep_dict['media_download'] = uri
             if filesize:
                 rep_dict['media_filesize'] = float(filesize)
