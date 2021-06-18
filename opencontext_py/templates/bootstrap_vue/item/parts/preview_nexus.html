@@ -18,7 +18,11 @@
 
 <div class="card media_preview">
   <div class="card-header">
-    <h5>Interactive 3D Model</h5>
+    {% if citation and  citation.title|length < 50 %}
+    <h5>Interactive 3D Model: {{ citation.title }}</h5>
+    {%else%}
+    <h5>Interactive 3D Model: {{ item.label }}</h5>
+    {%endif%}
   </div>
   <div class="card-body">
     

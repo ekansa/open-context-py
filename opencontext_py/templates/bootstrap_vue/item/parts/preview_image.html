@@ -4,7 +4,11 @@
 
 <div class="card media_preview">
   <div class="card-header">
-    <h5>Image Preview</h5>
+    {% if citation and  citation.title|length < 50 %}
+    <h5>Image Preview: {{ citation.title }}</h5>
+    {%else%}
+    <h5>Image Preview: {{ item.label }}</h5>
+    {%endif%}
   </div>
   <div class="card-body">
     <img src="{{ item.media_preview_image }}" 

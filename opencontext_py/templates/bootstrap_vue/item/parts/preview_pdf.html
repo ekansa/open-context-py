@@ -1,10 +1,14 @@
 {% block preview_pdf %}
 
-{% if item.media_preview_pdf %}
+{% if item.media_preview_pdf and not item.media_x3dom_model and not item.media_iiif %}
 
 <div class="card media_preview">
   <div class="card-header">
-    <h5>Portable Document Format (PDF) Preview</h5>
+    {% if citation and  citation.title|length < 50 %}
+    <h5>Portable Document Format (PDF) Preview: {{ citation.title }}</h5>
+    {%else%}
+    <h5>Portable Document Format (PDF) Preview {{ item.label }}</h5>
+    {%endif%}
   </div>
   <div class="card-body">
     <iframe src="{{ BASE_URL }}/static/viewerjs/index.html#{{ item.media_preview_pdf }}"
