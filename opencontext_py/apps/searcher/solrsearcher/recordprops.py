@@ -69,6 +69,9 @@ class RecordProperties():
             self.request_dict = json.loads(request_dict_json)
         else:
             self.request_dict = False
+        self.add_attribute_uris = False
+        if self.request_dict and self.request_dict.get('add-attribute-uris'):
+            self.add_attribute_uris = True
         self.highlighting = False
         self.recursive_count = 0
         self.min_date = False
@@ -348,7 +351,12 @@ class RecordProperties():
                         if isinstance(val, str):
                             string_val = True
                             parsed_val = self.parse_solr_value_parts(val)
-                            attribute_dict["values_list"].append(parsed_val['label'])
+                            if self.add_attribute_uris:
+                                attribute_dict["values_list"].append(
+                                    {'id': parsed_val['uri'], 'label': parsed_val['label']}
+                                )
+                            else:
+                                attribute_dict["values_list"].append(parsed_val['label'])
                             attribute_dict['value'] += delim + str(parsed_val['label'])
                         else:
                             attribute_dict["values_list"].append(val)
