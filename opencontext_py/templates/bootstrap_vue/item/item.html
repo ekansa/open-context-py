@@ -36,8 +36,9 @@
         {% if full_media %}
         
             {% include '../item/parts/preview_iiif.html' %}
-            {% include '../item/parts/preview_pdf.html' %}
             {% include '../item/parts/preview_nexus.html' %}
+            {% include '../item/parts/preview_x3dom.html' %}
+            {% include '../item/parts/preview_pdf.html' %}
             {% include '../item/parts/preview_geojson.html' %}
 
         {%endif%}
@@ -48,8 +49,9 @@
         {% if not full_media %}
 
             {% include '../item/parts/preview_image.html' %}
-            {% include '../item/parts/preview_pdf.html' %}
             {% include '../item/parts/preview_nexus.html' %}
+            {% include '../item/parts/preview_x3dom.html' %}
+            {% include '../item/parts/preview_pdf.html' %}
             {% include '../item/parts/preview_geojson.html' %}
 
         {%endif%}
