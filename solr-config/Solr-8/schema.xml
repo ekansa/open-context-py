@@ -142,7 +142,7 @@
     <!-- general item type ('subjects', 'media', 'documents', etc.) -->
     <field name="item_type" type="strings" indexed="true" stored="true" multiValued="false"/>
 
-    <!-- general item class (as slug_type_uri_label). Single valued, so sortable. -->
+    <!-- general item class (as a label). Single valued, so sortable. -->
     <field name="item_class" type="strings" indexed="true" stored="true" multiValued="false"/>
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
@@ -223,6 +223,10 @@
     <!-- Other types of geospatial point. can have multiple types of points, but only one point per type. -->
     <dynamicField name="*___geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
 
+
+    <!-- _uri_label of the (subjects) document that was the source of the chronology for this record  -->
+    <field name="form_use_life_source" type="string" indexed="true"  stored="true"  multiValued="false" required="false" />
+
     <!-- chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <field name="form_use_life_chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
 
@@ -278,12 +282,7 @@
     -->
     <dynamicField name="*___context_id" type="strings" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <!-- DEPRECATED DO NOT USE. These fields are here for backward
-    compatibility but should not be used going forward (2019-10-26)-->
-    <dynamicField name="*___project_id_fq" type="strings" indexed="true" stored="false" required="false" multiValued="true" />
-    <dynamicField name="*___context_id_fq" type="strings" indexed="true" stored="false" required="false" multiValued="true" />
-    <dynamicField name="*___pred_id_fq" type="strings" indexed="true" stored="false" required="false" multiValued="true" />
-
+    
 
 
 

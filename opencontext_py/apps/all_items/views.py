@@ -18,6 +18,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
+    prepare_for_item_dict_solr_and_html_template,
     prepare_for_item_dict_html_template
 )
 from opencontext_py.apps.all_items.representations.schema_org import (
@@ -25,6 +26,8 @@ from opencontext_py.apps.all_items.representations.schema_org import (
 )
 from opencontext_py.apps.all_items.representations import citation
 from opencontext_py.apps.all_items.legacy_all import update_old_id
+
+from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -39,7 +42,37 @@ from django.utils.cache import patch_vary_headers
 def test_json(request, uuid):
     """ API for searching Open Context """
     _, ok_uuid = update_old_id(uuid)
-    _, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
+    if request.GET.get('solr') == 'prep':
+        # with added stuff for Solr
+        man_obj, rep_dict = item.make_representation_dict(
+            subject_id=ok_uuid,
+            for_solr_or_html=True,
+        )
+        rep_dict = prepare_for_item_dict_solr_and_html_template(
+            man_obj, 
+            rep_dict
+        )
+    elif request.GET.get('solr') == 'solr':
+        # with added stuff for Solr
+        man_obj, rep_dict = item.make_representation_dict(
+            subject_id=ok_uuid,
+            for_solr_or_html=True,
+        )
+        rep_dict = prepare_for_item_dict_solr_and_html_template(
+            man_obj, 
+            rep_dict
+        )
+        solrdoc = SolrDocumentNS(
+            uuid=man_obj.uuid,
+            man_obj=man_obj,
+            rep_dict=rep_dict,
+        )
+        solrdoc.make_solr_doc()
+        rep_dict = solrdoc.fields
+    else:
+        # default, simple JSON-LD
+        _, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
+    
     json_output = json.dumps(
         rep_dict,
         indent=4,
@@ -59,7 +92,7 @@ def test_html(request, uuid):
     _, ok_uuid = update_old_id(uuid)
     man_obj, rep_dict = item.make_representation_dict(
         subject_id=ok_uuid,
-        for_html=True,
+        for_solr_or_html=True,
     )
     item_dict = prepare_for_item_dict_html_template(man_obj, rep_dict)
     json_output = json.dumps(
