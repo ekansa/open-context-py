@@ -17,8 +17,6 @@ from django.utils import timezone
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
-    sting_number_splitter,
-    suggest_project_short_id,
     AllManifest,
     AllAssertion,
     AllHistory,
@@ -26,7 +24,8 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
 )
-from opencontext_py.apps.all_items import utilities as model_utils
+from opencontext_py.apps.all_items import models_utils
+
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
@@ -60,7 +59,9 @@ def is_valid_uuid(val):
 
 def get_prefix_last_number_part(check_label):
     """Parses a check label to get a prefix and a last number part"""
-    label_parts, has_number_part = sting_number_splitter(check_label)
+    label_parts, has_number_part = models_utils.sting_number_splitter(
+        check_label
+    )
     if not has_number_part:
         # There's no numeric part to the label, so don't suggest an ID.
         return None, None
@@ -254,7 +255,7 @@ def validate_project_short_id(raw_short_id, exclude_uuid=None):
             'errors': [f'{raw_short_id} invalid, not a positive integer'],
             'valid_conflict_count': 0,
             'valid_conflict_examples': [],
-            'suggested': suggest_project_short_id(),
+            'suggested': models_utils.suggest_project_short_id(),
         }
     
     m_qs = AllManifest.objects.filter(
@@ -267,7 +268,7 @@ def validate_project_short_id(raw_short_id, exclude_uuid=None):
     report = report_id_conflicts(m_qs)
     report['short_id'] = short_id
     if not report['is_valid']:
-        report['suggested'] = suggest_project_short_id()
+        report['suggested'] = models_utils.suggest_project_short_id()
     return report
 
 

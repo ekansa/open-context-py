@@ -22,9 +22,8 @@ from opencontext_py.apps.all_items.models import (
     AllResource,
     AllIdentifier,
     AllSpaceTime,
-    get_immediate_concept_children_objs_db,
-    get_immediate_context_children_objs_db,
 )
+from opencontext_py.apps.all_items import models_utils
 
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.legacy_all import update_old_id
@@ -302,7 +301,7 @@ def get_item_children(identifier):
 
     if man_obj.item_type == 'subjects':
         # Gets spatial context children
-        children_objs =  get_immediate_context_children_objs_db(
+        children_objs =  models_utils.get_immediate_context_children_objs_db(
             man_obj
         )
     elif man_obj.item_type == 'projects':
@@ -316,7 +315,7 @@ def get_item_children(identifier):
         )
     else:
         # Gets concept hierarchy children.
-        children_objs =  get_immediate_concept_children_objs_db(
+        children_objs = models_utils.get_immediate_concept_children_objs_db(
             man_obj
         )
     

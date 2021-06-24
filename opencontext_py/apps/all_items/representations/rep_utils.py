@@ -49,7 +49,7 @@ def get_item_key_or_uri_value(manifest_obj):
     return f"https://{manifest_obj.uri}"
 
 
-def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html=False):
+def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr_or_html=False):
     """Makes a list of assertion objects for a predicate
     
     :param AllManifest predicate: An all manifest object for the
@@ -78,7 +78,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
             if getattr(assert_obj, 'object_geo_overlay_thumb', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_geo_overlay_thumb}'
-            if for_edit or for_html:
+            if for_edit or for_solr_or_html:
                 obj['object_id'] = str(assert_obj.object.uuid)
                 obj['object__item_type'] = assert_obj.object.item_type
                 obj['object__label'] = assert_obj.object.label
@@ -100,7 +100,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
             obj = {
                 f'@{assert_obj.language.item_key}': assert_obj.obj_string
             }
-            if for_edit or for_html:
+            if for_edit or for_solr_or_html:
                 obj['obj_string'] = assert_obj.obj_string
         else:
             act_attrib = ASSERTION_DATA_TYPE_LITERAL_MAPPINGS.get(
@@ -111,10 +111,10 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
                 obj = float(obj)
             elif predicate.data_type == 'xsd:date':
                 obj = obj.date().isoformat()
-            if for_edit or for_html:
+            if for_edit or for_solr_or_html:
                 obj = {act_attrib: obj}
         
-        if for_edit or for_html:
+        if for_edit or for_solr_or_html:
             # Add lots of extra information about the assertion to make editing easier.
             obj['uuid'] = str(assert_obj.uuid)
             obj['subject_id'] = str(assert_obj.subject.uuid)
@@ -122,11 +122,13 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_html
             obj['observation__label'] = assert_obj.observation.label
             obj['event_id'] = str(assert_obj.event.uuid)
             obj['event__label'] = assert_obj.event.label
+            obj['event__slug'] = assert_obj.event.slug
             obj['attribute_group_id'] = str(assert_obj.attribute_group.uuid)
             obj['attribute_group__label'] = assert_obj.attribute_group.label
-            obj['predicate__label'] = predicate.label
+            obj['attribute_group__slug'] = assert_obj.attribute_group.slug
             obj['predicate_id'] = str(predicate.uuid)
             obj['predicate__label'] = predicate.label
+            obj['predicate__slug'] = predicate.slug
             obj['predicate__data_type'] = predicate.data_type
             if predicate.item_class:
                 obj['predicate__item_class_id'] = str(predicate.item_class.uuid)
@@ -159,7 +161,7 @@ def add_predicates_assertions_to_dict(
     act_dict=None, 
     add_objs_to_existing_pred=True,
     for_edit=False,
-    for_html=False
+    for_solr_or_html=False
 ):
     """Adds predicates with their grouped objects to a dictionary, keyed by each pred
     
@@ -169,7 +171,7 @@ def add_predicates_assertions_to_dict(
     :param dict act_dict: A dictionary that gets the predicate object list
     :param bool for_edit: Do we want an output with additional identifiers
         useful for editing.
-    :param bool for_html: Do we want an output with additional attributes
+    :param bool for_solr_or_html: Do we want an output with additional attributes
         useful for HTML templating.
     """
     if not act_dict:
@@ -188,7 +190,7 @@ def add_predicates_assertions_to_dict(
             predicate,
             assert_objs, 
             for_edit=for_edit,
-            for_html=for_html,
+            for_solr_or_html=for_solr_or_html,
         )
         # Set a default list for the pred_key. This lets us add to an
         # already existing list.

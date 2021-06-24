@@ -20,8 +20,6 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
-    sting_number_splitter,
-    suggest_project_short_id,
     AllManifest,
     AllAssertion,
     AllHistory,
@@ -29,6 +27,8 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
 )
+from opencontext_py.apps.all_items import models_utils
+
 from opencontext_py.apps.etl.importer.models import (
     DataSource,
 )

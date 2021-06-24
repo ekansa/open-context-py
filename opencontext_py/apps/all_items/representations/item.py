@@ -274,7 +274,7 @@ def get_related_subjects_item_assertion(item_man_obj, assert_qs):
 def get_observations_attributes_from_assertion_qs(
     assert_qs,
     for_edit=False, 
-    for_html=False
+    for_solr_or_html=False
 ):
     """Gets observations and attributes in observations
     
@@ -292,7 +292,7 @@ def get_observations_attributes_from_assertion_qs(
         act_obs = LastUpdatedOrderedDict()
         act_obs['id'] = f'#obs-{observation.slug}'
         act_obs['label'] = observation.label
-        if for_html:
+        if for_solr_or_html:
             # Let our template know we've got a default observation
             act_obs['default'] = (str(observation.uuid) == configs.DEFAULT_OBS_UUID)
         # NOTE: we've added act_obs to the observations list, but
@@ -300,7 +300,7 @@ def get_observations_attributes_from_assertion_qs(
         # observations list already. 
         observations.append(act_obs)
         for event, attrib_groups in events.items():
-            if not for_html and str(event.uuid) == configs.DEFAULT_EVENT_UUID:
+            if not for_solr_or_html and str(event.uuid) == configs.DEFAULT_EVENT_UUID:
                 # NOTE: No event node is specified here, so all the
                 # attribute groups and predicates will just be added
                 # directly to the act_obs dictionary.
@@ -316,13 +316,13 @@ def get_observations_attributes_from_assertion_qs(
                 act_event['id'] = f'#event-{event.slug}'
                 act_event['label'] = event.label
                 act_event['type'] = 'oc-gen:events'
-                if for_html:
+                if for_solr_or_html:
                     # Let our template know we've got a default event.
                     act_event['default'] = (str(event.uuid) == configs.DEFAULT_EVENT_UUID)
                 act_obs.setdefault('oc-gen:has-events', [])
                 act_obs['oc-gen:has-events'].append(act_event)
             for attrib_group, preds in attrib_groups.items():
-                if not for_html and str(attrib_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID:
+                if not for_solr_or_html and str(attrib_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID:
                     # NOTE: no attribute group node is specified here, so all
                     # the predicates will be added to the act_event dictionary.
                     #
@@ -334,7 +334,7 @@ def get_observations_attributes_from_assertion_qs(
                     act_attrib_grp['id'] = f'#attribute-group-{attrib_group.slug}'
                     act_attrib_grp['label'] = attrib_group.label
                     act_attrib_grp['type'] = 'oc-gen:attribute-groups'
-                    if for_html:
+                    if for_solr_or_html:
                         # Let our template know we've got a default attribute group
                          act_attrib_grp['default'] = (
                             str(attrib_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID
@@ -347,7 +347,7 @@ def get_observations_attributes_from_assertion_qs(
                     pred_keyed_assert_objs=preds, 
                     act_dict=act_attrib_grp,
                     for_edit=for_edit,
-                    for_html=for_html,
+                    for_solr_or_html=for_solr_or_html,
                 )
 
     return observations
@@ -386,14 +386,14 @@ def add_related_media_files_dicts(item_man_obj, act_dict=None):
     return act_dict
 
 
-def add_to_parent_context_list(manifest_obj, context_list=None, for_html=False):
+def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html=False):
     """Recursively add to a list of parent contexts
 
     :param AllManifest manifest_obj: Instance of the AllManifest model that
         we want to see context information
     :param list context_list: A list context dictionaries that gets extended
         by this function
-    :param bool for_html: A boolean flag, if True add additional keys useful
+    :param bool for_solr_or_html: A boolean flag, if True add additional keys useful
         for HTML tempating
     """
     if context_list is None:
@@ -405,7 +405,7 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_html=False):
     item_dict['slug'] = manifest_obj.slug
     item_dict['label'] = manifest_obj.label
     item_dict['type'] = rep_utils.get_item_key_or_uri_value(manifest_obj.item_class)
-    if for_html:
+    if for_solr_or_html:
         item_dict['uuid'] = str(manifest_obj.uuid)
         item_dict['item_class_id'] = str(manifest_obj.item_class.uuid)
         item_dict['item_class__label'] = manifest_obj.item_class.label
@@ -415,12 +415,12 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_html=False):
         context_list = add_to_parent_context_list(
             manifest_obj.context, 
             context_list=context_list,
-            for_html=for_html,
+            for_solr_or_html=for_solr_or_html,
         )
     return context_list
 
 
-def start_item_representation_dict(item_man_obj, for_html=False):
+def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
     rep_dict['id'] = f'https://{item_man_obj.uri}'
@@ -432,7 +432,7 @@ def start_item_representation_dict(item_man_obj, for_html=False):
             rep_dict['category'] = item_man_obj.item_class.item_key
         else:
             rep_dict['category'] = f'https://{item_man_obj.item_class.uri}'
-    if for_html:
+    if for_solr_or_html:
         rep_dict['item_class__label'] = item_man_obj.item_class.label
     return rep_dict
 
@@ -482,7 +482,7 @@ def get_annotate_item_manifest_obj(subject_id):
     return item_man_obj
 
 
-def make_representation_dict(subject_id, for_html=False):
+def make_representation_dict(subject_id, for_solr_or_html=False):
     """Makes a representation dict for a subject id"""
     # This will most likely get all the context hierarchy in 1 query, thereby
     # limiting the number of times we hit the database.
@@ -493,7 +493,7 @@ def make_representation_dict(subject_id, for_html=False):
 
     rep_dict = start_item_representation_dict(
         item_man_obj,
-        for_html=for_html
+        for_solr_or_html=for_solr_or_html
     )
 
     select_related_object_contexts = False
@@ -530,7 +530,7 @@ def make_representation_dict(subject_id, for_html=False):
     if item_man_obj.item_type == 'subjects':
         parent_list = add_to_parent_context_list(
             item_man_obj.context,
-            for_html=for_html
+            for_solr_or_html=for_solr_or_html
         )
         if parent_list:
             # The parent order needs to be reversed to make the most
@@ -540,7 +540,7 @@ def make_representation_dict(subject_id, for_html=False):
     elif rel_subjects_man_obj:
         parent_list = add_to_parent_context_list(
             rel_subjects_man_obj,
-            for_html=for_html
+            for_solr_or_html=for_solr_or_html
         )
         if parent_list:
             # The parent order needs to be reversed to make the most
@@ -566,7 +566,7 @@ def make_representation_dict(subject_id, for_html=False):
 
         observations = get_observations_attributes_from_assertion_qs(
             obs_assert_qs, 
-            for_html=for_html
+            for_solr_or_html=for_solr_or_html
         )
         rep_dict['oc-gen:has-obs'] = observations
 
@@ -580,7 +580,7 @@ def make_representation_dict(subject_id, for_html=False):
         rep_dict = rep_utils.add_predicates_assertions_to_dict(
             pred_keyed_assert_objs, 
             act_dict=rep_dict,
-            for_edit=for_html
+            for_edit=for_solr_or_html
         )
     else:
         # The following is for other types of items that don't have lots
@@ -592,7 +592,7 @@ def make_representation_dict(subject_id, for_html=False):
         rep_dict = rep_utils.add_predicates_assertions_to_dict(
             pred_keyed_assert_objs, 
             act_dict=rep_dict,
-            for_edit=for_html
+            for_edit=for_solr_or_html
         )
     
     # NOTE: This adds Dublin Core metadata
@@ -605,7 +605,7 @@ def make_representation_dict(subject_id, for_html=False):
     rep_dict = metadata.add_dc_creator_contributor_equiv_metadata(
         assert_qs, 
         act_dict=rep_dict,
-        for_html=for_html
+        for_solr_or_html=for_solr_or_html
     )
     # NOTE: This add project Dublin Core metadata.
     proj_metadata_qs = metadata.get_project_metadata_qs(
@@ -621,7 +621,7 @@ def make_representation_dict(subject_id, for_html=False):
         pred_keyed_assert_objs, 
         act_dict=rep_dict,
         add_objs_to_existing_pred=False,
-        for_edit=for_html,
+        for_edit=for_solr_or_html,
     )
     # Add the project relationship if it is missing
     rep_dict = metadata.check_add_project(
