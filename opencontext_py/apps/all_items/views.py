@@ -46,17 +46,20 @@ def test_json(request, uuid):
         # with added stuff for Solr
         man_obj, rep_dict = item.make_representation_dict(
             subject_id=ok_uuid,
-            for_solr_or_html=True,
+            for_solr=True,
         )
         rep_dict = prepare_for_item_dict_solr_and_html_template(
             man_obj, 
             rep_dict
         )
+        rep_dict['for_solr_assert_objs'] = len(
+            rep_dict.get('for_solr_assert_objs', [])
+        )
     elif request.GET.get('solr') == 'solr':
         # with added stuff for Solr
         man_obj, rep_dict = item.make_representation_dict(
             subject_id=ok_uuid,
-            for_solr_or_html=True,
+            for_solr=True,
         )
         rep_dict = prepare_for_item_dict_solr_and_html_template(
             man_obj, 

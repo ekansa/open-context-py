@@ -482,11 +482,14 @@ def get_annotate_item_manifest_obj(subject_id):
     return item_man_obj
 
 
-def make_representation_dict(subject_id, for_solr_or_html=False):
+def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False):
     """Makes a representation dict for a subject id"""
     # This will most likely get all the context hierarchy in 1 query, thereby
     # limiting the number of times we hit the database.
     
+    if for_solr:
+        for_solr_or_html = True
+
     item_man_obj = get_annotate_item_manifest_obj(subject_id)
     if not item_man_obj:
         return None, None
@@ -559,7 +562,8 @@ def make_representation_dict(subject_id, for_solr_or_html=False):
         # commonality allows common processing.
         equiv_assertions = equivalent_ld.make_ld_equivalent_assertions(
             item_man_obj, 
-            obs_assert_qs
+            obs_assert_qs,
+            for_solr=for_solr,
         )
         if equiv_assertions:
             obs_assert_qs += equiv_assertions
@@ -582,6 +586,9 @@ def make_representation_dict(subject_id, for_solr_or_html=False):
             act_dict=rep_dict,
             for_edit=for_solr_or_html
         )
+        if for_solr:
+            # Make sure the assertion objects are easily available for solr.
+            rep_dict['for_solr_assert_objs'] = obs_assert_qs + ld_assert_qs
     else:
         # The following is for other types of items that don't have lots
         # of nested observation, event, and attribute nodes.
@@ -594,6 +601,9 @@ def make_representation_dict(subject_id, for_solr_or_html=False):
             act_dict=rep_dict,
             for_edit=for_solr_or_html
         )
+        if for_solr:
+            # Make sure the assertion objects are easily available for solr.
+            rep_dict['for_solr_assert_objs'] = assert_qs
     
     # NOTE: This adds Dublin Core metadata
     rep_dict = metadata.add_dublin_core_literal_metadata(

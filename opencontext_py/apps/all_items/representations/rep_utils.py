@@ -129,6 +129,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
             obj['predicate_id'] = str(predicate.uuid)
             obj['predicate__label'] = predicate.label
             obj['predicate__slug'] = predicate.slug
+            obj['predicate__item_type'] = predicate.item_type
             obj['predicate__data_type'] = predicate.data_type
             if predicate.item_class:
                 obj['predicate__item_class_id'] = str(predicate.item_class.uuid)

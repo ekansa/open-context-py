@@ -3,6 +3,8 @@ import copy
 import hashlib
 import uuid as GenUUID
 
+from django.core.cache import caches
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
@@ -147,6 +149,7 @@ class NotStoredAssertion():
         self.created = None
         self.meta_json = {}
         self.object_class_icon = None
+        self.for_solr = False
 
 
     @property
@@ -184,36 +187,90 @@ class NotStoredAssertion():
 
     def make_temp_equiv_obj_from_context_df_row(self, equiv_row, equiv_obj='predicate'):
         """Makes an equivalent object of a given type from a context_df row"""
-
-        act_context = NotStoredManifestItem()
-        act_context.populate_from_context_df_row_cols(
-            equiv_row,
-            cols=[
-                f'object__context_id',
-                f'object__context__label',
-                f'object__context__uri',
-                f'object__context__meta_json'
-            ],
-        )
-        act_item = NotStoredManifestItem()
-        act_item.populate_from_context_df_row_cols(
-            equiv_row,
-            cols=[
-                f'object_id',
-                f'object__item_key',
-                f'object__uri',
-                f'object__slug',
-                f'object__item_type',
-                f'object__data_type',
-                f'object__label',
-                f'object__meta_json',
-            ],
-        )
-        act_item.context = act_context
+        if self.for_solr:
+            act_item = get_real_man_obj_from_equiv_row(equiv_row)
+        else:
+            act_context = NotStoredManifestItem()
+            act_context.populate_from_context_df_row_cols(
+                equiv_row,
+                cols=[
+                    f'object__context_id',
+                    f'object__context__label',
+                    f'object__context__uri',
+                    f'object__context__meta_json'
+                ],
+            )
+            act_item = NotStoredManifestItem()
+            act_item.populate_from_context_df_row_cols(
+                equiv_row,
+                cols=[
+                    f'object_id',
+                    f'object__item_key',
+                    f'object__uri',
+                    f'object__slug',
+                    f'object__item_type',
+                    f'object__data_type',
+                    f'object__label',
+                    f'object__meta_json',
+                ],
+            )
+            act_item.context = act_context
         if equiv_obj == 'predicate':
             self.predicate = act_item
         elif equiv_obj == 'object':
             self.object = act_item
+
+
+def make_manifest_obj_cache_key(uuid):
+    """Make a cache key for fetching a manifest object by cache key"""
+    return f'manifest-by-uuid-{str(uuid)}'
+
+
+def cache_all_df_context_related_manifest_objects(df_context):
+    cache = caches['memory']
+    all_uuids = df_context['object_id'].unique().tolist()
+    uuids = []
+    for uuid in all_uuids:
+        cache_key = make_manifest_obj_cache_key(uuid)
+        if cache.get(cache_key):
+            # We've already got this cached.
+            continue
+        uuids.append(uuid)
+    mqs = AllManifest.objects.filter(
+        uuid__in=uuids
+    ).select_related(
+        'context'
+    )
+    for man_obj in mqs:
+        cache_key = make_manifest_obj_cache_key(man_obj.uuid)
+        try:
+            cache.set(cache_key, man_obj)
+        except:
+            pass
+
+
+def get_real_man_obj_from_equiv_row(equiv_row, use_cache=True):
+    """Get a real manifest object from an equivalence row"""
+    uuid = equiv_row['object_id']
+    man_obj = None
+    cache_key = None
+    if use_cache:
+        cache_key = make_manifest_obj_cache_key(uuid)
+        cache = caches['memory']
+        man_obj = cache.get(cache_key)
+    if man_obj:
+        return man_obj
+    man_obj = AllManifest.objects.filter(
+        uuid=uuid
+    ).select_related(
+        'context'
+    ).first()
+    if cache_key:
+        try:
+            cache.set(cache_key, man_obj)
+        except:
+            pass
+    return man_obj
 
 
 def add_to_list_new_no_store_assertion(ns_ass, ns_asserts=None):
@@ -229,7 +286,7 @@ def add_to_list_new_no_store_assertion(ns_ass, ns_asserts=None):
     return ns_asserts
 
 
-def make_ld_equivalent_assertions(item_man_obj, assert_qs):
+def make_ld_equivalent_assertions(item_man_obj, assert_qs, for_solr=False):
     """Gets an observation of equivalent linked data describing an item
 
     :param AllManifest item_man_obj: Instance of the AllManifest model that
@@ -277,6 +334,11 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs):
     if df_context is None or df_context.empty:
         # We have nothing to add, so skip out.
         return None
+    
+    if for_solr:
+        # We're indexing solr documents and need the related
+        # manifest objects.
+        cache_all_df_context_related_manifest_objects(df_context)
 
     # Make an index that of assertions that where the project-specific
     # predicates have some sort of equivalence relationships asserted in the
@@ -330,6 +392,7 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs):
             # Make a new Not-Stored assertion object, populating
             # the subject part.
             ns_ass = NotStoredAssertion(item_man_obj)
+            ns_ass.for_solr = for_solr
 
             # Now add the predicate part. The predicate will be for the
             # equiv_ld_pred_id id.
@@ -337,6 +400,7 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs):
                 equiv_pred_row, 
                 equiv_obj='predicate'
             )
+
             # Make sure we have agreement in the data type of the
             # not-stored assertion and the real_assert.
             ns_ass.predicate.data_type = real_assert.predicate.data_type

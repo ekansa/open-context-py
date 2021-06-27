@@ -66,6 +66,7 @@ SPECIAL_KEYS = [
     'dc-terms:isPartOf',
     'dc-terms:hasPart',
     'contexts',
+    'for_solr_assert_objs', # used to pass assertion objects to solr
     GEO_OVERLAYS_JSON_LD_KEY,
 ]
 
@@ -614,6 +615,12 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
         the item that is getting a representation.
     :param dict rep_dict: The item's JSON-LD representation dict
     """
+
+    # Convert into a count, because for_solr_assert_objs is not used
+    # in HTML templating.
+    rep_dict['for_solr_assert_objs'] = len(
+        rep_dict.get('for_solr_assert_objs', [])
+    )
 
     # Do the main reorganization to make convenient for HTML templating
     rep_dict = prepare_for_item_dict_solr_and_html_template(

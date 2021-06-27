@@ -28,6 +28,7 @@ paths = hierarchy.get_concept_hierarchy_paths_containing_item(child_obj=man_obj)
 """
 
 
+
 def get_concept_parent_paths(child_obj, use_cache=True, paths=None):
     """Makes concept hierarchy paths for child concept. 
     
@@ -64,6 +65,11 @@ def get_concept_parent_paths(child_obj, use_cache=True, paths=None):
 def get_concept_hierarchy_paths_containing_item(child_obj, use_cache=True):
     """Gets a list of hierarchy paths for a child obj,
        starting from most general to most specific (the child_obj)
+
+    :param AllManifest child_obj: The item that we want to put
+            into a list of hierarchy lists.
+
+    return list of hierarchy lists.
     """
     raw_paths = get_concept_parent_paths(child_obj, use_cache=use_cache)
     paths = [list(reversed(p)) for p in raw_paths]
@@ -79,6 +85,8 @@ def get_project_hierarchy_db(proj_man_obj):
     last_proj = proj_man_obj
     while i < 10 and str(last_proj.uuid) != configs.OPEN_CONTEXT_PROJ_UUID:
         last_proj = last_proj.project
+        if str(last_proj.uuid) == configs.OPEN_CONTEXT_PROJ_UUID:
+            break
         path.append(last_proj)
         i += 1
     return list(reversed(path))
