@@ -62,6 +62,12 @@
         "reference-uri": "oc-gen:reference-uri",
         "reference-label": "oc-gen:reference-label",
         "location-precision": "oc-gen:location-precision",
-        "location-note": "oc-gen:location-note"
+        "location-note": "oc-gen:location-note",
+        "oc-gen:has-path-items": {
+            "@container": "@list"
+        },
+        "oc-gen:has-linked-context-path": {
+            "@container": "@list"
+        }
     }
 }
