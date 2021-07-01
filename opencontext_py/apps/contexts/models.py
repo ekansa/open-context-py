@@ -110,7 +110,7 @@ class ItemContext():
         context['oc-gen:has-path-items'] = {'@container': '@list'}  # order of containment semantically important
         context['dc-terms:creator'] = {'@container': '@list'}  # order of authorship semantically important
         context['dc-terms:contributor'] = {'@container': '@list'}  # order of authorship semantically important
-        context['oc-gen:has-path-items'] = {'@container': '@list'}
+        context['oc-gen:has-linked-context-path'] = {'@container': '@list'} # order of containment semantically important
         # below are GeoJSON-LD context declarations, commented out to
         """
         context['Feature'] = 'geojson:Feature'
