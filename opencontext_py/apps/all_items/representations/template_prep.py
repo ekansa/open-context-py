@@ -42,6 +42,27 @@ GEO_OVERLAYS_JSON_LD_KEY = 'oc-pred:oc-gen-has-geo-overlay'
 TEMPLATE_GEO_OVERLAY_KEY = 'geo_overlays'
 GEO_OVERLAY_OPACITY_DEFAULT = 0.9
 
+
+TEXT_CONTENT_KEYS = [
+    'dc-terms:abstract',
+    'dc-terms:description',
+    'schema:text',
+    'bibo:content',
+    'skos:note',
+]
+
+NO_NODE_KEYS = TEXT_CONTENT_KEYS + [
+    'dc-terms:title',
+    'dc-terms:issued',
+    'dc-terms:modified',
+    'dc-terms:license',
+    'dc-terms:identifier',
+    'dc-terms:isPartOf',
+    'dc-terms:hasPart',
+]
+
+# These are keys that should be treated specially, 
+# and lumped into observations.
 SPECIAL_KEYS = [
     'id',
     'uuid',
@@ -55,20 +76,11 @@ SPECIAL_KEYS = [
     'oc-gen:has-contexts',
     'oc-gen:has-linked-contexts',
     'oc-gen:has-files',
-    'dc-terms:abstract',
-    'dc-terms:description',
-    'schema:text',
-    'bibo:content',
-    'dc-terms:title',
-    'dc-terms:issued',
-    'dc-terms:modified',
-    'dc-terms:license',
-    'dc-terms:isPartOf',
-    'dc-terms:hasPart',
     'contexts',
     'for_solr_assert_objs', # used to pass assertion objects to solr
     GEO_OVERLAYS_JSON_LD_KEY,
-]
+] + NO_NODE_KEYS
+
 
 ITEM_METADATA_OBS_ID = '#item-metadata'
 ITEM_METADATA_OBS_LABEL = 'Item Metadata'

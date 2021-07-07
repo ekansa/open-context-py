@@ -34,7 +34,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.all_items.editorial.synchronize.legacy import model_objects
 importlib.reload(model_objects)
 
-after_date = '2021-05-30'
+after_date = '2021-06-15'
 update_models_prod = [(Project, 'updated', True,),]
 model_objects.update_default_from_prod(
     project_uuid='bc71c724-eb1e-47d6-9d45-b586ddafdcfe', after_date=after_date, update_models=update_models_prod

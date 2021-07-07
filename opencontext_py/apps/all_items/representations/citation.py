@@ -172,7 +172,7 @@ def make_citation_dict(rep_dict):
         url_part = scheme_conf.get('url_root')
         if not url_part:
             continue
-        for act_id in rep_dict.get('owl:sameAs', []):
+        for act_id in rep_dict.get('dc-terms:identifier', []):
             if url_part in act_id:
                 citation_dict[scheme_key] = act_id
                 citation_dict['ids'][scheme_key.upper()] = act_id

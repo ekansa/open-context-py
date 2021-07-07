@@ -196,7 +196,7 @@ def add_dublin_core_literal_metadata(item_man_obj, rel_subjects_man_obj=None, ac
     return act_dict
 
 
-def check_add_default_license(act_dict=None):
+def check_add_default_license(act_dict=None, for_solr=False):
     """Adds a default license if no license already exists"""
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
@@ -208,6 +208,13 @@ def check_add_default_license(act_dict=None):
     lic_dict['id'] = f'https://{lic_uri}'
     lic_dict['slug'] = DC_DEFAULT_LICENSE_OBJECT.slug
     lic_dict['label'] = DC_DEFAULT_LICENSE_OBJECT.label
+    if for_solr:
+        lic_dict['predicate_id'] = configs.PREDICATE_DCTERMS_LICENSE_UUID
+        lic_dict['predicate__data_type'] = 'id'
+        lic_dict['predicate__item_type'] = 'property'
+        lic_dict['object_id'] = DC_DEFAULT_LICENSE_OBJECT.uuid
+        lic_dict['object__uri'] = lic_uri
+        lic_dict['object__context_id'] = DC_DEFAULT_LICENSE_OBJECT.context_id
     act_dict['dc-terms:license'] = [lic_dict]
     return act_dict
 

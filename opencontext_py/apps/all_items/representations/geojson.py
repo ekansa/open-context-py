@@ -176,7 +176,7 @@ def get_meta_json_value_from_item_hierarchy(item_man_obj, meta_json_key='geo_not
     return key_val
 
 
-def add_precision_properties(properties, item_man_obj, spacetime_obj):
+def add_precision_properties(properties, item_man_obj, spacetime_obj, for_solr=False):
     """Adds geospatial precision notes
 
     :param dict properties: A GeoJSON properties dictionary.
@@ -184,6 +184,8 @@ def add_precision_properties(properties, item_man_obj, spacetime_obj):
         that is getting geospatial data.
     :param AllSpaceTime spacetime_obj: A spacetime object with location
         precision information
+    :param bool for_solr: A boolean flag to add additional metadata because
+        the dict will be used for solr indexing.
     """
 
     # First, attempt to get a geospatial precision note from the item
@@ -246,11 +248,20 @@ def add_precision_properties(properties, item_man_obj, spacetime_obj):
         properties["location_precision_factor"] = abs(item_precision_specificity)
     else:
         pass
-    
+
+    if for_solr:
+        # Always make sure we have the location precision factor
+        properties["location_precision_factor"] = abs(item_precision_specificity)
+        properties["event_id"] = str(spacetime_obj.event.uuid)
+        properties["event__item_class_id"] = str(spacetime_obj.event.item_class.uuid)
+        properties["event__item_class__slug"] = spacetime_obj.event.item_class.slug
+        if spacetime_obj.latitude and spacetime_obj.latitude:
+            properties["latitude"] = float(spacetime_obj.latitude)
+            properties["longitude"] = float(spacetime_obj.longitude)
     return properties
 
 
-def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None):
+def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None, for_solr=False):
     """Adds GeoJSON feature (with when object) to the act_dict
     
     :param AllManifest item_man_obj: The manifest object getting a
@@ -258,6 +269,8 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
     :param AllManifest rel_subjects_man_obj: A manifest object with item_type
         "subjects" that itself (or it's parent context) will be the source
         of spacetime data for the item_man_obj.
+    :param bool for_solr: A boolean flag to add additional metadata because
+        the dict will be used for solr indexing.
     """
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
@@ -304,10 +317,15 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
             properties = add_precision_properties(
                 properties, 
                 item_man_obj, 
-                spacetime_obj
+                spacetime_obj,
+                for_solr=for_solr,
             )
             feature["geometry"] = spacetime_obj.geometry.copy()
             feature["geometry"]["id"] = f"#feature-geom-{spacetime_obj.uuid}"
+            if for_solr:
+                properties["reference_uri"] = f"https://{spacetime_obj.item.uri}"
+                properties["reference_label"] = spacetime_obj.item.label
+                properties["reference_slug"] = spacetime_obj.item.slug
         else:
             # We need to do some inferencing to add geospatial data.
             ref_spacetime_obj = spacetime_obj
@@ -337,7 +355,8 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
             properties = add_precision_properties(
                 properties, 
                 item_man_obj, 
-                ref_spacetime_obj
+                ref_spacetime_obj,
+                for_solr=for_solr,
             )
 
             geomtry = LastUpdatedOrderedDict()
@@ -379,6 +398,13 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None)
             when["reference_uri"] = f"https://{chrono_spacetime_obj.item.uri}"
             when["reference_label"] = chrono_spacetime_obj.item.label
             when["reference_slug"] = chrono_spacetime_obj.item.slug
+
+        if for_solr:
+            when["earliest"] = float(chrono_spacetime_obj.earliest)
+            when["latest"] = float(chrono_spacetime_obj.latest)
+            when["reference_uri"] = f"https://{chrono_spacetime_obj.item.uri}"
+            when["reference_label"] = chrono_spacetime_obj.item.label
+            when["reference_slug"] = chrono_spacetime_obj.item.slug 
 
         feature["when"] = when
         features.append(feature)

@@ -193,51 +193,29 @@
         in logic in Python for creating a solr document  -->
     <field name="text" type="text_general" indexed="true" stored="true" multiValued="false" large="true"/>
 
-    <!-- SPACE AND TIME FIELDS -->
+
+    <!-- ############################################################################################################ -->
+    <!-- SPACE AND TIME FIELDS  -->
+    <!-- NOTE: Space time fields are dynamic and populated by "event type", their will be a general, unspecified
+    "all_event" for any geospatial description, and then more fine-grained event type assertion added as well.
+     -->
     <!-- the slug_type_uri_label of the (subjects) document that was the source of the geometry for this record -->
-    <field name="disc_geosource"  type="string"  indexed="true"  stored="true"  multiValued="false" required="false" />
-    
-    <!-- discovery location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
-    but only one path per type. Only want facets, not specific tiles -->
-    <field name="discovery_geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
+    <dynamicField name="*___geo_source"  type="string"  indexed="true"  stored="true"  multiValued="false" required="false" />
 
-    <!-- discovery location geospatial point. can have multiple types of points, but only one point per type. -->
-    <field name="discovery_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
-    <dynamicField name="*_coordinate"  type="pdouble" indexed="true"  stored="false"/>
-
-    <!-- origin location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
-    but only one path per type. Only want facets, not specific tiles -->
-    <field name="origin_geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
-
-    <!-- origin location geospatial point. can have multiple types of points, but only one point per type. -->
-    <field name="origin_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
-
-    <!-- current location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
-    but only one path per type. Only want facets, not specific tiles -->
-    <field name="current_geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
-
-    <!-- current location geospatial point. can have multiple types of points, but only one point per type. -->
-    <field name="current_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
+    <!-- The worst level of geo precision factor for a location of a given event type -->
+    <dynamicField name="*___geo_precision_factor"  type="pint"  indexed="true"  stored="true"  multiValued="false" required="true" />
 
     <!-- Other types of location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->
-    <dynamicField name="*___geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
+    <dynamicField name="*___geo_tile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
     <!-- Other types of geospatial point. can have multiple types of points, but only one point per type. -->
-    <dynamicField name="*___geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
+    <dynamicField name="*___geo_location"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
+    <dynamicField name="*___coordinate"  type="pdouble" indexed="true"  stored="false"/>
 
 
-    <!-- _uri_label of the (subjects) document that was the source of the chronology for this record  -->
-    <field name="form_use_life_source" type="string" indexed="true"  stored="true"  multiValued="false" required="false" />
-
-    <!-- chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
-    <field name="form_use_life_chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
-
-    <!-- chronological earliest date in Julian dates BCE  -->
-    <field name="form_use_life_chrono_earliest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
-
-    <!-- chronological latest date in Julian dates BCE  -->
-    <field name="form_use_life_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
+    <!-- the slug_type_uri_label of the (subjects) document that was the source of the chronology for this record -->
+    <dynamicField name="*___chrono_source"  type="string"  indexed="true"  stored="true"  multiValued="false" required="false" />
 
     <!-- other chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <dynamicField name="*___chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
@@ -248,13 +226,18 @@
     <!-- other chronological latest date in Julian dates BCE  -->
     <dynamicField name="*___chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
+    <!-- ############################################################################################################ -->
 
 
+    <!-- ############################################################################################################ -->
     <!-- 3 integer media types -->
 	  <field name="image_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
 	  <field name="other_binary_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
 	  <field name="document_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <!-- ############################################################################################################ -->
     
+
+    <!-- ############################################################################################################ -->
     <!-- link to a thumbnail, if present -->
     <field name="thumbnail_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
     <!-- link to a preview, if present -->
@@ -263,7 +246,10 @@
     <field name="full_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
     <!-- link to a iiif info json resource, if present -->
     <field name="iiif_json_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
+    <!-- ############################################################################################################ -->
 
+
+    <!-- ############################################################################################################ -->
     <!-- these fields allow solr to summarize the next values down in a hierarchy. the field _pred will have
 	  a prefix defined by the slug of its parent levels. 
     
@@ -309,7 +295,7 @@
 
     <!-- string data predicates with @type = "xsd:string" values -->
 	  <dynamicField name="*___pred_string" type="text_general" indexed="true" stored="false" required="false" multiValued="true" />
-
+    <!-- ############################################################################################################ -->
 
     <!-- Field to use to determine and enforce document uniqueness.
          Unless this field is marked with required="false", it will be a required field

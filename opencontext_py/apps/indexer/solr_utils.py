@@ -94,12 +94,8 @@ def string_clean_for_solr(str_for_solr_val):
         SOLR_VALUE_DELIM, 
         SOLR_VALUE_SUB,
     )
-    while str_for_solr_val.startswith('_'):
-        str_for_solr_val = str_for_solr_val[1:]
-    while str_for_solr_val.endswith('_'):
-        str_for_solr_val = str_for_solr_val[:-1]
-    return str_for_solr_val
-    
+    return str_for_solr_val.strip('_')
+
 
 def make_solr_entity_str(
     slug,
@@ -121,7 +117,7 @@ def make_solr_entity_str(
     slug = string_clean_for_solr(slug)
     solr_data_type = get_solr_data_type_from_data_type(data_type)
     solr_data_type = string_clean_for_solr(solr_data_type)
-    uri = string_clean_for_solr(uri)
+    uri = string_clean_for_solr(AllManifest().clean_uri(uri))
     label = string_clean_for_solr(label)
     values = [slug, solr_data_type, uri, label]
     if alt_label:

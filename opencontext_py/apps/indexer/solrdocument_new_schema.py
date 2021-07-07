@@ -22,6 +22,8 @@ from opencontext_py.apps.all_items import labels
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
+    TEXT_CONTENT_KEYS,
+    NO_NODE_KEYS,
     prepare_for_item_dict_solr_and_html_template,
     prepare_for_item_dict_html_template
 )
@@ -40,29 +42,9 @@ LD_EQUIVALENT_PREDICATES = [
 ]
 
 LD_IDENTIFIER_PREDICATES = [
+    'dc-terms:identifier',
     'owl:sameAs',
     'foaf:isPrimaryTopicOf'
-]
-
-LD_DIRECT_PREDICATES = [
-    'http://nomisma.org/ontology#hasTypeSeriesItem',
-    'http://erlangen-crm.org/current/P2_has_type',
-    'http://www.wikidata.org/wiki/Property:P3328',
-    'oc-gen:has-technique',
-    'rdfs:range',
-    'skos:example',
-    'skos:related',
-]
-
-PERSISTENT_ID_ROOTS = [
-    'https://doi.org',
-    'http://doi.org',
-    'https://dx.doi.org',
-    'http://dx.doi.org',
-    'https://n2t.net/ark:/',
-    'http://n2t.net/ark:/',
-    'https://orcid.org',
-    'http://orcid.org'
 ]
 
 LABELING_PREDICATE_KEYS = [
@@ -103,6 +85,10 @@ ROOT_PREDICATE_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 ROOT_LINK_DATA_SOLR = 'ld' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
 ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
+
+# General (any event type) space and time solr prefix.
+ALL_EVENTS_SOLR = 'all_events'
+
 EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 JOIN_SOLR = 'join_uuids'
 FILE_SIZE_SOLR = 'filesize'
@@ -344,21 +330,35 @@ class SolrDocumentNS:
         self.fields['item_type'] = self.man_obj.item_type
         self.fields['item_class'] = self.man_obj.item_class.label
 
+    
+    def _add_string_content_to_text_field(self, text_content_pred_key):
+        """Adds multiple language labels and titles to add to text field."""
+        text_val_objs = self.rep_dict.get(text_content_pred_key)
+        if not text_val_objs:
+            return None
+        if isinstance(text_val_objs, str):
+            text_val_objs = [{'_': text_val_objs}]
+        for text_val_obj in text_val_objs:
+            for _, text_val in text_val_obj.items():
+                text_val = solr_utils.ensure_text_solr_ok(
+                    text_val
+                )
+                if text_val in self.fields['text']:
+                    # Don't bloat the index with duplicate text.
+                    continue
+                self.fields['text'] += text_val +  ' \n'
+
 
     def _add_labels_titles_to_text_field(self):
         """Adds multiple language labels and titles to add to text field."""
         for label_pred in LABELING_PREDICATE_KEYS:
-            label_objs = self.rep_dict.get(label_pred)
-            if not label_objs:
-                continue
-            if isinstance(label_objs, str):
-                label_objs = [{'_': label_objs}]
-            for label_obj in label_objs:
-                for _, text_val in label_obj.items():
-                    self.fields['text'] += solr_utils.ensure_text_solr_ok(
-                        text_val
-                    )
-                    self.fields['text'] += ' \n'
+            self._add_string_content_to_text_field(label_pred)
+    
+
+    def _add_text_contents(self):
+        """Adds multiple language text content to add to text field."""
+        for text_pred in TEXT_CONTENT_KEYS:
+            self._add_string_content_to_text_field(text_pred)
 
 
     def _set_solr_project_fields(self):
@@ -502,19 +502,21 @@ class SolrDocumentNS:
 
         return list of hierarchy lists.
         """
-        if item_man_obj.item_type in ITEM_TYPES_FOR_CONCEPT_HIERARCHIES:
+        if item_man_obj.item_type in (ITEM_TYPES_FOR_CONCEPT_HIERARCHIES + ITEM_TYPES_FOR_VOCAB_PARENTS):
+            # Use database lookups to get concept hierarchies if
+            # the item type is relevant to this kind of lookup.
             raw_hierarchy_paths = hierarchy.get_concept_hierarchy_paths_containing_item(
                 item_man_obj
             )
-        elif item_man_obj.item_type in ITEM_TYPES_FOR_VOCAB_PARENTS:
-            # NOTE TODO: Do we want to suppport recursive look-ups of
-            # contexts here?
-            if str(item_man_obj.context.uuid) == configs.OPEN_CONTEXT_PROJ_UUID:
-                raw_hierarchy_paths = [[item_man_obj]]
-            else:
-                raw_hierarchy_paths = [[item_man_obj.context, item_man_obj]]
         else:
             raw_hierarchy_paths = [[item_man_obj]]
+    
+        if (item_man_obj.item_type in ITEM_TYPES_FOR_VOCAB_PARENTS 
+            and str(item_man_obj.context.uuid) != configs.OPEN_CONTEXT_PROJ_UUID):
+            raw_raw_hierarchy_paths = copy.deepcopy(raw_hierarchy_paths)
+            # Make sure the context of the URI entity item is at the root of all of the
+            # hierarchy paths for this item.
+            raw_hierarchy_paths = [([item_man_obj.context] + p) for p in raw_raw_hierarchy_paths]
 
         # Now get the alternative labels if they exist. This step also
         # converts manifest objects into solr doc creation friendly
@@ -703,6 +705,17 @@ class SolrDocumentNS:
             self.fields['text'] += '\n'
 
 
+    def _clean_add_uri_to_solr_object_uri_field(self, object_uri, clean_first=True):
+        """Cleans and adds a uri to the solr object_uri field"""
+        if clean_first:
+            object_uri = AllManifest().clean_uri(object_uri)
+        if 'object_uri' not in self.fields:
+            self.fields['object_uri'] = []
+        if object_uri not in self.fields['object_uri']:
+            self.fields['object_uri'].append(object_uri)
+
+
+
     def _add_object_uri(self, val_obj):
         """Adds a linked data URI of an object for indexing
 
@@ -713,10 +726,7 @@ class SolrDocumentNS:
         object_uri = val_obj.get('object__uri')
         if not object_uri:
             return None
-        if 'object_uri' not in self.fields:
-            self.fields['object_uri'] = []
-        if object_uri not in self.fields['object_uri']:
-            self.fields['object_uri'].append(object_uri)
+        self._clean_add_uri_to_solr_object_uri_field(object_uri)
 
 
     def _add_solr_field_values(
@@ -856,15 +866,16 @@ class SolrDocumentNS:
             pred_obj_all_field = None
 
             for index, item_obj in enumerate(hierarchy_items):
+                # Make sure this is a dictionary version of this item.
+                item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
+
                 # Add the solr field if it does not exist.
                 if not self.fields.get(act_solr_field):
                     self.fields[act_solr_field] = []
                 if index < last_item_index:
                     # Force parents to be of an id data type.
-                    item_obj.data_type = 'id'
-                    self.fields['text'] += ' ' + item.label + ' '
-                # Make a dictionary version of this item.
-                item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
+                    item['data_type'] = 'id'
+                    self.fields['text'] += ' ' + item.get('label', '') + ' '
 
                 # Compose the solr value for the current parent item.
                 act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
@@ -989,6 +1000,249 @@ class SolrDocumentNS:
                         )
 
 
+    def _add_descriptions_outside_observations(self):
+        """Adds descriptions for items that are NOT part of an observation node"""
+        for no_node_key in NO_NODE_KEYS:
+            if not self.rep_dict.get(no_node_key):
+                # This key does not exist in our rep_dict, so skip.
+                continue
+            if not isinstance(self.rep_dict.get(no_node_key), list):
+                # The predicate has a value that needs special treatment,
+                # b/c it is NOT a list of dicts, so continue.
+                continue
+            for pred_value_object in self.rep_dict.get(no_node_key):
+                if not isinstance(pred_value_object, dict):
+                    # A case like dc-terms:identifier where the objects
+                    # strings.
+                    continue
+                solr_field_name = self._get_predicate_solr_field_name_in_hierarchy(
+                    assert_dict=pred_value_object, 
+                    is_default_attrib_group=True,
+                )
+                if not solr_field_name:
+                    # We don't have a solr field name, so skip.
+                    continue
+                self._add_solr_field_values(
+                    solr_field_name,
+                    [pred_value_object]
+                )
+
+
+    def _add_geo_coordinate_fields(
+        self, 
+        event_class_slug, 
+        latitude, 
+        longitude, 
+        location_precision_factor
+    ):
+        """Adds solr fields for an event class latitude and longitude
+        
+        :param str event_class_slug: An event class slug or 
+            catch-all ALL_EVENTS_SOLR slug so events of a given
+            type are prefixed in solr dynamic geo and chrono
+            fields.
+        :param float latitude: A float WGS-84 latitude value
+        :param float longitude: A float WGS-84 longitude value
+        """
+        if not latitude or not longitude:
+            # Skip out, we lack coordinates.
+            return False
+        
+        # We're trusting these are valid!
+
+        # NOTE: ___geo_location is a SINGLE value field. Populate it only once for
+        # using the first (most important) feature of this event class.
+        coords_str = f'{latitude},{longitude}'
+        solr_geo_location_field = event_class_slug + SOLR_VALUE_DELIM + 'geo_location'
+        if not self.fields.get(solr_geo_location_field): 
+            self.fields[solr_geo_location_field] = coords_str
+        
+        if  location_precision_factor == 0:
+            # Default with no noted reduction in precision is to 
+            # index geotiles with the maximum zoom level.
+            location_precision_factor = MAX_GEOTILE_ZOOM
+        if location_precision_factor < MIN_GEOTILE_ZOOM:
+            location_precision_factor = MIN_GEOTILE_ZOOM
+        if location_precision_factor > MAX_GEOTILE_ZOOM:
+            location_precision_factor = MAX_GEOTILE_ZOOM
+        gm = GlobalMercator()
+        tile = gm.lat_lon_to_quadtree(
+            latitude,
+            longitude,
+            location_precision_factor
+        )
+
+        if len(tile) <= (location_precision_factor - 2):
+            print(
+                f'Problem with location precision {location_precision_factor} '
+                f'and tile: {tile}'
+            )
+            return False
+
+        # NOTE: ___geo_tile is a multi-valued field, so we can add multiple
+        # geo-tile values for this event class.
+        solr_geo_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'geo_tile'
+        if not self.fields.get(solr_geo_tile_field):
+            self.fields[solr_geo_tile_field] = []
+        self.fields[solr_geo_tile_field].append(tile)
+        return True
+    
+
+    def _add_chrono_event(self, feature, event_class_slug):
+        """Adds chronology related solr fields given a when dict object
+        
+        :param dict feature: A GeoJSON feature with additional keys
+            used for solr indexing.
+        :param str event_class_slug: An event class slug or 
+            catch-all ALL_EVENTS_SOLR slug so events of a given
+            type are prefixed in solr dynamic geo and chrono
+            fields.
+        """
+        when_dict = feature.get('when')
+        if not when_dict:
+            return None
+        
+        # NOTE: ___chrono_source is a SINGLE value field. Populate it only once for
+        # using the first (most important) feature of this event class.
+        solr_chrono_source_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_source'
+        if not self.fields.get(solr_chrono_source_field):
+            self.fields[solr_chrono_source_field] = solr_utils.make_solr_entity_str(
+                slug=when_dict.get('reference_slug'),
+                data_type='id',
+                uri=when_dict.get('reference_uri'),
+                label=when_dict.get('reference_label'),
+            )
+        
+        # NOTE: ___chrono_tile is a multi-valued field, so we can add multiple
+        # chrono-tile values for this event class.
+        date_start = when_dict.get('earliest')
+        date_stop = when_dict.get('latest')
+        if date_start is None and date_stop is None:
+            return None
+        if date_start is None:
+            date_start = date_stop
+        if date_stop is None:
+            date_stop = date_start
+
+        chrono_tile = ChronoTile()
+        solr_chrono_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_tile'
+        if not self.fields.get(solr_chrono_tile_field):
+            self.fields[solr_chrono_tile_field] = []
+        self.fields[solr_chrono_tile_field].append(
+            chrono_tile.encode_path_from_bce_ce(
+                date_start, date_stop, '10M-'
+            )
+        )
+        # NOTE: ___chrono_earliest and chrono_latest are multi-valued fields, 
+        # so we can add multiple values for this event class.
+        solr_chrono_earliest_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_earliest'
+        if not self.fields.get(solr_chrono_earliest_field):
+            self.fields[solr_chrono_earliest_field] = []
+        solr_chrono_latest_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_latest'
+        if not self.fields.get(solr_chrono_latest_field):
+            self.fields[solr_chrono_latest_field] = []
+        self.fields[solr_chrono_earliest_field].append(date_start)
+        self.fields[solr_chrono_latest_field].append(date_stop)
+
+
+    def _add_space_time_feature_event(self, feature, event_class_slug):
+        """Adds space-time fields from a feature GeoJSON dict
+        
+        :param dict feature: A GeoJSON feature with additional keys
+            used for solr indexing.
+        :param str event_class_slug: An event class slug or 
+            catch-all ALL_EVENTS_SOLR slug so events of a given
+            type are prefixed in solr dynamic geo and chrono
+            fields.
+        """
+        props = feature.get('properties')
+        if not props:
+            return None
+        event_class_slug = solr_utils.convert_slug_to_solr(
+            event_class_slug
+        )
+
+        # NOTE: Add the geo coordinates. 
+        coords_ok = self._add_geo_coordinate_fields(
+            event_class_slug, 
+            latitude=props.get('latitude'), 
+            longitude=props.get('longitude'),
+            location_precision_factor=props.get('location_precision_factor', 0),
+        )
+        if not coords_ok:
+            # We don't have ok coordinates, so skip out.
+            return None
+
+        # NOTE: ___geo_source is a SINGLE value field. Populate it only once for
+        # using the first (most important) feature of this event class.
+        solr_geo_source_field = event_class_slug + SOLR_VALUE_DELIM + 'geo_source'
+        if not self.fields.get(solr_geo_source_field):
+            self.fields[solr_geo_source_field] = solr_utils.make_solr_entity_str(
+                slug=props.get('reference_slug'),
+                data_type='id',
+                uri=props.get('reference_uri'),
+                label=props.get('reference_label'),
+            )
+    
+         # NOTE: ___geo_source is a SINGLE value field. Populate it with the maximum
+         # (worst precision) value of all features for this event class.
+        solr_geo_precision_factor_field = event_class_slug + SOLR_VALUE_DELIM + 'geo_precision_factor'
+        if not self.fields.get(solr_geo_precision_factor_field):
+            self.fields[solr_geo_precision_factor_field] = 0
+        if props.get('location_precision_factor', 0) > self.fields[solr_geo_precision_factor_field]:
+            self.fields[solr_geo_precision_factor_field] = props.get('location_precision_factor')
+        
+        # Add chronology related information for this event class, if it exists.
+        self._add_chrono_event(feature, event_class_slug)
+
+
+    def _add_space_time_feature(self, feature):
+        """Adds space-time fields from a feature GeoJSON dict
+        
+        :param dict feature: A GeoJSON feature with additional keys
+            used for solr indexing.
+        """
+        props = feature.get('properties')
+        if not props:
+            return None
+        act_event_class_slug = props.get('event__item_class__slug')
+        if not act_event_class_slug:
+            return None
+        for event_class_slug in [ALL_EVENTS_SOLR, act_event_class_slug]:
+            # Add fields for all event classes, and this specific event
+            # class.
+            self._add_space_time_feature_event(feature, event_class_slug)
+
+
+    def _add_space_time_features(self):
+        """Adds geospatial and chronology solr field data for
+        each class of event.
+        """
+        if not self.rep_dict.get('features'):
+            # NO spacetime information to add.
+            return None
+        for feature in self.rep_dict.get('features'):
+            self._add_space_time_feature(feature)
+
+
+    def _add_persistent_identifiers(self):
+        """Adds persistent identifiers to the solr document"""
+        for id_key in LD_IDENTIFIER_PREDICATES:
+            if not self.rep_dict.get(id_key):
+                continue
+            if not self.fields.get('persistent_uri'):
+                self.fields['persistent_uri'] = []
+            for id_val in self.rep_dict.get(id_key):
+                id_val = AllManifest().clean_uri(id_val)
+                if id_val in self.fields['persistent_uri']:
+                    continue
+                self.fields['persistent_uri'].append(id_val)
+                self._clean_add_uri_to_solr_object_uri_field(
+                    id_val, 
+                    clean_first=False
+                )
+
+
     def make_solr_doc(self):
         """Make a solr document """
         if not self.man_obj or not self.rep_dict:
@@ -997,14 +1251,24 @@ class SolrDocumentNS:
         self._set_required_solr_fields()
         # Add labeling text to the general text field
         self._add_labels_titles_to_text_field()
+        # Add text content (project abstract, document content, etc.
+        # to the text field)
+        self._add_text_contents()
         # Add the project hierarchy
         self._set_solr_project_fields()
         # Add the item spatial context hierarchy
         self._add_solr_spatial_context()
         # Add the item_class hierarchies
         self._add_category_hierarchies()
-        # Add descriptions from observations()
+        # Add descriptions from observations
         self._add_observations_descriptions()
+        # Add descriptions that are NOT in observation nodes.
+        self._add_descriptions_outside_observations()
+        # Add space and time fields
+        self._add_space_time_features()
+        # Add DOIs, ARKs, ORCID persistent IDs.
+        self._add_persistent_identifiers()
+
 
     def make_related_solr_doc(self):
         """Make a related solr document """

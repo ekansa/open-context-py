@@ -1,6 +1,7 @@
 
 import copy
 import hashlib
+from sys import dont_write_bytecode
 import uuid as GenUUID
 
 from django.db.models import Q, OuterRef, Subquery
@@ -458,6 +459,22 @@ def get_annotate_item_manifest_obj(subject_id):
         resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
     ).values('uri')[:1]
 
+    # Main persistent identifiers
+    ark_qs = AllIdentifier.objects.filter(
+        item_id=OuterRef('uuid'),
+        scheme='ark',
+    ).values('id')[:1]
+
+    doi_qs = AllIdentifier.objects.filter(
+        item_id=OuterRef('uuid'),
+        scheme='doi',
+    ).values('id')[:1]
+
+    orcid_qs = AllIdentifier.objects.filter(
+        item_id=OuterRef('uuid'),
+        scheme='orcid',
+    ).values('id')[:1]
+
     item_man_obj_qs = AllManifest.objects.filter(
         uuid=subject_id
     ).select_related(
@@ -472,6 +489,12 @@ def get_annotate_item_manifest_obj(subject_id):
         proj_hero=Subquery(proj_hero_qs)
     ).annotate(
         proj_proj_hero=Subquery(proj_proj_hero_qs)
+    ).annotate(
+        ark=Subquery(ark_qs)
+    ).annotate(
+        doi=Subquery(doi_qs)
+    ).annotate(
+        orcid=Subquery(orcid_qs)
     )
     
     item_man_obj_qs = add_select_related_contexts_to_qs(
@@ -480,6 +503,35 @@ def get_annotate_item_manifest_obj(subject_id):
 
     item_man_obj = item_man_obj_qs.first()
     return item_man_obj
+
+
+def add_persistent_identifiers(item_man_obj, rep_dict):
+    """Adds persistent identifiers to a rep_dict
+    
+    :param AllManifest item_man_obj: The item's manifest object, 
+        annotated with ark, doi, and orcid attributes (all of
+        which may be None if no persistent id's exist for this
+        item)
+    """
+    if (not item_man_obj.ark 
+        and not item_man_obj.doi 
+        and not item_man_obj.orcid):
+        return rep_dict
+    if not 'dc-terms:identifier' in rep_dict:
+        rep_dict['dc-terms:identifier'] = []
+    if item_man_obj.doi:
+        rep_dict['dc-terms:identifier'].append(
+            AllIdentifier().make_id_url('doi', item_man_obj.ark, 'https://')
+        )
+    if item_man_obj.orcid:
+        rep_dict['dc-terms:identifier'].append(
+            AllIdentifier().make_id_url('orcid', item_man_obj.ark, 'https://')
+        )
+    if item_man_obj.ark:
+        rep_dict['dc-terms:identifier'].append(
+            AllIdentifier().make_id_url('ark', item_man_obj.ark, 'https://')
+        )
+    return rep_dict
 
 
 def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False):
@@ -523,7 +575,8 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
     rep_dict = geojson.add_geojson_features(
         item_man_obj, 
         rel_subjects_man_obj=rel_subjects_man_obj, 
-        act_dict=rep_dict
+        act_dict=rep_dict,
+        for_solr=for_solr,
     )
 
     # Add the list of media resources associated with this item if
@@ -640,6 +693,12 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
     )
 
     # Adds the default license if a license is still missing.
-    rep_dict = metadata.check_add_default_license(rep_dict)
+    rep_dict = metadata.check_add_default_license(
+        rep_dict, 
+        for_solr=for_solr
+    )
+
+    # Add any persistent identifiers assigned to this item.
+    rep_dict = add_persistent_identifiers(item_man_obj, rep_dict)
 
     return item_man_obj, rep_dict
