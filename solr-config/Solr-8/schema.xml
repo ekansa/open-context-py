@@ -181,8 +181,8 @@
     <!-- uuid identifiers for non-spatial hierarchy "join" relationships -->
     <field name="join_uuids" type="string" indexed="true" stored="true" multiValued="true" required="false" />
     
-    <!-- human remains sensitive, 0 means not sensitive. Higher values more sensitive  -->
-    <field name="human_remains" type="pint" indexed="true" stored="true" multiValued="false" required="false" />
+    <!-- human remains sensitive, False means not sensitive. True is sensitive  -->
+    <field name="human_remains" type="booleans" indexed="true" stored="true" multiValued="false" required="true" />
 
     <!-- filesize for media files -->
     <field name="filesize" type="pdouble" indexed="true" stored="true" required="false" multiValued="false"/>
@@ -232,8 +232,14 @@
     <!-- ############################################################################################################ -->
     <!-- 3 integer media types -->
 	  <field name="image_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="three_d_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="gis_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
 	  <field name="other_binary_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
-	  <field name="document_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="documents_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="subjects_children_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="subjects_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="persons_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="tables_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
     <!-- ############################################################################################################ -->
     
 

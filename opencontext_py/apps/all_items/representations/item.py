@@ -407,7 +407,8 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
     item_dict['label'] = manifest_obj.label
     item_dict['type'] = rep_utils.get_item_key_or_uri_value(manifest_obj.item_class)
     if for_solr_or_html:
-        item_dict['uuid'] = str(manifest_obj.uuid)
+        item_dict['object_id'] = str(manifest_obj.uuid)
+        item_dict['object__item_type'] = manifest_obj.item_type
         item_dict['item_class_id'] = str(manifest_obj.item_class.uuid)
         item_dict['item_class__label'] = manifest_obj.item_class.label
     context_list.append(item_dict)

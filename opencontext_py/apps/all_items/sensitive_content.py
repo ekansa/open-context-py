@@ -29,6 +29,10 @@ sc.fast_flag_human_remains_items_in_project(project_id)
 # Data, media, and documentation of human need special flagging and
 # warnings for users
 # ---------------------------------------------------------------------
+HUMAN_REMAINS_ITEM_CLASS_KEYS = [
+    'oc-gen:cat-human-bone'
+]
+
 HUMAN_REMAINS_ITEM_CLASS_URIS = [
     'opencontext.org/vocabularies/oc-general/cat-human-bone'
 ]

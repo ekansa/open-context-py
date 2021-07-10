@@ -19,6 +19,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items import hierarchy
 from opencontext_py.apps.all_items import labels
+from opencontext_py.apps.all_items import sensitive_content
 from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
@@ -122,6 +123,26 @@ FILE_TYPE_SOLR_FIELD_DICT = {
 }
 
 
+# The solr document creation calculates an "interest score"
+# used to help sort records based on their "interestingness". This is
+# calculated as a function of item_type and richness or documentation
+# and description. More richly described items will be considered
+# more interesting.
+DEFAULT_BASE_INTEREST_SCORE = 1
+ITEM_TYPE_INTEREST_SCORES = {
+    'projects': 500, 
+    'tables': 250,
+    'vocabularies': 100,
+    'media': 10,
+    'documents': 10,
+    'predicates': 3,
+    'types': 3,
+    'subjects': 2,
+    'persons': 1,
+}
+
+
+
 
 class SolrDocumentNS:
     '''
@@ -129,12 +150,17 @@ class SolrDocumentNS:
     fields are stored in a Solr Document's "fields" property.
     '''
 
-    def __init__(self, uuid, man_obj=None, rep_dict=None):
+    def __init__(self, uuid, man_obj=None, rep_dict=None, do_related=False):
         '''
         Using our expanded representation dict to make a solr
         document.
         '''
-    
+        
+        # do_related means that we're making solr fields for
+        # a related item (a subject linked to a media resource)
+        # this makes only some solr fields
+        self.do_related = do_related
+
         # Are we doing a related document? Related documents are
         # made to add extra metadata to a solr document. Typically
         # documents for "media" and "document" item_types lack much
@@ -142,16 +168,16 @@ class SolrDocumentNS:
         # item_types that are linked to media and document item_types
         # to add more descriptive information.
         # prefix for related solr_documents
-        self.solr_doc_prefix = ''
-        # do_related means that we're making solr fields for
-        # a related item (a subject linked to a media resource)
-        # this makes only some solr fields
-        self.do_related = False
+        if self.do_related:
+            self.solr_doc_prefix = RELATED_SOLR_DOC_PREFIX
+        else:
+            self.solr_doc_prefix = ''
+    
         # First get core data structures
         if not man_obj or not rep_dict:
             man_obj, rep_dict = item.make_representation_dict(
                 subject_id=uuid,
-                for_solr_or_html=True,
+                for_solr=True,
             )
             rep_dict = prepare_for_item_dict_solr_and_html_template(
                 man_obj, 
@@ -176,14 +202,16 @@ class SolrDocumentNS:
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
-        self.fields['human_remains'] = 0  # Default, item is not about human remains.
+        self.fields['human_remains'] = False  # Default, item is not about human remains.
         # Default media counts.
         self.fields['image_media_count'] = 0
         self.fields['other_binary_media_count'] = 0
-        self.fields['document_count'] = 0
+        self.fields['documents_count'] = 0
+        self.fields['subjects_children_count'] = 0
+        self.fields['persons_count'] = 0
+        self.fields['tables_count'] = 0
         # The solr field for joins by uuid.
         self.join_solr_field = 'join' +  SOLR_VALUE_DELIM + 'pred_id'
-
 
 
     # -----------------------------------------------------------------
@@ -256,29 +284,6 @@ class SolrDocumentNS:
         return True
     
 
-    def _add_joined_subject_uuid(self, item_obj):
-        """Adds subject uuids to facilitate joins."""
-        if not self.man_obj.item_type in ['media','documents']:
-            # This Open Context item type does not record joins.
-            return None
-        # Make sure the item is a dict.
-        item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
-        if item.get('item_type') != 'subjects':
-            # Not a subject, no uuid to join.
-            return None
-        
-        if not item.get('uuid'):
-            return None
-        # We need to facilitate joins to a related
-        # Open Context subject item (join by UUID).
-        if not JOIN_SOLR in self.fields:
-            # We don't have a solr field for joins yet, so
-            # make one.
-            self.fields[JOIN_SOLR] = []
-        # Append to the solr field for joins
-        self.fields[JOIN_SOLR].append(item.get('uuid'))
-
-
     def _add_solr_fields_for_linked_media_documents(self, item_obj):
         """Adds standard solr fields relating to media and document links."""
         item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
@@ -326,10 +331,18 @@ class SolrDocumentNS:
         )
         # default, can add as image media links discovered
         self.fields['image_media_count'] = 0
+        self.fields['three_d_media_count'] = 0
+        self.fields['gis_media_count'] = 0
         # default, can add as other media links discovered
         self.fields['other_binary_media_count'] = 0
         # default, can add as doc links discovered
         self.fields['document_count'] = 0
+        self.fields['subjects_children_count'] = 0
+        self.fields['subjects_count'] = 0
+        self.fields['persons_count'] = 0
+        self.fields['tables_count'] = 0
+
+
         self.fields['sort_score'] = float(
             '0.' + self.man_obj.sort.replace('-', '')
         )
@@ -339,7 +352,7 @@ class SolrDocumentNS:
         self.fields['item_class'] = self.man_obj.item_class.label
         if self.man_obj.meta_json.get('flag_human_remains'):
             # Sensitive data needing to be flagged.
-            self.fields['human_remains'] += 1
+            self.fields['human_remains'] = True
 
     
     def _add_string_content_to_text_field(self, text_content_pred_key):
@@ -424,7 +437,7 @@ class SolrDocumentNS:
             # Compose the solr_value for this item in the context
             # hierarchy.
             act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
-                obj_or_dict=context,
+                obj_or_dict=copy.deepcopy(context),
                 act_solr_doc_prefix='', # No prefixing for projects!
             )
             # The self.ALL_CONTEXT_SOLR takes values for
@@ -436,7 +449,7 @@ class SolrDocumentNS:
             self._add_id_field_and_value(
                 ALL_CONTEXT_SOLR,
                 act_solr_value,
-                act_solr_doc_prefix='', # No prefixing for projects!
+                act_solr_doc_prefix='', # No prefixing for contexts
             )
             if index == 0:
                 # We are at the top of the spatial hierarchy
@@ -623,7 +636,7 @@ class SolrDocumentNS:
         if not self.man_obj.item_class:
             # No category, skip the rest.
             return None
-        if  str(self.man_obj.item_class.uuid) == configs.DEFAULT_CLASS_UUID:
+        if str(self.man_obj.item_class.uuid) == configs.DEFAULT_CLASS_UUID:
             # Default class, tedious and not worth indexing.
             return None
         
@@ -677,8 +690,6 @@ class SolrDocumentNS:
                 dict_lookup_prefix='object'
             )
 
-            # Add subject uuid joins, if applicable.
-            self._add_joined_subject_uuid(item)
             # Add standard solr fields that summarize linked media,
             # documents.
             self._add_solr_fields_for_linked_media_documents(item)
@@ -697,7 +708,7 @@ class SolrDocumentNS:
                 item_man_obj = AllManifest.objects.filter(uuid=item_uuid).first()
             if not item_man_obj:
                 print(f'NO item_man_obj:  {item_uuid}')
-                print(f'NO item_man_obj:  {solr_field_name}: {item}')
+                print(f'Problem with:  {solr_field_name}: {item}')
                 continue
 
             # Put the item in a list of hierarchy lists (parents may not
@@ -724,7 +735,6 @@ class SolrDocumentNS:
             self.fields['object_uri'] = []
         if object_uri not in self.fields['object_uri']:
             self.fields['object_uri'].append(object_uri)
-
 
 
     def _add_object_uri(self, val_obj):
@@ -986,13 +996,14 @@ class SolrDocumentNS:
              # We are OK to index observation assertions if the observation is
              # active, otherwise we should skip it to so that the inactive
              # observations do not get indexed.
-            obs_status = obs.get('oc-gen:obsStatus', 'active')
-            if obs_status != 'active':
+            if obs.get('oc-gen:obsStatus', 'active') != 'active':
                 # Skip this observation. It's there but has a deprecated
                 # status.
                 continue
             # Descriptive predicates are down in the events.
             for event_node in obs.get('oc-gen:has-events', []):
+                if not event_node.get('has_descriptions'):
+                    continue
                 for attrib_group in event_node.get('oc-gen:has-attribute-groups', []):
                     for _, pred_value_objects in attrib_group.get('descriptions', {}).items():
                         # TODO handle predicates, their hierarchy, and add
@@ -1009,6 +1020,47 @@ class SolrDocumentNS:
                             solr_field_name,
                             pred_value_objects
                         )
+    
+
+    def _add_observations_links(self):
+        """Adds linking info from item observations to the Solr doc."""
+        if not self.rep_dict.get('oc-gen:has-obs'):
+            return None
+        # Get the list of all the observations made on this item.
+        # Each observation is a dictionary with descriptive assertions
+        # keyed by a predicate.
+        for obs in self.rep_dict.get('oc-gen:has-obs'):
+             # Get the status of the observation, defaulting to 'active'.
+             # We are OK to index observation assertions if the observation is
+             # active, otherwise we should skip it to so that the inactive
+             # observations do not get indexed.
+            if obs.get('oc-gen:obsStatus', 'active') != 'active':
+                # Skip this observation. It's there but has a deprecated
+                # status.
+                continue
+            # Descriptive predicates are down in the events.
+            for event_node in obs.get('oc-gen:has-events', []):
+                if not event_node.get('has_relations'):
+                    continue
+                for attrib_group in event_node.get('oc-gen:has-attribute-groups', []):
+                    for rel_item_type, pred_value_dicts in attrib_group.get('relations', {}).items():
+                        if rel_item_type in ['documents', 'subjects_children', 'subjects', 'persons', 'tables']:
+                            solr_field = f'{rel_item_type}_count'
+                            for _, pred_value_objects in pred_value_dicts.items():
+                                # Add to the count for this item type
+                                self.fields[solr_field] += len(pred_value_objects)
+                        elif rel_item_type == 'media':
+                            for _, pred_value_objects in pred_value_dicts.items():
+                                for obj_dict in pred_value_objects:
+                                    if obj_dict.get('type') == 'oc-gen:image':
+                                        self.fields['image_media_count'] += 1
+                                    elif obj_dict.get('type') in ['oc-gen:3d-model']:
+                                        self.fields['three_d_media_count'] += 1
+                                    elif obj_dict.get('type') in ['oc-gen:geospatial-file', 'oc-gen:gis-vector-file']:
+                                        self.fields['gis_media_count'] += 1
+                                    else:
+                                        self.fields['other_binary_media_count'] += 1
+
 
 
     def _add_descriptions_outside_observations(self):
@@ -1024,7 +1076,7 @@ class SolrDocumentNS:
             for pred_value_object in self.rep_dict.get(no_node_key):
                 if not isinstance(pred_value_object, dict):
                     # A case like dc-terms:identifier where the objects
-                    # strings.
+                    # are strings.
                     continue
                 solr_field_name = self._get_predicate_solr_field_name_in_hierarchy(
                     assert_dict=pred_value_object, 
@@ -1112,6 +1164,11 @@ class SolrDocumentNS:
         when_dict = feature.get('when')
         if not when_dict:
             return None
+        
+        if when_dict.get('reference_type') == 'specified':
+            # This item has its own chronological data, not inferred from
+            # another source.
+            self.chrono_specified = True
         
         # NOTE: ___chrono_source is a SINGLE value field. Populate it only once for
         # using the first (most important) feature of this event class.
@@ -1221,6 +1278,10 @@ class SolrDocumentNS:
         props = feature.get('properties')
         if not props:
             return None
+        if props.get('reference_type') == 'specified':
+            # This item has its own geospatial data, not inferred from
+            # another source.
+            self.geo_specified = True
         act_event_class_slug = props.get('event__item_class__slug')
         if not act_event_class_slug:
             return None
@@ -1291,6 +1352,165 @@ class SolrDocumentNS:
                 self.fields[FILE_SIZE_SOLR] = size
 
 
+    def _double_check_human_remains(self):
+        """Checks if this item has metadata relating to human remains"""
+        if self.fields.get('human_remains'):
+            # This is already flagged, so no need to do further checks.
+            return None
+        
+        if self.man_obj.meta_json.get('flag_human_remains'):
+            # Sensitive data needing to be flagged.
+            self.fields['human_remains'] = True
+            return None
+
+        if  self.man_obj.item_class.item_key in sensitive_content.HUMAN_REMAINS_ITEM_CLASS_KEYS:
+            # The item class is about human remains.
+            self.fields['human_remains'] = True
+            return None
+
+        if  self.man_obj.item_class.uri in sensitive_content.HUMAN_REMAINS_ITEM_CLASS_URIS:
+            # The item class URI is about human remains.
+            self.fields['human_remains'] = True
+            return None
+    
+        if set(
+            sensitive_content.HUMAN_REMAINS_LINKED_DATA_URIS
+        ).intersection(set(self.fields.get('object_uri', []))):
+            # The item has associated URIs that are about human remains or burials
+            self.fields['human_remains'] = True
+
+
+    def _add_linked_subjects(self):
+        """Adds fields from related subject items to the solr document."""
+    
+        # NOTE: This essentially denormalizes media and document items.
+        # Some of the important descriptive fields of the subjects
+        # associated with a given media or document item get added
+        # to the solr document. This allows the subject items to
+        # provide metadata that further allow searching of media and
+        # documents items (that tend not to have great metadata without
+        # such associations)
+    
+        if not self.man_obj.item_type in ['media', 'documents']:
+            # This is only done for media and documents items.
+            return None
+        # Get the list of all the observations made on this item.
+        # Each observation is a dictionary with descriptive assertions
+        # keyed by a predicate.
+        subject_dicts = []
+        for obs in self.rep_dict.get('oc-gen:has-obs', []):
+             # Get the status of the observation, defaulting to 'active'.
+             # We are OK to index observation assertions if the observation is
+             # active, otherwise we should skip it to so that the inactive
+             # observations do not get indexed.
+            if obs.get('oc-gen:obsStatus', 'active') != 'active':
+                # Skip this observation. It's there but has a deprecated
+                # status.
+                continue
+            # Descriptive predicates are down in the events.
+            for event_node in obs.get('oc-gen:has-events', []):
+                if not event_node.get('has_relations'):
+                    continue
+                for attrib_group in event_node.get('oc-gen:has-attribute-groups', []):
+                    for rel_item_type, pred_value_dicts in attrib_group.get('relations', {}).items():
+                        if rel_item_type != 'subjects':
+                            # We only care about subjects items for related linking.
+                            continue
+                        for _, pred_value_objects in pred_value_dicts.items():
+                            subject_dicts += pred_value_objects
+
+        if self.rep_dict.get('contexts'):
+            # Add the last context (the most specific one) from the context items.
+            subject_dicts.append(self.rep_dict['contexts'][-1])
+
+        if not JOIN_SOLR in self.fields:
+            # We don't have a solr field for joins yet, so
+            # make one.
+            self.fields[JOIN_SOLR] = []
+        for subject_dict in subject_dicts:
+            related_object_id = subject_dict.get('object_id')
+            if not related_object_id:
+                # we don't have a related item.
+                continue
+            if related_object_id == str(self.man_obj.uuid):
+                # The related item is the same as our current item, so skip
+                continue
+            if related_object_id in self.fields[JOIN_SOLR]:
+                # We've already added this.
+                continue
+            print(f'Get related item_type subjects: {related_object_id}')
+            rel_sd_obj = SolrDocumentNS(uuid=related_object_id, do_related=True)
+            rel_sd_obj.make_related_solr_doc()
+            self.fields[JOIN_SOLR].append(related_object_id)
+            if rel_sd_obj.fields.get('human_remains'):
+                # The related subjects item is about human remains, so
+                # flag this for human remains.
+                self.fields['human_remains'] = True
+            self.fields['text'] += '/n' + rel_sd_obj.fields['text'] + '/n'
+            for field_key, vals in rel_sd_obj.fields.items():
+                if not field_key.startswith(RELATED_SOLR_DOC_PREFIX):
+                    # We only want to add fields from the rel_sd_obj
+                    # that start with the RELATED_SOLR_DOC_PREFIX.
+                    continue
+                if field_key not in self.fields:
+                    self.fields[field_key] = []
+                # Force the vals of the related solr doc
+                # to be a list.
+                if not isinstance(vals, list):
+                    vals = [vals]
+                # Add a list of values.
+                for val in vals:
+                    if val in self.fields[field_key]:
+                        # We already have this value, don't index
+                        # the redundant value.
+                        continue
+                    self.fields[field_key].append(val)
+
+
+    def _calculate_interest_score(self):
+        """ Calculates the 'interest score' for sorting items with more
+        documentation / description to a higher rank.
+        """
+
+        # Start the interest score on the base for this item_type.
+        score = ITEM_TYPE_INTEREST_SCORES.get(
+            self.man_obj.item_type, 
+            DEFAULT_BASE_INTEREST_SCORE
+        )
+        
+        rel_solr_field_prefix = solr_utils.convert_slug_to_solr(
+            RELATED_SOLR_DOC_PREFIX
+        )
+        for field_key, value in self.fields.items():
+            if (field_key.startswith(rel_solr_field_prefix) and
+                '__pred_' in field_key):
+                # The more richly related items are described, the
+                # more interesting.
+                score += 0.1
+            elif '__pred_' in field_key:
+                score += 1
+
+        score += len(self.fields['text']) / 200
+        score += self.fields['image_media_count'] * 4
+        score += self.fields['three_d_media_count'] * 10
+        score += self.fields['gis_media_count'] * 10
+        score += self.fields['other_binary_media_count'] * 5
+        score += self.fields['documents_count'] * 4
+        score += self.fields['subjects_children_count'] * 0.1
+        score += self.fields['subjects_count']
+        score += self.fields['persons_count'] * 2
+        score += self.fields['tables_count'] * 5
+        if self.geo_specified:
+            # geo data specified, more interesting
+            score += 5
+        if self.chrono_specified:
+            # chrono data specified, more interesting
+            score += 5
+        # Add to the score based on the file size of a media file.
+        score += self.fields.get(FILE_SIZE_SOLR, 0 ) / 50000
+        self.fields['interest_score'] = score
+
+
     def make_solr_doc(self):
         """Make a solr document """
         if not self.man_obj or not self.rep_dict:
@@ -1310,6 +1530,8 @@ class SolrDocumentNS:
         self._add_category_hierarchies()
         # Add descriptions from observations
         self._add_observations_descriptions()
+        # Add counts for links to different item_types
+        self._add_observations_links()
         # Add descriptions that are NOT in observation nodes.
         self._add_descriptions_outside_observations()
         # Add space and time fields
@@ -1318,8 +1540,28 @@ class SolrDocumentNS:
         self._add_persistent_identifiers()
         # Add Media file links, size, etc.
         self._add_media_fields()
+        # Just to be sure, check metadata about human remains
+        # associated metadata in order to flag this item if needed.
+        self._double_check_human_remains()
+        # Applicable only to media and documents item_types,
+        # add fields from related subjects items.
+        self._add_linked_subjects()
+        # Calculate the interest score for the item
+        self._calculate_interest_score()
 
 
     def make_related_solr_doc(self):
         """Make a related solr document """
+        if not self.man_obj or not self.rep_dict:
+            return None
         self.do_related = True
+        self.solr_doc_prefix = RELATED_SOLR_DOC_PREFIX
+        # Add the item_class hierarchies
+        self._add_category_hierarchies()
+        # Add descriptions from observations
+        self._add_observations_descriptions()
+        # Add descriptions that are NOT in observation nodes.
+        self._add_descriptions_outside_observations()
+        # Just to be sure, check metadata about human remains
+        # associated metadata in order to flag this item if needed.
+        self._double_check_human_remains()

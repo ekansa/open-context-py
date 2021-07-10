@@ -596,7 +596,7 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
         rep_dict.get('oc-gen:has-contexts', []) 
         + rep_dict.get('oc-gen:has-linked-contexts', [])
     )
-
+   
     # Add any metadata about this item.
     meta_obs_dict = prepare_item_metadata_obs(rep_dict)
     if meta_obs_dict:

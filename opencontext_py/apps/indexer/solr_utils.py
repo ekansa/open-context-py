@@ -135,12 +135,14 @@ def solr_convert_man_obj_obj_dict(obj_or_dict, dict_lookup_prefix='object'):
         obj_dict = make_model_object_json_safe_dict(obj_or_dict)
         obj_dict['id'] = obj_dict.get('uri')
     else:
-        obj_dict = obj_or_dict
-        obj_dict['uuid'] = obj_dict.get(
-            f'{dict_lookup_prefix}_id'
+        obj_dict = copy.deepcopy(obj_or_dict)
+        obj_dict['uuid'] = obj_or_dict.get(
+            f'{dict_lookup_prefix}_id', 
+            obj_or_dict.get('uuid')
         )
-        obj_dict['item_type'] = obj_dict.get(
-            f'{dict_lookup_prefix}__item_type'
+        obj_dict['item_type'] = obj_or_dict.get(
+            f'{dict_lookup_prefix}__item_type',
+            obj_or_dict.get('item_type')
         )
     return obj_dict
 
