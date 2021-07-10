@@ -199,6 +199,10 @@
     <!-- NOTE: Space time fields are dynamic and populated by "event type", their will be a general, unspecified
     "all_event" for any geospatial description, and then more fine-grained event type assertion added as well.
      -->
+
+    <!-- Slugs for the different event classes present in the solr document -->
+    <field name="event_class_slugs" type="string" indexed="true" stored="true" multiValued="true" required="false" />
+
     <!-- the slug_type_uri_label of the (subjects) document that was the source of the geometry for this record -->
     <dynamicField name="*___geo_source"  type="string"  indexed="true"  stored="true"  multiValued="false" required="false" />
 
@@ -208,6 +212,8 @@
     <!-- Other types of location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->
     <dynamicField name="*___geo_tile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
+    <!-- Same as above, but with lower resolution (shorter tile paths)-->
+    <dynamicField name="*___lr_geo_tile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
     <!-- Other types of geospatial point. can have multiple types of points, but only one point per type. -->
     <dynamicField name="*___geo_location"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
@@ -219,6 +225,8 @@
 
     <!-- other chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <dynamicField name="*___chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
+    <!-- Same as above, but with lower resolution (shorter tile paths)-->
+    <dynamicField name="*___lr_chrono_tile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
     <!-- other chronological earliest date in Julian dates BCE  -->
     <dynamicField name="*___chrono_earliest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
