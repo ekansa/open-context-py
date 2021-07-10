@@ -83,3 +83,17 @@ def test_encode_decode_paths():
             # Assert that the round-trip of encoding to decoding worked!
             assert latest_bp == decode_dict['latest_bp']
             assert earliest_bp == decode_dict['earliest_bp']
+            # Now test that trimming the paths gives us date ranges that
+            # still appropriately bound our inputs.
+            act_path = path[0:-1]
+            while chronotiles.raw_path_depth(act_path) > 5:
+                logger.info(
+                    f'Checking bounds of trimmed: {act_path}, length: '
+                    f'{chronotiles.raw_path_depth(act_path)}'
+                )
+                decode_dict = chronotiles.decode_path_dates(act_path)
+                # The input values should be within the bounds of the
+                # earliest and lastest values of the input dates.
+                assert latest_bp >= decode_dict['latest_bp']
+                assert earliest_bp <= decode_dict['earliest_bp']
+                act_path = act_path[0:-1]
