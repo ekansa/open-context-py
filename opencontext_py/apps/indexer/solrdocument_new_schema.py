@@ -109,10 +109,15 @@ ITEM_TYPES_FOR_VOCAB_PARENTS = [
     'uri',
 ]
 
-# Maximum depth of geotile zoom
-MAX_GEOTILE_ZOOM = 30
 # Minimum allowed geotile zoom
 MIN_GEOTILE_ZOOM = 6
+# Maximum depth of geotile zoom
+MAX_GEOTILE_ZOOM = 30
+# Low resolution geotile string length
+LOW_RESOLUTION_GEOTILE_LENGTH = 9
+# Drop last chrono-tile characters
+LOW_RESOLUTION_CHRONOTILE_DROP_LAST = 10
+
 
 # Mappings for solr fields and file uris.
 FILE_TYPE_SOLR_FIELD_DICT = {
@@ -1148,6 +1153,16 @@ class SolrDocumentNS:
         if not self.fields.get(solr_geo_tile_field):
             self.fields[solr_geo_tile_field] = []
         self.fields[solr_geo_tile_field].append(tile)
+
+        # NOTE: This is for lower resolution (more general indexing) for
+        # better performance when we want "big picture", more general geo-tile
+        # facets
+        solr_lr_geo_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'lr_geo_tile'
+        if not self.fields.get(solr_lr_geo_tile_field):
+            self.fields[solr_lr_geo_tile_field] = []
+        self.fields[solr_lr_geo_tile_field].append(
+            tile[:LOW_RESOLUTION_GEOTILE_LENGTH]
+        )
         return True
     
 
@@ -1196,15 +1211,25 @@ class SolrDocumentNS:
         # exceeds the maximum range allowed.
         try:
             chrono_path = chronotiles.encode_path_from_bce_ce(
-                date_start, date_stop, prefix=chronotiles.DEFAULT_PATH_PREFIX
+                date_start, date_stop, prefix=''
             )
         except:
             chrono_path = None
         if chrono_path:
+            # Make the fill resolution chronopath field.
             solr_chrono_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_tile'
             if not self.fields.get(solr_chrono_tile_field):
                 self.fields[solr_chrono_tile_field] = []
             self.fields[solr_chrono_tile_field].append(chrono_path)
+            # Now make the lower resolution chronopath field by dropping the
+            # last several characters from the path
+            solr_lr_chrono_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'lr_chrono_tile'
+            if not self.fields.get(solr_lr_chrono_tile_field):
+                self.fields[solr_lr_chrono_tile_field] = []
+            self.fields[solr_lr_chrono_tile_field].append(
+                chrono_path[0:-LOW_RESOLUTION_CHRONOTILE_DROP_LAST]
+            )
+
         
         # NOTE: ___chrono_earliest and chrono_latest are multi-valued fields, 
         # so we can add multiple values for this event class.
@@ -1245,6 +1270,12 @@ class SolrDocumentNS:
         if not coords_ok:
             # We don't have ok coordinates, so skip out.
             return None
+
+        # Add the event class slug to the list for this item.
+        if not self.fields.get('event_class_slugs'):
+            self.fields['event_class_slugs'] = []
+        if event_class_slug != ALL_EVENTS_SOLR:
+            self.fields['event_class_slugs'].append(event_class_slug)
 
         # NOTE: ___geo_source is a SINGLE value field. Populate it only once for
         # using the first (most important) feature of this event class.
