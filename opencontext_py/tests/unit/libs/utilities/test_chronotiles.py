@@ -49,7 +49,7 @@ def test_encode_decode_paths():
             for i in range(NUMBER_RANDOM_TEST_SPANS)
         ]
         for test_span in test_spans:
-            latest_bp = round(random.uniform(0, path_max_bp), 0)
+            latest_bp = round( random.randrange(0, path_max_bp), 0)
             earliest_bp = round((latest_bp + test_span), 0)
             logger.info(
                 f'Checking dates: {earliest_bp} to {latest_bp}'
@@ -57,7 +57,7 @@ def test_encode_decode_paths():
             if latest_bp > path_max_bp or earliest_bp > path_max_bp:
                 # We expect an error to be raised in this case!
                 logger.info(
-                    f'Out of bound date should raise error (max bpp: {path_max_bp})'
+                    f'Out of bound date should raise error (max bp: {path_max_bp})'
                 )
                 with pytest.raises(Exception):
                      path = chronotiles.encode_path(

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-from opencontext_py.libs.chronotiles import ChronoTile
+from opencontext_py.libs.utilities import chronotiles
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 from opencontext_py.apps.all_items.models import (
@@ -112,6 +112,14 @@ ITEM_TYPES_FOR_VOCAB_PARENTS = [
 MAX_GEOTILE_ZOOM = 30
 # Minimum allowed geotile zoom
 MIN_GEOTILE_ZOOM = 6
+
+# Mappings for solr fields and file uris.
+FILE_TYPE_SOLR_FIELD_DICT = {
+    'oc-gen:thumbnail': 'thumbnail_uri',
+    'oc-gen:preview': 'preview_uri',
+    'oc-gen:fullfile': 'full_uri',
+    'oc-gen:iiif': 'iiif_json_uri',
+}
 
 
 
@@ -329,6 +337,9 @@ class SolrDocumentNS:
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.man_obj.item_type
         self.fields['item_class'] = self.man_obj.item_class.label
+        if self.man_obj.meta_json.get('flag_human_remains'):
+            # Sensitive data needing to be flagged.
+            self.fields['human_remains'] += 1
 
     
     def _add_string_content_to_text_field(self, text_content_pred_key):
@@ -1124,15 +1135,20 @@ class SolrDocumentNS:
         if date_stop is None:
             date_stop = date_start
 
-        chrono_tile = ChronoTile()
-        solr_chrono_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_tile'
-        if not self.fields.get(solr_chrono_tile_field):
-            self.fields[solr_chrono_tile_field] = []
-        self.fields[solr_chrono_tile_field].append(
-            chrono_tile.encode_path_from_bce_ce(
-                date_start, date_stop, '10M-'
+        # Try to make a chrono-path. This will error out if the date range
+        # exceeds the maximum range allowed.
+        try:
+            chrono_path = chronotiles.encode_path_from_bce_ce(
+                date_start, date_stop, prefix=chronotiles.DEFAULT_PATH_PREFIX
             )
-        )
+        except:
+            chrono_path = None
+        if chrono_path:
+            solr_chrono_tile_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_tile'
+            if not self.fields.get(solr_chrono_tile_field):
+                self.fields[solr_chrono_tile_field] = []
+            self.fields[solr_chrono_tile_field].append(chrono_path)
+        
         # NOTE: ___chrono_earliest and chrono_latest are multi-valued fields, 
         # so we can add multiple values for this event class.
         solr_chrono_earliest_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_earliest'
@@ -1241,6 +1257,38 @@ class SolrDocumentNS:
                     id_val, 
                     clean_first=False
                 )
+    
+
+    def _add_media_fields(self):
+        """Adds media size and type fields to the solr document."""
+        if self.man_obj.item_type != 'media':
+            return None
+        if not self.rep_dict.get('oc-gen:has-files'):
+            # Skip this, not a media type item, or missing
+            # required data.
+            return None
+        if not self.fields.get(FILE_SIZE_SOLR):
+            self.fields[FILE_SIZE_SOLR] = 0
+        # Iterate through the file items.
+        for file_item in self.rep_dict.get('oc-gen:has-files'):
+            if not 'type' in file_item or not 'dc-terms:hasFormat' in file_item:
+                # We're missing key data, so skip.
+                continue
+            if file_item['type'] in ['oc-gen:archive', 'oc-gen:ia-fullfille', 'oc-gen:fullfile']:
+                self.fields[FILE_MIMETYPE_SOLR] = AllManifest().clean_uri(file_item['dc-terms:hasFormat'])
+
+            # Populate the solr field for this file type, if not already populated.
+            solr_file_uri_field = FILE_TYPE_SOLR_FIELD_DICT.get(file_item['type'])
+            if solr_file_uri_field and not self.fields.get(solr_file_uri_field):
+                # Populate solr field with the uri for this file type.
+                self.fields[solr_file_uri_field] = AllManifest().clean_uri(file_item['id'])
+            
+            if not file_item.get('dcat:size'):
+                continue
+            size = float(file_item.get('dcat:size'))
+            if size > self.fields[FILE_SIZE_SOLR]:
+                # The biggest filesize gets indexed.
+                self.fields[FILE_SIZE_SOLR] = size
 
 
     def make_solr_doc(self):
@@ -1268,6 +1316,8 @@ class SolrDocumentNS:
         self._add_space_time_features()
         # Add DOIs, ARKs, ORCID persistent IDs.
         self._add_persistent_identifiers()
+        # Add Media file links, size, etc.
+        self._add_media_fields()
 
 
     def make_related_solr_doc(self):

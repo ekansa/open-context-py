@@ -17,11 +17,13 @@ chronological tile path strings.
 pytest opencontext_py/tests/unit/libs/utilities/test_chronotiles.py -v --log-cli-level info
 """
 
+PREFIX_DELIM = '-'
+DEFAULT_PATH_PREFIX = f'10M{PREFIX_DELIM}'
 DEFAULT_MAXIMUM_BP = 10000000  # 10 million years ago
 PRESENT = 2000 # Year 0 BP expressed in BCE/CE.
 MAX_TILE_DEPTH = 38
 MIN_INTERVAL_SPAN = .25
-PREFIX_DELIM = '-'
+
 
 YEAR_POWER_DICT= {
     'k': 3,
@@ -41,6 +43,7 @@ def raw_path_depth(raw_path):
         path = raw_path
     
     return len(path)
+
 
 def number_cast(test_string):
     """Cast a string as an integer or float number
@@ -87,7 +90,7 @@ def get_path_interval_earliest_latest_bp(
     """Gets a tuple of last interval size, earliest_bp, latest_bp dates from a path
     
     :param str no_prefix_path: A chrono-path string without a prefix.
-    :param int path_max_bp: The maximum BP date encoded by this chrono-path.
+    :param float path_max_bp: The maximum BP date encoded by this chrono-path.
     
     return Tuple (path_max_bp, level_interval, block_earliest_bp, block_latest_bp)
     """
@@ -119,7 +122,7 @@ def decode_path(raw_path, path_max_bp=DEFAULT_MAXIMUM_BP):
     """Decodes a chrono-tile path into a tuple of path encoded interval values.
 
     :param str raw_path: A chrono-path string with or without a prefix.
-    :param int path_max_bp: The default maximum BP value in the bounds of the path,
+    :param float path_max_bp: The default maximum BP value in the bounds of the path,
         if not otherwise provided by a prefix.
 
     return Tuple (path_max_bp, level_interval, earliest_bp, latest_bp)
