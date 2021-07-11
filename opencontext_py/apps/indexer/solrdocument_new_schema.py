@@ -985,6 +985,7 @@ class SolrDocumentNS:
                         prefix='pred_'
                     )
                 )
+                solr_field_name = self._prefix_solr_field(solr_field_name)
     
         return solr_field_name
 
