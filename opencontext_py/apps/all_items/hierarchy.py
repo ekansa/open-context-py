@@ -47,7 +47,6 @@ def get_concept_parent_paths(child_obj, use_cache=True, paths=None):
     if not parent_objs:
         return paths
     new_paths = []
-    print(f'{child_obj.label} has {len(parent_objs)} parents')
     for parent_obj in parent_objs:
         parent_paths = []
         for path in paths:

@@ -1470,7 +1470,8 @@ class SolrDocumentNS:
             if related_object_id in self.fields[JOIN_SOLR]:
                 # We've already added this.
                 continue
-            print(f'Get related item_type subjects: {related_object_id}')
+            if False:
+                print (f'Get related item_type subjects: {related_object_id}')
             rel_sd_obj = SolrDocumentNS(uuid=related_object_id, do_related=True)
             rel_sd_obj.make_related_solr_doc()
             self.fields[JOIN_SOLR].append(related_object_id)
@@ -1580,6 +1581,7 @@ class SolrDocumentNS:
         self._add_linked_subjects()
         # Calculate the interest score for the item
         self._calculate_interest_score()
+        return True
 
 
     def make_related_solr_doc(self):
@@ -1597,3 +1599,4 @@ class SolrDocumentNS:
         # Just to be sure, check metadata about human remains
         # associated metadata in order to flag this item if needed.
         self._double_check_human_remains()
+        return True
