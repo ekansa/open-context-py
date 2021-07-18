@@ -485,8 +485,8 @@ def get_immediate_concept_parent_objs(child_obj, use_cache=True):
     """Get the immediate parents of a child manifest object"""
     if not use_cache:
         return get_immediate_concept_parent_objs_db(child_obj)
-    cache_key = f'concept-parents-{child_obj.uuid}'
-    cache = caches['memory']
+    cache_key = f'{str(child_obj.uuid)}-concept-parents'
+    cache = caches['redis']
     all_parents = cache.get(cache_key)
     if all_parents is not None:
         return all_parents
@@ -504,8 +504,8 @@ def get_immediate_concept_children_objs(parent_obj, use_cache=True):
     """Get the immediate children of a parent manifest object"""
     if not use_cache:
         return get_immediate_concept_children_objs_db(parent_obj)
-    cache_key = f'concept-children-{parent_obj.uuid}'
-    cache = caches['memory']
+    cache_key = f'{str(parent_obj.uuid)}-concept-children'
+    cache = caches['redis']
     all_children = cache.get(cache_key)
     if all_children is not None:
         return all_children
@@ -523,8 +523,8 @@ def get_immediate_context_parent_obj(child_obj, use_cache=True):
     """Get the immediate parents of a child manifest object"""
     if not use_cache:
         return get_immediate_context_parent_obj_db(child_obj)
-    cache_key = f'context-parent-{child_obj.uuid}'
-    cache = caches['memory']
+    cache_key = f'{str(child_obj.uuid)}-context-parent'
+    cache = caches['redis']
     parent_obj = cache.get(cache_key)
     if parent_obj is not None:
         return parent_obj
@@ -542,8 +542,8 @@ def get_immediate_context_children_obs(parent_obj, use_cache=True):
     """Get the immediate children of a parent manifest object"""
     if not use_cache:
         return get_immediate_context_children_objs_db(parent_obj)
-    cache_key = f'context-children-{parent_obj.uuid}'
-    cache = caches['memory']
+    cache_key = f'{str(parent_obj.uuid)}-context-children'
+    cache = caches['redis']
     all_children = cache.get(cache_key)
     if all_children is not None:
         return all_children

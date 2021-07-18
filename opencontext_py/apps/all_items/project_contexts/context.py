@@ -236,6 +236,22 @@ def db_make_project_context_df(project_id):
     return df
 
 
+def make_project_context_cache_key(project_id):
+    """Makes a cache key for a project context"""
+    return f'{str(project_id)}-project-context-df'
+
+
+def get_project_context_df_from_cache(project_id):
+    """Gets a project context df from the cache, if it exists
+
+    :param str project_id: A project's UUID or string UUID primary key
+        identifier
+    """
+    cache = caches['redis']
+    cache_key = make_project_context_cache_key(project_id)
+    return cache.get(cache_key)
+
+
 def get_cache_project_context_df(project_id, use_cache=True, reset_cache=False):
     """Gets and caches a project context dataframe
 
@@ -249,7 +265,7 @@ def get_cache_project_context_df(project_id, use_cache=True, reset_cache=False):
 
     cache = caches['redis']
     df = None
-    cache_key = f'project-context-df-{str(project_id)}'
+    cache_key = make_project_context_cache_key(project_id)
     if not reset_cache:
         df = cache.get(cache_key)
     
@@ -264,18 +280,8 @@ def get_cache_project_context_df(project_id, use_cache=True, reset_cache=False):
     return df
 
 
-def get_project_context_df_from_cache(project_id):
-    """Gets a project context df from the cache, if it exists
 
-    :param str project_id: A project's UUID or string UUID primary key
-        identifier
-    """
-    cache = caches['redis']
-    cache_key = f'project-context-df-{str(project_id)}'
-    return cache.get(cache_key)
-
-
-def get_item_context_df(subject_id_list, project_id):
+def get_item_context_df(subject_id_list, project_id, pref_project_context=True):
     """Gets an item's context dataframe if a project df is not cached
 
     :param list subject_id_list: A list of assertion
@@ -287,6 +293,13 @@ def get_item_context_df(subject_id_list, project_id):
     if df is not None:
         # The requirement is satisfied because we have the
         # project's context df
+        return df
+    
+    if pref_project_context:
+        df = get_cache_project_context_df(project_id)
+    
+    if pref_project_context and df is not None:
+        # Satisfy the requirement with the project context.
         return df
     
     # As a fallback, make a dataframe of linked data

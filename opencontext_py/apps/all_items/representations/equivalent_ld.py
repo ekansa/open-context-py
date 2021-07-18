@@ -3,6 +3,9 @@ import copy
 import hashlib
 import uuid as GenUUID
 
+import numpy as np
+import pandas as pd
+
 from django.core.cache import caches
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -223,12 +226,15 @@ class NotStoredAssertion():
 
 def make_manifest_obj_cache_key(uuid):
     """Make a cache key for fetching a manifest object by cache key"""
-    return f'manifest-by-uuid-{str(uuid)}'
+    return f'{str(uuid)}-manifest-by-uuid'
 
 
 def cache_all_df_context_related_manifest_objects(df_context):
-    cache = caches['memory']
-    all_uuids = df_context['object_id'].unique().tolist()
+    cache = caches['redis']
+    all_uuids = df_context[
+        ~df_context['object_id'].isnull()
+        & (df_context['object_id'] != 'nan')
+    ]['object_id'].unique().tolist()
     uuids = []
     for uuid in all_uuids:
         cache_key = make_manifest_obj_cache_key(uuid)
@@ -236,6 +242,7 @@ def cache_all_df_context_related_manifest_objects(df_context):
             # We've already got this cached.
             continue
         uuids.append(uuid)
+
     mqs = AllManifest.objects.filter(
         uuid__in=uuids
     ).select_related(
@@ -256,7 +263,7 @@ def get_real_man_obj_from_equiv_row(equiv_row, use_cache=True):
     cache_key = None
     if use_cache:
         cache_key = make_manifest_obj_cache_key(uuid)
-        cache = caches['memory']
+        cache = caches['redis']
         man_obj = cache.get(cache_key)
     if man_obj:
         return man_obj

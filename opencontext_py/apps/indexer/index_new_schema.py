@@ -33,6 +33,7 @@ m_qs = AllManifest.objects.filter(
     project_id__in=project_ids,
 )
 uuids = [str(m.uuid) for m in m_qs]
+new_ind.clear_caches()
 new_ind.make_indexed_solr_documents_in_chunks(uuids)
 
 """
@@ -103,11 +104,26 @@ def make_index_solr_documents(uuids, solr=None):
         logger.info(f'Indexed committing {str(uuids)}')
         print(f'Indexed committing {str(uuids)}')
     else:
-        logger.warn(f'Problem committing {str(uuids)}')
-        print(f'Problem committing {str(uuids)}')
+        for solr_doc in solr_docs:
+            solr_status = solr.update(
+                [solr_doc], 
+                'json',
+                commit=False
+            ).status
+            if not solr_status == 200:
+                logger.warn(
+                    f'Problem committing {solr_doc.get("uuid")}'
+                )
+                print(
+                    f'Problem committing {solr_doc.get("uuid")}'
+                )
 
-
-def make_indexed_solr_documents_in_chunks(uuids, solr=None, chunk_size=20):
+def make_indexed_solr_documents_in_chunks(
+    uuids, 
+    solr=None, 
+    chunk_size=20, 
+    start_clear_caches=True
+):
     """Makes and indexes solr documents in chunks"""
     if not solr:
         solr = get_solr_connection()
@@ -115,6 +131,11 @@ def make_indexed_solr_documents_in_chunks(uuids, solr=None, chunk_size=20):
     total_count = len(uuids)
     logger.info(f'Index {total_count} total items.')
     print(f'Index {total_count} total items.')
+    
+    if start_clear_caches:
+        print('Clearing caches for fresh indexing')
+        clear_caches()
+    
     all_start = time.time()
     total_indexed = 0
     count_groups, r =  divmod(total_count, chunk_size)

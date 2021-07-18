@@ -120,7 +120,7 @@ class ResultFacetsStandard():
         # Put the last label in parentheses.
         labels[-1] = '({})'.format(labels[-1])
         facet['label'] = ' '.join(labels)
-        facet['rdfs:isDefinedBy'] = items[0].uri
+        facet['rdfs:isDefinedBy'] = f'https://{items[0].uri}'
         facet['slug'] = items[0].slug
         facet['type'] = facet_type
         if range_data_type:

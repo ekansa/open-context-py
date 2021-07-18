@@ -87,12 +87,48 @@ def test_json(request, uuid):
     )
 
 
+def make_solr_doc_in_html(request, ok_uuid):
+    """Make a Solr Doc JSON in HTML for debugging"""
+    man_obj, rep_dict = item.make_representation_dict(
+        subject_id=ok_uuid,
+        for_solr=True,
+    )
+    rep_dict = prepare_for_item_dict_solr_and_html_template(
+        man_obj, 
+        rep_dict
+    )
+    solrdoc = SolrDocumentNS(
+        uuid=man_obj.uuid,
+        man_obj=man_obj,
+        rep_dict=rep_dict,
+    )
+    solrdoc.make_solr_doc()
+    rp = RootPath()
+    context = {
+        'BASE_URL': rp.get_baseurl(),
+        'PAGE_TITLE': f'Solr Doc: {man_obj.label}',
+        'solr_json': json.dumps(
+            solrdoc.fields,
+            indent=4,
+            ensure_ascii=False
+        ),
+    }
+    template = loader.get_template('bootstrap_vue/item/item_solr.html')
+    response = HttpResponse(template.render(context, request))
+    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+    return response
+
+
 @never_cache
 def test_html(request, uuid):
     """HTML representation for searching Open Context """
     # NOTE: There is NO templating here, this is strictly so we can 
     # use the Django debugger to optimize queries
     _, ok_uuid = update_old_id(uuid)
+    if request.GET.get('solr') == 'solr':
+        # with added stuff for Solr
+        return make_solr_doc_in_html(request, ok_uuid)
+
     man_obj, rep_dict = item.make_representation_dict(
         subject_id=ok_uuid,
         for_solr_or_html=True,
@@ -143,7 +179,6 @@ def test_html(request, uuid):
         # for debugging.
         'show_json': request.GET.get('json', False),
     }
-
     template = loader.get_template('bootstrap_vue/item/item.html')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])

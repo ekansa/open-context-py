@@ -162,7 +162,7 @@ def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
         return db_get_project_metadata_qs(project_id=project.uuid)
 
     cache_key = f'proj-dc-meta-{project.slug}'
-    cache = caches['memory']
+    cache = caches['redis']
 
     proj_meta_qs = cache.get(cache_key)
     if proj_meta_qs is not None:

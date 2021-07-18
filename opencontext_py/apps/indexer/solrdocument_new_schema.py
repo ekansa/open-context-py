@@ -94,7 +94,10 @@ EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 JOIN_SOLR = 'join_uuids'
 FILE_SIZE_SOLR = 'filesize'
 FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+
+# Configs for related (subjects items) solr fields
 RELATED_SOLR_DOC_PREFIX = 'REL_'
+ADD_RELATED_LITERAL_FIELDS = False
 
 # These item types may be in SKOS or OWL hiearchies.
 ITEM_TYPES_FOR_CONCEPT_HIERARCHIES = [
@@ -210,9 +213,12 @@ class SolrDocumentNS:
         self.fields['human_remains'] = False  # Default, item is not about human remains.
         # Default media counts.
         self.fields['image_media_count'] = 0
+        self.fields['three_d_media_count'] = 0
+        self.fields['gis_media_count'] = 0
         self.fields['other_binary_media_count'] = 0
         self.fields['documents_count'] = 0
         self.fields['subjects_children_count'] = 0
+        self.fields['subjects_count'] = 0
         self.fields['persons_count'] = 0
         self.fields['tables_count'] = 0
         # The solr field for joins by uuid.
@@ -707,7 +713,10 @@ class SolrDocumentNS:
                 continue
             # First, check if we already have it from the initial query
             # to the AllAssertions.
-            item_man_obj = self.rel_man_objs.get(item_uuid)
+            item_man_obj = solr_utils.get_manifest_obj_from_man_obj_dict(
+                item_uuid,
+                self.rel_man_objs
+            )
             if not item_man_obj:
                 # This is less idea, because it means hitting the DB
                 item_man_obj = AllManifest.objects.filter(uuid=item_uuid).first()
@@ -771,12 +780,28 @@ class SolrDocumentNS:
             solr_data_type = solr_utils.get_solr_data_type_from_data_type(
                 val_obj.get('predicate__data_type')
             )
+            if solr_data_type == 'id':
+                # This is the most complicated case where the value
+                # objects will be non-literals (entities with outside URIs or URI
+                # identified Open Context entities). So we need to add them, and
+                # any of their hierarchy parents, to the solr document.
+                self._add_solr_id_field_values(
+                    solr_field_name,
+                    [val_obj]
+                )
+                self._add_object_uri(val_obj)
+            
+            if self.do_related and not ADD_RELATED_LITERAL_FIELDS:
+                # This is a related solr doc, and we don't want
+                # to add literal fields.
+                continue
+
             if solr_data_type == 'string':
                 val_str = val_obj.get('obj_string')
                 if not val_str:
                     continue
-                val_str = solr_utils.ensure_text_solr_ok(val_str)
-                self.fields['text'] += str(val_str) + ' \n'
+                val_str = str(solr_utils.ensure_text_solr_ok(val_str))
+                self.fields['text'] += val_str + ' \n'
                 self.fields[solr_field_name].append(val_str)
             elif solr_data_type== 'bool':
                 val = val_obj.get('obj_boolean')
@@ -802,16 +827,6 @@ class SolrDocumentNS:
                     continue
                 self.fields['text'] += str(val) + ' \n'
                 self.fields[solr_field_name].append((val + 'T00:00:00Z'))
-            elif solr_data_type == 'id':
-                # This is the most complicated case where the value
-                # objects will be non-literals (entities with outside URIs or URI
-                # identified Open Context entities). So we need to add them, and
-                # any of their hierarchy parents, to the solr document.
-                self._add_solr_id_field_values(
-                    solr_field_name,
-                    [val_obj]
-                )
-                self._add_object_uri(val_obj)
             else:
                 pass
 
@@ -843,11 +858,19 @@ class SolrDocumentNS:
 
         # First, check if we already have it from the initial query
         # to the AllAssertions.
-        pred_man_obj = self.rel_man_objs.get(pred_uuid)
+        pred_man_obj = solr_utils.get_manifest_obj_from_man_obj_dict(
+            pred_uuid,
+            self.rel_man_objs
+        )
         if not pred_man_obj:
-            # This is less idea, because it means hitting the DB
-            pred_man_obj = AllManifest.objects.filter(uuid=pred_uuid).first()
-        if not pred_man_obj:
+            return None
+        
+        if (self.do_related 
+            and not ADD_RELATED_LITERAL_FIELDS 
+            and pred_man_obj.data_type != 'id'):
+            # We're doing a related solr doc, and this is predicate
+            # is for a literal, and we're configured not to add
+            # literals to the related fields. So skip out.
             return None
 
         # Put the item in a list of hierarchy lists (parents may not
@@ -861,7 +884,10 @@ class SolrDocumentNS:
         if not is_default_attrib_group:
             attribute_group_uuid = assert_dict.get('attribute_group_id')
         if attribute_group_uuid:
-            attrib_group_man_obj = self.rel_man_objs.get(attribute_group_uuid)
+            attrib_group_man_obj = solr_utils.get_manifest_obj_from_man_obj_dict(
+                attribute_group_uuid,
+                self.rel_man_objs
+            )
         if attrib_group_man_obj:
             # Add the attribute group to the top of the hierarchy paths for this
             # predicate.

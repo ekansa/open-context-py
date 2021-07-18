@@ -64,9 +64,15 @@ else:
 if get_secret('DEBUG') == 1:
     DEBUG = True
     # TEMPLATE_DEBUG = True
+    if str(os.getenv('DEBUG', 1)) == '0':
+        # Allow an environment variable to turn off
+        # debugging. Nice for indexing on a dev machine
+        # from the shell.
+        DEBUG = False
 else:
     DEBUG = False
     # TEMPLATE_DEBUG = False
+
 
 TEMPLATES = [
     {
@@ -318,6 +324,7 @@ MANAGERS = (
     (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'))
 )
 
+
 if DEBUG:
     # Short caching for debugging
     FILE_CACHE_TIMEOUT = (60 * 5)
@@ -368,7 +375,7 @@ else:
             'LOCATION': 'redis://127.0.0.1:6379/1',
             'TIMEOUT': (60 * 60),  # 1 hour for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 25000,
+                'MAX_ENTRIES': 100000,
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient'
             }
         },

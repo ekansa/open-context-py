@@ -1,6 +1,6 @@
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 # ---------------------------------------------------------------------
 # This module contains general configuration global constants for use
@@ -12,7 +12,7 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 USE_TEST_SOLR_CONNECTION = True
 
 REQUEST_CONTEXT_HIERARCHY_DELIM = '/'
-REQUEST_PROP_HIERARCHY_DELIM = '---'
+REQUEST_PROP_HIERARCHY_DELIM = SolrDoc.SOLR_VALUE_DELIM
 REQUEST_OR_OPERATOR = '||'
 REQUEST_SORT_DIR_DELIM = '--'
 
@@ -31,18 +31,20 @@ SOLR_DEFAULT_ROW_COUNT = 20
 SOLR_MAX_RESULT_ROW_COUNT = 10000
 
 DEFAULT_FACET_FIELDS = [
-    SolrDocument.ROOT_LINK_DATA_SOLR,
-    SolrDocument.ROOT_PROJECT_SOLR,
+    SolrDoc.ROOT_PROJECT_SOLR,
+    SolrDoc.ROOT_LINK_DATA_SOLR,
     'image_media_count',
+    'three_d_media_count',
+    'gis_media_count',
     'other_binary_media_count',
-    'document_count',
-    'form_use_life_chrono_tile',
-    'discovery_geotile',
+    'documents_count',
+    'all_events___lr_chrono_tile',
+    'all_events___lr_geo_tile',
     # 'disc_geosource',
 ]
 
 PROJECT_FACET_FIELDS = [
-    # SolrDocument.ROOT_LINK_DATA_SOLR
+    # SolrDoc.ROOT_LINK_DATA_SOLR
     'dc_terms_subject___pred_id',
     'dc_terms_coverage___pred_id',
     'dc_terms_temporal___pred_id',
@@ -65,6 +67,9 @@ ITEM_TYPE_FACETFIELDS = {
     'subjects': [
         'oc_gen_subjects___pred_id'
     ],
+    'media': [
+        'oc_gen_media___pred_id'
+    ],
 }
 
 # Set facet limits for different solr fields. -1 indicates
@@ -82,6 +87,8 @@ SOLR_FIELDS_FACET_LIMITS = [
 REL_MEDIA_EXISTS = [
     # Tuple means: (url-parameter, solr filter query)
     ('images', 'image_media_count:[1 TO *]',),
+    ('3d', 'three_d_media_count:[1 TO *]',),
+    ('gis', 'gis_media_count:[1 TO *]',),
     ('other-media', 'other_binary_media_count:[1 TO *]',),
     ('documents', 'document_count:[1 TO *]',),
 ]
@@ -116,18 +123,23 @@ ITEM_CAT_FIELDS = [
     'oc_gen_predicates___pred_id',
 ]
 
-REL_CAT_FACET_FIELDS = ['rel__oc_gen_subjects___pred_id']
+REL_CAT_FACET_FIELDS = [
+    f'{SolrDoc.RELATED_SOLR_DOC_PREFIX}oc_gen_subjects___pred_id'
+]
+
 GENERAL_STATS_FIELDS = [
     'updated',
     'published',
 ]
 
 CHRONO_STATS_FIELDS =  [
-    'form_use_life_chrono_earliest',
-    'form_use_life_chrono_latest'
+    'all_events___chrono_earliest',
+    'all_events___chrono_latest'
 ]
 
-MEDIA_STATS_FIELDS = [SolrDocument.FILE_SIZE_SOLR]
+MEDIA_STATS_FIELDS = [
+    SolrDoc.FILE_SIZE_SOLR
+]
 
 ALL_TYPES_STATS_FIELDS = (
     GENERAL_STATS_FIELDS 
@@ -189,17 +201,17 @@ RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</em>'
 # ---------------------------------------------------------------------
 HIERARCHY_PARAM_TO_SOLR = [
     (
-        'proj', SolrDocument.ROOT_PROJECT_SOLR,
+        'proj', SolrDoc.ROOT_PROJECT_SOLR,
         {
-            'root_field': SolrDocument.ROOT_PROJECT_SOLR,
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PROJECT,
+            'root_field': SolrDoc.ROOT_PROJECT_SOLR,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PROJECT,
         },
     ),
     (
         'prop', None,
         {
-            'root_field': SolrDocument.ROOT_PREDICATE_SOLR,
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'root_field': SolrDoc.ROOT_PREDICATE_SOLR,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
@@ -207,7 +219,7 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'dc_terms_subject___pred_id',
             'obj_all_slug': "dc-terms-subject",
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
             'attribute_field_part': 'dc_terms_subject___',
         },
     ),
@@ -216,7 +228,7 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'dc_terms_spatial___pred_id',
             'obj_all_slug': 'dc-terms-spatial',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
@@ -224,7 +236,7 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'dc_terms_coverage___pred_id',
             'obj_all_slug': 'dc-terms-coverage',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
@@ -232,7 +244,7 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'dc_terms_temporal___pred_id',
             'obj_all_slug': 'dc-terms-temporal',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
@@ -240,14 +252,14 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'dc_terms_isreferencedby___pred_id',
             'obj_all_slug': 'dc-terms-isreferencedby',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
         'dc-creator', None, {
             'root_field': 'dc_terms_creator___pred_id',
             'obj_all_slug': 'dc-terms-creator',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
@@ -255,7 +267,7 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'dc_terms_contributor___pred_id',
             'obj_all_slug': 'dc-terms-contributor',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
     (
@@ -263,7 +275,7 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': 'bibo_status___pred_id',
             'obj_all_slug': 'bibo-status',
-            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
 ]
@@ -272,7 +284,7 @@ HIERARCHY_PARAM_TO_SOLR = [
 # Prefix on identifiers to that it is being referenced as a
 # related entity. The SOLR doc will have an underscore, but the public client
 # request will have "-" character.
-RELATED_ENTITY_ID_PREFIX = SolrDocument.RELATED_SOLR_DOC_PREFIX.replace('_', '-')
+RELATED_ENTITY_ID_PREFIX = SolrDoc.RELATED_SOLR_DOC_PREFIX.replace('_', '-')
 
 
 
@@ -297,6 +309,10 @@ SORT_OPTIONS = [
      'value': 'item',
      'label': 'Item (type, provenance, label)',
      'opt': True},
+    {'type': 'oc-api:sort-item-class',
+     'value': 'item-class',
+     'label': 'General category',
+     'opt': True},
     {'type': 'oc-api:sort-updated',
      'value': 'updated',
      'label': 'Updated',
@@ -313,10 +329,11 @@ SORT_OPTIONS = [
 
 REQUEST_SOLR_SORT_MAPPINGS = {
     'item': 'slug_type_uri_label',
-    # 'item': 'sort_score',
     'updated': 'updated',
     'published': 'published',
-    'interest': 'interest_score'
+    'interest': 'interest_score',
+    'item-type': 'item_type',
+    'item-class': 'item_class',
 }
 
 
@@ -575,13 +592,23 @@ FACETS_RELATED_MEDIA = {
             'param_key': 'images',
         },
         {
+            'label': 'Linked with 3D media',
+            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['three_d_media_count']),
+            'param_key': '3d-media',
+        },
+        {
+            'label': 'Linked with GIS media',
+            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['gis_media_count']),
+            'param_key': '3d-media',
+        },
+        {
             'label': 'Linked with media (non-image)',
             'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['other_binary_media_count']),
             'param_key': 'other-media',
         },
         {
             'label': 'Linked with documents',
-            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['document_count']),
+            'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['documents_count']),
             'param_key': 'documents',
         },
     ],
@@ -589,13 +616,13 @@ FACETS_RELATED_MEDIA = {
 
 
 FACETS_CONTEXT_SUFFIX = (
-    SolrDocument.SOLR_VALUE_DELIM + SolrDocument.FIELD_SUFFIX_CONTEXT
+    SolrDoc.SOLR_VALUE_DELIM + SolrDoc.FIELD_SUFFIX_CONTEXT
 )
 FACETS_PROP_SUFFIX = (
-    SolrDocument.SOLR_VALUE_DELIM + SolrDocument.FIELD_SUFFIX_PREDICATE
+    SolrDoc.SOLR_VALUE_DELIM + SolrDoc.FIELD_SUFFIX_PREDICATE
 )
 FACETS_PROJ_SUFFIX = (
-    SolrDocument.SOLR_VALUE_DELIM + SolrDocument.FIELD_SUFFIX_PROJECT
+    SolrDoc.SOLR_VALUE_DELIM + SolrDoc.FIELD_SUFFIX_PROJECT
 )
 
 # Facet configuration for standard fields, identified as standard by
@@ -629,33 +656,33 @@ FACETS_STANDARD = [
 
 # Facet metadata for standard root fields.
 FACET_STANDARD_ROOT_FIELDS = {
-    SolrDocument.ROOT_CONTEXT_SOLR: {
+    SolrDoc.ROOT_CONTEXT_SOLR: {
         "id": "#facet-context",
         "rdfs:isDefinedBy": "oc-api:facet-context",
         "label": "Context",
         "type": "oc-api:facet-context",
     },
-    SolrDocument.ROOT_PREDICATE_SOLR: {
+    SolrDoc.ROOT_PREDICATE_SOLR: {
         "id": "#facet-prop-var",
         "rdfs:isDefinedBy": "oc-api:facet-prop-var",
         "label": "Descriptions (Project Defined)",
         "type": "oc-api:facet-prop",
     },
-    SolrDocument.ROOT_LINK_DATA_SOLR: {
+    SolrDoc.ROOT_LINK_DATA_SOLR: {
         "id": "#facet-prop-ld",
         "rdfs:isDefinedBy": "oc-api:facet-prop-ld",
         "label": "Descriptions (Common Standards)",
         "type": "oc-api:facet-prop",
     },
-    SolrDocument.ROOT_PROJECT_SOLR: {
+    SolrDoc.ROOT_PROJECT_SOLR: {
         "id": "#facet-project",
         "rdfs:isDefinedBy": "oc-api:facet-project",
         "label": "Project",
         "type": "oc-api:facet-project",
     },
     (
-        SolrDocument.RELATED_SOLR_DOC_PREFIX 
-        + SolrDocument.ROOT_PREDICATE_SOLR
+        SolrDoc.RELATED_SOLR_DOC_PREFIX 
+        + SolrDoc.ROOT_PREDICATE_SOLR
     ): {
         "id": "#facet-rel-prop-var",
         "rdfs:isDefinedBy": "oc-api:facet-rel-prop-var",
@@ -664,8 +691,8 @@ FACET_STANDARD_ROOT_FIELDS = {
         "oc-api:related-property": True,
     },
     (
-        SolrDocument.RELATED_SOLR_DOC_PREFIX 
-        + SolrDocument.ROOT_LINK_DATA_SOLR
+        SolrDoc.RELATED_SOLR_DOC_PREFIX 
+        + SolrDoc.ROOT_LINK_DATA_SOLR
     ): {
         "id": "#facet-rel-prop-ld",
         "rdfs:isDefinedBy": "oc-api:facet-rel-prop-ld",
@@ -731,58 +758,58 @@ FACET_OPT_SUB_HEADING_DEFAULT = ([], 'Other Attributes',)
 
 FACET_OPT_ORDERED_SUB_HEADINGS = [
     (
-        ['http://opencontext.org/vocabularies/dinaa/'], 
+        ['opencontext.org/vocabularies/dinaa/'], 
         'N. American Site (DINAA)',
     ),
     (
-        ['http://purl.obolibrary.org/obo/FOODON_00001303'], 
+        ['purl.obolibrary.org/obo/FOODON_00001303'], 
         'Standard Biological',
     ),
     (
-        ['http://opencontext.org/vocabularies/open-context-zooarch/'],
+        ['opencontext.org/vocabularies/open-context-zooarch/'],
         'Standard Zooarchaeological',
     ),
     (
-        ['http://erlangen-crm.org/'], 
+        ['erlangen-crm.org/'], 
         'Standard Cultural (CIDOC-CRM)',
     ),
     (
         [
-            'http://purl.org/dc/terms/references',
-            'http://purl.org/dc/terms/isReferencedBy',
+            'purl.org/dc/terms/references',
+            'purl.org/dc/terms/isReferencedBy',
         ],
         'Cross-References',
     ),
     (
-        ['http://id.loc.gov/authorities/subjects/'],
+        ['id.loc.gov/authorities/subjects/'],
         'Library of Congress (LoC)',
     ),
     (
-        ['http://vocab.getty.edu/aat/'], 
+        ['vocab.getty.edu/aat/'], 
         'Getty Art and Architecture Thesaurus',
     ),
     (   
-        ['http://collection.britishmuseum.org'],
+        ['collection.britishmuseum.org'],
         'British Museum Terms',
     ),
     (   
-        ['http://geonames.org/'], 
+        ['geonames.org/'], 
         'Geonames (Gazetteer)',
     ),
     (   
-        ['http://pleiades.stoa.org/'], 
+        ['pleiades.stoa.org/'], 
         'Pleiades (Ancient Places Gazetteer)',
     ),
     (
-        ['http://levantineceramics.org/wares/'], 
+        ['levantineceramics.org/wares/'], 
         'Levantine Ceramics Wares',
     ),
     (
-        ['http://wikipedia.org/'],
+        ['wikipedia.org/'],
         'Wikipedia Topics',
     ),
     (   
-        ['http://purl.org/NET/biol/ns#term_hasTaxonomy'],
+        ['purl.org/NET/biol/ns#term_hasTaxonomy'],
         '(Deprecated) Biological',
     ),
     FACET_OPT_SUB_HEADING_DEFAULT,

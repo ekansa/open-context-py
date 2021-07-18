@@ -566,14 +566,11 @@ def parse_solr_encoded_entity_str(
         alt_label = parts[4]
     else:
         alt_label = None
-
-    if (parts[2].startswith('http://') 
-        or parts[2].startswith('https://')):
-        # We already have a full url.
-        uri = parts[2]
+    
+    if parts[2].startswith('opencontext.org'):
+        uri = base_url + parts[2].split('opencontext.org')[-1]
     else:
-        # Use the base url to make a full url.
-        uri = base_url + parts[2]
+        uri = 'https://' + parts[2]
     
     # Return a dictionary of the parsed entity.
     if not solr_slug_format:

@@ -1,9 +1,12 @@
 import copy
 import datetime
 import json
-from opencontext_py.apps.all_items.models import AllManifest
+
 from django.conf import settings
+from django.core.cache import caches
 from django.utils.encoding import force_text
+
+from opencontext_py.apps.all_items.models import AllManifest
 from opencontext_py.libs.isoyears import ISOyears
 
 from opencontext_py.libs.models import (
@@ -51,6 +54,33 @@ def make_dict_of_manifest_objs_from_assertion_objs(assert_objs):
         if not str(assert_obj.object.uuid) in rel_man_objs:
             rel_man_objs[str(assert_obj.object.uuid)] = assert_obj.object
     return rel_man_objs
+
+
+def get_manifest_obj_from_man_obj_dict(uuid, man_obj_dict, use_cache=True):
+    """Get a manifest object from the manifest object dict, or fallback
+     to cache, then DB
+    """
+    man_obj = man_obj_dict.get(uuid)
+    if man_obj:
+        # We have the item in the dict.
+        return man_obj
+    # Fallback 1: Look in the cache.
+    cache_key = None
+    if use_cache:
+        cache_key = f'man-obj-{str(uuid)}'
+        cache = caches['redis']
+        man_obj = cache.get(cache_key)
+        if man_obj:
+            # We found the item in the cache.
+            return man_obj
+    man_obj = AllManifest.objects.filter(uuid=uuid).first()
+    if man_obj and cache_key:
+        # set the cache with this manifest object
+        try:
+            cache.set(cache_key, man_obj)
+        except:
+            pass
+    return man_obj
 
 
 def get_solr_data_type_from_data_type(data_type, prefix=''):

@@ -100,7 +100,7 @@ def get_project_hierarchy(man_obj, use_cache=True):
         return get_project_hierarchy_db(proj_man_obj)
         
     cache_key = f'parent-projects-{str(proj_man_obj.uuid)}'
-    cache = caches['memory']
+    cache = caches['redis']
     path = cache.get(cache_key)
     if path:
         return path

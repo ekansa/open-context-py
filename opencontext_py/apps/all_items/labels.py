@@ -47,8 +47,8 @@ def get_other_label_assertions(man_obj, use_cache=True):
     if not use_cache:
         return get_other_label_assertions_db(man_obj)
     # Use the cache
-    cache_key = f'item-labels-qs-{man_obj.uuid}'
-    cache = caches['memory']
+    cache_key = f'{str(man_obj.uuid)}-item-labels-qs'
+    cache = caches['redis']
     a_qs = cache.get(cache_key)
     if a_qs is not None:
         # We found the result in the cache.

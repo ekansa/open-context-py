@@ -13,12 +13,15 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllSpaceTime,
+)
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+from opencontext_py.apps.indexer import solrdocument_new_schema as solr_doc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import event_utilities
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
@@ -50,8 +53,8 @@ class ResultFacetsGeo():
         if current_filters_url is None:
             current_filters_url = self.base_search_url
         self.current_filters_url = current_filters_url
-        self.max_depth = SolrDocument.MAX_GEOTILE_ZOOM
-        self.min_depth = SolrDocument.MAX_GEOTILE_ZOOM
+        self.max_depth = solr_doc.MAX_GEOTILE_ZOOM
+        self.min_depth = solr_doc.MIN_GEOTILE_ZOOM
         self.default_tile_feature_type = 'Polygon'
         self.valid_tile_feature_types = ['Polygon', 'Point',]
         self.default_aggregation_depth = 10
@@ -178,7 +181,10 @@ class ResultFacetsGeo():
         """Makes geographic tile facets from a solr_json response""" 
         geotile_path_keys = (
             configs.FACETS_SOLR_ROOT_PATH_KEYS 
-            + ['discovery_geotile']
+            + [
+                'all_events___lr_geo_tile',
+                'all_events___geo_tile',
+            ]
         )
         geotile_val_count_list = utilities.get_dict_path_value(
             geotile_path_keys,
@@ -248,7 +254,7 @@ class ResultFacetsGeo():
 
             # Update the request dict for this facet option.
             sl.replace_param_value(
-                'disc-geotile',
+                'all-geotile',
                 match_old_value=None,
                 new_value=tile,
             )  
@@ -285,18 +291,16 @@ class ResultFacetsGeo():
             
             # Add the geometry object to the facet option.
             geometry = LastUpdatedOrderedDict()
-            geometry['id'] = '#geo-disc-tile-geom-{}'.format(tile)
+            geometry['id'] = f'#geo-all-geom-{tile}'
             geometry['type'] = feature_type
             geometry['coordinates'] = geo_coords
             option['geometry'] = geometry
 
             properties = LastUpdatedOrderedDict()
-            properties['id'] = '#geo-disc-tile-{}'.format(tile)
+            properties['id'] = f'#geo-all-{tile}'
             properties['href'] = option['id']
-            properties['label'] = 'Discovery region ({})'.format(
-                (len(options) + 1)
-            )
-            properties['feature-type'] = 'discovery region (facet)'
+            properties['label'] = f'Region ({(len(options) + 1)})'
+            properties['feature-type'] = 'Geospace region (facet)'
             properties['count'] = count
             properties['early bce/ce'] = self.min_date
             properties['late bce/ce'] = self.max_date
@@ -307,100 +311,13 @@ class ResultFacetsGeo():
         return options
 
 
-    def _make_cache_geospace_obj_dict(self, uuids):
-        """Make a dict of geospace objects keyed by uuid"""
-        m_cache = MemoryCache()
-        uuids_for_qs = []
-        uuid_geo_dict = {}
-        for uuid in uuids:
-            cache_key = m_cache.make_cache_key(
-                prefix='geospace-obj',
-                identifier=uuid
-            )
-            geo_obj = m_cache.get_cache_object(
-                cache_key
-            )
-            if geo_obj is None:
-                uuids_for_qs.append(uuid)
-            else:
-                uuid_geo_dict[uuid] = geo_obj
-        
-        if not len(uuids_for_qs):
-            # Found them all from the cache!
-            # Return without touching the database.
-            return uuid_geo_dict
-        
-        # Lookup the remaining geospace objects from a
-        # database query. We order by uuid then reverse
-        # of feature_id so that the lowest feature id is the
-        # thing that actually gets cached.
-        geospace_qs = Geospace.objects.filter(
-            uuid__in=uuids_for_qs,
-        ).exclude(
-            ftype__in=['Point', 'point']
-        ).order_by('uuid', '-feature_id')
-        for geo_obj in geospace_qs:
-            cache_key = m_cache.make_cache_key(
-                prefix='geospace-obj',
-                identifier=str(geo_obj.uuid)
-            )
-            m_cache.save_cache_object(
-                cache_key, geo_obj
-            )
-            uuid_geo_dict[geo_obj.uuid] = geo_obj
-        
-        return uuid_geo_dict
-    
-
-    def _get_cache_contexts_dict(self, uuids):
-        """Make a dictionary that associates uuids to context paths"""
-        m_cache = MemoryCache()
-        uuids_for_qs = []
-        uuid_context_dict = {}
-        for uuid in uuids:
-            cache_key = m_cache.make_cache_key(
-                prefix='context-path',
-                identifier=uuid
-            )
-            context_path = m_cache.get_cache_object(
-                cache_key
-            )
-            if context_path is None:
-                uuids_for_qs.append(uuid)
-            else:
-                uuid_context_dict[uuid] = context_path
-        
-        if not len(uuids_for_qs):
-            # Found them all from the cache!
-            # Return without touching the database.
-            return uuid_context_dict
-        
-        # Lookup the remaining geospace objects from a
-        # database query. We order by uuid then reverse
-        # of feature_id so that the lowest feature id is the
-        # thing that actually gets cached.
-        subject_qs = Subject.objects.filter(
-            uuid__in=uuids_for_qs,
-        )
-        for sub_obj in subject_qs:
-            cache_key = m_cache.make_cache_key(
-                prefix='context-path',
-                identifier=str(sub_obj.uuid)
-            )
-            m_cache.save_cache_object(
-                cache_key, 
-                sub_obj.context
-            )
-            uuid_context_dict[sub_obj.uuid] = sub_obj.context
-        
-        return uuid_context_dict
-
-
     def make_geo_contained_in_facet_options(self, solr_json):
         """Gets geospace item query set from a list of options tuples"""
         geosource_path_keys = (
             configs.FACETS_SOLR_ROOT_PATH_KEYS 
-            + ['disc_geosource']
+            + [
+                'all_events___geo_source',
+            ]
         )
         geosource_val_count_list = utilities.get_dict_path_value(
             geosource_path_keys,
@@ -444,7 +361,7 @@ class ResultFacetsGeo():
         # Make a dictionary of geospace objects keyed by uuid. This
         # will hit the database in one query to get all geospace
         # objects not present in the cache.
-        uuid_geo_dict = self._make_cache_geospace_obj_dict(uuids)
+        uuid_geo_dict = event_utilities.make_cache_spacetime_obj_dict(uuids)
 
         # Make a dict of context paths, keyed by uuid. This will also
         # hit the database in only 1 query, for all context paths not

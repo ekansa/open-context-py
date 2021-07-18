@@ -1,0 +1,25 @@
+{% extends '../page.html' %}
+
+{% block content %}
+
+{% include '../item/parts/vue_shared.html' %}
+{% include '../common_geo.html' %}
+
+<!-- Specialized view of Solr documents for Open Context items -->
+<div id="main">
+
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col">
+                <label for="item_json" class="form-label">Solr JSON</label>
+                <textarea class="form-control form-control-sm" id="item_json" rows="25">{{ solr_json|safe }}
+                </textarea>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

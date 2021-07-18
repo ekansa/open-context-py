@@ -14,14 +14,19 @@ from opencontext_py.libs.validategeojson import ValidateGeoJson
 
 from opencontext_py.apps.entities.uri.models import URImanagement
 
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
-from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllAssertion,
+    AllHistory,
+    AllResource,
+    AllIdentifier,
+    AllSpaceTime,
+)
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import event_utilities
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
@@ -30,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 PRED_ID_FIELD_SUFFIX = (
-    SolrDocument.SOLR_VALUE_DELIM 
-    + SolrDocument.FIELD_SUFFIX_PREDICATE
+    SolrDoc.SOLR_VALUE_DELIM 
+    + SolrDoc.FIELD_SUFFIX_PREDICATE
 )
 
 
@@ -133,11 +138,11 @@ def get_specific_attribute_values(
         values returned to the client.
     """
     outputs = []
-    slug_prefix = parent_dict['slug'] + SolrDocument.SOLR_VALUE_DELIM
+    slug_prefix = parent_dict['slug'] + SolrDoc.SOLR_VALUE_DELIM
     specific_pred_field_part = (
-        SolrDocument.SOLR_VALUE_DELIM
+        SolrDoc.SOLR_VALUE_DELIM
         + specific_predicate_dict['slug']
-        + SolrDocument.SOLR_VALUE_DELIM
+        + SolrDoc.SOLR_VALUE_DELIM
     )
 
     # A solr document (solr_doc) is a dict keyed by solr fields
@@ -272,7 +277,7 @@ def get_attribute_tuples_string_pred_uuids(attribute_values_tuples):
 
 def get_predicate_attributes(
     solr_doc, 
-    root_key=SolrDocument.ROOT_PREDICATE_SOLR
+    root_key=SolrDoc.ROOT_PREDICATE_SOLR
 ):
     """Gets nonstandard predicate attributes from a solr doc
     
@@ -308,7 +313,7 @@ def get_linked_data_attributes(solr_doc):
     """
     return get_predicate_attributes(
         solr_doc, 
-        root_key=SolrDocument.ROOT_LINK_DATA_SOLR
+        root_key=SolrDoc.ROOT_LINK_DATA_SOLR
     )
 
 
@@ -322,7 +327,7 @@ def get_geo_discovery_source_uuid(solr_doc):
     # UUID for non-point geospatial feature data that associated
     # with this item or other items that may contain it.
 
-    disc_source_str = solr_doc.get('disc_geosource')
+    disc_source_str = solr_doc.get('all_events___geo_source')
     if not disc_source_str:
         return None
     
@@ -465,7 +470,7 @@ class ResultRecord():
         """Sets the records spatial contexts list"""
         self.contexts = get_simple_hierarchy_items(
             solr_doc,
-            SolrDocument.ALL_CONTEXT_SOLR
+            SolrDoc.ALL_CONTEXT_SOLR
         )
         if not self.contexts:
             return None
@@ -493,7 +498,7 @@ class ResultRecord():
         """Sets the records projects list"""
         self.projects = get_simple_hierarchy_items(
             solr_doc,
-            SolrDocument.ALL_PROJECT_SOLR
+            SolrDoc.ALL_PROJECT_SOLR
         )
         if not self.projects:
             return None
@@ -517,7 +522,7 @@ class ResultRecord():
 
     def set_geo_point_attributes(self, solr_doc):
         """Sets geospatial point attribute values"""
-        disc_geo = solr_doc.get('discovery_geolocation')
+        disc_geo = solr_doc.get('all_events___geo_location')
         if not disc_geo or ',' not in disc_geo:
             # No point found or it is not valid
             self.geo_feature_type = None
@@ -538,8 +543,8 @@ class ResultRecord():
     
     def set_chrono_ranges(self, solr_doc):
         """Sets chronology date ranges for the record"""
-        dates = solr_doc.get('form_use_life_chrono_earliest', [])
-        dates += solr_doc.get('form_use_life_chrono_latest', [])
+        dates = solr_doc.get('all_events___chrono_earliest', [])
+        dates += solr_doc.get('all_events___chrono_latest', [])
         if not len(dates):
             return None
         self.early_date = min(dates)
@@ -627,14 +632,11 @@ class ResultRecord():
         if not geo_obj:
             return None
 
-        self.geo_feature_type = geo_obj.ftype
-        coord_obj = json.loads(geo_obj.coordinates)
-        v_geojson = ValidateGeoJson()
-        coord_obj = v_geojson.fix_geometry_rings_dir(
-            geo_obj.ftype,
-            coord_obj
-        )
-        self.geometry_coords = coord_obj
+        if not geo_obj.geometry:
+            return None
+        
+        self.geo_feature_type = geo_obj.geometry_type
+        self.geometry_coords = geo_obj.geometry.get('coordinates')
     
 
     def _make_client_attribute_vals(
@@ -791,20 +793,14 @@ class ResultRecord():
     def make_geojson(self, record_index, total_found):
         """Outputs the record object as GeoJSON"""
         geo_json = LastUpdatedOrderedDict()
-        geo_json['id'] = '#record-{}-of-{}'.format(
-            record_index, 
-            total_found
-        )
+        geo_json['id'] = f'#record-{record_index}-of-{total_found}'
         geo_json['label'] = self.label
         geo_json['rdfs:isDefinedBy'] = self.uri
         geo_json['type'] = 'Feature'
         geo_json['category'] = 'oc-api:geo-record'
 
         geometry = LastUpdatedOrderedDict()
-        geometry['id'] = '#record-geom-{}-of-{}'.format(
-            record_index, 
-            total_found
-        )
+        geometry['id'] = f'#record-geom-{record_index}-of-{total_found}'
         geometry['type'] = self.geo_feature_type
         geometry['coordinates'] = self.geometry_coords
         geo_json['geometry'] = geometry
@@ -813,11 +809,8 @@ class ResultRecord():
             and self.late_date is not None):
             # If we have dates, add them.
             when = LastUpdatedOrderedDict()
-            when['id'] = '#record-event-{}-of-{}'.format(
-                record_index, 
-                total_found
-            )
-            when['type'] = 'oc-gen:formation-use-life'
+            when['id'] = f'#record-event-{record_index}-of-{total_found}'
+            when['type'] = 'oc-gen:general-time-space'
             # convert numeric to GeoJSON-LD ISO 8601
             when['start'] = ISOyears().make_iso_from_float(
                 self.early_date
@@ -828,10 +821,7 @@ class ResultRecord():
             geo_json['when'] = when
 
         # Now add the properties dict to the GeoJSON
-        props_id_value = '#rec-{}-of-{}'.format(
-            record_index, 
-            total_found
-        )
+        props_id_value = f'#rec-{record_index}-of-{total_found}'
         geo_json['properties'] = self.make_client_properties_dict(
             id_value=props_id_value,
             feature_type='item record'
@@ -972,59 +962,30 @@ class ResultRecords():
         # This queryset will be in a SubQuery to effectively make a 
         # join between Assertions and OC strings via the 
         # assertion.object_uuid and ocstring.uuid keys.
-        str_qs = OCstring.objects.filter(
-            uuid=OuterRef('object_uuid')
-        ).values('content')
-
-        ass_qs = Assertion.objects.filter(
-            uuid__in=uuids,
-            predicate_uuid__in=string_pred_uuids,
+        ass_qs = AllAssertion.objects.filter(
+            subject_id__in=uuids,
+            # predicate_id__in=string_pred_uuids,
+            predicate__data_type='xsd:string',
+            visibility=1,
         ).exclude(
             visibility__lt=1
         ).order_by(
-            'uuid', 
-            'predicate_uuid', 
+            'subject_id', 
+            'predicate_id', 
             'sort'
-        ).annotate(
-            str_content=Subquery(
-                str_qs
-            )
         )
         output = {}
         for a in ass_qs:
-            if not a.uuid in output:
-                output[a.uuid] = {}
-            if not a.predicate_uuid in output[a.uuid]:
-                output[a.uuid][a.predicate_uuid] = []
-            output[a.uuid][a.predicate_uuid].append(
-                a.str_content
+            subject_id = str(a.subject.uuid)
+            predicate_id = str(a.predicate.uuid)
+            if not subject_id in output:
+                output[subject_id] = {}
+            if not predicate_id in output[subject_id]:
+                output[subject_id][predicate_id] = []
+            output[subject_id][predicate_id].append(
+                a.obj_string
             )
         return output
-    
-
-    def _get_geo_features_objs(self, uuids):
-        """Get non-point geospatial features from the database
-
-        :param list uuids: List of UUIDs for the solr documents in the
-            results that may have geospatial features.
-        """
-
-        # NOTE: We query the list of multiple uuids in 1 query to
-        # limit the number of queries we make on the database.
-
-        uuid_geo_dict = {}
-        if not len(uuids):
-            return uuid_geo_dict
-
-        geospace_qs = Geospace.objects.filter(
-            uuid__in=uuids,
-        ).exclude(
-            ftype__in=['Point', 'point']
-        ).order_by('uuid', '-feature_id')
-        for geo_obj in geospace_qs:
-            uuid_geo_dict[geo_obj.uuid] = geo_obj
-
-        return uuid_geo_dict
 
 
     def make_records_from_solr(self, solr_json):
@@ -1121,7 +1082,7 @@ class ResultRecords():
 
         # Make a query to get any non-point geospatial feature data
         # associated with these result records.
-        uuid_geo_dict = self._get_geo_features_objs(geo_uuids)
+        uuid_geo_dict = event_utilities.make_cache_spacetime_obj_dict(geo_uuids)
 
         for rr in records:
             rr.add_string_content(uuid_pred_str_dict)
