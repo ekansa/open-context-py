@@ -51,7 +51,7 @@
             </h5>
         </b-button>
     </div>
-    <b-collapse :id="'panel-' + [[dom_key]]" class="card-body" :visible="facet_start_open">
+    <b-collapse :id="'panel-' + [[dom_key]]" class="panel" :visible="facet_start_open">
         <ul class="list-group f-opt-list" :id="'s-ops-'+ [[dom_key]]">
         <facets-xfacet-xdtype-xgroup-opts
             v-for="(xfacet_xdtype_xgroup_opts, index) in xfacet_xdtype_groups_opts.groups_opts"

@@ -10,6 +10,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
+from opencontext_py.apps.indexer import solr_utils
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 
@@ -219,7 +220,7 @@ def rename_solr_field_for_data_type(data_type, solr_field):
     first_part = SolrDoc.SOLR_VALUE_DELIM.join(parts[0:-1])
     if '_' in general_part:
         general_part = general_part.split('_')[0]
-    new_ending = get_solr_predicate_type_string(
+    new_ending = solr_utils.get_solr_data_type_from_data_type(
         data_type, 
         prefix=(general_part + '_')
     )
@@ -245,7 +246,7 @@ def get_data_type_for_solr_field(solr_field):
 
     # Return the mapping between the solr_data_type part
     # and the predicate data types.
-    return SOLR_DATA_TYPE_TO_PREDICATE.get(
+    return solr_utils.SOLR_DATA_TYPE_TO_DATA_TYPE.get(
         solr_data_type
     )
 

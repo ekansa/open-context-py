@@ -423,7 +423,7 @@ def get_spatial_context_query_dict(spatial_context=None):
 # GENERAL HIERARCHY FUNCTIONS
 # ---------------------------------------------------------------------
 
-def get_range_stats_fields(attribute_item, field_fq):
+def get_range_stats_fields(attribute_item_obj, field_fq):
     """Prepares facet request for value range (numeric, date) fields"""
     # Strip the '_id' end of the field_fq (for the filter query).
     # The field_fq needs to be updated to have the suffix of the 
@@ -431,7 +431,7 @@ def get_range_stats_fields(attribute_item, field_fq):
 
     # NOTE: 'xsd:boolean' is excluded from range facets
     
-    if not attribute_item.data_type in [
+    if not attribute_item_obj.data_type in [
         'xsd:integer', 
         'xsd:double',  
         'xsd:date'
@@ -439,7 +439,7 @@ def get_range_stats_fields(attribute_item, field_fq):
         # Not an attribute that has value ranges to facet.
         return None
     field_fq = utilities.rename_solr_field_for_data_type(
-        attribute_item.data_type, 
+        attribute_item_obj.data_type, 
         field_fq
     )
     query_dict = {'prequery-stats': []}
@@ -449,18 +449,18 @@ def get_range_stats_fields(attribute_item, field_fq):
     return query_dict      
 
 
-def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
+def compose_filter_query_on_literal(raw_literal, attribute_item_obj, field_fq):
     """Composes a solr filter query on literal values."""
     
     # The field_fq needs to be updated to have the suffix of the 
     # right type of literal that we're going to query.  
     field_fq = utilities.rename_solr_field_for_data_type(
-        attribute_item.data_type, 
+        attribute_item_obj.data_type, 
         field_fq
     )
 
     query_dict = {'fq': []}
-    if attribute_item.data_type == 'xsd:string':
+    if attribute_item_obj.data_type == 'xsd:string':
         # Case for querying string literals. This is the most 
         # complicated type of literal to query.
         query_dict['hl-queries'] = []
@@ -475,11 +475,11 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
             )
             query_dict['hl-queries'].append(
                 '{field_label}: {field_val}'.format(
-                    field_label=attribute_item.label,
+                    field_label=attribute_item_obj.label,
                     field_val=qterm,
                 )
             )
-    elif attribute_item.data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
+    elif attribute_item_obj.data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
         # Case for querying numeric or boolean literals. This is a 
         # simple type of literal to query. We pass the literal on without
         # modification as the filter field query value.
@@ -488,7 +488,7 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
                 field_val=raw_literal
             )
         )
-    elif attribute_item.data_type == 'xsd:date':
+    elif attribute_item_obj.data_type == 'xsd:date':
         # Case for querying date literals. This is a simple
         # type of literal to query. We pass the literal on without
         # modification as the filter field query value.
@@ -578,21 +578,20 @@ def get_general_hierarchic_path_query_dict(
     # formulating solr queries on general/universal metadata
     # attributes, not the more specific, rarely used attributes that
     # are stored in the database.
-    attribute_item = None
+    attribute_item_obj = None
 
     # Default to no solr related prefix
     use_solr_rel_prefix = ''
     
     last_path_index = len(path_list) -1 
     for path_index, item_id in enumerate(path_list):
-        if (attribute_item is not None 
-            and getattr(attribute_item, 'data_type', None) 
-            in configs.LITERAL_DATA_TYPES):
+        if (attribute_item_obj is not None 
+            and attribute_item_obj.data_type in configs.LITERAL_DATA_TYPES):
             # Process literals in requests, because some requests will filter according to
             # numeric, date, or string criteria. 
             literal_query_dict = compose_filter_query_on_literal(
                 raw_literal=item_id,
-                attribute_item=attribute_item,
+                attribute_item_obj=attribute_item_obj,
                 field_fq=field_fq,
             )
 
@@ -742,7 +741,7 @@ def get_general_hierarchic_path_query_dict(
                 )
 
             if attribute_item_obj.data_type in configs.LITERAL_DATA_TYPES:
-                # This attribute_item has a data type for literal
+                # This attribute_item_obj has a data type for literal
                 # values. 
 
                 children = db_entities.get_man_obj_children_list(attribute_item_obj)
