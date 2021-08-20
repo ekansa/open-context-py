@@ -2,12 +2,12 @@ import copy
 
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import (
     get_path_value, 
     SearchLinks,
@@ -61,13 +61,8 @@ class ResultFacetsStandard():
             )
 
         solr_slug_parts = solr_facet_field_key.split(
-            SolrDocument.SOLR_VALUE_DELIM
+            SolrDoc.SOLR_VALUE_DELIM
         )
-
-        # Making this dict will require some database (usually from
-        # the cache) because it is not a standard root solr field,
-        # rather it is a solr field deeper in a hierarchy.
-        m_cache = MemoryCache()
 
         # The solr field parts are in reverse hierarchy order
         solr_slug_parts.reverse()
@@ -81,13 +76,13 @@ class ResultFacetsStandard():
             if slug.startswith(configs.RELATED_ENTITY_ID_PREFIX):
                 is_related = True
                 slug = slug[len(configs.RELATED_ENTITY_ID_PREFIX):]
-            item = m_cache.get_entity(slug)
-            if not item:
+            item_obj = db_entities.get_cache_man_obj_by_any_id(slug)
+            if not item_obj:
                 continue
 
             # Add an "is_related" attribute
-            item.is_related = is_related
-            items.append(item)
+            item_obj.is_related = is_related
+            items.append(item_obj)
         
         if not len(items):
             return None
@@ -217,6 +212,8 @@ class ResultFacetsStandard():
             option['rdfs:isDefinedBy'] = parsed_val['uri']
             option['slug'] = parsed_val['slug']
             option['label'] = parsed_val['label']
+            if parsed_val.get('alt_label'):
+                option['skos:altLabel'] = parsed_val.get('alt_label')
             option['count'] = count
             options.append(option)
         return options

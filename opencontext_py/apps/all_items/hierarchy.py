@@ -9,7 +9,9 @@ from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
 )
+from opencontext_py.apps.all_items import labels
 from opencontext_py.apps.all_items import models_utils
+
 
 """ Recursive functions for hierarchies
 import importlib
@@ -26,6 +28,20 @@ paths = hierarchy.get_concept_parent_paths(child_obj=man_obj)
 paths = hierarchy.get_concept_hierarchy_paths_containing_item(child_obj=man_obj)
 
 """
+
+
+# These item types may be in SKOS or OWL hiearchies.
+ITEM_TYPES_FOR_CONCEPT_HIERARCHIES = [
+    'predicates',
+    'types',
+    'class',
+    'property',
+]
+# These item types should have their parent vocabulary as their parent.
+ITEM_TYPES_FOR_VOCAB_PARENTS = [
+    'units',
+    'uri',
+]
 
 
 
@@ -110,4 +126,53 @@ def get_project_hierarchy(man_obj, use_cache=True):
     except:
         pass
     return path
-    
+
+
+def get_hierarchy_paths_w_alt_labels_by_item_type(item_man_obj, add_alt_label=True, use_cache=True):
+    """Get hierarchy paths list of lists for a manifest object
+
+    :param AllManifest item_man_obj: The item that we want to put
+        into a list of hierarchy lists.
+
+    return list of hierarchy lists.
+    """
+    if item_man_obj.item_type in (ITEM_TYPES_FOR_CONCEPT_HIERARCHIES + ITEM_TYPES_FOR_VOCAB_PARENTS):
+        # Use database lookups to get concept hierarchies if
+        # the item type is relevant to this kind of lookup.
+        raw_hierarchy_paths = get_concept_hierarchy_paths_containing_item(
+            item_man_obj,
+            use_cache=use_cache,
+        )
+    elif item_man_obj.item_type == 'projects':
+        raw_hierarchy_paths = [
+            get_project_hierarchy(
+                item_man_obj,
+                use_cache=use_cache,
+            )
+        ]
+    else:
+        raw_hierarchy_paths = [[item_man_obj]]
+
+    if (item_man_obj.item_type in ITEM_TYPES_FOR_VOCAB_PARENTS 
+        and str(item_man_obj.context.uuid) != configs.OPEN_CONTEXT_PROJ_UUID):
+        raw_raw_hierarchy_paths = copy.deepcopy(raw_hierarchy_paths)
+        # Make sure the context of the URI entity item is at the root of all of the
+        # hierarchy paths for this item.
+        raw_hierarchy_paths = [([item_man_obj.context] + p) for p in raw_raw_hierarchy_paths]
+
+    if not add_alt_label:
+        return raw_hierarchy_path
+    # Now get the alternative labels if they exist. This step also
+    # converts manifest objects into solr doc creation friendly
+    # dictionary objects.
+    hierarchy_paths = []
+    for raw_hierarchy_path in raw_hierarchy_paths:
+        hierarchy_path = []
+        for item_obj in raw_hierarchy_path:
+            other_labels = labels.get_other_labels(item_obj, use_cache=use_cache)
+            if other_labels:
+                item_obj.alt_label = other_labels[0]
+                item_obj.other_labels = other_labels
+            hierarchy_path.append(item_obj)
+        hierarchy_paths.append(hierarchy_path)
+    return hierarchy_paths

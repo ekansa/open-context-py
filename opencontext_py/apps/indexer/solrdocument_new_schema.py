@@ -99,18 +99,6 @@ FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 RELATED_SOLR_DOC_PREFIX = 'REL_'
 ADD_RELATED_LITERAL_FIELDS = False
 
-# These item types may be in SKOS or OWL hiearchies.
-ITEM_TYPES_FOR_CONCEPT_HIERARCHIES = [
-    'predicates',
-    'types',
-    'class',
-    'property',
-]
-# These item types should have their parent vocabulary as their parent.
-ITEM_TYPES_FOR_VOCAB_PARENTS = [
-    'units',
-    'uri',
-]
 
 # Minimum allowed geotile zoom
 MIN_GEOTILE_ZOOM = 6
@@ -537,22 +525,7 @@ class SolrDocumentNS:
 
         return list of hierarchy lists.
         """
-        if item_man_obj.item_type in (ITEM_TYPES_FOR_CONCEPT_HIERARCHIES + ITEM_TYPES_FOR_VOCAB_PARENTS):
-            # Use database lookups to get concept hierarchies if
-            # the item type is relevant to this kind of lookup.
-            raw_hierarchy_paths = hierarchy.get_concept_hierarchy_paths_containing_item(
-                item_man_obj
-            )
-        else:
-            raw_hierarchy_paths = [[item_man_obj]]
-    
-        if (item_man_obj.item_type in ITEM_TYPES_FOR_VOCAB_PARENTS 
-            and str(item_man_obj.context.uuid) != configs.OPEN_CONTEXT_PROJ_UUID):
-            raw_raw_hierarchy_paths = copy.deepcopy(raw_hierarchy_paths)
-            # Make sure the context of the URI entity item is at the root of all of the
-            # hierarchy paths for this item.
-            raw_hierarchy_paths = [([item_man_obj.context] + p) for p in raw_raw_hierarchy_paths]
-
+        raw_hierarchy_paths = hierarchy.get_hierarchy_paths_w_alt_labels_by_item_type(item_man_obj)
         # Now get the alternative labels if they exist. This step also
         # converts manifest objects into solr doc creation friendly
         # dictionary objects.
@@ -560,10 +533,9 @@ class SolrDocumentNS:
         for raw_hierarchy_path in raw_hierarchy_paths:
             hierarchy_path = []
             for item_obj in raw_hierarchy_path:
-                other_labels = labels.get_other_labels(item_obj)
                 item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
-                if other_labels:
-                    item['alt_label'] = other_labels[0]
+                if getattr(item_obj, 'alt_label', None):
+                    item['alt_label'] = item_obj.alt_label
                 hierarchy_path.append(item)
             hierarchy_paths.append(hierarchy_path)
         return hierarchy_paths
@@ -1148,9 +1120,14 @@ class SolrDocumentNS:
         # NOTE: ___geo_location is a SINGLE value field. Populate it only once for
         # using the first (most important) feature of this event class.
         coords_str = f'{latitude},{longitude}'
-        solr_geo_location_field = event_class_slug + SOLR_VALUE_DELIM + 'geo_location'
-        if not self.fields.get(solr_geo_location_field): 
-            self.fields[solr_geo_location_field] = coords_str
+        # We'll do the geo_location (a normal location field) and geo_location_rpt, 
+        # a recursive tree model lots like the geotiles we have implemented, but probably
+        # faster and better b/c it is Solr.
+        for geo_suffix in ['geo_location',  'geo_location_rpt']:
+            solr_geo_location_field = event_class_slug + SOLR_VALUE_DELIM + geo_suffix
+            if not self.fields.get(solr_geo_location_field): 
+                self.fields[solr_geo_location_field] = coords_str
+
         
         if  location_precision_factor == 0:
             # Default with no noted reduction in precision is to 

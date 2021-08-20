@@ -10,7 +10,6 @@ from opencontext_py.libs.validategeojson import ValidateGeoJson
 
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 
 from opencontext_py.apps.all_items.models import (
@@ -18,7 +17,7 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 
-from opencontext_py.apps.indexer import solrdocument_new_schema as solr_doc
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import event_utilities
@@ -53,8 +52,8 @@ class ResultFacetsGeo():
         if current_filters_url is None:
             current_filters_url = self.base_search_url
         self.current_filters_url = current_filters_url
-        self.max_depth = solr_doc.MAX_GEOTILE_ZOOM
-        self.min_depth = solr_doc.MIN_GEOTILE_ZOOM
+        self.max_depth = SolrDoc.MAX_GEOTILE_ZOOM
+        self.min_depth = SolrDoc.MIN_GEOTILE_ZOOM
         self.default_tile_feature_type = 'Polygon'
         self.valid_tile_feature_types = ['Polygon', 'Point',]
         self.default_aggregation_depth = 10
@@ -71,7 +70,7 @@ class ResultFacetsGeo():
             if tile.startswith(NULL_ISLAND_TILE_ROOT):
                 # Skip, because the tile is almost certainly reflecting
                 # bad data.
-                logger.warn('Found {} bad geotile records'.format(count))
+                logger.warn(f'Found {count} bad geotile records')
                 # So skip.
                 continue
             # Parse the tile to get the lon, lat list.
@@ -80,10 +79,7 @@ class ResultFacetsGeo():
             if not isinstance(geo_coords, list):
                 # Not a valid data for some awful reason.
                 logger.warn(
-                    'Found bad {} geotile with {} records'.format(
-                        tile, 
-                        count,
-                    )
+                    f'Found bad {tile} geotile with {count} records'
                 )
                 continue
             valid_tile_tuples.append(
@@ -164,8 +160,8 @@ class ResultFacetsGeo():
             return option
 
         when = LastUpdatedOrderedDict()
-        when['id'] = '#event-{}'.format(id_suffix)
-        when['type'] = 'oc-gen:formation-use-life'
+        when['id'] = f'#event-{id_suffix}'
+        when['type'] = 'oc-gen:general-time-space'
         # convert numeric to GeoJSON-LD ISO 8601
         when['start'] = ISOyears().make_iso_from_float(
             self.min_date
@@ -178,19 +174,35 @@ class ResultFacetsGeo():
 
 
     def make_geotile_facet_options(self, solr_json):
-        """Makes geographic tile facets from a solr_json response""" 
-        geotile_path_keys = (
-            configs.FACETS_SOLR_ROOT_PATH_KEYS 
-            + [
-                'all_events___lr_geo_tile',
-                'all_events___geo_tile',
-            ]
-        )
-        geotile_val_count_list = utilities.get_dict_path_value(
-            geotile_path_keys,
-            solr_json,
-            default=[]
-        )
+        """Makes geographic tile facets from a solr_json response"""
+
+        geopaths = [
+            (
+                configs.FACETS_SOLR_ROOT_PATH_KEYS 
+                + [
+                    f'{configs.ROOT_EVENT_CLASS}___geo_tile'
+                ]
+            ),
+            (
+                configs.FACETS_SOLR_ROOT_PATH_KEYS 
+                + [
+                    f'{configs.ROOT_EVENT_CLASS}___lr_geo_tile',
+                ]
+            ),
+        ]
+
+        # Iterate through the high res, then the low res version
+        # of the geopaths.
+        for geotile_path_keys in geopaths:
+            geotile_val_count_list = utilities.get_dict_path_value(
+                geotile_path_keys,
+                solr_json,
+                default=[]
+            )
+            if len(geotile_val_count_list):
+                # We found what we're looking for!
+                break
+        
         if not len(geotile_val_count_list):
             return None
         
@@ -254,7 +266,7 @@ class ResultFacetsGeo():
 
             # Update the request dict for this facet option.
             sl.replace_param_value(
-                'all-geotile',
+                'allevent-geotile',
                 match_old_value=None,
                 new_value=tile,
             )  
@@ -316,7 +328,7 @@ class ResultFacetsGeo():
         geosource_path_keys = (
             configs.FACETS_SOLR_ROOT_PATH_KEYS 
             + [
-                'all_events___geo_source',
+                f'{configs.ROOT_EVENT_CLASS}___geo_source',
             ]
         )
         geosource_val_count_list = utilities.get_dict_path_value(
@@ -344,12 +356,12 @@ class ResultFacetsGeo():
             )
             if not parsed_entity:
                 logger.warn(
-                    'Cannot parse entity from {}'.format(solr_entity_str)
+                    f'Cannot parse entity from {solr_entity_str}'
                 )
                 continue
             if not '/' in parsed_entity['uri']:
                 logger.warn(
-                    'Invalid uri from {}'.format(solr_entity_str)
+                    f'Invalid uri from {solr_entity_str}'
                 )
                 continue
             uri_parts = parsed_entity['uri'].split('/')
@@ -377,7 +389,7 @@ class ResultFacetsGeo():
             parsed_entity = parsed_solr_entities[solr_entity_str]
             uuid = parsed_entity['uuid']
             geo_obj = uuid_geo_dict.get(uuid)
-            if  geo_obj is None:
+            if  geo_obj is None or not geo_obj.geometry:
                 logger.warn('No geospace object for {}'.format(uuid))
                 continue
 
@@ -427,21 +439,13 @@ class ResultFacetsGeo():
             # Add the geometry from the geo_obj coordinates. First
             # check to make sure they are OK with the the GeoJSON
             # right-hand rule.
-            geometry = LastUpdatedOrderedDict()
-            geometry['id'] = '#geo-in-geom-{}'.format(uuid)
-            geometry['type'] =  geo_obj.ftype
-            coord_obj = json.loads(geo_obj.coordinates)
-            v_geojson = ValidateGeoJson()
-            coord_obj = v_geojson.fix_geometry_rings_dir(
-                geo_obj.ftype,
-                coord_obj
-            )
-            geometry['coordinates'] = coord_obj
+            geometry = copy.deepcopy(geo_obj.geometry)
+            geometry['id'] = f'#geo-in-geom-{uuid}'
             option['geometry'] = geometry
 
 
             properties = LastUpdatedOrderedDict()
-            properties['id'] = '#geo-in-props-{}'.format(uuid)
+            properties['id'] = f'#geo-in-props-{uuid}'
             properties['href'] = option['id']
             properties['item-href'] = parsed_entity['uri']
             properties['label'] = context_path

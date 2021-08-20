@@ -346,7 +346,13 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs, for_solr=False):
         # We're indexing solr documents and need the related
         # manifest objects.
         cache_all_df_context_related_manifest_objects(df_context)
-
+    
+    # Sort the context dataframes.
+    df_context.sort_values(
+        by=['subject__data_type', 'object__label'], 
+        inplace=True
+    )
+    
     # Make an index that of assertions that where the project-specific
     # predicates have some sort of equivalence relationships asserted in the
     # df_context.

@@ -286,8 +286,8 @@ def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
     )
 
 
-def get_item_children(identifier):
-    """Gets a dict for an object and a list of its children"""
+def get_man_obj_by_any_id(identifier):
+    """Gets a manifest object by an type of unique identifier"""
     _, new_uuid = update_old_id(identifier)
     
     man_obj = AllManifest.objects.filter(
@@ -295,13 +295,25 @@ def get_item_children(identifier):
         |Q(slug=identifier)
         |Q(uri=AllManifest().clean_uri(identifier))
         |Q(item_key=identifier)
+    ).select_related(
+        'context'
+    ).select_related(
+        'project'
     ).first()
+    return man_obj
+
+
+def get_item_children(identifier, man_obj=None, output_child_objs=False):
+    """Gets a dict for an object and a list of its children"""
+    
+    if identifier and not man_obj:
+        man_obj = get_man_obj_by_any_id(identifier)
     if not man_obj:
         return None
 
     if man_obj.item_type == 'subjects':
         # Gets spatial context children
-        children_objs =  models_utils.get_immediate_context_children_objs_db(
+        children_objs = models_utils.get_immediate_context_children_objs_db(
             man_obj
         )
     elif man_obj.item_type == 'projects':
@@ -326,6 +338,12 @@ def get_item_children(identifier):
             item_type='types',
             context=man_obj,
         ).order_by('label')
+    
+
+    if output_child_objs:
+        # Return the child manifest objects, not JSON safe
+        # dict representations
+        return children_objs
 
     output = manifest_obj_to_json_safe_dict(man_obj)
     output['children'] = []
@@ -338,14 +356,7 @@ def get_item_children(identifier):
 
 def get_item_assertion_examples(identifier):
     """Gets random example list of item as predicate or object of assertions"""
-    _, new_uuid = update_old_id(identifier)
-    
-    man_obj = AllManifest.objects.filter(
-        Q(uuid=new_uuid)
-        |Q(slug=identifier)
-        |Q(uri=AllManifest().clean_uri(identifier))
-        |Q(item_key=identifier)
-    ).first()
+    man_obj = get_man_obj_by_any_id(identifier)
     if not man_obj:
         return None
 

@@ -209,6 +209,7 @@
 
     <!-- Other types of geospatial point. can have multiple types of points, but only one point per type. -->
     <dynamicField name="*_geo_location"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
+    <dynamicField name="*_geo_location_rpt"  type="location_rpt" indexed="true" stored="true" multiValued="false"/>
     <dynamicField name="*_coordinate"  type="pdouble" indexed="true"  stored="false"/>
 
 

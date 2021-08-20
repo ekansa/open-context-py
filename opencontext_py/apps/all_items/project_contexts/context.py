@@ -210,7 +210,7 @@ def db_make_project_context_df(project_id):
     obj_df = pd.DataFrame.from_records(obj_qs)
     obj_df = rename_pred_obj_df_cols(obj_df, 'object')
 
-    df = pd.concat([obj_df, obj_df])
+    df = pd.concat([pred_df, obj_df])
     if df.empty:
         return df
 

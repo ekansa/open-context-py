@@ -7,7 +7,7 @@ from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
@@ -67,7 +67,7 @@ class SearchSolr():
         """Adds to initial facet field list based on request_dict"""
         if 'proj' in request_dict:
             self.init_facet_fields.append(
-                SolrDocument.ROOT_PREDICATE_SOLR
+                SolrDoc.ROOT_PREDICATE_SOLR
             )
 
     def _associate_facet_field_with_client_request(
@@ -116,7 +116,39 @@ class SearchSolr():
         query['debugQuery'] = self.solr_debug_query
         query['fq'] = []
         # Starts with an initial facet field list
-        query['facet.field'] = self.init_facet_fields 
+        query['facet.field'] = self.init_facet_fields
+
+        # Add the geo-tile facet field.
+        geodeep = start_pos = utilities.get_request_param_value(
+            request_dict, 
+            param='geodeep',
+            default=0,
+            as_list=False,
+            solr_escape=False,
+            require_int=True,
+        )
+        if geodeep > SolrDoc.LOW_RESOLUTION_GEOTILE_LENGTH:
+            geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___geo_tile'
+        else:
+            geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_geo_tile'
+        query['facet.field'].append(geo_tile_facet_field)
+
+        # Add the chrono-tile facet field.
+        chronodeep = start_pos = utilities.get_request_param_value(
+            request_dict, 
+            param='chronodeep',
+            default=0,
+            as_list=False,
+            solr_escape=False,
+            require_int=True,
+        )
+        if chronodeep > SolrDoc.LOW_RESOLUTION_CHRONOTILE_DROP_LAST:
+            chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
+        else:
+            chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
+        query['facet.field'].append(chrono_tile_facet_field)
+
+
         query['facet.range'] = []
         
         query['stats'] = self.solr_stats_query
@@ -155,14 +187,14 @@ class SearchSolr():
                 raw_fulltext_search
             )
             solr_fulltext = ' '.join(escaped_terms)
-            query['q'] = 'text: {}'.format(solr_fulltext)
+            query['q'] = f'text: {solr_fulltext}'
             query['q.op'] = 'AND'
             query['hl'] = 'true'  # search term highlighting
             query['hl.fl'] = 'text' # highlight the text field
             query['hl.fragsize'] = 200
             query['hl.simple.pre'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE
             query['hl.simple.post'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST
-            query['hl.q'] = 'text: {}'.format(solr_fulltext)
+            query['hl.q'] = f'text: {solr_fulltext}'
         
         # -------------------------------------------------------------
         # START and ROWS (Paging through results)
@@ -315,7 +347,7 @@ class SearchSolr():
         
         raw_disc_geo = utilities.get_request_param_value(
             request_dict, 
-            param='disc-geotile',
+            param='allevent-geotile',
             default=None,
             as_list=False,
             solr_escape=False,
@@ -332,7 +364,7 @@ class SearchSolr():
 
         raw_chrono_tile = utilities.get_request_param_value(
             request_dict, 
-            param='form-chronotile',
+            param='allevent-chronotile',
             default=None,
             as_list=False,
             solr_escape=False,
@@ -352,7 +384,7 @@ class SearchSolr():
         query_dict = querymaker.get_form_use_life_span_query_dict(
             form_start=utilities.get_request_param_value(
                 request_dict, 
-                param='form-start',
+                param='allevent-start',
                 default=None,
                 as_list=False,
                 solr_escape=False,
@@ -360,7 +392,7 @@ class SearchSolr():
             ), 
             form_stop=utilities.get_request_param_value(
                 request_dict, 
-                param='form-stop',
+                param='allevent-stop',
                 default=None,
                 as_list=False,
                 solr_escape=False,
@@ -379,10 +411,11 @@ class SearchSolr():
         # -------------------------------------------------------------
         if request_dict.get('path') and self.do_context_paths:
             query_dict = querymaker.get_spatial_context_query_dict(
-                request_dict['path']
+                spatial_context=request_dict.get('path')
             )
             if query_dict:
-
+                print(f'Path {query_dict }')
+                print(f'RQ {request_dict}')
                 # Associate the facet fields with the client request param
                 # and param value.
                 self._associate_facet_field_with_client_request(
@@ -392,7 +425,7 @@ class SearchSolr():
                 )
                 # Remove the default Root Solr facet field if it is there.
                 query['facet.field'] = utilities.safe_remove_item_from_list(
-                    SolrDocument.ROOT_CONTEXT_SOLR,
+                    SolrDoc.ROOT_CONTEXT_SOLR,
                     query['facet.field'].copy()
                 )
                 query = utilities.combine_query_dict_lists(
@@ -492,7 +525,7 @@ class SearchSolr():
                 # We could not find the facet field in the
                 # query facet fields, so skip.
                 continue
-            limit_key = 'f.{}.facet.limit'.format(facet_field)
+            limit_key = f'f.{facet_field}.facet.limit'
             query[limit_key] = limit
         return query
 

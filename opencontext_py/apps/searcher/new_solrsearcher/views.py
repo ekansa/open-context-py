@@ -140,12 +140,13 @@ def query_html(request, spatial_context=None):
     # API.
     # search_temp = SearchTemplate(response_dict.copy())
     context = {
+        'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
+        'BASE_URL': rp.get_baseurl(),
         'st': response_dict.copy(),
-        'base_url': rp.get_baseurl(),
         'api_url': response_dict.get('id'),
         'configs': configs,
     }
-    template = loader.get_template('search_vue/view.html')
+    template = loader.get_template('bootstrap_vue/search/search.html')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response

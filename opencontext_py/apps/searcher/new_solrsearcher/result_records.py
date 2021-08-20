@@ -317,29 +317,29 @@ def get_linked_data_attributes(solr_doc):
     )
 
 
-def get_geo_discovery_source_uuid(solr_doc):
-    """Gets the uuid for a discovery geo source item"""
+def get_geo_all_event_source_uuid(solr_doc):
+    """Gets the uuid for a geo source for un-typed, all_events"""
 
-    # NOTE: A 'discovery geo source' is the item with non-point 
+    # NOTE: An 'all-events geo source' is the item with non-point 
     # geo spatial feature data. A give record may have its own
     # geo spatial feature data, or it may be contained within 
     # another item that has such data. This method gets the
     # UUID for non-point geospatial feature data that associated
     # with this item or other items that may contain it.
 
-    disc_source_str = solr_doc.get('all_events___geo_source')
-    if not disc_source_str:
+    all_event_source_str = solr_doc.get('all_events___geo_source')
+    if not all_event_source_str:
         return None
     
-    disc_source_dict = utilities.parse_solr_encoded_entity_str(
-        disc_source_str,
+    all_event_source_dict = utilities.parse_solr_encoded_entity_str(
+        all_event_source_str,
         solr_slug_format=False,
     )
-    if not disc_source_dict:
+    if not all_event_source_dict:
         return None
     
     uuid = get_uuid_from_entity_dict(
-        disc_source_dict,
+        all_event_source_dict,
         data_type_limit='id',
         item_type_limit='subjects'
     )
@@ -1025,7 +1025,7 @@ class ResultRecords():
 
             uuids.append(rr.uuid)
 
-            geo_uuid = get_geo_discovery_source_uuid(solr_doc)
+            geo_uuid = get_geo_all_event_source_uuid(solr_doc)
             if geo_uuid == rr.uuid:
                 # We only need to add geospatial feature
                 # data if the disc_geosource is actually the

@@ -1,0 +1,181 @@
+{% extends '../page.html' %}
+
+{% block content %}
+
+{% include '../common_geo.html' %}
+{% include '../search/parts/filters.html' %}
+{% include '../search/parts/facets.html' %}
+
+
+<!-- General template for views of Open Context search results -->
+<div id="main">
+
+    <div class="container-fluid">
+
+        <div id="app">
+            <div class="row" v-if="result">
+                <div class="col-sm-8">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>
+                                <span class="text-left">Map</span>
+                                <span class="text-right">[[ result['totalResults'] ]] Records</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                          <div id="app_media">
+                            <common_map
+                              :map_key="0"
+                              :map_class="'map_preview'"
+                              :min_height="800"
+                              :ref_suffix="'search-map'"
+                              v-bind:geo_json="result"></common_map>
+                          </div>
+                        </div>
+                      </div>
+
+
+
+
+                </div>
+                <div class="col-sm-4">
+
+                    <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
+                                 
+                    <all-facets v-bind:facets_dtypes_groups_opts="facets_dtypes_groups_opts"></all-facets>
+
+
+                </div>
+
+            </div>
+
+            <div class="row" v-if="result">
+
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    // Populated by Django.
+    var base_url = '{{ BASE_URL|safe }}';
+  
+    // These are functions needed to play with the URLs returned
+    // by the Open Context search API so we can do useful things
+    // in Vue templating.
+    //
+    // TODO: Move these someplace else.
+    //
+    function remove_prefix(str, prefix){
+         if(str.startsWith(prefix)){
+              return str.slice(prefix.length);
+         } else {
+              return str;
+         }
+    }
+    function abs_to_rel_url(url){
+         return remove_prefix(url, base_url);
+    }
+    function make_url_variants(url){
+         var urls = [url];
+         var prefixes = [
+              {f: 'http://', r: 'https://'},
+              {f: 'https://', r: 'http://'},
+              {f: 'oc-gen:', r: 'http://opencontext.org/'},
+              {f: 'http://', r: 'https://'}, // for https variants of OC.
+         ];
+         for(let prefix_conf of prefixes){
+              var new_url = url;
+              if(url.startsWith(prefix_conf.f)){
+                   new_url = prefix_conf.r + remove_prefix(url, prefix_conf.f);
+              }
+              if(urls.indexOf(new_url) >= 0 ){
+                   continue;
+              }
+              urls.push(new_url);
+         }
+         return urls;
+    }
+
+    var api_url = abs_to_rel_url('{{ api_url|safe }}');
+
+    const GEO_JSON = null;
+
+    // Set up the vue router in 'history' mode to manage
+    // API requests to the backend. The history mode pushes
+    // changes to the client's browser URL, which should let
+    // the client bookmark state.
+    const routes = [{path: api_url}];
+    const router = new VueRouter({
+         mode: 'history',
+         routes: routes
+    });
+
+    var vm = new Vue({
+        router: router,
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        data: {
+            message: 'Open Context Search Result',
+            result: null,
+            map: null,
+            tile_layer: null,
+        },
+        created(){
+            this.fetch_oc_api();
+        },
+        watch: {
+            // call again the method if the route changes
+            '$route': 'fetch_oc_api'
+        },
+        methods: {
+            fetch_oc_api: function (){
+                this.error = null;
+                this.loading = true;
+                fetch(
+                    this.$route.fullPath,
+                    {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                    }
+                )
+                .then(this.loading = false)
+                .then(response => response.json())
+                .then(json => {
+                    this.result = json;
+                })
+            },
+            do_ready: function (){
+                console.log('do ready');
+            }
+        },
+        computed: {
+            grouped_filters: function () {
+                // Group individual, hierarchy related 
+                // filters returned from the API 
+                return group_filters(this.result);
+            },
+            facets_dtypes_groups_opts: function() {
+                // Group facet fields and options
+                // returned from the API
+                return prepare_facets_dtypes_groups_opts(this.result);
+            }
+        },
+        components: {
+            'common_map': vc_common_map,
+            'all-filters': vc_all_filters,
+            'all-facets': vc_all_facets,
+        },
+    }).$mount('#app');
+</script>
+
+
+
+
+
+{% endblock %}

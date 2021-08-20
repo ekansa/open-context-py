@@ -4,7 +4,6 @@ from django.conf import settings
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
-from opencontext_py.libs.memorycache import MemoryCache
 
 from opencontext_py.apps.entities.uri.models import URImanagement
 
@@ -18,7 +17,13 @@ from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 
+from opencontext_py.apps.all_items.configs import (
+    URI_ITEM_TYPES,
+    DEFAULT_SUBJECTS_ROOTS
+)
+
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
@@ -328,34 +333,15 @@ def get_form_use_life_span_query_dict(form_start=None, form_stop=None):
 # ---------------------------------------------------------------------
 # SPATIAL CONTEXT RELATED FUNCTIONS
 # ---------------------------------------------------------------------
-def get_containment_parent_slug(slug):
-    '''Takes a slug and returns the slug of its parent. Returns 'root'
-    if a slug has no parent.
-        
-    :param str slug: Slug identifying a subjects item.
-    '''
-    m_cache = MemoryCache()
-    cache_key = m_cache.make_cache_key('contain-par-slug', slug)
-    parent_slug = m_cache.get_cache_object(cache_key)
-    if parent_slug is None:
-        contain_obj = Containment()
-        # Because it seems to introduce memory errors, turn off
-        # caching for this class instance.
-        contain_obj.use_cache = False
-        parent_slug = contain_obj.get_parent_slug_by_slug(slug)
-        m_cache.save_cache_object(cache_key, parent_slug)
-    if parent_slug:
-        return parent_slug
-    return 'root'
 
-def get_valid_context_slugs(paths_list):
-    '''Takes a list of context paths and returns a list of
-    slugs for valid paths, ignoring invalid paths.
-    
+def add_url_fixes_to_paths_list(paths_list):
+    """Adds URL fixes to paths lists
+
     :param list paths_list: List of spatial context path
         strings.
-    '''
-    m_cache = MemoryCache()
+    
+    :return list 
+    """
     paths_list = list(paths_list)
     url_fixes = []
     for context in paths_list:
@@ -371,20 +357,7 @@ def get_valid_context_slugs(paths_list):
     # needed for replace problematic URL encoding to successfully
     # lookup items.
     paths_list += url_fixes
-    valid_context_slugs = []
-    for context in list(paths_list):
-        # Verify that the contexts are valid
-        # find and save the entity to memory
-        entity = m_cache.get_entity_by_context(context)
-        if not entity:
-            # Skip, we couldn't find an entity for
-            # this context path
-            continue
-        if entity.slug in valid_context_slugs:
-            # Skip, we already have this entity slug in our valid list.
-            continue
-        valid_context_slugs.append(entity.slug)
-    return valid_context_slugs
+    return paths_list
 
 def get_spatial_context_query_dict(spatial_context=None):
     '''Returns a query_dict object for a spatial_context path.
@@ -406,33 +379,36 @@ def get_spatial_context_query_dict(spatial_context=None):
         hierarchy_delim=configs.REQUEST_CONTEXT_HIERARCHY_DELIM,
         or_delim=configs.REQUEST_OR_OPERATOR
     )
-    # Look up slugs for the subjects entities identified by each of the
-    # spatial context paths in the paths_list. The valid_context_slugs
-    # is a list of slugs for entities successfully identified in a
-    # database lookup of the spatial context paths.
-    valid_context_slugs = get_valid_context_slugs(paths_list)
+
+    # Now add path items with URL escape fixes if needed.
+    paths_list = add_url_fixes_to_paths_list(paths_list)
+
+    # Get manifest objects from the paths list. This uses the cache,
+    # or the DB if the cache doesn't have what we want.
     path_terms = []
-    for slug in valid_context_slugs:
-        parent_slug = get_containment_parent_slug(slug)
-        if not parent_slug:
-            # An odd case where we don't have a parent slug.
-            # Just continue so we don't trigger an error or have
-            # weird behavior.
-            continue
+    for man_obj in db_entities.get_cache_manifest_items_by_path(
+        paths_list
+    ):
+        parent_slug = man_obj.context.slug
+        if str(man_obj.context.uuid) in DEFAULT_SUBJECTS_ROOTS:
+            # We're at the root of spatial containment.
+            parent_slug = 'root'
+        # Make the query term for the path
         path_term = utilities.make_solr_term_via_slugs(
             field_slug=parent_slug,
             solr_dyn_field=SolrDocument.FIELD_SUFFIX_CONTEXT,
-            value_slug=slug,
+            value_slug=man_obj.slug,
         )
         path_terms.append(path_term)
         # Now add a field to the facet.field list so solr calculates
         # facets for any child contexts that may be contained inside
         # the context identified by the slug "slug".
         query_dict['facet.field'].append(
-            slug.replace('-', '_')
+            man_obj.slug.replace('-', '_')
             + SolrDocument.SOLR_VALUE_DELIM
             + SolrDocument.FIELD_SUFFIX_CONTEXT
         )
+
     # NOTE: Multiple path terms are the result of an "OR" (||) operator
     # in the client's request. 
     query_dict['fq'].append(
@@ -446,44 +422,6 @@ def get_spatial_context_query_dict(spatial_context=None):
 # ---------------------------------------------------------------------
 # GENERAL HIERARCHY FUNCTIONS
 # ---------------------------------------------------------------------
-def get_entity_item_parent_entity(item, add_original=False):
-    """Gets the parent entity item dict for an item entity object
-    
-    :param entity item: See the apps/entity/models entity object for a
-        definition. 
-    """
-    use_id = item.slug
-    is_project = False
-    if getattr(item, 'item_type', None) == 'projects':
-        is_project = True
-    if getattr(item, 'uuid', None):
-        # Use the UUID for an item if we have it to look up parents.
-        use_id = item.uuid
-    item_parents = general_get_jsonldish_entity_parents(
-        use_id,
-        add_original=add_original,
-        is_project=is_project,
-    ) 
-    if not item_parents or not len(item_parents):
-        return None
-    return item_parents[-1]
-
-def get_entity_item_children_list(item, recursive=False):
-    """Gets a list of children item dicts for an item entity object
-    
-    :param entity item: See the apps/entity/models entity object for a
-        definition. 
-    """
-    use_id = item.slug
-    if getattr(item, 'uuid', None):
-        # Use the UUID for an item if we have it to look up parents.
-        use_id = item.uuid
-    item_children = LinkRecursion().get_entity_children(
-        use_id,
-        recursive=recursive
-    )
-    return item_children
-
 
 def get_range_stats_fields(attribute_item, field_fq):
     """Prepares facet request for value range (numeric, date) fields"""
@@ -602,7 +540,7 @@ def get_general_hierarchic_path_query_dict(
     # non-spatial-context hierarchies that we index. Because of that
     # it will be somewhat abstract and difficult to understand at
     # first.
-    m_cache = MemoryCache()
+
     query_dict = {'fq': [], 'facet.field': []}
 
     if obj_all_slug:
@@ -685,17 +623,17 @@ def get_general_hierarchic_path_query_dict(
             prefix=use_solr_rel_prefix
         )
         
-        item = m_cache.get_entity(item_id)
-        if not item:
+        item_obj = db_entities.get_cache_man_obj_by_any_id(item_id)
+        if not item_obj:
             # We don't recognize the first item, and it is not
             # a literal of an attribute field. So return None.
             return None
         
-        item_parent = get_entity_item_parent_entity(item)
-        if item_parent and item_parent.get('slug'):
+        item_parent_obj = db_entities.get_man_obj_parent(item_obj)
+        if item_parent_obj:
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
-            parent_slug_part =  item_parent['slug'].replace('-', '_')
+            parent_slug_part = item_parent_obj.slug.replace('-', '_')
             if not attribute_field_part.startswith(parent_slug_part):
                 facet_field = (
                     # Use the most immediate parent item of the item entity
@@ -713,7 +651,7 @@ def get_general_hierarchic_path_query_dict(
         # If the item is a linked data entity, and we have a 
         # root field field defined for project specific predicates.
         # So, change the root solr field to be the linked data root.
-        if (item.item_type == 'uri' 
+        if (item_obj.item_type in URI_ITEM_TYPES 
            and facet_field == SolrDocument.ROOT_PREDICATE_SOLR):
             facet_field = SolrDocument.ROOT_LINK_DATA_SOLR
 
@@ -745,7 +683,7 @@ def get_general_hierarchic_path_query_dict(
         # with the item's immediate parent (or root, if it has no
         # parents).
         fq_item_slug = add_rel_prefix_if_needed( 
-            utilities.fq_slug_value_format(item.slug),
+            utilities.fq_slug_value_format(item_obj.slug),
             prefix=use_solr_rel_prefix
         )
 
@@ -767,7 +705,7 @@ def get_general_hierarchic_path_query_dict(
         # that will be used to query child items in the next iteration
         # of this loop.
         facet_field = (
-            item.slug.replace('-', '_')
+            item_obj.slug.replace('-', '_')
             + SolrDocument.SOLR_VALUE_DELIM
             + attribute_field_part
             + field_suffix  
@@ -782,8 +720,7 @@ def get_general_hierarchic_path_query_dict(
             field_fq += fq_solr_field_suffix
         
         
-        if ((getattr(item, 'item_type', None) == 'predicates')
-            or (getattr(item, 'entity_type', None) == 'property')):
+        if item_obj.item_type in ['predicates', 'property']:
             # The current item entity is a "predicates" or a "property"
             # type of item. That means the item is a kind of attribute
             # or a "predicate" in linked-data speak, (NOT the value of
@@ -794,27 +731,26 @@ def get_general_hierarchic_path_query_dict(
             
             # The current item is an attribute item, so copy it for
             # use as we continue to iterate through this path_list.
-            attribute_item = item
+            attribute_item_obj = item_obj
             if False:
                 # Keep for debugging but turn it off
                 print('attribute item {} is a {}, {}'.format(
-                        attribute_item.label,
-                        attribute_item.item_type, 
-                        attribute_item.data_type
+                        attribute_item_obj.label,
+                        attribute_item_obj.item_type, 
+                        attribute_item_obj.data_type
                     )
                 )
 
-            if (getattr(attribute_item, 'data_type', None) 
-               in configs.LITERAL_DATA_TYPES):
+            if attribute_item_obj.data_type in configs.LITERAL_DATA_TYPES:
                 # This attribute_item has a data type for literal
                 # values. 
 
-                children = get_entity_item_children_list(item)
+                children = db_entities.get_man_obj_children_list(attribute_item_obj)
                 if len(children):
                     # The (supposedly) literal attribute item 
                     # has children so force it to have a data_type of 
                     # 'id'.
-                    attribute_item.data_type = 'id'
+                    attribute_item_obj.data_type = 'id'
                 
                 # NOTE: Generally, we don't make facets on literal 
                 # attributes. However, some literal attributes are
@@ -825,11 +761,11 @@ def get_general_hierarchic_path_query_dict(
                     # in the path_list, so we do not need to check
                     # for child items.
                     facet_field = None
-                elif attribute_item.data_type == 'xsd:boolean':
+                elif attribute_item_obj.data_type == 'xsd:boolean':
                     # Make sure we get the facet field, identified
                     # with the correct data type, for boolean values.
                     facet_field = utilities.rename_solr_field_for_data_type(
-                        attribute_item.data_type,
+                        attribute_item_obj.data_type,
                         (
                             use_solr_rel_prefix
                             + item.slug.replace('-', '_')
@@ -837,7 +773,7 @@ def get_general_hierarchic_path_query_dict(
                             + field_suffix
                         )  
                     )
-                elif attribute_item.data_type != 'id':
+                elif attribute_item_obj.data_type != 'id':
                     # The attribute item data type has not been reset
                     # to be 'id', b/c there are no children items to 
                     # this literal attribute item. Thus, there is no 
@@ -847,10 +783,10 @@ def get_general_hierarchic_path_query_dict(
                 # Format the field_fq appropriately for this specific
                 # data type.
                 field_fq = utilities.rename_solr_field_for_data_type(
-                    attribute_item.data_type,
+                    attribute_item_obj.data_type,
                     (
                         use_solr_rel_prefix
-                        + item.slug.replace('-', '_')
+                        + item_obj.slug.replace('-', '_')
                         + SolrDocument.SOLR_VALUE_DELIM
                         + field_suffix
                     )  
@@ -859,7 +795,7 @@ def get_general_hierarchic_path_query_dict(
                 # The attribute item is for a literal type field.
                 # Gather numeric and date fields that need a 
                 range_query_dict = get_range_stats_fields(
-                    attribute_item,
+                    attribute_item_obj,
                     field_fq
                 )
                 # Now combine the query dict for the range fields with
@@ -868,22 +804,19 @@ def get_general_hierarchic_path_query_dict(
                     part_query_dict=range_query_dict,
                     main_query_dict=query_dict,
                 )
-            elif (attribute_item.item_type == 'predicates' 
-                or (attribute_item.item_type == 'uri'
-                and getattr(item, 'entity_type', None) == 'property' 
-                and not attribute_field_part) ):
+            elif (
+                    not attribute_field_part 
+                    or attribute_item_obj.item_type == 'predicates' 
+                ):
                 # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
                 if False:
                     # Keep for debugging, but turn it off.
                     print(
-                        'Pred attribute: {}, {}'.format(
-                            attribute_item.item_type,
-                            getattr(item, 'entity_type', None)
-                        )
+                        f'Pred attribute: {attribute_item_obj.item_type}'
                     )
                 attribute_field_part = (
-                    attribute_item.slug.replace('-', '_')
+                    attribute_item_obj.slug.replace('-', '_')
                     + SolrDocument.SOLR_VALUE_DELIM
                 )
 

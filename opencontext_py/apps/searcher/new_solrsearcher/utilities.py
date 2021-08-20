@@ -4,14 +4,12 @@ import itertools
 import math
 import re
 
+from django.conf import settings
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 
-from opencontext_py.apps.indexer.solrdocumentnew import (
-    SOLR_DATA_TYPE_TO_PREDICATE,
-    get_solr_predicate_type_string,
-    SolrDocumentNew as SolrDocument,
-)
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 
@@ -157,7 +155,7 @@ def infer_multiple_or_hierarchy_paths(
     for delim in check_delims:
         raw_path = raw_path.lstrip(delim)
         raw_path = raw_path.rstrip(delim)
-    # Split the raw_path by hiearchy delim (default to '/') and then by
+    # Split the raw_path by hierarchy delim (default to '/') and then by
     # the or_delim (default to '||').
     if hierarchy_delim:
         path_lists = [
@@ -194,7 +192,7 @@ def infer_multiple_or_hierarchy_paths(
 def get_path_depth(self, path, delimiter='/'):
     """Gets the depth of a (number of items) if split by a delimiter
     
-    :param str path: A hierachic path, with levels separated by a
+    :param str path: A hierarchic path, with levels separated by a
         delimiter
     :param str delimiter: A string delimiter between different levels
         of a hiearchic path
@@ -212,20 +210,20 @@ def rename_solr_field_for_data_type(data_type, solr_field):
     :param str solr_field: The solr field that will changed
         appropriate to its datatype.
     """
-    if not SolrDocument.SOLR_VALUE_DELIM in solr_field:
+    if not SolrDoc.SOLR_VALUE_DELIM in solr_field:
         # No change, this is not solr field formatted in a
         # way we'd expect data_type specific variants. 
         return solr_field
-    parts = solr_field.split(SolrDocument.SOLR_VALUE_DELIM)
+    parts = solr_field.split(SolrDoc.SOLR_VALUE_DELIM)
     general_part = parts[-1]
-    first_part = SolrDocument.SOLR_VALUE_DELIM.join(parts[0:-1])
+    first_part = SolrDoc.SOLR_VALUE_DELIM.join(parts[0:-1])
     if '_' in general_part:
         general_part = general_part.split('_')[0]
     new_ending = get_solr_predicate_type_string(
         data_type, 
         prefix=(general_part + '_')
     )
-    return first_part + SolrDocument.SOLR_VALUE_DELIM + new_ending
+    return first_part + SolrDoc.SOLR_VALUE_DELIM + new_ending
 
 
 def get_data_type_for_solr_field(solr_field):
@@ -234,9 +232,9 @@ def get_data_type_for_solr_field(solr_field):
     :param str solr_field: The solr field that we want to know
         about its data type.
     """
-    if not SolrDocument.SOLR_VALUE_DELIM in solr_field:
+    if not SolrDoc.SOLR_VALUE_DELIM in solr_field:
         return None
-    parts = solr_field.split(SolrDocument.SOLR_VALUE_DELIM)
+    parts = solr_field.split(SolrDoc.SOLR_VALUE_DELIM)
     suffix_part = parts[-1]
     if not '_' in suffix_part:
         # We can't break apart the suffix to find the
@@ -261,22 +259,20 @@ def join_solr_query_terms(terms_list, operator='AND'):
     if len(terms_list) == 1:
         # Nothing to process or wrap in parantheses.
         return terms_list[0]
-    terms = ['({})'.format(term) for term in terms_list]
-    terms_str = (' {} '.format(operator)).join(terms)
+    terms = [f'({term})' for term in terms_list]
+    terms_str = f' {operator} '.join(terms)
     if len(terms) > 1:
         # Multiple terms, so add
-        return '({})'.format(terms_str)
+        return f'({terms_str})'
     return terms_str
 
 
 def fq_slug_value_format(slug, value_slug_length_limit=120):
     """Formats a slug for a Solr query value"""
-    if SolrDocument.DO_LEGACY_FQ:
-        return slug
     # NOTE: The '-' character is reserved in Solr, so we need to replace
     # it with a '_' character in order to do prefix queries on the slugs.
     slug = slug.replace('-', '_')
-    slug += SolrDocument.SOLR_VALUE_DELIM
+    slug += SolrDoc.SOLR_VALUE_DELIM
     slug = (
         slug[:value_slug_length_limit] + '*'
     )
@@ -307,10 +303,6 @@ def make_solr_term_via_slugs(
     :param str value_slug: A string for the slug value that we want
         to query.
     """
-    if SolrDocument.DO_LEGACY_FQ:
-        # Doing the legacy filter query method, so add a
-        # suffix of _fq to the solr field.
-        solr_field_suffix = '_fq'
     
     # Format the value slug for the filter query.
     value_slug = fq_slug_value_format(value_slug)
@@ -320,13 +312,13 @@ def make_solr_term_via_slugs(
         # Add the immediate parent part of the solr
         # field, since it is set.
         solr_parent_prefix += (
-            SolrDocument.SOLR_VALUE_DELIM
+            SolrDoc.SOLR_VALUE_DELIM
             + field_parent_slug.replace('-', '_')
         )
     
     return (
         solr_parent_prefix
-        + SolrDocument.SOLR_VALUE_DELIM
+        + SolrDoc.SOLR_VALUE_DELIM
         + solr_dyn_field
         + solr_field_suffix + ':'
         + value_slug
@@ -547,13 +539,13 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
 def parse_solr_encoded_entity_str(
     entity_str,
     base_url='', 
-    solr_value_delim=SolrDocument.SOLR_VALUE_DELIM,
+    solr_value_delim=SolrDoc.SOLR_VALUE_DELIM,
     solr_slug_format=False
 ):
     """Parses an entity string encoded for solr"""
     
     # NOTE: This is reverse of the function:
-    # SolrDocument.make_entity_string_for_solr
+    # solr_utils.make_entity_string_for_solr
     if not solr_value_delim in entity_str:
         return None
     
@@ -567,8 +559,10 @@ def parse_solr_encoded_entity_str(
     else:
         alt_label = None
     
-    if parts[2].startswith('opencontext.org'):
-        uri = base_url + parts[2].split('opencontext.org')[-1]
+    # This makes it easier to link to a local deployment of
+    # opencontext.
+    if parts[2].startswith(settings.CANONICAL_BASE_URL):
+        uri = base_url + parts[2].split(settings.CANONICAL_BASE_URL)[-1]
     else:
         uri = 'https://' + parts[2]
     
@@ -853,12 +847,8 @@ def estimate_good_coordinate_rounding(
     while round_more:
         round_dist = round(dist, round_level)
         trunc_dist = math.trunc(dist * pow(10, round_level))
-        print('{} has round: {}, trunc {} at round_level {}'.format(
-                dist,
-                round_dist,
-                trunc_dist,
-                round_level,
-            )
+        print(
+            f'{dist} has round: {round_dist}, trunc {trunc_dist} at round_level {round_level}'
         ) 
         if ((round_dist > 0.0 and trunc_dist >= 5) 
             or round_level >= max_round):

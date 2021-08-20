@@ -8,7 +8,6 @@ from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.solrconnection import SolrConnection
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
@@ -16,8 +15,14 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 
-def compose_stats_query(fq_list=[], stats_fields_list=[], q='*:*'):
-    """Compose a stats query to get stats for solr fields for ranges"""
+def compose_stats_query(fq_list=[], stats_fields_list=[], facet_fields=[], q='*:*'):
+    """Compose a stats query to get stats for solr fields for ranges
+    
+    :param list fq_list: List of facet-query terms
+    :param list stats_fields_list: List of fields for stats
+    :param list facet_fields: List of fields to get facet counts
+    :param str q: The solr q query condition
+    """
     query_dict = {}
     query_dict['debugQuery'] = 'false'
     query_dict['stats'] = 'true'
@@ -26,6 +31,10 @@ def compose_stats_query(fq_list=[], stats_fields_list=[], q='*:*'):
     query_dict['q'] = q
     query_dict['fq'] = fq_list
     query_dict['stats.field'] = stats_fields_list
+    if facet_fields:
+        query_dict['facet'] = 'true'
+        query_dict['facet.mincount'] = 1
+        query_dict['facet.field'] = facet_fields
     return query_dict
 
 
@@ -75,12 +84,12 @@ def stats_ranges_query_dict_via_solr(
             query_dict['facet.range'].append(solr_field_key)
         if solr_field_key not in query_dict['stats.field']:
             query_dict['stats.field'].append(solr_field_key)
-        fstart = 'f.{}.facet.range.start'.format(solr_field_key)
-        fend = 'f.{}.facet.range.end'.format(solr_field_key)
-        fgap = 'f.{}.facet.range.gap'.format(solr_field_key)
-        findex = 'f.{}.facet.range.sort'.format(solr_field_key)
-        fother = 'f.{}.facet.range.other'.format(solr_field_key)
-        finclude = 'f.{}.facet.range.include'.format(solr_field_key)
+        fstart = f'f.{solr_field_key}.facet.range.start'
+        fend = f'f.{solr_field_key}.facet.range.end'
+        fgap = f'f.{solr_field_key}.facet.range.gap'
+        findex = f'f.{solr_field_key}.facet.range.sort'
+        fother = f'f.{solr_field_key}.facet.range.other'
+        finclude = f'f.{solr_field_key}.facet.range.include'
         query_dict[fother] = 'all'
         query_dict[finclude] = 'all'
         query_dict[findex] = 'index'  # sort by index, not by count

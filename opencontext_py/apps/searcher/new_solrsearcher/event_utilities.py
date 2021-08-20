@@ -3,12 +3,11 @@ import json
 import logging
 
 from django.conf import settings
-
+from django.core.cache import caches
 
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 from opencontext_py.libs.isoyears import ISOyears
-from opencontext_py.libs.memorycache import MemoryCache
 
 from opencontext_py.apps.all_items.models import (
     AllManifest,
@@ -24,24 +23,22 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 logger = logging.getLogger(__name__)
 
 
+def make_spacetime_obj_cache_key(uuid):
+    """Makes a cache key for looking up SpaceTime objects keyed by uuid"""
+    return f'event-obj-geom-{str(uuid)}'
+
 
 def make_cache_spacetime_obj_dict(
     uuids, 
     excludes={'geometry_type__in': ['Point', 'point']},
-    cache_key_prefix='event-obj-geom-'
 ):
     """Make a dict of SpaceTime objects keyed by uuid"""
-    m_cache = MemoryCache()
+    cache = caches['redis']
     uuids_for_qs = []
     uuid_event_dict = {}
     for uuid in uuids:
-        cache_key = m_cache.make_cache_key(
-            prefix=cache_key_prefix,
-            identifier=uuid
-        )
-        event_obj = m_cache.get_cache_object(
-            cache_key
-        )
+        cache_key = make_spacetime_obj_cache_key(uuid)
+        event_obj = cache.get(cache_key)
         if event_obj is None:
             uuids_for_qs.append(uuid)
         else:
@@ -66,13 +63,11 @@ def make_cache_spacetime_obj_dict(
         event_qs = event_qs.exclude(**excludes)
 
     for event_obj in event_qs:
-        cache_key = m_cache.make_cache_key(
-            prefix=cache_key_prefix,
-            identifier=str(event_obj.item.uuid)
-        )
-        m_cache.save_cache_object(
-            cache_key, event_obj
-        )
+        cache_key = make_spacetime_obj_cache_key(str(event_obj.item.uuid))
+        try:
+            cache.set(cache_key, event_obj)
+        except:
+            pass
         uuid_event_dict[str(event_obj.item.uuid)] = event_obj
     
     return uuid_event_dict

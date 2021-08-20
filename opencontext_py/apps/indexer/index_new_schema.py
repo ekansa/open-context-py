@@ -22,16 +22,17 @@ import importlib
 import logging
 from opencontext_py.apps.all_items.models import (
     AllManifest,
+    AllAssertion,
 )
 from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
 
 # Gabii for now.
-project_ids = ['df043419-f23b-41da-7e4d-ee52af22f92f',]
+project_ids = ['3585b372-8d2d-436c-9a4c-b5c10fce3ccd', 'df043419-f23b-41da-7e4d-ee52af22f92f',]
 m_qs = AllManifest.objects.filter(
     item_type__in=['projects', 'subjects', 'media', 'documents'],
     project_id__in=project_ids,
-)
+).order_by('project_id', 'sort')
 uuids = [str(m.uuid) for m in m_qs]
 new_ind.clear_caches()
 new_ind.make_indexed_solr_documents_in_chunks(uuids)

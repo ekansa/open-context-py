@@ -179,7 +179,7 @@ class ResultMaker():
                 'start',
                 (
                     configs.STATS_FIELDS_PATH_KEYS + [
-                        'form_use_life_chrono_earliest',
+                        f'{configs.ROOT_EVENT_CLASS}___chrono_earliest',
                         'min',
                     ]
                 ),
@@ -189,7 +189,7 @@ class ResultMaker():
                 'stop',
                 (
                     configs.STATS_FIELDS_PATH_KEYS + [
-                        'form_use_life_chrono_latest',
+                        f'{configs.ROOT_EVENT_CLASS}___chrono_latest',
                         'max',
                     ]
                 )

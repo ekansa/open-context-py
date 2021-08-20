@@ -11,7 +11,6 @@ from django.utils.encoding import iri_to_uri
 
 from django.conf import settings
 
-from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.chronotiles import ChronoTile
@@ -20,6 +19,7 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 
@@ -251,7 +251,6 @@ class SearchFilters():
                 lookup_val
             )
 
-        m_cache = MemoryCache()
         items = []
         if configs.REQUEST_OR_OPERATOR in lookup_val:
             lookup_list = lookup_val.split(
@@ -262,9 +261,11 @@ class SearchFilters():
         
         for act_val in lookup_list:
             if is_spatial_context:
-                item = m_cache.get_entity_by_context(act_val)
+                item = db_entities.get_cache_manifest_item_by_path(act_val)
+                if not item:
+                    item = db_entities.get_cache_man_obj_by_any_id(act_val)
             else:
-                item = m_cache.get_entity(act_val)
+                item = db_entities.get_cache_man_obj_by_any_id(act_val)
             if not item:
                 continue
             items.append(item)

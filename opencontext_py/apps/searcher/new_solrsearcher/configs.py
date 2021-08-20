@@ -12,7 +12,7 @@ from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 USE_TEST_SOLR_CONNECTION = True
 
 REQUEST_CONTEXT_HIERARCHY_DELIM = '/'
-REQUEST_PROP_HIERARCHY_DELIM = SolrDoc.SOLR_VALUE_DELIM
+REQUEST_PROP_HIERARCHY_DELIM = SolrDoc.SOLR_VALUE_DELIM.replace('_', '-')
 REQUEST_OR_OPERATOR = '||'
 REQUEST_SORT_DIR_DELIM = '--'
 
@@ -31,6 +31,7 @@ SOLR_DEFAULT_ROW_COUNT = 20
 SOLR_MAX_RESULT_ROW_COUNT = 10000
 
 DEFAULT_FACET_FIELDS = [
+    SolrDoc.ROOT_CONTEXT_SOLR,
     SolrDoc.ROOT_PROJECT_SOLR,
     SolrDoc.ROOT_LINK_DATA_SOLR,
     'image_media_count',
@@ -38,10 +39,11 @@ DEFAULT_FACET_FIELDS = [
     'gis_media_count',
     'other_binary_media_count',
     'documents_count',
-    'all_events___lr_chrono_tile',
-    'all_events___lr_geo_tile',
+    'all_events___geo_precision_factor',
+    'event_class_slugs'
     # 'disc_geosource',
 ]
+
 
 PROJECT_FACET_FIELDS = [
     # SolrDoc.ROOT_LINK_DATA_SOLR
@@ -75,10 +77,17 @@ ITEM_TYPE_FACETFIELDS = {
 # Set facet limits for different solr fields. -1 indicates
 # no limit to the number of facets, which means the most
 # expensive.
+ROOT_EVENT_CLASS = SolrDoc.ALL_EVENTS_SOLR
+
+
 SOLR_FIELDS_FACET_LIMITS = [
-    ('form_use_life_chrono_tile', -1,),
-    ('discovery_geotile', -1,),
-    ('disc_geosource', -1,),
+    (f'{ROOT_EVENT_CLASS}___lr_geo_tile', -1,),
+    (f'{ROOT_EVENT_CLASS}___geo_tile', -1,),
+    (f'{ROOT_EVENT_CLASS}___geo_source', -1,),
+
+    (f'{ROOT_EVENT_CLASS}___lr_chrono_tile', -1,),
+    (f'{ROOT_EVENT_CLASS}___chrono_tile', -1,),
+    (f'{ROOT_EVENT_CLASS}___chrono_source', -1,),
 ]
 
 
@@ -133,8 +142,8 @@ GENERAL_STATS_FIELDS = [
 ]
 
 CHRONO_STATS_FIELDS =  [
-    'all_events___chrono_earliest',
-    'all_events___chrono_latest'
+    f'{ROOT_EVENT_CLASS}___chrono_earliest',
+    f'{ROOT_EVENT_CLASS}___chrono_latest'
 ]
 
 MEDIA_STATS_FIELDS = [
@@ -200,6 +209,13 @@ RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</em>'
 #              querymaker.get_general_hierarchic_paths_query_dict 
 # ---------------------------------------------------------------------
 HIERARCHY_PARAM_TO_SOLR = [
+    (
+        'path', SolrDoc.ROOT_CONTEXT_SOLR,
+        {
+            'root_field':SolrDoc.ROOT_CONTEXT_SOLR,
+            'field_suffix': SolrDoc.FIELD_SUFFIX_CONTEXT,
+        },
+    ),
     (
         'proj', SolrDoc.ROOT_PROJECT_SOLR,
         {
