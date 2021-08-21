@@ -2,22 +2,26 @@
 
 
 <template id="all-facets-template">
-<div v-if="facets_dtypes_groups_opts">
-    <div v-if="facets_dtypes_groups_opts.length">
-        <h3>Filtering Options</h3>
-        <div id="acc-facets">
-            <facets-xfacet-dtypes-groups-opts
-                v-for="(xfacet_dtypes_groups_opts, index) in facets_dtypes_groups_opts"
-                v-bind:key="xfacet_dtypes_groups_opts.key"
-                v-bind:facet_id="xfacet_dtypes_groups_opts.id"
-                v-bind:facet_label="xfacet_dtypes_groups_opts.label"
-                v-bind:facet_start_open="xfacet_dtypes_groups_opts.start_open"
-                v-bind:xfacet_dtypes_groups_opts="xfacet_dtypes_groups_opts"
-                v-bind:index="index">
-            </facets-xfacet-dtypes-groups-opts>
+    <div id="all_facet_filters">
+        <h4>Filtering Options</h4>
+        <div v-if="facets_dtypes_groups_opts">
+            <div id="acc-facets" v-if="facets_dtypes_groups_opts.length">
+                <facets-xfacet-dtypes-groups-opts
+                    v-for="(xfacet_dtypes_groups_opts, index) in facets_dtypes_groups_opts"
+                    v-bind:key="xfacet_dtypes_groups_opts.key"
+                    v-bind:facet_id="xfacet_dtypes_groups_opts.id"
+                    v-bind:facet_label="xfacet_dtypes_groups_opts.label"
+                    v-bind:facet_start_open="xfacet_dtypes_groups_opts.start_open"
+                    v-bind:xfacet_dtypes_groups_opts="xfacet_dtypes_groups_opts"
+                    v-bind:index="index">
+                </facets-xfacet-dtypes-groups-opts>
+            </div>
+        </div>
+        <div v-else>
+            <b-spinner class="m-5" label="Busy"></b-spinner>
+            <p>Gathering filtering options...</p>
         </div>
     </div>
-</div>
 </template>
 
 <template id="facets-xfacet-dtypes-groups-opts-template">
@@ -45,9 +49,9 @@
             [[facet_label]] facet open [[ facet_start_open ]]
         </a>
         -->
-        <b-button variant="link" class="text-left" v-b-toggle="'panel-' + dom_key">
-            <h5><i class="bi bi-arrows-expand"></i>
-            [[facet_label]]
+        <b-button variant="link" class="text-left filter_heading_button" v-b-toggle="'panel-' + dom_key">
+            <h5 class="filter_heading_labels"><i class="bi bi-arrows-expand"></i>
+                [[facet_label]]
             </h5>
         </b-button>
     </div>

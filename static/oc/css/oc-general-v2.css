@@ -283,3 +283,24 @@ div.subject-list-text {
 	max-height: 300px;
 	overflow-y: scroll;
 }
+
+
+/*
+---------------------------------------------------------
+Search 
+---------------------------------------------------------
+*/
+#app {
+	min-height: 800px;
+}
+#all_facet_filters {
+	margin-top: 36px;
+}
+.filter_heading_button {
+	text-decoration: none;
+	color: #212529;
+}
+.filter_heading_labels {
+	text-decoration: none;
+	color: #212529;
+}

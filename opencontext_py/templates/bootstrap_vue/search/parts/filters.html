@@ -2,43 +2,36 @@
 
 
 <template id="filter-list-template">
-<div v-if="grouped_filters">
-    <div class="card" id="acc-filters" v-if="!grouped_filters.length">
-        <div class="card-header"> 
-            <h5>
-                Search Filters
-            </h5>
-        </div>
-            
-        <div class="card-body small">
-            Collection is not filtered. Select query options below.
-        </div>
-            
-    </div>
 
-    <div class="card" id="acc-filters" v-if="grouped_filters.length">
-        <div class="card-header"> 
-            <b-button variant="link" class="text-left" v-b-toggle="'panel-filters'">
-                <h5><i class="bi bi-arrows-expand"></i>
-                Applied Filters
-                </h5>
-            </b-button>
-        </div>
-            
-        <b-collapse :id="'panel-filters'" class="card-body" visible>
-            
+<div class="card bg-light" id="acc-filters">
+    <div class="card-header"> 
+        <h5 class="filter_heading_labels">
+            Applied Filters
+        </h5>
+    </div>
+        
+    <div class="card-body small">
+        <div v-if="grouped_filters">
+            <div v-if="grouped_filters.length">
                 <filter-item
                     v-for="(filter_group, index) in grouped_filters"
                     v-bind:key="filter_group.key"
                     v-bind:filter_group="filter_group"
                     v-bind:index="index"
                 ></filter-item>
-            
-        </b-collapse>
-            
+            </div>
+            <p v-else>
+                No filters currently in use. Select query options below.
+            </p>
+        </div>
+        <div v-else>
+            <b-spinner class="m-5" label="Busy"></b-spinner>
+            <p>Listing filters currently in use...</p>
+        </div>
     </div>
-
+        
 </div>
+
 </template>
 
 
@@ -86,7 +79,10 @@ var vc_filter_item = Vue.component(
     'filter-item',
     {
         delimiters: ['[[', ']]'],
-        props: ['filter_group', 'index'],
+        props: ['filter_group', 'index', 'allow_collapse'],
+        data: {
+            allow_collapse: false,
+        },
         template: '#filter-item-template',
     }
 );
