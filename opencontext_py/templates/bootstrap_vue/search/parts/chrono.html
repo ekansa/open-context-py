@@ -78,7 +78,7 @@ var vc_chronotiles = Vue.component(
                 ],
                 default_sigma_factor: 0.15,
                 default_x_interval_count: 100,
-                default_y_no_value: null,
+                default_y_no_value: 0,
                 default_gradient_type: 'blue_red',
                 default_options: {
                     height: '400px',
@@ -151,6 +151,11 @@ var vc_chronotiles = Vue.component(
                                 return rounded;
                             }
                         },
+                        axisBorder: {
+                            show: true,
+                            color: '#78909C',
+                            offsetY: -1,
+                        },
                     },
                     yaxis: {
                         showForNullSeries: false,
@@ -160,11 +165,12 @@ var vc_chronotiles = Vue.component(
                         axisTicks: {
                             show: false,
                         },
+                        min: 0.00,
                     },
                     stroke: {
                         curve: 'smooth',
                         //curve: 'stepline',
-                        width: 3,
+                        width: 2,
                     },
                     tooltip: {
                         enabled: false,
