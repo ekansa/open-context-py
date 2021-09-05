@@ -1,0 +1,362 @@
+{% load humanize %}
+
+
+<template id="chronotiles-template">
+
+<div class="card bg-light" id="acc-filters">
+    <div class="card-header"> 
+        <h5 class="filter_heading_labels">
+            Timespans
+        </h5>
+    </div>
+        
+    <div class="card-body small">
+        <div v-if="data_series.length" id="chrono-chart">
+            <apexchart 
+                width="100%" 
+                type="area"
+                :options="options"
+                :series="data_series">
+            </apexchart>
+        </div>
+        <div v-else>
+            <b-spinner class="m-5" label="Busy"></b-spinner>
+            <p>Getting time-span data...</p>
+        </div>
+    </div>
+        
+</div>
+
+</template>
+
+
+<style type="text/css">
+/* don't display the no-pointer circle in the chrono chart */
+#chrono-chart circle.no-pointer-events {
+    display: none;
+}
+</style>
+
+
+<script type="text/javascript">
+
+
+
+var vc_chronotiles = Vue.component(
+    'chronotiles',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['chrono_facets',],
+        data() {
+            return {
+                chrono_facets: null,
+                data_series: [],
+                data_series_colors: [],
+                // data_series_fill_opacities: [],
+                // data_series_fill_opacities_to: [],
+                chrono_total_count: 0,
+                chrono_max_count: 0,
+                chrono_max_count_per_year: 0,
+                chrono_all_years: [],
+                chrono_min_year: null,
+                chrono_max_year: null,
+                chart_count_per_year: null,
+                chart_max_year: 2000,
+                t_span_min: 25,
+                curve_steps: [
+                    0.5,
+                    0.45,
+                    0.4,
+                    0.35,
+                    0.3,
+                    0.25,
+                    0.2,
+                    0.15,
+                    0.1,
+                    0.05,
+                    0.0,
+                ],
+                default_sigma_factor: 0.15,
+                default_x_interval_count: 100,
+                default_y_no_value: null,
+                default_gradient_type: 'blue_red',
+                default_options: {
+                    height: '400px',
+                    chart: {
+                        type: 'area',
+                        stacked: true,
+                        stackType: 'normal',
+                        animations: {
+                            enabled: true,
+                            easing: 'easein',
+                        },
+                        toolbar: {
+                            show: true,
+                            offsetX: 0,
+                            offsetY: 0,
+                            tools: {
+                                download: true,
+                                selection: false,
+                                zoom: false,
+                                zoomin: false,
+                                zoomout: false,
+                                pan: false,
+                                reset: false | '<img src="/static/icons/reset.png" width="20">',
+                                customIcons: [],
+                            },
+                            export: {
+                                csv: null,
+                                svg: {
+                                    filename: undefined,
+                                },
+                                png: {
+                                    filename: undefined,
+                                },
+                            }
+                        },
+                    },
+                    plotOptions: {
+                        area: {
+                            fillTo: 'end',
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false,
+                    },
+                    fill: {
+                        colors: [],
+                        type: 'gradient',
+                        gradient: {
+                            shade: 'light',
+                            type: 'vertical',
+                            shadeIntensity: 0.75,
+                            inverseColors: false,
+                            opacityFrom: 1,
+                            opacityTo: 1,
+                            
+                        },
+                    },
+                    markers: {
+                        size: 0,
+                    },
+                    legend: {
+                        show: false,
+                    },
+                    xaxis: {
+                        type: 'numeric',
+                        labels: {
+                            formatter: function(value){
+                                let n_date = parseFloat(value);
+                                let rounded = n_date + 25/2 - (n_date + 25/2) % 25;
+                                return rounded;
+                            }
+                        },
+                    },
+                    yaxis: {
+                        showForNullSeries: false,
+                        labels: {
+                            show: false,
+                        },
+                        axisTicks: {
+                            show: false,
+                        },
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        //curve: 'stepline',
+                        width: 3,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+            };
+        },
+        template: '#chronotiles-template',
+        mounted() {
+            this.make_all_data_series();
+        },
+        computed: {
+            options() {
+                if(!this.data_series || this.data_series.length < 1){
+                    return this.default_options;
+                }
+                let act_options = this.default_options;
+                act_options.colors = this.data_series_colors;
+                act_options.fill.colors = this.data_series_colors;
+                // act_options.fill.opacity = this.data_series_fill_opacities;
+                // act_options.fill.gradient.opacityFrom = this.data_series_fill_opacities;
+                // act_options.fill.gradient.opacityTo = this.data_series_fill_opacities_to;
+                act_options.chart.animations.enabled = false;
+                return act_options;
+            },
+        },
+        methods: {
+            round_date(date){
+                let n_date = parseFloat(date);
+                let rounded = n_date + this.t_span_min/2 - (n_date + this.t_span_min/2) % this.t_span_min;
+                return rounded;
+            },
+            gaussian(x, mean, sigma) {
+                let gaussianConstant = 1 / Math.sqrt(2 * Math.PI);
+                x = (x - mean) / sigma;
+                return gaussianConstant * Math.exp(-0.5 * x * x) / sigma;
+            },
+            make_span_data_series(chrono){
+                let c_per_year = chrono.count / chrono.t_span;
+                let sigma = chrono.t_span * this.default_sigma_factor;
+                let chrono_y_factor = chrono.count * this.chart_count_per_year;
+
+                let series = [];
+                let chrono_chart_start_x = Math.min.apply(Math, chrono.chart_year_x);
+                let chrono_chart_stop_x = Math.max.apply(Math, chrono.chart_year_x);
+                for (let year_x of this.chrono_all_years) {
+                    let act_pair = {x:year_x, y:this.default_y_no_value};
+                    if(year_x >= this.chart_max_year){
+                        // Don't put any later than the maximum year for the chart.
+                        act_pair.y = 0;
+                    }
+                    else if(year_x == chrono_chart_start_x){
+                        // The absolute minimum of the chrono span gets a 0
+                        act_pair.y = 0;
+                    }
+                    else if(year_x == chrono_chart_stop_x){
+                        // the absolute maximum of the chart gets a 0
+                        act_pair.y = 0;
+                    }
+                    else if(year_x > chrono_chart_start_x && year_x < chrono_chart_stop_x){
+                        // For values between the chrono's chart min and max,
+                        // use a gaussian function to make a reasonable looking curve.
+                        act_pair.y = this.gaussian(year_x, chrono.median_year, sigma) * chrono_y_factor;
+                    }
+                    series.push(act_pair);
+                }
+                if(chrono_chart_stop_x < this.chart_max_year){
+                    // Add the last year for the whole chart, which is missing.
+                    series.push(
+                        {x:this.chart_max_year, y:this.default_y_no_value}
+                    );
+                }
+                return {
+                    name: `${this.round_date(chrono.start)} to ${this.round_date(chrono.stop)} (Count: ${chrono.count})`,
+                    data: series,
+                }
+            },
+            add_chart_year_x_to_chrono(chrono){
+                chrono.t_span = parseFloat(chrono.stop) - parseFloat(chrono.start);
+                if(chrono.t_span < this.t_span_min){
+                    chrono.t_span = this.t_span_min;
+                }
+                chrono.count_per_year =  chrono.count / chrono.t_span;
+                chrono.median_year =  Math.round(((parseFloat(chrono.stop) + parseFloat(chrono.start)) / 2));
+                chrono.chart_year_x = [
+                    Math.round((chrono.median_year - (chrono.t_span * 0.5))) - 1,
+                    Math.round((chrono.median_year + (chrono.t_span * 0.5))) + 1,
+                ];
+                for(let act_step of this.curve_steps){
+                    let act_x_minus = Math.round((chrono.median_year - (chrono.t_span * act_step)));
+                    let act_x_plus = Math.round((chrono.median_year + (chrono.t_span * act_step)));
+                    if(chrono.chart_year_x.indexOf(act_x_minus) < 0){
+                        chrono.chart_year_x.push(act_x_minus);
+                    }
+                    if(chrono.chart_year_x.indexOf(act_x_plus) < 0){
+                        chrono.chart_year_x.push(act_x_plus);
+                    }
+                }
+                chrono.chart_year_x.sort(function(a, b){return a-b});
+                return chrono;
+            },
+            initialize_chart_data: function() {
+                this.data_series = [];
+                this.data_series_colors = [];
+                this.data_series_fill_opacities = [];
+                this.data_series_fill_opacities_to = [];
+                this.chrono_all_years = [];
+                this.chrono_total_count = 0;
+            },
+            make_all_data_series: function() {
+
+                this.initialize_chart_data();
+                if(!this.chrono_facets || this.chrono_facets.length < 1){
+                    return null;
+                }
+                
+                let chrono_counts = [];
+                let chrono_counts_per_year = [];
+                let chrono_id_t_spans = {};
+                let chrono_id_objs = {};
+                for(let chrono of this.chrono_facets){
+                    chrono = this.add_chart_year_x_to_chrono(chrono);
+                    this.chrono_total_count += chrono.count;
+                    chrono_counts.push(chrono.count);
+                    for (let year_x of chrono.chart_year_x) {
+                        if(this.chrono_all_years.indexOf(year_x) >=0 ){
+                            continue;
+                        }
+                        this.chrono_all_years.push(year_x);
+                    }
+                    chrono_counts_per_year.push(chrono.count_per_year);
+                    chrono_id_t_spans[chrono.id] = chrono.t_span;
+                    chrono_id_objs[chrono.id] = chrono;
+                }
+                
+                if(this.chrono_total_count < 1){
+                    return null;
+                }
+            
+                this.chrono_all_years.sort(function(a, b){return a-b});
+
+                this.chrono_max_count = Math.max.apply(Math, chrono_counts);
+                this.chrono_max_count_per_year = Math.max.apply(Math, chrono_counts_per_year);
+                this.chrono_min_year = Math.min.apply(Math, this.chrono_all_years);
+                this.chrono_max_year = Math.max.apply(Math, this.chrono_all_years);
+                this.chart_count_per_year = (this.chart_max_year - this.chrono_min_year) / this.chrono_total_count;
+
+                // Now make a list of chrono.id, sorted in descending (reverse) order of their
+                // time-spans. This lets us put the biggest time spans at the bottom of the
+                // stack-area chart.
+                let id_keys_sorted = Object.keys(chrono_id_t_spans).sort(
+                    function(a,b){
+                        return chrono_id_t_spans[a]-chrono_id_t_spans[b];
+                    }
+                );
+                id_keys_sorted.reverse();
+                
+                for(let id_key of id_keys_sorted){
+                    let chrono = chrono_id_objs[id_key];
+                    let chrono_series = this.make_span_data_series(chrono);
+                    this.data_series.push(chrono_series);
+                    let chrono_color = make_hex_color_in_gradient(
+                        (chrono.count / this.chrono_max_count), 
+                        COLOR_GRADIENTS[this.default_gradient_type]
+                    );
+                    this.data_series_colors.push(chrono_color);
+                    if(false){
+                        // skip this.
+                        let chrono_opacity = (
+                            ((chrono.count_per_year / this.chrono_max_count_per_year) * 0.5 ) + 0.20
+                        );
+                        chrono_opacity = 1;
+                        let chrono_opacity_to = 1;
+                        // chrono_opacity = 1.0;
+                        this.data_series_fill_opacities.push(chrono_opacity);
+                        this.data_series_fill_opacities_to.push(chrono_opacity_to);
+                    }
+                }
+                // console.log(this.data_series);
+            },
+        },
+        components: {
+            apexchart: VueApexCharts,
+        }
+    }
+);
+
+
+function make_broaden_link_with_last_hash(raw_filter){
+    
+}
+
+
+
+</script>

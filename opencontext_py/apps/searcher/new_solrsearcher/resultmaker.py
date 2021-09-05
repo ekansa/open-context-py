@@ -10,7 +10,6 @@ from opencontext_py.libs.isoyears import ISOyears
 
 from opencontext_py.apps.contexts.models import SearchContext
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 # Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
@@ -176,7 +175,7 @@ class ResultMaker():
         meta_configs = [
             (
                 # Earliest date items formed, used, or alive.
-                'start',
+                'allevent-start',
                 (
                     configs.STATS_FIELDS_PATH_KEYS + [
                         f'{configs.ROOT_EVENT_CLASS}___chrono_earliest',
@@ -186,7 +185,7 @@ class ResultMaker():
             ),
             (
                 # Latest date items formed, used, or alive
-                'stop',
+                'allevent-stop',
                 (
                     configs.STATS_FIELDS_PATH_KEYS + [
                         f'{configs.ROOT_EVENT_CLASS}___chrono_latest',
@@ -473,7 +472,7 @@ class ResultMaker():
         if chrono_options is None or not len(chrono_options):
             # Skip out, we found no chronological options
             return None
-        self.result["oc-api:has-form-use-life-ranges"] = chrono_options
+        self.result["oc-api:has-event-time-ranges"] = chrono_options
     
 
     def _add_geojson_features_to_result(self, geo_features_list):

@@ -3,6 +3,7 @@
 {% block content %}
 
 {% include '../common_geo.html' %}
+{% include '../search/parts/chrono.html' %}
 {% include '../search/parts/filters.html' %}
 {% include '../search/parts/facets.html' %}
 
@@ -45,6 +46,12 @@
                         </div>
                       </div>
 
+
+                    <div v-if="chrono_facets">
+                        <chronotiles
+                            :key="'chrono-tiles-component-' + chrono_tiles_component_key_index"
+                            v-bind:chrono_facets="chrono_facets"></chronotiles>
+                    </div>
                 </div>
                 <div class="col-sm-4">
                     <div v-if="result">
@@ -130,6 +137,8 @@
             result: null,
             map: null,
             tile_layer: null,
+            emit_update_fetch_done: false,
+            chrono_tiles_component_key_index: 0,
         },
         created(){
             this.fetch_oc_api();
@@ -154,7 +163,16 @@
                 .then(response => response.json())
                 .then(json => {
                     this.result = json;
+                    this.chrono_tiles_component_key_index += 1;
+                    if(this.emit_update_fetch_done){
+                        this.emit_update_fetch_done = false;
+                        this.$emit('update_fetch_done', true);
+                    }
                 })
+            },
+            emit_fetch_update(v){
+                this.emit_update_fetch_done = true;
+                this.fetch_oc_api();
             },
             do_ready: function (){
                 console.log('do ready');
@@ -170,10 +188,20 @@
                 // Group facet fields and options
                 // returned from the API
                 return prepare_facets_dtypes_groups_opts(this.result);
+            },
+            chrono_facets: function(){
+                if(!this.result){
+                    return null;
+                }
+                if(!this.result.hasOwnProperty('oc-api:has-event-time-ranges')){
+                    return null;
+                }
+                return this.result['oc-api:has-event-time-ranges'];
             }
         },
         components: {
             'common_map': vc_common_map,
+            'chronotiles': vc_chronotiles,
             'all-filters': vc_all_filters,
             'all-facets': vc_all_facets,
         },

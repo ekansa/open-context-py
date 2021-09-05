@@ -227,6 +227,9 @@
     <!-- other chronological latest date in Julian dates BCE  -->
     <dynamicField name="*_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
+    <!-- Chronology ranges as points (earliest, latest) -->
+    <dynamicField name="*_chrono_point" type="point" indexed="true" stored="true" multiValued="true"/>
+
     <!-- ############################################################################################################ -->
 
 

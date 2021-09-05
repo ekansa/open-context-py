@@ -502,20 +502,20 @@ FILTER_PARAM_CONFIGS = {
         'oc-api:filter': 'Identifier Lookup',
         'label-template': 'Identifier: \'{act_val}\'',
     },
-    'form-chronotile': {
-        'oc-api:filter': 'Time of formation, use, or life',
+    'allevent-chronotile': {
+        'oc-api:filter': 'Time of any event',
     },
-    'form-start': {
-        'oc-api:filter': 'Earliest formation, use, or life date',
+    'allevent-start': {
+        'oc-api:filter': 'Earliest event date',
     },
-    'form-stop': {
-        'oc-api:filter': 'Latest formation, use, or life date',
+    'allevent-stop': {
+        'oc-api:filter': 'Latest event date',
     },
-    'disc-geotile': {
-        'oc-api:filter': 'Location of discovery or observation',
+    'allevent-geotile': {
+        'oc-api:filter': 'Any observed location',
     },
-    'disc-bbox': {
-        'oc-api:filter': 'Location of discovery or observation',
+    'bbox': {
+        'oc-api:filter': 'Any observed location',
     },
     'images': {
         'oc-api:filter': 'Has related media',
@@ -528,6 +528,14 @@ FILTER_PARAM_CONFIGS = {
     'documents': {
         'oc-api:filter': 'Has related media',
         'label': 'Linked to documents', 
+    },
+    'gis-media': {
+        'oc-api:filter': 'Has related GIS media',
+        'label': 'Linked to GIS media', 
+    },
+    '3d-media': {
+        'oc-api:filter': 'Has related 3D media',
+        'label': 'Linked to 3D media', 
     },
 }
 
@@ -615,7 +623,7 @@ FACETS_RELATED_MEDIA = {
         {
             'label': 'Linked with GIS media',
             'facet_path': (FACETS_SOLR_ROOT_PATH_KEYS + ['gis_media_count']),
-            'param_key': '3d-media',
+            'param_key': 'gis-media',
         },
         {
             'label': 'Linked with media (non-image)',

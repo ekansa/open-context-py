@@ -258,7 +258,7 @@ def get_discovery_bbox_query_dict(raw_disc_bbox):
             lat_1=bbox_coors[3],
             lon_1=bbox_coors[2],
         )
-        fq_term = 'discovery_geolocation: ' + q_bbox
+        fq_term = f'{configs.ROOT_EVENT_CLASS}___geolocation: ' + q_bbox
         terms.append(fq_term)
     # Join the various bounding box query OR terms.
     query_dict['fq'].append(
@@ -291,42 +291,43 @@ def make_tile_query_dict(raw_tile_path, solr_field, max_path_length):
     return query_dict
 
 
-def get_discovery_geotile_query_dict(raw_disc_geo):
+def get_discovery_geotile_query_dict(raw_disc_geo, low_res=True):
     """Makes a filter query for a discovery location geotile"""
+    solr_field = f'{configs.ROOT_EVENT_CLASS}___lr_geo_tile'
+    if not low_res:
+        solr_field = f'{configs.ROOT_EVENT_CLASS}___geo_tile'
     return make_tile_query_dict(
         raw_tile_path=raw_disc_geo, 
-        solr_field='discovery_geotile', 
+        solr_field=solr_field, 
         max_path_length=SolrDocument.MAX_GEOTILE_ZOOM,
     )
 
 
-def get_form_use_life_chronotile_query_dict(raw_chrono_tile):
+def get_form_use_life_chronotile_query_dict(raw_chrono_tile, low_res=True):
     """Makes a filter query for formation-use-life chrono-tile string"""
+    solr_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
+    if not low_res:
+        solr_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
     return make_tile_query_dict(
         raw_tile_path=raw_chrono_tile, 
-        solr_field='form_use_life_chrono_tile', 
+        solr_field=solr_field, 
         max_path_length=ChronoTile().MAX_TILE_DEPTH,
     )
 
 
-def get_form_use_life_span_query_dict(form_start=None, form_stop=None):
+def get_all_event_chrono_span_query_dict(all_start=None, all_stop=None):
     """Makes a filter query for formation-use-life chrono based on 
     start and/or stop times
     """
-    if form_start is None and form_stop is None:
+    if all_start is None and all_stop is None:
         return None
-    if form_start is None:
+    if all_start is None:
         # Set the start to be older than the entire Cosmos.
-        form_start = -10*1000*1000*1000
-    if form_stop is None:
+        all_start = -15*1000*1000*1000
+    if all_stop is None:
         # Set the stop long after the Sun would have died.
-        form_stop = 10*1000*1000*1000
-    term = 'form_use_life_chrono_point:[{},{} TO {},{}]'.format(
-        form_start,
-        form_start, 
-        form_stop,
-        form_stop,
-    )
+        all_stop = 10*1000*1000*1000
+    term =  f'{configs.ROOT_EVENT_CLASS}___chrono_point:[{all_start},{all_start} TO {all_stop},{all_stop}]'
     return {'fq': [term]}
 
 

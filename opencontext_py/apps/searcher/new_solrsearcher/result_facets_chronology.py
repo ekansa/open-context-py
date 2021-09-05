@@ -3,10 +3,12 @@ import copy
 from django.conf import settings
 
 
-from opencontext_py.libs.chronotiles import ChronoTile
+from opencontext_py.libs.utilities import chronotiles
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
+
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
@@ -34,7 +36,7 @@ class ResultFacetsChronology():
         self.min_tile_depth = 12
         self.default_aggregation_depth = 16
         self.default_max_tile_count = 30
-        self.max_depth = ChronoTile.MAX_TILE_DEPTH
+        self.max_depth = chronotiles.MAX_TILE_DEPTH
         self.limiting_tile = None
         self.min_date = None  # bce / ce
         self.max_date = None  # bce / ce
@@ -44,35 +46,35 @@ class ResultFacetsChronology():
 
     def _set_client_earliest_latest_limits(self):
         """Sets earliest and latest date limits from the client"""
-        form_start = utilities.get_request_param_value(
+        all_start = utilities.get_request_param_value(
             self.request_dict, 
-            param='form-start',
+            param='allevent-start',
             default=None,
             as_list=False,
             solr_escape=False,
             require_float=True,
         ) 
-        if form_start:
-            self.exclude_before = form_start
-        form_stop = utilities.get_request_param_value(
+        if all_start:
+            self.exclude_before = all_start
+        all_stop = utilities.get_request_param_value(
             self.request_dict, 
-            param='form-stop',
+            param='allevent-stop',
             default=None,
             as_list=False,
             solr_escape=False,
             require_float=True,
         )
-        if form_stop:
-            self.exclude_after = form_stop
-        form_tile = utilities.get_request_param_value(
+        if all_stop:
+            self.exclude_after = all_stop
+        all_tile = utilities.get_request_param_value(
             self.request_dict, 
-            param='form-chronotile',
+            param='allevent-chronotile',
             default=None,
             as_list=False,
             solr_escape=False,
         )
-        if form_tile:
-            self.limiting_tile = form_tile
+        if all_tile:
+            self.limiting_tile = all_tile
 
 
     def _make_valid_options_tile_dicts(self, options_tuples):
@@ -86,27 +88,26 @@ class ResultFacetsChronology():
                 # So skip.
                 continue
             # Parse the tile to get date ranges.
-            chrono_t = ChronoTile()
-            tile_dict = chrono_t.decode_path_dates(tile)
+            tile_dict = chronotiles.decode_path_dates(tile)
             if not isinstance(tile_dict, dict):
                 # Not a valid data for some awful reason.
                 continue
             if (self.exclude_before is not None 
-                and tile_dict['earliest_bce'] < self.exclude_before):
+                and tile_dict['earliest_bce_ce'] < self.exclude_before):
                 # The date range is too early.
                 continue
             if (self.exclude_after is not None 
-                and tile_dict['latest_bce'] > self.exclude_after):
+                and tile_dict['latest_bce_ce'] > self.exclude_after):
                 # The date range is too late.
                 continue
             if self.min_date is None:
-                self.min_date = tile_dict['earliest_bce']
+                self.min_date = tile_dict['earliest_bce_ce']
             if self.max_date is None:
-                self.max_date = tile_dict['latest_bce']
-            if self.min_date > tile_dict['earliest_bce']:
-                self.min_date = tile_dict['earliest_bce']
-            if self.max_date < tile_dict['latest_bce']:
-                self.max_date = tile_dict['latest_bce']
+                self.max_date = tile_dict['latest_bce_ce']
+            if self.min_date > tile_dict['earliest_bce_ce']:
+                self.min_date = tile_dict['earliest_bce_ce']
+            if self.max_date < tile_dict['latest_bce_ce']:
+                self.max_date = tile_dict['latest_bce_ce']
             tile_dict['tile_key'] = tile
             tile_dict['count'] = count
             valid_tile_dicts.append(tile_dict)
@@ -143,17 +144,35 @@ class ResultFacetsChronology():
 
     def make_chronology_facet_options(self, solr_json):
         """Makes chronology facets from a solr_json response""" 
-        chrono_path_keys = (
-            configs.FACETS_SOLR_ROOT_PATH_KEYS 
-            + ['form_use_life_chrono_tile']
-        )
-        chrono_val_count_list = utilities.get_dict_path_value(
-            chrono_path_keys,
-            solr_json,
-            default=[]
-        )
-        if not len(chrono_val_count_list):
+        chrono_paths = [
+            (
+                configs.FACETS_SOLR_ROOT_PATH_KEYS 
+                + [
+                    f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
+                ]
+            ),
+            (
+                configs.FACETS_SOLR_ROOT_PATH_KEYS 
+                + [
+                    f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile',
+                ]
+            ),
+        ]
+        # Iterate through the high res, then the low res version
+        # of the chrono paths
+        for chrono_path_keys in chrono_paths:
+            chrono_val_count_list = utilities.get_dict_path_value(
+                chrono_path_keys,
+                solr_json,
+                default=[]
+            )
+            if chrono_val_count_list and len(chrono_val_count_list):
+                # we found what we're looking for!
+                break
+
+        if not chrono_val_count_list:
             return None
+
         options_tuples = utilities.get_facet_value_count_tuples(
             chrono_val_count_list
         )
@@ -183,18 +202,17 @@ class ResultFacetsChronology():
             if trim_tile_key not in aggregate_tiles:
                 # Make the aggregate tile dictionary
                 # object.
-                chrono_t = ChronoTile()
-                agg_dict = chrono_t.decode_path_dates(trim_tile_key)
+                agg_dict = chronotiles.decode_path_dates(trim_tile_key)
                 if (self.min_date is not None 
-                    and agg_dict['earliest_bce'] < self.min_date):
+                    and agg_dict['earliest_bce_ce'] < self.min_date):
                     # The aggregated date range looks too early, so
                     # set it to the earliest allowed.
-                    agg_dict['earliest_bce'] = self.min_date
+                    agg_dict['earliest_bce_ce'] = self.min_date
                 if (self.max_date is not None 
-                    and agg_dict['latest_bce'] > self.max_date):
+                    and agg_dict['latest_bce_ce'] > self.max_date):
                     # The aggregated date range looks too late, so
                     # set it to the latest date range allowed.
-                    agg_dict['latest_bce'] = self.max_date
+                    agg_dict['latest_bce_ce'] = self.max_date
                 agg_dict['tile_key'] = trim_tile_key
                 agg_dict['count'] = 0
                 aggregate_tiles[trim_tile_key] = agg_dict
@@ -208,7 +226,7 @@ class ResultFacetsChronology():
         # this makes puts early dates with longest timespans first
         sorted_agg_tiles = sorted(
             agg_tile_list,
-            key=lambda k: (k['earliest_bce'], -k['latest_bce'])
+            key=lambda k: (k['earliest_bce_ce'], -k['latest_bce_ce'])
         )
 
         options = []
@@ -222,19 +240,19 @@ class ResultFacetsChronology():
 
             # Update the request dict for this facet option.
             sl.replace_param_value(
-                'form-chronotile',
+                'allevent-chronotile',
                 match_old_value=None,
                 new_value=tile_dict['tile_key'],
             )
             sl.replace_param_value(
-                'form-start',
+                'allevent-start',
                 match_old_value=None,
-                new_value=tile_dict['earliest_bce'],
+                new_value=tile_dict['earliest_bce_ce'],
             )
             sl.replace_param_value(
-                'form-stop',
+                'allevent-stop',
                 match_old_value=None,
-                new_value=tile_dict['latest_bce'],
+                new_value=tile_dict['latest_bce_ce'],
             )  
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
@@ -248,14 +266,14 @@ class ResultFacetsChronology():
             option['count'] = tile_dict['count']
             option['category'] = 'oc-api:chrono-facet'
             option['start'] = ISOyears().make_iso_from_float(
-                tile_dict['earliest_bce']
+                tile_dict['earliest_bce_ce']
             )
             option['stop'] = ISOyears().make_iso_from_float(
-                tile_dict['latest_bce']
+                tile_dict['latest_bce_ce']
             )
             properties = LastUpdatedOrderedDict()
-            properties['early bce/ce'] = tile_dict['earliest_bce']
-            properties['late bce/ce'] = tile_dict['latest_bce']
+            properties['early bce/ce'] = tile_dict['earliest_bce_ce']
+            properties['late bce/ce'] = tile_dict['latest_bce_ce']
             option['properties'] = properties
             options.append(option)
 

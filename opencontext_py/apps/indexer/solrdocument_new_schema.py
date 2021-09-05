@@ -1246,6 +1246,19 @@ class SolrDocumentNS:
         self.fields[solr_chrono_earliest_field].append(date_start)
         self.fields[solr_chrono_latest_field].append(date_stop)
 
+        # Strictly speaking, the point field here is redundant, 
+        # but I want to experiment with it because it encapsulates
+        # start and stop values together (like the chrono_tile).
+        # It's useful to see if Solr can aggregate these for useful
+        # faceting.
+        solr_chrono_point_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_point'
+        if not self.fields.get(solr_chrono_point_field):
+            self.fields[solr_chrono_point_field] = []
+        self.fields[solr_chrono_point_field].append(
+            f'{date_start},{date_stop}'
+        )
+
+
 
     def _add_space_time_feature_event(self, feature, event_class_slug):
         """Adds space-time fields from a feature GeoJSON dict

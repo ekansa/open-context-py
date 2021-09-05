@@ -381,8 +381,8 @@ class SearchSolr():
             )
 
         # One or both of the form use life date limits can be None. 
-        query_dict = querymaker.get_form_use_life_span_query_dict(
-            form_start=utilities.get_request_param_value(
+        query_dict = querymaker.get_all_event_chrono_span_query_dict(
+            all_start=utilities.get_request_param_value(
                 request_dict, 
                 param='allevent-start',
                 default=None,
@@ -390,7 +390,7 @@ class SearchSolr():
                 solr_escape=False,
                 require_float=True,
             ), 
-            form_stop=utilities.get_request_param_value(
+            all_stop=utilities.get_request_param_value(
                 request_dict, 
                 param='allevent-stop',
                 default=None,
