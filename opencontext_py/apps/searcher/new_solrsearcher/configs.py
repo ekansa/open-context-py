@@ -142,8 +142,8 @@ GENERAL_STATS_FIELDS = [
 ]
 
 CHRONO_STATS_FIELDS =  [
-    f'{ROOT_EVENT_CLASS}___chrono_earliest',
-    f'{ROOT_EVENT_CLASS}___chrono_latest'
+    f'{ROOT_EVENT_CLASS}___chrono_point_0___pdouble',
+    f'{ROOT_EVENT_CLASS}___chrono_point_1___pdouble'
 ]
 
 MEDIA_STATS_FIELDS = [

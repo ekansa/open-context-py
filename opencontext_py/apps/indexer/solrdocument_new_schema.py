@@ -1117,6 +1117,13 @@ class SolrDocumentNS:
         
         # We're trusting these are valid!
 
+        # Capture the count of the number of geospatial objects associated
+        # with this item.
+        geo_count_field = event_class_slug + SOLR_VALUE_DELIM + 'geo_count'
+        if not self.fields.get(geo_count_field):
+            self.fields[geo_count_field] = 0
+        self.fields[geo_count_field] += 1
+
         # NOTE: ___geo_location is a SINGLE value field. Populate it only once for
         # using the first (most important) feature of this event class.
         coords_str = f'{latitude},{longitude}'
@@ -1211,6 +1218,13 @@ class SolrDocumentNS:
         if date_stop is None:
             date_stop = date_start
 
+        # Capture the count of the number of chronology time spans associated
+        # with this item.
+        chrono_count_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_count'
+        if not self.fields.get(chrono_count_field):
+            self.fields[chrono_count_field] = 0
+        self.fields[chrono_count_field] += 1
+
         # Try to make a chrono-path. This will error out if the date range
         # exceeds the maximum range allowed.
         try:
@@ -1233,18 +1247,6 @@ class SolrDocumentNS:
             self.fields[solr_lr_chrono_tile_field].append(
                 chrono_path[0:-LOW_RESOLUTION_CHRONOTILE_DROP_LAST]
             )
-
-        
-        # NOTE: ___chrono_earliest and chrono_latest are multi-valued fields, 
-        # so we can add multiple values for this event class.
-        solr_chrono_earliest_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_earliest'
-        if not self.fields.get(solr_chrono_earliest_field):
-            self.fields[solr_chrono_earliest_field] = []
-        solr_chrono_latest_field = event_class_slug + SOLR_VALUE_DELIM + 'chrono_latest'
-        if not self.fields.get(solr_chrono_latest_field):
-            self.fields[solr_chrono_latest_field] = []
-        self.fields[solr_chrono_earliest_field].append(date_start)
-        self.fields[solr_chrono_latest_field].append(date_stop)
 
         # Strictly speaking, the point field here is redundant, 
         # but I want to experiment with it because it encapsulates

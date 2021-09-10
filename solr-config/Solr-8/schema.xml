@@ -212,6 +212,8 @@
     <dynamicField name="*_geo_location_rpt"  type="location_rpt" indexed="true" stored="true" multiValued="false"/>
     <dynamicField name="*_coordinate"  type="pdouble" indexed="true"  stored="false"/>
 
+    <!-- Count of geosptial objects associated with the current document -->
+    <dynamicField name="*_geo_count" type="pint" indexed="true" stored="true" multiValued="false"/>
 
     <!-- the slug_type_uri_label of the (subjects) document that was the source of the chronology for this record -->
     <dynamicField name="*_chrono_source"  type="string"  indexed="true"  stored="true"  multiValued="false" required="false" />
@@ -221,14 +223,11 @@
     <!-- Same as above, but with lower resolution (shorter tile paths)-->
     <dynamicField name="*_lr_chrono_tile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
-    <!-- other chronological earliest date in Julian dates BCE  -->
-    <dynamicField name="*_chrono_earliest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
-
-    <!-- other chronological latest date in Julian dates BCE  -->
-    <dynamicField name="*_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
-
     <!-- Chronology ranges as points (earliest, latest) -->
     <dynamicField name="*_chrono_point" type="point" indexed="true" stored="true" multiValued="true"/>
+
+    <!-- Count of time-ranges associated with the current document -->
+    <dynamicField name="*_chrono_count" type="pint" indexed="true" stored="true" multiValued="false"/>
 
     <!-- ############################################################################################################ -->
 

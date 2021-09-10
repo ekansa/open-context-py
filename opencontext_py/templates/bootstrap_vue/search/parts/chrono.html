@@ -76,7 +76,7 @@ var vc_chronotiles = Vue.component(
                     0.05,
                     0.0,
                 ],
-                default_sigma_factor: 0.15,
+                default_sigma_factor: 0.25,
                 default_x_interval_count: 100,
                 default_y_no_value: 0,
                 default_gradient_type: 'blue_red',
@@ -170,7 +170,7 @@ var vc_chronotiles = Vue.component(
                     stroke: {
                         curve: 'smooth',
                         //curve: 'stepline',
-                        width: 2,
+                        width: 1,
                     },
                     tooltip: {
                         enabled: false,
@@ -218,9 +218,13 @@ var vc_chronotiles = Vue.component(
                 let chrono_chart_stop_x = Math.max.apply(Math, chrono.chart_year_x);
                 for (let year_x of this.chrono_all_years) {
                     let act_pair = {x:year_x, y:this.default_y_no_value};
-                    if(year_x >= this.chart_max_year){
+                    if(this.chart_max_year > this.chart_max_year && year_x >= this.chart_max_year){
                         // Don't put any later than the maximum year for the chart.
-                        act_pair.y = 0;
+                        act_pair.y = 0.0;
+                    }
+                    else if(this.chart_max_year < this.chart_max_year && year_x >= this.chrono_max_year){
+                        // This will be below the miniumum display value for the y-axis
+                        act_pair.y = -1.0;
                     }
                     else if(year_x == chrono_chart_start_x){
                         // The absolute minimum of the chrono span gets a 0
@@ -233,7 +237,12 @@ var vc_chronotiles = Vue.component(
                     else if(year_x > chrono_chart_start_x && year_x < chrono_chart_stop_x){
                         // For values between the chrono's chart min and max,
                         // use a gaussian function to make a reasonable looking curve.
+                        // The chrono_y_factor is a scaling factor. If a given chrono range
+                        // has a large number of records, then the y values will be larger.
                         act_pair.y = this.gaussian(year_x, chrono.median_year, sigma) * chrono_y_factor;
+                        // This subtraction is needed to make reasonable curves in cases where we've
+                        // chosen to make sigma a large fraction of the chrono object's time span.
+                        act_pair.y -= this.gaussian(chrono_chart_stop_x, chrono.median_year, sigma) * chrono_y_factor;
                     }
                     series.push(act_pair);
                 }
