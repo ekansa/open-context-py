@@ -170,7 +170,7 @@ class ResultMaker():
             self.result[json_ld_key] = act_time 
 
 
-    def add_form_use_life_date_range(self, solr_json, iso_year_format=True):
+    def add_all_events_date_range(self, solr_json, iso_year_format=True):
         """Adds earliest and latest form-use-life dates"""
         meta_configs = [
             (
@@ -178,7 +178,7 @@ class ResultMaker():
                 'allevent-start',
                 (
                     configs.STATS_FIELDS_PATH_KEYS + [
-                        f'{configs.ROOT_EVENT_CLASS}___chrono_earliest',
+                        f'{configs.ROOT_EVENT_CLASS}___chrono_point_0___pdouble',
                         'min',
                     ]
                 ),
@@ -188,7 +188,7 @@ class ResultMaker():
                 'allevent-stop',
                 (
                     configs.STATS_FIELDS_PATH_KEYS + [
-                        f'{configs.ROOT_EVENT_CLASS}___chrono_latest',
+                        f'{configs.ROOT_EVENT_CLASS}___chrono_point_1___pdouble',
                         'max',
                     ]
                 )
@@ -214,6 +214,52 @@ class ResultMaker():
         # Set the query result minimum and maximum date range.
         self.min_date = min(all_dates)
         self.max_date = max(all_dates)
+
+
+    def add_geo_chrono_counts(self, solr_json):
+        meta_configs = [
+            (
+                # Facets with counts of geo-spatial features per record (document)
+                "oc-api:all-geospatial-feature-counts",
+                (
+                    configs.FACETS_SOLR_ROOT_PATH_KEYS + [
+                        f'{configs.ROOT_EVENT_CLASS}___geo_count',
+                    ]
+                ),
+            ),
+            (
+                # Facets with counts of chronological ranges per record (document)
+                "oc-api:all-chronology-range-counts",
+                (
+                    configs.FACETS_SOLR_ROOT_PATH_KEYS + [
+                        f'{configs.ROOT_EVENT_CLASS}___chrono_count',
+                    ]
+                )
+            ),
+        ]
+        for result_key, facets_path in meta_configs:
+            val_count_list = utilities.get_dict_path_value(
+                facets_path,
+                solr_json,
+                default=[]
+            )
+            print(f'{result_key} from {facets_path} to {val_count_list}')
+            if not val_count_list:
+                continue
+            val_tuples = utilities.get_facet_value_count_tuples(
+                val_count_list
+            )
+            if not val_tuples:
+                continue
+            self.result[result_key] = []
+            for num_feat, count in val_tuples:
+                self.result[result_key].append(
+                    {
+                        'total_events_count': int(float(num_feat)),
+                        'count': count,
+                    }
+                )
+        return None
 
     # -----------------------------------------------------------------
     # Methods to make links for paging + sorting navigation 
@@ -679,7 +725,8 @@ class ResultMaker():
             # Add search metadata to the response to the client.
             self.result['id'] = self.make_response_id()
             self.add_publishing_datetime_metadata(solr_json)
-            self.add_form_use_life_date_range(solr_json)
+            self.add_all_events_date_range(solr_json)
+            self.add_geo_chrono_counts(solr_json)
             # The paging function below provides the count of 
             # search results
             self.add_paging_json(solr_json)

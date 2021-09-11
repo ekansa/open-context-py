@@ -50,6 +50,7 @@
                     <div v-if="chrono_facets">
                         <chronotiles
                             :key="'chrono-tiles-component-' + chrono_tiles_component_key_index"
+                            v-bind:result_id="result.id"
                             v-bind:chrono_facets="chrono_facets"></chronotiles>
                     </div>
                 </div>
@@ -75,46 +76,8 @@
 
 <script type="text/javascript">
     // Populated by Django.
-    var base_url = '{{ BASE_URL|safe }}';
-  
-    // These are functions needed to play with the URLs returned
-    // by the Open Context search API so we can do useful things
-    // in Vue templating.
-    //
-    // TODO: Move these someplace else.
-    //
-    function remove_prefix(str, prefix){
-         if(str.startsWith(prefix)){
-              return str.slice(prefix.length);
-         } else {
-              return str;
-         }
-    }
-    function abs_to_rel_url(url){
-         return remove_prefix(url, base_url);
-    }
-    function make_url_variants(url){
-         var urls = [url];
-         var prefixes = [
-              {f: 'http://', r: 'https://'},
-              {f: 'https://', r: 'http://'},
-              {f: 'oc-gen:', r: 'http://opencontext.org/'},
-              {f: 'http://', r: 'https://'}, // for https variants of OC.
-         ];
-         for(let prefix_conf of prefixes){
-              var new_url = url;
-              if(url.startsWith(prefix_conf.f)){
-                   new_url = prefix_conf.r + remove_prefix(url, prefix_conf.f);
-              }
-              if(urls.indexOf(new_url) >= 0 ){
-                   continue;
-              }
-              urls.push(new_url);
-         }
-         return urls;
-    }
-
-    var api_url = abs_to_rel_url('{{ api_url|safe }}');
+    const BASE_URL = '{{ BASE_URL|safe }}';
+    var api_url = abs_to_rel_url('{{ api_url|safe }}', BASE_URL);
 
     const GEO_JSON = null;
 

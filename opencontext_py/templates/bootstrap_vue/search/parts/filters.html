@@ -100,7 +100,7 @@ var vc_all_filters = Vue.component(
 
 
 function make_broaden_link_with_last_hash(raw_filter){
-    let broaden_link = abs_to_rel_url(raw_filter['oc-api:broaden']);
+    let broaden_link = abs_to_rel_url(raw_filter['oc-api:broaden'], BASE_URL);
     if(raw_filter["oc-api:filter-group"].indexOf("---") < 0){
         return broaden_link + '#' + raw_filter["oc-api:filter-slug"];
     }
@@ -138,14 +138,14 @@ function group_filters(result){
             }
             temp_groups[group_key] = {
                 'label': raw_filter['oc-api:filter'],
-                'key': abs_to_rel_url(raw_filter['oc-api:remove']),
-                'remove_href': abs_to_rel_url(raw_filter['oc-api:remove']),
+                'key': abs_to_rel_url(raw_filter['oc-api:remove'], BASE_URL),
+                'remove_href': abs_to_rel_url(raw_filter['oc-api:remove'], BASE_URL),
                 'path_delim': path_delim,
                 'filters': []
             };
         }
         if(('oc-api:broaden' in raw_filter)){
-            raw_filter['key'] =  abs_to_rel_url(raw_filter['oc-api:broaden']);
+            raw_filter['key'] =  abs_to_rel_url(raw_filter['oc-api:broaden'], BASE_URL);
             raw_filter['oc-api:broaden'] = make_broaden_link_with_last_hash(raw_filter);
         }
         temp_groups[group_key]['filters'].push(raw_filter);

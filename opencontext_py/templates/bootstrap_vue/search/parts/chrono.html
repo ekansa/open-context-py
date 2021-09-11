@@ -3,22 +3,54 @@
 
 <template id="chronotiles-template">
 
-<div class="card bg-light" id="acc-filters">
+<div class="card bg-light" id="all-chrono-card">
     <div class="card-header"> 
         <h5 class="filter_heading_labels">
-            Timespans
+            Time Ranges (Years BCE/CE)
         </h5>
     </div>
         
     <div class="card-body small">
-        <div v-if="data_series.length" id="chrono-chart">
-            <apexchart 
+        <b-container fluid v-if="data_series.length" id="all-chrono-chart">
+            <apexchart
+                id="chrono-chart"
                 width="100%" 
                 type="area"
                 :options="options"
                 :series="data_series">
             </apexchart>
-        </div>
+            <div id="chrono-slider-outer">
+                <div id="range-slider-outer" class="range-slider">
+                    <b-form-input @change="slider_time_range_change" v-model="input_min" :min="chart_min_year" :max="chart_max_year" type="range"></b-form-input>
+                    <b-form-input @change="slider_time_range_change" v-model="input_max" :min="chart_min_year" :max="chart_max_year" type="range"></b-form-input>
+                </div>
+            </div>
+            <b-row class="text-center" align-v="center">
+                <b-col lg="5"><small><strong>Filter within time range</strong><br/>(Move markers or type years BCE/CE ranges)</small></b-col>
+                <b-col lg="2">
+                    <b-form-input @change="input_time_range_change" type="number" v-model="input_min" size="sm" class="text-center"></b-form-input>
+                </b-col>
+                <b-col lg="1">to</b-col>
+                <b-col lg="2">
+                    <b-form-input @change="input_time_range_change" type="number" v-model="input_max" size="sm" class="text-center"></b-form-input>
+                </b-col>
+                <b-col lg="1">
+                    <div v-if="time_range_filter_link">
+                        <router-link :title="'Filter from ' + input_min + ' to ' + input_max" :to="time_range_filter_link" >
+                            <b-button variant="primary">
+                                <b-icon-calendar2-check-fill></b-icon-calendar2-check-fill>
+                            </b-button>
+                        </router-link>
+                    </div>
+                    <div v-else>
+                        <b-button title="Select a time range to filter" disabled>
+                            <b-icon-calendar2-check-fill></b-icon-calendar2-check-fill>
+                        </b-button>
+                    </div>
+                    
+                </b-col>
+            </b-row>
+        </b-container>
         <div v-else>
             <b-spinner class="m-5" label="Busy"></b-spinner>
             <p>Getting time-span data...</p>
@@ -31,10 +63,115 @@
 
 
 <style type="text/css">
+
+#all-chrono-card {
+    margin-top: 24px;
+}
+
+#chrono-chart {
+    margin-bottom: 0px;
+}
 /* don't display the no-pointer circle in the chrono chart */
 #chrono-chart circle.no-pointer-events {
     display: none;
 }
+
+#chrono-slider-outer {
+    width: 100%;
+    margin: auto;
+    text-align: center;
+    padding-left: 20px;
+    padding-right: 22px;
+    margin-top: 60px;
+    margin-bottom: 24px;
+    z-index: 1;
+}
+#range-slider-outer {
+    z-index: 10;
+    height: 18px;
+    margin-top: -112px;
+}
+.range-slider {
+  width: 100%;
+  margin-top: -118px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  position: relative;
+  height: 6em;
+  z-index: 11;
+}
+
+.range-slider svg,
+.range-slider input[type=range] {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.range-slider input[type=number] {
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 1.6em;
+  -moz-appearance: textfield;
+}
+
+.range-slider input[type=number]::-webkit-outer-spin-button,
+.range-slider input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.range-slider input[type=number]:invalid,
+.range-slider input[type=number]:out-of-range {
+  border: 2px solid #ff6347;
+}
+
+.range-slider input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+}
+
+.range-slider input[type=range]:focus {
+  outline: none;
+}
+
+.range-slider input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #848485;
+}
+
+.range-slider input[type=range]:focus::-ms-fill-lower {
+  background: #848485;
+}
+
+.range-slider input[type=range]:focus::-ms-fill-upper {
+  background: #848485;
+}
+
+.range-slider input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 5px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: #848485;
+  border-radius: 1px;
+  box-shadow: none;
+  border: 0;
+}
+
+.range-slider input[type=range]::-webkit-slider-thumb {
+  z-index: 7;
+  position: relative;
+  box-shadow: 0px 0px 0px #000;
+  border: 1px solid #848485;
+  height: 18px;
+  width: 18px;
+  border-radius: 25px;
+  background: #a1d0ff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -7px;
+}
+
 </style>
 
 
@@ -46,9 +183,10 @@ var vc_chronotiles = Vue.component(
     'chronotiles',
     {
         delimiters: ['[[', ']]'],
-        props: ['chrono_facets',],
+        props: ['result_id', 'chrono_facets',],
         data() {
             return {
+                result_id: null,
                 chrono_facets: null,
                 data_series: [],
                 data_series_colors: [],
@@ -61,6 +199,7 @@ var vc_chronotiles = Vue.component(
                 chrono_min_year: null,
                 chrono_max_year: null,
                 chart_count_per_year: null,
+                chart_min_year: null,
                 chart_max_year: 2000,
                 t_span_min: 25,
                 curve_steps: [
@@ -76,6 +215,8 @@ var vc_chronotiles = Vue.component(
                     0.05,
                     0.0,
                 ],
+                input_min: null,
+                input_max: null,
                 default_sigma_factor: 0.25,
                 default_x_interval_count: 100,
                 default_y_no_value: 0,
@@ -173,7 +314,18 @@ var vc_chronotiles = Vue.component(
                         width: 1,
                     },
                     tooltip: {
-                        enabled: false,
+                        enabled: true,
+                        shared: false,
+                        intersect: false,
+                        followCursor: true,
+                        inverseOrder: false,
+                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                            // console.log('s index: ' + seriesIndex + ' dp index: ' + dataPointIndex);
+                            let act_series = w.config.series[seriesIndex];
+                            return '<div class="arrow_box">' +
+                            '<span>Circa ' + act_series.name + '</span>' +
+                            '</div>'
+                        }
                     },
                 },
             };
@@ -196,12 +348,60 @@ var vc_chronotiles = Vue.component(
                 act_options.chart.animations.enabled = false;
                 return act_options;
             },
+            time_range_filter_link() {
+                let current_url = this.result_id;
+                if(this.input_min == null || this.input_max == null){
+                    return null;
+                }
+                let current_min = getURLParameter(current_url, 'allevent-start');
+                let current_max = getURLParameter(current_url, 'allevent-stop');
+                if(!current_min && !current_max){
+                    if(this.input_min <= this.chrono_min_year && this.input_max >= this.chrono_max_year){
+                        return null;
+                    }
+                }
+                else if (parseInt(current_min) == this.input_min && parseInt(current_max) == this.input_max){
+                    return null;
+                }
+
+                let url = replaceURLparameter(current_url, 'allevent-start', this.input_min);
+                url = replaceURLparameter(url, 'allevent-stop', this.input_max);
+                let hash = '';
+                if(window.location.hash) {
+                    hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+                }
+                if(url.indexOf(hash) < 0){
+                    url += hash;
+                }
+                url = abs_to_rel_url(url, BASE_URL);
+                return url;
+            },
         },
         methods: {
             round_date(date){
                 let n_date = parseFloat(date);
                 let rounded = n_date + this.t_span_min/2 - (n_date + this.t_span_min/2) % this.t_span_min;
                 return rounded;
+            },
+            format_bce_ce(date){
+                if(date < 0){
+                    return `${(date * -1)} BCE`;
+                }
+                return `${date} CE`;
+            },
+            input_time_range_change: function() {
+                this.input_min = parseInt(this.input_min);
+                this.input_max = parseInt(this.input_max);
+                if (this.input_min > this.input_max) {
+                    console.log('Fix input range ' + this.input_min + ' to ' + this.input_max);
+                    let tmp =  this.input_max;
+                    this.input_max = this.input_min;
+                    this.input_min = tmp;
+                    console.log('Fixed input range ' + this.input_min + ' to ' + this.input_max);
+                }
+            },
+            slider_time_range_change: function() {
+                this.input_time_range_change();
             },
             gaussian(x, mean, sigma) {
                 let gaussianConstant = 1 / Math.sqrt(2 * Math.PI);
@@ -252,8 +452,10 @@ var vc_chronotiles = Vue.component(
                         {x:this.chart_max_year, y:this.default_y_no_value}
                     );
                 }
+                let start_bce_ce = this.format_bce_ce(this.round_date(chrono.start));
+                let stop_bce_ce = this.format_bce_ce(this.round_date(chrono.stop));
                 return {
-                    name: `${this.round_date(chrono.start)} to ${this.round_date(chrono.stop)} (Count: ${chrono.count})`,
+                    name: `${start_bce_ce} to ${stop_bce_ce} (Count: ${chrono.count})`,
                     data: series,
                 }
             },
@@ -324,8 +526,14 @@ var vc_chronotiles = Vue.component(
                 this.chrono_max_count = Math.max.apply(Math, chrono_counts);
                 this.chrono_max_count_per_year = Math.max.apply(Math, chrono_counts_per_year);
                 this.chrono_min_year = Math.min.apply(Math, this.chrono_all_years);
+                this.chart_min_year = this.round_date(this.chrono_min_year - (this.t_span_min * 2.5));
                 this.chrono_max_year = Math.max.apply(Math, this.chrono_all_years);
+                this.chrono_all_years = [this.chart_min_year].concat(this.chrono_all_years);
+                this.chrono_all_years.sort(function(a, b){return a-b});
                 this.chart_count_per_year = (this.chart_max_year - this.chrono_min_year) / this.chrono_total_count;
+
+                this.input_min = this.chrono_min_year;
+                this.input_max = this.chrono_max_year;
 
                 // Now make a list of chrono.id, sorted in descending (reverse) order of their
                 // time-spans. This lets us put the biggest time spans at the bottom of the

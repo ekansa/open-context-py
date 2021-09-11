@@ -237,7 +237,7 @@ function prepare_option(prefix, hash_prefix, i, f_opt){
     f_opt.key = `${prefix}-option-${i}`;
     f_opt.dom_id = `${prefix}-option-${i}`;
     f_opt.last_hash = make_last_hash(hash_prefix, f_opt.slug);
-    f_opt.id = abs_to_rel_url(f_opt.id);
+    f_opt.id = abs_to_rel_url(f_opt.id, BASE_URL);
     if (f_opt.id.indexOf(('#' + f_opt.last_hash)) < 0) {
         f_opt.id += '#' + f_opt.last_hash;
     }

@@ -24,6 +24,14 @@ REQUEST_URL_FORMAT_EXTENTIONS = [
 ]
 
 
+# Geospace and chronology related facets are in a hierachy of
+# event classes. For now, we'll only use the root of the hierarchy, but
+# in the future we may want to implement features to allow queries and
+# visualizations of different types of geospatial and chronological 
+# events.
+ROOT_EVENT_CLASS = SolrDoc.ALL_EVENTS_SOLR
+
+
 # ---------------------------------------------------------------------
 # Solr Search Configs
 # ---------------------------------------------------------------------
@@ -40,8 +48,9 @@ DEFAULT_FACET_FIELDS = [
     'other_binary_media_count',
     'documents_count',
     'all_events___geo_precision_factor',
-    'event_class_slugs'
-    # 'disc_geosource',
+    'event_class_slugs',
+    f'{ROOT_EVENT_CLASS}___geo_count',
+    f'{ROOT_EVENT_CLASS}___chrono_count',
 ]
 
 
@@ -73,11 +82,6 @@ ITEM_TYPE_FACETFIELDS = {
         'oc_gen_media___pred_id'
     ],
 }
-
-# Set facet limits for different solr fields. -1 indicates
-# no limit to the number of facets, which means the most
-# expensive.
-ROOT_EVENT_CLASS = SolrDoc.ALL_EVENTS_SOLR
 
 
 SOLR_FIELDS_FACET_LIMITS = [

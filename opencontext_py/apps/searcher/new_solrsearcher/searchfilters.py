@@ -186,7 +186,7 @@ class SearchFilters():
                 act_val=act_val    
             )
         
-        if param_key in ['form-start', 'form-stop']:
+        if param_key in ['allevent-start', 'allevent-stop']:
             # Case for filters on years.
             act_date = utilities.string_to_int(act_val)
             if act_date is None:
@@ -196,7 +196,7 @@ class SearchFilters():
             else:
                 act_filter['label'] = '{} CE'.format(act_date) 
        
-        elif param_key == 'form-chronotile':
+        elif param_key == 'allevent-chronotile':
             chrono = ChronoTile()
             dates = chrono.decode_path_dates(act_val)
             if isinstance(dates, dict):
@@ -207,12 +207,12 @@ class SearchFilters():
             else:
                 act_filter['label'] = 'Invalid chronology encoding'
 
-        elif param_key == 'disc-geotile':
+        elif param_key == 'allevent-geotile':
             act_filter['label'] = make_geotile_filter_label(
                 act_val
             )
         
-        elif param_key == 'disc-bbox':
+        elif param_key == 'allevent-bbox':
             act_filter['label'] = make_bbox_filter_label(
                 act_val
             )
