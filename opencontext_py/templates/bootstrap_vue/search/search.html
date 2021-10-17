@@ -4,6 +4,7 @@
 
 {% include '../common_geo.html' %}
 {% include '../search/parts/chrono.html' %}
+{% include '../search/parts/tabs.html' %}
 {% include '../search/parts/filters.html' %}
 {% include '../search/parts/facets.html' %}
 
@@ -17,6 +18,14 @@
             <div class="row">
                 <div class="col-sm-8">
 
+                    <all-search-tabs
+                        v-bind:result="result"
+                        v-bind:chrono_facets="chrono_facets"
+                        v-bind:chrono_tiles_component_key_index="chrono_tiles_component_key_index"
+                    >
+                    </all-search-tabs>
+
+                    <!--
                     <div class="card">
                         <div class="card-header">
                             <h5 v-if="result">
@@ -53,6 +62,8 @@
                             v-bind:result_id="result.id"
                             v-bind:chrono_facets="chrono_facets"></chronotiles>
                     </div>
+                
+                -->
                 </div>
                 <div class="col-sm-4">
                     <div v-if="result">
@@ -163,8 +174,9 @@
             }
         },
         components: {
-            'common_map': vc_common_map,
-            'chronotiles': vc_chronotiles,
+            // 'common_map': vc_common_map,
+            // 'chronotiles': vc_chronotiles,
+            'all-search-tabs': vc_all_search_tabs,
             'all-filters': vc_all_filters,
             'all-facets': vc_all_facets,
         },

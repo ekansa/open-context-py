@@ -161,7 +161,7 @@ class ResultFacetsGeo():
 
         when = LastUpdatedOrderedDict()
         when['id'] = f'#event-{id_suffix}'
-        when['type'] = 'oc-gen:general-time-space'
+        when['type'] = configs.DEFAULT_API_EVENT_ID
         # convert numeric to GeoJSON-LD ISO 8601
         when['start'] = ISOyears().make_iso_from_float(
             self.min_date

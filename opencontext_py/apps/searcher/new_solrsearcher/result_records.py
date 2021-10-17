@@ -522,7 +522,9 @@ class ResultRecord():
 
     def set_geo_point_attributes(self, solr_doc):
         """Sets geospatial point attribute values"""
-        disc_geo = solr_doc.get('all_events___geo_location')
+        disc_geo = solr_doc.get(
+            f'{configs.ROOT_EVENT_CLASS}___geo_location'
+        )
         if not disc_geo or ',' not in disc_geo:
             # No point found or it is not valid
             self.geo_feature_type = None
@@ -540,11 +542,19 @@ class ResultRecord():
             self.longitude,
             self.latitude,
         ]
-    
+
+
     def set_chrono_ranges(self, solr_doc):
         """Sets chronology date ranges for the record"""
-        dates = solr_doc.get('all_events___chrono_earliest', [])
-        dates += solr_doc.get('all_events___chrono_latest', [])
+        dates = []
+        for i in [0, 1]:
+            date_solr = solr_doc.get(
+                f'{configs.ROOT_EVENT_CLASS}___chrono_point_{i}___pdouble', 
+            )
+            if date_solr is None:
+                continue
+            dates.append(date_solr)
+
         if not len(dates):
             return None
         self.early_date = min(dates)

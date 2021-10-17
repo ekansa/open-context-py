@@ -104,9 +104,13 @@ function make_broaden_link_with_last_hash(raw_filter){
     let prefix_parts = raw_filter["oc-api:filter-group"].split('---');
     let act_prefix = prefix_parts[0];
     if(act_prefix == raw_filter["oc-api:filter-slug"]){
-        return broaden_link + '#' + act_prefix;
+        return update_search_url_frag_key_val(broaden_link, "aq", act_prefix);
     }
-    return broaden_link + '#' + act_prefix + '---' + raw_filter["oc-api:filter-slug"];
+    return update_search_url_frag_key_val(
+        broaden_link, 
+        "aq", 
+        (act_prefix + '---' + raw_filter["oc-api:filter-slug"])
+    );
 }
 
 

@@ -744,6 +744,9 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
     'media': 'oc-api:has-rel-media-options',
 }
 
+# Default time-space event category for API
+DEFAULT_API_EVENT_ID = 'oc-gen:general-time-space'
+
 
 
 # ---------------------------------------------------------------------

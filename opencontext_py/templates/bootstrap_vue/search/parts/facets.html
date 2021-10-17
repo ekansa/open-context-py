@@ -233,13 +233,23 @@ function make_last_hash(hash_prefix, slug){
     return act_prefix + '---' + slug;
 }
 
+function check_url_has_aq_val(url, check_aq_val){
+    if(url.indexOf('#') < 0){
+        // Not hash value.
+        return false;
+    }
+    let frag_str = url.split('#')[1];
+    let url_aq_val = get_search_frag_key("aq", frag_str);
+    return url_aq_val == check_aq_val;
+}
+
 function prepare_option(prefix, hash_prefix, i, f_opt){
     f_opt.key = `${prefix}-option-${i}`;
     f_opt.dom_id = `${prefix}-option-${i}`;
     f_opt.last_hash = make_last_hash(hash_prefix, f_opt.slug);
     f_opt.id = abs_to_rel_url(f_opt.id, BASE_URL);
-    if (f_opt.id.indexOf(('#' + f_opt.last_hash)) < 0) {
-        f_opt.id += '#' + f_opt.last_hash;
+    if (!check_url_has_aq_val(f_opt.id, f_opt.last_hash)) {
+        f_opt.id = update_search_url_frag_key_val(f_opt.id, "aq", f_opt.last_hash);
     }
     return f_opt;
 }
@@ -322,11 +332,7 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
 
 function prepare_facets_dtypes_groups_opts(result){
     // Prepares facet options lists for templates
-    let hash = null;
-    if(window.location.hash) {
-        hash = window.location.hash.substring(1); //Puts hash in variable, and removes the # character
-        console.log(hash);
-    }
+    let aq_from_hash = get_search_current_frag_key("aq");
     var first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
     var facets_dtypes_groups_opts = []; // main output.
     if (!('oc-api:has-facets' in result)){
@@ -379,7 +385,7 @@ function prepare_facets_dtypes_groups_opts(result){
             f_field[opts_conf.list_key] = 'moved';
         }
         
-        if((hash != null) && f_field.id.endsWith(hash)){
+        if((aq_from_hash != null) && f_field.id.endsWith(aq_from_hash)){
             f_field.start_open = true;
             first_dtypes_groups_opts.push(f_field);
         }

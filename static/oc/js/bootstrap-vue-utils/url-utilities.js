@@ -114,3 +114,128 @@ function parseUrl() {
 	});
 	return result;
 }
+
+
+const SEARCH_FRAGMENT_KEYS = [
+    'tab', // tab in view
+    'aq', // active query
+    'zm', // map zoom level
+    'tilezm', // tie zoom level
+    'lat', // map lat
+    'lon', // map lon
+    'geovis', // map visualization type
+    'tiles', // base map tile type
+];
+
+const FRAG_KEY_DELIM = '/';
+const FRAG_KEY_VAL_DEMIM = '=';
+
+function parse_frag_dict(frag_str, allowed_keys){
+    let frag_obj = {};
+    let frag_parts = frag_str.split(FRAG_KEY_DELIM);
+    for(let frag_part of frag_parts){
+        let key_val = frag_part.split(FRAG_KEY_VAL_DEMIM);
+        if(key_val.length != 2){
+            continue;
+        }
+        let key = key_val[0];
+        let val = key_val[1];
+        if(allowed_keys.indexOf(key) < 0){
+            console.log("Unknown frag key: " + key);
+            continue;
+        }
+        frag_obj[key] = val;
+    }
+    return frag_obj;
+}
+
+function parse_search_frag_dict(frag_str){
+    return parse_frag_dict(frag_str, SEARCH_FRAGMENT_KEYS);
+}
+
+function encode_frag_obj(frag_obj){
+    let key_vals = [];
+    for (let entry of Object.entries(frag_obj)) {
+        let str_entry = entry.join(FRAG_KEY_VAL_DEMIM);
+        key_vals.push(str_entry);
+    }
+    return key_vals.join(FRAG_KEY_DELIM);
+}
+
+function get_frag_key(key, frag_str, allowed_keys){
+    let frag_obj = parse_frag_dict(frag_str, allowed_keys);
+    if(key in frag_obj){
+        return frag_obj[key];
+    }
+    return null;
+}
+
+function get_search_frag_key(key, frag_str){
+    return get_frag_key(key, frag_str, SEARCH_FRAGMENT_KEYS);
+}
+
+function update_frag_str(key, val, frag_str, allowed_keys){
+    let frag_obj = parse_frag_dict(frag_str, allowed_keys);
+    if(allowed_keys.indexOf(key) < 0){
+        return encode_frag_obj(frag_obj);
+    }
+    frag_obj[key] = val;
+    return encode_frag_obj(frag_obj);
+}
+
+function update_search_frag_str(key, val, frag_str){
+    return update_frag_str(key, val, frag_str, SEARCH_FRAGMENT_KEYS);
+}
+
+function get_current_frag_obj(allowed_keys){
+    if(window.location.hash) {
+        //Puts hash in variable, and removes the # character
+        let frag_str = window.location.hash.substring(1);
+        return parse_frag_dict(frag_str, allowed_keys);
+    }
+    else{
+        return {};
+    }
+}
+
+function get_search_current_frag_obj(){
+    if(window.location.hash) {
+        //Puts hash in variable, and removes the # character
+        let frag_str = window.location.hash.substring(1);
+        return parse_search_frag_dict(frag_str);
+    }
+    else{
+        return {};
+    }
+}
+
+function get_current_frag_key(key, allowed_keys){
+    let frag_obj = get_current_frag_obj(allowed_keys);
+    if(key in frag_obj){
+        return frag_obj[key];
+    }
+    return null;
+}
+
+function get_search_current_frag_key(key){
+    let frag_obj = get_search_current_frag_obj();
+    if(key in frag_obj){
+        return frag_obj[key];
+    }
+    return null;
+}
+
+function update_url_frag_key_val(url, key, val, allowed_keys){
+    let frag_str = '';
+    if(url.indexOf('#') >= 0){
+        url_parts = url.split('#');
+        url = url_parts[0];
+        frag_str = url_parts[1];
+    }
+    frag_str = update_frag_str(key, val, frag_str, allowed_keys);
+    return url + '#' + frag_str;
+}
+
+function update_search_url_frag_key_val(url, key, val){
+    return update_url_frag_key_val(url, key, val, SEARCH_FRAGMENT_KEYS);
+}

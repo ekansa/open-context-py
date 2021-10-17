@@ -264,7 +264,7 @@ class ResultFacetsChronology():
             option['id'] = urls['html']
             option['json'] = urls['json']
             option['count'] = tile_dict['count']
-            option['category'] = 'oc-api:chrono-facet'
+            option['category'] = configs.DEFAULT_API_EVENT_ID
             option['start'] = ISOyears().make_iso_from_float(
                 tile_dict['earliest_bce_ce']
             )
