@@ -68,23 +68,23 @@
 var vc_all_search_tabs = Vue.component(
     'all-search-tabs',
     {
-        delimiters: ['[[', ']]'],
-        props: ['result', 'chrono_facets', 'chrono_tiles_component_key_index'],
-        template: '#all-search-tabs-temp',
-        data: {
-            message: 'Open Context Search Result',
-            result: null,
-            map: null,
-            tile_layer: null,
-            emit_update_fetch_done: false,
-            chrono_tiles_component_key_index: 0,
-        },
-        methods: {
-        },
-        components: {
-          'common_map': vc_common_map,
-          'chronotiles': vc_chronotiles,
-        }
+      delimiters: ['[[', ']]'],
+      props: ['result', 'chrono_facets', 'chrono_tiles_component_key_index'],
+      template: '#all-search-tabs-temp',
+      data: {
+        message: 'Open Context Search Result',
+        result: null,
+        map: null,
+        tile_layer: null,
+        emit_update_fetch_done: false,
+        chrono_tiles_component_key_index: 0,
+      },
+      methods: {
+      },
+      components: {
+        'common_map': vc_common_map,
+        'chronotiles': vc_chronotiles,
+      }
     }
 );
 

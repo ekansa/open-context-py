@@ -99,7 +99,11 @@ var vc_all_filters = Vue.component(
 function make_broaden_link_with_last_hash(raw_filter){
     let broaden_link = abs_to_rel_url(raw_filter['oc-api:broaden'], BASE_URL);
     if(raw_filter["oc-api:filter-group"].indexOf("---") < 0){
-        return broaden_link + '#' + raw_filter["oc-api:filter-slug"];
+        return update_search_url_frag_key_val(
+            broaden_link, 
+            "aq", 
+            raw_filter["oc-api:filter-slug"]
+        );
     }
     let prefix_parts = raw_filter["oc-api:filter-group"].split('---');
     let act_prefix = prefix_parts[0];
