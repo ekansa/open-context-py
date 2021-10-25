@@ -1,0 +1,66 @@
+{% load humanize %}
+
+
+<template id="all-numeric-facets-template">
+    <div>
+        <div v-if="facets_numeric_groups_opts">
+            <div class="row">
+                <div class="col-sm-12">
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="col" v-if="facets_int_groups_opts">
+                    <all-facets
+                        v-bind:options_title="'Integer Fields'"
+                        v-bind:facets_dtypes_groups_opts="facets_int_groups_opts"></all-facets>
+                </div>
+                <div class="col" v-if="facets_double_groups_opts">
+                    <all-facets
+                        v-bind:options_title="'Decimal Fields'"
+                        v-bind:facets_dtypes_groups_opts="facets_double_groups_opts"></all-facets>
+                </div>
+                <div class="col" v-if="facets_date_groups_opts">
+                    <all-facets
+                        v-bind:options_title="'Calendar Fields'"
+                        v-bind:facets_dtypes_groups_opts="facets_date_groups_opts"></all-facets>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+
+<script type="text/javascript">
+
+
+var vc_all_numeric_facets = Vue.component(
+    'all-numeric-facets',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'facets_numeric_groups_opts',
+            'facets_int_groups_opts',
+            'facets_double_groups_opts',
+            'facets_date_groups_opts',
+        ],
+        template: '#all-numeric-facets-template',
+        data: {
+            facets_numeric_groups_opts: null,
+            facets_int_groups_opts: null,
+            facets_double_groups_opts: null,
+            facets_date_groups_opts: null,
+        },
+        methods: {
+            
+        },
+        components: {
+            'all-facets': vc_all_facets,
+        }
+    }
+);
+
+
+
+
+</script>

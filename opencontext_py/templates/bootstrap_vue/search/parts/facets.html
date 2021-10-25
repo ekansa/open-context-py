@@ -3,7 +3,7 @@
 
 <template id="all-facets-template">
     <div id="all_facet_filters">
-        <h4>Filtering Options</h4>
+        <h4>[[ options_title ]]</h4>
         <div v-if="facets_dtypes_groups_opts">
             <div id="acc-facets" v-if="facets_dtypes_groups_opts.length">
                 <facets-xfacet-dtypes-groups-opts
@@ -166,7 +166,10 @@ var vc_all_facets = Vue.component(
     'all-facets',
     {
         delimiters: ['[[', ']]'],
-        props: ['facets_dtypes_groups_opts'],
+        props: ['facets_dtypes_groups_opts', 'options_title'],
+        data: {
+            options_title: 'Filtering Options',
+        },
         template: '#all-facets-template',
         components: {
             'facets-xfacet-dtypes-groups-opts': vc_xfacet_dtypes_groups_opts,
@@ -247,6 +250,10 @@ function prepare_option(prefix, hash_prefix, i, f_opt){
     f_opt.key = `${prefix}-option-${i}`;
     f_opt.dom_id = `${prefix}-option-${i}`;
     f_opt.last_hash = make_last_hash(hash_prefix, f_opt.slug);
+    if (typeof(f_opt.id) === 'undefined'){
+        console.log('No id in ' + f_opt);
+        return null;
+    }
     f_opt.id = abs_to_rel_url(f_opt.id, BASE_URL);
     if (!check_url_has_aq_val(f_opt.id, f_opt.last_hash)) {
         f_opt.id = update_search_url_frag_key_val(f_opt.id, "aq", f_opt.last_hash);
@@ -255,11 +262,14 @@ function prepare_option(prefix, hash_prefix, i, f_opt){
 }
 
 function prepare_options_list(dom_id_prefix, hash_prefix, raw_options_list){
-    var prepare_options = [];
-    var i = 0;
+    let prepare_options = [];
+    let i = 0;
     for(let f_opt of raw_options_list){
         i +=1;
         f_opt = prepare_option(dom_id_prefix, hash_prefix, i, f_opt);
+        if(!f_opt){
+            continue;
+        }
         prepare_options.push(f_opt);
     }
     return prepare_options;
@@ -280,6 +290,9 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
             i +=1;
             var opt_uri = i;
             f_opt = prepare_option(dom_id_prefix, hash_prefix, i, f_opt);
+            if(!f_opt){
+                continue;
+            }
             if ('rdfs:isDefinedBy' in f_opt){
                 opt_uri = f_opt['rdfs:isDefinedBy'];
             }
@@ -330,7 +343,8 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
     return groups_opts;
 }
 
-function prepare_facets_dtypes_groups_opts(result){
+
+function prepare_facets_dtypes_groups_opts_by_data_types(result, allowed_data_types){
     // Prepares facet options lists for templates
     let aq_from_hash = get_search_current_frag_key("aq");
     var first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
@@ -359,6 +373,15 @@ function prepare_facets_dtypes_groups_opts(result){
                 'groups_opts': null,
             };
         
+            if(allowed_data_types.indexOf(opts_conf.data_type) < 0){
+                // The data-type here is not what we want to handle
+                continue;
+            }
+
+            if(act_options_list === 'moved'){
+                continue;
+            }
+
             if(opts_conf.data_type == 'id' || opts_conf.data_type == 'media'){
                 act_dtype_groups_opts['groups_opts'] = prep_id_media_options(
                     act_dtype_groups_opts.key,
@@ -396,5 +419,14 @@ function prepare_facets_dtypes_groups_opts(result){
     }
     return first_dtypes_groups_opts.concat(facets_dtypes_groups_opts);
 }
+
+
+function prepare_facets_dtypes_groups_opts(result){
+    return prepare_facets_dtypes_groups_opts_by_data_types(
+        result, 
+        ['id', 'media']
+    )
+}
+
 
 </script>

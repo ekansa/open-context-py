@@ -2,11 +2,18 @@
 
 {% block content %}
 
+<script type="text/javascript">
+    // Populated by Django.
+    const BASE_URL = '{{ BASE_URL|safe }}';
+    var api_url = abs_to_rel_url('{{ api_url|safe }}', BASE_URL);
+</script>
+
 {% include '../common_geo.html' %}
 {% include '../search/parts/chrono.html' %}
-{% include '../search/parts/tabs.html' %}
 {% include '../search/parts/filters.html' %}
 {% include '../search/parts/facets.html' %}
+{% include '../search/parts/facets_numeric.html' %}
+{% include '../search/parts/tabs.html' %}
 
 
 <!-- General template for views of Open Context search results -->
@@ -69,7 +76,7 @@
                     <div v-if="result">
                         <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
                                     
-                        <all-facets v-bind:facets_dtypes_groups_opts="facets_dtypes_groups_opts"></all-facets>
+                        <all-facets v-bind:facets_dtypes_groups_opts="facets_cat_dtypes_groups_opts"></all-facets>
                     </div>
                 </div>
 
@@ -86,10 +93,6 @@
 
 
 <script type="text/javascript">
-    // Populated by Django.
-    const BASE_URL = '{{ BASE_URL|safe }}';
-    var api_url = abs_to_rel_url('{{ api_url|safe }}', BASE_URL);
-
     const GEO_JSON = null;
 
     // Set up the vue router in 'history' mode to manage
@@ -158,10 +161,13 @@
                 // filters returned from the API 
                 return group_filters(this.result);
             },
-            facets_dtypes_groups_opts: function() {
+            facets_cat_dtypes_groups_opts: function() {
                 // Group facet fields and options
                 // returned from the API
-                return prepare_facets_dtypes_groups_opts(this.result);
+                return prepare_facets_dtypes_groups_opts_by_data_types(
+                    this.result,
+                    ['id', 'media']
+                );
             },
             chrono_facets: function(){
                 if(!this.result){

@@ -8,15 +8,29 @@
           class="nav-link active" 
           id="tab-map-time-ranges" 
           data-toggle="tab"
-          href="#map-time-ranges" 
+          :href="'#' + map_time_id" 
           aria-controls="map-time-ranges" 
           aria-selected="true">Map and Time Ranges</a>
       </li>
+
+      <li 
+        class="nav-item"
+        role="presentation" 
+        v-if="facets_numeric_groups_opts">
+        <a 
+          class="nav-link" 
+          id="tab-numeric-fields" 
+          data-toggle="tab"
+          :href="'#' + numeric_fields_id" 
+          aria-controls="numeric-fields" 
+          aria-selected="false">Numeric Fields</a>
+      </li>
+
     </ul>
     <div class="tab-content" id="all-search-tabs">
       <div 
         class="tab-pane fade show active"
-        id="map-time-ranges" 
+        :id="map_time_id" 
         role="tabpanel" 
         aria-labelledby="tab-map-time-range">
 
@@ -50,15 +64,34 @@
         </div>
 
 
-      <div v-if="chrono_facets">
-        <chronotiles
-            :key="'chrono-tiles-component-' + chrono_tiles_component_key_index"
-            v-bind:result_id="result.id"
-            v-bind:chrono_facets="chrono_facets"></chronotiles>
-      </div>
+        <div v-if="chrono_facets">
+          <chronotiles
+              :key="'chrono-tiles-component-' + chrono_tiles_component_key_index"
+              v-bind:result_id="result.id"
+              v-bind:chrono_facets="chrono_facets"></chronotiles>
+        </div>
 
       </div>
+
+      <div 
+        class="tab-pane fade" 
+        :id="numeric_fields_id"
+        role="tabpanel"
+        aria-labelledby="tab-numeric-fields"
+        v-if="facets_numeric_groups_opts"
+        >
+        
+        <all-numeric-facets
+          v-bind:facets_numeric_groups_opts="facets_numeric_groups_opts"
+          v-bind:facets_int_groups_opts="facets_int_groups_opts"
+          v-bind:facets_double_groups_opts="facets_double_groups_opts"
+          v-bind:facets_date_groups_opts="facets_date_groups_opts"
+        ></all-numeric-facets>
+
+      </div>
+
     </div>
+
   </div>
 </template>
 
@@ -69,7 +102,11 @@ var vc_all_search_tabs = Vue.component(
     'all-search-tabs',
     {
       delimiters: ['[[', ']]'],
-      props: ['result', 'chrono_facets', 'chrono_tiles_component_key_index'],
+      props: [
+        'result',
+        'chrono_facets',
+        'chrono_tiles_component_key_index',
+      ],
       template: '#all-search-tabs-temp',
       data: {
         message: 'Open Context Search Result',
@@ -79,11 +116,69 @@ var vc_all_search_tabs = Vue.component(
         emit_update_fetch_done: false,
         chrono_tiles_component_key_index: 0,
       },
-      methods: {
+      computed: {
+        map_time_id: function () {
+          let frag_obj = get_search_current_frag_obj();
+          frag_obj.tab = 'map-time-ranges';
+          // return encode_frag_obj(frag_obj);
+          return frag_obj.tab;
+        },
+        numeric_fields_id: function () {
+          let frag_obj = get_search_current_frag_obj();
+          frag_obj.tab = 'numeric-fields';
+          // return encode_frag_obj(frag_obj);
+          return frag_obj.tab;
+        },
+        facets_numeric_groups_opts: function() {
+            // Group facet fields and options
+            // returned from the API
+            if(!this.result){
+              return null;
+            }
+            // return null;
+            return prepare_facets_dtypes_groups_opts_by_data_types(
+              this.result,
+              ['int', 'double', 'date']
+            );
+        },
+        facets_int_groups_opts: function() {
+            // Group facet fields and options
+            // returned from the API
+            if(!this.result){
+              return null;
+            }
+            return prepare_facets_dtypes_groups_opts_by_data_types(
+              this.result,
+              ['int',]
+            );
+        },
+        facets_double_groups_opts: function() {
+            // Group facet fields and options
+            // returned from the API
+            if(!this.result){
+              return null;
+            }
+            return prepare_facets_dtypes_groups_opts_by_data_types(
+              this.result,
+              ['double',]
+            );
+        },
+        facets_date_groups_opts: function() {
+            // Group facet fields and options
+            // returned from the API
+            if(!this.result){
+              return null;
+            }
+            return prepare_facets_dtypes_groups_opts_by_data_types(
+              this.result,
+              ['date',]
+            );
+        },
       },
       components: {
         'common_map': vc_common_map,
         'chronotiles': vc_chronotiles,
+        'all-numeric-facets': vc_all_numeric_facets,
       }
     }
 );
