@@ -145,6 +145,8 @@ LEGACY_ROOT_SUBJECTS = [
     ('251C032B-684D-445E-156B-5710AA407B11', 'Malaysia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('20AF0BD0-B152-4A48-E19D-3A951EEF4A58', 'Mauritius', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('ee431393-7ab1-4d7a-abec-bb05f53babda', 'Mexico', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
+    # Added for Cattle-People.
+    ('decda957-9e07-42d6-b128-b48d1129d889', 'Mongolia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('b3cab722-fb1f-4b8a-b7ab-2627b2eba70e', 'Morocco', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('bc2c325c-4f4a-4eb6-aea1-50b2474b8814', 'Myanmar', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('44d061ca-4aec-402e-9dec-12d0223465b3', 'Nicaragua', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
@@ -158,6 +160,9 @@ LEGACY_ROOT_SUBJECTS = [
     ('56F99175-F90F-4978-362A-5B6FE27E8B6B', 'Russia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('c373317b-5c35-4e3e-b618-0f2a022918a9', 'Rwanda', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('cd518ce5-801d-4e30-af66-3972c4622f7e', 'Senegal', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+    # NOTE: Somaliland doesn't have international recognition for independence, see:
+    # https://en.wikipedia.org/wiki/Somaliland
+    ('fe9516aa-fa9c-49a5-8683-131117e87f66', 'Somaliland', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('75EE4254-7C5A-4B0F-F809-A1AFAC016C53', 'South Africa', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('A11CD813-68C7-4F02-4DDA-4C388C422231', 'South Atlantic Ocean', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('3776e3e7-91ea-4c35-9481-0b1fae3afa9a', 'Spain', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
