@@ -132,6 +132,7 @@ class BotHerder():
         'spbot',
         'http://2re.site/',
         'https://7ooo.ru/',
+        'dataforseo-bot',
     ]
 
     def __init__(self):
