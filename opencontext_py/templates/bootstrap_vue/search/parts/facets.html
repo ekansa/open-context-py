@@ -2,10 +2,10 @@
 
 
 <template id="all-facets-template">
-    <div id="all_facet_filters">
-        <h4>[[ options_title ]]</h4>
+    <div :id="facets_group_dtype_id + '_all'">
+        <h4 v-if="options_title">[[ options_title ]]</h4>
         <div v-if="facets_dtypes_groups_opts">
-            <div id="acc-facets" v-if="facets_dtypes_groups_opts.length">
+            <div :id="facets_group_dtype_id" v-if="facets_dtypes_groups_opts.length">
                 <facets-xfacet-dtypes-groups-opts
                     v-for="(xfacet_dtypes_groups_opts, index) in facets_dtypes_groups_opts"
                     v-bind:key="xfacet_dtypes_groups_opts.key"
@@ -166,9 +166,10 @@ var vc_all_facets = Vue.component(
     'all-facets',
     {
         delimiters: ['[[', ']]'],
-        props: ['facets_dtypes_groups_opts', 'options_title'],
+        props: ['facets_dtypes_groups_opts', 'options_title', 'facets_group_dtype_id'],
         data: {
             options_title: 'Filtering Options',
+            facets_group_dtype_id: 'main_facets',
         },
         template: '#all-facets-template',
         components: {
@@ -344,8 +345,9 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
 }
 
 
-function prepare_facets_dtypes_groups_opts_by_data_types(result, allowed_data_types){
+function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_data_types){
     // Prepares facet options lists for templates
+    let result = JSON.parse(JSON.stringify(raw_result)); // prevent mutation of the result.
     let aq_from_hash = get_search_current_frag_key("aq");
     var first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
     var facets_dtypes_groups_opts = []; // main output.
@@ -390,6 +392,10 @@ function prepare_facets_dtypes_groups_opts_by_data_types(result, allowed_data_ty
                 );
             }
             else{
+                if(f_field.label.indexOf(opts_conf.label_prefix) < 0){
+                    // Add a data-type specific prefix.
+                    f_field.label = opts_conf.label_prefix + f_field.label;
+                }
                 act_dtype_groups_opts['groups_opts'] = [
                     // Only 1, un labeled group for non id or media type facet
                     // options.

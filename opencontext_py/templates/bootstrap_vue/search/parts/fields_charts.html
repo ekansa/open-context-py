@@ -1,0 +1,200 @@
+{% load humanize %}
+
+
+<template id="fields-chart-template">
+
+<div class="card bg-light">
+    <div class="card-header"> 
+        <h5 class="filter_heading_labels">
+            [[ chart_title ]]
+        </h5>
+    </div>
+        
+    <div class="card-body small">
+        <b-container fluid v-if="data_series">
+            <apexchart
+                :id="'chart-' + chart_id"
+                width="100%" 
+                :type="chart_type"
+                :options="options"
+                :series="data_series">
+            </apexchart>
+            
+        </b-container>
+        <div v-else>
+            <b-spinner class="m-5" label="Busy"></b-spinner>
+            <p>Getting chart data...</p>
+        </div>
+    </div>
+        
+</div>
+
+</template>
+
+
+<template id="fields-all-charts-template">
+
+    <b-container fluid v-if="all_range_facets">
+        <b-row v-for="(range_facet_obj, index) in all_range_facets">
+            <b-cell>
+                <fields-chart
+                    :key="range_facet_obj.slug + '-key-' + charts_key_index"
+                    v-bind:range_facet_obj="range_facet_obj"
+                    v-bind:chart_title="range_facet_obj.label"
+                    v-bind:chart_id="range_facet_obj.slug"
+                ></fields-chart>
+            </b-cell>
+        </b-row>
+    </b-container>
+    
+</template>
+
+
+
+
+
+<style type="text/css">
+
+
+</style>
+
+
+<script type="text/javascript">
+
+
+var vc_fields_chart = Vue.component(
+    'fields-chart',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'range_facet_obj',
+            'chart_title',
+            'chart_id',
+            'chart_type',
+            'data_series',
+        ],
+        data() {
+            return {
+                range_facet_obj: null,
+                chart_title: null,
+                chart_id: null,
+                data_series: [],
+                chart_type: 'bar',
+                chart_height: 400,
+                x_axis_type: 'category',
+                default_gradient_type: 'blue_red',
+            };
+        },
+        template: '#fields-chart-template',
+        mounted() {
+            this.make_all_data_series();
+        },
+        computed: {
+            options: function() {
+                if(!this.data_series || this.data_series.length < 1){
+                    return null;
+                }
+                let options = {
+                    chart: {
+                        height: this.chart_height,
+                        type: this.chart_type,
+                    },
+                    plotOptions: {
+                        bar: {
+                            borderRadius: 4,
+                            dataLabels: {
+                                position: 'top', // top, center, bottom
+                            },
+                        }
+                    },
+                    xaxis: {
+                        type: this.x_axis_type,
+                    }
+                };
+                return options;
+            },
+
+        },
+        methods: {
+            make_default_zero_series(data_type, min, max, gap){
+                let y_x_defaults = {};
+                if((data_type == 'xsd:double') || (data_type == 'xsd:integer')){
+                    for (let step = min; step < (max + gap); step += gap) {
+                        y_x_defaults[step] = 0;
+                    }
+                }
+                return y_x_defaults;
+            },
+            make_all_data_series: function() {
+                if(!this.range_facet_obj){
+                    return null;
+                }
+                if(!('oc-api:has-range-options' in this.range_facet_obj)){
+                    return null;
+                }
+                let data_type = null;
+                if(!('oc-api:has-range-options' in this.range_facet_obj)){
+                    data_type = "xsd:double";
+                }
+                else{
+                    data_type = this.range_facet_obj["data-type"];
+                }
+
+                let data_vals = [];
+                for (let r_opt of this.range_facet_obj['oc-api:has-range-options']){
+                    let act_pair = {
+                        x: r_opt['label'],
+                        y: r_opt['count'],
+                    }
+                    data_vals.push(act_pair);
+                }
+                this.data_series = [
+                    {
+                        name: 'Record counts',
+                        type: 'column',
+                        data: data_vals,
+                    },
+                ];
+                console.log(this.data_series);
+            },
+        },
+        components: {
+            apexchart: VueApexCharts,
+        }
+    }
+);
+
+
+var vc_fields_all_charts = Vue.component(
+    'fields-all-charts',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'all_range_facets',
+            'charts_key_index',
+        ],
+        data() {
+            return {
+                all_range_facets: null,
+                charts_key_index: 0,
+            };
+        },
+        template: '#fields-all-charts-template',
+        mounted() {
+            
+        },
+        computed: {
+            
+        },
+        methods: {
+            
+        },
+        components: {
+            'fields-chart': vc_fields_chart,
+        }
+    }
+);
+
+
+
+</script>

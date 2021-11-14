@@ -852,8 +852,19 @@ FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = [
     {'uris':uri_list, 'label': label} 
     for uri_list, label in FACET_OPT_ORDERED_SUB_HEADINGS
 ]
+
+FACET_DATA_TYPE_FRONT_END_LABEL_PREFIXES = {
+    'id': '',
+    'bool': 'True/False ',
+    'int': 'Integer ',
+    'double': 'Decimal ',
+    'date': 'Calendar ',
+    'string': 'Text ',
+    'media': '',
+}
+
 FACETS_OPTIONS_LISTS_AND_DATA_TYPES = [
-    {'data_type': k, 'list_key': v} 
+    {'data_type': k, 'list_key': v, 'label_prefix': FACET_DATA_TYPE_FRONT_END_LABEL_PREFIXES.get(k)} 
     for k,v in FACETS_DATA_TYPE_OPTIONS_LISTS.items()
 ] 
 

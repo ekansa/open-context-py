@@ -82,6 +82,8 @@
         >
         
         <all-numeric-facets
+          v-bind:charts_key_index="charts_key_index"
+          v-bind:all_range_facets="all_range_facets"
           v-bind:facets_numeric_groups_opts="facets_numeric_groups_opts"
           v-bind:facets_int_groups_opts="facets_int_groups_opts"
           v-bind:facets_double_groups_opts="facets_double_groups_opts"
@@ -106,6 +108,7 @@ var vc_all_search_tabs = Vue.component(
         'result',
         'chrono_facets',
         'chrono_tiles_component_key_index',
+        'charts_key_index',
       ],
       template: '#all-search-tabs-temp',
       data: {
@@ -114,6 +117,7 @@ var vc_all_search_tabs = Vue.component(
         map: null,
         tile_layer: null,
         emit_update_fetch_done: false,
+        charts_key_index: 0,
         chrono_tiles_component_key_index: 0,
       },
       computed: {
@@ -147,10 +151,13 @@ var vc_all_search_tabs = Vue.component(
             if(!this.result){
               return null;
             }
-            return prepare_facets_dtypes_groups_opts_by_data_types(
+            let facet_opts = prepare_facets_dtypes_groups_opts_by_data_types(
               this.result,
               ['int',]
             );
+            console.log('Integer facets');
+            console.log(facet_opts);
+            return facet_opts;
         },
         facets_double_groups_opts: function() {
             // Group facet fields and options
@@ -174,6 +181,16 @@ var vc_all_search_tabs = Vue.component(
               ['date',]
             );
         },
+        all_range_facets: function () {
+          if(!this.result){
+            return null;
+          }
+          if (!('oc-api:has-range-facets' in this.result)){
+            // Nothing to do, so skip out.
+            return null;
+          }
+          return this.result['oc-api:has-range-facets'];
+        }
       },
       components: {
         'common_map': vc_common_map,

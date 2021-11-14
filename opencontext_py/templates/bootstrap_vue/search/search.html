@@ -12,6 +12,7 @@
 {% include '../search/parts/chrono.html' %}
 {% include '../search/parts/filters.html' %}
 {% include '../search/parts/facets.html' %}
+{% include '../search/parts/fields_charts.html' %}
 {% include '../search/parts/facets_numeric.html' %}
 {% include '../search/parts/tabs.html' %}
 
@@ -28,6 +29,7 @@
                     <all-search-tabs
                         v-bind:result="result"
                         v-bind:chrono_facets="chrono_facets"
+                        v-bind:charts_key_index="charts_key_index"
                         v-bind:chrono_tiles_component_key_index="chrono_tiles_component_key_index"
                     >
                     </all-search-tabs>
@@ -76,7 +78,9 @@
                     <div v-if="result">
                         <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
                                     
-                        <all-facets v-bind:facets_dtypes_groups_opts="facets_cat_dtypes_groups_opts"></all-facets>
+                        <all-facets 
+                            v-bind:facets_group_dtype_id="'main_facets'"
+                            v-bind:facets_dtypes_groups_opts="facets_cat_dtypes_groups_opts"></all-facets>
                     </div>
                 </div>
 
@@ -115,6 +119,7 @@
             map: null,
             tile_layer: null,
             emit_update_fetch_done: false,
+            charts_key_index: 0,
             chrono_tiles_component_key_index: 0,
         },
         created(){
@@ -140,6 +145,7 @@
                 .then(response => response.json())
                 .then(json => {
                     this.result = json;
+                    this.charts_key_index += 1;
                     this.chrono_tiles_component_key_index += 1;
                     if(this.emit_update_fetch_done){
                         this.emit_update_fetch_done = false;

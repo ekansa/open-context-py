@@ -401,7 +401,6 @@ def add_edit_string_translation(request, string_uuid):
 
 
 @cache_control(no_cache=True)
-@transaction.atomic()
 @reversion.create_revision()
 def add_edit_item_containment(request, uuid):
     """ Handles POST requests to add a containment assertion for an item """

@@ -4,25 +4,28 @@
 <template id="all-numeric-facets-template">
     <div>
         <div v-if="facets_numeric_groups_opts">
-            <div class="row">
+            <div class="row" v-if="all_range_facets">
                 <div class="col-sm-12">
-
+                    <fields-all-charts
+                    v-bind:charts_key_index="charts_key_index"
+                    v-bind:all_range_facets="all_range_facets">
+                    </fields-all-charts>
                 </div>
             </div>
             <div class="row">
                 <div class="col" v-if="facets_int_groups_opts">
                     <all-facets
-                        v-bind:options_title="'Integer Fields'"
+                        v-bind:facets_group_dtype_id="'int_facets'"
                         v-bind:facets_dtypes_groups_opts="facets_int_groups_opts"></all-facets>
                 </div>
                 <div class="col" v-if="facets_double_groups_opts">
                     <all-facets
-                        v-bind:options_title="'Decimal Fields'"
+                        v-bind:facets_group_dtype_id="'double_facets'"
                         v-bind:facets_dtypes_groups_opts="facets_double_groups_opts"></all-facets>
                 </div>
                 <div class="col" v-if="facets_date_groups_opts">
                     <all-facets
-                        v-bind:options_title="'Calendar Fields'"
+                        v-bind:facets_group_dtype_id="'date_facets'"
                         v-bind:facets_dtypes_groups_opts="facets_date_groups_opts"></all-facets>
                 </div>
             </div>
@@ -39,23 +42,28 @@ var vc_all_numeric_facets = Vue.component(
     {
         delimiters: ['[[', ']]'],
         props: [
+            'all_range_facets',
             'facets_numeric_groups_opts',
             'facets_int_groups_opts',
             'facets_double_groups_opts',
             'facets_date_groups_opts',
+            'charts_key_index'
         ],
         template: '#all-numeric-facets-template',
         data: {
+            all_range_facets: null,
             facets_numeric_groups_opts: null,
             facets_int_groups_opts: null,
             facets_double_groups_opts: null,
             facets_date_groups_opts: null,
+            charts_key_index: 0,
         },
         methods: {
             
         },
         components: {
             'all-facets': vc_all_facets,
+            'fields-all-charts': vc_fields_all_charts,
         }
     }
 );

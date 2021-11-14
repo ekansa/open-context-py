@@ -97,10 +97,12 @@ TIME_ATTRIBUTES = [
 
 LEGACY_ROOT_SUBJECTS = [
     # List of tuples as follows:
-    # old_uuid, old_context_path, new parent item. 
+    # old_uuid, old_context_path, new parent item.
+    ('69cd6681-3550-4423-97f8-59d76a258c49', 'Afghanistan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('feda369d-2dbc-4b16-b0ed-83524bafa620', 'Algeria', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ("a3efae9e-7826-46db-82a1-6f7c04b4af1e", 'Argentina', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('7351C966-B876-4B29-F525-5B33CBE895B7', 'Australia', configs.DEFAULT_SUBJECTS_OCEANIA_UUID),
+    ('4d0191be-9aa0-4566-9b64-89c79ff23d85', 'Bahrain', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('2a9d6e29-5485-4999-9435-1a836fd57b4f', 'Belize', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('90959e36-d1e7-45b7-be4b-109c944f3f55', 'Bolivia', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('f7d43b2c-b033-4cbe-9b87-8df3f3691f9c', 'Borneo', configs.DEFAULT_SUBJECTS_ASIA_UUID),
@@ -141,6 +143,9 @@ LEGACY_ROOT_SUBJECTS = [
     ('0cd4d992-caa3-4b00-94ab-7eb15bba7eaf', 'Ivory Coast', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('D9AE02E5-C3F3-41D0-EB3A-39798F63GGGG', 'Jordan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('550f3c41-7456-4ecb-aecd-e20070762261', 'Kenya', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+
+    ('f8b1b2ac-4f10-426d-8c4c-5745f6d0403c', 'Lebanon', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+    ('07a9c764-c101-4579-be5a-7ad3292f7eb5', 'Libya', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('2658a3bf-622b-4a22-9e65-a586976ee196', 'Liechtenstein', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('251C032B-684D-445E-156B-5710AA407B11', 'Malaysia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('20AF0BD0-B152-4A48-E19D-3A951EEF4A58', 'Mauritius', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
@@ -152,6 +157,10 @@ LEGACY_ROOT_SUBJECTS = [
     ('44d061ca-4aec-402e-9dec-12d0223465b3', 'Nicaragua', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('39656aad-ef90-4c98-8700-6487dd8d4d23', 'Nigeria', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('32B3883A-B007-405D-C4E0-ED129C587DFA', 'Northern Mariana Islands', configs.DEFAULT_SUBJECTS_OCEANIA_UUID),
+
+    ('ba12f728-537e-4d9a-a1d2-2fdfe36473b2', 'Oman', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+    ('2421c35e-7aa2-4fe0-ae90-0a995ea88136', 'Pakistan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+
     ('4_global_Palestine', 'Palestinian Authority', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('e6a2d6f1-c86d-454c-98a7-fdb2b1ead222', 'Peru', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('A659B68E-EC36-4477-0C79-D48B370118FC', 'Philippines', configs.DEFAULT_SUBJECTS_ASIA_UUID),
@@ -159,6 +168,9 @@ LEGACY_ROOT_SUBJECTS = [
     ('d9814d86-cbe1-4ba3-bdc4-b3f757443e88', 'Portugal', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('56F99175-F90F-4978-362A-5B6FE27E8B6B', 'Russia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('c373317b-5c35-4e3e-b618-0f2a022918a9', 'Rwanda', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+
+    ('3191c767-259c-4666-9f27-78dc6ab13d40', 'Saudi Arabia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+
     ('cd518ce5-801d-4e30-af66-3972c4622f7e', 'Senegal', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     # NOTE: Somaliland doesn't have international recognition for independence, see:
     # https://en.wikipedia.org/wiki/Somaliland
@@ -173,12 +185,18 @@ LEGACY_ROOT_SUBJECTS = [
     ('2230cb43-fd24-4d14-bfac-dced6cbe3f23', 'Switzerland', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('d73cdb54-a47a-48a7-bc40-52a36e4ac0c8', 'Syria', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('8C2F0C28-2D8F-4DAF-DD92-D34561E753C3', 'Taiwan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+    ('5c73ec28-2d0b-4c93-af6d-99b5bc8ca67e', 'Tajikistan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+
     ('e4d3ed3d-ede0-4854-92be-4d151a0d168f', 'Tanzania', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('0194DA55-F6BE-413D-C288-EF201FC4F2D0', 'Thailand', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('1_Global_Spatial', 'Turkey', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+    ('cf8ce7a3-868c-4311-9e4c-422e8d678244', 'Tunisia', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+
     ('b0054729-c5d6-40a6-89fa-6fce2fd1d2ca', 'Uganda', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('4A7C4A4A-FC66-411A-CDF4-870D153375F3', 'United Kingdom', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('2A1B75E6-8C79-49B9-873A-A2E006669691', 'United States', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
+    ('a8bd8294-91de-426a-89df-0f72352a6aaa', 'Uzbekistan', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+
     ('a8e5898b-4f6a-4f1c-96e7-0d9da4da8a69', 'Venezuala', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
 
     # This is for the Palestine Authority. Do this last, because we need to have migrated the
