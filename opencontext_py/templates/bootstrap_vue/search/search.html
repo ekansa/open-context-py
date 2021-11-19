@@ -29,8 +29,7 @@
                     <all-search-tabs
                         v-bind:result="result"
                         v-bind:chrono_facets="chrono_facets"
-                        v-bind:charts_key_index="charts_key_index"
-                        v-bind:chrono_tiles_component_key_index="chrono_tiles_component_key_index"
+                        v-bind:route_key_index="route_key_index"
                     >
                     </all-search-tabs>
 
@@ -119,8 +118,7 @@
             map: null,
             tile_layer: null,
             emit_update_fetch_done: false,
-            charts_key_index: 0,
-            chrono_tiles_component_key_index: 0,
+            route_key_index: 0,
         },
         created(){
             this.fetch_oc_api();
@@ -145,8 +143,7 @@
                 .then(response => response.json())
                 .then(json => {
                     this.result = json;
-                    this.charts_key_index += 1;
-                    this.chrono_tiles_component_key_index += 1;
+                    this.route_key_index += 1;
                     if(this.emit_update_fetch_done){
                         this.emit_update_fetch_done = false;
                         this.$emit('update_fetch_done', true);

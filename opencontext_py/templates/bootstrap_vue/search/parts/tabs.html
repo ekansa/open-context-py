@@ -2,56 +2,28 @@
 
 <template id="all-search-tabs-temp">
   <div>
-    <ul class="nav nav-tabs" id="search-tabs-nav" role="tablist">
-      <li class="nav-item" role="presentation">
-        <a 
-          class="nav-link active" 
-          id="tab-map-time-ranges" 
-          data-toggle="tab"
-          :href="'#' + map_time_id" 
-          aria-controls="map-time-ranges" 
-          aria-selected="true">Map and Time Ranges</a>
-      </li>
-
-      <li 
-        class="nav-item"
-        role="presentation" 
-        v-if="facets_numeric_groups_opts">
-        <a 
-          class="nav-link" 
-          id="tab-numeric-fields" 
-          data-toggle="tab"
-          :href="'#' + numeric_fields_id" 
-          aria-controls="numeric-fields" 
-          aria-selected="false">Numeric Fields</a>
-      </li>
-
-    </ul>
-    <div class="tab-content" id="all-search-tabs">
-      <div 
-        class="tab-pane fade show active"
-        :id="map_time_id" 
-        role="tabpanel" 
-        aria-labelledby="tab-map-time-range">
-
-        <div class="card">
-          <div class="card-header">
+    <b-card no-body>
+      <b-tabs card v-model="tab">
+        <b-tab title="Map and Time Ranges" 
+          :id="'tab-map-time-ranges'" 
+          v-on:click="tab_clicked"
+          >
+          <b-card-text>
             <h5 v-if="result">
-                <span class="text-left">Map</span>
-                <span class="text-right">[[ result['totalResults'] ]] Records</span>
+              <span class="text-left">Map</span>
+              <span class="text-right">[[ result['totalResults'] ]] Records</span>
             </h5>
             <h5 v-else>
                 <span class="text-left">Map</span>
                 <span class="text-right">Loading Records...</span>
             </h5>
-          </div>
-          <div class="card-body">
             <div id="app_media" v-if="result">
               <common_map
                 :map_key="0"
                 :map_class="'map_preview'"
                 :min_height="800"
                 :ref_suffix="'search-map'"
+                v-bind:route_key_index="route_key_index"
                 v-bind:geo_json="result"></common_map>
             </div>
             <div class="jumbotron jumbotron-fluid" v-else>
@@ -60,40 +32,35 @@
                   <b-spinner class="m-5" label="Busy"></b-spinner>
                 </div>
             </div>
-          </div>
-        </div>
+            <div v-if="chrono_facets">
+              <chronotiles
+                  :key="'chrono-tiles-component-' + route_key_index"
+                  v-bind:result_id="result.id"
+                  v-bind:chrono_facets="chrono_facets"></chronotiles>
+            </div>
+          </b-card-text>
+        </b-tab>
+        <b-tab 
+          title="Numeric Fields"
+          :id="'tab-numeric-fields'"
+          v-if="facets_numeric_groups_opts"
+          v-on:click="tab_clicked"
+          >
+          <b-card-text>
 
+            <all-numeric-facets
+              v-bind:route_key_index="route_key_index"
+              v-bind:all_range_facets="all_range_facets"
+              v-bind:facets_numeric_groups_opts="facets_numeric_groups_opts"
+              v-bind:facets_int_groups_opts="facets_int_groups_opts"
+              v-bind:facets_double_groups_opts="facets_double_groups_opts"
+              v-bind:facets_date_groups_opts="facets_date_groups_opts"
+            ></all-numeric-facets>
 
-        <div v-if="chrono_facets">
-          <chronotiles
-              :key="'chrono-tiles-component-' + chrono_tiles_component_key_index"
-              v-bind:result_id="result.id"
-              v-bind:chrono_facets="chrono_facets"></chronotiles>
-        </div>
-
-      </div>
-
-      <div 
-        class="tab-pane fade" 
-        :id="numeric_fields_id"
-        role="tabpanel"
-        aria-labelledby="tab-numeric-fields"
-        v-if="facets_numeric_groups_opts"
-        >
-        
-        <all-numeric-facets
-          v-bind:charts_key_index="charts_key_index"
-          v-bind:all_range_facets="all_range_facets"
-          v-bind:facets_numeric_groups_opts="facets_numeric_groups_opts"
-          v-bind:facets_int_groups_opts="facets_int_groups_opts"
-          v-bind:facets_double_groups_opts="facets_double_groups_opts"
-          v-bind:facets_date_groups_opts="facets_date_groups_opts"
-        ></all-numeric-facets>
-
-      </div>
-
-    </div>
-
+          </b-card-text>
+        </b-tab>
+      </b-tabs>
+    </b-card>
   </div>
 </template>
 
@@ -107,18 +74,17 @@ var vc_all_search_tabs = Vue.component(
       props: [
         'result',
         'chrono_facets',
-        'chrono_tiles_component_key_index',
-        'charts_key_index',
+        'route_key_index',
+        'tab',
       ],
       template: '#all-search-tabs-temp',
       data: {
         message: 'Open Context Search Result',
         result: null,
-        map: null,
         tile_layer: null,
         emit_update_fetch_done: false,
-        charts_key_index: 0,
-        chrono_tiles_component_key_index: 0,
+        route_key_index: 0,
+        tab: null,
       },
       computed: {
         map_time_id: function () {
@@ -190,6 +156,13 @@ var vc_all_search_tabs = Vue.component(
             return null;
           }
           return this.result['oc-api:has-range-facets'];
+        },
+      },
+      methods: {
+        tab_clicked(){
+          console.log('Tab clicked: ' + this.tab);
+          window.dispatchEvent(new Event('resize'));
+          return true;
         }
       },
       components: {

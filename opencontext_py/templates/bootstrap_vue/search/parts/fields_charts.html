@@ -38,7 +38,7 @@
         <b-row v-for="(range_facet_obj, index) in all_range_facets">
             <b-cell>
                 <fields-chart
-                    :key="range_facet_obj.slug + '-key-' + charts_key_index"
+                    :key="range_facet_obj.slug + '-key-' + route_key_index"
                     v-bind:range_facet_obj="range_facet_obj"
                     v-bind:chart_title="range_facet_obj.label"
                     v-bind:chart_id="range_facet_obj.slug"
@@ -171,12 +171,12 @@ var vc_fields_all_charts = Vue.component(
         delimiters: ['[[', ']]'],
         props: [
             'all_range_facets',
-            'charts_key_index',
+            'route_key_index',
         ],
         data() {
             return {
                 all_range_facets: null,
-                charts_key_index: 0,
+                route_key_index: 0,
             };
         },
         template: '#fields-all-charts-template',

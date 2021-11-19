@@ -199,6 +199,7 @@ var vc_common_map = Vue.component(
         'map_type',
         'map_class',
         'min_height',
+        'route_key_index',
     ],
     data() {
         return {
@@ -224,6 +225,7 @@ var vc_common_map = Vue.component(
             map_type: 'generic',
             map_class: 'item',
             min_height: 300,
+            route_key_index: 0,
         };
     },
     template: '#common_map',
@@ -238,6 +240,7 @@ var vc_common_map = Vue.component(
         this.get_item_location_info();
     },
     updated(){
+        this.map_size_reset();
         this.fit_bounds();
         this.get_item_location_info();
     },
@@ -428,6 +431,15 @@ var vc_common_map = Vue.component(
                 this.$refs[this.map_ref].mapObject._layersMaxZoom = MAX_ZOOM;
                 console.log(bounds);
             }, 100);
+        },
+        map_size_reset: function(){
+            if(!this.geo_json && GEO_JSON != null){
+                this.geo_json = GEO_JSON;
+            }
+            setTimeout(() => {
+                // wait a bit so the geojson layer is available.
+                this.$refs[this.map_ref].mapObject.invalidateSize();
+            }, 50);
         },
         get_item_location_info: function() {
             if(!this.geo_json || !this.item_json){
