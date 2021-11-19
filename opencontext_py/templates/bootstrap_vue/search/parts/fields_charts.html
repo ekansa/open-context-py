@@ -3,7 +3,7 @@
 
 <template id="fields-chart-template">
 
-<div class="card bg-light">
+<div class="card bg-light numeric_chart">
     <div class="card-header"> 
         <h5 class="filter_heading_labels">
             [[ chart_title ]]
@@ -79,7 +79,8 @@ var vc_fields_chart = Vue.component(
                 chart_title: null,
                 chart_id: null,
                 data_series: [],
-                chart_type: 'bar',
+                // chart_type: 'bar',
+                chart_type: 'histogram',
                 chart_height: 400,
                 x_axis_type: 'category',
                 default_gradient_type: 'blue_red',
@@ -98,6 +99,30 @@ var vc_fields_chart = Vue.component(
                     chart: {
                         height: this.chart_height,
                         type: this.chart_type,
+                        toolbar: {
+                            show: true,
+                            offsetX: 0,
+                            offsetY: 0,
+                            tools: {
+                                download: true,
+                                selection: false,
+                                zoom: false,
+                                zoomin: false,
+                                zoomout: false,
+                                pan: false,
+                                reset: false | '<img src="/static/icons/reset.png" width="20">',
+                                customIcons: [],
+                            },
+                            export: {
+                                csv: null,
+                                svg: {
+                                    filename: undefined,
+                                },
+                                png: {
+                                    filename: undefined,
+                                },
+                            }
+                        },
                     },
                     plotOptions: {
                         bar: {
@@ -109,7 +134,7 @@ var vc_fields_chart = Vue.component(
                     },
                     xaxis: {
                         type: this.x_axis_type,
-                    }
+                    },
                 };
                 return options;
             },
