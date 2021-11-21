@@ -30,6 +30,7 @@ psycopg2>=2.7.5
 py>=1.10.0
 pyparsing>=2.1.1
 pyproj>=2.2.1
+pysolr>=3.9.0
 pytest-django>=3.4.3
 pytest>=3.9.3
 python-dateutil>=2.5.3
