@@ -5,10 +5,9 @@ import re
 import time
 from datetime import datetime
 from django.conf import settings
-from mysolr.compat import urljoin, compat_args, parse_response
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.solrclient import SolrClient
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
@@ -49,18 +48,13 @@ def stats_ranges_query_dict_via_solr(
         # Connect to solr.
         if configs.USE_TEST_SOLR_CONNECTION:
             # Connect to the testing solr server
-            solr = SolrConnection(
-                exit_on_error=False,
-                solr_host=settings.SOLR_HOST_TEST,
-                solr_port=settings.SOLR_PORT_TEST,
-                solr_collection=settings.SOLR_COLLECTION_TEST
-            ).connection
+            solr = SolrClient(use_test_solr=True).solr
         else:
             # Connect to the default solr server
-            solr = SolrConnection(False).connection
+            solr =  SolrClient().solr
 
-    response = solr.search(**stats_query)  # execute solr query
-    solr_json = response.raw_content
+    results = solr.search(**stats_query)
+    solr_json = results.raw_response
     if not isinstance(solr_json, dict):
         return None
 

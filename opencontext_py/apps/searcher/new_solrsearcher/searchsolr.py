@@ -4,8 +4,8 @@ import logging
 import time
 from datetime import datetime
 from django.conf import settings
-from mysolr.compat import urljoin, compat_args, parse_response
-from opencontext_py.libs.solrconnection import SolrConnection
+
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
@@ -44,7 +44,6 @@ class SearchSolr():
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = {}
     
-    
     def solr_connect(self):
         """ Connects to solr """
         if self.solr is not None:
@@ -53,15 +52,10 @@ class SearchSolr():
 
         if configs.USE_TEST_SOLR_CONNECTION:
             # Connect to the testing solr server
-            self.solr = SolrConnection(
-                exit_on_error=False,
-                solr_host=settings.SOLR_HOST_TEST,
-                solr_port=settings.SOLR_PORT_TEST,
-                solr_collection=settings.SOLR_COLLECTION_TEST
-            ).connection
+            self.solr = SolrClient(use_test_solr=True).solr
         else:
             # Connect to the default solr server
-            self.solr = SolrConnection(False).connection
+            self.solr =  SolrClient().solr
     
     def add_initial_facet_fields(self, request_dict):
         """Adds to initial facet field list based on request_dict"""
@@ -535,7 +529,6 @@ class SearchSolr():
         assert 'q' in query
         query = self.update_query_with_stats_prequery(query)
         query = self._set_solr_field_facet_limits(query)
-        compat_args(query)
         query['wt'] = 'json'
         return query
     
@@ -544,19 +537,13 @@ class SearchSolr():
         """ Connects to solr and runs a query"""
         query = self.finish_query(query)
         self.solr_connect()
-        url = urljoin(self.solr.base_url, 'select')
         try:
-            http_response = self.solr.make_request.post(
-                url,
-                data=query,
-                timeout=240
-            )
-            self.solr_response = parse_response(http_response.content)
+            results = self.solr.search(**query)
+            self.solr_response = results.raw_response
         except Exception as error:
             logger.error(
-                '[' + datetime.now().strftime('%x %X ')
-                + settings.TIME_ZONE + '] Error: '
-                + str(error)
-                + ' => Query: ' + str(query)
+                f'[{datetime.now().strftime("%x %X ")}'
+                f'{settings.TIME_ZONE}] Error: '
+                f'{str(error)} => Query: {query}'
             )
         return self.solr_response

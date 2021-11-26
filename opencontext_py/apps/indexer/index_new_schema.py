@@ -11,8 +11,11 @@ from django.core.cache import caches
 
 from opencontext_py.apps.all_items.models import AllManifest
 
-from opencontext_py.libs.solrconnection import SolrConnection
+
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
+
+from opencontext_py.apps.searcher.new_solrsearcher import configs as solr_search_configs
 
 
 """
@@ -51,12 +54,13 @@ def get_elapsed_time_in_seconds(start_time):
 
 
 def get_solr_connection():
-    solr = SolrConnection(
-        exit_on_error=False,
-        solr_host=settings.SOLR_HOST_TEST,
-        solr_port=settings.SOLR_PORT_TEST,
-        solr_collection=settings.SOLR_COLLECTION_TEST
-    ).connection
+    """ Connects to solr """
+    if solr_search_configs.USE_TEST_SOLR_CONNECTION:
+        # Connect to the testing solr server
+        solr = SolrClient(use_test_solr=True).solr
+    else:
+        # Connect to the default solr server
+        solr =  SolrClient().solr
     return solr
 
 
@@ -95,29 +99,31 @@ def make_index_solr_documents(uuids, solr=None):
     if not solr:
         solr = get_solr_connection()
     solr_docs =  make_solr_documents(uuids)
-    solr_status = solr.update(
-        solr_docs, 
-        'json',
-        commit=False
-    ).status
-    if solr_status == 200:
-        solr.commit()
-        logger.info(f'Indexed committing {str(uuids)}')
-        print(f'Indexed committing {str(uuids)}')
-    else:
+    try:
+        solr.add(
+            solr_docs, 
+            commit=False,
+            overwrite=True,
+        )
+    except:
         for solr_doc in solr_docs:
-            solr_status = solr.update(
-                [solr_doc], 
-                'json',
-                commit=False
-            ).status
-            if not solr_status == 200:
+            try:
+                solr.add(
+                    [solr_doc], 
+                    commit=False,
+                    overwrite=True,
+                )
+            except:
                 logger.warn(
                     f'Problem committing {solr_doc.get("uuid")}'
                 )
                 print(
                     f'Problem committing {solr_doc.get("uuid")}'
                 )
+    solr.commit()
+    logger.info(f'Indexed committing {str(uuids)}')
+    print(f'Indexed committing {str(uuids)}')
+
 
 def make_indexed_solr_documents_in_chunks(
     uuids, 
