@@ -4,6 +4,7 @@ verify_ssl = true
 url = "https://pypi.org/simple"
 
 [packages]
+apache-libcloud = ">=3.4.1"
 coverage = ">=4.0.3"
 coveralls = ">=1.1"
 Django = ">=3.1.12"
