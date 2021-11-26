@@ -39,7 +39,7 @@ class SearchWarmer():
         self.done_urls = []
         self.follow_count = 200000
         self.start_time = 0
-        self.delay_before_request = self.SLEEP_TIME
+        self.delay_before_request = 0.5
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.urls = [
