@@ -4,7 +4,7 @@ import logging
 import time
 from datetime import datetime
 from django.conf import settings
-from mysolr.compat import urljoin, compat_args, parse_response
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.isoyears import ISOyears
 

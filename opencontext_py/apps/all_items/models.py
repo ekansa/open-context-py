@@ -1430,7 +1430,7 @@ class AllResource(models.Model):
         # mediatype if missing.
         head = None
         if not self.filesize or self.mediatype is None:
-            head = get_web_resource_head_info(
+            head = models_utils.get_web_resource_head_info(
                 self.uri
             )
         if head is not None and not self.filesize:

@@ -169,7 +169,6 @@ DEFAULT_MANIFESTS = [
     # Default Open Context Assertion Node entities
     DEFAULT_OBS_DICT,
     DEFAULT_EQUIV_OBS_DICT,
-    DEFAULT_EVENT_DICT,
     DEFAULT_ATTRIBUTE_GROUP_DICT,
     {
         'uuid': DEFAULT_NULL_OBJECT_UUID,
@@ -769,6 +768,7 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/general-time-space',
         'context_id': OC_GEN_VOCAB_UUID,
     },
+    DEFAULT_EVENT_DICT,
     {
         'uuid': OC_EVENT_TYPE_CURRENT_UUID,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
