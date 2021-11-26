@@ -3,7 +3,7 @@ from datetime import datetime
 from itertools import islice
 from django.conf import settings
 import logging
-from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.libs.crawlerutilites import CrawlerUtilities as crawlutil
 from opencontext_py.apps.indexer.uuidlist import UUIDList
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
@@ -36,7 +36,7 @@ crawler.crawl(100)
         # The list of Open Context items to crawl
         self.uuidlist = UUIDList().uuids
         # Connect to Solr
-        self.solr = SolrConnection().connection
+        self.solr = SolrClient().solr
         # Flag as human remains sensitive
         self.human_remains = 0  # 0 means no, positive values means yes
         self.max_geo_zoom = 30  # set the max geo tile zoom we should use for indexing

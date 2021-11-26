@@ -6,7 +6,6 @@ from datetime import datetime
 from django.conf import settings
 
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
@@ -55,7 +54,7 @@ class SearchSolr():
             self.solr = SolrClient(use_test_solr=True).solr
         else:
             # Connect to the default solr server
-            self.solr =  SolrClient().solr
+            self.solr = SolrClient().solr
     
     def add_initial_facet_fields(self, request_dict):
         """Adds to initial facet field list based on request_dict"""

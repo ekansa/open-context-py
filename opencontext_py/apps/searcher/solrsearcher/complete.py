@@ -1,16 +1,9 @@
 import json
 from django.conf import settings
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.solrconnection import SolrConnection
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
-from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
-from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
-from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
-from opencontext_py.apps.searcher.solrsearcher.reconciliation import Reconciliation
-from opencontext_py.apps.searcher.solrsearcher.projtemplating import ProjectAugment
 from django.views.decorators.cache import cache_control
 
 

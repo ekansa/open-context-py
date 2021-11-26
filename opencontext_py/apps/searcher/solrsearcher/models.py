@@ -4,8 +4,7 @@ import json
 import logging
 from datetime import datetime
 from django.conf import settings
-from mysolr.compat import urljoin, compat_args, parse_response
-from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
@@ -77,7 +76,7 @@ class SolrSearch():
 
     def solr_connect(self):
         """ connects to solr """
-        self.solr = SolrConnection(False).connection
+        self.solr = SolrClient().solr
 
     def search_solr(self, request_dict_json):
         """searches solr to get raw solr search results"""
@@ -115,19 +114,15 @@ class SolrSearch():
         """
         logger = logging.getLogger(__name__)
         # some hassels to handle project pivot queries
-        response = KludgeSolrResponse()
-        squery = response.build_request(query)
-        url = urljoin(self.solr.base_url, 'select')
         try:
-            http_response = self.solr.make_request.post(url,
-                                                        data=squery,
-                                                        timeout=240)
-            response.raw_content = parse_response(http_response.content)
+            results = self.solr.search(**query)
+            response = results.raw_response
         except Exception as error:
-            response = {}
-            logger.error('[' + datetime.now().strftime('%x %X ') +
-                         settings.TIME_ZONE + '] Error: ' + str(error)
-                         + ' => Query: ' + str(squery))
+            logger.error(
+                f'[{datetime.now().strftime("%x %X ")}'
+                f'{settings.TIME_ZONE}] Error: '
+                f'{str(error)} => Query: {query}'
+            )
         return response
 
     def compose_query(self, request_dict):

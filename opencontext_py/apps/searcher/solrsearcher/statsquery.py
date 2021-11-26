@@ -1,6 +1,6 @@
 import json
 from django.conf import settings
-from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
@@ -26,15 +26,15 @@ class StatsQuery():
 
     def solr_connect(self):
         """ connects to solr """
-        self.solr = SolrConnection(False).connection
+        self.solr = SolrClient().solr
 
     def add_stats_ranges_from_solr(self, query):
         """ gets solr stats by searching solr
             searches solr to get raw solr search results
         """
         stats_query = self.compose_query()  # make the stats query
-        response = self.solr.search(**stats_query)  # execute solr query
-        solr_json = response.raw_content
+        results = self.solr.search(**stats_query)
+        solr_json = results.raw_response
         if isinstance(solr_json, dict):
             if 'stats' in solr_json:
                 if 'stats_fields' in solr_json['stats']:

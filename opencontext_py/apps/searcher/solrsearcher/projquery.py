@@ -1,7 +1,6 @@
 import json
 from django.conf import settings
-from opencontext_py.libs.solrconnection import SolrConnection
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.projects.models import Project
 
@@ -22,7 +21,7 @@ class ProjectsQuery():
 
     def solr_connect(self):
         """ connects to solr """
-        self.solr = SolrConnection(False).connection
+        self.solr = SolrClient().solr
 
     def check_single_project(self, query):
         """ checks to see if the query results only in a single project.
@@ -30,9 +29,8 @@ class ProjectsQuery():
             specific descriptive properties
         """
         single_project = False
-        projs_query = self.compose_query(query)  # make the stats query
-        response = self.solr.search(**projs_query)  # execute solr query
-        solr_json = response.raw_content
+        results = self.solr.search(**stats_query)
+        solr_json = results.raw_response
         if isinstance(solr_json, dict):
             if 'facet_counts' in solr_json:
                 if 'facet_fields' in solr_json['facet_counts']:

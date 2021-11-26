@@ -1,7 +1,7 @@
 import json
 import requests
 from django.conf import settings
-from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 
 
@@ -15,7 +15,7 @@ class SolrDirect():
 
     def __init__(self):
         # Connect to Solr
-        self.solr = SolrConnection().connection
+        self.solr = SolrClient().solr
         self.request_error = False
 
     def get_result_uuids(self, request_url):
