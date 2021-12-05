@@ -106,6 +106,8 @@ LEGACY_ROOT_SUBJECTS = [
     ('2a9d6e29-5485-4999-9435-1a836fd57b4f', 'Belize', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('90959e36-d1e7-45b7-be4b-109c944f3f55', 'Bolivia', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('f7d43b2c-b033-4cbe-9b87-8df3f3691f9c', 'Borneo', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+
+    ('b62fc350-fc9e-4603-b936-671088f87f94', 'Bosnia and Herzegovina', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('34053a4c-44f8-4824-beab-9dadb5a66a82', 'Brazil', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('c75c197b-e532-4968-a4a0-dd11be56bef2', 'Bulgaria', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('47ed71f2-36ab-4e43-9d91-2257476a725c', 'Cambodia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
@@ -117,6 +119,9 @@ LEGACY_ROOT_SUBJECTS = [
     # ('99e74a38-8178-41a0-83aa-13f78499f327', 'Clermont County'),
     ('239419cf-e7ea-4e41-8cbe-78d817ed3ae8', 'Colombia', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('b97e416b-9684-4fec-990f-5ca974fe657e', 'Costa Rica', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
+
+    ('7cf7cf91-746c-4523-99d2-983677ab9aa7', 'Croatia', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
+
     ('67D9F00D-14E6-4A1B-3A61-EC92FC774098', 'Cyprus', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('7b8e80bf-b51f-4cf0-a13d-ce403ff15545', 'Democratic Republic of Congo', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('90d17f5c-60e9-4493-b957-95080c67384f', 'Denmark', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
@@ -172,6 +177,8 @@ LEGACY_ROOT_SUBJECTS = [
     ('3191c767-259c-4666-9f27-78dc6ab13d40', 'Saudi Arabia', configs.DEFAULT_SUBJECTS_ASIA_UUID),
 
     ('cd518ce5-801d-4e30-af66-3972c4622f7e', 'Senegal', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+
+    ('6790ca65-964e-46e7-a8ed-2db2a3ce39cc', 'Serbia', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     # NOTE: Somaliland doesn't have international recognition for independence, see:
     # https://en.wikipedia.org/wiki/Somaliland
     ('fe9516aa-fa9c-49a5-8683-131117e87f66', 'Somaliland', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
@@ -792,6 +799,7 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
         'oc-gen:archive': (configs.OC_RESOURCE_ARCHIVE_UUID, 0),
         'oc-gen:fullfile': (configs.OC_RESOURCE_FULLFILE_UUID, 0),
         'oc-gen:hero': (configs.OC_RESOURCE_HERO_UUID, 0),
+        'oc-gen:ia-archive': (configs.OC_RESOURCE_IA_FULLFILE_UUID, 0),
         'oc-gen:ia-fullfile': (configs.OC_RESOURCE_IA_FULLFILE_UUID, 0),
         'oc-gen:iiif': (configs.OC_RESOURCE_IIIF_UUID, 0),
         'oc-gen:nexus-3d': (configs.OC_RESOURCE_NEXUS_3D_UUID, 0),
@@ -809,6 +817,9 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
         ('.tiff', configs.MEDIA_TYPE_TIFF_UUID,),
     ]
 
+    if not res_type_mappings.get(old_mediafile_obj.file_type):
+        raise ValueError(f'Cannot find resource type mapping for {old_mediafile_obj.file_type}')
+        
     resourcetype_id, rank =  res_type_mappings.get(old_mediafile_obj.file_type)
     rank += old_mediafile_obj.highlight
 
