@@ -115,7 +115,7 @@ def add_get_geonames_manifest_entity(raw_url):
 
     vocab_obj = get_geonames_vocabulary_obj()
 
-    # Get the GBIF item for these species URI.
+    # Get the Geonames item for this place URI.
     geonames_obj = AllManifest.objects.filter(
         uri=AllManifest().clean_uri(uri), 
         context=vocab_obj,
@@ -126,7 +126,7 @@ def add_get_geonames_manifest_entity(raw_url):
 
     # We don't have a manifest object for this
     # entity, so make one. First, go get the canonnical
-    # name for the species via the Geonames API.
+    # name for the place via the Geonames API.
     api = GeonamesAPI()
     label, alt_label = api.get_labels_for_uri(uri)
 
@@ -239,7 +239,7 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj):
 
 
 def add_get_geonames_manifest_obj_and_spacetime_obj(raw_url):
-    """Adds GBIF entity and its hierarchy"""
+    """Adds geonames entity and spacetime object"""
     geonames_obj = add_get_geonames_manifest_entity(raw_url)
     if not geonames_obj:
         # We couldn't find or create a geonames manifest
