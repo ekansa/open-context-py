@@ -130,6 +130,7 @@ class BotHerder():
         'ltx71',
         'MJ12bot',
         'spbot',
+        'petalbot',
         'http://2re.site/',
         'https://7ooo.ru/',
         'dataforseo-bot',
