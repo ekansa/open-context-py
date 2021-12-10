@@ -1124,5 +1124,8 @@ class ResultRecords():
                 record_index= i + self.start, 
                 total_found=self.total_found
             )
+            if not geojson.get('geometry', {}).get('type'):
+                # Missing geometry data, don't add.
+                continue
             features.append(geojson)
         return features
