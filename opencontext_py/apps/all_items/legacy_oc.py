@@ -815,6 +815,7 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
         ('.png', configs.MEDIA_TYPE_PNG_UUID,),
         ('.tif', configs.MEDIA_TYPE_TIFF_UUID,),
         ('.tiff', configs.MEDIA_TYPE_TIFF_UUID,),
+        ('.zip', configs.MEDIA_TYPE_ZIP_UUID,),
     ]
 
     if not res_type_mappings.get(old_mediafile_obj.file_type):
@@ -858,6 +859,11 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
                 uuid=configs.MEDIA_TYPE_GEO_JSON_UUID,
                 item_type='media-types',
             ).first()
+        elif not new_mt and media_type.endswith('x3d+xml'):
+            new_mt = AllManifest.objects.filter(
+                uuid=configs.MEDIA_TYPE_XML_UUID,
+                item_type='media-types',
+            ).first()
         if new_mt:
             media_file_dict['mediatype_id'] = new_mt.uuid
 
@@ -882,6 +888,17 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
         defaults=media_file_dict,
     )
     return res_obj
+
+
+def migrate_legacy_project_hero_media(old_project_uuid, new_proj_man_obj):
+    """Migrates legacy project hero media to a new media resource."""
+    old_heros_qs = Mediafile.objects.filter(
+        uuid=old_project_uuid, 
+        file_type='oc-gen:hero'
+    )
+    for old_mediafile_obj in old_heros_qs:
+        res_obj = migrate_legacy_media_file(new_proj_man_obj, old_mediafile_obj)
+        print(f'Migrated project hero: {res_obj.uri} ({res_obj.uuid})')
 
 
 def migrate_legacy_media(old_man_obj):
@@ -931,26 +948,29 @@ def migrate_legacy_media(old_man_obj):
     }
 
     # This helps determin media item class based on the mime-type of the
-    # fullfile associated with a media resource.
-    full_types = [
-        ('application/pdf', configs.CLASS_OC_DOCUMENT_MEDIA,),
-        ('image', configs.CLASS_OC_IMAGE_MEDIA,),
-        ('text/csv', configs.CLASS_OC_DATATABLE_MEDIA,),
-        ('spreadsheetml', configs.CLASS_OC_DATATABLE_MEDIA,),
+    # files associated with a media resource.
+    media_class_file_tups = [
+        ('oc-gen:fullfile', 'application/pdf', configs.CLASS_OC_DOCUMENT_MEDIA,),
+        ('oc-gen:fullfile', 'image', configs.CLASS_OC_IMAGE_MEDIA,),
+        ('oc-gen:fullfile', 'text/csv', configs.CLASS_OC_DATATABLE_MEDIA,),
+        ('oc-gen:fullfile', 'spreadsheetml', configs.CLASS_OC_DATATABLE_MEDIA,),
+        ('oc-gen:x3dom-model', 'x3d+xml', configs.CLASS_OC_3D_MEDIA,),
+        ('oc-gen:preview', 'vnd.geo+json', configs.CLASS_OC_VECTOR_GIS_MEDIA,),
     ]
+    
     media_class_id = media_class_mappings.get(old_man_obj.class_uri)
     if not media_class_id:
         for old_f in old_media_files:
-            if old_f.file_type != 'oc-gen:fullfile':
-                continue
-            for f_type, class_id in full_types:
+            for file_type, f_type, class_id in media_class_file_tups:
+                if not old_f.file_type == file_type:
+                    continue
                 if not f_type in old_f.mime_type_uri:
                     continue
                 media_class_id = class_id
 
     if not media_class_id:
         print(
-            f'Old media {old_id} {old_man_obj.label} missing mediafile item class.'
+            f'Old media {old_id} {old_man_obj.label} missing mediafile item class {old_man_obj.class_uri}.'
         )
         return None
 

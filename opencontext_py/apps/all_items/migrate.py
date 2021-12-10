@@ -21,7 +21,18 @@ from opencontext_py.apps.all_items import legacy_oc
 from pathlib import Path
 from opencontext_py.apps.all_items.migrate import *
 home = str(Path.home())
-project_uuids = ['3585b372-8d2d-436c-9a4c-b5c10fce3ccd', 'a52bd40a-9ac8-4160-a9b0-bd2795079203',]
+project_uuids = ['3', '3585b372-8d2d-436c-9a4c-b5c10fce3ccd', 'a52bd40a-9ac8-4160-a9b0-bd2795079203',]
+p_ids = [
+    '3F6DCD13-A476-488E-ED10-47D25513FCB2', 
+    'b9472eec-e622-4838-b6d8-5a2958b9d4d3', 
+    'a52bd40a-9ac8-4160-a9b0-bd2795079203', 
+    'bc71c724-eb1e-47d6-9d45-b586ddafdcfe', 
+    '95b1ef01-9ccb-4484-b0f2-540f4dc54672', 
+    'a9dbf427-cff6-41b7-8462-a9ab8d9908f4', 
+    '10aa84ad-c5de-4e79-89ce-d83b75ed72b5', 
+    '141e814a-ba2d-4560-879f-80f1afb019e9', 
+    'c89e6a9e-105a-4368-9e90-26940d7bf37a'
+]
 migrate_single_project('3', error_path=f'{home}/migration-errors')
 """
 
@@ -58,7 +69,9 @@ def migrate_single_project(old_project_uuid, error_path=''):
         old_project_uuid, 
         use_cache=False,
     )
+    legacy_oc.migrate_legacy_project_hero_media(old_project_uuid, new_proj_man_obj=project)
     legacy_oc.migrate_legacy_manifest_for_project(project_uuid=old_project_uuid)
+
     legacy_oc.migrate_legacy_spacetime_for_project(project_uuid=old_project_uuid)
     orig_assert_migrate_errors = legacy_oc.migrate_legacy_assertions_for_project(old_project_uuid)
     if orig_assert_migrate_errors:
