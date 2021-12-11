@@ -19,7 +19,31 @@
                 :options="options"
                 :series="data_series">
             </apexchart>
-            
+            <b-row class="text-center" align-v="center">
+                <b-col cols="5"><small><strong>Filter Ranges</strong></small></b-col>
+                <b-col cols="2">
+                    <b-form-input @change="input_range_change" :type="input_type" v-model="input_min" size="sm" class="text-center"></b-form-input>
+                </b-col>
+                <b-col cols="1">to</b-col>
+                <b-col cols="2">
+                    <b-form-input @change="input_range_change" :type="input_type" v-model="input_max" size="sm" class="text-center"></b-form-input>
+                </b-col>
+                <b-col cols="1">
+                    <div v-if="range_filter_link">
+                        <router-link :title="'Filter from ' + input_min + ' to ' + input_max" :to="range_filter_link" >
+                            <b-button variant="primary">
+                                <b-icon-filter-circle-fill></b-icon-filter-circle-fill>
+                            </b-button>
+                        </router-link>
+                    </div>
+                    <div v-else>
+                        <b-button title="Input a range to filter" disabled>
+                            <b-icon-filter-circle-fill></b-icon-filter-circle-fill>
+                        </b-button>
+                    </div>
+                    
+                </b-col>
+            </b-row>
         </b-container>
         <div v-else>
             <b-spinner class="m-5" label="Busy"></b-spinner>
@@ -72,13 +96,21 @@ var vc_fields_chart = Vue.component(
             'chart_id',
             'chart_type',
             'data_series',
+            'result_id',
         ],
         data() {
             return {
+                result_id: null,
                 range_facet_obj: null,
                 chart_title: null,
                 chart_id: null,
+                data_type: null,
                 data_series: [],
+                min_value: null,
+                max_value: null,
+                input_min: null,
+                input_max: null,
+                query_url_obj: null,
                 // chart_type: 'bar',
                 chart_type: 'histogram',
                 chart_height: 400,
@@ -138,9 +170,73 @@ var vc_fields_chart = Vue.component(
                 };
                 return options;
             },
-
+            range_filter_link() {
+                if(this.query_url_obj == null){
+                    return null;
+                }
+                if(this.input_min == null || this.input_max == null){
+                    return null;
+                }
+                let range_min = this.input_min;
+                if(this.input_min == null){
+                    range_min = '*';
+                }
+                let range_max = this.input_max;
+                if(this.input_max == null){
+                    range_max = '*';
+                }
+                let url = [
+                    this.query_url_obj.prefix,
+                    this.query_url_obj.query,
+                    '%5B',
+                    range_min,
+                    '+TO+',
+                    range_max,
+                    '%5D',
+                    this.query_url_obj.suffix,
+                ].join('');
+                let hash = '';
+                if(window.location.hash) {
+                    hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+                }
+                if(url.indexOf(hash) < 0){
+                    url += hash;
+                }
+                url = abs_to_rel_url(url, BASE_URL);
+                return url;
+            },
+            input_type() {
+                let input_type = 'number';
+                if(this.data_type == 'xsd:date'){
+                    input_type = 'date';
+                }
+                return input_type;
+            },
         },
         methods: {
+            input_range_change: function() {
+                let sort_vals = false;
+                if(this.data_type == 'xsd:double'){
+                    sort_vals = true;
+                    this.input_min = parseFloat(this.input_min);
+                    this.input_max = parseFloat(this.input_max);
+                }
+                if(this.data_type == 'xsd:integer'){
+                    sort_vals = true;
+                    this.input_min = parseInt(this.input_min);
+                    this.input_max = parseInt(this.input_max);
+                }
+                if(!sort_vals){
+                    return null;
+                }
+                if (this.input_min > this.input_max) {
+                    console.log('Fix input range ' + this.input_min + ' to ' + this.input_max);
+                    let tmp =  this.input_max;
+                    this.input_max = this.input_min;
+                    this.input_min = tmp;
+                    console.log('Fixed input range ' + this.input_min + ' to ' + this.input_max);
+                }
+            },
             make_default_zero_series(data_type, min, max, gap){
                 let y_x_defaults = {};
                 if((data_type == 'xsd:double') || (data_type == 'xsd:integer')){
@@ -149,6 +245,44 @@ var vc_fields_chart = Vue.component(
                     }
                 }
                 return y_x_defaults;
+            },
+            find_str_dif(str1, str2){ 
+                let diff= "";
+                str2.split('').forEach(function(val, i){
+                    if (val != str1.charAt(i))
+                    diff += val ;         
+                });
+                return diff;
+            },
+            make_query_url_obj(slug, opt_urls){
+                if(opt_urls.length < 2){
+                    return null;
+                }
+                let first_url = opt_urls[0];
+                let last_url = opt_urls[opt_urls.length - 1];
+                let l_q_term = slug + '---%5B';
+                let l_url_ex = last_url.split(l_q_term);
+                let f_url_ex = first_url.split(l_q_term);
+                if(l_url_ex[0] != f_url_ex[0]){
+                    console.log('URL template ambiguity problem');
+                    return null;
+                }
+                let url_obj = {
+                    prefix: l_url_ex[0],
+                    query: (slug + '---'),
+                    suffix: '',
+                }
+                if(l_url_ex.length == 2){
+                    let first_at = l_url_ex[1].indexOf('&');
+                    if(first_at < 0){
+                        url_obj.suffix = '';
+                    }
+                    else{
+                        // Other parameters in this url to include.
+                        url_obj.suffix = l_url_ex[1].substring(first_at);
+                    }
+                }
+                return url_obj;
             },
             make_all_data_series: function() {
                 if(!this.range_facet_obj){
@@ -159,12 +293,22 @@ var vc_fields_chart = Vue.component(
                 }
                 let data_type = null;
                 if(!('oc-api:has-range-options' in this.range_facet_obj)){
-                    data_type = "xsd:double";
+                    this.data_type = "xsd:double";
                 }
                 else{
-                    data_type = this.range_facet_obj["data-type"];
+                    this.data_type = this.range_facet_obj["data-type"];
                 }
 
+                if('oc-api:min' in this.range_facet_obj){
+                    this.min_value = this.range_facet_obj['oc-api:min'];
+                    this.input_min = this.min_value;
+                }
+                if('oc-api:max' in this.range_facet_obj){
+                    this.max_value = this.range_facet_obj['oc-api:max'];
+                    this.input_max = this.max_value;
+                }
+
+                let opt_urls = [];
                 let data_vals = [];
                 for (let r_opt of this.range_facet_obj['oc-api:has-range-options']){
                     let act_pair = {
@@ -172,7 +316,14 @@ var vc_fields_chart = Vue.component(
                         y: r_opt['count'],
                     }
                     data_vals.push(act_pair);
+                    opt_urls.push(r_opt['id']);
                 }
+
+                this.query_url_obj = this.make_query_url_obj(
+                    this.range_facet_obj.slug,
+                    opt_urls,
+                );
+
                 this.data_series = [
                     {
                         name: 'Record counts',
@@ -197,12 +348,12 @@ var vc_fields_all_charts = Vue.component(
         props: [
             'all_range_facets',
             'route_key_index',
+            'result_id',
         ],
-        data() {
-            return {
-                all_range_facets: null,
-                route_key_index: 0,
-            };
+        data: {
+            result_id: null,
+            all_range_facets: null,
+            route_key_index: 0,
         },
         template: '#fields-all-charts-template',
         mounted() {

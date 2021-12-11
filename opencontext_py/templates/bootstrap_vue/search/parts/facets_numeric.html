@@ -7,6 +7,7 @@
             <div class="row" v-if="all_range_facets">
                 <div class="col-sm-12">
                     <fields-all-charts
+                    v-bind:result_id="result_id"
                     v-bind:route_key_index="route_key_index"
                     v-bind:all_range_facets="all_range_facets">
                     </fields-all-charts>
@@ -47,7 +48,8 @@ var vc_all_numeric_facets = Vue.component(
             'facets_int_groups_opts',
             'facets_double_groups_opts',
             'facets_date_groups_opts',
-            'route_key_index'
+            'route_key_index',
+            'result_id',
         ],
         template: '#all-numeric-facets-template',
         data: {
@@ -56,6 +58,7 @@ var vc_all_numeric_facets = Vue.component(
             facets_int_groups_opts: null,
             facets_double_groups_opts: null,
             facets_date_groups_opts: null,
+            result_id: null,
             route_key_index: 0,
         },
         methods: {
