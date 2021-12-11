@@ -499,7 +499,7 @@ def safe_remove_item_from_list(item, item_list):
     return item_list
 
 
-def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=[]):
+def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=None):
     """Combines lists from the part_query_dict into the 
     
     :param dict part_query_dict: The smaller query dict that will get
@@ -509,16 +509,24 @@ def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=[]):
     :param list skip_keys: List of keys to skip and not include in
         adding to the main_query_dict.
     """
+    if skip_keys is None:
+        skip_keys = []
     if not part_query_dict:
         return main_query_dict
     for key, values in part_query_dict.items():
-        if key in skip_keys or not values:
+        if key in skip_keys or values is None:
             continue
-        if key not in main_query_dict:
-            main_query_dict[key] = values
+        if not main_query_dict.get(key):
+            if isinstance(values, list):
+                main_query_dict[key] = copy.deepcopy(values)
+            elif isinstance(values, dict):
+                main_query_dict[key] = copy.deepcopy(values)
+            else:
+                main_query_dict[key] = values
         elif (isinstance(main_query_dict[key], list)
             and isinstance(values, list)):
             main_query_dict[key] += values
+    
     return main_query_dict
 
 
