@@ -231,6 +231,8 @@ def make_manifest_obj_cache_key(uuid):
 
 def cache_all_df_context_related_manifest_objects(df_context):
     cache = caches['redis']
+    if not 'object_id' in df_context.columns:
+        return None
     all_uuids = df_context[
         ~df_context['object_id'].isnull()
         & (df_context['object_id'] != 'nan')
@@ -346,7 +348,11 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs, for_solr=False):
         # We're indexing solr documents and need the related
         # manifest objects.
         cache_all_df_context_related_manifest_objects(df_context)
-    
+
+    if not 'object__label' in df_context.columns:
+        # We have nothing to add, so skip out.
+        return None
+
     # Sort the context dataframes.
     df_context.sort_values(
         by=['subject__data_type', 'object__label'], 
@@ -478,4 +484,3 @@ def make_ld_equivalent_assertions(item_man_obj, assert_qs, for_solr=False):
     # OK! We should have all of our glorious not-stored linked data
     # equivalence assertions to return.
     return equiv_assertions
-
