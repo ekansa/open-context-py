@@ -385,8 +385,10 @@ class ResultRecord():
         self.thumbnail_scr = None
         self.preview_scr = None
         self.fullfile_scr = None
+        self.iiif_json_uri = None
         self.snippet = None
         self.cite_uri = None  # stable identifier as an HTTP uri
+        self.descriptiveness = None # maps to interest_score
 
         # All spatial contexts (dicts derived from solr entity stings)
         self.contexts = None
@@ -420,6 +422,7 @@ class ResultRecord():
         self.set_record_projects(solr_doc)
         self.set_geo_point_attributes(solr_doc)
         self.set_chrono_ranges(solr_doc)
+        self.set_media(solr_doc)
 
 
     def set_record_basic_metadata(self, solr_doc):
@@ -445,6 +448,8 @@ class ResultRecord():
         self.item_type = item_type_output['item_type']
         self.label = item_dict.get('label')
         self.slug = item_dict.get('slug')
+        self.descriptiveness = solr_doc.get('interest_score')
+    
     
     def set_record_category(self, solr_doc):
         """Sets the record category"""
@@ -559,6 +564,12 @@ class ResultRecord():
             return None
         self.early_date = min(dates)
         self.late_date = max(dates)
+    
+
+    def set_media(self, solr_doc):
+        """Sets media urls for the record"""
+        self.thumbnail_scr = solr_doc.get('thumbnail_uri')
+        self.iiif_json_uri = solr_doc.get('iiif_json_uri')
     
 
     def add_snippet_content(self, highlight_dict):
@@ -753,6 +764,8 @@ class ResultRecord():
             properties['item category'] = self.category['label']
         if self.snippet:
             properties['snippet'] = self.snippet
+        if self.thumbnail_scr:
+            properties['thumbnail'] = f'https://{self.thumbnail_scr}'
         
 
         # Add linked data (standards) attributes if they exist.
@@ -806,6 +819,7 @@ class ResultRecord():
         geo_json['id'] = f'#record-{record_index}-of-{total_found}'
         geo_json['label'] = self.label
         geo_json['rdfs:isDefinedBy'] = self.uri
+        geo_json['oc-api:descriptiveness'] = self.descriptiveness
         geo_json['type'] = 'Feature'
         geo_json['category'] = 'oc-api:geo-record'
 

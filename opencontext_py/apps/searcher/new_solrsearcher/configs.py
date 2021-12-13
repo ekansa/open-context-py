@@ -143,6 +143,7 @@ REL_CAT_FACET_FIELDS = [
 GENERAL_STATS_FIELDS = [
     'updated',
     'published',
+    'interest_score',
 ]
 
 CHRONO_STATS_FIELDS =  [
@@ -889,5 +890,3 @@ FACET_OPT_HIDE_URI_MAPS = [
 FACET_OPT_HIDE_URI_PREFIX_MAPS = [
             
 ]
-
-

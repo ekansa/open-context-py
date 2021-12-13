@@ -153,6 +153,16 @@ class ResultMaker():
                 'oai-pmh:earliestDatestamp',
                 (configs.STATS_FIELDS_PATH_KEYS + ['published', 'min',]),
             ),
+            (
+                # Least interesting
+                'oc-api:descriptiveness-min',
+                (configs.STATS_FIELDS_PATH_KEYS + ['interest_score', 'min',]),
+            ),
+            (
+                # Most interesting
+                'oc-api:descriptiveness-max',
+                (configs.STATS_FIELDS_PATH_KEYS + ['interest_score', 'max',]),
+            ),
         ]
         for json_ld_key, path_keys_list in meta_configs:
             act_time = utilities.get_dict_path_value(
