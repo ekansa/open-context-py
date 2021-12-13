@@ -1,0 +1,256 @@
+{% load humanize %}
+
+
+
+
+
+
+<template id='records-tab-field-media'>
+    <div class="clearfix">
+    <b-img-lazy 
+        v-if="field_item.media" 
+        :src="field_item.media" 
+        fluid 
+        :alt="'Image related to ' + field_item.label">
+    </b-img-lazy>
+    <b-img v-else
+        v-bind="blank_props"
+        blank-color="#cccccc" 
+        :alt="'No image related to ' + field_item.label">
+    </b-img>
+    </div>
+</template>
+
+
+
+
+
+
+
+<template id="records-tab-template">
+
+    <b-container fluid>
+        <h5 class="filter_heading_labels">
+            Item Records ([[result_count]])
+        </h5>
+
+        <b-table 
+            v-if="result_raw_features"
+            :items="items"
+            :fields="fields"
+            :striped="striped"
+            :bordered="bordered"
+            responsive="sm"
+            :small="true"
+            selectable
+            @row-selected="onRowSelected"
+        >
+
+            <template #cell(media)="data">
+                <records-tab-field-media
+                v-bind:field_item="data.item">
+                </records-tab-field-media>
+            </template>
+            <template #cell()="data">
+                [[ data.value ]]
+            </template>
+
+        </b-table>
+        <div v-else>
+            <b-spinner class="m-5" label="Busy"></b-spinner>
+            <p>Getting item records...</p>
+        </div>
+
+    </b-container>
+
+</template>
+
+
+
+
+
+
+<style type="text/css">
+
+
+</style>
+
+
+<script type="text/javascript">
+
+var vs_records_tab_field_media = Vue.component(
+    'records-tab-field-media',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['field_item', ],
+      data() {
+        return {
+            field_item: null,
+            blank_props: {
+                blank: true, 
+                width: 75, 
+                height: 75, 
+                class: 'm1',
+            },
+        };
+      },
+      template: '#records-tab-field-media',
+      methods: {
+        
+      }
+    },
+);
+
+
+
+var vc_records_tab = Vue.component(
+    'records-tab',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'all_range_facets',
+            'route_key_index',
+            'result_id',
+            'result_count',
+            'descriptiveness_min',
+            'descriptiveness_max',
+            'result_raw_features',
+        ],
+        data() {
+            return {
+                striped: true,
+                bordered: true,
+                selectMode: 'single',
+                result_id: null,
+                all_range_facets: null,
+                route_key_index: 0,
+                result_count: 0,
+                descriptiveness_min: 0,
+                descriptiveness_max: 0,
+                interest_levels: 5,
+                result_raw_features: null,
+                fields: [
+                    { key: 'label', sortable: true },
+                    { key: 'project', sortable: true },
+                    { key: 'context', sortable: true },
+                    { key: 'category', sortable: true },
+                    { key: 'chronology', sortable: false },
+                    { key: 'descriptiveness', sortable: true },
+                    { key: 'media', sortable: false },
+                ],
+                selected: [],
+            };
+        },
+        template: '#records-tab-template',
+        mounted() {
+            
+        },
+        computed: {
+            items: function () {
+                if(!this.result_raw_features){
+                    return null;
+                }
+                let items = [];
+                for(let feature of this.result_raw_features){
+                    if(feature['category'] != 'oc-api:geo-record'){
+                        continue;
+                    }
+                    if(!('properties' in feature)){
+                        continue;
+                    }
+                    
+                    let props = feature['properties'];
+                    let url = feature['rdfs:isDefinedBy'];
+                    url = abs_to_rel_url(url, BASE_URL);
+
+                    let context = '(No spatial context)';
+                    let context_url = null;
+                    if('context label' in props){
+                        context = props['context label'];
+                    }
+                    if('context href' in props){
+                        context_url = abs_to_rel_url(
+                            props['context href'],
+                            BASE_URL,
+                        );
+                    }
+                    let category = '(Uncateorized)';
+                    if('item category' in props){
+                        category = props['item category'];
+                    }
+                    let early = null;
+                    let late = null;
+                    let dates = null;
+                    if('early bce/ce' in props){
+                        early = style_bce_ce_year(props['early bce/ce'], null);
+                    }
+                    if('late bce/ce' in props){
+                        late = style_bce_ce_year(props['late bce/ce'], null);
+                    }
+                    if((early != null) && (late != null)){
+                        dates = early + ' to ' + late;
+                    }
+                    else if(early != null){
+                        dates = early;
+                    }
+                    else if(late != null){
+                        dates = late;
+                    }
+                    else {
+                        dates = '(No dates)';
+                    }
+                    let thumb_uri = null;
+                    if('thumbnail' in props){
+                        thumb_uri = props['thumbnail'];
+                    }
+
+                    let item = {
+                        label: feature['label'],
+                        url: url,
+                        category: category,
+                        context: context,
+                        context_url: context_url,
+                        project: props['project label'],
+                        project_url: abs_to_rel_url(
+                            props['project href'],
+                            BASE_URL,
+                        ),
+                        chronology: dates,
+                        descriptiveness: this.interest_level(
+                            feature['oc-api:descriptiveness'], 
+                            this.descriptiveness_min, 
+                            this.descriptiveness_max,
+                        ),
+                        media: thumb_uri,
+                    };
+                    items.push(item);
+                }
+                return items;
+            },
+        },
+        methods: {
+            interest_level(des_act, des_min, dex_max){
+                let level = 0;
+                let increments = (dex_max - des_min) / this.interest_levels;
+                for (let i = 1; i <= this.interest_levels; i++) {
+                    let level_score = des_min + (increments * i);
+                    if (des_act >= level_score){
+                        level = i;
+                    }
+                }
+                return level;
+            },
+            onRowSelected(items) {
+                this.selected = items;
+                console.log(this.selected);
+            },
+        },
+        components: {
+            'records-tab-field-media': vs_records_tab_field_media,
+        },
+    }
+);
+
+
+
+</script>
