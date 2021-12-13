@@ -113,9 +113,13 @@ LOW_RESOLUTION_CHRONOTILE_DROP_LAST = 10
 # Mappings for solr fields and file uris.
 FILE_TYPE_SOLR_FIELD_DICT = {
     'oc-gen:thumbnail': 'thumbnail_uri',
+    'oc-gen:thumbnail-uri': 'thumbnail_uri',
     'oc-gen:preview': 'preview_uri',
+    'oc-gen:preview-uri': 'preview_uri',
     'oc-gen:fullfile': 'full_uri',
+    'oc-gen:fullfile-uri': 'full_uri',
     'oc-gen:iiif': 'iiif_json_uri',
+    'oc-gen:iiif-uri': 'iiif_json_uri',
 }
 
 
@@ -292,20 +296,15 @@ class SolrDocumentNS:
             else:
                 self.fields['other_binary_media_count'] += 1
         elif item.get('item_type') == 'documents':
-            self.fields['document_count'] += 1
-        
-        # Tuples of (solr_field, media item_obj key)
-        media_tups = [
-            ('thumbnail_uri', 'oc-gen:thumbnail-uri'),
-            ('iiif_json_uri', 'oc-gen:iiif-json-uri'),
-        ]
-        for solr_field, key_uri in media_tups:
+            self.fields['documents_count'] += 1
+        for key_uri, solr_field in FILE_TYPE_SOLR_FIELD_DICT.items():
             if self.fields.get(solr_field):
                 # We already have one of these.
                 continue
             if not item.get(key_uri):
                 continue
-            self.fields[solr_field] = [item.get(key_uri)]
+            # This is NOT a multi-valued field
+            self.fields[solr_field] = AllManifest().clean_uri(item.get(key_uri))
 
 
     def _set_required_solr_fields(self):
@@ -335,7 +334,7 @@ class SolrDocumentNS:
         # default, can add as other media links discovered
         self.fields['other_binary_media_count'] = 0
         # default, can add as doc links discovered
-        self.fields['document_count'] = 0
+        self.fields['documents_count'] = 0
         self.fields['subjects_children_count'] = 0
         self.fields['subjects_count'] = 0
         self.fields['persons_count'] = 0
@@ -1064,6 +1063,14 @@ class SolrDocumentNS:
                                         self.fields['gis_media_count'] += 1
                                     else:
                                         self.fields['other_binary_media_count'] += 1
+                            for key_uri, solr_field in FILE_TYPE_SOLR_FIELD_DICT.items():
+                                if self.fields.get(solr_field):
+                                    # We already have one of these.
+                                    continue
+                                if not obj_dict.get(key_uri):
+                                    continue
+                                # This is NOT a multi-valued field
+                                self.fields[solr_field] = AllManifest().clean_uri(obj_dict.get(key_uri))
 
 
 
