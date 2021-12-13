@@ -149,7 +149,7 @@
     <field name="has_table_id" type="strings" indexed="true" stored="false" multiValued="true" />
 
     <!-- interest score for items -->
-    <field name="interest_score" type="pdouble" indexed="true" stored="false" required="true" multiValued="false"/>
+    <field name="interest_score" type="pdouble" indexed="true" stored="true" required="true" multiValued="false"/>
 
     <!-- sort value for items, based on calculations done in Python, default to 0 -->
     <field name="sort_score" type="pdouble" indexed="true" stored="false" required="true" multiValued="false"/>
