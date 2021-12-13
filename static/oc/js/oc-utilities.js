@@ -96,7 +96,8 @@ function make_unique_count_key(count_key, count_list) {
 
 function style_bce_ce_year(date_num){
 	//styles a year BCE / CE
-	if (date_num == false) {
+	let output = null;
+	if (date_num == false || date_num == null) {
 		output = '(recent)';
 	}
 	else{
