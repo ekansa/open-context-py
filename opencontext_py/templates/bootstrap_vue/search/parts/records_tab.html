@@ -18,16 +18,20 @@
 
 
 <template id='records-tab-field-descriptiveness'>
-    <div class="clearfix">
+    <div class="clearfix record-thumb-outer">
     <b-img-lazy 
         v-if="field_item.media" 
-        :src="field_item.media" 
-        fluid 
+        :src="field_item.media"
+        thumbnail
+        fluid
+        rounded
+        center
         :alt="'Image related to ' + field_item.label">
     </b-img-lazy>
     <b-img v-else
         v-bind="blank_props"
-        blank-color="#cccccc" 
+        blank-color="#cccccc"
+        center
         :alt="'No image related to ' + field_item.label">
     </b-img>
     </div>
