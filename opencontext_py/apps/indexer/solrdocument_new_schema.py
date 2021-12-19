@@ -317,6 +317,7 @@ class SolrDocumentNS:
             label=self.man_obj.label,
         )
         self.fields['project_uuid'] =  str(self.man_obj.project_id)
+        self.fields['project_label'] =  str(self.man_obj.project.label)
         if not self.man_obj.published:
             published_datetime = DEFAULT_PUBLISHED_DATETIME
         else:
@@ -477,6 +478,7 @@ class SolrDocumentNS:
             # This item has no spatial context.
             return None
         # Iterate through the spatial context items.
+        context_path_labels = []
         for index, context in enumerate(context_items):
             # Compose the solr_value for this item in the context
             # hierarchy.
@@ -514,6 +516,12 @@ class SolrDocumentNS:
                 act_solr_value,
                 act_solr_doc_prefix='', # No prefixing for contexts!
             )
+            if not context.get('label'):
+                continue
+            context_path_labels.append(context.get('label'))
+        if len(context_path_labels) < 1:
+            return None
+        self.fields['context_path'] = '/'.join(context_path_labels)
     
 
     def _get_hierarchy_paths_w_alt_labels_by_item_type(self, item_man_obj):

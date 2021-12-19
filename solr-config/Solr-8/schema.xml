@@ -137,8 +137,14 @@
     <!-- general item class (as a label). Single valued, so sortable. -->
     <field name="item_class" type="strings" indexed="true" stored="true" multiValued="false"/>
 
+    <!-- general item context path, single value, so sortable. -->
+    <field name="context_path" type="strings" indexed="true" stored="true" multiValued="false"/>
+
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+
+    <!-- project_label is required, makes this sortable solr doc -->
+    <field name="project_label" type="strings" indexed="true" stored="true" required="true" multiValued="false" />
 
     <!-- in_table_id identifies a downloadable table the contains this record.
     not required. don't store, since only want facets of these -->
