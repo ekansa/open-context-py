@@ -1,11 +1,23 @@
 {% load humanize %}
 
 
+<template id='records-tab-field-label'>
+    <div>
+        <a v-if="field_item.href"
+            :href="field_item.href"
+            :title="'Link to ' + field_item.label"
+            target="_blank">
+            [[ field_item.label ]]
+        </a>
+        <span v-else>
+            (Loading...)
+        </span>
+    </div>
+</template>
 
 
 
-
-<template id='records-tab-field-media'>
+<template id='records-tab-field-descriptiveness'>
     <div class="clearfix">
     <b-img-lazy 
         v-if="field_item.media" 
@@ -23,15 +35,11 @@
 
 
 
-
-
-
-
 <template id="records-tab-template">
 
-    <b-container fluid>
+    <div id="search-records-tab">
         <h5 class="filter_heading_labels">
-            Item Records ([[result_count]])
+            Search Results [[ view_range_note ]]
         </h5>
 
         <b-table 
@@ -40,17 +48,29 @@
             :fields="fields"
             :striped="striped"
             :bordered="bordered"
-            responsive="sm"
+            responsive="xl"
             :small="true"
             selectable
+            hover
             @row-selected="onRowSelected"
+            no-local-sorting
+            @sort-changed="sortingChanged"
+            sort-icon-left
+            :sort-by.sync="sortBy"
+            :sort-desc.sync="sortDesc"
         >
-
-            <template #cell(media)="data">
-                <records-tab-field-media
+            <template #cell(label)="data">
+                <records-tab-field-label
                 v-bind:field_item="data.item">
-                </records-tab-field-media>
+                </records-tab-field-label>
             </template>
+
+            <template #cell(descriptiveness)="data">
+                <records-tab-field-descriptiveness
+                v-bind:field_item="data.item">
+                </records-tab-field-descriptiveness>
+            </template>
+
             <template #cell()="data">
                 [[ data.value ]]
             </template>
@@ -61,7 +81,7 @@
             <p>Getting item records...</p>
         </div>
 
-    </b-container>
+    </div>
 
 </template>
 
@@ -78,8 +98,30 @@
 
 <script type="text/javascript">
 
-var vs_records_tab_field_media = Vue.component(
-    'records-tab-field-media',
+
+const SORT_OPTIONS_FRONTEND = JSON.parse('{{ SORT_OPTIONS_FRONTEND|escapejs }}');
+
+
+var vs_records_tab_field_label = Vue.component(
+    'records-tab-field-label',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['field_item', ],
+      data() {
+        return {
+            field_item: null,
+        };
+      },
+      template: '#records-tab-field-label',
+      methods: {
+        
+      }
+    },
+);
+
+
+var vs_records_tab_field_descriptiveness = Vue.component(
+    'records-tab-field-descriptiveness',
     {
       delimiters: ['[[', ']]'],
       props: ['field_item', ],
@@ -94,7 +136,7 @@ var vs_records_tab_field_media = Vue.component(
             },
         };
       },
-      template: '#records-tab-field-media',
+      template: '#records-tab-field-descriptiveness',
       methods: {
         
       }
@@ -112,6 +154,12 @@ var vc_records_tab = Vue.component(
             'route_key_index',
             'result_id',
             'result_count',
+            'result_start_index',
+            'result_items_per_page',
+            'result_page_first_link',
+            'result_page_previous_link',
+            'result_page_next_link',
+            'result_page_last_link',
             'descriptiveness_min',
             'descriptiveness_max',
             'result_raw_features',
@@ -125,18 +173,26 @@ var vc_records_tab = Vue.component(
                 all_range_facets: null,
                 route_key_index: 0,
                 result_count: 0,
+                result_start_index: 0,
+                result_items_per_page: 1,
+                result_page_first_link: null,
+                result_page_previous_link: null,
+                result_page_next_link: null,
+                result_page_last_link: null,
                 descriptiveness_min: 0,
                 descriptiveness_max: 0,
                 interest_levels: 5,
                 result_raw_features: null,
+                sortBy: 'descriptiveness',
+                sortDesc: true,
                 fields: [
-                    { key: 'label', sortable: true },
+                    { key: 'descriptiveness', sortable: true, label: 'Info Content'},
+                    { key: 'item_class', sortable: true, label: 'Category' },
+                    { key: 'label', sortable: true, label: 'Item'},
                     { key: 'project', sortable: true },
                     { key: 'context', sortable: true },
-                    { key: 'category', sortable: true },
                     { key: 'chronology', sortable: false },
-                    { key: 'descriptiveness', sortable: true },
-                    { key: 'media', sortable: false },
+                    { key: 'updated', sortable: true },
                 ],
                 selected: [],
             };
@@ -146,6 +202,20 @@ var vc_records_tab = Vue.component(
             
         },
         computed: {
+            view_range_note: function() {
+                if(this.result_count < 1 || this.result_count == null){
+                    return 'Current filters return no items';
+                }
+                if(this.result_start_index == null || this.result_items_per_page == null){
+                    return 'Error. Please change filter criteria.';
+                }
+                let first_index = this.result_start_index + 1;
+                let last_index = this.result_start_index + this.result_items_per_page;
+                if(last_index > this.result_count){
+                    last_index = this.result_count;
+                }
+                return `${first_index.toLocaleString()} to ${last_index.toLocaleString()} of ${this.result_count.toLocaleString()}`;
+            },
             items: function () {
                 if(!this.result_raw_features){
                     return null;
@@ -163,6 +233,11 @@ var vc_records_tab = Vue.component(
                     let url = feature['rdfs:isDefinedBy'];
                     url = abs_to_rel_url(url, BASE_URL);
 
+                    let href = url;
+                    if('href' in props){
+                        href = props['href'];
+                    }
+
                     let context = '(No spatial context)';
                     let context_url = null;
                     if('context label' in props){
@@ -174,9 +249,9 @@ var vc_records_tab = Vue.component(
                             BASE_URL,
                         );
                     }
-                    let category = '(Uncateorized)';
+                    let item_class = '(Uncateorized)';
                     if('item category' in props){
-                        category = props['item category'];
+                        item_class = props['item category'];
                     }
                     let early = null;
                     let late = null;
@@ -203,11 +278,15 @@ var vc_records_tab = Vue.component(
                     if('thumbnail' in props){
                         thumb_uri = props['thumbnail'];
                     }
+                    let updated = props['updated'];
+                    let updated_ex = updated.split('T');
+                    updated = updated_ex[0];
 
                     let item = {
                         label: feature['label'],
                         url: url,
-                        category: category,
+                        href: href,
+                        item_class: item_class,
                         context: context,
                         context_url: context_url,
                         project: props['project label'],
@@ -221,6 +300,7 @@ var vc_records_tab = Vue.component(
                             this.descriptiveness_min, 
                             this.descriptiveness_max,
                         ),
+                        updated: updated,
                         media: thumb_uri,
                     };
                     items.push(item);
@@ -240,13 +320,44 @@ var vc_records_tab = Vue.component(
                 }
                 return level;
             },
-            onRowSelected(items) {
+            onRowSelected(items){
                 this.selected = items;
                 console.log(this.selected);
+                window.open(items[0].href, "_blank");
+            },
+            sortingChanged(ctx){
+                console.log(ctx);
+                let current_url = this.result_id;
+                if(!(ctx.sortBy in SORT_OPTIONS_FRONTEND)){
+                    console.log(ctx.sortBy + ' needs config');
+                    return null;
+                }
+                let sort_val = SORT_OPTIONS_FRONTEND[ctx.sortBy];
+                if(ctx.sortDesc){
+                    sort_val += '--desc';
+                }
+                else{
+                    sort_val += '--asc';
+                }
+                if(sort_val == getURLParameter(this.result_id, 'sort')){
+                    // no sort change.
+                    return null;
+                }
+                let url = replaceURLparameter(current_url, 'sort', sort_val);
+                let hash = '';
+                if(window.location.hash) {
+                    hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+                }
+                if(url.indexOf(hash) < 0){
+                    url += hash;
+                }
+                url = abs_to_rel_url(url, BASE_URL);
+                router.push(url);
             },
         },
         components: {
-            'records-tab-field-media': vs_records_tab_field_media,
+            'records-tab-field-label': vs_records_tab_field_label,
+            'records-tab-field-descriptiveness': vs_records_tab_field_descriptiveness,
         },
     }
 );

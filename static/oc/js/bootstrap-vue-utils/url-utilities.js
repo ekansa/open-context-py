@@ -226,6 +226,9 @@ function get_search_current_frag_key(key){
 }
 
 function update_url_frag_key_val(url, key, val, allowed_keys){
+    if(!url){
+        return null;
+    }
     let frag_str = '';
     if(url.indexOf('#') >= 0){
         url_parts = url.split('#');

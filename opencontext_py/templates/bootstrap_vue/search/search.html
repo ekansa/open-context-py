@@ -25,7 +25,7 @@
 
         <div id="app">
             <div class="row">
-                <div class="col-sm-8">
+                <div class="col-lg-8">
 
                     <all-search-tabs
                         v-bind:result="result"
@@ -34,47 +34,8 @@
                     >
                     </all-search-tabs>
 
-                    <!--
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 v-if="result">
-                                <span class="text-left">Map</span>
-                                <span class="text-right">[[ result['totalResults'] ]] Records</span>
-                            </h5>
-                            <h5 v-else>
-                                <span class="text-left">Map</span>
-                                <span class="text-right">Loading Records...</span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                          <div id="app_media" v-if="result">
-                            <common_map
-                              :map_key="0"
-                              :map_class="'map_preview'"
-                              :min_height="800"
-                              :ref_suffix="'search-map'"
-                              v-bind:geo_json="result"></common_map>
-                          </div>
-                          <div class="jumbotron jumbotron-fluid" v-else>
-                              <div class="container-fluid text-muted text-center">
-                                <h1 class="display-4">Getting map data...</h1>
-                                <b-spinner class="m-5" label="Busy"></b-spinner>
-                              </div>
-                            </div>
-                        </div>
-                      </div>
-
-
-                    <div v-if="chrono_facets">
-                        <chronotiles
-                            :key="'chrono-tiles-component-' + chrono_tiles_component_key_index"
-                            v-bind:result_id="result.id"
-                            v-bind:chrono_facets="chrono_facets"></chronotiles>
-                    </div>
-                
-                -->
                 </div>
-                <div class="col-sm-4">
+                <div class="col-lg-4">
                     <div v-if="result">
                         <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
                                     

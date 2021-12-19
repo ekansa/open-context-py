@@ -307,3 +307,6 @@ Search
 .numeric_chart {
 	margin-bottom: 24px;
 }
+#search-records-tab tbody {
+	font-size: 14px;
+}

@@ -449,6 +449,8 @@ class ResultRecord():
         self.label = item_dict.get('label')
         self.slug = item_dict.get('slug')
         self.descriptiveness = solr_doc.get('interest_score')
+        self.published = solr_doc.get('published')
+        self.updated = solr_doc.get('updated')
     
     
     def set_record_category(self, solr_doc):
@@ -492,12 +494,16 @@ class ResultRecord():
             self.contexts[-1].get('uri', ''), 
             base_url=settings.CANONICAL_HOST,
         )
-        # Set the context label from all the labels in the
-        # context list.
-        context_labels = [
-            c['label'] for c in self.contexts if c.get('label')
-        ]
-        self.context_label = '/'.join(context_labels)
+        if solr_doc.get('context_path'):
+            # We have this in the solr doc (a sortable field)
+            self.context_label = solr_doc.get('context_path')
+        else:
+            # Set the context label from all the labels in the
+            # context list.
+            context_labels = [
+                c['label'] for c in self.contexts if c.get('label')
+            ]
+            self.context_label = '/'.join(context_labels)
     
     def set_record_projects(self, solr_doc):
         """Sets the records projects list"""
@@ -766,6 +772,8 @@ class ResultRecord():
             properties['snippet'] = self.snippet
         if self.thumbnail_scr:
             properties['thumbnail'] = f'https://{self.thumbnail_scr}'
+        properties['published'] = self.published
+        properties['updated'] = self.updated
         
 
         # Add linked data (standards) attributes if they exist.

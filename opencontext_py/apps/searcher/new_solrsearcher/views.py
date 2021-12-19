@@ -145,6 +145,7 @@ def query_html(request, spatial_context=None):
         'st': response_dict.copy(),
         'api_url': response_dict.get('id'),
         'configs': configs,
+        'SORT_OPTIONS_FRONTEND': json.dumps(configs.SORT_OPTIONS_FRONTEND),
     }
     template = loader.get_template('bootstrap_vue/search/search.html')
     response = HttpResponse(template.render(context, request))

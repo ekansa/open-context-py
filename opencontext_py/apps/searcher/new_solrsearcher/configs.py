@@ -330,13 +330,25 @@ SORT_OPTIONS = [
      'value': 'item',
      'label': 'Item (type, provenance, label)',
      'opt': True},
+    {'type': 'oc-api:sort-item-type',
+     'value': 'item-type',
+     'label': 'Item type',
+     'opt': False},
     {'type': 'oc-api:sort-item-class',
      'value': 'item-class',
      'label': 'General category',
      'opt': True},
+    {'type': 'oc-api:sort-project',
+     'value': 'project',
+     'label': 'Project',
+     'opt': True},
     {'type': 'oc-api:sort-updated',
      'value': 'updated',
      'label': 'Updated',
+     'opt': True},
+    {'type': 'oc-api:sort-context',
+     'value': 'context',
+     'label': 'Item Context',
      'opt': True},
     {'type': 'oc-api:sort-published',
      'value': 'published',
@@ -355,6 +367,19 @@ REQUEST_SOLR_SORT_MAPPINGS = {
     'interest': 'interest_score',
     'item-type': 'item_type',
     'item-class': 'item_class',
+    'project': 'project_label',
+    'context': 'context_path',
+}
+
+# Frontend sort configurations, keyed by
+# the frontend table fields.
+SORT_OPTIONS_FRONTEND = {
+    'descriptiveness': 'interest',
+    'label': 'item',
+    'updated': 'updated',
+    'item_class': 'item-class',
+    'context': 'context',
+    'project': 'project',
 }
 
 

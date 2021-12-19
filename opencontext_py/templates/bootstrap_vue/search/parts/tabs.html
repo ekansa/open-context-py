@@ -5,7 +5,7 @@
     <b-card no-body>
       <b-tabs card v-model="tab">
         <b-tab title="Map and Time Ranges" 
-          :id="'tab-map-time-ranges'" 
+          :id="'tab-map-time-ranges'"
           v-on:click="tab_clicked"
           >
           <b-card-text>
@@ -43,10 +43,9 @@
         <b-tab 
           title="Charts"
           :id="'tab-numeric-fields'"
-          v-if="facets_numeric_groups_opts"
           v-on:click="tab_clicked"
           >
-          <b-card-text>
+          <b-card-text v-if="facets_numeric_groups_opts">
 
             <all-numeric-facets
               v-bind:route_key_index="route_key_index"
@@ -64,15 +63,19 @@
         <b-tab 
           title="Item Records"
           :id="'tab-item-records'"
-          v-if="result_count > 0"
           v-on:click="tab_clicked"
           >
-          <b-card-text>
-
+          <b-card-text v-if="result_count > 0">
             <records-tab
               v-bind:route_key_index="route_key_index"
               v-bind:result_id="result.id"
               v-bind:result_count="result_count"
+              v-bind:result_start_index="result_start_index"
+              v-bind:result_items_per_page="result_items_per_page"
+              v-bind:result_page_first_link="result_page_first_link"
+              v-bind:result_page_previous_link="result_page_previous_link"
+              v-bind:result_page_next_link="result_page_next_link"
+              v-bind:result_page_last_link="result_page_last_link"
               v-bind:descriptiveness_min="descriptiveness_min"
               v-bind:descriptiveness_max="descriptiveness_max"
               v-bind:result_raw_features="result_raw_features"
@@ -106,7 +109,7 @@ var vc_all_search_tabs = Vue.component(
         tile_layer: null,
         emit_update_fetch_done: false,
         route_key_index: 0,
-        tab: null,
+        tab: 0,
       },
       computed: {
         map_time_id: function () {
@@ -116,40 +119,34 @@ var vc_all_search_tabs = Vue.component(
           return frag_obj.tab;
         },
         result_count: function() {
-          if(!this.result){
-            return null;
-          }
-          if(!('totalResults' in this.result)){
-            return null;
-          }
-          return this.result['totalResults'];
+          return safe_get_nested_object_by_str_key(this.result, 'totalResults');
+        },
+        result_start_index: function() {
+          return safe_get_nested_object_by_str_key(this.result, 'startIndex');
+        },
+        result_items_per_page: function() {
+          return safe_get_nested_object_by_str_key(this.result, 'itemsPerPage');
+        },
+        result_page_first_link: function() {
+          return safe_get_nested_object_by_str_key(this.result, 'first');
+        },
+        result_page_previous_link: function() {
+          return safe_get_nested_object_by_str_key(this.result, 'previous');
+        },
+        result_page_next_link: function() {
+          return safe_get_nested_object_by_str_key(this.result, 'next');
+        },
+        result_page_last_link: function() {
+          return safe_get_nested_object_by_str_key(this.result, 'last');
         },
         descriptiveness_min: function() {
-          if(!this.result){
-            return null;
-          }
-          if(!('oc-api:descriptiveness-min' in this.result)){
-            return null;
-          }
-          return this.result['oc-api:descriptiveness-min'];
+          return safe_get_nested_object_by_str_key(this.result, 'oc-api:descriptiveness-min');
         },
         descriptiveness_max: function() {
-          if(!this.result){
-            return null;
-          }
-          if(!('oc-api:descriptiveness-max' in this.result)){
-            return null;
-          }
-          return this.result['oc-api:descriptiveness-max'];
+          return safe_get_nested_object_by_str_key(this.result, 'oc-api:descriptiveness-max');
         },
         result_raw_features: function() {
-          if(!this.result){
-            return null;
-          }
-          if(!('features' in this.result)){
-            return null;
-          }
-          return this.result['features'];
+          return safe_get_nested_object_by_str_key(this.result, 'features');
         },
         numeric_fields_id: function () {
           let frag_obj = get_search_current_frag_obj();
@@ -219,8 +216,12 @@ var vc_all_search_tabs = Vue.component(
       methods: {
         tab_clicked(){
           console.log('Tab clicked: ' + this.tab);
+          // let frag_obj = get_search_current_frag_obj();
+          // frag_obj.tab = this.tab;
+          // console.log( encode_frag_obj(frag_obj));
+          // window.location.hash = encode_frag_obj(frag_obj);
           window.dispatchEvent(new Event('resize'));
-          return true;
+          return null;
         }
       },
       components: {
