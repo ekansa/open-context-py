@@ -183,11 +183,12 @@ var vc_chronotiles = Vue.component(
     'chronotiles',
     {
         delimiters: ['[[', ']]'],
-        props: ['result_id', 'chrono_facets',],
+        props: ['result_id', 'chrono_facets', 'frontend_state_obj',],
         data() {
             return {
                 result_id: null,
                 chrono_facets: null,
+                frontend_state_obj: null,
                 data_series: [],
                 data_series_colors: [],
                 // data_series_fill_opacities: [],

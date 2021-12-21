@@ -76,9 +76,10 @@ var vc_filter_item = Vue.component(
     'filter-item',
     {
         delimiters: ['[[', ']]'],
-        props: ['filter_group', 'index', 'allow_collapse'],
+        props: ['filter_group', 'index', 'allow_collapse', 'frontend_state_obj'],
         data: {
             allow_collapse: false,
+            frontend_state_obj: null,
         },
         template: '#filter-item-template',
     }
@@ -87,7 +88,13 @@ var vc_all_filters = Vue.component(
     'all-filters',
     {
         delimiters: ['[[', ']]'],
-        props: ['grouped_filters'],
+        props: ['grouped_filters', 'frontend_state_obj'],
+        data() {
+            return {
+                grouped_filters: null,
+                frontend_state_obj: null,
+            };
+        },
         template: '#filter-list-template',
         components: {
             'filter-item': vc_filter_item

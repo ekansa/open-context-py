@@ -31,17 +31,22 @@
                         v-bind:result="result"
                         v-bind:chrono_facets="chrono_facets"
                         v-bind:route_key_index="route_key_index"
+                        v-bind:frontend_state_obj="frontend_state_obj"
                     >
                     </all-search-tabs>
 
                 </div>
                 <div class="col-lg-4">
                     <div v-if="result">
-                        <all-filters v-bind:grouped_filters="grouped_filters"></all-filters>
+                        <all-filters 
+                            v-bind:grouped_filters="grouped_filters"
+                            v-bind:frontend_state_obj="frontend_state_obj">
+                        </all-filters>
                                     
                         <all-facets 
                             v-bind:facets_group_dtype_id="'main_facets'"
-                            v-bind:facets_dtypes_groups_opts="facets_cat_dtypes_groups_opts"></all-facets>
+                            v-bind:facets_dtypes_groups_opts="facets_cat_dtypes_groups_opts"
+                            v-bind:frontend_state_obj="frontend_state_obj"></all-facets>
                     </div>
                 </div>
 
@@ -81,6 +86,7 @@
             tile_layer: null,
             emit_update_fetch_done: false,
             route_key_index: 0,
+            frontend_state_obj:null,
         },
         created(){
             this.fetch_oc_api();
@@ -93,6 +99,10 @@
             fetch_oc_api: function (){
                 this.error = null;
                 this.loading = true;
+                if(!this.frontend_state_obj){
+                    this.frontend_state_obj = get_search_current_frag_obj();
+                    console.log(this.frontend_state_obj);
+                }
                 fetch(
                     this.$route.fullPath,
                     {

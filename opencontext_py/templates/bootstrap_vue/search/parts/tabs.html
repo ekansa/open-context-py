@@ -100,16 +100,20 @@ var vc_all_search_tabs = Vue.component(
         'result',
         'chrono_facets',
         'route_key_index',
+        'frontend_state_obj',
         'tab',
       ],
       template: '#all-search-tabs-temp',
-      data: {
-        message: 'Open Context Search Result',
-        result: null,
-        tile_layer: null,
-        emit_update_fetch_done: false,
-        route_key_index: 0,
-        tab: 0,
+      data() {
+        return {
+          message: 'Open Context Search Result',
+          result: null,
+          tile_layer: null,
+          emit_update_fetch_done: false,
+          route_key_index: 0,
+          tab: 0,
+          frontend_state_obj: null,
+        };
       },
       computed: {
         map_time_id: function () {

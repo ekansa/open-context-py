@@ -166,10 +166,13 @@ var vc_all_facets = Vue.component(
     'all-facets',
     {
         delimiters: ['[[', ']]'],
-        props: ['facets_dtypes_groups_opts', 'options_title', 'facets_group_dtype_id'],
-        data: {
-            options_title: 'Filtering Options',
-            facets_group_dtype_id: 'main_facets',
+        props: ['facets_dtypes_groups_opts', 'options_title', 'facets_group_dtype_id', 'frontend_state_obj'],
+        data() {
+            return {
+                options_title: 'Filtering Options',
+                facets_group_dtype_id: 'main_facets',
+                frontend_state_obj: null,
+            };
         },
         template: '#all-facets-template',
         components: {
