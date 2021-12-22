@@ -108,7 +108,7 @@ var vc_all_search_tabs = Vue.component(
           tile_layer: null,
           emit_update_fetch_done: false,
           route_key_index: 0,
-          initial_tab: 0,
+          initial_tab: null,
           count_tab_clicks: 0,
           initial_tab_clicks_to: 5,
           tab: null,
@@ -223,10 +223,14 @@ var vc_all_search_tabs = Vue.component(
       methods: {
         activate_tab_from_frontend_state_obj: function() {
           if(!this.frontend_state_obj){
-            this.initial_tab = 0;
+            this.initial_tab = null;
           }
           if(!('tab' in this.frontend_state_obj)){
-            this.initial_tab = 0;
+            this.initial_tab = null;
+          }
+          if(this.initial_tab == null){
+            this.tab = 0;
+            return null;
           }
           this.initial_tab = this.frontend_state_obj.tab;
           this.tab = this.initial_tab;
