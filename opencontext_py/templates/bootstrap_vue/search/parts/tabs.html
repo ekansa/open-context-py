@@ -109,7 +109,7 @@ var vc_all_search_tabs = Vue.component(
           emit_update_fetch_done: false,
           route_key_index: 0,
           tab: null,
-          frontend_state_obj: null,
+          frontend_state_obj: {},
         };
       },
       computed: {
@@ -221,8 +221,8 @@ var vc_all_search_tabs = Vue.component(
             this.frontend_state_obj = {};
           }
           this.frontend_state_obj.tab = this.tab;
-          window.dispatchEvent(new Event('resize'));
           this.$emit('set_frontend_state_obj', this.frontend_state_obj);
+          window.dispatchEvent(new Event('resize'));
           return null;
         }
       },

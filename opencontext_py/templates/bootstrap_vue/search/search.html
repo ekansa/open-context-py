@@ -97,6 +97,11 @@
             '$route': 'fetch_oc_api'
         },
         methods: {
+            create_frontend_state_obj: function(){
+                this.frontend_state_obj = get_search_current_frag_obj();
+                console.log('Create frontend_state_obj');
+                console.log(this.frontend_state_obj);
+            },
             fetch_oc_api: function (){
                 this.error = null;
                 this.loading = true;
