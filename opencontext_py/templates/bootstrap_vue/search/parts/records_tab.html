@@ -156,6 +156,7 @@ var vc_records_tab = Vue.component(
         props: [
             'all_range_facets',
             'route_key_index',
+            'frontend_state_obj',
             'result_id',
             'result_count',
             'result_start_index',
@@ -170,6 +171,7 @@ var vc_records_tab = Vue.component(
         ],
         data() {
             return {
+                frontend_state_obj: {},
                 striped: true,
                 bordered: true,
                 selectMode: 'single',
@@ -348,12 +350,10 @@ var vc_records_tab = Vue.component(
                     return null;
                 }
                 let url = replaceURLparameter(current_url, 'sort', sort_val);
-                let hash = '';
-                if(window.location.hash) {
-                    hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
-                }
-                if(url.indexOf(hash) < 0){
-                    url += hash;
+                let frag_str = encode_frag_obj(this.frontend_state_obj);
+                console.log('Frag to add to sort url: ' + frag_str);
+                if(frag_str.length > 1){
+                    url += '#' + frag_str;
                 }
                 url = abs_to_rel_url(url, BASE_URL);
                 router.push(url);

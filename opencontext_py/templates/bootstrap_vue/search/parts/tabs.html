@@ -3,9 +3,11 @@
 <template id="all-search-tabs-temp">
   <div>
     <b-card no-body>
-      <b-tabs card v-model="tab" @input="tab_clicked">
+      <b-tabs card v-model="tab" @input="input_tab_clicked" :ref="'search-tabs'">
         <b-tab title="Map and Time Ranges" 
-          :id="'tab-map-time-ranges'"
+          :id="tab_ids[0]"
+          :key="tab_ids[0]"
+          @click="tab_clicked"
           >
           <b-card-text>
             <h5 v-if="result">
@@ -16,7 +18,7 @@
                 <span class="text-left">Map</span>
                 <span class="text-right">Loading Records...</span>
             </h5>
-            <div id="app_media" v-if="result">
+            <div id="app_media" v-if="result && tab == 0">
               <common_map
                 :map_key="0"
                 :map_class="'map_preview'"
@@ -41,9 +43,11 @@
         </b-tab>
         <b-tab 
           title="Charts"
-          :id="'tab-numeric-fields'"
+          :id="tab_ids[1]"
+          :key="tab_ids[1]"
+          @click="tab_clicked"
           >
-          <b-card-text v-if="facets_numeric_groups_opts">
+          <b-card-text v-if="facets_numeric_groups_opts && tab == 1">
 
             <all-numeric-facets
               v-bind:route_key_index="route_key_index"
@@ -60,10 +64,13 @@
 
         <b-tab 
           title="Item Records"
-          :id="'tab-item-records'"
+          :id="tab_ids[2]"
+          :key="tab_ids[2]"
+          @click="tab_clicked"
           >
           <b-card-text v-if="result_count > 0">
             <records-tab
+              v-bind:frontend_state_obj="frontend_state_obj"
               v-bind:route_key_index="route_key_index"
               v-bind:result_id="result.id"
               v-bind:result_count="result_count"
@@ -98,24 +105,33 @@ var vc_all_search_tabs = Vue.component(
         'chrono_facets',
         'route_key_index',
         'frontend_state_obj',
+        'start_full_path',
         'tab',
       ],
       template: '#all-search-tabs-temp',
       data() {
         return {
           message: 'Open Context Search Result',
+          tabs_ref: 'search-tabs',
           result: null,
           tile_layer: null,
           emit_update_fetch_done: false,
           route_key_index: 0,
           initial_tab: null,
-          count_tab_clicks: 0,
-          initial_tab_clicks_to: 5,
+          prev_tab: null,
           tab: null,
           frontend_state_obj: {},
+          tab_ids: [
+            'tab-map-time-ranges',
+            'tab-numeric-fields',
+            'tab-item-records',
+          ],
+          real_tab: null,
+          map_tab: 0,
         };
       },
       mounted(){
+        this.updated_delay();
         this.activate_tab_from_frontend_state_obj();
       },
       computed: {
@@ -222,33 +238,65 @@ var vc_all_search_tabs = Vue.component(
       },
       methods: {
         activate_tab_from_frontend_state_obj: function() {
-          if(!this.frontend_state_obj){
-            this.initial_tab = null;
-          }
-          if(!('tab' in this.frontend_state_obj)){
-            this.initial_tab = null;
-          }
-          if(this.initial_tab == null){
+          this.updated_delay();
+          this.count_tab_clicks = 0;
+          if(this.frontend_state_obj == null){
+            console.log('cannot activate inital tab, no state obj');
             this.tab = 0;
             return null;
           }
-          this.initial_tab = this.frontend_state_obj.tab;
+          if(!('tab' in this.frontend_state_obj)){
+            console.log('cannot find tab key in state obj');
+            this.tab = 0;
+            return null;
+          }
+          this.updated_delay();
+          this.initial_tab = parseInt(this.frontend_state_obj.tab);
           this.tab = this.initial_tab;
           console.log('Activate initial tab: ' + this.initial_tab);
         },
-        tab_clicked(){
-          this.count_tab_clicks += 1;
-          console.log('Tab clicked: ' + this.tab + ', click count: ' + this.count_tab_clicks);
-          if(this.count_tab_clicks <= this.initial_tab_clicks_to){
-            this.tab = this.initial_tab;
+        updated_delay: function() {
+          this.real_tab = this.tab;
+          setTimeout(() => {
+            this.tab = this.map_tab;
+            window.dispatchEvent(new Event('resize'));
+          }, 100);
+          //Now go back to the real tab.
+          this.tab = this.real_tab;
+        },
+        input_tab_clicked: function(t_id){
+          let frag_tab_id = 0;
+          if(window.location.hash){
+            let act_frag_str =  window.location.hash.substring(1);
+            let act_frag_tab = get_search_frag_key('tab', act_frag_str);
+            if(act_frag_tab != null){
+              frag_tab_id = parseInt(act_frag_tab);
+            }
+          }
+          this.tab = frag_tab_id;
+          window.dispatchEvent(new Event('resize'));
+        },
+        tab_clicked: function(t_id){
+          if(this.tab == null || this.tab < 0){
+            console.log('Fake Tab clicked: ' + this.tab);
             return null;
           }
-          if(!this.frontend_state_obj){
-            this.frontend_state_obj = {};
+          console.log('tab click event');
+          console.log(t_id);
+          if(typeof(t_id) === 'number'){
+            this.input_tab_clicked(t_id);
+            return null;
+          }
+          for(let i = 0; i < this.tab_ids.length; i++){
+            let act_id = this.tab_ids[i];
+            if(t_id.target.id.indexOf(act_id)>=0){
+              // we found the id of passed from the click event.
+              this.tab = i;
+            }
           }
           this.frontend_state_obj.tab = this.tab;
-          this.$emit('set_frontend_state_obj', this.frontend_state_obj);
           window.dispatchEvent(new Event('resize'));
+          this.$emit('set_frontend_state_obj', this.frontend_state_obj);
           return null;
         }
       },
