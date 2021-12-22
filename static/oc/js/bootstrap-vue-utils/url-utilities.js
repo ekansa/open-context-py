@@ -242,3 +242,21 @@ function update_url_frag_key_val(url, key, val, allowed_keys){
 function update_search_url_frag_key_val(url, key, val){
     return update_url_frag_key_val(url, key, val, SEARCH_FRAGMENT_KEYS);
 }
+
+function update_search_url_frag_key_val_keep_tab(url, key, val){
+    let current_tab = get_search_current_frag_key('tab');
+    console.log('current tab: ' + current_tab);
+    if(current_tab != null){
+        url =  update_search_url_frag_key_val(url, 'tab', current_tab);
+    }
+    return update_search_url_frag_key_val(url, key, val);
+}
+
+function abs_to_rel_url_keep_tab(url, base_url){
+    let current_tab = get_search_current_frag_key('tab');
+    console.log('current tab: ' + current_tab);
+    if(current_tab != null){
+        url = update_search_url_frag_key_val(url, 'tab', current_tab);
+    }
+    return abs_to_rel_url(url, base_url);
+}

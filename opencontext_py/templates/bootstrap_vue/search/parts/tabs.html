@@ -4,7 +4,7 @@
   <div>
     <b-card no-body>
       <b-tabs card v-model="tab" @input="input_tab_clicked" :ref="'search-tabs'">
-        <b-tab title="Map and Time Ranges" 
+        <b-tab title="Mapped Results" 
           :id="tab_ids[0]"
           :key="tab_ids[0]"
           @click="tab_clicked"
@@ -33,21 +33,35 @@
                   <b-spinner class="m-5" label="Busy"></b-spinner>
                 </div>
             </div>
-            <div v-if="chrono_facets">
-              <chronotiles
-                  :key="'chrono-tiles-component-' + route_key_index"
-                  v-bind:result_id="result.id"
-                  v-bind:chrono_facets="chrono_facets"></chronotiles>
-            </div>
+            
           </b-card-text>
         </b-tab>
+
         <b-tab 
-          title="Charts"
+          title="Time Ranges"
           :id="tab_ids[1]"
           :key="tab_ids[1]"
           @click="tab_clicked"
           >
-          <b-card-text v-if="facets_numeric_groups_opts && tab == 1">
+          <b-card-text v-if="chrono_facets && tab == 1">
+
+            <chronotiles
+              :key="'chrono-tiles-component-' + route_key_index"
+              v-bind:result_id="result.id"
+              v-bind:chrono_facets="chrono_facets"></chronotiles>
+
+          </b-card-text>
+        </b-tab>
+
+
+
+        <b-tab 
+          title="Charts"
+          :id="tab_ids[2]"
+          :key="tab_ids[2]"
+          @click="tab_clicked"
+          >
+          <b-card-text v-if="facets_numeric_groups_opts && tab == 2">
 
             <all-numeric-facets
               v-bind:route_key_index="route_key_index"
@@ -64,8 +78,8 @@
 
         <b-tab 
           title="Item Records"
-          :id="tab_ids[2]"
-          :key="tab_ids[2]"
+          :id="tab_ids[3]"
+          :key="tab_ids[3]"
           @click="tab_clicked"
           >
           <b-card-text v-if="result_count > 0">
@@ -122,7 +136,8 @@ var vc_all_search_tabs = Vue.component(
           tab: null,
           frontend_state_obj: {},
           tab_ids: [
-            'tab-map-time-ranges',
+            'tab-map',
+            'tab-time-ranges',
             'tab-numeric-fields',
             'tab-item-records',
           ],
