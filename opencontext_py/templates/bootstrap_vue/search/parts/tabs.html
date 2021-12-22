@@ -3,10 +3,9 @@
 <template id="all-search-tabs-temp">
   <div>
     <b-card no-body>
-      <b-tabs card v-model="tab">
+      <b-tabs card v-model="tab" @input="tab_clicked">
         <b-tab title="Map and Time Ranges" 
           :id="'tab-map-time-ranges'"
-          v-on:click="tab_clicked"
           >
           <b-card-text>
             <h5 v-if="result">
@@ -43,7 +42,6 @@
         <b-tab 
           title="Charts"
           :id="'tab-numeric-fields'"
-          v-on:click="tab_clicked"
           >
           <b-card-text v-if="facets_numeric_groups_opts">
 
@@ -63,7 +61,6 @@
         <b-tab 
           title="Item Records"
           :id="'tab-item-records'"
-          v-on:click="tab_clicked"
           >
           <b-card-text v-if="result_count > 0">
             <records-tab
@@ -111,7 +108,7 @@ var vc_all_search_tabs = Vue.component(
           tile_layer: null,
           emit_update_fetch_done: false,
           route_key_index: 0,
-          tab: 0,
+          tab: null,
           frontend_state_obj: null,
         };
       },
@@ -220,11 +217,12 @@ var vc_all_search_tabs = Vue.component(
       methods: {
         tab_clicked(){
           console.log('Tab clicked: ' + this.tab);
-          // let frag_obj = get_search_current_frag_obj();
-          // frag_obj.tab = this.tab;
-          // console.log( encode_frag_obj(frag_obj));
-          // window.location.hash = encode_frag_obj(frag_obj);
+          if(!this.frontend_state_obj){
+            this.frontend_state_obj = {};
+          }
+          this.frontend_state_obj.tab = this.tab;
           window.dispatchEvent(new Event('resize'));
+          this.$emit('set_frontend_state_obj', this.frontend_state_obj);
           return null;
         }
       },

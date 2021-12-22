@@ -32,6 +32,7 @@
                         v-bind:chrono_facets="chrono_facets"
                         v-bind:route_key_index="route_key_index"
                         v-bind:frontend_state_obj="frontend_state_obj"
+                        @set_frontend_state_obj="set_frontend_state_obj($event)"
                     >
                     </all-search-tabs>
 
@@ -125,6 +126,14 @@
             emit_fetch_update(v){
                 this.emit_update_fetch_done = true;
                 this.fetch_oc_api();
+            },
+            set_frontend_state_obj(frontend_state_obj){
+                if(!frontend_state_obj){
+                    return null;
+                }
+                this.frontend_state_obj = frontend_state_obj;
+                console.log('Set frontend_state_obj');
+                console.log(this.frontend_state_obj);
             },
             do_ready: function (){
                 console.log('do ready');
