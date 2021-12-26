@@ -82,7 +82,7 @@
           :key="tab_ids[3]"
           @click="tab_clicked"
           >
-          <b-card-text v-if="result_count > 0">
+          <b-card-text v-if="result_count > 0 && tab == 3">
             <records-tab
               v-bind:frontend_state_obj="frontend_state_obj"
               v-bind:route_key_index="route_key_index"
@@ -166,16 +166,20 @@ var vc_all_search_tabs = Vue.component(
           return safe_get_nested_object_by_str_key(this.result, 'itemsPerPage');
         },
         result_page_first_link: function() {
-          return safe_get_nested_object_by_str_key(this.result, 'first');
+          let act_link = safe_get_nested_object_by_str_key(this.result, 'first');
+          return abs_to_rel_url_with_frag_obj(act_link, BASE_URL, this.frontend_state_obj);
         },
         result_page_previous_link: function() {
-          return safe_get_nested_object_by_str_key(this.result, 'previous');
+          let act_link = safe_get_nested_object_by_str_key(this.result, 'previous');
+          return abs_to_rel_url_with_frag_obj(act_link, BASE_URL, this.frontend_state_obj);
         },
         result_page_next_link: function() {
-          return safe_get_nested_object_by_str_key(this.result, 'next');
+          let act_link = safe_get_nested_object_by_str_key(this.result, 'next');
+          return abs_to_rel_url_with_frag_obj(act_link, BASE_URL, this.frontend_state_obj);
         },
         result_page_last_link: function() {
-          return safe_get_nested_object_by_str_key(this.result, 'last');
+          let act_link = safe_get_nested_object_by_str_key(this.result, 'last');
+          return abs_to_rel_url_with_frag_obj(act_link, BASE_URL, this.frontend_state_obj);
         },
         descriptiveness_min: function() {
           return safe_get_nested_object_by_str_key(this.result, 'oc-api:descriptiveness-min');

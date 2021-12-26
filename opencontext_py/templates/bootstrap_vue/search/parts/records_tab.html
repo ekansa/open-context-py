@@ -38,13 +38,95 @@
 </template>
 
 
+<template id="records-tab-header-footer">
+    <b-row>
+        <b-col cols="8">
+            <h5 class="filter_heading_labels">
+                Search Results [[ view_range_note ]]
+            </h5>
+        </b-col>
+        <b-col cols="1">
+            <b-button 
+                pill 
+                variant="outline-primary" 
+                size="sm"
+                v-if="result_page_first_link" 
+                :to="result_page_first_link" 
+                :id="hr_role + '-first-page-link-' + route_key_index" 
+                :title="'First page of results'"
+            >
+                <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
+            </b-button>
+            <b-button v-else disabled pill variant="outline-secondary" size="sm">
+                <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
+            </b-button>
+        </b-col>
+        <b-col cols="1">
+            <b-button 
+                pill 
+                variant="outline-primary" 
+                size="sm"
+                v-if="result_page_previous_link" 
+                :to="result_page_previous_link" 
+                :id="hr_role + '-previous-page-link-' + route_key_index" 
+                :title="'Previous page of results'"
+            >
+                <b-icon-chevron-left></b-icon-chevron-left>
+            </b-button>
+            <b-button v-else disabled pill variant="outline-secondary" size="sm">
+                <b-icon-chevron-left></b-icon-chevron-left>
+            </b-button>
+        </b-col>
+        <b-col cols="1">
+            <b-button 
+                pill 
+                variant="outline-primary" 
+                size="sm"
+                v-if="result_page_next_link" 
+                :to="result_page_next_link" 
+                :id="hr_role + '-next-page-link-' + route_key_index" 
+                :title="'Next page of results'"
+            >
+                <b-icon-chevron-right></b-icon-chevron-right>
+            </b-button>
+            <b-button v-else disabled pill variant="outline-secondary" size="sm">
+                <b-icon-chevron-right></b-icon-chevron-right>
+            </b-button>
+        </b-col>
+        <b-col cols="1">
+            <b-button 
+                pill 
+                variant="outline-primary" 
+                size="sm"
+                v-if="result_page_last_link" 
+                :to="result_page_last_link" 
+                :id="hr_role + '-last-page-link-' + route_key_index" 
+                :title="'Last page of results'"
+            >
+                <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
+            </b-button>
+            <b-button v-else disabled pill variant="outline-secondary" size="sm">
+                <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
+            </b-button>
+        </b-col>
+    </b-row>
+</template>
 
 <template id="records-tab-template">
 
     <div id="search-records-tab">
-        <h5 class="filter_heading_labels">
-            Search Results [[ view_range_note ]]
-        </h5>
+
+        <records-tab-header-footer
+            :hr_role="'header'"
+            v-bind:route_key_index="route_key_index"
+            v-bind:result_count="result_count"
+            v-bind:result_start_index="result_start_index"
+            v-bind:result_items_per_page="result_items_per_page"
+            v-bind:result_page_first_link="result_page_first_link"
+            v-bind:result_page_previous_link="result_page_previous_link"
+            v-bind:result_page_next_link="result_page_next_link"
+            v-bind:result_page_last_link="result_page_last_link"
+        ></records-tab-header-footer>
 
         <b-table 
             v-if="result_raw_features"
@@ -85,6 +167,18 @@
             <p>Getting item records...</p>
         </div>
 
+        <records-tab-header-footer
+            :hr_role="'footer'"
+            v-bind:route_key_index="route_key_index"
+            v-bind:result_count="result_count"
+            v-bind:result_start_index="result_start_index"
+            v-bind:result_items_per_page="result_items_per_page"
+            v-bind:result_page_first_link="result_page_first_link"
+            v-bind:result_page_previous_link="result_page_previous_link"
+            v-bind:result_page_next_link="result_page_next_link"
+            v-bind:result_page_last_link="result_page_last_link"
+        >
+        </records-tab-header-footer>
     </div>
 
 </template>
@@ -148,6 +242,59 @@ var vs_records_tab_field_descriptiveness = Vue.component(
 );
 
 
+var vs_records_tab_header_footer = Vue.component(
+    'records-tab-header-footer',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'hr_role',
+            'route_key_index',
+            'result_count',
+            'result_start_index',
+            'result_items_per_page',
+            'result_page_first_link',
+            'result_page_previous_link',
+            'result_page_next_link',
+            'result_page_last_link',
+        ],
+        data() {
+            return {
+                hr_role: 'header',
+                route_key_index: 0,
+                result_count: 0,
+                result_start_index: 0,
+                result_items_per_page: 1,
+                result_page_first_link: null,
+                result_page_previous_link: null,
+                result_page_next_link: null,
+                result_page_last_link: null,
+            };
+        },
+        template: '#records-tab-header-footer',
+        computed: {
+            view_range_note: function() {
+                if(this.result_count < 1 || this.result_count == null){
+                    return 'Current filters return no items';
+                }
+                if(this.result_start_index == null || this.result_items_per_page == null){
+                    return 'Error. Please change filter criteria.';
+                }
+                let first_index = this.result_start_index + 1;
+                let last_index = this.result_start_index + this.result_items_per_page;
+                if(last_index > this.result_count){
+                    last_index = this.result_count;
+                }
+                return `${first_index.toLocaleString()} to ${last_index.toLocaleString()} of ${this.result_count.toLocaleString()}`;
+            },
+        },
+        methods: {
+            on_click: function(b_clicked) {
+                this.$forceUpdate();
+            },
+        },
+    }
+);
+
 
 var vc_records_tab = Vue.component(
     'records-tab',
@@ -208,20 +355,6 @@ var vc_records_tab = Vue.component(
             
         },
         computed: {
-            view_range_note: function() {
-                if(this.result_count < 1 || this.result_count == null){
-                    return 'Current filters return no items';
-                }
-                if(this.result_start_index == null || this.result_items_per_page == null){
-                    return 'Error. Please change filter criteria.';
-                }
-                let first_index = this.result_start_index + 1;
-                let last_index = this.result_start_index + this.result_items_per_page;
-                if(last_index > this.result_count){
-                    last_index = this.result_count;
-                }
-                return `${first_index.toLocaleString()} to ${last_index.toLocaleString()} of ${this.result_count.toLocaleString()}`;
-            },
             items: function () {
                 if(!this.result_raw_features){
                     return null;
@@ -350,16 +483,12 @@ var vc_records_tab = Vue.component(
                     return null;
                 }
                 let url = replaceURLparameter(current_url, 'sort', sort_val);
-                let frag_str = encode_frag_obj(this.frontend_state_obj);
-                console.log('Frag to add to sort url: ' + frag_str);
-                if(frag_str.length > 1){
-                    url += '#' + frag_str;
-                }
-                url = abs_to_rel_url(url, BASE_URL);
+                url = abs_to_rel_url_with_frag_obj(url, BASE_URL, this.frontend_state_obj);
                 router.push(url);
             },
         },
         components: {
+            'records-tab-header-footer': vs_records_tab_header_footer,
             'records-tab-field-label': vs_records_tab_field_label,
             'records-tab-field-descriptiveness': vs_records_tab_field_descriptiveness,
         },

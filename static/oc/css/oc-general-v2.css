@@ -313,3 +313,6 @@ Search
 .record-thumb-outer {
 	max-width: 150px;
 }
+#search-records-tab .btn {
+	margin-bottom: 6px;
+}

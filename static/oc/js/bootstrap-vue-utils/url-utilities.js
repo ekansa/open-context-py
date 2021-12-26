@@ -153,7 +153,10 @@ function parse_search_frag_dict(frag_str){
     return parse_frag_dict(frag_str, SEARCH_FRAGMENT_KEYS);
 }
 
-function encode_frag_obj(frag_obj){
+function encode_frag_obj(frag_obj, null_val=null){
+    if(frag_obj == null){
+        return null_val;
+    }
     let key_vals = [];
     for (let entry of Object.entries(frag_obj)) {
         let str_entry = entry.join(FRAG_KEY_VAL_DEMIM);
@@ -259,4 +262,19 @@ function abs_to_rel_url_keep_tab(url, base_url){
         url = update_search_url_frag_key_val(url, 'tab', current_tab);
     }
     return abs_to_rel_url(url, base_url);
+}
+
+function abs_to_rel_url_with_frag_obj(url, base_url, frag_obj){
+    if(url == null){
+        return null;
+    }
+    let frag_str = '';
+    if(frag_obj != null){
+        frag_str = encode_frag_obj(frag_obj, null_val='');
+    }
+    if(frag_str.length > 1){
+        url += '#' + frag_str;
+    }
+    url = abs_to_rel_url(url, base_url);
+    return url;
 }

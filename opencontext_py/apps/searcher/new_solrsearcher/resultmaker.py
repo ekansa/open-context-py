@@ -371,15 +371,17 @@ class ResultMaker():
             )
             self.result['previous'] = links['html']
             self.result['previous-json'] = links['json']
-        if self.start + self.rows < self.total_found:
-            # add a next page link
-            links = self._make_paging_links(
-                start=(self.start + self.rows),
-                rows=self.rows,
-                act_request_dict=copy.deepcopy(act_request_dict)
-            )
-            self.result['next'] = links['html']
-            self.result['next-json'] = links['json']
+        if self.start + self.rows >= self.total_found:
+            # Don't add the next or last page.
+            return None
+        # add a next page link
+        links = self._make_paging_links(
+            start=(self.start + self.rows),
+            rows=self.rows,
+            act_request_dict=copy.deepcopy(act_request_dict)
+        )
+        self.result['next'] = links['html']
+        self.result['next-json'] = links['json']
         num_pages = round(self.total_found / self.rows, 0)
         if num_pages * self.rows >= self.total_found:
             num_pages -= 1
