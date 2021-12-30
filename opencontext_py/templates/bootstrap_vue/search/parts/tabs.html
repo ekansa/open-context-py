@@ -22,10 +22,14 @@
               <common_map
                 :map_key="0"
                 :map_class="'map_preview'"
+                :map_type="'search'"
                 :min_height="800"
                 :ref_suffix="'search-map'"
+                v-bind:frontend_state_obj="frontend_state_obj"
                 v-bind:route_key_index="route_key_index"
-                v-bind:geo_json="result"></common_map>
+                v-bind:geo_json="result"
+                @set_frontend_state_obj="set_frontend_state_obj($event)"
+                ></common_map>
             </div>
             <div class="jumbotron jumbotron-fluid" v-else>
                 <div class="container-fluid text-muted text-center">
@@ -65,6 +69,7 @@
 
             <all-numeric-facets
               v-bind:route_key_index="route_key_index"
+              v-bind:frontend_state_obj="frontend_state_obj"
               v-bind:result_id="result.id"
               v-bind:all_range_facets="all_range_facets"
               v-bind:facets_numeric_groups_opts="facets_numeric_groups_opts"
@@ -317,7 +322,12 @@ var vc_all_search_tabs = Vue.component(
           window.dispatchEvent(new Event('resize'));
           this.$emit('set_frontend_state_obj', this.frontend_state_obj);
           return null;
-        }
+        },
+        set_frontend_state_obj(frontend_state_obj){
+          if(frontend_state_obj){
+            this.$emit('set_frontend_state_obj', frontend_state_obj);
+          }
+        },
       },
       components: {
         'common_map': vc_common_map,

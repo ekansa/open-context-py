@@ -16,16 +16,19 @@
             <div class="row">
                 <div class="col" v-if="facets_int_groups_opts">
                     <all-facets
+                        v-bind:frontend_state_obj="frontend_state_obj"
                         v-bind:facets_group_dtype_id="'int_facets'"
                         v-bind:facets_dtypes_groups_opts="facets_int_groups_opts"></all-facets>
                 </div>
                 <div class="col" v-if="facets_double_groups_opts">
                     <all-facets
+                        v-bind:frontend_state_obj="frontend_state_obj"
                         v-bind:facets_group_dtype_id="'double_facets'"
                         v-bind:facets_dtypes_groups_opts="facets_double_groups_opts"></all-facets>
                 </div>
                 <div class="col" v-if="facets_date_groups_opts">
                     <all-facets
+                        v-bind:frontend_state_obj="frontend_state_obj"
                         v-bind:facets_group_dtype_id="'date_facets'"
                         v-bind:facets_dtypes_groups_opts="facets_date_groups_opts"></all-facets>
                 </div>
@@ -50,6 +53,7 @@ var vc_all_numeric_facets = Vue.component(
             'facets_date_groups_opts',
             'route_key_index',
             'result_id',
+            'frontend_state_obj',
         ],
         template: '#all-numeric-facets-template',
         data: {
@@ -60,6 +64,7 @@ var vc_all_numeric_facets = Vue.component(
             facets_date_groups_opts: null,
             result_id: null,
             route_key_index: 0,
+            frontend_state_obj: {}, 
         },
         methods: {
             

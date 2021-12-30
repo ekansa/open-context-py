@@ -120,9 +120,9 @@ const SEARCH_FRAGMENT_KEYS = [
     'tab', // tab in view
     'aq', // active query
     'zm', // map zoom level
-    'tilezm', // tie zoom level
-    'lat', // map lat
-    'lon', // map lon
+    'tilezm', // tile zoom level
+    'lat', // map latitute
+    'lng', // map longitude
     'geovis', // map visualization type
     'tiles', // base map tile type
 ];
@@ -131,6 +131,9 @@ const FRAG_KEY_DELIM = '/';
 const FRAG_KEY_VAL_DEMIM = '=';
 
 function parse_frag_dict(frag_str, allowed_keys){
+    if(frag_str.indexOf('#') == 0) {
+        frag_str = frag_str.substr(1);
+    }
     let frag_obj = {};
     let frag_parts = frag_str.split(FRAG_KEY_DELIM);
     for(let frag_part of frag_parts){
@@ -273,6 +276,10 @@ function abs_to_rel_url_with_frag_obj(url, base_url, frag_obj){
         frag_str = encode_frag_obj(frag_obj, null_val='');
     }
     if(frag_str.length > 1){
+        if(url.indexOf('#') >= 0){
+            let url_ex = url.split('#');
+            url = url_ex[0];
+        }
         url += '#' + frag_str;
     }
     url = abs_to_rel_url(url, base_url);

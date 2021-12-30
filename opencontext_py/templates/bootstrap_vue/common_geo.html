@@ -183,6 +183,202 @@
   ];
 
 
+// URL updating for Map view state.
+(function(window) {
+    var HAS_HASHCHANGE = (function() {
+        var doc_mode = window.documentMode;
+        return ('onhashchange' in window) &&
+            (doc_mode === undefined || doc_mode > 7);
+    })();
+    
+    L.Hash = function(map) {
+        this.tile_zoom = false;
+        this.onHashChange = L.Util.bind(this.onHashChange, this);
+    
+        if (map) {
+            this.init(map);
+        }
+    };
+    
+    L.Hash.prototype = {
+        map: null,
+        lastHash: null,
+        current_path: null,
+        frontend_state_obj: null,
+        update_map_frontend_state_obj: null,
+    
+        contains: function(a, obj) {
+            var i = a.length;
+            while (i--) {
+               if (a[i] === obj) {
+                   return true;
+               }
+            }
+            return false;
+        },
+
+        prep_geo_from_state_obj: function(frag_obj){
+            frag_obj.center = null;
+            frag_obj.zoom = null;
+            if(frag_obj.hasOwnProperty('zm') && frag_obj.hasOwnProperty('lat') && frag_obj.hasOwnProperty('lng')){
+                let zoom = parseInt(frag_obj.zm, 10);
+                let lat = parseFloat(frag_obj.lat);
+                let lng = parseFloat(frag_obj.lng);
+                if (isNaN(zoom) || isNaN(lat) || isNaN(lng)) {
+                    frag_obj.center = null;
+                }
+                else{
+                    frag_obj.center = new L.LatLng(lat, lng);
+                    frag_obj.zoom = zoom;
+                }
+            }
+            return frag_obj;
+        },
+
+        parseHash: function(hash) {
+            let frag_obj = parse_search_frag_dict(hash);
+            return this.prep_geo_from_state_obj(frag_obj);
+        },
+    
+        compose_new_frontend_state: function(map){
+            let frag_obj = null;
+            if(this.frontend_state_obj == null){
+                frag_obj = parse_search_frag_dict(location.hash);
+            }else{
+                frag_obj = this.frontend_state_obj;
+            }
+
+            let center = this.map.getCenter();
+            let zoom = this.map.getZoom();
+            let precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
+
+            frag_obj.zm = zoom;
+            frag_obj.lat = center.lat.toFixed(precision);
+            frag_obj.lng = center.lng.toFixed(precision);
+            return frag_obj;
+        },
+
+        formatHash: function(frag_obj) {
+            let frag_str = encode_frag_obj(frag_obj);
+            console.log('New frag str: ' + frag_str);
+            return '#' + frag_str;
+        },
+    
+        init: function(map) {
+            this.map = map;
+            this.map.on("moveend", this.onMapMove, this);
+            // reset the hash
+            this.lastHash = null;
+            this.onHashChange();
+            if (!this.isListening) {
+                this.startListening();
+            }
+        },
+    
+        remove: function() {
+            this.map = null;
+            if (this.isListening) {
+                this.stopListening();
+            }
+        },
+
+        update_new_fontend_state: function(frag_obj){
+            // Updates the frontend state for all vue components.
+            if(frag_obj.hasOwnProperty('center')){
+                delete frag_obj.center;
+            }
+            if(frag_obj.hasOwnProperty('zoom')){
+                delete frag_obj.zoom;
+            }
+            let hash = this.formatHash(frag_obj);
+            if (this.lastHash != hash) {
+                this.update_map_frontend_state_obj(frag_obj);
+                this.lastHash = hash;
+                return true;
+            }
+            return false;
+        },
+        
+        forceHashChange: function(map) {
+            // change the hash, in response to changes
+            // in base layers
+            let frag_obj = this.compose_new_frontend_state(map);
+            this.update_new_fontend_state(frag_obj);
+        },
+        
+        onMapMove: function(map) {
+            // bail if we're moving the map (updating from a hash),
+            // or if the map has no zoom set
+            
+            if (this.movingMap || this.map.getZoom() === 0) {
+                return false;
+            }
+            
+            let frag_obj = this.compose_new_frontend_state(map);
+            this.update_new_fontend_state(frag_obj);
+        },
+    
+        movingMap: false,
+        update: function() {
+            let parsed = null;
+            if(this.frontend_state_obj == null){
+                var hash = location.hash;
+                if (hash === this.lastHash) {
+                    // console.info("(no change)");
+                    return null;
+                }
+                parsed = this.parseHash(hash);
+            }else{
+                parsed = this.prep_geo_from_state_obj(this.frontend_state_obj);
+            }
+            if (parsed != null && parsed.center != null) {
+                // console.log("parsed:", parsed.zoom, parsed.center.toString());
+                this.movingMap = true;
+                this.map.setView(parsed.center, parsed.zoom);  
+                this.movingMap = false;
+            } else {
+                // console.warn("parse error; resetting:", this.map.getCenter(), this.map.getZoom());
+                this.onMapMove(this.map);
+            }
+        },
+    
+        // defer hash change updates every 100ms
+        changeDefer: 100,
+        changeTimeout: null,
+        onHashChange: function() {
+            // throttle calls to update() so that they only happen every
+            // `changeDefer` ms
+            if (!this.changeTimeout) {
+                var that = this;
+                this.changeTimeout = setTimeout(function() {
+                    that.update();
+                    that.changeTimeout = null;
+                }, this.changeDefer);
+            }
+        },
+    
+        isListening: false,
+        hashChangeInterval: null,
+        startListening: function() {
+            if (HAS_HASHCHANGE) {
+                L.DomEvent.addListener(window, "hashchange", this.onHashChange);
+            } else {
+                clearInterval(this.hashChangeInterval);
+                this.hashChangeInterval = setInterval(this.onHashChange, 50);
+            }
+            this.isListening = true;
+        },
+    
+        stopListening: function() {
+            if (HAS_HASHCHANGE) {
+                L.DomEvent.removeListener(window, "hashchange", this.onHashChange);
+            } else {
+                clearInterval(this.hashChangeInterval);
+            }
+            this.isListening = false;
+        }
+    };
+})(window);
 
 
 
@@ -200,6 +396,7 @@ var vc_common_map = Vue.component(
         'map_class',
         'min_height',
         'route_key_index',
+        'frontend_state_obj',
     ],
     data() {
         return {
@@ -226,6 +423,8 @@ var vc_common_map = Vue.component(
             map_class: 'item',
             min_height: 300,
             route_key_index: 0,
+            frontend_state_obj: {},
+            map_hash_obj: null,
         };
     },
     template: '#common_map',
@@ -292,6 +491,24 @@ var vc_common_map = Vue.component(
                 return `<a target="_blank" href="${str}">${str}</a>`;
             }
             return str;
+        },
+        update_map_frontend_state_obj(frontend_state_obj) {
+            this.$emit('set_frontend_state_obj', frontend_state_obj);
+        },
+        add_map_hash: function(map) {
+            if(this.map_type != 'search'){
+                return null;
+            }
+            let current_path = this.$route.fullPath;
+            if(current_path.indexOf('#') >= 0){
+                let current_path_ex = current_path.split('#');
+                current_path = current_path_ex[0];
+            }
+            console.log('current_path: ' + current_path);
+            this.map_hash_obj = new L.Hash(map);
+            this.map_hash_obj.current_path = current_path;
+            this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+            this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
         },
         make_geo_features_layer(category_limit){
             if(!this.geo_json || !this.item_json){
@@ -412,6 +629,7 @@ var vc_common_map = Vue.component(
                     );
                     this.added_google_tile_types.push(gtile_config.type);
                 }
+                this.add_map_hash(this.$refs[this.map_ref].mapObject);
             }, 100);
             this.added_google_tiles = true;
         },

@@ -42,13 +42,6 @@
 <template id="facets-xfacet-xdtype-groups-opts-template">
 <div class="panel card">
     <div class="card-header">
-        
-        <!--
-        <a class="text-left" data-toggle="collapse" data-parent="#acc-facets" :href="'#panel-' + dom_key">
-            <i class="bi bi-arrows-expand"></i>
-            [[facet_label]] facet open [[ facet_start_open ]]
-        </a>
-        -->
         <b-button variant="link" class="text-left filter_heading_button" v-b-toggle="'panel-' + dom_key">
             <h5 class="filter_heading_labels"><i class="bi bi-arrows-expand"></i>
                 [[facet_label]]
@@ -103,6 +96,7 @@
 var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
 var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
 var FACETS_OPTIONS_LISTS_AND_DATA_TYPES = {{ configs.FACETS_OPTIONS_LISTS_AND_DATA_TYPES|safe }};
+
 
 var vc_xfacet_xdtype_xgroup_xopt = Vue.component(
     'facets-xfacet-xdtype-xgroup-xopt',
@@ -171,7 +165,7 @@ var vc_all_facets = Vue.component(
             return {
                 options_title: 'Filtering Options',
                 facets_group_dtype_id: 'main_facets',
-                frontend_state_obj: null,
+                frontend_state_obj: {},
             };
         },
         template: '#all-facets-template',
@@ -258,10 +252,20 @@ function prepare_option(prefix, hash_prefix, i, f_opt){
         console.log('No id in ' + f_opt);
         return null;
     }
+    let current_hash_frag_obj = get_search_current_frag_obj();
+    // remove map attributes that need to get reset with a change of
+    // filters.
+    for(rm_key of FILTER_CHANGE_RESET_MAP_STATE_KEYS){
+        if(current_hash_frag_obj.hasOwnProperty(rm_key)){
+            delete current_hash_frag_obj[rm_key];
+        }
+    }
     f_opt.id = abs_to_rel_url(f_opt.id, BASE_URL);
     if (!check_url_has_aq_val(f_opt.id, f_opt.last_hash)) {
-        f_opt.id = update_search_url_frag_key_val(f_opt.id, "aq", f_opt.last_hash);
+        current_hash_frag_obj.aq = f_opt.last_hash;
+        // f_opt.id = update_search_url_frag_key_val(f_opt.id, "aq", f_opt.last_hash);
     }
+    f_opt.id = abs_to_rel_url_with_frag_obj(f_opt.id, BASE_URL, current_hash_frag_obj)
     return f_opt;
 }
 

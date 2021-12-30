@@ -35,7 +35,7 @@ ROOT_EVENT_CLASS = SolrDoc.ALL_EVENTS_SOLR
 # ---------------------------------------------------------------------
 # Solr Search Configs
 # ---------------------------------------------------------------------
-SOLR_DEFAULT_ROW_COUNT = 20
+SOLR_DEFAULT_ROW_COUNT = 50
 SOLR_MAX_RESULT_ROW_COUNT = 10000
 
 DEFAULT_FACET_FIELDS = [
