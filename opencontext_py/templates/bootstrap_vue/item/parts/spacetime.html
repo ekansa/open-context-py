@@ -2,7 +2,7 @@
 
 
 
-<div id="app">
+<div id="item-app">
   <common_map
     :map_key="0"
     :map_class="'map_item'"
@@ -22,7 +22,7 @@ var vm = new Vue(
     router: router,
     delimiters: ['[[', ']]'],
     ref: 'item_app',
-    el: '#app',
+    el: '#item-app',
     data: {
         uuid: ITEM_UUID,
     },
@@ -49,4 +49,3 @@ var vm = new Vue(
 ).$mount('#app');
 
 </script>
-

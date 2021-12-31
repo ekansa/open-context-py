@@ -134,7 +134,7 @@
   const TILE_PROVIDERS = [
     {
       name: 'MapBox Satellite',
-      visible: false,
+      visible: true,
       id: 'mapbox-satellite',
       url: (
         'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
@@ -443,6 +443,13 @@ var vc_common_map = Vue.component(
             frontend_state_obj: {},
             map_hash_obj: null,
             baselayer_name: null,
+            default_zoom: 11,
+            map_type_default_zooms: {
+                item: 16,
+                generic: 12,
+            },
+            default_tilelayer_name: 'Google Aerial',
+            updating: false,
         };
     },
     template: '#common_map',
@@ -454,10 +461,7 @@ var vc_common_map = Vue.component(
         this.fetch_geojson();
     },
     updated(){
-        this.map_size_reset();
-        this.fit_bounds();
-        this.get_item_location_info();
-        console.log('updated map');
+        this.update_map_setup();
     },
     computed: {
         map_ref(){return 'map-' + this.ref_suffix},
@@ -700,6 +704,9 @@ var vc_common_map = Vue.component(
             this.added_google_tiles = true;
         },
         geo_view_from_state_obj: function(frag_obj){
+            if(!frag_obj){
+                return null;
+            }
             frag_obj.center = null;
             frag_obj.zoom = null;
             if(frag_obj.hasOwnProperty('zm') && frag_obj.hasOwnProperty('lat') && frag_obj.hasOwnProperty('lng')){
@@ -716,6 +723,30 @@ var vc_common_map = Vue.component(
             }
             return frag_obj;
         },
+        finese_item_view: function(){
+            if(!this.map){
+                return null;
+            }
+            if (this.map_type == 'search'){
+                return null;
+            }
+            if(!('features' in this.geo_json)){
+                return null;
+            }
+            if(this.geo_json.features.length > 1){
+                return null;
+            }
+            if(this.geo_json.features[0].geometry.type != 'Point'){
+                console.log('Use extent derived zoom for ' + this.geo_json.features[0].geometry.type);
+                return null;
+            }
+            let zoom = this.default_zoom;
+            if(this.map_type in this.map_type_default_zooms){
+                zoom = this.map_type_default_zooms[this.map_type];
+            }
+            let center = this.map.getCenter();
+            this.map.setView(center, zoom);
+        },
         fit_bounds: function(){
             if(!this.geo_json && GEO_JSON != null){
                 this.geo_json = GEO_JSON;
@@ -729,7 +760,7 @@ var vc_common_map = Vue.component(
                 return null;
             }
             let frag_obj = this.geo_view_from_state_obj(this.frontend_state_obj);
-            if (frag_obj != null && frag_obj.center != null) {
+            if (this.map_type == 'search' && frag_obj != null && frag_obj.center != null) {
                 this.map.auto_fit = false;
                 this.map.setView(frag_obj.center, frag_obj.zoom);  
             }
@@ -750,6 +781,7 @@ var vc_common_map = Vue.component(
             this.get_item_location_info();
             this.add_map_hash();
             this.fit_bounds();
+            this.finese_item_view();
             this.map.auto_fit = false;
         },
         map_size_reset: function(){
@@ -782,6 +814,13 @@ var vc_common_map = Vue.component(
                     this.location_precision_note = feat.properties.location_precision_note;
                 }
             }
+        },
+        update_map_setup: function(){
+            this.map_size_reset();
+            this.fit_bounds();
+            this.finese_item_view();
+            this.get_item_location_info();
+            console.log('updated map');
         },
         fetch_geojson: function() {
             if(!this.geo_json_url){
