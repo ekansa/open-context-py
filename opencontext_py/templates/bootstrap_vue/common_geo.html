@@ -7,6 +7,7 @@
     <div>
         <l-map
             v-if="geo_json"
+            @ready="ready_map_setup"
             :class="map_class"
             :style="'min-height: ' + min_height + 'px;'"
             :ref="'map-' + ref_suffix" 
@@ -18,6 +19,7 @@
                 position="topright"></l-control-layers>
             <l-tile-layer
                 v-for="tp in tileProviders"
+                :ref="'map-tile-' + ref_suffix + '-' + tp.name" 
                 :key="tp.name"
                 :name="tp.name"
                 :visible="tp.visible"
@@ -102,24 +104,28 @@
       maxZoom: MAX_ZOOM_TILES,
       name: "Google Road",
       type: "roadmap",
+      id: 'google-road',
       attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
     },
     {
       maxZoom: MAX_ZOOM_TILES,
       name: "Google Aerial",
       type: "satellite",
+      id: 'google-aerial',
       attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
     },
     {
       maxZoom: MAX_ZOOM_TILES,
       name: "Google Terrain",
       type: "terrain",
+      id: 'google-terrain',
       attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
     },
     {
       maxZoom: MAX_ZOOM_TILES,
       name: "Google Hybrid",
       type: "hybrid",
+      id: 'google-hybrid',
       attribution: 'Map data: © <a target="_blank" href="https://google.com">Google.com</a>',
     },
   ];
@@ -128,7 +134,7 @@
   const TILE_PROVIDERS = [
     {
       name: 'MapBox Satellite',
-      visible: true,
+      visible: false,
       id: 'mapbox-satellite',
       url: (
         'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token='
@@ -203,9 +209,9 @@
     L.Hash.prototype = {
         map: null,
         lastHash: null,
-        current_path: null,
         frontend_state_obj: null,
         update_map_frontend_state_obj: null,
+        update_base_layer: null,
     
         contains: function(a, obj) {
             var i = a.length;
@@ -232,6 +238,9 @@
                     frag_obj.zoom = zoom;
                 }
             }
+            if(frag_obj.hasOwnProperty('bm') && frag_obj.bm != null){
+                this.update_base_layer(frag_obj.bm.replace('_', ' '));
+            }
             return frag_obj;
         },
 
@@ -255,12 +264,14 @@
             frag_obj.zm = zoom;
             frag_obj.lat = center.lat.toFixed(precision);
             frag_obj.lng = center.lng.toFixed(precision);
+            if(this.map.baselayer_name){
+                frag_obj.bm = this.map.baselayer_name.replace(' ' , '_');
+            }
             return frag_obj;
         },
 
         formatHash: function(frag_obj) {
             let frag_str = encode_frag_obj(frag_obj);
-            console.log('New frag str: ' + frag_str);
             return '#' + frag_str;
         },
     
@@ -302,6 +313,9 @@
         forceHashChange: function(map) {
             // change the hash, in response to changes
             // in base layers
+            if(this.map.auto_fit){
+                return false;
+            }
             let frag_obj = this.compose_new_frontend_state(map);
             this.update_new_fontend_state(frag_obj);
         },
@@ -313,7 +327,9 @@
             if (this.movingMap || this.map.getZoom() === 0) {
                 return false;
             }
-            
+            if(this.map.auto_fit){
+                return false;
+            }
             let frag_obj = this.compose_new_frontend_state(map);
             this.update_new_fontend_state(frag_obj);
         },
@@ -401,9 +417,10 @@ var vc_common_map = Vue.component(
     data() {
         return {
             // Map Options
+            map: null,
             map_key: 0,
             zoom_def: 13,
-            layers: [],
+            base_layers: {},
             selectedTileSet: TILE_PROVIDERS[0], 
             tileProviders: TILE_PROVIDERS,
             google_tile_configs: GOOGLE_TILE_CONFIGS,
@@ -425,6 +442,7 @@ var vc_common_map = Vue.component(
             route_key_index: 0,
             frontend_state_obj: {},
             map_hash_obj: null,
+            baselayer_name: null,
         };
     },
     template: '#common_map',
@@ -434,14 +452,12 @@ var vc_common_map = Vue.component(
     },
     mounted() {
         this.fetch_geojson();
-        this.fit_bounds();
-        this.add_google_tiles();
-        this.get_item_location_info();
     },
     updated(){
         this.map_size_reset();
         this.fit_bounds();
         this.get_item_location_info();
+        console.log('updated map');
     },
     computed: {
         map_ref(){return 'map-' + this.ref_suffix},
@@ -495,20 +511,55 @@ var vc_common_map = Vue.component(
         update_map_frontend_state_obj(frontend_state_obj) {
             this.$emit('set_frontend_state_obj', frontend_state_obj);
         },
-        add_map_hash: function(map) {
+        update_base_layer(baselayer_name){
+            if(!this.map){
+                return null;
+            }
+            if(!(baselayer_name in this.base_layers)){
+                console.log('Cannot find baselayer: ' + baselayer_name);
+                return null;
+            }
+            //
+            for(let name_key in this.base_layers){
+                let act_layer = this.base_layers[name_key];
+                if(name_key == baselayer_name){
+                    this.map.addLayer(act_layer);
+                }
+                else{
+                    this.map.removeLayer(act_layer);
+                }
+            }
+            let new_tile_state_list = [];
+            for(tp of this.tileProviders){
+                tp.visible = false;
+                if(tp.name == baselayer_name){
+                    tp.visible = true;
+                    this.selectedTileSet = tp;
+                }
+                new_tile_state_list.push(tp);
+            }
+            this.tileProviders = new_tile_state_list;
+            this.map.baselayer_name = baselayer_name;
+        },
+        add_map_hash: function() {
             if(this.map_type != 'search'){
                 return null;
             }
-            let current_path = this.$route.fullPath;
-            if(current_path.indexOf('#') >= 0){
-                let current_path_ex = current_path.split('#');
-                current_path = current_path_ex[0];
+            if(!this.map){
+                return null;
             }
-            console.log('current_path: ' + current_path);
-            this.map_hash_obj = new L.Hash(map);
-            this.map_hash_obj.current_path = current_path;
+            this.map_hash_obj = new L.Hash(this.map);
             this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
             this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
+            this.map_hash_obj.update_base_layer = this.update_base_layer;
+            this.map.hash_obj = this.map_hash_obj;
+            this.map.on('baselayerchange', function(e) {
+                // when the base layer changes, keep the id
+                this.baselayer_name = e.name;
+                if(this.hash_obj){
+                    this.hash_obj.forceHashChange();
+                }
+            });
         },
         make_geo_features_layer(category_limit){
             if(!this.geo_json || !this.item_json){
@@ -600,55 +651,106 @@ var vc_common_map = Vue.component(
             }
             return this.make_item_feature_tooltip(feature);
         },
+        gather_base_layers: function(){
+            if(!this.map){
+                return null;
+            }
+            for(tp of this.tileProviders){
+                let tile_key = 'map-tile-' + this.ref_suffix + '-' + tp.name;
+                if(this.$refs[tile_key] == null){
+                    console.log('no basemap with key: ' + tile_key);
+                    continue;
+                }
+                this.base_layers[tp.name] = this.$refs[tile_key][0].mapObject;
+            }
+        },
         add_google_tiles: function() {
             if(this.added_google_tiles){
                 return null;
             }
-            setTimeout(() => {
-                // wait a bit so the object is available for new tiles.
-                if(this.$refs[this.l_controls_ref] == null){
-                    console.log('no item: ' + this.l_controls_ref);
-                    return null;
+            if(!this.map){
+                return null;
+            }
+           
+            if(this.$refs[this.l_controls_ref] == null){
+                console.log('no item: ' + this.l_controls_ref);
+                return null;
+            }
+            if(this.$refs[this.map_ref] == null){
+                console.log('no item: ' + this.map_ref);
+                return null;
+            }
+            console.log(this.map);
+            for(let gtile_config of this.google_tile_configs){
+                if(this.added_google_tile_types.indexOf(gtile_config.type) >= 0){
+                    // Don't add the same layer twice!
+                    continue;
                 }
-                if(this.$refs[this.map_ref] == null){
-                    console.log('no item: ' + this.map_ref);
-                    return null;
-                }
-                for(let gtile_config of this.google_tile_configs){
-                    if(this.added_google_tile_types.indexOf(gtile_config.type) >= 0){
-                        // Don't add the same layer twice!
-                        continue;
-                    }
-                    let gtile = L.gridLayer.googleMutant(gtile_config);
-                    if(gtile_config.type == 'satellite'){
+                let gtile = L.gridLayer.googleMutant(gtile_config);
+                this.base_layers[gtile.options.name] = gtile;
+                if(gtile_config.type == 'satellite'){
                     // Add support for over-zooming satellite.
-                        this.$refs[this.map_ref].mapObject.addLayer(gtile);
-                    }
-                    this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
-                        gtile, gtile.options.name
-                    );
-                    this.added_google_tile_types.push(gtile_config.type);
+                    this.map.addLayer(gtile);
                 }
-                this.add_map_hash(this.$refs[this.map_ref].mapObject);
-            }, 100);
+                this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
+                    gtile, gtile.options.name
+                );
+                this.added_google_tile_types.push(gtile_config.type);
+            }
             this.added_google_tiles = true;
+        },
+        geo_view_from_state_obj: function(frag_obj){
+            frag_obj.center = null;
+            frag_obj.zoom = null;
+            if(frag_obj.hasOwnProperty('zm') && frag_obj.hasOwnProperty('lat') && frag_obj.hasOwnProperty('lng')){
+                let zoom = parseInt(frag_obj.zm, 10);
+                let lat = parseFloat(frag_obj.lat);
+                let lng = parseFloat(frag_obj.lng);
+                if (isNaN(zoom) || isNaN(lat) || isNaN(lng)) {
+                    frag_obj.center = null;
+                }
+                else{
+                    frag_obj.center = new L.LatLng(lat, lng);
+                    frag_obj.zoom = zoom;
+                }
+            }
+            return frag_obj;
         },
         fit_bounds: function(){
             if(!this.geo_json && GEO_JSON != null){
                 this.geo_json = GEO_JSON;
             }
-            setTimeout(() => {
-                // wait a bit so the geojson layer is available.
-                let l_geo_json = this.$refs[this.geojson_ref];
-                if(l_geo_json == null){
-                    console.log('no geo-json layer item: ' + this.geojson_ref);
-                    return null;
-                }
+            if(!this.map){
+                return null;
+            }
+            let l_geo_json = this.$refs[this.geojson_ref];
+            if(l_geo_json == null){
+                console.log('no geo-json layer item: ' + this.geojson_ref);
+                return null;
+            }
+            let frag_obj = this.geo_view_from_state_obj(this.frontend_state_obj);
+            if (frag_obj != null && frag_obj.center != null) {
+                this.map.auto_fit = false;
+                this.map.setView(frag_obj.center, frag_obj.zoom);  
+            }
+            else{
+                this.map.auto_fit = true;
                 let bounds = l_geo_json.getBounds();
-                this.$refs[this.map_ref].mapObject.fitBounds(bounds);
-                this.$refs[this.map_ref].mapObject._layersMaxZoom = MAX_ZOOM;
+                this.map.fitBounds(bounds);
                 console.log(bounds);
-            }, 100);
+            }
+            this.map._layersMaxZoom = MAX_ZOOM;
+            this.map.auto_fit = false;
+        },
+        ready_map_setup: function(){
+            this.map = this.$refs[this.map_ref].mapObject;
+            this.map.auto_fit = true;
+            this.gather_base_layers();
+            this.add_google_tiles();
+            this.get_item_location_info();
+            this.add_map_hash();
+            this.fit_bounds();
+            this.map.auto_fit = false;
         },
         map_size_reset: function(){
             if(!this.geo_json && GEO_JSON != null){

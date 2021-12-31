@@ -92,14 +92,19 @@
             frontend_state_obj: null,
         },
         created(){
-            this.create_frontend_state_obj();
             this.fetch_oc_api();
+            this.create_frontend_state_obj();
         },
         watch: {
             // call again the method if the route changes
             '$route': 'fetch_oc_api'
         },
         methods: {
+            update_frontent_state_obj: function(){
+                this.frontend_state_obj = get_search_current_frag_obj();
+                console.log('Updated frontend_state_obj');
+                console.log(this.frontend_state_obj);
+            },
             create_frontend_state_obj: function(){
                 if(!this.frontend_state_obj){
                     this.frontend_state_obj = get_search_current_frag_obj();
@@ -135,6 +140,7 @@
                 .then(json => {
                     this.result = json;
                     this.route_key_index += 1;
+                    this.update_frontent_state_obj();
                     if(this.emit_update_fetch_done){
                         this.emit_update_fetch_done = false;
                         this.$emit('update_fetch_done', true);

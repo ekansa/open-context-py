@@ -124,7 +124,7 @@ const SEARCH_FRAGMENT_KEYS = [
     'lat', // map latitute
     'lng', // map longitude
     'geovis', // map visualization type
-    'tiles', // base map tile type
+    'bm', // base map tile name
 ];
 
 const FRAG_KEY_DELIM = '/';
