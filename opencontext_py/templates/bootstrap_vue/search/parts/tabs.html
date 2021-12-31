@@ -11,8 +11,8 @@
           >
           <b-card-text>
             <h5 v-if="result">
-              <span class="text-left">Map</span>
-              <span class="text-right">[[ result['totalResults'] ]] Records</span>
+              <span class="text-left">Summary Map of</span>
+              <span class="text-right">[[ result_count_human ]] Records</span>
             </h5>
             <h5 v-else>
                 <span class="text-left">Map</span>
@@ -163,6 +163,13 @@ var vc_all_search_tabs = Vue.component(
         },
         result_count: function() {
           return safe_get_nested_object_by_str_key(this.result, 'totalResults');
+        },
+        result_count_human: function(){
+          let result_count = safe_get_nested_object_by_str_key(this.result, 'totalResults');
+          if(!result_count){
+            return '(No records returned)';
+          }
+          return result_count.toLocaleString();
         },
         result_start_index: function() {
           return safe_get_nested_object_by_str_key(this.result, 'startIndex');
