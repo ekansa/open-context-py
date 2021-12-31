@@ -356,8 +356,8 @@ function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_dat
     // Prepares facet options lists for templates
     let result = JSON.parse(JSON.stringify(raw_result)); // prevent mutation of the result.
     let aq_from_hash = get_search_current_frag_key("aq");
-    var first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
-    var facets_dtypes_groups_opts = []; // main output.
+    let first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
+    let facets_dtypes_groups_opts = []; // main output.
     if (!('oc-api:has-facets' in result)){
         // Nothing to do, so skip out.
         return facets_dtypes_groups_opts;

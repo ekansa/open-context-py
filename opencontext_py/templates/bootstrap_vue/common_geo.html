@@ -449,7 +449,6 @@ var vc_common_map = Vue.component(
                 generic: 12,
             },
             default_tilelayer_name: 'Google Aerial',
-            updating: false,
         };
     },
     template: '#common_map',
@@ -545,7 +544,65 @@ var vc_common_map = Vue.component(
             this.tileProviders = new_tile_state_list;
             this.map.baselayer_name = baselayer_name;
         },
-        add_map_hash: function() {
+        add_search_map_extra_controls: function() {
+            if(this.map_type != 'search'){
+                return null;
+            }
+            if(!this.map){
+                return null;
+            }
+            if(this.map.hasOwnProperty('search_map_extra_buttons')){
+                return null;
+            }
+            if(!this.map.hasOwnProperty('geodeep')){
+                this.map.geodeep = 11;
+            }
+            if(!this.map.hasOwnProperty('default_overlay_layer')){
+                this.map.default_overlay_layer = 'tile';
+            }
+            if(!this.map.hasOwnProperty('max_tile_zoom')){
+                this.map.max_tile_zoom = MAX_ZOOM_TILES;
+            }
+            this.map.add_search_map_extra_controls = function(map){
+                let deep_tile_control = L.easyButton(
+                    '<span class="material-icons-two-tone">grid_on</span>',
+                    // the control for higher resolution region tiles
+                    function (){
+                        map.default_overlay_layer = 'tile';
+                        let new_geodeep = parseInt(map.geodeep) + 1;
+                        if (new_geodeep <= map.max_tile_zoom) {
+                            //can still zoom in
+                            console.log('New higher tile zoom: ' + new_geodeep);
+                            map.geodeep = new_geodeep;
+                        }
+                    },
+                    'Higher resolution Open Context regions',
+                );
+                let big_tile_control = L.easyButton(
+                    '<span class="material-icons-two-tone">window</span>',
+                    // control for lower resolution region tiles
+                    function (){
+                        map.default_overlay_layer = 'tile';
+                        let new_geodeep = map.geodeep - 1;
+                        if (new_geodeep > 3) {
+                            console.log('New lower tile zoom: ' + new_geodeep);
+                            map.geodeep = new_geodeep;
+                        }
+                    },
+                    'Lower resolution Open Context regions',
+                );
+                map.search_map_extra_buttons = {
+                    deep_tile_control: deep_tile_control,
+                    big_tile_control: big_tile_control,
+                };
+                deep_tile_control.addTo(map);
+                big_tile_control.addTo(map);
+            }
+            this.map.add_search_map_extra_controls(this.map);
+            console.log(this.map.search_map_extra_buttons);
+            console.log('added search controls');
+        },
+        add_search_map_hash: function() {
             if(this.map_type != 'search'){
                 return null;
             }
@@ -779,7 +836,8 @@ var vc_common_map = Vue.component(
             this.gather_base_layers();
             this.add_google_tiles();
             this.get_item_location_info();
-            this.add_map_hash();
+            this.add_search_map_hash();
+            this.add_search_map_extra_controls();
             this.fit_bounds();
             this.finese_item_view();
             this.map.auto_fit = false;
@@ -861,7 +919,7 @@ var vc_common_map = Vue.component(
 
 
 
-
+/* TODO: https://www.patrick-wied.at/static/heatmapjs/example-heatmap-leaflet.html */
 
 
 

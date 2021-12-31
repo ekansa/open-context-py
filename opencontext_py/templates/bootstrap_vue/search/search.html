@@ -66,6 +66,7 @@
 <script type="text/javascript">
 
     const FILTER_CHANGE_RESET_MAP_STATE_KEYS = ['zm', 'lat', 'lng'];
+    const MAP_HIDE_INTERAL_STATE_KEYS = ['zoom', 'center'];
     const GEO_JSON = null;
 
     // Set up the vue router in 'history' mode to manage
@@ -154,6 +155,11 @@
             set_frontend_state_obj(frontend_state_obj){
                 if(!frontend_state_obj){
                     return null;
+                }
+                for(bad_key of MAP_HIDE_INTERAL_STATE_KEYS){
+                    if(frontend_state_obj.hasOwnProperty(bad_key)){
+                        delete frontend_state_obj[bad_key];
+                    }
                 }
                 this.frontend_state_obj = frontend_state_obj;
                 let frag_str = encode_frag_obj(this.frontend_state_obj);

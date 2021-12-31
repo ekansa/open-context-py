@@ -45,6 +45,7 @@
           title="Time Ranges"
           :id="tab_ids[1]"
           :key="tab_ids[1]"
+          :disabled="!chrono_facets"
           @click="tab_clicked"
           >
           <b-card-text v-if="chrono_facets && tab == 1">
@@ -63,6 +64,7 @@
           title="Charts"
           :id="tab_ids[2]"
           :key="tab_ids[2]"
+          :disabled="disable_charts_tab"
           @click="tab_clicked"
           >
           <b-card-text v-if="facets_numeric_groups_opts && tab == 2">
@@ -85,6 +87,7 @@
           title="Item Records"
           :id="tab_ids[3]"
           :key="tab_ids[3]"
+          :disabled="!(result_count > 0)"
           @click="tab_clicked"
           >
           <b-card-text v-if="result_count > 0 && tab == 3">
@@ -212,14 +215,26 @@ var vc_all_search_tabs = Vue.component(
             // Group facet fields and options
             // returned from the API
             if(!this.result){
-              return null;
+              return [];
             }
             // return null;
-            return prepare_facets_dtypes_groups_opts_by_data_types(
+            let charts_opts = prepare_facets_dtypes_groups_opts_by_data_types(
               this.result,
               ['int', 'double', 'date']
             );
+            if(charts_opts == null){
+              return [];
+            }
+            return charts_opts;
         },
+        disable_charts_tab: function() {
+          for(let f_obj of this.facets_numeric_groups_opts){
+            if(f_obj.dtypes_groups_opts.length > 0){
+              return false;
+            }
+          }
+          return true;
+        },  
         facets_int_groups_opts: function() {
             // Group facet fields and options
             // returned from the API
@@ -230,8 +245,6 @@ var vc_all_search_tabs = Vue.component(
               this.result,
               ['int',]
             );
-            console.log('Integer facets');
-            console.log(facet_opts);
             return facet_opts;
         },
         facets_double_groups_opts: function() {
