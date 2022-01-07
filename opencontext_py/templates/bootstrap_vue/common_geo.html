@@ -848,6 +848,8 @@ var vc_common_map = Vue.component(
                         onEachFeature: this.onEachFeatureFunction,
                     },
                 );
+                act_layer.ref = act_geojson.ref;
+                act_layer.label = act_geojson.label;
                 act_layer.addTo(this.map, act_geojson.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
                     act_layer, 
@@ -860,6 +862,9 @@ var vc_common_map = Vue.component(
                     }
                     this.map.addLayer(act_layer);
                     this.act_overlay_layer = act_layer;
+                }else{
+                    // Deactivate other, non preferred layers.
+                    this.map.removeLayer(act_layer);
                 }
             }
         },
