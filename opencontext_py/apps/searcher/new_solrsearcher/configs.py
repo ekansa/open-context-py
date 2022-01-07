@@ -915,3 +915,8 @@ FACET_OPT_HIDE_URI_MAPS = [
 FACET_OPT_HIDE_URI_PREFIX_MAPS = [
             
 ]
+
+
+# Levels of tile aggregation supported.
+MIN_GEOTILE_ZOOM = SolrDoc.MIN_GEOTILE_ZOOM
+MAX_GEOTILE_ZOOM = SolrDoc.MAX_GEOTILE_ZOOM

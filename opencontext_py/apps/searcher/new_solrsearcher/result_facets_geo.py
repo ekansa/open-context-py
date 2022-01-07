@@ -213,17 +213,18 @@ class ResultFacetsGeo():
         if not len(options_tuples):
             return None
         
+        # Validate the geo tiles, filter out bad data.
         valid_tile_tuples = self._make_valid_options_tile_tuples(
             options_tuples
         )
         if not len(valid_tile_tuples):
-            # None of the chronological tiles are valid
+            # None of the geo tiles are valid
             # given the query requirements.
             return None
 
         # Determine the aggregation depth needed to group geotiles
         # together into a reasonable number of options.
-        self._get_tile_aggregation_depth(valid_tile_tuples)
+        geodeep = self._get_tile_aggregation_depth(valid_tile_tuples)
 
         # Determine the min tile depth. We need to return this to 
         # the client so the client knows not to over-zoom.
@@ -247,7 +248,7 @@ class ResultFacetsGeo():
         aggregate_tiles = {}
         for tile, count in valid_tile_tuples:
             # Now aggregate the tiles.
-            trim_tile_key = tile[:self.default_aggregation_depth]
+            trim_tile_key = tile[:geodeep]
             if trim_tile_key not in aggregate_tiles:
                 # Make the aggregate tile with a count
                 # of zero
@@ -280,6 +281,7 @@ class ResultFacetsGeo():
             option['id'] = urls['html']
             option['json'] = urls['json']
             option['count'] = count
+            option['geodeep'] = geodeep
             option['type'] = 'Feature'
             option['category'] = 'oc-api:geo-facet'
 
@@ -458,5 +460,3 @@ class ResultFacetsGeo():
             geo_options.append(option)
 
         return geo_options
-
-

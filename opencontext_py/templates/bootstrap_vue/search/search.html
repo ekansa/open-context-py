@@ -68,7 +68,9 @@
     const FILTER_CHANGE_RESET_MAP_STATE_KEYS = ['zm', 'lat', 'lng'];
     const MAP_HIDE_INTERAL_STATE_KEYS = ['zoom', 'center'];
     const GEO_JSON = null;
-
+    const MIN_GEOTILE_ZOOM = {{ configs.MIN_GEOTILE_ZOOM }} ;
+    const MAX_GEOTILE_ZOOM = {{ configs.MAX_GEOTILE_ZOOM }} ;
+    
     // Set up the vue router in 'history' mode to manage
     // API requests to the backend. The history mode pushes
     // changes to the client's browser URL, which should let
