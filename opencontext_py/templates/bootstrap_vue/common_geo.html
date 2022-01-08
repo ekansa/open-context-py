@@ -94,7 +94,7 @@
     window.Vue2Leaflet.LMap,
   );
 
-  const MAX_ZOOM_TILES = 26;
+  const MAX_ZOOM_TILES = 24;
   const MAX_ZOOM = 30;
   
   const GOOGLE_API_KEY = 'AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo';
@@ -455,10 +455,19 @@ var vc_common_map = Vue.component(
             geo_region_facets: null,
             geo_page_records: null,
             geo_all_records: null,
+            heatmap_data: null,
             geo_tile_facets_default: {
                 type: "FeatureCollection",
-                label: "Summary regions",
+                label: "Summary as squares",
                 ref: "map-tile-geojson-" + this.ref_suffix,
+                min_count: null,
+                max_count: null,
+                features: [],
+            },
+            geo_facets_circles_default: {
+                type: "FeatureCollection",
+                label: "Summary as circles",
+                ref: "map-circle-geojson-" + this.ref_suffix,
                 min_count: null,
                 max_count: null,
                 features: [],
@@ -483,9 +492,22 @@ var vc_common_map = Vue.component(
                 ref: "map-all-recs-geojson-" + this.ref_suffix,
                 features: [],
             },
+            heatmap_data_default: {
+                label: "Summary as heatmap",
+                ref: "map-heatmap-" + this.ref_suffix,
+                max: null,
+                data: [],
+            },
+            heatmap_config: {
+                "radius": 40,
+                "useLocalExtrema": false,
+                latField: 'lat',
+                lngField: 'lng',
+                valueField: 'count',
+            },
             show_default_overlay: true,
-            act_overlay_layer: null,
             act_overlay_layers: null,
+            default_gradient_key: 'legacy_oc',
         };
     },
     template: '#common_map',
@@ -529,6 +551,34 @@ var vc_common_map = Vue.component(
                 return `<a target="_blank" href="${str}">${str}</a>`;
             }
             return str;
+        },
+        update_router: function(url){
+            let hash = '';
+            if(window.location.hash) {
+                hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+            }
+            if(url.indexOf(hash) < 0){
+                url += hash;
+            }
+            url = abs_to_rel_url(url, BASE_URL);
+            router.push(url);
+        },
+        update_geodeep: function(geodeep){
+            if(!this.geo_json){
+                return null;
+            }
+            let current_url = this.geo_json.id;
+            let url = replaceURLparameter(current_url, 'geodeep', geodeep);
+            this.update_router(url);
+        },
+        get_centroid: function(arr) {
+            // get the centroid of a polygon
+            if(arr[0] == arr[1]){
+                arr.pop();
+            }
+            return arr.reduce(function (x,y) {
+                return [x[0] + y[0]/arr.length, x[1] + y[1]/arr.length] 
+            }, [0,0]);
         },
         update_map_frontend_state_obj(frontend_state_obj) {
             this.$emit('set_frontend_state_obj', frontend_state_obj);
@@ -576,24 +626,27 @@ var vc_common_map = Vue.component(
             if(!this.map.hasOwnProperty('geodeep')){
                 this.map.geodeep = 11;
             }
-            if(!this.map.hasOwnProperty('default_overlay_layer')){
-                this.map.default_overlay_layer = 'tile';
-            }
             if(!this.map.hasOwnProperty('max_tile_zoom')){
                 this.map.max_tile_zoom = MAX_ZOOM_TILES;
             }
+            this.map.update_geodeep = this.update_geodeep;
             this.map.add_search_map_extra_controls = function(map){
                 let search_map_extra_controls = [];
                 let deep_tile_control = L.easyButton(
                     '<span class="material-icons-two-tone">grid_on</span>',
                     // the control for higher resolution region tiles
                     function (){
-                        map.default_overlay_layer = 'tile';
+                        map.removeLayer(map.act_overlay_layer);
+                        if(map.act_tile_facets_layer){
+                            map.addLayer(map.act_tile_facets_layer);
+                        }
+                        map.act_overlay_layer = map.act_tile_facets_layer;
                         let new_geodeep = parseInt(map.geodeep) + 1;
                         if (new_geodeep <= map.max_tile_zoom) {
                             //can still zoom in
                             console.log('New higher tile zoom: ' + new_geodeep);
                             map.geodeep = new_geodeep;
+                            map.update_geodeep(new_geodeep);
                         }
                     },
                     'Higher resolution Open Context regions',
@@ -602,11 +655,16 @@ var vc_common_map = Vue.component(
                     '<span class="material-icons-two-tone">window</span>',
                     // control for lower resolution region tiles
                     function (){
-                        map.default_overlay_layer = 'tile';
+                        map.removeLayer(map.act_overlay_layer);
+                        if(map.act_tile_facets_layer){
+                            map.addLayer(map.act_tile_facets_layer);
+                        }
+                        map.act_overlay_layer = map.act_tile_facets_layer;
                         let new_geodeep = map.geodeep - 1;
                         if (new_geodeep > 3) {
                             console.log('New lower tile zoom: ' + new_geodeep);
                             map.geodeep = new_geodeep;
+                            map.update_geodeep(new_geodeep);
                         }
                     },
                     'Lower resolution Open Context regions',
@@ -614,14 +672,22 @@ var vc_common_map = Vue.component(
                 let circle_control = L.easyButton(
                     '<span class="material-icons">circle</span>', 
                     function (){
-                        console.log('Circle region button');
+                        map.removeLayer(map.act_overlay_layer);
+                        if(map.act_circle_layer){
+                            map.addLayer(map.act_circle_layer);
+                        }
+                        map.act_overlay_layer = map.act_circle_layer;
                     },
                     'Circle-markers for Open Context regions',
                 );
                 let heat_control = L.easyButton(
                     '<span class="material-icons">thermostat</span>', 
                     function (){
-                        console.log('Heat-map button');
+                        map.removeLayer(map.act_overlay_layer);
+                        if(map.act_heatmap_layer){
+                            map.addLayer(map.act_heatmap_layer);
+                        }
+                        map.act_overlay_layer = map.act_heatmap_layer;
                     },
                     'Heat-map visualization',
                 );
@@ -672,11 +738,27 @@ var vc_common_map = Vue.component(
             if(!this.geo_json){
                 return geo_layer;
             }
+            let counts = [];
             for(let feature of this.geo_json.features){
                 if(feature.category != category_limit){
                     continue;
                 }
                 geo_layer.features.push(feature);
+                if(feature.hasOwnProperty('count')){
+                    counts.push(feature.count);
+                }
+            }
+            if(counts.length > 0){
+                // Add information needed to style features.
+                geo_layer.min_count = Math.min.apply(Math, counts);
+                geo_layer.max_count = Math.max.apply(Math, counts);
+                let count_features = [];
+                for(let feature of geo_layer.features){
+                    feature.max_count = geo_layer.max_count;
+                    feature.gradient_key = this.default_gradient_key;
+                    count_features.push(feature);
+                }
+                geo_layer.features = count_features;
             }
             return geo_layer;
         },
@@ -797,6 +879,136 @@ var vc_common_map = Vue.component(
             }
             this.added_google_tiles = true;
         },
+        count_style: function(feature){
+            let act_gradient = COLOR_GRADIENTS.legacy_oc;
+            if(feature.gradient_key in COLOR_GRADIENTS){
+                act_gradient = COLOR_GRADIENTS[feature.gradient_key];
+            }
+            let hex_color = make_hex_color_in_gradient(
+                (feature.count / feature.max_count), 
+                act_gradient
+            );
+            let fill_opacity = (
+                ((feature.count / feature.max_count) * 0.5 ) + 0.20
+            );
+            console.log(feature.max_count + ' - ' + feature.count + ' - ' + hex_color);
+            return {
+                color: hex_color,
+                fillOpacity: fill_opacity,
+                weight: 2
+            };
+        },
+        circle_pointToLayer: function(feature,  latlng){
+            let marker_opts = this.count_style(feature);
+            let radius = Math.round(30 * (feature.count / feature.max_count), 0) + 5;
+            marker_opts.radius = radius;
+            marker_opts.fillColor = marker_opts.color;
+            marker_opts.weight = 1;
+            marker_opts.opacity = 0.95;
+            marker_opts.fillOpacity = 0.8;
+            return L.circleMarker(latlng, marker_opts);
+        },
+        geojson_to_circle_data: function(act_geojson){
+            if(act_geojson.category != 'oc-api:geo-facet'){
+                return null;
+            }
+            if(!act_geojson.hasOwnProperty('max_count')){
+                return null;
+            }
+            let circle_geojson = JSON.parse(JSON.stringify(this.geo_facets_circles_default));
+            circle_geojson.min_count = act_geojson.min_count;
+            circle_geojson.max_count = act_geojson.max_count;
+            circle_geojson.category = act_geojson.category;
+            /*
+			 * 1st we aggregate nearby tiles getting points for the center of each
+			 * tile region
+			 */
+            let aggregated_tiles = {};
+            for(let feature of act_geojson.features){
+                let centroid = this.get_centroid(feature.geometry.coordinates[0]);
+                let geo_id_ex = feature.geometry.id.split('-');
+				let geo_tile = geo_id_ex[geo_id_ex.length - 1];
+                let agg_tile_id = geo_tile.substring(0, (geo_tile.length -1));
+                if(!(agg_tile_id in aggregated_tiles)) {
+                    aggregated_tiles[agg_tile_id] = [];
+                }
+                let point_item = {
+                    centroid: centroid,
+                    count: feature.count,
+                    id: replaceURLparameter(feature.id, 'allevent-geotile', agg_tile_id),
+                }
+                aggregated_tiles[agg_tile_id].push(point_item);
+            }
+            /*
+			 * 2nd we compute the weighted average for nearby tile center points
+			 * based on their counts. This will help make the map look less like a grid
+			 */
+            let max_count = 0;
+            let tindex = 0;
+            let count_keyed_points = {};
+            let count_keys = [];
+            for(let agg_tile_id in aggregated_tiles){
+                tindex += .000001;
+                let total_count = 0;
+                let sum_lat = 0;
+                let sum_lng = 0;
+                for(let point_item of aggregated_tiles[agg_tile_id]){
+                    total_count += point_item.count;
+                    sum_lat += point_item.centroid[1] * point_item.count;
+                    sum_lng += point_item.centroid[0] * point_item.count;
+                }
+                if(max_count < total_count){
+                    max_count = total_count;
+                }
+                let mean_lat = sum_lat / total_count;
+                let mean_lng = sum_lng / total_count;
+                let point_feature = {
+                    'type': 'Feature',
+                    'id': aggregated_tiles[agg_tile_id][0].id,
+                    'count': total_count,
+                    'max_count': null,
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': [mean_lng, mean_lat],
+                    },
+                };
+                count_key = total_count + tindex;
+                count_keys.push(count_key);
+                count_keyed_points[count_key] = point_feature;
+            }
+            /*
+			 * 3rd we sort the points in descending order of count so the point features with
+			 * the highest counts will be rendered lower
+			 */
+			count_keys.sort(function(a, b){return b-a;});
+            for(let count_key of count_keys){
+                let feature = count_keyed_points[count_key];
+                feature.max_count = max_count;
+                circle_geojson.features.push(feature);
+            }
+            return circle_geojson;
+        },
+        geojson_to_heatmap_data: function(act_geojson){
+            if(act_geojson.category != 'oc-api:geo-facet'){
+                return null;
+            }
+            if(!act_geojson.hasOwnProperty('max_count')){
+                return null;
+            }
+            let heatmap_data = JSON.parse(JSON.stringify(this.heatmap_data_default));
+            heatmap_data.max = act_geojson.max_count;
+            for(let feature of act_geojson.features){
+                let centroid = this.get_centroid(feature.geometry.coordinates[0]);
+                let data_item = {
+                    // convert geojson order to lat/lng
+                    lat: centroid[1],
+                    lng: centroid[0],
+                    count: feature.count,
+                }
+                heatmap_data.data.push(data_item);
+            }
+            return heatmap_data;
+        },
         add_overlay_layers: function() {
             if(!this.geo_json){
                 return null;
@@ -811,15 +1023,19 @@ var vc_common_map = Vue.component(
 
             // prevent mutation of the result.
             this.geo_tile_facets = this.make_geo_features_layer(
-                'oc-api:geo-facet', JSON.parse(JSON.stringify(this.geo_tile_facets_default))
+                'oc-api:geo-facet', 
+                JSON.parse(JSON.stringify(this.geo_tile_facets_default))
             );
             this.geo_region_facets = this.make_geo_features_layer(
-                'oc-api:geo-contained-in-feature', JSON.parse(JSON.stringify(this.geo_region_facets_default))
+                'oc-api:geo-contained-in-feature', 
+                JSON.parse(JSON.stringify(this.geo_region_facets_default))
             );
             this.geo_page_records = this.make_geo_features_layer(
-                'oc-api:geo-record', JSON.parse(JSON.stringify(this.geo_page_records_default))
+                'oc-api:geo-record', 
+                JSON.parse(JSON.stringify(this.geo_page_records_default))
             );
             if(this.act_overlay_layers && this.act_overlay_layers.length > 0){
+                // This removes prior (geojson) overlay layers from prior routing.
                 for(let act_layer of this.act_overlay_layers){
                     act_layer.removeFrom(this.map);
                     this.$refs[this.l_controls_ref].mapObject.removeLayer(
@@ -828,22 +1044,6 @@ var vc_common_map = Vue.component(
                 }
             }
             this.act_overlay_layers = null;
-
-            console.log(
-                this.geo_tile_facets.category + 
-                ' has ' + 
-                this.geo_tile_facets.features.length
-            );
-            console.log(
-                this.geo_region_facets.category + 
-                ' has ' + 
-                this.geo_region_facets.features.length
-            );
-            console.log(
-                this.geo_page_records.category + 
-                ' has ' + 
-                this.geo_page_records.features.length
-            );
             let overlays_geojson = [];
             if(this.geo_tile_facets && this.geo_tile_facets.features.length > 0){
                 overlays_geojson.push(this.geo_tile_facets);
@@ -860,15 +1060,30 @@ var vc_common_map = Vue.component(
             if(overlays_geojson.length < 1){
                 return null;
             }
-            this.act_overlay_layer = null;
+            this.map.act_overlay_layer = null;
+            this.map.act_tile_facets_layer = null;
+            this.map.act_circle_layer = null;
+            this.map.act_heatmap_layer = null;
             this.act_overlay_layers = [];
             for(let act_geojson of overlays_geojson){
-                let act_layer = L.geoJson(
-                    act_geojson,
-                    {
-                        onEachFeature: this.onEachFeatureFunction,
-                    },
-                );
+                let act_layer = null;
+                if(act_geojson.hasOwnProperty('max_count')){
+                    act_layer = L.geoJson(
+                        act_geojson,
+                        {
+                            style: this.count_style,
+                            onEachFeature: this.onEachFeatureFunction,
+                        },
+                    );
+                }
+                else{
+                    act_layer = L.geoJson(
+                        act_geojson,
+                        {
+                            onEachFeature: this.onEachFeatureFunction,
+                        },
+                    );
+                }
                 act_layer.ref = act_geojson.ref;
                 act_layer.label = act_geojson.label;
                 // Now add it again fresh.
@@ -877,18 +1092,60 @@ var vc_common_map = Vue.component(
                     act_layer, 
                     act_geojson.label
                 );
-                if(!this.act_overlay_layer){
+                if(!this.map.act_overlay_layer){
                     let l_geo_json = this.$refs[this.geojson_ref];
                     if(l_geo_json){
                         this.map.removeLayer(l_geo_json);
                     }
                     this.map.addLayer(act_layer);
-                    this.act_overlay_layer = act_layer;
+                    this.map.act_overlay_layer = act_layer;
                 }else{
                     // Deactivate other, non preferred layers.
                     this.map.removeLayer(act_layer);
                 }
                 this.act_overlay_layers.push(act_layer);
+                // Add headmap if relevant.
+                let heatmap_data = this.geojson_to_heatmap_data(act_geojson);
+                let circle_geojson = this.geojson_to_circle_data(act_geojson);
+                if(heatmap_data == null || circle_geojson == null){
+                    continue;
+                }
+                // If we have heatmap and circle_geojson then the act_layer is a region-facet
+                this.map.act_tile_facets_layer = act_layer;
+
+                // Make and add a circle layer
+                console.log('Circle layer geojon')
+                let circle_layer = L.geoJson(
+                    circle_geojson,
+                    {
+                        pointToLayer: this.circle_pointToLayer,
+                        onEachFeature: this.onEachFeatureFunction,
+                    },
+                );
+                circle_layer.ref = circle_geojson.ref;
+                circle_layer.label = circle_geojson.label;
+                circle_layer.addTo(this.map, circle_layer.label);
+                this.$refs[this.l_controls_ref].mapObject.addOverlay(
+                    circle_layer, 
+                    circle_layer.label
+                );
+                this.map.removeLayer(circle_layer);
+                this.act_overlay_layers.push(circle_layer);
+                this.map.act_circle_layer = circle_layer;
+
+                //Make and add the heatmap layer
+                let heatmap_layer = new HeatmapOverlay(this.heatmap_config);
+                heatmap_layer.ref = heatmap_data.ref;
+                heatmap_layer.label = heatmap_data.label;
+                heatmap_layer.setData(heatmap_data);
+                heatmap_layer.addTo(this.map, heatmap_layer.label);
+                this.$refs[this.l_controls_ref].mapObject.addOverlay(
+                    heatmap_layer, 
+                    heatmap_layer.label
+                );
+                this.map.removeLayer(heatmap_layer);
+                this.act_overlay_layers.push(heatmap_layer);
+                this.map.act_heatmap_layer = heatmap_layer;
             }
         },
         geo_view_from_state_obj: function(frag_obj){
@@ -942,18 +1199,18 @@ var vc_common_map = Vue.component(
             if(!this.map){
                 return null;
             }
-            let l_geo_json = null;
-            if(this.act_overlay_layer != null){
-                l_geo_json = this.act_overlay_layer;
+            let act_overlay_layer = null;
+            if(this.map.act_overlay_layer != null){
+                act_overlay_layer = this.map.act_overlay_layer;
             }
             else{
-                l_geo_json = this.$refs[this.geojson_ref];
-                if(l_geo_json == null){
+                act_overlay_layer = this.$refs[this.geojson_ref];
+                if(act_overlay_layer == null){
                     console.log('no geo-json layer item: ' + this.geojson_ref);
                     return null;
                 }
             }
-            if(l_geo_json == null){
+            if(act_overlay_layer == null){
                 console.log('no overlay layer for fitbounds');
                 return null;
             }
@@ -964,7 +1221,7 @@ var vc_common_map = Vue.component(
             }
             else{
                 this.map.auto_fit = true;
-                let bounds = l_geo_json.getBounds();
+                let bounds = act_overlay_layer.getBounds();
                 this.map.fitBounds(bounds);
                 console.log(bounds);
             }
@@ -978,8 +1235,8 @@ var vc_common_map = Vue.component(
             this.add_google_tiles();
             this.get_item_location_info();
             this.add_search_map_hash();
-            this.add_search_map_extra_controls();
             this.add_overlay_layers();
+            this.add_search_map_extra_controls();
             this.fit_bounds();
             this.finese_item_view();
             this.map.auto_fit = false;
