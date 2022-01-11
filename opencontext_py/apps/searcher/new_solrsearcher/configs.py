@@ -83,6 +83,11 @@ ITEM_TYPE_FACETFIELDS = {
     ],
 }
 
+# What is the minimum context depth for defaulting to high resolution geo
+# spatial tiles? For example Europe/Italy will have a context depth of 2,
+# so will not trigger high resolution tiles.
+MIN_CONTEXT_DEPTH_FOR_HIGH_RES_GEOTILES = 3
+
 
 SOLR_FIELDS_FACET_LIMITS = [
     (f'{ROOT_EVENT_CLASS}___lr_geo_tile', -1,),

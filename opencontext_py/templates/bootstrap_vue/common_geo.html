@@ -908,6 +908,18 @@ var vc_common_map = Vue.component(
             marker_opts.fillOpacity = 0.8;
             return L.circleMarker(latlng, marker_opts);
         },
+        get_map_geodeep_from_geojson: function(act_geojson){
+            if(act_geojson.category != 'oc-api:geo-facet'){
+                return null;
+            }
+            if(!this.map){
+                return null;
+            }
+            let feature = act_geojson.features[0];
+            let geo_id_ex = feature.geometry.id.split('-');
+			let geo_tile = geo_id_ex[geo_id_ex.length - 1];
+            this.map.geodeep = geo_tile.length;
+        },
         geojson_to_circle_data: function(act_geojson){
             if(act_geojson.category != 'oc-api:geo-facet'){
                 return null;
@@ -1114,6 +1126,10 @@ var vc_common_map = Vue.component(
                 // If we have heatmap and circle_geojson then the act_layer is a region-facet
                 this.map.act_tile_facets_layer = act_layer;
 
+                // Extract the current geodeep property. This is needed to give a starting
+                // value for increasing or decreasing the tile resolution controls.
+                this.get_map_geodeep_from_geojson(act_geojson);
+
                 // Make and add a circle layer
                 let circle_layer = L.geoJson(
                     circle_geojson,
@@ -1240,7 +1256,6 @@ var vc_common_map = Vue.component(
             this.add_search_map_hash();
             this.add_overlay_layers();
             this.add_search_map_extra_controls();
-            this.set_image_overlays_back();
             this.fit_bounds();
             this.finese_item_view();
             this.map.auto_fit = false;
@@ -1282,7 +1297,6 @@ var vc_common_map = Vue.component(
             this.fit_bounds();
             this.finese_item_view();
             this.get_item_location_info();
-            this.set_image_overlays_back();
             console.log('updated map');
         },
         fetch_geojson: function() {

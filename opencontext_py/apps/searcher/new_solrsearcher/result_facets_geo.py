@@ -124,7 +124,7 @@ class ResultFacetsGeo():
             require_int=True,
         )
         if not deep:
-            # The chronology aggregation depth is not set, so
+            # The geospatial aggregation depth is not set, so
             # return the 
             dist_deep = self._distance_determine_aggregation_depth(
                 valid_tile_tuples
@@ -140,6 +140,7 @@ class ResultFacetsGeo():
 
             # Choose the less deep aggregation depth determined from
             # these two methods.
+            print(f'Computed geodeep options are: ' + str([dist_deep, all_agg_depth]))
             deep = min([dist_deep, all_agg_depth])
 
         # Now put some limits on it.

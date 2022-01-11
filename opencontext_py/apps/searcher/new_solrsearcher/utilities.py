@@ -190,13 +190,13 @@ def infer_multiple_or_hierarchy_paths(
     return paths_as_strs
 
 
-def get_path_depth(self, path, delimiter='/'):
+def get_path_depth(path, delimiter='/'):
     """Gets the depth of a (number of items) if split by a delimiter
     
     :param str path: A hierarchic path, with levels separated by a
         delimiter
     :param str delimiter: A string delimiter between different levels
-        of a hiearchic path
+        of a hierarchic path
     """
     # Remove a possible trailing delimiter before calculating
     # the depth

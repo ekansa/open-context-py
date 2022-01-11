@@ -111,39 +111,8 @@ class SearchSolr():
         # Starts with an initial facet field list
         query['facet.field'] = self.init_facet_fields
 
-        # Add the geo-tile facet field.
-        geodeep = start_pos = utilities.get_request_param_value(
-            request_dict, 
-            param='geodeep',
-            default=0,
-            as_list=False,
-            solr_escape=False,
-            require_int=True,
-        )
-        if geodeep > SolrDoc.LOW_RESOLUTION_GEOTILE_LENGTH:
-            geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___geo_tile'
-        else:
-            geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_geo_tile'
-        query['facet.field'].append(geo_tile_facet_field)
-
-        # Add the chrono-tile facet field.
-        chronodeep = start_pos = utilities.get_request_param_value(
-            request_dict, 
-            param='chronodeep',
-            default=0,
-            as_list=False,
-            solr_escape=False,
-            require_int=True,
-        )
-        if chronodeep > SolrDoc.LOW_RESOLUTION_CHRONOTILE_DROP_LAST:
-            chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
-        else:
-            chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
-        query['facet.field'].append(chrono_tile_facet_field)
-
 
         query['facet.range'] = []
-        
         query['stats'] = self.solr_stats_query
         # Starts with an initial stats field list
         query['stats.field'] = self.init_stats_fields
@@ -318,6 +287,7 @@ class SearchSolr():
             )
         
 
+        do_lr_geotile_facet = True
         # -------------------------------------------------------------
         # GEO-SPACE AND TIME
         # -------------------------------------------------------------
@@ -329,6 +299,7 @@ class SearchSolr():
             solr_escape=False,
         )
         if raw_disc_bbox:
+            do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile 
             query_dict = querymaker.get_discovery_bbox_query_dict(
                 raw_disc_bbox
             )
@@ -346,6 +317,7 @@ class SearchSolr():
             solr_escape=False,
         )
         if raw_disc_geo:
+            do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile 
             query_dict = querymaker.get_discovery_geotile_query_dict(
                 raw_disc_geo
             )
@@ -409,6 +381,13 @@ class SearchSolr():
             if query_dict:
                 print(f'Path {query_dict }')
                 print(f'RQ {request_dict}')
+                context_deep = utilities.get_path_depth(
+                    path=request_dict.get('path', ''),
+                    delimiter=configs.REQUEST_CONTEXT_HIERARCHY_DELIM
+                )
+                if context_deep >= configs.MIN_CONTEXT_DEPTH_FOR_HIGH_RES_GEOTILES:
+                    do_lr_geotile_facet = False
+
                 # Associate the facet fields with the client request param
                 # and param value.
                 self._associate_facet_field_with_client_request(
@@ -426,6 +405,48 @@ class SearchSolr():
                     main_query_dict=query,
                 )
         
+
+
+        # -------------------------------------------------------------
+        # GEOSPACE and Chronology tiles.
+        # -------------------------------------------------------------
+        # Add the geo-tile facet field.
+        geodeep = start_pos = utilities.get_request_param_value(
+            request_dict, 
+            param='geodeep',
+            default=0,
+            as_list=False,
+            solr_escape=False,
+            require_int=True,
+        )
+        if not do_lr_geotile_facet or geodeep > SolrDoc.LOW_RESOLUTION_GEOTILE_LENGTH:
+            geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___geo_tile'
+        else:
+            geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_geo_tile'
+        query['facet.field'].append(geo_tile_facet_field)
+
+        # Add the chrono-tile facet field.
+        chronodeep = start_pos = utilities.get_request_param_value(
+            request_dict, 
+            param='chronodeep',
+            default=0,
+            as_list=False,
+            solr_escape=False,
+            require_int=True,
+        )
+        if chronodeep > SolrDoc.LOW_RESOLUTION_CHRONOTILE_DROP_LAST:
+            chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
+        else:
+            chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
+        query['facet.field'].append(chrono_tile_facet_field)
+
+
+
+
+
+
+
+
         # -------------------------------------------------------------
         # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
         # etc.). The following iterates through a loop of tuples that
