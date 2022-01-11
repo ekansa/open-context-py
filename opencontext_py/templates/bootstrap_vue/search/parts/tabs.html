@@ -29,6 +29,7 @@
                 v-bind:frontend_state_obj="frontend_state_obj"
                 v-bind:route_key_index="route_key_index"
                 v-bind:geo_json="result"
+                v-bind:geo_overlays="project_image_overlays"
                 @set_frontend_state_obj="set_frontend_state_obj($event)"
                 ></common_map>
             </div>
@@ -202,6 +203,26 @@ var vc_all_search_tabs = Vue.component(
         },
         descriptiveness_max: function() {
           return safe_get_nested_object_by_str_key(this.result, 'oc-api:descriptiveness-max');
+        },
+        project_image_overlays: function() {
+          let raw_overlays = safe_get_nested_object_by_str_key(
+            this.result, 
+            'oc-api:oc-gen-has-geo-overlays'
+          );
+          if(!raw_overlays){
+            return null;
+          }
+          console.log('raw overlay count: ' + raw_overlays.length);
+          let overlays = [];
+          for(let overlay_obj of raw_overlays){
+            if(!overlay_obj.hasOwnProperty('oc-api:leaflet')){
+              continue;
+            }
+            let overlay = overlay_obj['oc-api:leaflet'];
+            overlay.zIndex = -1;
+            overlays.push(overlay);
+          }
+          return overlays;
         },
         result_raw_features: function() {
           return safe_get_nested_object_by_str_key(this.result, 'features');

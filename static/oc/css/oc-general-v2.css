@@ -320,3 +320,7 @@ Search
 	margin-top: 1px;
 	margin-left: -0.08em;
 }
+/* This puts the heatmap layer above image overlays */
+.leaflet-zoom-hide {
+	z-index: 300;
+}

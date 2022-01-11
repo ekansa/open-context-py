@@ -32,6 +32,7 @@
                 v-if="geo_overlays"
                 v-for="ov in geo_overlays"
                 :key="ov.id"
+                :ref="'map-image-overlay-' + ov.id + '-' + ref_suffix"
                 :name="ov.label"
                 :visible="ov.visible"
                 :url="ov.url"
@@ -891,7 +892,6 @@ var vc_common_map = Vue.component(
             let fill_opacity = (
                 ((feature.count / feature.max_count) * 0.5 ) + 0.20
             );
-            console.log(feature.max_count + ' - ' + feature.count + ' - ' + hex_color);
             return {
                 color: hex_color,
                 fillOpacity: fill_opacity,
@@ -1092,6 +1092,7 @@ var vc_common_map = Vue.component(
                     act_layer, 
                     act_geojson.label
                 );
+                act_layer.bringToFront();
                 if(!this.map.act_overlay_layer){
                     let l_geo_json = this.$refs[this.geojson_ref];
                     if(l_geo_json){
@@ -1114,7 +1115,6 @@ var vc_common_map = Vue.component(
                 this.map.act_tile_facets_layer = act_layer;
 
                 // Make and add a circle layer
-                console.log('Circle layer geojon')
                 let circle_layer = L.geoJson(
                     circle_geojson,
                     {
@@ -1129,6 +1129,7 @@ var vc_common_map = Vue.component(
                     circle_layer, 
                     circle_layer.label
                 );
+                circle_layer.bringToFront();
                 this.map.removeLayer(circle_layer);
                 this.act_overlay_layers.push(circle_layer);
                 this.map.act_circle_layer = circle_layer;
@@ -1143,6 +1144,8 @@ var vc_common_map = Vue.component(
                     heatmap_layer, 
                     heatmap_layer.label
                 );
+                heatmap_layer.zIndex = 100;
+                console.log(heatmap_layer);
                 this.map.removeLayer(heatmap_layer);
                 this.act_overlay_layers.push(heatmap_layer);
                 this.map.act_heatmap_layer = heatmap_layer;
@@ -1237,6 +1240,7 @@ var vc_common_map = Vue.component(
             this.add_search_map_hash();
             this.add_overlay_layers();
             this.add_search_map_extra_controls();
+            this.set_image_overlays_back();
             this.fit_bounds();
             this.finese_item_view();
             this.map.auto_fit = false;
@@ -1278,6 +1282,7 @@ var vc_common_map = Vue.component(
             this.fit_bounds();
             this.finese_item_view();
             this.get_item_location_info();
+            this.set_image_overlays_back();
             console.log('updated map');
         },
         fetch_geojson: function() {

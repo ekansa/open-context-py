@@ -5,10 +5,14 @@ import hashlib
 
 from django.conf import settings
 from django.core.cache import caches
+from django.db.models import Q, OuterRef, Subquery
 
+from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllSpaceTime,
+    AllAssertion,
+    AllResource,
 )
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items import hierarchy
@@ -124,7 +128,6 @@ def get_cache_manifest_items_by_path(
         )
     
     cache = caches['redis']
-
     output = []
     db_query_paths = []
     for path in paths_list:
@@ -233,3 +236,65 @@ def get_man_obj_children_list(man_obj, use_cache=True):
     except:
         pass
     return children_objs
+
+
+def db_get_projects_overlay_qs(project_slugs):
+    """Get get a project (image) overlay 
+    
+    :param str project_slugs: List string slug identifiers for a project
+        that may image overlays
+    """
+
+    # NOTE: Some projects have digitized raster images
+    # georeference and used as an overlay.
+    geo_overlay_qs = AllResource.objects.filter(
+        item=OuterRef('object'),
+        resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID,
+    ).values('uri')[:1]
+
+    qs = AllAssertion.objects.filter(
+        subject__slug__in=project_slugs,
+        predicate__data_type='id',
+        visible=True,
+    ).filter(
+       predicate_id=configs.PREDICATE_GEO_OVERLAY_UUID
+    ).select_related( 
+        'object'
+    ).annotate(
+        object_geo_overlay=Subquery(geo_overlay_qs)
+    )
+    return qs
+
+
+def get_project_overlay_qs(
+    projects=None, 
+    project_slugs=None, 
+    use_cache=True
+):
+    """Get get a project (image) overlay via the cache"""
+    if not project_slugs and projects:
+        project_slugs = [p.slug for p in projects]
+    if not len(project_slugs):
+        return None
+
+    # Sort the slugs generating a consistent cache key
+    project_slugs.sort()
+    if not use_cache:
+        # Skip the case, just use the database.
+        return db_get_projects_overlay_qs(project_slugs)
+
+    hash_obj = hashlib.sha1()
+    path_item_str = f'projects-overlay: {project_slugs}'
+    hash_obj.update(path_item_str.encode('utf-8'))
+    cache_key = f'proj-overlay-{str(hash_obj.hexdigest())}'
+    cache = caches['redis']
+    proj_overlay_qs = cache.get(cache_key)
+    if proj_overlay_qs is not None:
+        # We've already cached this, so returned the cached queryset
+        return proj_overlay_qs
+    proj_overlay_qs = db_get_projects_overlay_qs(project_slugs)
+    try:
+        cache.set(cache_key, proj_overlay_qs)
+    except:
+        pass
+    return proj_overlay_qs

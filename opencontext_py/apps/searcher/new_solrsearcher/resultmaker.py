@@ -17,6 +17,7 @@ from opencontext_py.apps.searcher.new_solrsearcher.result_facets_chronology impo
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_geo import ResultFacetsGeo
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
+from opencontext_py.apps.searcher.new_solrsearcher import project_overlays
 from opencontext_py.apps.searcher.new_solrsearcher.result_records import (
     get_record_uuids_from_solr,
     get_record_uris_from_solr,
@@ -713,6 +714,16 @@ class ResultMaker():
         )
 
 
+    def add_project_image_overlays(self):
+        """Adds project image overlay dict objects"""
+        overlay_dicts = project_overlays.add_project_image_overlays(
+            result_json=self.result
+        )
+        if not overlay_dicts:
+            return None
+        self.result["oc-api:oc-gen-has-geo-overlays"] = overlay_dicts
+
+
     # -----------------------------------------------------------------
     # The main method to make the client response result from a 
     # solr response json dict.
@@ -761,6 +772,8 @@ class ResultMaker():
             self.add_item_type_facets(solr_json) 
             # Add related media facet options
             self.add_rel_media_facets(solr_json)
+            # Adds overlay images, associated with project facet options.
+            self.add_project_image_overlays()
         
         if 'geo-facet' in self.act_responses:
             # Add the geographic tile facets.
