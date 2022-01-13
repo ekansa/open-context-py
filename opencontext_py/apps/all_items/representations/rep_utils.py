@@ -88,6 +88,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
                     obj['object__context_id'] = str(assert_obj.object.context.uuid)
                     obj['object__context__label'] = assert_obj.object.context.label
                     obj['object__context__uri'] = assert_obj.object.context.uri
+                    obj['object__context__meta_json'] = assert_obj.object.context.meta_json
                 if assert_obj.object.item_class:
                     obj['object__item_class__label'] = assert_obj.object.item_class.label
                 if hasattr(assert_obj, 'object_class_icon'):
@@ -131,6 +132,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
             obj['predicate__slug'] = predicate.slug
             obj['predicate__item_type'] = predicate.item_type
             obj['predicate__data_type'] = predicate.data_type
+            obj['predicate__meta_json'] = predicate.meta_json
             if predicate.item_class:
                 obj['predicate__item_class_id'] = str(predicate.item_class.uuid)
                 obj['predicate__item_class__label'] = predicate.item_class.label
@@ -142,6 +144,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
             obj['predicate__context__item_type'] = predicate.context.item_type
             obj['predicate__context__label'] = predicate.context.label
             obj['predicate__context__uri'] = predicate.context.uri
+            obj['predicate__context__meta_json'] = predicate.context.meta_json
             obj['language_id'] = str(assert_obj.language.uuid)
             obj['language__label'] = assert_obj.language.label
             obj['sort'] = assert_obj.sort

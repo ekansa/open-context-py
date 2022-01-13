@@ -229,7 +229,6 @@ class ResultFacetsStandard():
         options_tuples
     ):
         """Adds options lists for different data types to a facet"""
-        
         # Look up the client's request parameter and reqest 
         param_key, match_old_value = self.facet_fields_to_client_request.get(
             solr_facet_field_key,
@@ -277,6 +276,14 @@ class ResultFacetsStandard():
                 
                 if not solr_facet_field_key.endswith(suffix):
                     # the type for field for the current suffix.
+                    continue
+                if (
+                    suffix == configs.FACETS_PROP_SUFFIX 
+                    and solr_facet_field_key.endswith(configs.FACETS_CAT_SUFFIX)
+                ):
+                    # We don't want to double count categories, because
+                    # the prop-suffix is also a suffix of the category
+                    # suffix.
                     continue
 
                 # Make  list of the tuples for this solr facet field.
@@ -544,4 +551,3 @@ class ResultFacetsStandard():
 
         
             
-

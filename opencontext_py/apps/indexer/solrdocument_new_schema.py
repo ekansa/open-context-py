@@ -32,6 +32,22 @@ from opencontext_py.apps.all_items.representations.template_prep import (
 from opencontext_py.apps.indexer import solr_utils 
 
 
+# A dict for the category, property associated with an Open Context
+# category
+OC_CATEGORY_PROP_DICT = {
+    'uuid': configs.PREDICATE_OC_CATEGORY,
+    'project_id': configs.OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': configs.DEFAULT_CLASS_UUID,
+    'item_type': 'property',
+    'data_type': 'id',
+    'slug': 'oc-gen-category',
+    'label': 'Category',
+    'item_key': 'oc-gen:category',
+    'uri': 'opencontext.org/vocabularies/oc-general/category',
+    'context_id': configs.OC_GEN_VOCAB_UUID,
+}
+
+
 # the list below defines predicates used for
 # semantic equivalence in indexing
 # linked data
@@ -83,6 +99,7 @@ FIELD_SUFFIX_PROJECT = 'project_id'
 ALL_CONTEXT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
 ROOT_CONTEXT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
 ROOT_PREDICATE_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+ROOT_OC_CATEGORY_SOLR = 'oc_gen_category' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 ROOT_LINK_DATA_SOLR = 'ld' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
 ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
@@ -589,6 +606,16 @@ class SolrDocumentNS:
                 # to the text field. This means key-word searches will
                 # be inclusive of all parent items in a hierarchy.
                 self.fields['text'] += ' ' + item.get('label', '') + ' '
+
+                if self._check_meta_json_to_skip_index(item):
+                    # item meta_json says don't index this.
+                    if False:
+                        print(f"No solr indexing of item { item.get('label') } (uuid: {item.get('uuid')}) ")
+                    # Index the object URI and label for full text. That's it.
+                    self._add_object_uri(item)
+                    continue
+
+
                 # Compose the solr value for the current parent item.
                 act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
                     obj_or_dict=item,
@@ -646,11 +673,7 @@ class SolrDocumentNS:
                     continue
                 if item.get('uri', '').endswith(self.man_obj.item_type):
                     # we've found the parent 
-                    solr_field_name = solr_utils.convert_slug_to_solr(
-                        item.get('slug')
-                        + SOLR_VALUE_DELIM 
-                        + 'pred_id'
-                    )
+                    solr_field_name = ROOT_OC_CATEGORY_SOLR
             if not hierarchy_path:
                 continue
             hierarchy_paths.append(hierarchy_path)
@@ -669,6 +692,27 @@ class SolrDocumentNS:
         )
 
 
+    def _check_meta_json_to_skip_index(self, item):
+        """Checks an item's meta_json (and context meta_json) if item sould be skipped
+        
+        :param dict item: An item dictionary object with, expected to have
+            meta_json and context__meta_json
+        """
+        keys = [
+            'meta_json', 
+            'context__meta_json', 
+            'object__meta_json', 
+            'object__context__meta_json'
+        ]
+        for key in keys:
+            act_meta_json = item.get(key, {})
+            if not act_meta_json:
+                continue
+            if act_meta_json.get('skip_solr_index', False):
+                return True
+        return False
+
+
     def _add_solr_id_field_values(self, solr_field_name, pred_value_objects):
         """Adds non-literal predicate value objects,
            and their hierarchy parents, to the Solr doc
@@ -679,6 +723,14 @@ class SolrDocumentNS:
                 item_obj,
                 dict_lookup_prefix='object'
             )
+            
+            if self._check_meta_json_to_skip_index(item):
+                # item meta_json says don't index this.
+                if False:
+                    print(f"No solr indexing of item { item.get('label') } (uuid: {item.get('uuid')}) ")
+                # Index the object URI, that' it.
+                self._add_object_uri(item)
+                continue
 
             # Add standard solr fields that summarize linked media,
             # documents.
@@ -834,6 +886,17 @@ class SolrDocumentNS:
         if pred_uuid in NO_INDEX_DESCRIPTION_PREDICATE_UUIDS:
             # This is not something we want to index.
             return None
+        
+        pred_meta_json = assert_dict.get(
+            'predicate__meta_json',
+            assert_dict.get('predicate__context__meta_json', {})
+        )
+        if pred_meta_json.get('skip_solr_index', False):
+            if False:
+                print(
+                    f"No solr indexing of predicate { assert_dict.get('predicate__label') }"
+                )
+            return None
 
         # First, check if we already have it from the initial query
         # to the AllAssertions.
@@ -899,6 +962,11 @@ class SolrDocumentNS:
             for index, item_obj in enumerate(hierarchy_items):
                 # Make sure this is a dictionary version of this item.
                 item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
+
+                if self._check_meta_json_to_skip_index(item):
+                    # item meta_json says don't index this.
+                    print(f"No solr indexing of pred { item.get('label') } (uuid: {item.get('uuid')}) ")
+                    break
 
                 # Add the solr field if it does not exist.
                 if not self.fields.get(act_solr_field):

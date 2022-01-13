@@ -75,11 +75,19 @@ ITEM_TYPE_FACETFIELDS = {
         'dc_terms_spatial___pred_id',
         'dc_terms_coverage___pred_id',
     ],
+    """
     'subjects': [
         'oc_gen_subjects___pred_id'
     ],
     'media': [
         'oc_gen_media___pred_id'
+    ],
+    """
+    'subjects': [
+        'oc_gen_category___pred_id'
+    ],
+    'media': [
+        'oc_gen_category___pred_id'
     ],
 }
 
@@ -134,6 +142,7 @@ PERSISTENT_URI_TEMPLATES = [
     'https://orcid.org/{id}', # Orcid (people)
 ]
 
+"""
 ITEM_CAT_FIELDS = [
     'oc_gen_subjects___pred_id',
     'oc_gen_media___pred_id',
@@ -144,6 +153,17 @@ ITEM_CAT_FIELDS = [
 REL_CAT_FACET_FIELDS = [
     f'{SolrDoc.RELATED_SOLR_DOC_PREFIX}oc_gen_subjects___pred_id'
 ]
+"""
+
+ROOT_OC_CATEGORY_SOLR = SolrDoc.ROOT_OC_CATEGORY_SOLR
+ITEM_CAT_FIELDS = [
+    'oc_gen_category___pred_id',
+]
+
+REL_CAT_FACET_FIELDS = [
+    f'{SolrDoc.RELATED_SOLR_DOC_PREFIX}oc_gen_category___pred_id'
+]
+
 
 GENERAL_STATS_FIELDS = [
     'updated',
@@ -231,6 +251,13 @@ HIERARCHY_PARAM_TO_SOLR = [
         {
             'root_field': SolrDoc.ROOT_PROJECT_SOLR,
             'field_suffix': SolrDoc.FIELD_SUFFIX_PROJECT,
+        },
+    ),
+    (
+        'cat', SolrDoc.ROOT_OC_CATEGORY_SOLR,
+        {
+            'root_field': SolrDoc.ROOT_OC_CATEGORY_SOLR,
+            'field_suffix': SolrDoc.ROOT_OC_CATEGORY_SOLR,
         },
     ),
     (
@@ -445,6 +472,10 @@ ITEM_TYPE_URI_MAPPINGS = {
     for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
+ITEM_TYPE_SLUGS = [
+    t_dict['slug'] 
+    for _, t_dict in ITEM_TYPE_MAPPINGS.items()
+]
 
 # ---------------------------------------------------------------------
 # Configs for current search/query filters
@@ -475,6 +506,11 @@ FILTER_PARAM_CONFIGS = {
     },
     'proj': {
         'oc-api:filter': 'Project',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'cat': {
+        'oc-api:filter': 'Category',
         'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
         'is_spatial_context': False,
     },
@@ -674,6 +710,9 @@ FACETS_RELATED_MEDIA = {
 }
 
 
+FACETS_CAT_SUFFIX = (
+    SolrDoc.ROOT_OC_CATEGORY_SOLR
+)
 FACETS_CONTEXT_SUFFIX = (
     SolrDoc.SOLR_VALUE_DELIM + SolrDoc.FIELD_SUFFIX_CONTEXT
 )
@@ -690,6 +729,13 @@ FACETS_PROJ_SUFFIX = (
 # (solr_field_suffix, request_param, hierarchy_delim, facet_type)
 #
 FACETS_STANDARD = [
+    (
+        FACETS_CAT_SUFFIX, 
+        'cat', 
+        REQUEST_PROP_HIERARCHY_DELIM,  
+        'oc-api:facet-category',
+        'Category',
+    ),
     (
         FACETS_CONTEXT_SUFFIX, 
         'path', 
@@ -720,6 +766,12 @@ FACET_STANDARD_ROOT_FIELDS = {
         "rdfs:isDefinedBy": "oc-api:facet-context",
         "label": "Context",
         "type": "oc-api:facet-context",
+    },
+    SolrDoc.ROOT_OC_CATEGORY_SOLR: {
+        "id": "#facet-category",
+        "rdfs:isDefinedBy": "oc-api:facet-category",
+        "label": "Category",
+        "type": "oc-api:facet-category",
     },
     SolrDoc.ROOT_PREDICATE_SOLR: {
         "id": "#facet-prop-var",

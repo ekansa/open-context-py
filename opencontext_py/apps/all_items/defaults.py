@@ -322,6 +322,20 @@ DEFAULT_MANIFESTS = [
     },
     # Open Context hard-coded, widely used predicates
     {
+        'uuid': PREDICATE_OC_CATEGORY,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'property',
+        'data_type': 'id',
+        'slug': 'oc-gen-category',
+        'label': 'Category',
+        'item_key': 'oc-gen:category',
+        'uri': 'opencontext.org/vocabularies/oc-general/category',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
         'uuid': PREDICATE_PROJ_ROOT_UUID,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
         'project_id': OPEN_CONTEXT_PROJ_UUID,

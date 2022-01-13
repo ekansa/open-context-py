@@ -174,6 +174,14 @@ def solr_convert_man_obj_obj_dict(obj_or_dict, dict_lookup_prefix='object'):
             f'{dict_lookup_prefix}__item_type',
             obj_or_dict.get('item_type')
         )
+        obj_dict['meta_json'] = obj_or_dict.get(
+            f'{dict_lookup_prefix}__meta_json',
+            obj_or_dict.get('meta_json')
+        )
+        obj_dict['context__meta_json'] = obj_or_dict.get(
+            f'{dict_lookup_prefix}__context__meta_json',
+            obj_or_dict.get('context__meta_json')
+        )
     return obj_dict
 
 

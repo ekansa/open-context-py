@@ -180,6 +180,9 @@ OC_PRED_LINK_OK_ITEM_TYPES = [
     'persons',
 ]
 
+# Standard predicate for has_category (open context item_class)
+PREDICATE_OC_CATEGORY = '00000000-6e24-2911-63bc-084e90c2d141'
+
 # Standard predicate for project root children; 'oc-gen:contains-root'
 PREDICATE_PROJ_ROOT_UUID = 'c3a4bde8-2dc9-ac70-cf7b-42990fd662ab'
 

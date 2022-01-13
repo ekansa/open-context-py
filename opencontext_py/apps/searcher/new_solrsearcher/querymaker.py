@@ -218,11 +218,7 @@ def get_item_type_query_dict(raw_item_type):
         path_terms.append(path_term)
         # Now add a field to the facet.field list so solr calculates
         # facets for class_uris for the current item type.
-        query_dict['facet.field'].append(
-            item_type_slug.replace('-', '_')
-            + SolrDocument.SOLR_VALUE_DELIM
-            + SolrDocument.FIELD_SUFFIX_PREDICATE
-        )
+        query_dict['facet.field'].append(configs.ROOT_OC_CATEGORY_SOLR)
     # NOTE: Multiple item_type terms are the result of an "OR" (||) operator
     # in the client's request. 
     query_dict['fq'].append(
@@ -586,6 +582,7 @@ def get_general_hierarchic_path_query_dict(
     
     last_path_index = len(path_list) -1 
     for path_index, item_id in enumerate(path_list):
+
         if (attribute_item_obj is not None 
             and attribute_item_obj.data_type in configs.LITERAL_DATA_TYPES):
             # Process literals in requests, because some requests will filter according to
@@ -630,6 +627,16 @@ def get_general_hierarchic_path_query_dict(
             return None
         
         item_parent_obj = db_entities.get_man_obj_parent(item_obj)
+        if (
+            item_parent_obj
+            and field_suffix == configs.ROOT_OC_CATEGORY_SOLR 
+            and item_parent_obj.slug in configs.ITEM_TYPE_SLUGS
+        ):
+            # We don't want to use item_type item parents as parents
+            # for category filters. This is redundant and makes search
+            # filtering more complicated.
+            item_parent_obj = None
+        
         if item_parent_obj:
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
@@ -676,6 +683,7 @@ def get_general_hierarchic_path_query_dict(
         # The solr fields that don't have "_fq" are used exclusively for
         # making facets (counts of metadata values in different documents).
         field_fq = facet_field
+
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
         

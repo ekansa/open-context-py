@@ -111,6 +111,7 @@ REPLACE_URIS = {
     ('www.worldcat.org', 'www.worldcat.org/oclc',),
     ('opencontext.org/about/concepts', 'opencontext.org/vocabularies/oc-general'),
     ('bibo:status/forthcoming', '')
+    ('eol.org/pages/32609438#gbif-sub', 'en.wikipedia.org/wiki/Ovicaprid')
 }
 
 URI_SLUG_MAPPINGS = {
@@ -562,3 +563,22 @@ def eol_assertion_fix(
         ranking_tuples,
         project_id=project_id,
     )
+    # Add some metadata to indicate that EOL is being
+    # deprecated, so don't include it in solr indexing.
+    eol_vocab = AllManifest.objects.filter(
+        item_type='vocabularies',
+        uri__contains='eol.org'
+    ).first()
+    if eol_vocab:
+        eol_vocab.meta_json['deprecated'] = True
+        eol_vocab.meta_json['skip_solr_index'] = True
+        eol_vocab.save()
+    
+    # Don't include this predicate for solr indexing
+    taxon_id = AllManifest.objects.filter(
+        uri='purl.org/NET/biol/ns#term_hasTaxonomy'
+    ).first()
+    if taxon_id:
+        taxon_id.meta_json['deprecated'] = True
+        taxon_id.meta_json['skip_solr_index'] = True
+        taxon_id.save()
