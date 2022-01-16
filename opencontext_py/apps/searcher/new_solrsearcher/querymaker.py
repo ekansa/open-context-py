@@ -626,6 +626,7 @@ def get_general_hierarchic_path_query_dict(
             # a literal of an attribute field. So return None.
             return None
         
+        pref_meta_json_facet_field = True
         item_parent_obj = db_entities.get_man_obj_parent(item_obj)
         if (
             item_parent_obj
@@ -635,7 +636,9 @@ def get_general_hierarchic_path_query_dict(
             # We don't want to use item_type item parents as parents
             # for category filters. This is redundant and makes search
             # filtering more complicated.
+            pref_meta_json_facet_field = False
             item_parent_obj = None
+
         
         if item_parent_obj:
             # The item has a parent item, and that parent item will
@@ -671,6 +674,19 @@ def get_general_hierarchic_path_query_dict(
             prefix=use_solr_rel_prefix
         )
 
+        # Make the filter query field.
+        if pref_meta_json_facet_field and item_obj.meta_json.get('obj_all_solr_field'):
+            # Use the obj_all_solr_field associated with this item, because
+            # it is more forgiving about where in a hierarchy we are.
+            field_fq = add_rel_prefix_if_needed(
+                item_obj.meta_json.get('obj_all_solr_field'), 
+                prefix=use_solr_rel_prefix
+            )
+        else:
+            # This is the default behavior without the DB specifying
+            # an object all field.
+            field_fq = facet_field
+
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
@@ -682,8 +698,6 @@ def get_general_hierarchic_path_query_dict(
         # query solr for slugs, we query solr-fields that end with "_fq".
         # The solr fields that don't have "_fq" are used exclusively for
         # making facets (counts of metadata values in different documents).
-        field_fq = facet_field
-
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
         
@@ -695,29 +709,28 @@ def get_general_hierarchic_path_query_dict(
             prefix=use_solr_rel_prefix
         )
 
-        query_dict['fq'].append('{field_fq}:{item_slug}'.format(
-                field_fq=field_fq,
-                item_slug=fq_item_slug
-            )
-        )
+        query_dict['fq'].append(f'{field_fq}:{fq_item_slug}')
         # Now make the query for the item and the solr field
         # associated with all items in the whole hierarchy for this
         # type of solr dynamic field. 
         if obj_all_field_fq:
-            query_dict['fq'].append('{field_fq}:{item_slug}'.format(
-                    field_fq=obj_all_field_fq,
-                    item_slug=fq_item_slug
-                )
+            query_dict['fq'].append(f'{obj_all_field_fq}:{fq_item_slug}')
+
+        if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
+            # We're preferencing the solr_field_name stored in the meta_json.
+            facet_field = item_obj.meta_json.get('solr_field')
+            print(f'Use preferred facet_field {facet_field}')  
+        else:
+            # Use the current item as the basis for the next solr_field
+            # that will be used to query child items in the next iteration
+            # of this loop.
+            facet_field = (
+                item_obj.slug.replace('-', '_')
+                + SolrDocument.SOLR_VALUE_DELIM
+                + attribute_field_part
+                + field_suffix  
             )
-        # Use the current item as the basis for the next solr_field
-        # that will be used to query child items in the next iteration
-        # of this loop.
-        facet_field = (
-            item_obj.slug.replace('-', '_')
-            + SolrDocument.SOLR_VALUE_DELIM
-            + attribute_field_part
-            + field_suffix  
-        )
+
         facet_field = add_rel_prefix_if_needed(
             facet_field, 
             prefix=use_solr_rel_prefix
@@ -788,17 +801,21 @@ def get_general_hierarchic_path_query_dict(
                     # need to make a facet field for it.
                     facet_field = None
 
-                # Format the field_fq appropriately for this specific
-                # data type.
-                field_fq = utilities.rename_solr_field_for_data_type(
-                    attribute_item_obj.data_type,
-                    (
-                        use_solr_rel_prefix
-                        + item_obj.slug.replace('-', '_')
-                        + SolrDocument.SOLR_VALUE_DELIM
-                        + field_suffix
-                    )  
-                )
+                if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
+                    facet_field = item_obj.meta_json.get('solr_field')
+                    field_fq = item_obj.meta_json.get('solr_field')
+                else:
+                    # Format the field_fq appropriately for this specific
+                    # data type.
+                    field_fq = utilities.rename_solr_field_for_data_type(
+                        attribute_item_obj.data_type,
+                        (
+                            use_solr_rel_prefix
+                            + item_obj.slug.replace('-', '_')
+                            + SolrDocument.SOLR_VALUE_DELIM
+                            + field_suffix
+                        )  
+                    )
 
                 # The attribute item is for a literal type field.
                 # Gather numeric and date fields that need a 
@@ -832,14 +849,24 @@ def get_general_hierarchic_path_query_dict(
                     attribute_field_part, 
                     prefix=use_solr_rel_prefix
                 )
-                # Now also update the obj_all_field_fq
-                obj_all_field_fq = (
-                    'obj_all'
-                    + SolrDocument.SOLR_VALUE_DELIM
-                    + attribute_field_part
-                    + field_suffix
-                    + fq_solr_field_suffix 
-                )
+                
+                if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
+                    # This is the preferred way to get the obj_all field fq, because
+                    # the solr_field_name is explicitly in the DB for us to use.
+                    obj_all_field_fq = (
+                        'obj_all'
+                        + SolrDocument.SOLR_VALUE_DELIM
+                        + item_obj.meta_json.get('solr_field_name')
+                    )
+                else:
+                    # Fall back to complex logic to guess the obj_all_field_fq
+                    obj_all_field_fq = (
+                        'obj_all'
+                        + SolrDocument.SOLR_VALUE_DELIM
+                        + attribute_field_part
+                        + field_suffix
+                        + fq_solr_field_suffix 
+                    )
                 obj_all_field_fq = add_rel_prefix_if_needed(
                     obj_all_field_fq, 
                     prefix=use_solr_rel_prefix

@@ -40,6 +40,15 @@ uuids = [str(m.uuid) for m in m_qs]
 new_ind.clear_caches()
 new_ind.make_indexed_solr_documents_in_chunks(uuids)
 
+
+p_uuids = AllAssertion.objects.all().distinct('predicate').order_by('predicate_id').values_list('predicate_id', flat=True)
+uuids = []
+for p_uuid in p_uuids:
+    act_ass = AllAssertion.objects.filter(
+        predicate_id=p_uuid, subject__item_type__in=['projects', 'subjects', 'media', 'documents'],
+    ).exclude(subject_id__in=uuids).first()
+    if act_ass:
+        uuids.append(str(act_ass.subject.uuid))
 """
 
 

@@ -237,3 +237,22 @@ def add_get_gbif_manifest_obj_and_hierarchy(raw_uri):
         # next iteration of the loop.
         child_obj = parent_species_obj
     return gbif_obj
+
+
+def contextualize_items_without_parents():
+    """Adds parent items to GBIF entities without hierarchies"""
+    vocab_obj = get_gbif_vocabulary_obj()
+    gbif_qs = AllManifest.objects.filter(
+        item_type=GBIF_SPECIES_ITEM_TYPE,
+        data_type='id',
+        context=vocab_obj,
+    )
+    for gbif_obj in gbif_qs:
+        has_parent = AllAssertion.objects.filter(
+            subject=gbif_obj,
+            predicate_id=configs.PREDICATE_SKOS_BROADER_UUID
+        ).first()
+        if has_parent:
+            continue
+        print(f'Needs a parent: {gbif_obj.label} ({gbif_obj.uri})')
+        get_add_gbif_parent(gbif_obj.uri, child_obj=gbif_obj)

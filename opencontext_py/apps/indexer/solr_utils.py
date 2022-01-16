@@ -83,6 +83,12 @@ def get_manifest_obj_from_man_obj_dict(uuid, man_obj_dict, use_cache=True):
     return man_obj
 
 
+def clear_man_obj_from_cache(uuid):
+    cache_key = f'man-obj-{str(uuid)}'
+    cache = caches['redis']
+    cache.delete(cache_key)
+
+
 def get_solr_data_type_from_data_type(data_type, prefix=''):
     '''
     Defines whether our dynamic solr fields names for
@@ -164,6 +170,7 @@ def solr_convert_man_obj_obj_dict(obj_or_dict, dict_lookup_prefix='object'):
     if isinstance(obj_or_dict, AllManifest):
         obj_dict = make_model_object_json_safe_dict(obj_or_dict)
         obj_dict['id'] = obj_dict.get('uri')
+        obj_dict['meta_json'] = copy.deepcopy(obj_or_dict.meta_json)
     else:
         obj_dict = copy.deepcopy(obj_or_dict)
         obj_dict['uuid'] = obj_or_dict.get(

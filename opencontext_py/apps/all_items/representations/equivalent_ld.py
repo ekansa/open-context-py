@@ -198,6 +198,7 @@ class NotStoredAssertion():
                 equiv_row,
                 cols=[
                     f'object__context_id',
+                    f'object__context__item_type',
                     f'object__context__label',
                     f'object__context__uri',
                     f'object__context__meta_json'

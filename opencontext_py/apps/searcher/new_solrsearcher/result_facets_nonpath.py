@@ -41,6 +41,8 @@ class ResultFacetsNonPath():
             solr_json,
             default=[]
         )
+        if not item_type_val_count_list:
+            return None
         if not len(item_type_val_count_list):
             return None
         options_tuples = utilities.get_facet_value_count_tuples(
@@ -153,4 +155,3 @@ class ResultFacetsNonPath():
         rel_media_facets['label'] = configs.FACETS_RELATED_MEDIA['label']
         rel_media_facets['oc-api:has-rel-media-options'] = options
         return rel_media_facets
-

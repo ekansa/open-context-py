@@ -379,8 +379,6 @@ class SearchSolr():
                 spatial_context=request_dict.get('path')
             )
             if query_dict:
-                print(f'Path {query_dict }')
-                print(f'RQ {request_dict}')
                 context_deep = utilities.get_path_depth(
                     path=request_dict.get('path', ''),
                     delimiter=configs.REQUEST_CONTEXT_HIERARCHY_DELIM
@@ -406,7 +404,84 @@ class SearchSolr():
                 )
         
 
+        # -------------------------------------------------------------
+        # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
+        # etc.). The following iterates through a loop of tuples that
+        # configure how different GET parameters get processed by the
+        # function:
+        #
+        # querymaker.get_general_hierarchic_paths_query_dict
+        #
+        # Note how the last element in each tuple "param_args" is used
+        # for key-word arguments in the function.
+        # -------------------------------------------------------------
+        for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
+            raw_paths = utilities.get_request_param_value(
+                request_dict, 
+                param=param,
+                default=None,
+                as_list=True,
+                solr_escape=False,
+            )
+            if not raw_paths:
+                # We don't have a request using this param, so skip
+                continue
+            if not isinstance(raw_paths, list):
+                raw_paths = [raw_paths]
+            if param == 'proj':
+                # One ore more projects are selected, so do high
+                # resolution map tiles.
+                do_lr_geotile_facet = False
+            for raw_path in raw_paths:
+                query_dict = querymaker.get_general_hierarchic_paths_query_dict(
+                    raw_path=raw_path, **param_args
+                )
+                if not query_dict:
+                    # We don't have a response for this query, so continue
+                    # for now until we come up with error handling.
+                    continue
+                # Associate the facet fields with the client request param
+                # and param value.
+                self._associate_facet_field_with_client_request(
+                    param=param, 
+                    raw_path=raw_path, 
+                    query_dict=query_dict
+                )
+                if remove_field:
+                    # Remove a default facet field if it is there.
+                    query['facet.field'] = utilities.safe_remove_item_from_list(
+                        remove_field,
+                        query['facet.field'].copy()
+                    )
+                
+                if param == 'cat':
+                    for cat_slug_key, cat_facet_fields_tups in configs.ITEM_CAT_FACET_FIELDS_SOLR.items():
+                        if cat_slug_key not in raw_path:
+                            continue
+                        # Add additional facet fields configured for use with a
+                        # given category. This is especially useful for zooarchaeology where
+                        # some useful standard fields may be "buried" too deep in a hierachy
+                        # to be easily accessible to users.
+                        for cat_raw_path, cat_facet_field in cat_facet_fields_tups:
+                            print(f'check add {cat_facet_field}')
+                            if cat_facet_field in query['facet.field']:
+                                continue
+                            query['facet.field'].append(cat_facet_field)
+                            self._associate_facet_field_with_client_request(
+                                param='prop', 
+                                raw_path=cat_raw_path, 
+                                query_dict=query_dict
+                            )
 
+                
+                # Now add results of this raw_path to the over-all query.
+                query = utilities.combine_query_dict_lists(
+                    part_query_dict=query_dict,
+                    main_query_dict=query,
+                )
+        
+
+        
         # -------------------------------------------------------------
         # GEOSPACE and Chronology tiles.
         # -------------------------------------------------------------
@@ -440,65 +515,6 @@ class SearchSolr():
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
         query['facet.field'].append(chrono_tile_facet_field)
 
-
-
-
-
-
-
-
-        # -------------------------------------------------------------
-        # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
-        # etc.). The following iterates through a loop of tuples that
-        # configure how different GET parameters get processed by the
-        # function:
-        #
-        # querymaker.get_general_hierarchic_paths_query_dict
-        #
-        # Note how the last element in each tuple "param_args" is used
-        # for key-word arguments in the function.
-        # -------------------------------------------------------------
-        for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
-            raw_paths = utilities.get_request_param_value(
-                request_dict, 
-                param=param,
-                default=None,
-                as_list=True,
-                solr_escape=False,
-            )
-            if not raw_paths:
-                # We don't have a request using this param, so skip
-                continue
-            if not isinstance(raw_paths, list):
-                raw_paths = [raw_paths]
-            for raw_path in raw_paths:
-                query_dict = querymaker.get_general_hierarchic_paths_query_dict(
-                    raw_path=raw_path, **param_args
-                )
-                if not query_dict:
-                    # We don't have a response for this query, so continue
-                    # for now until we come up with error handling.
-                    continue
-                # Associate the facet fields with the client request param
-                # and param value.
-                self._associate_facet_field_with_client_request(
-                    param=param, 
-                    raw_path=raw_path, 
-                    query_dict=query_dict
-                )
-                if remove_field:
-                    # Remove a default facet field if it is there.
-                    query['facet.field'] = utilities.safe_remove_item_from_list(
-                        remove_field,
-                        query['facet.field'].copy()
-                    )
-                
-                # Now add results of this raw_path to the over-all query.
-                query = utilities.combine_query_dict_lists(
-                    part_query_dict=query_dict,
-                    main_query_dict=query,
-                )
-                
         return query
     
 

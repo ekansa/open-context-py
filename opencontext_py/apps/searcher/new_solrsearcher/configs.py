@@ -92,9 +92,9 @@ ITEM_TYPE_FACETFIELDS = {
 }
 
 # What is the minimum context depth for defaulting to high resolution geo
-# spatial tiles? For example Europe/Italy will have a context depth of 2,
-# so will not trigger high resolution tiles.
-MIN_CONTEXT_DEPTH_FOR_HIGH_RES_GEOTILES = 3
+# spatial tiles? For example "Europe" will have a context depth of 1,
+# so will not trigger high resolution tiles, but "Europe/Italy" will.
+MIN_CONTEXT_DEPTH_FOR_HIGH_RES_GEOTILES = 2
 
 
 SOLR_FIELDS_FACET_LIMITS = [
@@ -142,27 +142,47 @@ PERSISTENT_URI_TEMPLATES = [
     'https://orcid.org/{id}', # Orcid (people)
 ]
 
-"""
-ITEM_CAT_FIELDS = [
-    'oc_gen_subjects___pred_id',
-    'oc_gen_media___pred_id',
-    'oc_gen_persons___pred_id',
-    'oc_gen_predicates___pred_id',
-]
-
-REL_CAT_FACET_FIELDS = [
-    f'{SolrDoc.RELATED_SOLR_DOC_PREFIX}oc_gen_subjects___pred_id'
-]
-"""
 
 ROOT_OC_CATEGORY_SOLR = SolrDoc.ROOT_OC_CATEGORY_SOLR
 ITEM_CAT_FIELDS = [
-    'oc_gen_category___pred_id',
+    ROOT_OC_CATEGORY_SOLR,
 ]
 
 REL_CAT_FACET_FIELDS = [
-    f'{SolrDoc.RELATED_SOLR_DOC_PREFIX}oc_gen_category___pred_id'
+    f'{SolrDoc.RELATED_SOLR_DOC_PREFIX}{ROOT_OC_CATEGORY_SOLR}'
 ]
+
+ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS = [
+    ('cidoc-crm-p2-has-type', 'cidoc_crm_p2_has_type___pred_id'),
+    ('cidoc-crm-e54-dimension---oc-zoo-anatomical-meas', 'oc_zoo_anatomical_meas___cidoc_crm_e54_dimension___pred_id'),
+]
+
+# This is a front-end configuration to bundle facet options for standards relating
+# to an item_class (the 'cat' param.). This get evaluated in order of more general to
+# more specific.
+ITEM_CAT_FACET_FIELDS_FRONT_END = {
+    'oc-gen-cat-bio-subj-ecofact': {
+        'id': '#facet-fgoup-oc-gen-cat-bio-subj-ecofact',
+        'rdfs:isDefinedBy': None,
+        'label': 'Ecofact (Standards)',
+        'slug': 'fgoup-oc-gen-cat-bio-subj-ecofact',
+        'type': 'oc-api:facet-prop',
+        'group_slugs': [slug for slug, _ in ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS],
+    },
+    'oc-gen-cat-animal-bone': {
+        'id': '#facet-fgoup-oc-gen-cat-animal-bone',
+        'rdfs:isDefinedBy': None,
+        'label': 'Zooarchaelogy (Standards)',
+        'slug': 'fgoup-oc-gen-cat-animal-bone',
+        'type': 'oc-api:facet-prop',
+        'group_slugs': [slug for slug, _ in ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS],
+    },
+}
+
+ITEM_CAT_FACET_FIELDS_SOLR = {
+    'oc-gen-cat-bio-subj-ecofact': ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS.copy(),
+    'oc-gen-cat-animal-bone': ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS.copy(),
+}
 
 
 GENERAL_STATS_FIELDS = [

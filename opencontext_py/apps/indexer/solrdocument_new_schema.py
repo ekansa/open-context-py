@@ -2,6 +2,8 @@ import copy
 import datetime
 import json
 from django.conf import settings
+from django.core.cache import caches
+
 from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
@@ -159,6 +161,16 @@ ITEM_TYPE_INTEREST_SCORES = {
 }
 
 
+def clear_caches():
+    """Clears caches in case we're making DB updates on
+       manifest objects used as predicates.
+    """
+    cache = caches['redis']
+    cache.clear()
+    cache = caches['default']
+    cache.clear()
+    cache = caches['memory']
+    cache.clear()
 
 
 class SolrDocumentNS:
@@ -798,7 +810,8 @@ class SolrDocumentNS:
     def _add_solr_field_values(
             self,
             solr_field_name,
-            pred_value_objects
+            pred_value_objects,
+            enforce_ld_outside_objects=False
         ):
         """Adds predicate value objects, and their hierarchy parents, to the Solr doc."""
         if not isinstance(pred_value_objects, list):
@@ -812,6 +825,14 @@ class SolrDocumentNS:
                 val_obj.get('predicate__data_type')
             )
             if solr_data_type == 'id':
+                if (
+                    enforce_ld_outside_objects
+                    and val_obj.get('predicate__item_type') == 'property'
+                    and val_obj.get('object__item_type') == 'types'
+                ):
+                    # This is a case of a linked data where the object is not
+                    # referencig a specific vocabulary, so we should skip it.
+                    continue 
                 # This is the most complicated case where the value
                 # objects will be non-literals (entities with outside URIs or URI
                 # identified Open Context entities). So we need to add them, and
@@ -860,6 +881,85 @@ class SolrDocumentNS:
                 self.fields[solr_field_name].append((val + 'T00:00:00Z'))
             else:
                 pass
+
+
+    def _is_same_actual_versus_expected_meta_json(self, actual_meta_json, expected_meta_json):
+        """Checks if the actual meta_json object is the same as the expected.
+        
+        :param dict actual_meta_json: An items actual meta_json dict.
+        :param dict expected_meta_json: Meta_json keys and values expected
+            to be present in the predicate item's AllManitest instance.
+        """
+        for expected_key, expected_str in expected_meta_json.items():
+            if not isinstance(expected_str, str):
+                continue
+            if expected_str.startswith(RELATED_SOLR_DOC_PREFIX):
+                # Strip away any 'REL' prefix, to keep things consistent.
+                expected_str = expected_str[len(RELATED_SOLR_DOC_PREFIX):]
+            if actual_meta_json.get(expected_key) != expected_str:
+                return False
+        return True
+
+
+    def _update_pred_obj_meta_json(
+        self, 
+        expected_meta_json, 
+        item_obj, 
+        clear_caches_on_update=True
+    ):
+        """Updates a Manifest object meta_json with a solr_field_name if 
+        it does not already exist.
+        
+        :param dict expected_meta_json: Meta_json keys and values expected
+            to be present in the predicate item's AllManitest instance.
+        :param (dict or AllManifest) item_obj: The AllManifest instance or 
+            a dict of an AllManifest instance that's used as a predicate.
+        :param bool clear_caches_on_update: Clear the caches on update.
+        """
+        # Make sure we save the solr_field_name in the Manifest meta_json
+        # if this doesn't yet exist.
+        if not expected_meta_json:
+            return None
+        is_ok = None
+        item_man_obj_to_update = None
+        if isinstance(item_obj, dict):
+            is_ok = self._is_same_actual_versus_expected_meta_json(
+                actual_meta_json=item_obj.get('meta_json', {}), 
+                expected_meta_json=expected_meta_json
+            )
+            if not is_ok:
+                item_man_obj_to_update = solr_utils.get_manifest_obj_from_man_obj_dict(
+                    uuid=item_obj.get('uuid'),
+                    man_obj_dict={}
+                )
+
+        elif isinstance(item_obj, AllManifest):
+            is_ok = self._is_same_actual_versus_expected_meta_json(
+                actual_meta_json=item_obj.meta_json, 
+                expected_meta_json=expected_meta_json
+            )
+            # Make sure copy the object otherwise we'll run into weird
+            # mutation issues.
+            if not is_ok:
+                item_man_obj_to_update = copy.deepcopy(item_obj)
+        
+        if is_ok or not item_man_obj_to_update:
+            # We don't need ot update the meta-json
+            return None
+        
+        update_str = ''
+        for expected_key, expected_str in expected_meta_json.items():
+            if expected_str.startswith(RELATED_SOLR_DOC_PREFIX):
+                # Strip away any 'REL' prefix, to keep things consistent.
+                expected_str = expected_str[len(RELATED_SOLR_DOC_PREFIX):]
+            update_str += f'{expected_key}:{expected_str}, '
+            item_man_obj_to_update.meta_json[expected_key] = expected_str
+
+        print(f'Save {update_str} for {item_man_obj_to_update.label}')
+    
+        item_man_obj_to_update.save()
+        if clear_caches_on_update:
+            solr_utils.clear_man_obj_from_cache(item_man_obj_to_update.uuid)
 
     
     def _get_predicate_solr_field_name_in_hierarchy(
@@ -951,21 +1051,27 @@ class SolrDocumentNS:
         # The default solr_field_name.
         solr_field_name = None
 
-        for hierarchy_items in hierarchy_paths:
-
+        # The last_index_hierarchy_paths is the index number for the last of the
+        # hierarchy paths. If we're at the last path of heirarchies, we'll save
+        # the solr_field_name and the parent_solr_field_name on the predicate's
+        # AllManifest instances meta_json. This should simplify logic on composing
+        # facet queries and getting facet fields.
+        last_index_hierarchy_paths = len(hierarchy_paths) - 1
+        for index_hierarchy_paths, hierarchy_items in enumerate(hierarchy_paths):
             act_solr_field = self._prefix_solr_field(root_solr_field)
+            parent_solr_field = self._prefix_solr_field(root_solr_field)
             # Add the root solr field if it does not exist.
             last_item_index = len(hierarchy_items) - 1
             attribute_field_part = ''
             pred_obj_all_field = None
-
             for index, item_obj in enumerate(hierarchy_items):
                 # Make sure this is a dictionary version of this item.
                 item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
 
                 if self._check_meta_json_to_skip_index(item):
                     # item meta_json says don't index this.
-                    print(f"No solr indexing of pred { item.get('label') } (uuid: {item.get('uuid')}) ")
+                    if False:
+                        print(f"No solr indexing of pred { item.get('label') } (uuid: {item.get('uuid')}) ")
                     break
 
                 # Add the solr field if it does not exist.
@@ -1043,6 +1149,30 @@ class SolrDocumentNS:
                         act_solr_value,
                         act_solr_doc_prefix=self.solr_doc_prefix,
                     )
+        
+                if ( 
+                    index > 0 
+                    and index < last_item_index
+                    and index_hierarchy_paths == last_index_hierarchy_paths
+                ):
+                    # Save the solr_field_name for items in the
+                    # middle of a hierarchy.
+                    # We do this only for the last of the heirarchy paths.
+                    # So as to limit hits to the DB.
+                    expected_meta_json = {
+                        'solr_field': solr_utils.convert_slug_to_solr(
+                            item_obj.get('slug')
+                            + attribute_field_part
+                            + SOLR_VALUE_DELIM 
+                            + FIELD_SUFFIX_PREDICATE
+                        ),
+                    }
+                    if pred_obj_all_field:
+                        expected_meta_json['obj_all_solr_field'] = pred_obj_all_field
+                    self._update_pred_obj_meta_json(
+                        expected_meta_json=expected_meta_json, 
+                        item_obj=copy.deepcopy(item_obj),
+                    )
                 
                 if index != last_item_index:
                     continue
@@ -1058,6 +1188,21 @@ class SolrDocumentNS:
                         prefix='pred_'
                     )
                 )
+                if index_hierarchy_paths == last_index_hierarchy_paths:
+                    # Make sure we save the solr_field_name and
+                    # the parent_solr_field_name in the Manifest meta_json.
+                    # We do this only for the last of the heirarchy paths.
+                    # So as to limit hits to the DB.
+                    expected_meta_json = {
+                        'solr_field': solr_field_name
+                    }
+                    if pred_obj_all_field:
+                        expected_meta_json['obj_all_solr_field'] = pred_obj_all_field
+                    self._update_pred_obj_meta_json(
+                        expected_meta_json=expected_meta_json, 
+                        item_obj=copy.deepcopy(item_obj),
+                    )
+                # Now finally, add a prefix if this is a related item.
                 solr_field_name = self._prefix_solr_field(solr_field_name)
     
         return solr_field_name
@@ -1097,7 +1242,8 @@ class SolrDocumentNS:
                             continue
                         self._add_solr_field_values(
                             solr_field_name,
-                            pred_value_objects
+                            pred_value_objects,
+                            enforce_ld_outside_objects=True
                         )
     
 

@@ -87,6 +87,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
                 if assert_obj.object.context:
                     obj['object__context_id'] = str(assert_obj.object.context.uuid)
                     obj['object__context__label'] = assert_obj.object.context.label
+                    obj['object__context__item_type'] = assert_obj.object.context.item_type
                     obj['object__context__uri'] = assert_obj.object.context.uri
                     obj['object__context__meta_json'] = assert_obj.object.context.meta_json
                 if assert_obj.object.item_class:
