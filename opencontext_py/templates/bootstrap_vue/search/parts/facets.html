@@ -245,7 +245,7 @@ function check_url_has_aq_val(url, check_aq_val){
     return url_aq_val == check_aq_val;
 }
 
-function prepare_option(prefix, hash_prefix, i, f_opt){
+function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
     f_opt.key = `${prefix}-option-${i}`;
     f_opt.dom_id = `${prefix}-option-${i}`;
     f_opt.last_hash = make_last_hash(hash_prefix, f_opt.slug);
@@ -253,20 +253,19 @@ function prepare_option(prefix, hash_prefix, i, f_opt){
         console.log('No id in ' + f_opt);
         return null;
     }
-    let current_hash_frag_obj = get_search_current_frag_obj();
+    if(frontend_state_obj.length < 1){
+        frontend_state_obj = get_search_current_frag_obj();
+    }
     // remove map attributes that need to get reset with a change of
     // filters.
     for(rm_key of FILTER_CHANGE_RESET_MAP_STATE_KEYS){
-        if(current_hash_frag_obj.hasOwnProperty(rm_key)){
-            delete current_hash_frag_obj[rm_key];
+        if(frontend_state_obj.hasOwnProperty(rm_key)){
+            delete frontend_state_obj[rm_key];
         }
     }
+    frontend_state_obj.aq = f_opt.last_hash;
     f_opt.id = abs_to_rel_url(f_opt.id, BASE_URL);
-    if (!check_url_has_aq_val(f_opt.id, f_opt.last_hash)) {
-        current_hash_frag_obj.aq = f_opt.last_hash;
-        // f_opt.id = update_search_url_frag_key_val(f_opt.id, "aq", f_opt.last_hash);
-    }
-    f_opt.id = abs_to_rel_url_with_frag_obj(f_opt.id, BASE_URL, current_hash_frag_obj)
+    f_opt.id = abs_to_rel_url_with_frag_obj(f_opt.id, BASE_URL, frontend_state_obj);
     return f_opt;
 }
 
@@ -284,7 +283,12 @@ function prepare_options_list(dom_id_prefix, hash_prefix, raw_options_list){
     return prepare_options;
 }
 
-function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
+function prep_id_media_options(
+    dom_id_prefix, 
+    hash_prefix, 
+    raw_options_list,
+    frontend_state_obj={},
+){
     // Prepares facet options, grouped by configured vocabs / namespaces
     var groups_opts = [];
     var all_grouped_uris = [];
@@ -298,7 +302,13 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
         for(let f_opt of raw_options_list){
             i +=1;
             var opt_uri = i;
-            f_opt = prepare_option(dom_id_prefix, hash_prefix, i, f_opt);
+            f_opt = prepare_option(
+                dom_id_prefix, 
+                hash_prefix, 
+                i, 
+                f_opt,
+                frontend_state_obj=frontend_state_obj,
+            );
             if(!f_opt){
                 continue;
             }
@@ -352,11 +362,21 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
     return groups_opts;
 }
 
-function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_data_types){
+function prepare_facets_dtypes_groups_opts_by_data_types(
+    raw_result, 
+    allowed_data_types,
+    frontend_state_obj={},
+){
     // Prepares facet options lists for templates
     let result = JSON.parse(JSON.stringify(raw_result)); // prevent mutation of the result.
 
-    let aq_from_hash = get_search_current_frag_key("aq");
+    let aq_from_hash = null;
+    if(frontend_state_obj.hasOwnProperty("aq")){
+        aq_from_hash = frontend_state_obj.aq;
+    }
+    else{
+        aq_from_hash = get_search_current_frag_key("aq");
+    }
     let first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
     let facets_dtypes_groups_opts = []; // main output.
     if (!('oc-api:has-facets' in result)){
@@ -396,7 +416,8 @@ function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_dat
                 act_dtype_groups_opts['groups_opts'] = prep_id_media_options(
                     act_dtype_groups_opts.key,
                     f_field.id,
-                    act_options_list
+                    act_options_list,
+                    frontend_state_obj=frontend_state_obj,
                 );
             }
             else{
@@ -435,10 +456,11 @@ function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_dat
 }
 
 
-function prepare_facets_dtypes_groups_opts(result){
+function prepare_facets_dtypes_groups_opts(result, frontend_state_obj={},){
     return prepare_facets_dtypes_groups_opts_by_data_types(
         result, 
-        ['id', 'media']
+        ['id', 'media'],
+        frontend_state_obj=frontend_state_obj,
     )
 }
 

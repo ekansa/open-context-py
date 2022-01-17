@@ -184,7 +184,8 @@
                 // returned from the API
                 return prepare_facets_dtypes_groups_opts_by_data_types(
                     this.result,
-                    ['id', 'media']
+                    ['id', 'media'],
+                    frontend_state_obj=this.frontend_state_obj,
                 );
             },
             chrono_facets: function(){

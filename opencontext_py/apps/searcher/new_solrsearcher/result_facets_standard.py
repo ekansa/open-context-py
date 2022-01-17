@@ -257,8 +257,13 @@ class ResultFacetsStandard():
                 # No facet options of this datatype.
                 continue
             if add_to_existing_opts and facet.get(options_list_key):
-                all_options = facet[options_list_key] + options
-                # Sort the options by count.
+                # First sort by label, this will mean options with
+                # the same count will be secondarily sorted by label.
+                all_options = sorted(
+                    (facet[options_list_key] + options),
+                    key=itemgetter('label')
+                )
+                # Second sort the options by count.
                 facet[options_list_key] = sorted(
                     all_options, 
                     key=itemgetter('count'), 
