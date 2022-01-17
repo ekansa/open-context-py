@@ -255,6 +255,10 @@ var vc_all_search_tabs = Vue.component(
               return false;
             }
           }
+          let ranges = safe_get_nested_object_by_str_key(this.result, 'oc-api:has-range-facets');
+          if(ranges){
+            return false;
+          }
           return true;
         },  
         facets_int_groups_opts: function() {

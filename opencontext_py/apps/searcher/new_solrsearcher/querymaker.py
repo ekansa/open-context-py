@@ -644,7 +644,10 @@ def get_general_hierarchic_path_query_dict(
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
             parent_slug_part = item_parent_obj.slug.replace('-', '_')
-            if not attribute_field_part.startswith(parent_slug_part):
+            if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
+                facet_field = item_obj.meta_json.get('solr_field')
+                print(f'Use meta_json facet_field {facet_field}')
+            elif not attribute_field_part.startswith(parent_slug_part):
                 facet_field = (
                     # Use the most immediate parent item of the item entity
                     # to identify the solr field we need to query. That
@@ -686,7 +689,7 @@ def get_general_hierarchic_path_query_dict(
             # This is the default behavior without the DB specifying
             # an object all field.
             field_fq = facet_field
-
+        
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
@@ -741,7 +744,8 @@ def get_general_hierarchic_path_query_dict(
             field_fq += fq_solr_field_suffix
         
         
-        if item_obj.item_type in ['predicates', 'property']:
+        if (item_obj.item_type in ['predicates', 'property'] 
+            or item_obj.data_type in configs.LITERAL_DATA_TYPES):
             # The current item entity is a "predicates" or a "property"
             # type of item. That means the item is a kind of attribute
             # or a "predicate" in linked-data speak, (NOT the value of
@@ -856,7 +860,7 @@ def get_general_hierarchic_path_query_dict(
                     obj_all_field_fq = (
                         'obj_all'
                         + SolrDocument.SOLR_VALUE_DELIM
-                        + item_obj.meta_json.get('solr_field_name')
+                        + item_obj.meta_json.get('solr_field')
                     )
                 else:
                     # Fall back to complex logic to guess the obj_all_field_fq

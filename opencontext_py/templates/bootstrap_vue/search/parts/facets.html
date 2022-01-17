@@ -352,64 +352,6 @@ function prep_id_media_options(dom_id_prefix, hash_prefix, raw_options_list){
     return groups_opts;
 }
 
-
-function category_group_facets(result){
-    // This groups facet fields together in category (like Animal Bone) specific
-    // groups. It makes a more organized looking user interface of facet options.
-    let url_cat = getURLParameter(result.id, 'cat');
-    if(!url_cat){
-        // Not filtering by category, so don't apply category groupings
-        return result['oc-api:has-facets'];
-    }
-    let item_cat_facet_fields_front_end = JSON.parse(JSON.stringify(ITEM_CAT_FACET_FIELDS_FRONT_END));
-    let cat_group_fields = null;
-    for(let key_cat in item_cat_facet_fields_front_end){
-        if(url_cat.indexOf(key_cat) < 0){
-            continue;
-        }
-        cat_group_fields = item_cat_facet_fields_front_end[key_cat];
-    }
-    if(!cat_group_fields){
-        // Category lacks grouping configuration
-        return result['oc-api:has-facets'];
-    }
-    let other_fields = [];
-    for (let f_field of result['oc-api:has-facets']){
-        if(cat_group_fields == null){
-            other_fields.push(f_field);
-            continue;
-        }
-        let f_field_slug_match = false;
-        for(f_field_slug of cat_group_fields.group_slugs){
-            if(f_field.id == `#facet-${f_field_slug}`){
-                f_field_slug_match = true;
-            }
-        }
-        if(!f_field_slug_match){
-            other_fields.push(f_field);
-            continue;
-        }
-        for (let opts_conf of FACETS_OPTIONS_LISTS_AND_DATA_TYPES) {
-            if (!(opts_conf.list_key in f_field)){
-                // Nothing to do, so keep on looping to check for other kinds of
-                // options lists.
-                continue;
-            }
-            if (!(opts_conf.list_key in cat_group_fields)){
-                cat_group_fields[opts_conf.list_key] = [];
-            }
-            for(let act_opt of f_field[opts_conf.list_key]){
-                if(cat_group_fields[opts_conf.list_key].indexOf(act_opt) >=0){
-                    continue;
-                }
-                cat_group_fields[opts_conf.list_key].push(act_opt);
-            }
-        }
-    }
-    return [cat_group_fields].concat(other_fields);
-}
-
-
 function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_data_types){
     // Prepares facet options lists for templates
     let result = JSON.parse(JSON.stringify(raw_result)); // prevent mutation of the result.
@@ -421,8 +363,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(raw_result, allowed_dat
         // Nothing to do, so skip out.
         return facets_dtypes_groups_opts;
     }
-    let grouped_facets = category_group_facets(result);
-    for (let f_field of grouped_facets){
+    for (let f_field of result['oc-api:has-facets']){
         f_field.id = remove_prefix(f_field.id, '#');
         f_field.start_open = false;
         f_field.key = f_field.id;

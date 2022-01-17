@@ -38,6 +38,7 @@ def process_solr_query(request_dict):
     result_maker = ResultMaker(
         request_dict=request_dict,
         facet_fields_to_client_request=search_solr.facet_fields_to_client_request,
+        slugs_for_config_facets=search_solr.slugs_for_config_facets,
         base_search_url='/query/',
     )
     result_maker.create_result(

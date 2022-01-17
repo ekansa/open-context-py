@@ -157,6 +157,17 @@ ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS = [
     ('cidoc-crm-e54-dimension---oc-zoo-anatomical-meas', 'oc_zoo_anatomical_meas___cidoc_crm_e54_dimension___pred_id'),
 ]
 
+# This configures what solr facet fields get grouped into a zooarch preconfig'd set
+# of facets. The dict is keyed by the solr_facet_field_key. If all options from
+# that solr_facet_field_key need to be added to the preconfiged facet, then
+# the value for the key will be "ALL" to include all the options. If only certain 
+# slug identified options are to be included, those will be expressed in a list.
+ZOOARCH_SOLR_FACET_FIELD_KEYS_AND_OPTIONS_SLUGS = {
+    'cidoc_crm_p2_has_type___pred_id': 'ALL',
+    'oc_zoo_anatomical_meas___cidoc_crm_e54_dimension___pred_id': 'ALL',
+    'ld___pred_id': ['obo-foodon-00001303'],
+}
+
 # This is a front-end configuration to bundle facet options for standards relating
 # to an item_class (the 'cat' param.). This get evaluated in order of more general to
 # more specific.
@@ -178,6 +189,32 @@ ITEM_CAT_FACET_FIELDS_FRONT_END = {
         'group_slugs': [slug for slug, _ in ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS],
     },
 }
+
+PRECONFIG_FACET_FIELDS_BACKEND = [
+    (
+        'oc-gen-cat-bio-subj-ecofact', 
+        {
+            'id': '#facet-fgoup-oc-gen-cat-bio-subj-ecofact',
+            'rdfs:isDefinedBy': None,
+            'label': 'Ecofact (Standards)',
+            'slug': 'fgoup-oc-gen-cat-bio-subj-ecofact',
+            'type': 'oc-api:facet-prop',
+            'solr_facet_field_keys_opts_slugs': ZOOARCH_SOLR_FACET_FIELD_KEYS_AND_OPTIONS_SLUGS,
+        },
+    ),
+    (
+        'oc-gen-cat-animal-bone', 
+        {
+            'id': '#facet-fgoup-oc-gen-cat-animal-bone',
+            'rdfs:isDefinedBy': None,
+            'label': 'Zooarchaelogy (Standards)',
+            'slug': 'fgoup-oc-gen-cat-animal-bone',
+            'type': 'oc-api:facet-prop',
+            'solr_facet_field_keys_opts_slugs': ZOOARCH_SOLR_FACET_FIELD_KEYS_AND_OPTIONS_SLUGS,
+        },
+    ),
+]
+
 
 ITEM_CAT_FACET_FIELDS_SOLR = {
     'oc-gen-cat-bio-subj-ecofact': ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS.copy(),

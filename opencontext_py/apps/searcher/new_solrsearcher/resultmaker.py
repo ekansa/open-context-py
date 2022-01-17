@@ -38,6 +38,7 @@ class ResultMaker():
         self, 
         request_dict=None, 
         facet_fields_to_client_request={},
+        slugs_for_config_facets=[],
         base_search_url='/search/'
     ):
         self.result = LastUpdatedOrderedDict()
@@ -50,7 +51,9 @@ class ResultMaker():
         # Dictionary of keyed by facet fields that are derived from the
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
-        self.facet_fields_to_client_request = facet_fields_to_client_request
+        self.facet_fields_to_client_request = copy.deepcopy(facet_fields_to_client_request)
+        # Keep track of the slugs that have pre-defined facets configs.
+        self.slugs_for_config_facets = copy.deepcopy(slugs_for_config_facets)
         # Set the act_response types to the default. The act_response
         # lists the types of response objects to provide back to the client.
         self.act_responses = configs.RESPONSE_DEFAULT_TYPES.copy()
@@ -591,6 +594,7 @@ class ResultMaker():
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
             facet_fields_to_client_request=self.facet_fields_to_client_request,
+            slugs_for_config_facets=self.slugs_for_config_facets,
             base_search_url=self.base_search_url,
         ) 
         facets = facets_standard.get_facets_and_options(

@@ -1,5 +1,7 @@
 import copy
 
+from operator import itemgetter
+
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
@@ -27,6 +29,7 @@ class ResultFacetsStandard():
         request_dict=None, 
         current_filters_url=None, 
         facet_fields_to_client_request={},
+        slugs_for_config_facets=[],
         base_search_url='/search/'
     ):
         rp = RootPath()
@@ -40,6 +43,8 @@ class ResultFacetsStandard():
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = facet_fields_to_client_request
+        # Keep track of the slugs that have pre-defined facets configs.
+        self.slugs_for_config_facets = copy.deepcopy(slugs_for_config_facets)
     
 
     def make_facet_dict_from_solr_field(
@@ -135,6 +140,11 @@ class ResultFacetsStandard():
     ):
         """Adds option dict object to a list based on data-type.
         
+        :param str param_key: The request parameter key value.
+        :param str match_old_value: If not None, this is for iterating
+            through lists of values for a given request parameter so we
+            can replace that value
+        :param str delim: Delimiter for hieararchy path values
         :param str data_type: Solr data-type to match for inclusion
             in the output options list.
         :param list options_tuples: List of (facet_value, count) tuples
@@ -226,7 +236,8 @@ class ResultFacetsStandard():
         solr_facet_field_key, 
         param_key, 
         delim, 
-        options_tuples
+        options_tuples,
+        add_to_existing_opts=False
     ):
         """Adds options lists for different data types to a facet"""
         # Look up the client's request parameter and reqest 
@@ -245,14 +256,141 @@ class ResultFacetsStandard():
             if not len(options):
                 # No facet options of this datatype.
                 continue
-            facet[options_list_key] = options
+            if add_to_existing_opts and facet.get(options_list_key):
+                all_options = facet[options_list_key] + options
+                # Sort the options by count.
+                facet[options_list_key] = sorted(
+                    all_options, 
+                    key=itemgetter('count'), 
+                    reverse=True
+                )
+
+            else:
+                facet[options_list_key] = options
         return facet
+
+
+    def prep_preconfig_facet(
+        self, 
+        param_key, 
+    ):
+        """Prepare a preconfigured facet if applicable
+        
+        :param str param_key: The request parameter key value.
+
+        return preconfig_facet
+        """
+        if param_key != 'prop' or not len(self.slugs_for_config_facets):
+            return None
+        
+        # Iterate through the list of configs.ITEM_CAT_FACET_FIELDS_BACKEND.
+        # This will go from more general to more specific. The most specific
+        # matched configuration will be the one we use.
+        preconfig_facet = None
+        for config_slug, act_config in configs.PRECONFIG_FACET_FIELDS_BACKEND:
+            if config_slug not in self.slugs_for_config_facets:
+                continue
+            preconfig_facet = copy.deepcopy(act_config)
+        return preconfig_facet
+
+
+    def prep_preconfig_facet_options(
+        self, 
+        preconfig_facet,
+        solr_facet_field_key,
+        param_key, 
+        delim, 
+        options_tuples
+    ):
+        """Prepare a preconfigured facet if applicable
+        
+        :param dict preconfig_facet: A dictionary for a pre-configured
+            facet field.
+        :param str solr_facet_field_key: A solr facet field key that's 
+            checked to see if it matches expectations in the pre_config
+            facet.
+        :param str param_key: The request parameter key value.
+        :param str delim: A hierarchy path delimiter
+        :param list options_tuples: List of (facet_value, count) tuples 
+
+        return preconfig_facet, remaing_options_tuples
+        """
+        if not preconfig_facet or not options_tuples or not len(options_tuples):
+            return preconfig_facet, options_tuples
+        
+        solr_fact_field_config = preconfig_facet.get(
+            'solr_facet_field_keys_opts_slugs', 
+            {}
+        ).get(solr_facet_field_key)
+
+        if not solr_fact_field_config:
+            # The current solr_facet_field_key is not in the dict of 
+            # solr_facet_field_keys relevant to this pre-configured facet
+            return preconfig_facet, options_tuples
+        
+        if solr_fact_field_config == 'ALL':
+            # Add ALL of the options_tuples for current solr_facet_field_key to the preconfig_facet
+            preconfig_facet = self.add_options_lists_to_facet(
+                preconfig_facet, 
+                solr_facet_field_key, 
+                param_key, 
+                delim, 
+                options_tuples,
+                add_to_existing_opts=True,
+            )
+            # Return the preconfig_facet and an empty list of options tuples
+            # because we used all of these options_tuples and none remain.
+            return  preconfig_facet, []
+        
+        if not isinstance(solr_fact_field_config, list):
+            # We have a bad config. Raise an error.
+            raise ValueError(f'Bad config in {preconfig_facet}, check {solr_facet_field_key}')
+        
+        preconfig_options_tuples = []
+        remaining_options_tuples = []
+        for facet_value, count in options_tuples:
+            # Parse the solr encoded entity string. Note this does
+            # NOT make a request to the database.
+            parsed_val = utilities.parse_solr_encoded_entity_str(
+                facet_value, base_url=self.base_url
+            )
+            if not parsed_val:
+                # Can't interpret this as a solr value, so skip
+                continue
+            slug_matches = False
+            for opt_slug in solr_fact_field_config:
+                if parsed_val.get('slug') == opt_slug:
+                    slug_matches = True
+                    break
+            if slug_matches:
+                # This matches the preconfiged slug,
+                preconfig_options_tuples.append((facet_value, count,))
+            else:
+                remaining_options_tuples.append((facet_value, count,))
+        
+        if not len(preconfig_options_tuples):
+            # We didn't actually find any matching option_tuples in
+            # current solr_facet_field_key
+            return preconfig_facet, options_tuples
+
+        preconfig_facet = self.add_options_lists_to_facet(
+            preconfig_facet, 
+            solr_facet_field_key, 
+            param_key, 
+            delim, 
+            preconfig_options_tuples,
+            add_to_existing_opts=True,
+        )
+        # Return the preconfig_facet and a smaller list of options tuples
+        # remaining_options_tuples
+        return  preconfig_facet, remaining_options_tuples
+
 
 
     def get_facets_and_options(self, solr_json):
         """Gets property facets and options from solr response json"""
-        
-        facets = []
+        preconfig_facets = []
+        normal_facets = []
         solr_facet_fields_dict = utilities.get_dict_path_value(
             configs.FACETS_SOLR_ROOT_PATH_KEYS,
             solr_json
@@ -269,6 +407,7 @@ class ResultFacetsStandard():
                 facet_labeling,
             ) in configs.FACETS_STANDARD:
 
+            preconfig_facet = self.prep_preconfig_facet(param_key)
             for (
                     solr_facet_field_key, 
                     solr_facet_value_count_list,
@@ -290,6 +429,17 @@ class ResultFacetsStandard():
                 options_tuples = utilities.get_facet_value_count_tuples(
                     solr_facet_value_count_list
                 )
+
+                # Add to the preconfigured facet, of it exists, and if criteria
+                # match.
+                preconfig_facet, options_tuples = self.prep_preconfig_facet_options(
+                    preconfig_facet,
+                    solr_facet_field_key,
+                    param_key, 
+                    delim, 
+                    options_tuples
+                )
+
                 if not len(options_tuples):
                     # Skip, because we don't have any facet options
                     continue
@@ -314,9 +464,14 @@ class ResultFacetsStandard():
                     delim, 
                     options_tuples
                 )
-                facets.append(facet)
+                normal_facets.append(facet)
+            
+            if preconfig_facet:
+                preconfig_facet.pop('solr_facet_field_keys_opts_slugs')
+                preconfig_facets.append(preconfig_facet)
         
-        return facets
+        # Make the preconfig facet the first facet.
+        return preconfig_facets + normal_facets
     
 
     def add_range_options_list(

@@ -38,6 +38,8 @@ class SearchSolr():
         self.do_bot_limit = False
         self.solr_debug_query = 'false'
         self.solr_stats_query = 'true'
+        # This is for storing slugs that have pre-defined facet configs.
+        self.slugs_for_config_facets = []
         # Dictionary of keyed by facet fields that are derived from the
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
@@ -458,6 +460,8 @@ class SearchSolr():
                     for cat_slug_key, cat_facet_fields_tups in configs.ITEM_CAT_FACET_FIELDS_SOLR.items():
                         if cat_slug_key not in raw_path:
                             continue
+                        # Keep track of the cats that have special facets configs.
+                        self.slugs_for_config_facets.append(cat_slug_key)
                         # Add additional facet fields configured for use with a
                         # given category. This is especially useful for zooarchaeology where
                         # some useful standard fields may be "buried" too deep in a hierachy
@@ -467,11 +471,6 @@ class SearchSolr():
                             if cat_facet_field in query['facet.field']:
                                 continue
                             query['facet.field'].append(cat_facet_field)
-                            self._associate_facet_field_with_client_request(
-                                param='prop', 
-                                raw_path=cat_raw_path, 
-                                query_dict=query_dict
-                            )
 
                 
                 # Now add results of this raw_path to the over-all query.

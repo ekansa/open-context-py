@@ -883,16 +883,28 @@ class SolrDocumentNS:
                 pass
 
 
-    def _is_same_actual_versus_expected_meta_json(self, actual_meta_json, expected_meta_json):
+    def _is_same_actual_versus_expected_meta_json(
+        self, 
+        actual_meta_json,
+        expected_meta_json,
+        expect_key_only_check=True, 
+    ):
         """Checks if the actual meta_json object is the same as the expected.
         
         :param dict actual_meta_json: An items actual meta_json dict.
         :param dict expected_meta_json: Meta_json keys and values expected
             to be present in the predicate item's AllManitest instance.
+        :param bool expect_key_only_check: Only check that the expected key
+            exists, don't update key values if it does.
         """
         for expected_key, expected_str in expected_meta_json.items():
             if not isinstance(expected_str, str):
                 continue
+            if expect_key_only_check:
+                if not actual_meta_json.get(expected_key):
+                    return False
+                else:
+                    continue
             if expected_str.startswith(RELATED_SOLR_DOC_PREFIX):
                 # Strip away any 'REL' prefix, to keep things consistent.
                 expected_str = expected_str[len(RELATED_SOLR_DOC_PREFIX):]
@@ -904,7 +916,8 @@ class SolrDocumentNS:
     def _update_pred_obj_meta_json(
         self, 
         expected_meta_json, 
-        item_obj, 
+        item_obj,
+        expect_key_only_check=True, 
         clear_caches_on_update=True
     ):
         """Updates a Manifest object meta_json with a solr_field_name if 
@@ -914,6 +927,8 @@ class SolrDocumentNS:
             to be present in the predicate item's AllManitest instance.
         :param (dict or AllManifest) item_obj: The AllManifest instance or 
             a dict of an AllManifest instance that's used as a predicate.
+        :param bool expect_key_only_check: Only check that the expected key
+            exists, don't update key values if it does.
         :param bool clear_caches_on_update: Clear the caches on update.
         """
         # Make sure we save the solr_field_name in the Manifest meta_json
@@ -925,7 +940,8 @@ class SolrDocumentNS:
         if isinstance(item_obj, dict):
             is_ok = self._is_same_actual_versus_expected_meta_json(
                 actual_meta_json=item_obj.get('meta_json', {}), 
-                expected_meta_json=expected_meta_json
+                expected_meta_json=expected_meta_json,
+                expect_key_only_check=expect_key_only_check,
             )
             if not is_ok:
                 item_man_obj_to_update = solr_utils.get_manifest_obj_from_man_obj_dict(
@@ -936,7 +952,8 @@ class SolrDocumentNS:
         elif isinstance(item_obj, AllManifest):
             is_ok = self._is_same_actual_versus_expected_meta_json(
                 actual_meta_json=item_obj.meta_json, 
-                expected_meta_json=expected_meta_json
+                expected_meta_json=expected_meta_json,
+                expect_key_only_check=expect_key_only_check,
             )
             # Make sure copy the object otherwise we'll run into weird
             # mutation issues.
@@ -1153,7 +1170,6 @@ class SolrDocumentNS:
                 if ( 
                     index > 0 
                     and index < last_item_index
-                    and index_hierarchy_paths == last_index_hierarchy_paths
                 ):
                     # Save the solr_field_name for items in the
                     # middle of a hierarchy.
@@ -1169,9 +1185,13 @@ class SolrDocumentNS:
                     }
                     if pred_obj_all_field:
                         expected_meta_json['obj_all_solr_field'] = pred_obj_all_field
+                    # In cases of multiple hierarchies, this only updates the item_obj meta_json 
+                    # if we're on the last index of all the hierarchy paths. Otherwise,
+                    # we'll only update the item_obj meta_json if it is missing an expected key.
                     self._update_pred_obj_meta_json(
                         expected_meta_json=expected_meta_json, 
                         item_obj=copy.deepcopy(item_obj),
+                        expect_key_only_check=(index_hierarchy_paths != last_index_hierarchy_paths)
                     )
                 
                 if index != last_item_index:
@@ -1201,6 +1221,7 @@ class SolrDocumentNS:
                     self._update_pred_obj_meta_json(
                         expected_meta_json=expected_meta_json, 
                         item_obj=copy.deepcopy(item_obj),
+                        expect_key_only_check=False
                     )
                 # Now finally, add a prefix if this is a related item.
                 solr_field_name = self._prefix_solr_field(solr_field_name)
