@@ -3,6 +3,11 @@ const COLOR_GRADIENTS = {
 		{v: 0, color: '#000000', },
 		{v: 1, color: '#FFFFFF', },
 	],
+	gray_inv: [
+		{v: 0, color: '#FFFFFF', },
+		{v: 1, color: '#000000', },
+	],
+	/*
 	incandescent: [
 		{v: 0, color: '#000000', },
 		{v: 0.33, color: '#290000', },
@@ -18,9 +23,43 @@ const COLOR_GRADIENTS = {
 		{v: 0.5, color: '#00FFFF', },
 		{v: 1, color: '#FFFFFF', },
 	],
-	sea: [
-		{v: 0, color: '#3f2b96', },
-		{v: 1, color: '#a8c0ff', },
+	*/
+	// #d3f2a3,#97e196,#6cc08b,#4c9b82,#217a79,#105965,#074050
+	emrld: [
+		{v: 0, color: '#d3f2a3', },
+		{v: 0.2, color: '#97e196', },
+		{v: 0.4, color: '#6cc08b', },
+		{v: 0.5, color: '#4c9b82', },
+		{v: 0.6, color: '#217a79', },
+		{v: 0.8, color: '#105965', },
+		{v: 1, color: '#074050', },
+	],
+	geyser: [
+		{v: 0, color: '#008080', },
+		{v: 0.2, color: '#70a494', },
+		{v: 0.4, color: '#b4c8a8', },
+		{v: 0.5, color: '#f6edbd', },
+		{v: 0.6, color: '#edbb8a', },
+		{v: 0.8, color: '#de8a5a', },
+		{v: 1, color: '#ca562c', },
+	],
+	fall: [
+		{v: 0, color: '#3d5941', },
+		{v: 0.2, color: '#778868', },
+		{v: 0.4, color: '#b5b991', },
+		{v: 0.5, color: '#f6edbd', },
+		{v: 0.6, color: '#edbb8a', },
+		{v: 0.8, color: '#de8a5a', },
+		{v: 1, color: '#ca562c', },
+	],
+	temps: [
+		{v: 0, color: '#009392', },
+		{v: 0.2, color: '#39b185', },
+		{v: 0.4, color: '#9ccb86', },
+		{v: 0.5, color: '#e9e29c', },
+		{v: 0.6, color: '#eeb479', },
+		{v: 0.8, color: '#e88471', },
+		{v: 1, color: '#cf597e', },
 	],
 	blue_red_5: [
 		{v: 0, color: '#0000FF', },
@@ -44,6 +83,15 @@ const COLOR_GRADIENTS = {
 		{v: 0, color: '#FF0000', },
 		{v: 0.667, color: '#FFFF00', },
 		{v: 1, color: '#FFFFFF', },
+	],
+	sunset_dark: [
+		{v: 0, color: '#fcde9c', },
+		{v: 0.2, color: '#faa476', },
+		{v: 0.4, color: '#f0746e', },
+		{v: 0.5, color: '#e34f6f', },
+		{v: 0.6, color: '#dc3977', },
+		{v: 0.8, color: '#b9257a', },
+		{v: 1, color: '#7c1d6f', },
 	],
 	legacy_oc: [
 		{v: 0, color: '#FFFF66', },

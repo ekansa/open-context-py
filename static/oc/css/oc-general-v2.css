@@ -324,3 +324,6 @@ Search
 .leaflet-zoom-hide {
 	z-index: 300;
 }
+#map-color-modal {
+	max-height: 80%;
+}

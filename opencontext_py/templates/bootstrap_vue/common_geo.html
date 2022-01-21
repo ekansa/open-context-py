@@ -11,19 +11,45 @@
         title="Change Map Visualization Colors"
         @shown="on_shown"
     >
+    
+        <p><small>Select a color gradient option to use in map data visualizations. Different
+            color options may be more effective than others depending on your selection of
+            basemap layers, underlying patterns in the data, your sensitivity to
+            various colors, and aesthetic preferences.
+        </small></p>
+        <b-list-group flush>
+            <b-list-group-item>
+                <b-row class="text-center" align-v="center">
+                    <b-col cols="1">
 
-        <b-row v-for="(color_choice, index) in color_choices"
-        >
-            <b-col cols="1">
-                -
-            </b-col>
-            <b-col cols="10">
-                <div :style="color_choice.style"></div>
-            </b-col>
-            <b-col cols="1">
-                +
-            </b-col>
-        </b-row>
+                    </b-col>
+                    <b-col cols="3">
+                        <strong>Small counts</strong>
+                    </b-col>
+                    <b-col cols="5">
+                        <strong></strong>
+                    </b-col>
+                    <b-col cols="3">
+                        <strong>Large counts</strong>
+                    </b-col>
+                </b-row>
+            </b-list-group-item>
+            <b-form-radio-group @change="on_selected" v-model="selected_gradient_key" >
+                <b-list-group-item v-for="(color_choice, index) in color_choices">
+                    <b-row align-v="center">
+                        <b-col cols="1">
+                            <b-form-radio
+                            name="map-color-radios" 
+                            :value="color_choice.key"></b-form-radio>
+                        </b-col>
+                        <b-col>
+                            <div :style="color_choice.style"></div>
+                        </b-col>
+                    </b-row>
+                </b-list-group-item>
+            </b-form-radio-group>
+        </b-list-group>
+    
     </b-modal>
 </template>
     
@@ -92,14 +118,17 @@
         </div>
         <map-color-ui 
             v-if="map_type == 'search'"
+            v-bind:selected_gradient_key="selected_gradient_key"
             v-bind:frontend_state_obj="frontend_state_obj"
+            @set_selected_gradient_key="set_selected_gradient_key"
         ></map-color-ui>
     </div>
 </template>
 
 
 <script type="text/javascript">
-  // Import Vue2Leaflet components. 
+  // Import Vue2Leaflet components.
+  const DEFAULT_COLOR_GRADIENT_KEY = 'legacy_oc';
   const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
   const l_tile_layer = Vue.component(
     'l-tile-layer', 
@@ -431,9 +460,10 @@ var vc_map_color_ui = Vue.component(
     'map-color-ui',
     {
         delimiters: ['[[', ']]'],
-        props: ['frontend_state_obj',],
+        props: ['selected_gradient_key', 'frontend_state_obj',],
         data() {
             return {
+                selected_gradient_key: DEFAULT_COLOR_GRADIENT_KEY,
                 frontend_state_obj: {},
             };
         },
@@ -453,9 +483,9 @@ var vc_map_color_ui = Vue.component(
                         l_gradient_parts.push(grad_part);
                     }
                     let color_choice = {
-                        id: key,
-                        style: (`min-height: 44px;
-                                 margin-top: 12px;
+                        key: key,
+                        checked: (key == this.selected_gradient_key),
+                        style: (`min-height: 36px;
                                  background-image: linear-gradient(${l_gradient_parts.join(', ')});`),
                     }
                     color_choices.push(color_choice);
@@ -465,7 +495,14 @@ var vc_map_color_ui = Vue.component(
         },
         methods: {
             on_shown(){
-                console.log('Color map colors');
+                console.log('Show Color map colors');
+            },
+            set_selected_gradient_key(){
+                this.$emit('set_selected_gradient_key', this.selected_gradient_key);
+            },
+            on_selected(){
+                console.log('Color gradient option selected');
+                this.set_selected_gradient_key();
             },
         },
         components: {
@@ -587,7 +624,7 @@ var vc_common_map = Vue.component(
                 valueField: 'count',
             },
             show_default_overlay: true,
-            default_gradient_key: 'legacy_oc',
+            selected_gradient_key: DEFAULT_COLOR_GRADIENT_KEY,
         };
     },
     template: '#common_map',
@@ -693,9 +730,48 @@ var vc_common_map = Vue.component(
             this.tileProviders = new_tile_state_list;
             this.map.baselayer_name = baselayer_name;
         },
-        toggle_map_color_ui: function(){
+        show_map_color_ui: function(){
             console.log('color control toggle');
             this.$bvModal.show('map-color-modal');
+        },
+        make_heatmap_gradient_config: function(gradient_key){
+            if(!COLOR_GRADIENTS.hasOwnProperty(gradient_key)){
+                return null;
+            }
+            let act_gradient = COLOR_GRADIENTS[gradient_key];
+            let heat_gradient = {};
+            for(let conf of act_gradient){
+                let v_val = conf.v;
+                if(v_val < 0.01){
+                    v_val = 0.01;
+                }
+                let v_key = '' + v_val;
+                heat_gradient[v_key] = conf.color;
+            }
+            return heat_gradient;
+        },
+        update_overlay_color_gradient: function() {
+            if(this.map_type != 'search'){
+                return null;
+            }
+            if(!this.map){
+                return null;
+            }
+            // Re-render the map-layers with the new color.
+            this.add_overlay_layers();
+            this.frontend_obj_overlays_prep();
+            // Hide the modal for the color gradient interface.
+            this.$bvModal.hide('map-color-modal');
+        },
+        set_selected_gradient_key(gradient_key){
+            if(!gradient_key in COLOR_GRADIENTS){
+                // This key does not exist, skip out.
+                return null;
+            }
+            this.selected_gradient_key = gradient_key;
+            this.frontend_state_obj.ovgrd = this.selected_gradient_key;
+            this.update_map_frontend_state_obj(this.frontend_state_obj);
+            this.update_overlay_color_gradient();
         },
         add_search_map_extra_controls: function() {
             if(this.map_type != 'search'){
@@ -714,7 +790,7 @@ var vc_common_map = Vue.component(
                 this.map.max_tile_zoom = MAX_ZOOM_TILES;
             }
             this.map.update_geodeep = this.update_geodeep;
-            this.map.toggle_map_color_ui = this.toggle_map_color_ui;
+            this.map.show_map_color_ui = this.show_map_color_ui;
             this.map.deactivate_all_overlays_except = function(map, active_ov_id){
                 if(!map.hasOwnProperty('overlay_layers_by_id')){
                     console.log('missing overlay_layers_by_id');
@@ -781,7 +857,7 @@ var vc_common_map = Vue.component(
                 let color_control = L.easyButton(
                     '<span class="material-icons-two-tone">palette</span>', 
                     function (){
-                        map.toggle_map_color_ui();
+                        map.show_map_color_ui();
                     },
                     'Map visualization colors',
                 );
@@ -936,7 +1012,7 @@ var vc_common_map = Vue.component(
                 let count_features = [];
                 for(let feature of geo_layer.features){
                     feature.max_count = geo_layer.max_count;
-                    feature.gradient_key = this.default_gradient_key;
+                    feature.gradient_key = this.selected_gradient_key;
                     count_features.push(feature);
                 }
                 geo_layer.features = count_features;
@@ -1061,7 +1137,7 @@ var vc_common_map = Vue.component(
             this.added_google_tiles = true;
         },
         count_style: function(feature){
-            let act_gradient = COLOR_GRADIENTS.legacy_oc;
+            let act_gradient = COLOR_GRADIENTS[DEFAULT_COLOR_GRADIENT_KEY];
             if(feature.gradient_key in COLOR_GRADIENTS){
                 act_gradient = COLOR_GRADIENTS[feature.gradient_key];
             }
@@ -1176,6 +1252,7 @@ var vc_common_map = Vue.component(
             for(let count_key of count_keys){
                 let feature = count_keyed_points[count_key];
                 feature.max_count = max_count;
+                feature.gradient_key = this.selected_gradient_key;
                 circle_geojson.features.push(feature);
             }
             return circle_geojson;
@@ -1211,6 +1288,17 @@ var vc_common_map = Vue.component(
             if(this.$refs[this.l_controls_ref] == null){
                 console.log('no item: ' + this.l_controls_ref);
                 return null;
+            }
+
+            // Use the frontend state object to set the selected color gradient,
+            // if applicable.
+            if(this.frontend_state_obj.hasOwnProperty('ovgrd')){
+                if(this.frontend_state_obj.ovgrd in COLOR_GRADIENTS){
+                    console.log('frontend obj color gradient: ' + this.frontend_state_obj.ovgrd);
+                    this.selected_gradient_key = this.frontend_state_obj.ovgrd;
+                }
+            }else{
+                this.frontend_state_obj.ovgrd = DEFAULT_COLOR_GRADIENT_KEY;
             }
 
             // prevent mutation of the result.
@@ -1346,7 +1434,11 @@ var vc_common_map = Vue.component(
                 this.map.removeLayer(circle_layer);
                 this.map.overlay_layers_by_id[circle_layer.ov_id] = circle_layer;
 
-                //Make and add the heatmap layer
+                //Make and add the heatmap layer.
+                // First, set up the color gradient for the heatmap.
+                this.heatmap_config.gradient = this.make_heatmap_gradient_config(
+                    this.selected_gradient_key
+                );
                 let heatmap_layer = new HeatmapOverlay(this.heatmap_config);
                 heatmap_layer.ref = heatmap_data.ref;
                 heatmap_layer.label = heatmap_data.label;

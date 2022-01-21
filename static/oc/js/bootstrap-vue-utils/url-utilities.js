@@ -120,10 +120,10 @@ const SEARCH_FRAGMENT_KEYS = [
     'tab', // tab in view
     'aq', // active query
     'zm', // map zoom level
-    'tilezm', // tile zoom level
     'lat', // map latitute
     'lng', // map longitude
-    'ov', // Active map overlays
+    'ov', // active map overlays
+    'ovgrd', //map overlay color gradient key
     'bm', // base map tile name
 ];
 
