@@ -123,12 +123,13 @@ const SEARCH_FRAGMENT_KEYS = [
     'tilezm', // tile zoom level
     'lat', // map latitute
     'lng', // map longitude
-    'geovis', // map visualization type
+    'ov', // Active map overlays
     'bm', // base map tile name
 ];
 
 const FRAG_KEY_DELIM = '/';
 const FRAG_KEY_VAL_DEMIM = '=';
+const FRAG_KEY_MULTI_VAL_DEMIM = '~';
 
 function parse_frag_dict(frag_str, allowed_keys){
     if(frag_str.indexOf('#') == 0) {
@@ -147,7 +148,12 @@ function parse_frag_dict(frag_str, allowed_keys){
             console.log("Unknown frag key: " + key);
             continue;
         }
-        frag_obj[key] = val;
+        if(val.indexOf(FRAG_KEY_MULTI_VAL_DEMIM) < 0){
+            frag_obj[key] = val;
+        }
+        else{
+            frag_obj[key] = val.split(FRAG_KEY_MULTI_VAL_DEMIM);
+        }
     }
     return frag_obj;
 }
@@ -156,13 +162,21 @@ function parse_search_frag_dict(frag_str){
     return parse_frag_dict(frag_str, SEARCH_FRAGMENT_KEYS);
 }
 
+function isArray (value) {
+    return value && typeof value === 'object' && value.constructor === Array;
+}
+
+
 function encode_frag_obj(frag_obj, null_val=null){
     if(frag_obj == null){
         return null_val;
     }
     let key_vals = [];
     for (let entry of Object.entries(frag_obj)) {
-        let str_entry = entry.join(FRAG_KEY_VAL_DEMIM);
+        if(isArray(entry[1])){
+            entry[1] = entry[1].join(FRAG_KEY_MULTI_VAL_DEMIM);
+        }  
+        let str_entry = entry.join(FRAG_KEY_VAL_DEMIM); 
         key_vals.push(str_entry);
     }
     return key_vals.join(FRAG_KEY_DELIM);
@@ -243,28 +257,6 @@ function update_url_frag_key_val(url, key, val, allowed_keys){
     }
     frag_str = update_frag_str(key, val, frag_str, allowed_keys);
     return url + '#' + frag_str;
-}
-
-function update_search_url_frag_key_val(url, key, val){
-    return update_url_frag_key_val(url, key, val, SEARCH_FRAGMENT_KEYS);
-}
-
-function update_search_url_frag_key_val_keep_tab(url, key, val){
-    let current_tab = get_search_current_frag_key('tab');
-    console.log('current tab: ' + current_tab);
-    if(current_tab != null){
-        url =  update_search_url_frag_key_val(url, 'tab', current_tab);
-    }
-    return update_search_url_frag_key_val(url, key, val);
-}
-
-function abs_to_rel_url_keep_tab(url, base_url){
-    let current_tab = get_search_current_frag_key('tab');
-    console.log('current tab: ' + current_tab);
-    if(current_tab != null){
-        url = update_search_url_frag_key_val(url, 'tab', current_tab);
-    }
-    return abs_to_rel_url(url, base_url);
 }
 
 function abs_to_rel_url_with_frag_obj(url, base_url, frag_obj){

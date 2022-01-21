@@ -100,13 +100,18 @@
         },
         watch: {
             // call again the method if the route changes
-            '$route': 'fetch_oc_api'
+            '$route': 'fetch_oc_api',
         },
         methods: {
             update_frontent_state_obj: function(){
-                this.frontend_state_obj = get_search_current_frag_obj();
-                console.log('Updated frontend_state_obj');
-                console.log(this.frontend_state_obj);
+                let current_path = this.$route.fullPath;
+                if(current_path.indexOf('#') >= 0){
+                    let current_path_ex = current_path.split('#');
+                    this.frontend_state_obj = null;
+                    let new_frontend_state_obj = parse_search_frag_dict(current_path_ex[1]);
+                    console.log('Updated frontend_state_obj from ' + current_path_ex[1]);
+                    this.frontend_state_obj = new_frontend_state_obj;
+                }
             },
             create_frontend_state_obj: function(){
                 if(!this.frontend_state_obj){
@@ -177,7 +182,10 @@
             grouped_filters: function () {
                 // Group individual, hierarchy related 
                 // filters returned from the API 
-                return group_filters(this.result);
+                return group_filters(
+                    this.result,
+                    frontend_state_obj=this.frontend_state_obj,
+                );
             },
             facets_cat_dtypes_groups_opts: function() {
                 // Group facet fields and options

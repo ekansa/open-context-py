@@ -163,32 +163,15 @@ ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS = [
 # the value for the key will be "ALL" to include all the options. If only certain 
 # slug identified options are to be included, those will be expressed in a list.
 ZOOARCH_SOLR_FACET_FIELD_KEYS_AND_OPTIONS_SLUGS = {
-    'cidoc_crm_p2_has_type___pred_id': 'ALL',
+    'cidoc_crm_p2_has_type___pred_id': [
+        'oc-zoo-has-anat-id', 
+        'oc-zoo-has-fusion-char', 
+        'oc-zoo-has-phys-sex-det',
+    ],
     'oc_zoo_anatomical_meas___cidoc_crm_e54_dimension___pred_id': 'ALL',
     'ld___pred_id': ['obo-foodon-00001303'],
 }
 
-# This is a front-end configuration to bundle facet options for standards relating
-# to an item_class (the 'cat' param.). This get evaluated in order of more general to
-# more specific.
-ITEM_CAT_FACET_FIELDS_FRONT_END = {
-    'oc-gen-cat-bio-subj-ecofact': {
-        'id': '#facet-fgoup-oc-gen-cat-bio-subj-ecofact',
-        'rdfs:isDefinedBy': None,
-        'label': 'Ecofact (Standards)',
-        'slug': 'fgoup-oc-gen-cat-bio-subj-ecofact',
-        'type': 'oc-api:facet-prop',
-        'group_slugs': [slug for slug, _ in ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS],
-    },
-    'oc-gen-cat-animal-bone': {
-        'id': '#facet-fgoup-oc-gen-cat-animal-bone',
-        'rdfs:isDefinedBy': None,
-        'label': 'Zooarchaelogy (Standards)',
-        'slug': 'fgoup-oc-gen-cat-animal-bone',
-        'type': 'oc-api:facet-prop',
-        'group_slugs': [slug for slug, _ in ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS],
-    },
-}
 
 PRECONFIG_FACET_FIELDS_BACKEND = [
     (

@@ -93,7 +93,6 @@
 <script type="text/javascript">
 
 // Passed from the Django template
-const ITEM_CAT_FACET_FIELDS_FRONT_END = JSON.parse('{{ ITEM_CAT_FACET_FIELDS_FRONT_END|escapejs }}');
 var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
 var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
 var FACETS_OPTIONS_LISTS_AND_DATA_TYPES = {{ configs.FACETS_OPTIONS_LISTS_AND_DATA_TYPES|safe }};
@@ -113,7 +112,7 @@ var vc_xfacet_xdtype_xgroup_xopt = Vue.component(
                 else{
                     return 'list-group-item d-flex justify-content-between align-items-center';
                 }
-            }
+            },
         },
         components: {
             
@@ -235,16 +234,6 @@ function make_last_hash(hash_prefix, slug){
     return act_prefix + '---' + slug;
 }
 
-function check_url_has_aq_val(url, check_aq_val){
-    if(url.indexOf('#') < 0){
-        // Not hash value.
-        return false;
-    }
-    let frag_str = url.split('#')[1];
-    let url_aq_val = get_search_frag_key("aq", frag_str);
-    return url_aq_val == check_aq_val;
-}
-
 function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
     f_opt.key = `${prefix}-option-${i}`;
     f_opt.dom_id = `${prefix}-option-${i}`;
@@ -253,28 +242,39 @@ function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
         console.log('No id in ' + f_opt);
         return null;
     }
-    if(frontend_state_obj.length < 1){
-        frontend_state_obj = get_search_current_frag_obj();
+    // Let's not mutate the passed in frontend state object!
+    let frontend_state = JSON.parse(JSON.stringify(frontend_state_obj));
+    if(Object.keys(frontend_state).length < 1){
+        frontend_state = get_search_current_frag_obj();
     }
     // remove map attributes that need to get reset with a change of
     // filters.
     for(rm_key of FILTER_CHANGE_RESET_MAP_STATE_KEYS){
-        if(frontend_state_obj.hasOwnProperty(rm_key)){
-            delete frontend_state_obj[rm_key];
+        if(frontend_state.hasOwnProperty(rm_key)){
+            delete frontend_state[rm_key];
         }
     }
-    frontend_state_obj.aq = f_opt.last_hash;
-    f_opt.id = abs_to_rel_url(f_opt.id, BASE_URL);
-    f_opt.id = abs_to_rel_url_with_frag_obj(f_opt.id, BASE_URL, frontend_state_obj);
+    frontend_state.aq = f_opt.last_hash;
+    f_opt.id = abs_to_rel_url_with_frag_obj(f_opt.id, BASE_URL, frontend_state);
     return f_opt;
 }
 
-function prepare_options_list(dom_id_prefix, hash_prefix, raw_options_list){
+function prepare_options_list(
+    dom_id_prefix, 
+    hash_prefix, 
+    raw_options_list,
+    frontend_state_obj={},){
     let prepare_options = [];
     let i = 0;
     for(let f_opt of raw_options_list){
         i +=1;
-        f_opt = prepare_option(dom_id_prefix, hash_prefix, i, f_opt);
+        f_opt = prepare_option(
+            dom_id_prefix, 
+            hash_prefix, 
+            i, 
+            f_opt,  
+            frontend_state_obj=frontend_state_obj
+        );
         if(!f_opt){
             continue;
         }
@@ -369,14 +369,13 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
 ){
     // Prepares facet options lists for templates
     let result = JSON.parse(JSON.stringify(raw_result)); // prevent mutation of the result.
+    let frontend_state = JSON.parse(JSON.stringify(frontend_state_obj));
 
     let aq_from_hash = null;
-    if(frontend_state_obj.hasOwnProperty("aq")){
-        aq_from_hash = frontend_state_obj.aq;
+    if(frontend_state.hasOwnProperty("aq")){
+        aq_from_hash = frontend_state.aq;
     }
-    else{
-        aq_from_hash = get_search_current_frag_key("aq");
-    }
+    
     let first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
     let facets_dtypes_groups_opts = []; // main output.
     if (!('oc-api:has-facets' in result)){
@@ -417,7 +416,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
                     act_dtype_groups_opts.key,
                     f_field.id,
                     act_options_list,
-                    frontend_state_obj=frontend_state_obj,
+                    frontend_state_obj=frontend_state,
                 );
             }
             else{
@@ -434,7 +433,8 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
                         'options': prepare_options_list(
                             act_dtype_groups_opts.key,
                             f_field.id,
-                            act_options_list
+                            act_options_list,
+                            frontend_state_obj=frontend_state,
                         )
                     }
                 ];

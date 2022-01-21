@@ -103,29 +103,52 @@ var vc_all_filters = Vue.component(
 );
 
 
-function make_broaden_link_with_last_hash(raw_filter){
-    let broaden_link = abs_to_rel_url_keep_tab(raw_filter['oc-api:broaden'], BASE_URL);
+function make_filter_url_with_frontent_state(url, new_aq_val=null, frontend_state_obj={},){
+    let frontend_state = JSON.parse(JSON.stringify(frontend_state_obj));
+    // remove map attributes that need to get reset with a change of
+    // filters.
+    for(rm_key of FILTER_CHANGE_RESET_MAP_STATE_KEYS){
+        if(frontend_state.hasOwnProperty(rm_key)){
+            delete frontend_state[rm_key];
+        }
+    }
+    if(frontend_state.hasOwnProperty('aq')){
+        delete frontend_state['aq'];
+    }
+    if(new_aq_val != null){
+        frontend_state.aq = new_aq_val;
+    }
+    return abs_to_rel_url_with_frag_obj(url, BASE_URL, frontend_state);
+}
+
+function make_broaden_link_with_last_hash(raw_filter, frontend_state_obj={},){
+
+    let frontend_state = JSON.parse(JSON.stringify(frontend_state_obj));
     if(raw_filter["oc-api:filter-group"].indexOf("---") < 0){
-        return  update_search_url_frag_key_val_keep_tab(
-            broaden_link, 
-            "aq", 
-            raw_filter["oc-api:filter-slug"]
+        return make_filter_url_with_frontent_state(
+            url=raw_filter['oc-api:broaden'],
+            new_aq_val=raw_filter["oc-api:filter-slug"],
+            frontend_state_obj=frontend_state,
         );
     }
     let prefix_parts = raw_filter["oc-api:filter-group"].split('---');
     let act_prefix = prefix_parts[0];
     if(act_prefix == raw_filter["oc-api:filter-slug"]){
-        return  update_search_url_frag_key_val_keep_tab(broaden_link, "aq", act_prefix);
+        return  make_filter_url_with_frontent_state(
+            url=raw_filter['oc-api:broaden'],
+            new_aq_val=act_prefix,
+            frontend_state_obj=frontend_state,
+        );
     }
-    return  update_search_url_frag_key_val_keep_tab(
-        broaden_link, 
-        "aq", 
-        (act_prefix + '---' + raw_filter["oc-api:filter-slug"])
+    return make_filter_url_with_frontent_state(
+        url=raw_filter['oc-api:broaden'],
+        new_aq_val=(act_prefix + '---' + raw_filter["oc-api:filter-slug"]),
+        frontend_state_obj=frontend_state,
     );
 }
 
 
-function group_filters(result){
+function group_filters(result, frontend_state_obj={},){
     console.log(result);
     var grouped_filters = []; //main output.
     var group_keys = []; //used for ordering filter groups predictably
@@ -133,6 +156,10 @@ function group_filters(result){
     if (!('oc-api:active-filters' in result)){
         return grouped_filters;
     }
+
+    // Prevent mutation of the result.
+    let frontend_state = JSON.parse(JSON.stringify(frontend_state_obj));
+
     for (let raw_filter of result['oc-api:active-filters']){
         console.log(raw_filter);
         var group_key = null;
@@ -150,15 +177,22 @@ function group_filters(result){
             }
             temp_groups[group_key] = {
                 'label': raw_filter['oc-api:filter'],
-                'key': abs_to_rel_url_keep_tab(raw_filter['oc-api:remove'], BASE_URL),
-                'remove_href': abs_to_rel_url_keep_tab(raw_filter['oc-api:remove'], BASE_URL),
+                'key': abs_to_rel_url(raw_filter['oc-api:remove'], BASE_URL),
+                'remove_href': make_filter_url_with_frontent_state(
+                    url=raw_filter['oc-api:remove'],
+                    new_aq_val=null,
+                    frontend_state_obj=frontend_state,
+                ),
                 'path_delim': path_delim,
                 'filters': []
             };
         }
         if(('oc-api:broaden' in raw_filter)){
-            raw_filter['key'] =  abs_to_rel_url_keep_tab(raw_filter['oc-api:broaden'], BASE_URL);
-            raw_filter['oc-api:broaden'] = make_broaden_link_with_last_hash(raw_filter);
+            raw_filter['key'] =  abs_to_rel_url(raw_filter['oc-api:broaden'], BASE_URL);
+            raw_filter['oc-api:broaden'] = make_broaden_link_with_last_hash(
+                raw_filter,
+                frontend_state_obj=frontend_state,
+            );
         }
         temp_groups[group_key]['filters'].push(raw_filter);
     }

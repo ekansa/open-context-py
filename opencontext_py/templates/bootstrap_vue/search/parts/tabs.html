@@ -156,7 +156,6 @@ var vc_all_search_tabs = Vue.component(
         };
       },
       mounted(){
-        this.updated_delay();
         this.activate_tab_from_frontend_state_obj();
       },
       computed: {
@@ -269,7 +268,8 @@ var vc_all_search_tabs = Vue.component(
             }
             let facet_opts = prepare_facets_dtypes_groups_opts_by_data_types(
               this.result,
-              ['int',]
+              ['int',],
+              frontend_state_obj=this.frontend_state_obj,
             );
             return facet_opts;
         },
@@ -281,7 +281,8 @@ var vc_all_search_tabs = Vue.component(
             }
             return prepare_facets_dtypes_groups_opts_by_data_types(
               this.result,
-              ['double',]
+              ['double',],
+              frontend_state_obj=this.frontend_state_obj,
             );
         },
         facets_date_groups_opts: function() {
@@ -292,7 +293,8 @@ var vc_all_search_tabs = Vue.component(
             }
             return prepare_facets_dtypes_groups_opts_by_data_types(
               this.result,
-              ['date',]
+              ['date',],
+              frontend_state_obj=this.frontend_state_obj,
             );
         },
         all_range_facets: function () {
@@ -308,7 +310,6 @@ var vc_all_search_tabs = Vue.component(
       },
       methods: {
         activate_tab_from_frontend_state_obj: function() {
-          this.updated_delay();
           this.count_tab_clicks = 0;
           if(this.frontend_state_obj == null){
             console.log('cannot activate inital tab, no state obj');
@@ -318,21 +319,13 @@ var vc_all_search_tabs = Vue.component(
           if(!('tab' in this.frontend_state_obj)){
             console.log('cannot find tab key in state obj');
             this.tab = 0;
+            this.frontend_state_obj.tab = this.tab;
+            this.$emit('set_frontend_state_obj', this.frontend_state_obj);
             return null;
           }
-          this.updated_delay();
           this.initial_tab = parseInt(this.frontend_state_obj.tab);
           this.tab = this.initial_tab;
           console.log('Activate initial tab: ' + this.initial_tab);
-        },
-        updated_delay: function() {
-          this.real_tab = this.tab;
-          setTimeout(() => {
-            this.tab = this.map_tab;
-            window.dispatchEvent(new Event('resize'));
-          }, 100);
-          //Now go back to the real tab.
-          this.tab = this.real_tab;
         },
         input_tab_clicked: function(t_id){
           let frag_tab_id = 0;
@@ -351,8 +344,8 @@ var vc_all_search_tabs = Vue.component(
             console.log('Fake Tab clicked: ' + this.tab);
             return null;
           }
-          console.log('tab click event');
-          console.log(t_id);
+          //console.log('tab click event');
+          //console.log(t_id);
           if(typeof(t_id) === 'number'){
             this.input_tab_clicked(t_id);
             return null;

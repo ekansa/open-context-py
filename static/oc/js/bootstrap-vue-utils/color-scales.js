@@ -1,12 +1,26 @@
 const COLOR_GRADIENTS = {
+	gray: [
+		{v: 0, color: '#000000', },
+		{v: 1, color: '#FFFFFF', },
+	],
+	incandescent: [
+		{v: 0, color: '#000000', },
+		{v: 0.33, color: '#290000', },
+		{v: 0.66, color: '#FFFF00', },
+		{v: 1, color: '#FFFFFF', },
+	],
+	sand_blue: [
+		{v: 0, color: '#3E5151', },
+		{v: 1, color: '#DECBA4', },
+	],
 	black_aqua_white: [
 		{v: 0, color: '#000000', },
 		{v: 0.5, color: '#00FFFF', },
 		{v: 1, color: '#FFFFFF', },
 	],
-	blue_red: [
-		{v: 0, color: '#0000FF', },
-		{v: 1, color: '#FF0000', },
+	sea: [
+		{v: 0, color: '#3f2b96', },
+		{v: 1, color: '#a8c0ff', },
 	],
 	blue_red_5: [
 		{v: 0, color: '#0000FF', },
@@ -15,31 +29,21 @@ const COLOR_GRADIENTS = {
 		{v: 0.75, color: '#FFFF00', },
 		{v: 1, color: '#FF0000', },
 	],
-	incandescent: [
-		{v: 0, color: '#000000', },
-		{v: 0.33, color: '#290000', },
-		{v: 0.66, color: '#FFFF00', },
-		{v: 1, color: '#FFFFFF', },
+	blue_red: [
+		{v: 0, color: '#0000FF', },
+		{v: 1, color: '#FF0000', },
 	],
 	heated_metal: [
 		{v: 0, color: '#000000', },
 		{v: 0.4, color: '#800080', },
 		{v: 0.6, color: '#FF0000', },
 		{v: 0.8, color: '#FFFF00', },
-		{v: 1, color: '#FF0000', },
+		{v: 1, color: '#FFFFFF', },
 	],
 	sunrise: [
 		{v: 0, color: '#FF0000', },
 		{v: 0.667, color: '#FFFF00', },
 		{v: 1, color: '#FFFFFF', },
-	],
-	sea: [
-		{v: 0, color: '#3f2b96', },
-		{v: 1, color: '#a8c0ff', },
-	],
-	sand_blue: [
-		{v: 0, color: '#3E5151', },
-		{v: 1, color: '#DECBA4', },
 	],
 	legacy_oc: [
 		{v: 0, color: '#FFFF66', },
