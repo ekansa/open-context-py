@@ -8,6 +8,7 @@
     var api_url = abs_to_rel_url('{{ api_url|safe }}', BASE_URL);
 </script>
 
+{% include '../color_gradients.html' %}
 {% include '../common_geo.html' %}
 {% include '../search/parts/chrono.html' %}
 {% include '../search/parts/filters.html' %}
@@ -166,6 +167,12 @@
                 for(bad_key of MAP_HIDE_INTERAL_STATE_KEYS){
                     if(frontend_state_obj.hasOwnProperty(bad_key)){
                         delete frontend_state_obj[bad_key];
+                    }
+                }
+                // De-duplicate map overlay keys.
+                if(frontend_state_obj.hasOwnProperty('ov')){
+                    if(isArray(frontend_state_obj.ov)){
+                        frontend_state_obj.ov = [...new Set(frontend_state_obj.ov)];
                     }
                 }
                 this.frontend_state_obj = frontend_state_obj;

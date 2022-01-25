@@ -149,7 +149,7 @@ function make_broaden_link_with_last_hash(raw_filter, frontend_state_obj={},){
 
 
 function group_filters(result, frontend_state_obj={},){
-    console.log(result);
+    // console.log(result);
     var grouped_filters = []; //main output.
     var group_keys = []; //used for ordering filter groups predictably
     var temp_groups = {}; //used for grouping filters togther.
@@ -161,7 +161,7 @@ function group_filters(result, frontend_state_obj={},){
     let frontend_state = JSON.parse(JSON.stringify(frontend_state_obj));
 
     for (let raw_filter of result['oc-api:active-filters']){
-        console.log(raw_filter);
+        // console.log(raw_filter);
         var group_key = null;
         if (!('oc-api:filter-group' in raw_filter)){
             group_key = raw_filter['id'];

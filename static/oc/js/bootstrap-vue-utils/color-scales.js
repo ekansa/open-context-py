@@ -1,103 +1,117 @@
+/*
+This list of available color gradients is informed by
+recommendations for color choices developed by data visualization
+experts (considering perception, variation in human color
+sensitivity, etc.).
+
+For more, see: 
+https://www.thinkingondata.com/something-about-viridis-library/
+https://academy.datawrapper.de/article/140-what-to-consider-when-choosing-colors-for-data-visualization
+
+*/
+
 const COLOR_GRADIENTS = {
-	gray: [
-		{v: 0, color: '#000000', },
-		{v: 1, color: '#FFFFFF', },
+	viridis: [
+		{v: 0, color: '#fde725', },
+		{v: 0.15, color: '#90d743', },
+		{v: 0.35, color: '#35b779', },
+		{v: 0.5, color: '#21918c', },
+		{v: 0.65, color: '#31688e', },
+		{v: 0.85, color: '#443983', },
+		{v: 1, color: '#440154', },
 	],
-	gray_inv: [
-		{v: 0, color: '#FFFFFF', },
-		{v: 1, color: '#000000', },
-	],
-	/*
-	incandescent: [
-		{v: 0, color: '#000000', },
-		{v: 0.33, color: '#290000', },
-		{v: 0.66, color: '#FFFF00', },
-		{v: 1, color: '#FFFFFF', },
-	],
-	sand_blue: [
-		{v: 0, color: '#3E5151', },
-		{v: 1, color: '#DECBA4', },
-	],
-	black_aqua_white: [
-		{v: 0, color: '#000000', },
-		{v: 0.5, color: '#00FFFF', },
-		{v: 1, color: '#FFFFFF', },
-	],
-	*/
-	// #d3f2a3,#97e196,#6cc08b,#4c9b82,#217a79,#105965,#074050
 	emrld: [
 		{v: 0, color: '#d3f2a3', },
-		{v: 0.2, color: '#97e196', },
-		{v: 0.4, color: '#6cc08b', },
+		{v:0.15, color: '#97e196', },
+		{v:0.35, color: '#6cc08b', },
 		{v: 0.5, color: '#4c9b82', },
-		{v: 0.6, color: '#217a79', },
-		{v: 0.8, color: '#105965', },
+		{v:0.65, color: '#217a79', },
+		{v:0.85, color: '#105965', },
 		{v: 1, color: '#074050', },
 	],
 	geyser: [
 		{v: 0, color: '#008080', },
-		{v: 0.2, color: '#70a494', },
-		{v: 0.4, color: '#b4c8a8', },
+		{v:0.15, color: '#70a494', },
+		{v:0.35, color: '#b4c8a8', },
 		{v: 0.5, color: '#f6edbd', },
-		{v: 0.6, color: '#edbb8a', },
-		{v: 0.8, color: '#de8a5a', },
-		{v: 1, color: '#ca562c', },
-	],
-	fall: [
-		{v: 0, color: '#3d5941', },
-		{v: 0.2, color: '#778868', },
-		{v: 0.4, color: '#b5b991', },
-		{v: 0.5, color: '#f6edbd', },
-		{v: 0.6, color: '#edbb8a', },
-		{v: 0.8, color: '#de8a5a', },
+		{v:0.65, color: '#edbb8a', },
+		{v:0.85, color: '#de8a5a', },
 		{v: 1, color: '#ca562c', },
 	],
 	temps: [
 		{v: 0, color: '#009392', },
-		{v: 0.2, color: '#39b185', },
-		{v: 0.4, color: '#9ccb86', },
+		{v:0.15, color: '#39b185', },
+		{v:0.35, color: '#9ccb86', },
 		{v: 0.5, color: '#e9e29c', },
-		{v: 0.6, color: '#eeb479', },
-		{v: 0.8, color: '#e88471', },
+		{v:0.65, color: '#eeb479', },
+		{v:0.85, color: '#e88471', },
 		{v: 1, color: '#cf597e', },
 	],
-	blue_red_5: [
-		{v: 0, color: '#0000FF', },
-		{v: 0.25, color: '#00FFFF', },
-		{v: 0.5, color: '#008000', },
-		{v: 0.75, color: '#FFFF00', },
-		{v: 1, color: '#FF0000', },
+	turbo: [
+		{v: 0, color: '#30123b', },
+		{v: 0.2, color: '#4661d6', },
+		{v: 0.3, color: '#37a8fa', },
+		{v: 0.4, color: '#1ae4b6', },
+		{v: 0.5, color: '#71fe5f', },
+		{v: 0.6, color: '#c8ef34', },
+		{v: 0.7, color: '#faba39', },
+		{v: 0.8, color: '#f56918', },
+		{v: 0.9, color: '#ca2a04', },
+		{v: 1, color: '#7a0403', },
 	],
-	blue_red: [
-		{v: 0, color: '#0000FF', },
-		{v: 1, color: '#FF0000', },
+	plasma: [
+		{v: 0, color: '#f0f921', },
+		{v:0.15, color: '#fdb42f', },
+		{v:0.35, color: '#ed7953', },
+		{v: 0.5, color: '#cc4778', },
+		{v:0.65, color: '#9c179e', },
+		{v:0.85, color: '#5c01a6', },
+		{v: 1, color: '#0d0887', },
 	],
-	heated_metal: [
-		{v: 0, color: '#000000', },
-		{v: 0.4, color: '#800080', },
-		{v: 0.6, color: '#FF0000', },
-		{v: 0.8, color: '#FFFF00', },
-		{v: 1, color: '#FFFFFF', },
-	],
-	sunrise: [
-		{v: 0, color: '#FF0000', },
-		{v: 0.667, color: '#FFFF00', },
-		{v: 1, color: '#FFFFFF', },
+	inferno: [
+		{v: 0, color: '#fcffa4', },
+		{v:0.15, color: '#fbb61a', },
+		{v:0.35, color: '#ed6925', },
+		{v: 0.5, color: '#bc3754', },
+		{v:0.65, color: '#781c6d', },
+		{v:0.85, color: '#320a5e', },
+		{v: 1, color: '#000004', },
 	],
 	sunset_dark: [
 		{v: 0, color: '#fcde9c', },
-		{v: 0.2, color: '#faa476', },
-		{v: 0.4, color: '#f0746e', },
+		{v:0.15, color: '#faa476', },
+		{v:0.35, color: '#f0746e', },
 		{v: 0.5, color: '#e34f6f', },
-		{v: 0.6, color: '#dc3977', },
-		{v: 0.8, color: '#b9257a', },
+		{v:0.65, color: '#dc3977', },
+		{v:0.85, color: '#b9257a', },
 		{v: 1, color: '#7c1d6f', },
 	],
-	legacy_oc: [
-		{v: 0, color: '#FFFF66', },
-		{v: 0.5, color: '#FF3300', },
-		{v: 1, color: '#5A0000', },
-	]
+	blue_pink: [
+		{v: 0, color: '#edf8fb', },
+		{v:0.15, color: '#bfd3e6', },
+		{v:0.35, color: '#9ebcda', },
+		{v: 0.5, color: '#8c96c6', },
+		{v:0.65, color: '#8c6bb1', },
+		{v:0.85, color: '#88419d', },
+		{v: 1, color: '#6e016b', },
+	],
+	oc: [
+		{v: 0, color: '#ffffb2', },
+		{v:0.15, color: '#fed976', },
+		{v:0.35, color: '#feb24c', },
+		{v: 0.5, color: '#fd8d3c', },
+		{v:0.65, color: '#fc4e2a', },
+		{v:0.85, color: '#e31a1c', },
+		{v: 1, color: '#b10026', },
+	],
+	gray: [
+		{v: 0, color: '#000001', },
+		{v: 1, color: '#FFFFFF', },
+	],
+	gray_inv: [
+		{v: 0, color: '#FFFFFF', },
+		{v: 1, color: '#000001', },
+	],
 };
 
 

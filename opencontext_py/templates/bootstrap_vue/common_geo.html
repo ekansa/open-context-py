@@ -6,53 +6,121 @@
     <b-modal
         size="lg"
         scrollable
+        class="color-ui-modal"
         ref="map-color-modal"
         id="map-color-modal"
         title="Change Map Visualization Colors"
         @shown="on_shown"
     >
-    
         <p><small>Select a color gradient option to use in map data visualizations. Different
             color options may be more effective than others depending on your selection of
             basemap layers, underlying patterns in the data, your sensitivity to
             various colors, and aesthetic preferences.
         </small></p>
-        <b-list-group flush>
-            <b-list-group-item>
-                <b-row class="text-center" align-v="center">
-                    <b-col cols="1">
 
-                    </b-col>
-                    <b-col cols="3">
-                        <strong>Small counts</strong>
-                    </b-col>
-                    <b-col cols="5">
-                        <strong></strong>
-                    </b-col>
-                    <b-col cols="3">
-                        <strong>Large counts</strong>
-                    </b-col>
-                </b-row>
-            </b-list-group-item>
-            <b-form-radio-group @change="on_selected" v-model="selected_gradient_key" >
-                <b-list-group-item v-for="(color_choice, index) in color_choices">
-                    <b-row align-v="center">
-                        <b-col cols="1">
-                            <b-form-radio
-                            name="map-color-radios" 
-                            :value="color_choice.key"></b-form-radio>
-                        </b-col>
-                        <b-col>
-                            <div :style="color_choice.style"></div>
-                        </b-col>
-                    </b-row>
-                </b-list-group-item>
-            </b-form-radio-group>
-        </b-list-group>
-    
+        <color-gradient-ui
+            v-bind:selected_gradient_key="selected_gradient_key"
+            @set_selected_gradient_key="set_selected_gradient_key"
+        >
+        </color-gradient-ui>
+
+        <template #modal-footer="{ ok, cancel, hide }">
+            <b-button size="sm" variant="outline-secondary" @click="hide('map-color-modal')">
+              Cancel
+            </b-button>
+          </template>
     </b-modal>
 </template>
     
+
+
+<template id="map_legends">
+    <b-card v-if="legends" 
+        border-variant="secondary"
+        header-border-variant="secondary"
+        header="Map Data Visualization Legend"
+        id="map-datavis-legend"
+    >
+        <b-list-group flush>
+            <b-list-group-item v-for="(legend, index) in legends" class="map-overlay-legend-item">
+
+                <b-row align-v="center">
+                    <b-col cols="3">
+                        <small>
+                            <b-avatar
+                            v-if="legend.icon" 
+                            :aria-label="'Icon for ' + legend.label" 
+                            rounded="sm"
+                            variant="light"
+                            v-html="legend.icon">
+                        </b-avatar>
+                            <strong>[[ legend.label ]]</strong>
+                        </small>
+                    </b-col>
+                    <b-col>
+                        <div v-if="legend.poly_list">
+                            <b-row align-h="center" align-v="center">
+                                <b-col v-for="(sqr, c_index) in legend.poly_list" class="text-center">
+                                    <svg width="25" height="25">
+                                        <rect x="0" y="0" width="25" height="25" :style="sqr.svg_style" />
+                                    </svg>
+                                </b-col>
+                            </b-row>
+                            <b-row align-h="center" align-v="top">
+                                <b-col v-for="(sqr, c_index) in legend.poly_list" class="text-center">
+                                    <small>[[ sqr.count ]]</small>
+                                </b-col>
+                            </b-row>
+                        </div>
+
+                        <div v-if="legend.circle_list">
+                            <b-row align-h="center" align-v="center">
+                                <b-col v-for="(crc, c_index) in legend.circle_list" class="text-center">
+                                    <svg :height="(crc.radius * 2) + 4" :width="(crc.radius * 2) + 4">
+                                        <circle :cx="crc.radius + 2" :cy="crc.radius + 2" :r="crc.radius" :style="crc.svg_style" />
+                                    </svg>
+                                </b-col>
+                            </b-row>
+                            <b-row align-h="center" align-v="top">
+                                <b-col v-for="(crc, c_index) in legend.circle_list" class="text-center">
+                                    <small>[[ crc.count ]]</small>
+                                </b-col>
+                            </b-row>
+                        </div>
+
+                        <div v-if="legend.heat_style">
+                            <b-row align-h="center">
+                                <b-col>
+                                    <div :style="legend.heat_style"></div>
+                                </b-col>
+                            </b-row>
+                            <b-row align-h="center">
+                                <b-col class="text-left">
+                                    <small>[[ legend.min_count ]]</small>
+                                </b-col>
+                                <b-col class="text-right">
+                                    <small>[[ legend.max_count ]]</small>
+                                </b-col>
+                            </b-row>
+                        </div>
+                        
+                    </b-col>
+                </b-row>
+                <b-row v-if="legend.circle_list">
+                    <b-col>
+                        <small><em>
+                            Circle markers aggregate counts from up to 4 adjacent regions,
+                            so the maximum value of a circle marker may differ from other visualization layers.
+                        </em>
+                        </small>
+                    </b-col>
+                </b-row>
+
+            </b-list-group-item>
+        </b-list-group>
+    </b-card>
+</template>
+
 
 
 <template id='common_map'>
@@ -116,19 +184,21 @@
               <small>[[location_precision_note]]</small>
             </b-alert>
         </div>
-        <map-color-ui 
-            v-if="map_type == 'search'"
-            v-bind:selected_gradient_key="selected_gradient_key"
-            v-bind:frontend_state_obj="frontend_state_obj"
-            @set_selected_gradient_key="set_selected_gradient_key"
-        ></map-color-ui>
+        <div v-if="map_type == 'search'">
+            <map-color-ui 
+                v-bind:selected_gradient_key="selected_gradient_key"
+                @set_selected_gradient_key="set_selected_gradient_key"
+            ></map-color-ui>
+            <map-legends v-bind:legends="map_legends"></map-legends>
+        </div>
     </div>
 </template>
 
 
 <script type="text/javascript">
   // Import Vue2Leaflet components.
-  const DEFAULT_COLOR_GRADIENT_KEY = 'legacy_oc';
+  const MAP_DEFAULT_COLOR_GRADIENT_KEY = 'oc';
+  const SEARCH_MAP_DEFAULT_OVERLAY_KEY = 'sqr';
   const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
   const l_tile_layer = Vue.component(
     'l-tile-layer', 
@@ -322,7 +392,7 @@
             frag_obj.zm = zoom;
             frag_obj.lat = center.lat.toFixed(precision);
             frag_obj.lng = center.lng.toFixed(precision);
-            if(Math.round(frag_obj.lat, 1) == 0 && Math.round(frag_obj.lng) == 0){
+            if(Math.round(frag_obj.lat, 1) == 0 && Math.round(frag_obj.lng, 1) == 0){
                 console.log('Bad coodinates do not update');
                 delete frag_obj.zm;
                 delete frag_obj.lat;
@@ -460,56 +530,49 @@ var vc_map_color_ui = Vue.component(
     'map-color-ui',
     {
         delimiters: ['[[', ']]'],
-        props: ['selected_gradient_key', 'frontend_state_obj',],
+        props: ['selected_gradient_key', ],
         data() {
             return {
-                selected_gradient_key: DEFAULT_COLOR_GRADIENT_KEY,
-                frontend_state_obj: {},
+                selected_gradient_key: MAP_DEFAULT_COLOR_GRADIENT_KEY,
             };
         },
         template: '#map_color_ui',
-        computed: {
-            color_choices(){
-                let color_choices = [];
-                for(let key in COLOR_GRADIENTS){
-                    if(!COLOR_GRADIENTS.hasOwnProperty(key)){
-                        continue;
-                    }
-                    let color_configs = COLOR_GRADIENTS[key];
-                    let l_gradient_parts = ['to right'];
-                    for(let conf of color_configs){
-                        let rgb = convertToRGB(conf.color);
-                        let grad_part = `rgba(${rgb.join(', ')},1)`;
-                        l_gradient_parts.push(grad_part);
-                    }
-                    let color_choice = {
-                        key: key,
-                        checked: (key == this.selected_gradient_key),
-                        style: (`min-height: 36px;
-                                 background-image: linear-gradient(${l_gradient_parts.join(', ')});`),
-                    }
-                    color_choices.push(color_choice);
-                }
-                return color_choices;
-            },
-        },
         methods: {
             on_shown(){
-                console.log('Show Color map colors');
+                console.log('Show map color ui');
             },
-            set_selected_gradient_key(){
+            set_selected_gradient_key(gradient_key){
+                this.selected_gradient_key = gradient_key;
                 this.$emit('set_selected_gradient_key', this.selected_gradient_key);
             },
-            on_selected(){
-                console.log('Color gradient option selected');
-                this.set_selected_gradient_key();
-            },
+        },
+        components: {
+            'color-gradient-ui': vc_color_gradient_ui,
+        }
+    }
+);
+
+
+var vc_map_legends = Vue.component(
+    'map-legends',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['legends', ],
+        data() {
+            return {
+                legends: null,
+            };
+        },
+        template: '#map_legends',
+        methods: {
+            
         },
         components: {
             
         }
     }
 );
+
 
 var vc_common_map = Vue.component(
   'common_map', 
@@ -568,6 +631,13 @@ var vc_common_map = Vue.component(
             geo_page_records: null,
             geo_all_records: null,
             heatmap_data: null,
+            overlay_icons: {
+                sqr: '<span class="material-icons-two-tone">grid_on</span>',
+                sqr_hr: '<span class="material-icons-two-tone">grid_on</span>',
+                sqr_lr: '<span class="material-icons-two-tone">window</span>',
+                crc: '<span class="material-icons">circle</span>',
+                heat: '<span class="material-icons">thermostat</span>',
+            },
             geo_tile_facets_default: {
                 type: "FeatureCollection",
                 label: "Summary as squares",
@@ -575,6 +645,7 @@ var vc_common_map = Vue.component(
                 ref: "map-tile-geojson-" + this.ref_suffix,
                 min_count: null,
                 max_count: null,
+                legend: null,
                 features: [],
             },
             geo_facets_circles_default: {
@@ -584,6 +655,7 @@ var vc_common_map = Vue.component(
                 ref: "map-circle-geojson-" + this.ref_suffix,
                 min_count: null,
                 max_count: null,
+                legend: null,
                 features: [],
             },
             geo_region_facets_default: {
@@ -593,6 +665,7 @@ var vc_common_map = Vue.component(
                 ref: "map-region-geojson-" + this.ref_suffix,
                 min_count: null,
                 max_count: null,
+                legend: null,
                 features: [],
             },
             geo_page_records_default: {
@@ -600,6 +673,7 @@ var vc_common_map = Vue.component(
                 label: "Records (current page)",
                 ov_id: 'pg-recs',
                 ref: "map-page-recs-geojson-" + this.ref_suffix,
+                legend: null,
                 features: [],
             },
             geo_all_records_default: {
@@ -607,6 +681,7 @@ var vc_common_map = Vue.component(
                 label: "Records (all selected)",
                 ov_id: 'all-recs',
                 ref: "map-all-recs-geojson-" + this.ref_suffix,
+                legend: null,
                 features: [],
             },
             heatmap_data_default: {
@@ -614,6 +689,7 @@ var vc_common_map = Vue.component(
                 ov_id: 'heat',
                 ref: "map-heatmap-" + this.ref_suffix,
                 max: null,
+                legend: null,
                 data: [],
             },
             heatmap_config: {
@@ -624,15 +700,22 @@ var vc_common_map = Vue.component(
                 valueField: 'count',
             },
             show_default_overlay: true,
-            selected_gradient_key: DEFAULT_COLOR_GRADIENT_KEY,
+            selected_gradient_key: MAP_DEFAULT_COLOR_GRADIENT_KEY,
+            legend_config: {
+                poly_list: null,
+                circle_list: null,
+                heat_style: null,
+            },
+            route_map_legends: {},
+            map_legends: null,
         };
     },
     template: '#common_map',
     delimiters: ['[[', ']]'],
-    created() {
+    created(){
         this.fetch_geojson();
     },
-    mounted() {
+    mounted(){
         this.fetch_geojson();
     },
     updated(){
@@ -660,6 +743,32 @@ var vc_common_map = Vue.component(
         },
     },
     methods: {
+        // Utility functions for search map interface
+        util_search_map_ok: function(){
+            if(this.map_type != 'search'){
+                return false;
+            }
+            if(!this.map){
+                return false;
+            }
+            return true;
+        },
+        util_search_map_ok_with_props: function(prop_list){
+            if(!this.util_search_map_ok()){
+                return false;
+            }
+            for(let prop of prop_list){
+                if(!this.map.hasOwnProperty(prop)){
+                    return false;
+                }
+            }
+            return true;
+        },
+        round_value(val, min_increment){
+            let n_val = parseFloat(val);
+            let rounded = n_val + min_increment/2 - (n_val + min_increment/2) % min_increment;
+            return rounded;
+        },
         add_links(str){
             if (!(typeof str === 'string' || str instanceof String)){
                 return str;
@@ -698,7 +807,14 @@ var vc_common_map = Vue.component(
             }, [0,0]);
         },
         update_map_frontend_state_obj(frontend_state_obj) {
+            if(frontend_state_obj.hasOwnProperty('ov')){
+                if(isArray(frontend_state_obj.ov)){
+                    frontend_state_obj.ov = [...new Set(frontend_state_obj.ov)];
+                }
+            }
+            this.frontend_state_obj = frontend_state_obj;
             this.$emit('set_frontend_state_obj', frontend_state_obj);
+            this.delayed_update_map_legends();
         },
         update_base_layer(baselayer_name){
             if(!this.map){
@@ -708,7 +824,6 @@ var vc_common_map = Vue.component(
                 console.log('Cannot find baselayer: ' + baselayer_name);
                 return null;
             }
-            //
             for(let name_key in this.base_layers){
                 let act_layer = this.base_layers[name_key];
                 if(name_key == baselayer_name){
@@ -731,7 +846,6 @@ var vc_common_map = Vue.component(
             this.map.baselayer_name = baselayer_name;
         },
         show_map_color_ui: function(){
-            console.log('color control toggle');
             this.$bvModal.show('map-color-modal');
         },
         make_heatmap_gradient_config: function(gradient_key){
@@ -750,34 +864,97 @@ var vc_common_map = Vue.component(
             }
             return heat_gradient;
         },
-        update_overlay_color_gradient: function() {
-            if(this.map_type != 'search'){
+        delayed_update_map_legends: function() {
+            setTimeout(() => {  
+                this.update_map_legends();
+            }, 250);
+        },
+        update_map_legends: function() {
+            let req_props = ['overlay_layers_by_id', 'visible_overlay_ids'];
+            if(!this.util_search_map_ok_with_props(req_props)){
                 return null;
             }
-            if(!this.map){
-                return null;
+            // Use relevant parts of the current frontend object state
+            // to track the state ff the legend. This means we won't make
+            // a new legend everytime the map is panned or zoom levels change.
+            // Only if the query changes or the overlays change will we update
+            // the legends.
+            let legend_ok_keys = ['ov', 'ovgrd',];
+            let act_legend_state = {};
+            for(let ok_key of legend_ok_keys){
+                if(this.frontend_state_obj.hasOwnProperty(ok_key)){
+                    act_legend_state[ok_key] = JSON.parse(JSON.stringify(this.frontend_state_obj[ok_key]));
+                }else{
+                    act_legend_state[ok_key] = null;
+                }
             }
-            // Re-render the map-layers with the new color.
-            this.add_overlay_layers();
-            this.frontend_obj_overlays_prep();
-            // Hide the modal for the color gradient interface.
-            this.$bvModal.hide('map-color-modal');
+            let state_key = (
+                this.$route.fullPath 
+                + '#' 
+                + encode_frag_obj(act_legend_state)
+            );
+            // console.log(this.$route);
+            // console.log('Map legend state key is: ' + state_key);
+            if(state_key in this.route_map_legends){
+                if(this.route_map_legends[state_key].length > 0){
+                    // console.log('Map legend state key already exists');
+                    this.map_legends = this.route_map_legends[state_key];
+                    return null;
+                }
+            }
+            // console.log('Map legend state key is new');
+            this.map_legends = [];
+            let order_legends = ['sqr', 'crc', 'cntx', 'heat'];
+            for(let ov_id of order_legends){
+                if(this.map.visible_overlay_ids.indexOf(ov_id) < 0){
+                    continue;
+                }
+                if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){ 
+                    continue;
+                }
+                let act_layer = this.map.overlay_layers_by_id[ov_id];
+                if(!act_layer.hasOwnProperty('legend')){
+                    continue;
+                }
+                if(act_layer.legend == null){
+                    continue;
+                }
+                this.map_legends.push(JSON.parse(JSON.stringify(act_layer.legend)));
+            }
+            // console.log('update map legends, legends: ');
+            // console.log(this.map_legends);
+            this.route_map_legends[state_key] = this.map_legends;
         },
         set_selected_gradient_key(gradient_key){
+            if(!this.util_search_map_ok()){
+                return null;
+            }
             if(!gradient_key in COLOR_GRADIENTS){
                 // This key does not exist, skip out.
                 return null;
             }
+            // capture the visible overlay ids before we mess with the overlay layers.
+            // we need to do this to solve wierd state crap that I don't understand.
+            let act_visible_overlay_ids = JSON.parse(JSON.stringify(this.map.visible_overlay_ids));
             this.selected_gradient_key = gradient_key;
-            this.frontend_state_obj.ovgrd = this.selected_gradient_key;
-            this.update_map_frontend_state_obj(this.frontend_state_obj);
-            this.update_overlay_color_gradient();
+            this.frontend_state_obj.ovgrd = gradient_key;
+            let frontend_state = JSON.parse(JSON.stringify(this.frontend_state_obj));
+            frontend_state.ovgrd = gradient_key;
+            this.update_map_frontend_state_obj(frontend_state);
+            this.selected_gradient_key = gradient_key;
+            this.frontend_state_obj.ovgrd = gradient_key;
+            this.add_overlay_layers();
+            // remember the overlay ids!
+            this.map.visible_overlay_ids = act_visible_overlay_ids;
+            setTimeout(() => {
+                this.frontend_state_obj.ovgrd = gradient_key;
+                this.frontend_obj_overlays_prep();
+            }, 50);
+            this.delayed_update_map_legends();
+            this.$bvModal.hide('map-color-modal');
         },
         add_search_map_extra_controls: function() {
-            if(this.map_type != 'search'){
-                return null;
-            }
-            if(!this.map){
+            if(!this.util_search_map_ok()){
                 return null;
             }
             if(this.map.hasOwnProperty('search_map_extra_buttons')){
@@ -791,12 +968,14 @@ var vc_common_map = Vue.component(
             }
             this.map.update_geodeep = this.update_geodeep;
             this.map.show_map_color_ui = this.show_map_color_ui;
+            this.map.overlay_icons = this.overlay_icons;
             this.map.deactivate_all_overlays_except = function(map, active_ov_id){
                 if(!map.hasOwnProperty('overlay_layers_by_id')){
                     console.log('missing overlay_layers_by_id');
                     console.log(map);
                     return null;
                 }
+                map.visible_overlay_ids = [];
                 for(let ov_id in map.overlay_layers_by_id){
                     if(!map.overlay_layers_by_id.hasOwnProperty(ov_id)){
                         continue;
@@ -804,15 +983,19 @@ var vc_common_map = Vue.component(
                     let act_layer = map.overlay_layers_by_id[ov_id];
                     if(active_ov_id == ov_id){
                         map.addLayer(act_layer);
+                        map.visible_overlay_ids = [act_layer.ov_id];
                     }else{
                         act_layer.removeFrom(map);
                     }
+                }
+                if(map.hash_obj){
+                    map.hash_obj.forceHashChange();
                 }
             },
             this.map.add_search_map_extra_controls = function(map){
                 let search_map_extra_controls = [];
                 let deep_tile_control = L.easyButton(
-                    '<span class="material-icons-two-tone">grid_on</span>',
+                    map.overlay_icons.sqr_hr,
                     // the control for higher resolution region tiles
                     function (){
                         map.deactivate_all_overlays_except(map, 'sqr');
@@ -827,7 +1010,7 @@ var vc_common_map = Vue.component(
                     'Higher resolution summary regions',
                 );
                 let big_tile_control = L.easyButton(
-                    '<span class="material-icons-two-tone">window</span>',
+                    map.overlay_icons.sqr_lr,
                     // control for lower resolution region tiles
                     function (){
                         map.deactivate_all_overlays_except(map, 'sqr');
@@ -841,14 +1024,14 @@ var vc_common_map = Vue.component(
                     'Lower resolution summary regions',
                 );
                 let circle_control = L.easyButton(
-                    '<span class="material-icons">circle</span>', 
+                    map.overlay_icons.crc,
                     function (){
                         map.deactivate_all_overlays_except(map, 'crc');
                     },
                     'Circle-markers for summary regions',
                 );
                 let heat_control = L.easyButton(
-                    '<span class="material-icons">thermostat</span>', 
+                    map.overlay_icons.heat,
                     function (){
                         map.deactivate_all_overlays_except(map, 'heat');
                     },
@@ -876,8 +1059,8 @@ var vc_common_map = Vue.component(
                 L.easyBar(search_map_extra_controls).addTo(map);
             }
             this.map.add_search_map_extra_controls(this.map);
-            console.log(this.map.search_map_extra_buttons);
-            console.log('added search controls');
+            // console.log(this.map.search_map_extra_buttons);
+            // console.log('added search controls');
         },
         geo_view_from_state_obj: function(raw_frag_obj){
             if(!raw_frag_obj){
@@ -901,10 +1084,7 @@ var vc_common_map = Vue.component(
             return frag_obj;
         },
         set_map_view_from_frontend_state_obj: function () {
-            if(this.map_type != 'search'){
-                return null;
-            }
-            if(!this.map){
+            if(!this.util_search_map_ok()){
                 return null;
             }
             let frag_obj = this.geo_view_from_state_obj(this.frontend_state_obj);
@@ -917,10 +1097,7 @@ var vc_common_map = Vue.component(
             return false;
         },
         add_search_map_hash: function() {
-            if(this.map_type != 'search'){
-                return null;
-            }
-            if(!this.map){
+            if(!this.util_search_map_ok()){
                 return null;
             }
             this.map.visible_overlay_ids = [];
@@ -984,40 +1161,40 @@ var vc_common_map = Vue.component(
                 }
             });
         },
-        make_geo_features_layer(category_limit, geo_layer=null){
-            if(!geo_layer){
-                let geo_layer = {
+        cat_limit_feature_data(category_limit, feature_data=null){
+            if(!feature_data){
+                let feature_data = {
                     type: "FeatureCollection",
                     features: [],
                 };
             }
-            geo_layer.category = category_limit;
+            feature_data.category = category_limit;
             if(!this.geo_json){
-                return geo_layer;
+                return feature_data;
             }
             let counts = [];
             for(let feature of this.geo_json.features){
                 if(feature.category != category_limit){
                     continue;
                 }
-                geo_layer.features.push(feature);
+                feature_data.features.push(feature);
                 if(feature.hasOwnProperty('count')){
                     counts.push(feature.count);
                 }
             }
             if(counts.length > 0){
                 // Add information needed to style features.
-                geo_layer.min_count = Math.min.apply(Math, counts);
-                geo_layer.max_count = Math.max.apply(Math, counts);
+                feature_data.min_count = Math.min.apply(Math, counts);
+                feature_data.max_count = Math.max.apply(Math, counts);
                 let count_features = [];
-                for(let feature of geo_layer.features){
-                    feature.max_count = geo_layer.max_count;
+                for(let feature of feature_data.features){
+                    feature.max_count = feature_data.max_count;
                     feature.gradient_key = this.selected_gradient_key;
                     count_features.push(feature);
                 }
-                geo_layer.features = count_features;
+                feature_data.features = count_features;
             }
-            return geo_layer;
+            return feature_data;
         },
         make_generic_feature_popup(feature){
             if(!feature.hasOwnProperty('properties')){
@@ -1117,7 +1294,7 @@ var vc_common_map = Vue.component(
                 console.log('no item: ' + this.map_ref);
                 return null;
             }
-            console.log(this.map);
+            // console.log(this.map);
             for(let gtile_config of this.google_tile_configs){
                 if(this.added_google_tile_types.indexOf(gtile_config.type) >= 0){
                     // Don't add the same layer twice!
@@ -1136,33 +1313,124 @@ var vc_common_map = Vue.component(
             }
             this.added_google_tiles = true;
         },
-        count_style: function(feature){
-            let act_gradient = COLOR_GRADIENTS[DEFAULT_COLOR_GRADIENT_KEY];
-            if(feature.gradient_key in COLOR_GRADIENTS){
-                act_gradient = COLOR_GRADIENTS[feature.gradient_key];
+        count_style: function(gradient_key, act_count, max_count){
+            let act_gradient = COLOR_GRADIENTS[MAP_DEFAULT_COLOR_GRADIENT_KEY];
+            if(gradient_key in COLOR_GRADIENTS){
+                act_gradient = COLOR_GRADIENTS[gradient_key];
             }
             let hex_color = make_hex_color_in_gradient(
-                (feature.count / feature.max_count), 
+                (act_count / max_count), 
                 act_gradient
             );
             let fill_opacity = (
-                ((feature.count / feature.max_count) * 0.5 ) + 0.20
+                ((act_count / max_count) * 0.5 ) + 0.20
             );
             return {
                 color: hex_color,
                 fillOpacity: fill_opacity,
-                weight: 2
+                weight: 1.5,
             };
         },
-        circle_pointToLayer: function(feature,  latlng){
-            let marker_opts = this.count_style(feature);
-            let radius = Math.round(30 * (feature.count / feature.max_count), 0) + 5;
-            marker_opts.radius = radius;
+        polygon_count_style: function(feature){
+            return this.count_style(
+                feature.gradient_key,
+                feature.count,
+                feature.max_count,
+            );
+        },
+        circle_count_style: function(gradient_key, act_count, max_count){
+            let marker_opts = this.count_style(gradient_key, act_count, max_count);
+            marker_opts.radius = Math.round(30 * (act_count / max_count), 0) + 5;
             marker_opts.fillColor = marker_opts.color;
             marker_opts.weight = 1;
             marker_opts.opacity = 0.95;
             marker_opts.fillOpacity = 0.8;
+            return marker_opts;
+        },
+        circle_pointToLayer: function(feature,  latlng){
+            let marker_opts = this.circle_count_style(
+                feature.gradient_key,
+                feature.count,
+                feature.max_count,
+            );
             return L.circleMarker(latlng, marker_opts);
+        },
+        make_legend_example_values: function(min_count, max_count){
+            let example_div = 5;
+            let max_min_dif =  max_count - min_count;
+            let increment = max_min_dif / example_div;
+            if(increment < 1){
+                increment = 1;
+            }
+            let example_values = [];
+            for(let act_val = min_count; act_val < max_count; act_val += increment){
+                let round_val = Math.round(act_val, 0);
+                if(example_values.indexOf(round_val) >=0 ){
+                    continue
+                }
+                example_values.push(round_val);
+            }
+            if(example_values.indexOf(max_count) < 0){
+                example_values.push(max_count);
+            }
+            return example_values;
+        },
+        make_layer_legend: function(act_layer, legend_key){
+            if(!act_layer.hasOwnProperty('min_count')){
+                return null;
+            }
+            if(!act_layer.hasOwnProperty('max_count')){
+                return null;
+            }
+            let example_values = this.make_legend_example_values(
+                act_layer.min_count, 
+                act_layer.max_count
+            );
+            let legend = JSON.parse(JSON.stringify(this.legend_config));
+            legend.ov_id = act_layer.ov_id;
+            legend.label = act_layer.label;
+            legend.icon = null;
+            if(this.overlay_icons.hasOwnProperty(act_layer.ov_id)){
+                legend.icon = this.overlay_icons[act_layer.ov_id];
+            }
+            legend.min_count = act_layer.min_count;
+            legend.max_count = act_layer.max_count;
+            let l_gradient_parts = ['to right'];
+            if(legend_key != 'heat_style'){
+                legend[legend_key] = [];
+            }
+            for(let act_count of example_values){
+                let opts = this.circle_count_style(
+                    this.selected_gradient_key, 
+                    act_count, 
+                    act_layer.max_count
+                );
+                opts.fillOpacity = 0.95;
+                let rgb = convertToRGB(opts.color);
+                let grad_part = `rgba(${rgb.join(', ')},1)`;
+                l_gradient_parts.push(grad_part);
+                let act_example = {
+                    count: act_count,
+                    radius: opts.radius,
+                    svg_style: (
+                        `fill:${opts.color};
+                        fill-opacity:${opts.fillOpacity};
+                        stroke:${opts.color};
+                        stroke-width:${opts.weight};
+                        stroke-opacity:1.0;`
+                    ),
+                };
+                if(legend_key != 'heat_style'){
+                    legend[legend_key].push(act_example);
+                }
+            }
+            if(legend_key == 'heat_style'){
+                legend[legend_key] = (
+                    `min-height: 36px;
+                    background-image: linear-gradient(${l_gradient_parts.join(', ')});`
+                );
+            }
+            return legend;
         },
         get_map_geodeep_from_geojson: function(act_geojson){
             if(act_geojson.category != 'oc-api:geo-facet'){
@@ -1184,8 +1452,6 @@ var vc_common_map = Vue.component(
                 return null;
             }
             let circle_geojson = JSON.parse(JSON.stringify(this.geo_facets_circles_default));
-            circle_geojson.min_count = act_geojson.min_count;
-            circle_geojson.max_count = act_geojson.max_count;
             circle_geojson.category = act_geojson.category;
             /*
 			 * 1st we aggregate nearby tiles getting points for the center of each
@@ -1211,6 +1477,7 @@ var vc_common_map = Vue.component(
 			 * 2nd we compute the weighted average for nearby tile center points
 			 * based on their counts. This will help make the map look less like a grid
 			 */
+            let min_count = null;
             let max_count = 0;
             let tindex = 0;
             let count_keyed_points = {};
@@ -1228,6 +1495,9 @@ var vc_common_map = Vue.component(
                 if(max_count < total_count){
                     max_count = total_count;
                 }
+                if(min_count == null || total_count < min_count){
+                    min_count = total_count;
+                }
                 let mean_lat = sum_lat / total_count;
                 let mean_lng = sum_lng / total_count;
                 let point_feature = {
@@ -1244,6 +1514,9 @@ var vc_common_map = Vue.component(
                 count_keys.push(count_key);
                 count_keyed_points[count_key] = point_feature;
             }
+            // Set min and max count limits for the circle feature geojson.
+            circle_geojson.min_count = min_count;
+            circle_geojson.max_count = max_count;
             /*
 			 * 3rd we sort the points in descending order of count so the point features with
 			 * the highest counts will be rendered lower
@@ -1265,6 +1538,8 @@ var vc_common_map = Vue.component(
                 return null;
             }
             let heatmap_data = JSON.parse(JSON.stringify(this.heatmap_data_default));
+            heatmap_data.min_count = act_geojson.min_count;
+            heatmap_data.max_count = act_geojson.max_count;
             heatmap_data.max = act_geojson.max_count;
             for(let feature of act_geojson.features){
                 let centroid = this.get_centroid(feature.geometry.coordinates[0]);
@@ -1294,23 +1569,23 @@ var vc_common_map = Vue.component(
             // if applicable.
             if(this.frontend_state_obj.hasOwnProperty('ovgrd')){
                 if(this.frontend_state_obj.ovgrd in COLOR_GRADIENTS){
-                    console.log('frontend obj color gradient: ' + this.frontend_state_obj.ovgrd);
+                    // console.log('frontend obj color gradient: ' + this.frontend_state_obj.ovgrd);
                     this.selected_gradient_key = this.frontend_state_obj.ovgrd;
                 }
             }else{
-                this.frontend_state_obj.ovgrd = DEFAULT_COLOR_GRADIENT_KEY;
+                this.frontend_state_obj.ovgrd = MAP_DEFAULT_COLOR_GRADIENT_KEY;
             }
 
             // prevent mutation of the result.
-            this.geo_tile_facets = this.make_geo_features_layer(
+            this.geo_tile_facets = this.cat_limit_feature_data(
                 'oc-api:geo-facet', 
                 JSON.parse(JSON.stringify(this.geo_tile_facets_default))
             );
-            this.geo_region_facets = this.make_geo_features_layer(
+            this.geo_region_facets = this.cat_limit_feature_data(
                 'oc-api:geo-contained-in-feature', 
                 JSON.parse(JSON.stringify(this.geo_region_facets_default))
             );
-            this.geo_page_records = this.make_geo_features_layer(
+            this.geo_page_records = this.cat_limit_feature_data(
                 'oc-api:geo-record', 
                 JSON.parse(JSON.stringify(this.geo_page_records_default))
             );
@@ -1356,10 +1631,12 @@ var vc_common_map = Vue.component(
                     act_layer = L.geoJson(
                         act_geojson,
                         {
-                            style: this.count_style,
+                            style: this.polygon_count_style,
                             onEachFeature: this.onEachFeatureFunction,
                         },
                     );
+                    act_layer.min_count = act_geojson.min_count;
+                    act_layer.max_count = act_geojson.max_count;
                 }
                 else{
                     act_layer = L.geoJson(
@@ -1378,6 +1655,8 @@ var vc_common_map = Vue.component(
                 else{
                     act_layer.ov_id = 'overlay-' + i;
                 }
+                // Add the layer legend if applicable.
+                act_layer.legend = this.make_layer_legend(act_layer, 'poly_list');
                 // Now add it again fresh.
                 act_layer.addTo(this.map, act_geojson.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
@@ -1393,7 +1672,7 @@ var vc_common_map = Vue.component(
                     this.map.removeLayer(l_geo_json);
                 }
 
-                if(!this.frontend_state_obj.hasOwnProperty('ov') && act_layer.ov_id == 'sqr'){
+                if(!this.frontend_state_obj.hasOwnProperty('ov') && act_layer.ov_id == SEARCH_MAP_DEFAULT_OVERLAY_KEY){
                     // we don't have a frontend obj determined overlay, and we don't have any
                     // currently visible overlays, so make this active layer visible.
                     this.map.addLayer(act_layer);
@@ -1425,6 +1704,9 @@ var vc_common_map = Vue.component(
                 circle_layer.ref = circle_geojson.ref;
                 circle_layer.label = circle_geojson.label;
                 circle_layer.ov_id = circle_geojson.ov_id;
+                circle_layer.min_count = circle_geojson.min_count;
+                circle_layer.max_count = circle_geojson.max_count;
+                circle_layer.legend = this.make_layer_legend(circle_layer, 'circle_list');
                 circle_layer.addTo(this.map, circle_layer.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
                     circle_layer, 
@@ -1436,14 +1718,18 @@ var vc_common_map = Vue.component(
 
                 //Make and add the heatmap layer.
                 // First, set up the color gradient for the heatmap.
-                this.heatmap_config.gradient = this.make_heatmap_gradient_config(
+                let act_heatmap_config = JSON.parse(JSON.stringify(this.heatmap_config));
+                act_heatmap_config.gradient = this.make_heatmap_gradient_config(
                     this.selected_gradient_key
                 );
-                let heatmap_layer = new HeatmapOverlay(this.heatmap_config);
+                let heatmap_layer = new HeatmapOverlay(act_heatmap_config);
                 heatmap_layer.ref = heatmap_data.ref;
                 heatmap_layer.label = heatmap_data.label;
                 heatmap_layer.ov_id = heatmap_data.ov_id;
+                heatmap_layer.min_count = heatmap_data.min_count;
+                heatmap_layer.max_count = heatmap_data.max_count;
                 heatmap_layer.setData(heatmap_data);
+                heatmap_layer.legend = this.make_layer_legend(heatmap_layer, 'heat_style');
                 heatmap_layer.addTo(this.map, heatmap_layer.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
                     heatmap_layer, 
@@ -1453,6 +1739,7 @@ var vc_common_map = Vue.component(
                 this.map.removeLayer(heatmap_layer);
                 this.map.overlay_layers_by_id[heatmap_layer.ov_id] = heatmap_layer;
             }
+
         },
         finese_item_view: function(){
             if(!this.map){
@@ -1490,7 +1777,7 @@ var vc_common_map = Vue.component(
                 console.log('Fontend state object set map bounds.');
                 return null;
             }
-            console.log('Use overlay layer to fit bounds.');
+            // console.log('Use overlay layer to fit bounds.');
             let act_overlay_layer = null;
             if(this.map.hasOwnProperty('overlay_layers_by_id')){
                 if (this.map.overlay_layers_by_id && this.map.overlay_layers_by_id.hasOwnProperty('sqr')){
@@ -1500,7 +1787,7 @@ var vc_common_map = Vue.component(
             if(act_overlay_layer == null){
                 act_overlay_layer = this.$refs[this.geojson_ref];
                 if(act_overlay_layer == null){
-                    console.log('no geo-json layer item: ' + this.geojson_ref);
+                    // console.log('no geo-json layer item: ' + this.geojson_ref);
                     return null;
                 }
             }
@@ -1511,7 +1798,7 @@ var vc_common_map = Vue.component(
             this.map.auto_fit = true;
             let bounds = act_overlay_layer.getBounds();
             this.map.fitBounds(bounds);
-            console.log(bounds);
+            // console.log(bounds);
             this.map.auto_fit = false;
         },
         frontend_obj_overlays_prep: function(){
@@ -1524,8 +1811,7 @@ var vc_common_map = Vue.component(
             if(!this.map.hasOwnProperty('overlay_layers_by_id')){
                 // No overlay layers by ID added to the map.
                 return null;
-            }
-                
+            }  
             if(!this.frontend_state_obj.hasOwnProperty('ov')){
                 // No overlays passed from frontend state object.
                 return null;
@@ -1541,6 +1827,9 @@ var vc_common_map = Vue.component(
                 }
                 let act_layer = this.map.overlay_layers_by_id[ov_id];
                 if(this.frontend_state_obj.ov.indexOf(act_layer.ov_id) >=0){
+                    if(this.map.visible_overlay_ids.indexOf(act_layer.ov_id) < 0){
+                        this.map.visible_overlay_ids.push(act_layer.ov_id);
+                    }
                     console.log('activate ' + act_layer.ov_id);
                     this.map.addLayer(act_layer);
                 }
@@ -1554,6 +1843,7 @@ var vc_common_map = Vue.component(
             this.map = this.$refs[this.map_ref].mapObject;
             this.map._layersMaxZoom = MAX_ZOOM;
             this.map.auto_fit = true;
+            this.map.legends = null;
             this.gather_base_layers();
             this.add_google_tiles();
             this.get_item_location_info();
@@ -1561,8 +1851,10 @@ var vc_common_map = Vue.component(
             this.add_overlay_layers();
             this.add_search_map_extra_controls();
             this.frontend_obj_overlays_prep();
+            this.update_map_legends();
             this.fit_bounds();
             this.finese_item_view();
+            // this.update_map_legends();
             this.map.auto_fit = false;
             this.map.overlay_ready = true;
         },
@@ -1609,6 +1901,7 @@ var vc_common_map = Vue.component(
             this.fit_bounds();
             this.finese_item_view();
             this.get_item_location_info();
+            this.update_map_legends();
             // console.log('updated map');
             // console.log('current frontend state');
             // console.log(this.frontend_state_obj);
@@ -1647,6 +1940,7 @@ var vc_common_map = Vue.component(
       'l-geo-json': l_geo_json,
       'l-marker': l_marker,
       'l-map': l_map,
+      'map-legends': vc_map_legends,
       'map-color-ui': vc_map_color_ui,
     },
 });

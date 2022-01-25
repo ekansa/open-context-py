@@ -324,6 +324,12 @@ Search
 .leaflet-zoom-hide {
 	z-index: 300;
 }
-#map-color-modal {
-	max-height: 80%;
+.color-ui-modal {
+	max-height: 85%;
+}
+#map-datavis-legend {
+	margin-top: 12px;
+}
+.map-overlay-legend-item {
+	margin-bottom: 12px;
 }

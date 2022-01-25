@@ -1,0 +1,107 @@
+{% block common_geo %}
+
+{% load humanize %}
+
+<template id="color_gradient_ui">
+    
+    <b-list-group flush>
+        <b-list-group-item>
+            <b-row class="text-center" align-v="center">
+                <b-col cols="1">
+
+                </b-col>
+                <b-col cols="3">
+                    <strong>Few records</strong>
+                </b-col>
+                <b-col cols="5">
+                    <strong></strong>
+                </b-col>
+                <b-col cols="3">
+                    <strong>Many records</strong>
+                </b-col>
+            </b-row>
+        </b-list-group-item>
+        <b-form-radio-group @change="on_selected" v-model="selected_gradient_key" >
+            <b-list-group-item v-for="(color_choice, index) in color_choices">
+                <b-row align-v="center">
+                    <b-col cols="1">
+                        <b-form-radio
+                        name="color-radios" 
+                        :value="color_choice.key"></b-form-radio>
+                    </b-col>
+                    <b-col>
+                        <div :style="color_choice.style"></div>
+                    </b-col>
+                </b-row>
+            </b-list-group-item>
+        </b-form-radio-group>
+    </b-list-group>
+
+</template>
+    
+
+<script type="text/javascript">
+  // Import Vue2Leaflet components.
+  const DEFAULT_COLOR_GRADIENT_KEY = 'oc';
+  
+
+var vc_color_gradient_ui = Vue.component(
+    'color-gradient-ui',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'selected_gradient_key', 
+        ],
+        data() {
+            return {
+                selected_gradient_key: DEFAULT_COLOR_GRADIENT_KEY,
+            }
+        },
+        template: '#color_gradient_ui',
+        computed: {
+            color_choices(){
+                let color_choices = [];
+                for(let key in COLOR_GRADIENTS){
+                    if(!COLOR_GRADIENTS.hasOwnProperty(key)){
+                        continue;
+                    }
+                    let color_configs = COLOR_GRADIENTS[key];
+                    let l_gradient_parts = ['to right'];
+                    for(let conf of color_configs){
+                        let rgb = convertToRGB(conf.color);
+                        let grad_part = `rgba(${rgb.join(', ')},1)`;
+                        l_gradient_parts.push(grad_part);
+                    }
+                    let color_choice = {
+                        key: key,
+                        checked: (key == this.selected_gradient_key),
+                        style: (`min-height: 36px;
+                                 background-image: linear-gradient(${l_gradient_parts.join(', ')});`),
+                    }
+                    color_choices.push(color_choice);
+                }
+                return color_choices;
+            },
+        },
+        methods: {
+            set_selected_gradient_key(){
+                this.$emit('set_selected_gradient_key', this.selected_gradient_key);
+            },
+            on_selected(){
+                console.log('Color gradient option selected');
+                this.set_selected_gradient_key();
+            },
+        },
+        components: {
+            
+        }
+    }
+);
+
+
+
+</script>
+
+
+
+{% endblock %}
