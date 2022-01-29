@@ -16,6 +16,7 @@ class SolrClient():
         solr_host=settings.SOLR_HOST,
         solr_port=settings.SOLR_PORT,
         solr_collection=settings.SOLR_COLLECTION,
+        search_handler=None,
         always_commit=False,
         timeout=30,
         auth=None,
@@ -41,7 +42,8 @@ class SolrClient():
         try:
             # print(solr_connection_string)
             self.solr = pysolr.Solr(
-                solr_connection_string, 
+                solr_connection_string,
+                search_handler=search_handler,
                 always_commit=always_commit, 
                 timeout=timeout, 
                 auth=auth

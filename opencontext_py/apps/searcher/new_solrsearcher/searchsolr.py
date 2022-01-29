@@ -150,15 +150,16 @@ class SearchSolr():
             escaped_terms = utilities.prep_string_search_term_list(
                 raw_fulltext_search
             )
-            solr_fulltext = ' '.join(escaped_terms)
-            query['q'] = f'text: {solr_fulltext}'
+            solr_fulltext = ' && '.join(escaped_terms)
+            print(f'solr escaped fulltext: {solr_fulltext}')
+            query['q'] = f'text: ({solr_fulltext})'
             query['q.op'] = 'AND'
             query['hl'] = 'true'  # search term highlighting
             query['hl.fl'] = 'text' # highlight the text field
             query['hl.fragsize'] = 200
             query['hl.simple.pre'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE
             query['hl.simple.post'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST
-            query['hl.q'] = f'text: {solr_fulltext}'
+            # query['hl.q'] = f'text: {solr_fulltext}'
         
         # -------------------------------------------------------------
         # START and ROWS (Paging through results)

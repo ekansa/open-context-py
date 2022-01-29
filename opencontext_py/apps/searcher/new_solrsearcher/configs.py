@@ -259,8 +259,10 @@ QUERY_SNIPPET_HIGHLIGHT_TAG_POST = '</h_l>'
 # Tags to use before and after the highlighted term to clearly set the
 # term off from surrounding text. These are for the highlighted text
 # for result records returned to the client.
-RECORD_SNIPPET_HIGHLIGHT_TAG_PRE = '<em class="snippet">'
-RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</em>'
+# RECORD_SNIPPET_HIGHLIGHT_TAG_PRE = '<em class="snippet">'
+# RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</em>'
+RECORD_SNIPPET_HIGHLIGHT_TAG_PRE = '<mark>'
+RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</mark>'
 
 # ---------------------------------------------------------------------
 # Hierarchic parameters configs:

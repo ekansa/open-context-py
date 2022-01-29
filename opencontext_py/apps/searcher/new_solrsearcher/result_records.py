@@ -451,6 +451,7 @@ class ResultRecord():
         self.descriptiveness = solr_doc.get('interest_score')
         self.published = solr_doc.get('published')
         self.updated = solr_doc.get('updated')
+        self.human_remains_flagged = solr_doc.get('human_remains', False)
     
     
     def set_record_category(self, solr_doc):
@@ -461,17 +462,11 @@ class ResultRecord():
                 logger.warn('Cannot find an item type for this record')
                 return None
             self.item_type = item_type_list[0]
+        
+        if solr_doc.get('item_class'):
+            # The simple case of a category.
+            self.category = solr_doc.get('item_class')
 
-        root_cat_field = 'obj_all___oc_gen_{}___pred_id'.format(
-            self.item_type
-        )
-        categories = get_simple_hierarchy_items(
-            solr_doc,
-            root_cat_field
-        )
-        if not categories:
-            return None
-        self.category = categories[-1]
     
     def set_record_contexts(self, solr_doc):
         """Sets the records spatial contexts list"""
@@ -767,7 +762,7 @@ class ResultRecord():
         properties['early bce/ce'] = self.early_date
         properties['late bce/ce'] = self.late_date
         if self.category is not None:
-            properties['item category'] = self.category['label']
+            properties['item category'] = self.category
         if self.snippet:
             properties['snippet'] = self.snippet
         if self.thumbnail_scr:
@@ -828,6 +823,7 @@ class ResultRecord():
         geo_json['label'] = self.label
         geo_json['rdfs:isDefinedBy'] = self.uri
         geo_json['oc-api:descriptiveness'] = self.descriptiveness
+        geo_json['oc-api:human-remains-related'] = self.human_remains_flagged
         geo_json['type'] = 'Feature'
         geo_json['category'] = 'oc-api:geo-record'
 

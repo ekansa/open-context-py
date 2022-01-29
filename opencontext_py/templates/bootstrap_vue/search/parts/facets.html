@@ -31,6 +31,7 @@
         v-bind:key="xfacet_xdtype_groups_opts.key"
         v-bind:dom_key="xfacet_xdtype_groups_opts.key"
         v-bind:facet_id="facet_id"
+        v-bind:facet_type="xfacet_xdtype_groups_opts.type"
         v-bind:facet_label="facet_label"
         v-bind:facet_start_open="facet_start_open"
         v-bind:xfacet_xdtype_groups_opts="xfacet_xdtype_groups_opts"
@@ -42,11 +43,33 @@
 <template id="facets-xfacet-xdtype-groups-opts-template">
 <div class="panel card">
     <div class="card-header">
-        <b-button variant="link" class="text-left filter_heading_button" v-b-toggle="'panel-' + dom_key">
-            <h5 class="filter_heading_labels"><i class="bi bi-arrows-expand"></i>
-                [[facet_label]]
-            </h5>
-        </b-button>
+        <b-row align-v="center">
+            <b-col>
+                <b-button variant="link" class="text-left filter_heading_button" v-b-toggle="'panel-' + dom_key">
+                    <h5 class="filter_heading_labels"><i class="bi bi-arrows-expand"></i>
+                        [[facet_label]]
+                    </h5>
+                </b-button>
+            </b-col>
+            <b-col v-if="show_multi_opt_button" class="text-right" cols="1">
+                <b-icon
+                    icon="three-dots-vertical"
+                    @click="toggle_multi_ops"
+                    title="Toggle multi-select options"
+                ></b-icon>
+            </b-col>
+            <b-col v-if="multi_opt_url" class="text-right" cols="1"> 
+                <router-link
+                    :to="multi_opt_url" 
+                    :id="multi_opt_url" 
+                    :title="'Filter using the selected ' + selected_opts.length + ' options'">
+                    <span 
+                        class="material-icons">
+                        manage_search
+                    </span>
+                </router-link>
+            </b-col>
+        </b-row>
     </div>
     <b-collapse :id="'panel-' + [[dom_key]]" class="panel" :visible="facet_start_open">
         <ul class="list-group f-opt-list" :id="'s-ops-'+ [[dom_key]]">
@@ -57,7 +80,10 @@
             v-bind:facet_id="facet_id"
             v-bind:facet_label="facet_label"
             v-bind:xfacet_xdtype_xgroup_opts="xfacet_xdtype_xgroup_opts"
-            v-bind:index="index">
+            v-bind:index="index"
+            v-bind:multi_opts="multi_opts"
+            @set_selected_options="set_selected_options"
+            >
         </facets-xfacet-xdtype-xgroup-opts>
         </ul>
     </b-collapse>
@@ -70,14 +96,37 @@
             <small><strong>[[xfacet_xdtype_xgroup_opts.label]]</strong></small>
         </li>
         <facets-xfacet-xdtype-xgroup-xopt
+            v-if="!multi_opts"
             v-for="(xfacet_xdtype_xgroup_xopt, index) in xfacet_xdtype_xgroup_opts.options"
             v-bind:key="xfacet_xdtype_xgroup_xopt.key"
             v-bind:option="xfacet_xdtype_xgroup_xopt"
             v-bind:index="index">
-
         </facets-xfacet-xdtype-xgroup-xopt>
+        <b-form-checkbox-group 
+            v-if="multi_opts"
+            @change="on_selected" v-model="selected_opts"
+            >
+            <facets-xfacet-xdtype-xgroup-xopt-multi
+                v-for="(xfacet_xdtype_xgroup_xopt, index) in xfacet_xdtype_xgroup_opts.options"
+                v-bind:key="xfacet_xdtype_xgroup_xopt.key"
+                v-bind:radio_name="xfacet_xdtype_xgroup_xopt.key"
+                v-bind:option="xfacet_xdtype_xgroup_xopt"
+                v-bind:index="index">
+            </facets-xfacet-xdtype-xgroup-xopt-multi>
+        </b-form-checkbox-group>
     </div>
 </template>
+
+
+
+<template id="facets-xfacet-xdtype-xgroup-xopt-multi-template">
+    <b-list-group-item v-bind:class="get_class()">
+        <b-form-checkbox :name="radio_name" :value="option.id">[[ option.label ]]</b-form-checkbox>
+                
+        <span class="badge badge-secondary badge-pill">[[option.count]]</span>
+    </b-list-group-item>
+</template>
+
 
 <template id="facets-xfacet-xdtype-xgroup-xopt-template">
     <li v-bind:class="get_class()">
@@ -90,12 +139,36 @@
 
 
 
+
 <script type="text/javascript">
 
 // Passed from the Django template
 var FACET_OPT_HIDE_URI_MAPS = {{ configs.FACET_OPT_HIDE_URI_MAPS|safe }};
 var FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = {{ configs.FACET_OPT_ORDERED_SUB_HEADINGS_DICTS|safe }};
 var FACETS_OPTIONS_LISTS_AND_DATA_TYPES = {{ configs.FACETS_OPTIONS_LISTS_AND_DATA_TYPES|safe }};
+
+
+var vc_xfacet_xdtype_xgroup_xopt_multi = Vue.component(
+    'facets-xfacet-xdtype-xgroup-xopt-multi',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['option', 'index', 'radio_name'],
+        template: '#facets-xfacet-xdtype-xgroup-xopt-multi-template',
+        methods: {
+            get_class: function (){
+                if(this.index > 0){
+                    return 'list-group-item d-flex justify-content-between align-items-center';
+                }
+                else{
+                    return 'list-group-item d-flex justify-content-between align-items-center';
+                }
+            },
+        },
+        components: {
+            
+        }
+    }
+);
 
 
 var vc_xfacet_xdtype_xgroup_xopt = Vue.component(
@@ -124,10 +197,34 @@ var vc_xfacet_xdtype_xgroup_opts = Vue.component(
     'facets-xfacet-xdtype-xgroup-opts',
     {
         delimiters: ['[[', ']]'],
-        props: ['facet_id', 'facet_label', 'facet_start_open', 'dom_key', 'xfacet_xdtype_xgroup_opts', 'index'],
         template: '#facets-xfacet-xdtype-xgroup-opts-template',
+        props: ['facet_id', 'facet_label', 'facet_type', 'facet_start_open', 'dom_key', 'xfacet_xdtype_xgroup_opts', 'index', 'multi_opts'],
+        data() {
+            return {     
+                facet_id: null,
+                facet_label: null,
+                facet_start_open: null,
+                facet_type: null,
+                dom_key: null,
+                xfacet_xdtype_xgroup_opts: null,
+                index: 0,
+                multi_opts: false,
+                selected_opts: [],
+            };
+        },
+        computed: {
+        },
+        methods: {
+            set_selected_options(){
+                this.$emit('set_selected_options', this.selected_opts);
+            },
+            on_selected: function() {
+                this.set_selected_options();
+            },
+        },
         components: {
             'facets-xfacet-xdtype-xgroup-xopt': vc_xfacet_xdtype_xgroup_xopt,
+            'facets-xfacet-xdtype-xgroup-xopt-multi': vc_xfacet_xdtype_xgroup_xopt_multi,
         }
     }
 );
@@ -136,8 +233,184 @@ var vc_xfacet_xdtype_groups_opts = Vue.component(
     'facets-xfacet-xdtype-groups-opts',
     {
         delimiters: ['[[', ']]'],
-        props: ['facet_id', 'facet_label', 'facet_start_open', 'dom_key', 'xfacet_xdtype_groups_opts'],
         template: '#facets-xfacet-xdtype-groups-opts-template',
+        props: ['facet_id', 'facet_label', 'facet_type', 'facet_start_open', 'dom_key', 'xfacet_xdtype_groups_opts'],
+        data() {
+            return {     
+                facet_id: null,
+                facet_label: null,
+                facet_type: null,
+                facet_start_open: null,
+                dom_key: null,
+                xfacet_xdtype_xgroup_opts: null,
+                index: 0,
+                multi_opts: false,
+                selected_opts: [],
+            };
+        },
+        computed: {
+            show_multi_opt_button(){
+                if(!this.xfacet_xdtype_groups_opts){
+                    return false;
+                }
+                if(!this.xfacet_xdtype_groups_opts.hasOwnProperty('groups_opts')){
+                    return false;
+                }
+                if(this.facet_type == 'oc-api:has-rel-media-options'){
+                    return false;
+                }
+                let opts_count = 0;
+                for(let group of this.xfacet_xdtype_groups_opts.groups_opts){
+                    if(!group.hasOwnProperty('options')){
+                        continue;
+                    }
+                    opts_count += group.options.length;
+                }
+                if(opts_count < 2){
+                    return false;
+                }
+                return true;
+            },
+            multi_opt_url(){
+                if(!this.show_multi_opt_button){
+                    return null;
+                }
+                if(this.selected_opts.length < 1){
+                    return null;
+                }
+                let combined_url_parts = {
+                    prefix: null,
+                    val_list: [],
+                    suffix: null,
+                };
+                for(let act_url of this.selected_opts){
+                    let url_parts = this.get_url_parts_for_multi(
+                        act_url,
+                        this.facet_type,
+                    );
+                    if(!url_parts){
+                        continue;
+                    }
+                    if((combined_url_parts.prefix == null) && !url_parts.ambiquity){
+                        combined_url_parts.prefix = url_parts.prefix;
+                    }
+                    if((combined_url_parts.suffix == null) && !url_parts.ambiquity){
+                        combined_url_parts.suffix = url_parts.suffix;
+                    }
+                    for(let val of url_parts.val_list){
+                        if(combined_url_parts.val_list.indexOf(val) <0 ){
+                            combined_url_parts.val_list.push(val);
+                        }
+                    }
+                }
+                if(combined_url_parts.prefix == null){
+                    return null;
+                }
+                return  (
+                    combined_url_parts.prefix
+                    + combined_url_parts.val_list.join('||')
+                    + combined_url_parts.suffix
+                );
+
+            }
+        },
+        methods: {
+            toggle_multi_ops: function(){
+                this.multi_opts = !this.multi_opts;
+            },
+            set_selected_options: function(selected_opts){
+                this.selected_opts = selected_opts;
+            },
+            get_url_parts_for_multi: function(act_url, facet_type){
+                if(!act_url || act_url.length < 1){
+                    return null;
+                }
+                if(!facet_type){
+                    return null;
+                }
+                let url_parts = {
+                    prefix: '',
+                    val_list: [],
+                    suffix: '',
+                    ambiquity: false,
+                }
+                let url_obj = new URL(act_url, BASE_URL);
+                if(facet_type == 'oc-api:facet-context'){
+                    let path_parts = url_obj.pathname.split('/');
+                    if(path_parts.length < 2){
+                        return null;
+                    }
+                    let prefix_parts = [];
+                    let val = path_parts[path_parts.length -1];
+                    url_parts.val_list.push(val);
+                    path_parts.pop();
+                    url_parts.prefix = path_parts.join('/') + '/';
+                    url_parts.suffix = url_obj.search + url_obj.hash;
+                    console.log('Context url parts:');
+                    console.log(url_parts);
+                    return url_parts;
+                }
+               
+                // First validate that the non-context URL is OK
+                // for processing for multi-select.
+                if(url_obj.hash.length < 1){
+                    return null;
+                }
+                let frontend_obj = parse_search_frag_dict(url_obj.hash);
+                if(!frontend_obj.hasOwnProperty('aq')){
+                    return null;
+                }
+                let null_count = 0;
+                let params = ['prop', 'proj', 'cat'];
+                for(let param of params){
+                    if(url_obj.searchParams.get(param) == null){
+                        null_count += 1;
+                    }
+                }
+                if(null_count >= params.length){
+                    return null;
+                }
+                // We hassed the tests, so now check to see we can get a URL out of this.
+
+                let prefix_aq_hierarchy = '';
+                let aq_val = frontend_obj.aq;
+                if(frontend_obj.aq.indexOf('---') >= 0){
+                    let aq_val_split = frontend_obj.aq.split('---');
+                    aq_val = aq_val_split[(aq_val_split.length -1)];
+                    aq_val_split.pop();
+                    prefix_aq_hierarchy = aq_val_split.join('---') + '---';
+                }
+                prefix_aq_hierarchy = prefix_aq_hierarchy.replace('facet-', '');
+
+                url_parts.val_list.push(aq_val);
+                let len_aq_val = aq_val.length;
+                url_parts.prefix = url_obj.pathname;
+                let search_terms = url_obj.search.split('&');
+                let act_delim = '';
+                let aq_found = false;
+                for(let search_term of search_terms){
+                    if(aq_found){
+                        url_parts.suffix += act_delim + search_term;
+                        continue;
+                    }
+                    let aq_pref_index = 0;
+                    if(prefix_aq_hierarchy.length > 0){
+                        aq_pref_index = search_term.indexOf(prefix_aq_hierarchy);
+                    }
+                    if(aq_pref_index >= 0 && search_term.endsWith(aq_val)){
+                        // we found the search term with the aq_value in the right prefix!
+                        aq_found = true;
+                        url_parts.prefix += act_delim + search_term.substring(0, search_term.length-len_aq_val);
+                    }
+                    else{
+                        url_parts.prefix += act_delim + search_term;
+                    }
+                    act_delim = '&';
+                }
+                url_parts.suffix += url_obj.hash;
+                return url_parts;
+            },
+        },
         components: {
             'facets-xfacet-xdtype-xgroup-opts': vc_xfacet_xdtype_xgroup_opts,
         }
@@ -249,7 +522,7 @@ function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
     }
     // remove map attributes that need to get reset with a change of
     // filters.
-    for(rm_key of FILTER_CHANGE_RESET_MAP_STATE_KEYS){
+    for(rm_key of FACET_CHANGE_RESET_MAP_STATE_KEYS){
         if(frontend_state.hasOwnProperty(rm_key)){
             delete frontend_state[rm_key];
         }
@@ -399,6 +672,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
             var act_dtype_groups_opts = {
                 'data_type': opts_conf.data_type,
                 'key': `${f_field.id}-dtype-${opts_conf.data_type}`,
+                'type': f_field.type,
                 'groups_opts': null,
             };
         

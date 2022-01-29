@@ -198,6 +198,13 @@ var vc_fields_chart = Vue.component(
                 let hash = '';
                 if(window.location.hash) {
                     hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+                    let frontend_state = parse_search_frag_dict(hash);
+                    for(rm_key of FACET_CHANGE_RESET_MAP_STATE_KEYS){
+                        if(frontend_state.hasOwnProperty(rm_key)){
+                            delete frontend_state[rm_key];
+                        }
+                    }
+                    hash = '#' + encode_frag_obj(frontend_state);
                 }
                 if(url.indexOf(hash) < 0){
                     url += hash;

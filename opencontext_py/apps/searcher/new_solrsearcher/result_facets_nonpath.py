@@ -87,6 +87,7 @@ class ResultFacetsNonPath():
             option['json'] = urls['json']
             for key, val in type_dict.items():
                 option[key] = val
+            option['count'] = count
             options.append(option)
         
         if not len(options):

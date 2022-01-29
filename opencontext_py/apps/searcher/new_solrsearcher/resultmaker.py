@@ -736,6 +736,8 @@ class ResultMaker():
         """Creates a search result for a client based on a solr_json 
         response.
         """
+        if not solr_json:
+            return None
 
         if set(self.act_responses).intersection(
             set(configs.RESPONSE_TYPES_JSON_LD_CONTEXT)):

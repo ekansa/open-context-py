@@ -109,6 +109,8 @@ urlpatterns = [
     url(r'^projects-search/(?P<spatial_context>\S+)?', SearchViews.projects_html_view, name='projects_search_html'),
     
     # New Search (testing) views
+    url(r'^suggest.json?', NewSearchViews.suggest_json, name='new_search_suggest_json'),
+    url(r'^suggest', NewSearchViews.suggest_json, name='new_search_suggest'),
     url(r'^query.json?', NewSearchViews.query_json, name='new_search_json_d'),
     url(r'^query/(?P<spatial_context>\S+)?.json', NewSearchViews.query_json, name='new_search_json'),
     url(r'^query/(?P<spatial_context>\S+)?', NewSearchViews.query_html, name='new_search_html'),

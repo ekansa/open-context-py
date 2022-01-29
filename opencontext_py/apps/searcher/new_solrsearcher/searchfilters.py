@@ -237,6 +237,7 @@ class SearchFilters():
         ):
         """Looks up a entity item to add to an act_filter"""
         lookup_val = str(lookup_val)
+        print(f'Lookup val is: {lookup_val}')
     
         if lookup_val.startswith(configs.RELATED_ENTITY_ID_PREFIX):
             # Strip off the related property prefix. Note that this
@@ -253,12 +254,15 @@ class SearchFilters():
 
         items = []
         if configs.REQUEST_OR_OPERATOR in lookup_val:
-            lookup_list = lookup_val.split(
-                configs.REQUEST_OR_OPERATOR
-            )
+            if is_spatial_context:
+                lookup_list = utilities.infer_multiple_or_hierarchy_paths(lookup_val)
+            else:
+                lookup_list = lookup_val.split(
+                    configs.REQUEST_OR_OPERATOR
+                )
         else:
             lookup_list = [lookup_val]
-        
+
         for act_val in lookup_list:
             if is_spatial_context:
                 item = db_entities.get_cache_manifest_item_by_path(act_val)
@@ -426,7 +430,7 @@ class SearchFilters():
                         act_search_term = item_lookup_val
                         act_filter['label'] = item_lookup_val
                         if param_config.get('label-prop-template'):
-                            # Use a configured tem
+                            # Use a configured term
                             act_filter['label'] = param_config['label-prop-template'].format(
                                 act_val=item_lookup_val
                             )

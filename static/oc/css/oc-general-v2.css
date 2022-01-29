@@ -293,6 +293,9 @@ Search
 #app {
 	min-height: 800px;
 }
+#filtered-fulltext {
+	margin-top: 36px;
+}
 #main_facets_all {
 	margin-top: 36px;
 }
@@ -332,4 +335,11 @@ Search
 }
 .map-overlay-legend-item {
 	margin-bottom: 12px;
+}
+.result-snippet {
+	margin-top: 24px;
+	font-size: small;
+}
+.result-snippet mark {
+	font-style: italic;
 }

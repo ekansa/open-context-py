@@ -38,6 +38,18 @@
 </template>
 
 
+
+<template id='records-tab-field-context'>
+    <div>
+        <span>[[ field_item.context ]]</span>
+        <dl v-if="field_item.snippet" class="result-snippet">
+            <dt>Search text snippet</dt>
+            <dd v-html="field_item.snippet"></dd>
+        </dl>
+    </div>
+</template>
+
+
 <template id="records-tab-header-footer">
     <b-row>
         <b-col cols="8">
@@ -145,16 +157,23 @@
             :sort-by.sync="sortBy"
             :sort-desc.sync="sortDesc"
         >
+
+            <template #cell(descriptiveness)="data">
+                <records-tab-field-descriptiveness
+                v-bind:field_item="data.item">
+                </records-tab-field-descriptiveness>
+            </template>
+
             <template #cell(label)="data">
                 <records-tab-field-label
                 v-bind:field_item="data.item">
                 </records-tab-field-label>
             </template>
 
-            <template #cell(descriptiveness)="data">
-                <records-tab-field-descriptiveness
+            <template #cell(context)="data">
+                <records-tab-field-context
                 v-bind:field_item="data.item">
-                </records-tab-field-descriptiveness>
+                </records-tab-field-context>
             </template>
 
             <template #cell()="data">
@@ -211,6 +230,24 @@ var vs_records_tab_field_label = Vue.component(
         };
       },
       template: '#records-tab-field-label',
+      methods: {
+        
+      }
+    },
+);
+
+
+var vs_records_tab_field_context = Vue.component(
+    'records-tab-field-context',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['field_item', ],
+      data() {
+        return {
+            field_item: null,
+        };
+      },
+      template: '#records-tab-field-context',
       methods: {
         
       }
@@ -421,6 +458,12 @@ var vc_records_tab = Vue.component(
                     let updated_ex = updated.split('T');
                     updated = updated_ex[0];
 
+                    let snippet = null;
+                    if('snippet' in props){
+                        snippet = props['snippet'];
+                        snippet = '...' + snippet.replace(context, '') + '...';
+                    }
+
                     let item = {
                         label: feature['label'],
                         url: url,
@@ -441,6 +484,7 @@ var vc_records_tab = Vue.component(
                         ),
                         updated: updated,
                         media: thumb_uri,
+                        snippet: snippet,
                     };
                     items.push(item);
                 }
@@ -490,6 +534,7 @@ var vc_records_tab = Vue.component(
         components: {
             'records-tab-header-footer': vs_records_tab_header_footer,
             'records-tab-field-label': vs_records_tab_field_label,
+            'records-tab-field-context': vs_records_tab_field_context,
             'records-tab-field-descriptiveness': vs_records_tab_field_descriptiveness,
         },
     }

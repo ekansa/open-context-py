@@ -1564,6 +1564,10 @@ var vc_common_map = Vue.component(
                 console.log('no item: ' + this.l_controls_ref);
                 return null;
             }
+            if(!this.frontend_state_obj){
+                // not a search map, no search map overlays.
+                return null;
+            }
 
             // Use the frontend state object to set the selected color gradient,
             // if applicable.

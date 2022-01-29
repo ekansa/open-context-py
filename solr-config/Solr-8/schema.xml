@@ -186,6 +186,12 @@
     <field name="filesize" type="pdouble" indexed="true" stored="true" required="false" multiValued="false"/>
 
 
+    <!-- catchall field, containing all other searchable text fields (implemented
+        in logic in Python for creating a solr document  -->
+    <field name="keywords" type="text_suggest" indexed="true" stored="true" multiValued="true" required="false" omitNorms="true"/>
+    <field name="keywords_str" type="text_suggest" indexed="true" stored="true" multiValued="true" required="false" omitNorms="true"/>
+    <copyField source="keywords" dest="keywords_str"/>
+
 
     <!-- catchall field, containing all other searchable text fields (implemented
         in logic in Python for creating a solr document  -->
@@ -340,6 +346,12 @@
     
     
     
+    <fieldType class="solr.TextField" name="text_suggest" positionIncrementGap="100">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
     
     
 

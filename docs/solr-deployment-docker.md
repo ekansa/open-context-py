@@ -39,6 +39,7 @@ export PATH_TO_SOLR_CONF=~/github/open-context-py/solr-config/Solr-8/
 sudo cp $PATH_TO_SOLR_CONF/schema.xml solr-oc-data/data/open-context/conf/managed-schema
 sudo cp $PATH_TO_SOLR_CONF/schema.xml solr-oc-data/data/open-context/conf/schema.xml
 sudo cp $PATH_TO_SOLR_CONF/currency.xml solr-oc-data/data/open-context/conf/currency.xml
+sudo cp $PATH_TO_SOLR_CONF/solrconfig.xml solr-oc-data/data/open-context/conf/solrconfig.xml
 sudo chown -R 8983:8983 solr-oc-data
 
 # Remove the stopped Docker containers so we can reuse this

@@ -18,8 +18,9 @@
                 <span class="text-left">Map</span>
                 <span class="text-right">Loading Records...</span>
             </h5>
-            <div id="app_media" v-if="result && tab == 0">
+            <div id="app_media" v-if="result_count > 0 && tab == 0">
               <common_map
+                v-if="result.features.length > 0"
                 :map_key="0"
                 :map_class="'map_preview'"
                 :map_type="'search'"
@@ -32,6 +33,12 @@
                 v-bind:geo_overlays="project_image_overlays"
                 @set_frontend_state_obj="set_frontend_state_obj($event)"
                 ></common_map>
+            </div>
+            <div class="jumbotron jumbotron-fluid" v-else-if="result_count == 0">
+              <div class="container-fluid text-muted text-center">
+                <h1 class="display-4">No records.</h1>
+                <p>Broaden or otherwise change search and filtering criteria.</p>
+              </div>
             </div>
             <div class="jumbotron jumbotron-fluid" v-else>
                 <div class="container-fluid text-muted text-center">

@@ -231,6 +231,7 @@ class SolrDocumentNS:
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
+        self.fields['keywords'] = []  # Start of keywords field
         self.fields['human_remains'] = False  # Default, item is not about human remains.
         # Default media counts.
         self.fields['image_media_count'] = 0
@@ -249,6 +250,14 @@ class SolrDocumentNS:
     # -----------------------------------------------------------------
     # NOTE: This section are for utilities used by multiple methods
     # -----------------------------------------------------------------
+    def _add_unique_keyword(self, keyword):
+        if not isinstance(keyword, str):
+            return None
+        if keyword in self.fields['keywords']:
+            return None
+        self.fields['keywords'].append(keyword)
+
+
     def _prefix_solr_field(self, solr_field, act_solr_doc_prefix=None):
         """Makes a solr field, with a prefix if needed"""
 
@@ -345,6 +354,7 @@ class SolrDocumentNS:
             uri=self.man_obj.uri,
             label=self.man_obj.label,
         )
+        self._add_unique_keyword(self.man_obj.label)
         self.fields['project_uuid'] =  str(self.man_obj.project_id)
         self.fields['project_label'] =  str(self.man_obj.project.label)
         if not self.man_obj.published:
@@ -570,8 +580,10 @@ class SolrDocumentNS:
             hierarchy_path = []
             for item_obj in raw_hierarchy_path:
                 item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
+                self._add_unique_keyword(item_obj.label)
                 if getattr(item_obj, 'alt_label', None):
                     item['alt_label'] = item_obj.alt_label
+                    self._add_unique_keyword(item_obj.alt_label)
                 hierarchy_path.append(item)
             hierarchy_paths.append(hierarchy_path)
         return hierarchy_paths

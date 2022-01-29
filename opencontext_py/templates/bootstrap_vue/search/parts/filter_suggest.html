@@ -1,0 +1,103 @@
+{% block suggest %}
+
+
+<template id="filter-search-typeahead">
+
+    <div class="card bg-light" id="filtered-fulltext">
+        <div class="card-header"> 
+            <h5 class="filter_heading_labels">
+                Add a filter for text matching:
+            </h5>
+        </div>
+            
+        <div class="card-body small">
+            <oc-search-typeahead
+                v-bind:project_slugs="project_slugs"
+                v-bind:frontend_state_obj="frontend_state_obj"
+                v-bind:base_search_url="base_search_url"
+                v-bind:search_via_router="true"
+                >
+            </oc-search-typeahead>
+        </div>
+            
+    </div>
+
+</template>
+
+
+<script type="text/javascript">
+
+var vc_filter_seach_typeahead = Vue.component(
+    'filter-search-typeahead',
+    {
+        template: '#filter-search-typeahead',
+        delimiters: ['[[', ']]'],
+        props: ['result', 'frontend_state_obj', 'base_search_url'],
+        data() {
+            return {
+                result: null,
+                frontend_state_obj: null,
+                base_search_url: '/search',
+            };
+        },
+        computed: {
+            project_slugs: function() {
+                return this.get_project_slugs_from_result();
+            },
+        },
+        methods: {
+            get_project_slugs_from_result: function(){
+                if(!this.result){
+                    return null;
+                }
+                if(this.result.totalResults < 1){
+                    return null;
+                }
+                // First check the simplist case, where we have project slugs
+                // already as current filters.
+                let project_slugs = [];
+                let proj_param = getURLParameter(this.result.id, 'proj');
+                if(proj_param){
+                    let raw_project_slugs = proj_param.split('||');
+                    for(let slug of raw_project_slugs){
+                        let hierarchy_slugs = slug.split('---');
+                        // use the last (most specific) slug in the hierarchy
+                        let use_slug = hierarchy_slugs[(hierarchy_slugs.length -1)];
+                        project_slugs.push(use_slug);
+                    }
+                    return project_slugs;
+                }
+                if (!('oc-api:has-facets' in this.result)){
+                    return project_slugs;
+                }
+                for (let f_field of this.result['oc-api:has-facets']){
+                    if(!f_field.hasOwnProperty('type')){
+                        continue;
+                    }
+                    if(!f_field.hasOwnProperty('oc-api:has-id-options')){
+                        continue;
+                    }
+                    if(f_field.type != 'oc-api:facet-project'){
+                        continue;
+                    }
+                    for(let opt of f_field['oc-api:has-id-options']){
+                        if(opt.hasOwnProperty('slug')){
+                            project_slugs.push(opt.slug);
+                        }
+                    }
+                    // we found the project facets, no need to keep looping
+                    break;
+                }
+                return project_slugs;
+            },
+        },
+        components: {
+            //'oc-search-typeahead': vc_oc_seach_typeahead,
+        }
+    }
+);
+
+
+</script>
+
+{% endblock %}

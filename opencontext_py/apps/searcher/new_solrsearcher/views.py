@@ -12,6 +12,7 @@ from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.template_prep import SearchTemplate
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
 from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
+from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 from django.views.decorators.cache import cache_control
@@ -152,3 +153,40 @@ def query_html(request, spatial_context=None):
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response
+
+
+@cache_control(no_cache=True)
+def suggest_json(request):
+    """ API for getting search term suggestions from Open Context """
+    
+    req_neg = RequestNegotiation('application/json')
+    req_neg.supported_types = ['application/json']
+    
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    
+    if not request.GET.get('q'):
+        response = HttpResponse(
+            'Must have a "q" search parameter',
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=400
+        )
+    # Associate the request media type with the request so we can
+    # make sure that different representations of this resource get different
+    # cache responses.
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # Client wanted a mimetype we don't support
+        response = HttpResponse(
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+    response_dict = suggest.get_solr_suggests(
+        q_term=request.GET.get('q'),
+        project_slugs_str=request.GET.get('proj'),
+        highlight=('hl' in request.GET)
+    )
+    return make_json_response(request, req_neg, response_dict)

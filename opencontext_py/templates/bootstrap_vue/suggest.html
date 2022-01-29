@@ -1,0 +1,152 @@
+{% block suggest %}
+<!-- General code for full text search with suggest/autocomplete API integration-->
+
+
+<template id="oc-search-typeahead">
+
+    <div>
+        <vue-bootstrap-typeahead
+            v-bind:data="data"
+            v-bind:query="query"
+            v-model="query"
+            size="lg"
+            :serializer="s => removeTags(s)"
+            placeholder="Type search term(s).."
+            debounce="50"
+            @hit="pick_selected_term($event)"
+        >
+
+            <template slot="suggestion" slot-scope="{ data }">
+                <span v-html="data"></span>
+            </template>
+
+            <template slot="append">
+                <b-button :to="router_query_link" :href="href_query_link" :disabled="query.length < 2" size="sm">
+                    <i alt="Search Icon" class="bi-search"></i>
+                </b-button>
+            </template>
+
+        </vue-bootstrap-typeahead>
+    </div>
+</template>
+
+
+<script type="text/javascript">
+
+
+var vc_typeahead = Vue.component('vue-bootstrap-typeahead', VueBootstrapTypeahead);
+var vc_oc_seach_typeahead = Vue.component(
+    'oc-search-typeahead',
+    {
+        delimiters: ['[[', ']]'],
+        template: '#oc-search-typeahead',
+        props: ['frontend_state_obj', 'project_slugs', 'search_via_router', 'base_search_url'],
+        data() {
+            return {
+                project_slugs: null,
+                frontend_state_obj: null,
+                data: [],
+                query: '',
+                selected_term: null,
+                search_via_router: false,
+                base_search_url: '/search',
+            };
+        },
+        computed: {
+            href_query_link: function(){
+                if(this.search_via_router){
+                    return null;
+                }
+                if(this.query.length < 2){
+                    return null;
+                }
+                return this.compose_query_link();
+            },
+            router_query_link: function(){
+                if(!this.search_via_router){
+                    return null;
+                }
+                if(this.query.length < 2){
+                    return null;
+                }
+                return this.compose_query_link();
+            }
+        },
+        watch: {
+            query: function(q_term) { 
+                this.get_suggestions(q_term);
+            },
+        },
+        methods: {
+            compose_query_link: function(){
+                let frontend_state = {};
+                if(this.frontend_state_obj){
+                    frontend_state = JSON.parse(JSON.stringify(this.frontend_state_obj));
+                }
+                if(Object.keys(frontend_state).length < 1){
+                    frontend_state = get_search_current_frag_obj();
+                }
+                // remove map attributes that need to get reset with a change of
+                // filters.
+                for(rm_key of FACET_CHANGE_RESET_MAP_STATE_KEYS){
+                    if(frontend_state.hasOwnProperty(rm_key)){
+                        delete frontend_state[rm_key];
+                    }
+                }
+                let url = replaceURLparameter(this.base_search_url, 'q', this.query);
+                url = abs_to_rel_url_with_frag_obj(url, BASE_URL, frontend_state);
+                return url;
+            },
+            removeTags: function(str) {
+                if ((str===null) || (str==='')){
+                    return '';
+                }
+                str = str.toString();
+                return str.replace( /(<([^>]+)>)/ig, '');
+            },
+            pick_selected_term: function(term){
+                console.log('Selected term is: ' + term);
+                term = this.removeTags(term);
+                this.query = term;
+                this.selected_term = term;
+                console.log('Selected term is now: ' + this.query);
+                return term;
+            },
+            async get_suggestions(q_term) {
+                if(q_term.length < 1){
+                    return null;
+                }
+                let params = {
+                    q: q_term,
+                    hl: true, // for term highlighting
+                }
+                if(this.project_slugs != null && this.project_slugs.length > 0){
+                    params.proj = this.project_slugs.join('||');
+                }
+                const requestOptions = {
+                    method: 'GET',
+                    headers: {
+                    'Content-Type': 'application/json',
+                    },
+                };
+                const res = await fetch(
+                    ('/suggest?' + new URLSearchParams(params)), 
+                    requestOptions,
+                );
+                const data = await res.json();
+                this.data = data;
+            },
+
+        },
+        components: {
+            VueBootstrapTypeahead,
+        },
+    }
+);
+
+
+
+
+</script>
+
+{% endblock %}
