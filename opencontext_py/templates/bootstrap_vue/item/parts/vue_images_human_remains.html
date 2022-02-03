@@ -1,0 +1,74 @@
+{% load humanize %}
+
+
+<template id="human-remains-image">
+
+  <b-img
+    :src="image_uri" 
+    :class="act_class" 
+    :alt="alt_label"/>
+  
+
+</template>
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+
+var vc_human_remains_image = Vue.component(
+  'human-remains-image',
+  {
+      delimiters: ['[[', ']]'],
+      template: '#human-remains-image',
+      props: [
+        'human_remains_flagged',
+        'human_remains_ok',
+        'image_uri',
+        'label',
+        'image_type'
+      ],
+      data() {
+        return {
+          human_remains_flagged: null,
+          human_remains_ok: HUMAN_REMAINS_OK,
+          image_uri: null,
+          label: null,
+          image_type: 'thumbnail',
+        }
+      },
+      computed: {
+        act_class: function(){
+          let cl = "";
+          if(this.image_type == 'thumbnail'){
+            cl = 'rounded item_thumb';
+            if(this.human_remains_flagged && !this.human_remains_ok){
+              cl += ' human_remains_thumb_blur'
+            }
+          }
+          else {
+            cl = 'img-fluid rounded mx-auto d-block';
+            if(this.human_remains_flagged && !this.human_remains_ok){
+              cl += ' human_remains_blur'
+            }
+          }
+          return cl;
+        },
+        alt_label: function(){
+          return `Thumbnail for ${this.label}`;
+        }
+      },
+      methods: {
+         
+      },
+      components: {
+          
+      }
+  }
+);
+
+</script>

@@ -34,6 +34,7 @@
                         v-bind:chrono_facets="chrono_facets"
                         v-bind:route_key_index="route_key_index"
                         v-bind:frontend_state_obj="frontend_state_obj"
+                        v-bind:human_remains_ok="human_remains_ok"
                         @set_frontend_state_obj="set_frontend_state_obj($event)"
                     >
                     </all-search-tabs>
@@ -41,6 +42,13 @@
                 </div>
                 <div class="col-lg-4">
                     <div v-if="result">
+
+                        <human-remains-results-alert
+                            v-bind:human_remains_flagged="human_remains_flagged"
+                            v-bind:human_remains_ok="human_remains_ok"
+                            @toggle_human_remains_ok="toggle_human_remains_ok($event)"
+                        ></human-remains-results-alert>
+
                         <all-filters 
                             v-bind:grouped_filters="grouped_filters"
                             v-bind:frontend_state_obj="frontend_state_obj">
@@ -102,6 +110,7 @@
             emit_update_fetch_done: false,
             route_key_index: 0,
             frontend_state_obj: null,
+            human_remains_ok: HUMAN_REMAINS_OK,
         },
         created(){
             this.fetch_oc_api();
@@ -189,6 +198,9 @@
                 console.log('Set frontend_state_obj');
                 console.log(this.frontend_state_obj);
             },
+            toggle_human_remains_ok: function(human_remains_ok) {
+                this.human_remains_ok = human_remains_ok;
+            },
             do_ready: function (){
                 console.log('do ready');
             }
@@ -219,11 +231,21 @@
                     return null;
                 }
                 return this.result['oc-api:has-event-time-ranges'];
+            },
+            human_remains_flagged: function(){
+                if(!this.result){
+                    return false;
+                }
+                if(!this.result.hasOwnProperty('oc-api:human-remains-flagged')){
+                    return false;
+                }
+                return this.result['oc-api:human-remains-flagged'];
             }
         },
         components: {
             // 'common_map': vc_common_map,
             // 'chronotiles': vc_chronotiles,
+            'human-remains-results-alert': vc_human_remains_results_alert,
             'all-search-tabs': vc_all_search_tabs,
             'all-filters': vc_all_filters,
             'filter-search-typeahead': vc_filter_seach_typeahead,

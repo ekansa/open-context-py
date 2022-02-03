@@ -178,6 +178,8 @@ def test_html(request, uuid):
         'full_media': request.GET.get('full', False),
         # for debugging.
         'show_json': request.GET.get('json', False),
+        # Consent to view human remains defaults to False if not actually set.
+        'human_remains_ok': request.session.get('human_remains_ok', False),
     }
     template = loader.get_template('bootstrap_vue/item/item.html')
     response = HttpResponse(template.render(context, request))

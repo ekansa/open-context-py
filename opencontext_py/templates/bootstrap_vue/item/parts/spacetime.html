@@ -1,8 +1,6 @@
 {% load humanize %}
 
 
-
-<div id="item-app">
   <common_map
     :map_key="0"
     :map_class="'map_item'"
@@ -13,40 +11,9 @@
     :map_type="'item'"
     :show_default_overlay="true"
     :item_json="item_json"></common_map>
-</div>
 
 
 <script type="text/javascript">
 
-var vm = new Vue(
-  {
-    router: router,
-    delimiters: ['[[', ']]'],
-    ref: 'item_app',
-    el: '#item-app',
-    data: {
-        uuid: ITEM_UUID,
-    },
-    computed: {
-        act_route: function () {
-            return this.$route;
-        },
-    },
-    watch: {
-        $route(to, from) {
-        // react to route changes...
-        }
-    },
-    methods: {
-      
-    },
-    created() {
-
-    },
-    components: {
-      'common_map': vc_common_map,
-    },
-  },
-).$mount('#app');
 
 </script>

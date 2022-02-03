@@ -148,6 +148,8 @@ def query_html(request, spatial_context=None):
         'api_url': response_dict.get('id'),
         'configs': configs,
         'SORT_OPTIONS_FRONTEND': json.dumps(configs.SORT_OPTIONS_FRONTEND),
+        # Consent to view human remains defaults to False if not actually set.
+        'human_remains_ok': request.session.get('human_remains_ok', False),
     }
     template = loader.get_template('bootstrap_vue/search/search.html')
     response = HttpResponse(template.render(context, request))

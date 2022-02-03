@@ -20,12 +20,22 @@
 <template id='records-tab-field-descriptiveness'>
     <div class="clearfix record-thumb-outer">
     <b-img-lazy 
-        v-if="field_item.media" 
+        v-if="field_item.media && (!field_item.human_remains_flag || human_remains_ok)" 
         :src="field_item.media"
         thumbnail
         fluid
         rounded
         center
+        :alt="'Image related to ' + field_item.label">
+    </b-img-lazy>
+    <b-img-lazy 
+        v-else-if="field_item.media && field_item.human_remains_flag" 
+        :src="field_item.media"
+        thumbnail
+        fluid
+        rounded
+        center
+        class="human_remains_thumb_blur" 
         :alt="'Image related to ' + field_item.label">
     </b-img-lazy>
     <b-img v-else
@@ -34,6 +44,12 @@
         center
         :alt="'No image related to ' + field_item.label">
     </b-img>
+
+        <div v-if="field_item.human_remains_flag">
+        <br/><span class="badge badge-pill badge-warning human_remains_warn text-center">
+            <i class="bi bi-exclamation-circle-fill"></i> Human Remains
+        </span>
+        </div>
     </div>
 </template>
 
@@ -160,6 +176,7 @@
 
             <template #cell(descriptiveness)="data">
                 <records-tab-field-descriptiveness
+                v-bind:human_remains_ok="human_remains_ok"
                 v-bind:field_item="data.item">
                 </records-tab-field-descriptiveness>
             </template>
@@ -259,7 +276,7 @@ var vs_records_tab_field_descriptiveness = Vue.component(
     'records-tab-field-descriptiveness',
     {
       delimiters: ['[[', ']]'],
-      props: ['field_item', ],
+      props: ['field_item', 'human_remains_ok'],
       data() {
         return {
             field_item: null,
@@ -269,6 +286,7 @@ var vs_records_tab_field_descriptiveness = Vue.component(
                 height: 75, 
                 class: 'm1',
             },
+            human_remains_ok: HUMAN_REMAINS_OK,
         };
       },
       template: '#records-tab-field-descriptiveness',
@@ -340,6 +358,7 @@ var vc_records_tab = Vue.component(
         props: [
             'all_range_facets',
             'route_key_index',
+            'human_remains_ok',
             'frontend_state_obj',
             'result_id',
             'result_count',
@@ -355,6 +374,7 @@ var vc_records_tab = Vue.component(
         ],
         data() {
             return {
+                human_remains_ok: HUMAN_REMAINS_OK,
                 frontend_state_obj: {},
                 striped: true,
                 bordered: true,
@@ -408,6 +428,11 @@ var vc_records_tab = Vue.component(
                     let props = feature['properties'];
                     let url = feature['rdfs:isDefinedBy'];
                     url = abs_to_rel_url(url, BASE_URL);
+
+                    let human_remains_flag = false;
+                    if('oc-api:human-remains-related' in feature){
+                        human_remains_flag = feature['oc-api:human-remains-related'];
+                    }
 
                     let href = url;
                     if('href' in props){
@@ -485,6 +510,7 @@ var vc_records_tab = Vue.component(
                         updated: updated,
                         media: thumb_uri,
                         snippet: snippet,
+                        human_remains_flag: human_remains_flag,
                     };
                     items.push(item);
                 }

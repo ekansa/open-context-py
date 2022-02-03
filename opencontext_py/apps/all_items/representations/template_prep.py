@@ -583,6 +583,34 @@ def gather_media_links(man_obj, rep_dict):
     return rep_dict
 
 
+def find_human_remains_media(rep_dict):
+    """Adds linking info from item observations to the Solr doc."""
+    # Get the list of all the observations made on this item.
+    # Each observation is a dictionary with descriptive assertions
+    # keyed by a predicate.
+    for obs in rep_dict.get('oc-gen:has-obs', []):
+            # Get the status of the observation, defaulting to 'active'.
+        if obs.get('oc-gen:obsStatus', 'active') != 'active':
+            # Skip this observation. It's there but has a deprecated
+            # status.
+            continue
+        # Descriptive predicates are down in the events.
+        for event_node in obs.get('oc-gen:has-events', []):
+            if not event_node.get('has_relations'):
+                continue
+            for attrib_group in event_node.get('oc-gen:has-attribute-groups', []):
+                for rel_item_type, pred_value_dicts in attrib_group.get('relations', {}).items():
+                    if rel_item_type != 'media':
+                        continue
+                    for _, pred_value_objects in pred_value_dicts.items():
+                        for obj_dict in pred_value_objects:
+                            if not obj_dict.get('object__meta_json'):
+                                continue
+                            if obj_dict['object__meta_json'].get('flag_human_remains', False):
+                                return True
+    return False
+
+
 def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     """Prepares a representation dict for Solr indexing and HTML templating
     
@@ -617,6 +645,10 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     # Gather links for different types of media.
     rep_dict = gather_media_links(man_obj, rep_dict)
 
+    # Note if we need to show a human remains consent interface.
+    rep_dict['flag_human_remains'] = man_obj.meta_json.get('flag_human_remains', False)
+    if not rep_dict['flag_human_remains']:
+        rep_dict['flag_human_remains'] = find_human_remains_media(rep_dict)
     return rep_dict
 
 
@@ -645,4 +677,3 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
     item_dict = make_template_ready_dict_obj(rep_dict)
 
     return item_dict
-

@@ -1,6 +1,7 @@
 import copy
 import json
 import logging
+from sys import flags
 import time
 from datetime import datetime
 from django.conf import settings
@@ -182,6 +183,33 @@ class ResultMaker():
                 # Add ISO 8601 current time for the missing value.
                 act_time = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
             self.result[json_ld_key] = act_time 
+
+
+    def add_human_remains_flag(self, solr_json,):
+        """Adds flagging to indicate human remains in results JSON-LD"""
+        # NOTE: Solr already defaults to representing time in 
+        # ISO 8601, so we're just pulling the appropriate time
+        # info from the solr_json to metadata fields in our response
+        # JSON-LD.
+        meta_configs = [
+            (
+                # Last modified.
+                'oc-api:human-remains-flagged',
+                (configs.FACETS_SOLR_ROOT_PATH_KEYS + ['human_remains',]),
+            ),
+        ]
+        for json_ld_key, path_keys_list in meta_configs:
+            flags_counts_list = utilities.get_dict_path_value(
+                path_keys_list, 
+                solr_json
+            )
+            if not flags_counts_list:
+                continue
+            flag_tups = utilities.get_facet_value_count_tuples(flags_counts_list)
+            for bool_str, count in flag_tups:
+                if bool_str != 'true' or count < 1:
+                    continue
+                self.result[json_ld_key] = True  
 
 
     def add_all_events_date_range(self, solr_json, iso_year_format=True):
@@ -754,6 +782,7 @@ class ResultMaker():
             # Add search metadata to the response to the client.
             self.result['id'] = self.make_response_id()
             self.add_publishing_datetime_metadata(solr_json)
+            self.add_human_remains_flag(solr_json)
             self.add_all_events_date_range(solr_json)
             self.add_geo_chrono_counts(solr_json)
             # The paging function below provides the count of 

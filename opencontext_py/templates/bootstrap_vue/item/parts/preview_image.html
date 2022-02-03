@@ -11,9 +11,23 @@
     {%endif%}
   </div>
   <div class="card-body">
+    {% if item.flag_human_remains %}
+
+    <human-remains-image
+      v-bind:human_remains_ok="human_remains_ok"
+      :human_remains_flagged="true"
+      :image_type="'preview'"
+      :image_uri="'{{ item.media_preview_image }}'"
+      :label="'Preview image'"
+    ></human-remains-image>
+
+    {%else%}
+
     <img src="{{ item.media_preview_image }}" 
       class="img-fluid rounded mx-auto d-block" 
       alt="Preview image" />
+
+    {%endif%}
   </div>
 </div>
 

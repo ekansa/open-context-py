@@ -220,7 +220,16 @@ Item Relationships
 	font-size: small;
 }
 .human_remains_thumb_blur {
-	filter: blur(8px) opacity(50%) saturate(10%)
+	filter: blur(9px) opacity(60%) saturate(15%)
+}
+.human_remains_blur {
+	filter: blur(40px) opacity(70%) saturate(25%)
+}
+.human_remains_thumb_ok_display {
+	filter: none;
+}
+.human_remains_ok_display {
+	filter: none;
 }
 
 
@@ -340,6 +349,10 @@ Search
 	margin-top: 24px;
 	font-size: small;
 }
-.result-snippet mark {
+.result-snippet dd {
 	font-style: italic;
+}
+.result-snippet dd mark {
+	font-style: normal;
+	font-weight: bold;
 }

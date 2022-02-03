@@ -36,7 +36,7 @@
             </div>
             <div class="jumbotron jumbotron-fluid" v-else-if="result_count == 0">
               <div class="container-fluid text-muted text-center">
-                <h1 class="display-4">No records.</h1>
+                <h1 class="display-4">No records</h1>
                 <p>Broaden or otherwise change search and filtering criteria.</p>
               </div>
             </div>
@@ -103,6 +103,7 @@
             <records-tab
               v-bind:frontend_state_obj="frontend_state_obj"
               v-bind:route_key_index="route_key_index"
+              v-bind:human_remains_ok="human_remains_ok"
               v-bind:result_id="result.id"
               v-bind:result_count="result_count"
               v-bind:result_start_index="result_start_index"
@@ -138,6 +139,7 @@ var vc_all_search_tabs = Vue.component(
         'frontend_state_obj',
         'start_full_path',
         'tab',
+        'human_remains_ok'
       ],
       template: '#all-search-tabs-temp',
       data() {
@@ -156,6 +158,7 @@ var vc_all_search_tabs = Vue.component(
             'tab-item-records',
           ],
           map_tab: 0,
+          human_remains_ok: HUMAN_REMAINS_OK,
         };
       },
       mounted(){

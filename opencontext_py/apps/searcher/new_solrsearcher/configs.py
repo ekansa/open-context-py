@@ -51,6 +51,7 @@ DEFAULT_FACET_FIELDS = [
     'event_class_slugs',
     f'{ROOT_EVENT_CLASS}___geo_count',
     f'{ROOT_EVENT_CLASS}___chrono_count',
+    'human_remains',
 ]
 
 

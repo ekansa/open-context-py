@@ -466,6 +466,8 @@ class ResultRecord():
         if solr_doc.get('item_class'):
             # The simple case of a category.
             self.category = solr_doc.get('item_class')
+        if 'Default (null)' in self.category:
+            self.category = self.item_type.title()
 
     
     def set_record_contexts(self, solr_doc):
