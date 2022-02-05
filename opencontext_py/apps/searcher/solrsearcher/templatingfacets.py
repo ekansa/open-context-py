@@ -1,7 +1,3 @@
-import datetime
-from django.utils.html import strip_tags
-from django.http import QueryDict
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.globalmaptiles import GlobalMercator

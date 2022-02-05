@@ -1,18 +1,10 @@
-import copy
 import io
 import json
 import reversion
-import uuid as GenUUID
 
-from django.conf import settings
-from django.core.cache import caches
-from django.shortcuts import redirect
 from django.http import StreamingHttpResponse, HttpResponse, Http404
 
-from django.db.models import Q
-from django.db import transaction
 
-from django.template import RequestContext, loader
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.all_items import configs
@@ -34,8 +26,6 @@ from opencontext_py.apps.all_items.editorial.tables import ui_utilities
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
-from django.views.decorators.cache import cache_page
-from django.utils.cache import patch_vary_headers
 
 
 #----------------------------------------------------------------------

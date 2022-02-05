@@ -8,11 +8,7 @@ from lxml import etree
 import lxml.html
 from unidecode import unidecode
 from django.conf import settings
-from django.db import connection
-from django.db.models import Q
-from django.db.models import Avg, Max, Min
 from time import sleep
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation

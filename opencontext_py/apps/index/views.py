@@ -1,6 +1,6 @@
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.conf import settings
-from django.template import RequestContext, loader
+from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 

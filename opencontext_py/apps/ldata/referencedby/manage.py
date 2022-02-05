@@ -1,6 +1,3 @@
-import sys
-import csv
-from time import sleep
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.referencedby.api import csvAPI

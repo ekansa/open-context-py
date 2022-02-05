@@ -1,10 +1,8 @@
 import json
-from django.conf import settings
 
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
-from django.views.decorators.cache import cache_control
 
 
 class CompleteQuery():

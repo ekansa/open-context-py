@@ -6,7 +6,7 @@ import feedparser
 import hashlib
 from time import sleep
 from django.conf import settings
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from django.utils.http import urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 

@@ -1,5 +1,4 @@
 from unidecode import unidecode
-from django.conf import settings
 from django.core.cache import caches
 from django.template.defaultfilters import slugify
 from opencontext_py.libs.general import LastUpdatedOrderedDict

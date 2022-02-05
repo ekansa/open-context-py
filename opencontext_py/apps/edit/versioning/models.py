@@ -1,8 +1,5 @@
 from reversion.models import Revision
 from django.db import models
-from django.conf import settings
-from datetime import datetime
-from django.utils import timezone
 
 
 # Version history metadata to help track editing changes and

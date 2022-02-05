@@ -1,4 +1,3 @@
-from django.db import models
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.sources.models import ImportSource
 

@@ -1,17 +1,9 @@
 import re
-import json
 import os
 import codecs
-import requests
-import hashlib
 import csv
 from lxml import etree
-from time import sleep
-from io import StringIO, BytesIO
-from django.conf import settings
-from django.db import connection
-from django.db import models
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from io import BytesIO
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage

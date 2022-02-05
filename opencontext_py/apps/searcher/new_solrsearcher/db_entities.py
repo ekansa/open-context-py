@@ -1,11 +1,8 @@
-import copy
-import json
 import logging
 import hashlib
 
-from django.conf import settings
 from django.core.cache import caches
-from django.db.models import Q, OuterRef, Subquery
+from django.db.models import OuterRef, Subquery
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (

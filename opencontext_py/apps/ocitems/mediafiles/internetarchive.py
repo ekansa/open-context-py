@@ -1,11 +1,8 @@
-import os, sys, shutil
-import codecs
+import os
 import requests
-from io import BytesIO
 from time import sleep
 from internetarchive import get_session, get_item
 from django.conf import settings
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles

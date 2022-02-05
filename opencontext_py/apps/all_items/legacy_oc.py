@@ -1,14 +1,11 @@
-import copy
 import itertools
 import json
 import pytz
 import hashlib
-import uuid as GenUUID
 
 import pandas as pd
 
 from django.core.cache import caches
-from django.db.models import Q
 from django.utils import timezone
 
 from opencontext_py.apps.all_items import configs

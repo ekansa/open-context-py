@@ -1,5 +1,3 @@
-from django.db import models
-from django.db.models import Q
 from django.conf import settings
 from opencontext_py.apps.imports.records.models import ImportCell
 

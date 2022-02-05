@@ -1,14 +1,5 @@
-import os
-import codecs
-import uuid as GenUUID
-import re
-import datetime
-import json
-import html
 from dateutil.parser import parse
 from lxml import etree
-from django.db import models
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement

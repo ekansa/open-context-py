@@ -1,10 +1,5 @@
 import json
 import geojson
-import django.utils.http as http
-from django.conf import settings
-from django.db import connection
-from django.db import models
-from django.db.models import Q
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.rootpath import RootPath

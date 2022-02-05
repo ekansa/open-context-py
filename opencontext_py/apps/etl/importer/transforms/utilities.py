@@ -1,12 +1,8 @@
-import copy
-import json
 import logging
 
 import numpy as np
 import pandas as pd
 
-from django.core.cache import caches
-from django.db.models import Q
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (

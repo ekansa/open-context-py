@@ -1,4 +1,3 @@
-from django.db import models
 from django.utils.http import urlunquote
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity, LinkEntityGeneration
 from opencontext_py.apps.ldata.geonames.api import GeonamesAPI

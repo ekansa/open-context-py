@@ -1,5 +1,3 @@
-import json
-import time
 from unidecode import unidecode
 from django.conf import settings
 from opencontext_py.apps.entities.uri.models import URImanagement

@@ -1,10 +1,3 @@
-import copy
-import json
-import logging
-import re
-import time
-from datetime import datetime
-from django.conf import settings
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.solrclient import SolrClient

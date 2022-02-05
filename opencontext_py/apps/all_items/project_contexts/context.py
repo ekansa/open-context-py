@@ -1,15 +1,11 @@
 
-import copy
-import hashlib
 import logging
-import uuid as GenUUID
 
 import numpy as np
 import pandas as pd
 
 from django.core.cache import caches
 
-from django.db.models import OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 

@@ -8,7 +8,7 @@ from opencontext_py.apps.imports.sources.create import ImportRefineSource
 from opencontext_py.apps.imports.sources.finalize import FinalizeImport
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
-from django.template import RequestContext, loader
+from django.template import loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache

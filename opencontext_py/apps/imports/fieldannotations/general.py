@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation

@@ -1,5 +1,3 @@
-from django.utils.html import strip_tags
-from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.searcher.solrsearcher.templating import ResultRecord

@@ -1,6 +1,4 @@
 import uuid as GenUUID
-import hashlib
-from django.db import models
 from opencontext_py.apps.ocitems.strings.models import OCstring
 
 

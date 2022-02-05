@@ -1,9 +1,6 @@
-import json
 import datetime
-from django.conf import settings
 from django.utils.http import urlencode
 from django.core.paginator import Paginator
-from django.utils import feedgenerator
 from opencontext_py.apps.ocitems.manifest.pagedfeed import PagedFeedMaker
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict

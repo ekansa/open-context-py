@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 

@@ -2,10 +2,8 @@ import csv
 import os
 import json
 import requests
-from django.utils.encoding import smart_text
 from time import sleep
 from collections import OrderedDict
-from django.db import models
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI

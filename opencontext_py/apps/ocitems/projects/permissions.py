@@ -1,6 +1,5 @@
 import datetime
-from django.contrib.auth.models import User, Group
-from django.db import models
+from django.contrib.auth.models import Group
 from django.db.models import Q
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest

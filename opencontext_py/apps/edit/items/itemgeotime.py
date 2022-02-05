@@ -1,10 +1,5 @@
-import time
-import datetime
 import json
 from dateutil.parser import parse
-from django.db import models
-from django.db.models import Q
-from django.conf import settings
 from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.validategeojson import ValidateGeoJson

@@ -1,10 +1,5 @@
 
-import copy
-import hashlib
-import uuid as GenUUID
 
-from django.core.cache import caches
-from django.db.models import OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 

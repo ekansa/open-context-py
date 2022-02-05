@@ -1,12 +1,8 @@
 
 import copy
-import hashlib
-import uuid as GenUUID
 
 from django.conf import settings
-from django.core.cache import caches
-from django.db.models import OuterRef, Subquery
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from django.utils.http import urlquote
 
 from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.general import LastUpdatedOrderedDict

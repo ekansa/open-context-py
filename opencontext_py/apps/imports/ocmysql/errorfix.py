@@ -1,4 +1,3 @@
-import json
 import requests
 from django.db import connection
 from opencontext_py.apps.ocitems.assertions.models import Assertion

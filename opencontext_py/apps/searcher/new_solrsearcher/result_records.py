@@ -1,10 +1,8 @@
 import copy
-import json
 import logging
 import lxml.html
 
 from django.conf import settings
-from django.db.models import Subquery, Q, OuterRef
 from django.utils.html import strip_tags
 
 from opencontext_py.libs.isoyears import ISOyears

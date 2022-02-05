@@ -1,12 +1,7 @@
-import os
-import hashlib
-import time
-import uuid as GenUUID
 
 import numpy as np
 import pandas as pd
 
-from django.db.models import Count, Q, OuterRef, Subquery
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.defaults import (

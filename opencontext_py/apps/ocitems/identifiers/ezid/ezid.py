@@ -1,8 +1,6 @@
 import re
-import json
 import requests
 from time import sleep
-from requests.auth import HTTPBasicAuth
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI

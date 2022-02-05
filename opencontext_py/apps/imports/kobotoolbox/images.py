@@ -1,10 +1,6 @@
-import fnmatch
-from time import sleep
-import uuid as GenUUID
-import os, sys, shutil
-import codecs
+import os
+import shutil
 from PIL import Image, ImageFile
-from django.db import models
 from django.db.models import Q
 from django.conf import settings
 from opencontext_py.apps.imports.records.models import ImportCell

@@ -1,6 +1,3 @@
-import sys
-import json
-from time import sleep
 from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion

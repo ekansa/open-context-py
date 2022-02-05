@@ -2,8 +2,6 @@ import json
 from django.http import HttpResponse, Http404
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
-from django.template import RequestContext, loader
-from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 

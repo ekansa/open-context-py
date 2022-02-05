@@ -1,9 +1,5 @@
-import datetime
-from django.conf import settings
 from django.utils.http import urlencode
-from django.utils import feedgenerator
-from django.utils.feedgenerator import SyndicationFeed, Atom1Feed
-from django.contrib.syndication.views import Feed
+from django.utils.feedgenerator import Atom1Feed
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement

@@ -1,5 +1,3 @@
-import hashlib
-from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.entities.entity.models import Entity 
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation

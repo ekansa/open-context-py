@@ -1,7 +1,5 @@
 import time
 import json
-import django.utils.http as http
-from datetime import datetime
 from django.conf import settings
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.memorycache import MemoryCache

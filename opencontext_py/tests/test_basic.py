@@ -2,7 +2,6 @@ import pytest
 import json
 
 from django.db import connection
-from django.test.utils import setup_test_environment
 from django.test.client import Client
 from django.conf import settings
 

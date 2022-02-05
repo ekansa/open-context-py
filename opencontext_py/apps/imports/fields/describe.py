@@ -1,6 +1,4 @@
 from titlecase import titlecase
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation

@@ -1,6 +1,5 @@
 import pytest
 import logging
-import random
 
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 

@@ -1,4 +1,3 @@
-import json
 import requests
 from urllib.parse import urlparse, parse_qs
 from opencontext_py.libs.general import LastUpdatedOrderedDict

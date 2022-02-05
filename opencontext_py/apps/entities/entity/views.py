@@ -1,7 +1,5 @@
 import json
-import mimetypes
 import requests
-import logging
 from django.http import HttpResponse, Http404
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath

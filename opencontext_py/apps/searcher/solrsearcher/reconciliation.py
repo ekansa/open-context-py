@@ -1,7 +1,4 @@
-import re
-import datetime
 import operator
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.entity.models import Entity

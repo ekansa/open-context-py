@@ -4,7 +4,7 @@ from django.http import HttpResponse, Http404
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
-from django.template import RequestContext, loader
+from django.template import loader
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkvocabularies.templating import TemplateVocab

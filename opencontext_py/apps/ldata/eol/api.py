@@ -1,4 +1,3 @@
-import json
 import requests
 from time import sleep
 from opencontext_py.libs.general import LastUpdatedOrderedDict

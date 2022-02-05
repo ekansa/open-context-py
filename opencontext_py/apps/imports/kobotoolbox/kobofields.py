@@ -1,4 +1,3 @@
-from django.conf import settings
 from opencontext_py.apps.imports.fields.models import ImportField 
 
 class KoboFields():

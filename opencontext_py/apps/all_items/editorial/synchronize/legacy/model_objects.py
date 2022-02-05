@@ -1,8 +1,6 @@
 import pytz
 
 from django.conf import settings
-from datetime import datetime
-from django.utils import timezone
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.events.models import Event

@@ -1,4 +1,3 @@
-from django.conf import settings
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 

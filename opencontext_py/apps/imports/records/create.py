@@ -1,9 +1,5 @@
-import uuid as GenUUID
-import datetime
 import numpy as np
 import pandas as pd
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.fields.create import ImportFields

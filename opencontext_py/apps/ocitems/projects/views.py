@@ -1,4 +1,3 @@
-import json
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 
@@ -14,8 +13,7 @@ from opencontext_py.apps.ocitems.projects.content import ProjectContent
 from opencontext_py.apps.ocitems.projects.layers import ProjectLayers
 from opencontext_py.apps.ocitems.ocitem.views import items_graph
 
-from django.template import RequestContext, loader
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.template import loader
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers

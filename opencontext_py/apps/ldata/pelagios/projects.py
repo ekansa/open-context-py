@@ -1,7 +1,5 @@
-import time
 from rdflib import Graph, URIRef, Literal, Namespace
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
-from django.conf import settings
 from opencontext_py.libs.languages import Languages
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity

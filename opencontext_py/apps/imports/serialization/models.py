@@ -2,7 +2,6 @@ import pytz
 import os
 import json
 import codecs
-from django.db import models
 from django.db import transaction
 from django.conf import settings
 from datetime import datetime

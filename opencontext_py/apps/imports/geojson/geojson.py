@@ -1,8 +1,7 @@
 import re
 import json
-import os, sys, shutil
+import os
 import codecs
-import datetime
 import geojson
 from geojson import Polygon
 from shapely.geometry import Point
@@ -11,8 +10,6 @@ from shapely.geometry import shape
 from unidecode import unidecode
 from dateutil.parser import parse
 from collections import OrderedDict
-from django.db import models
-from django.db.models import Q
 from django.conf import settings
 from django.template.defaultfilters import slugify
 from opencontext_py.libs.general import LastUpdatedOrderedDict

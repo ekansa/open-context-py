@@ -1,7 +1,5 @@
-import json
 from django.conf import settings
 from django.db import connection
-from django.db import models
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache

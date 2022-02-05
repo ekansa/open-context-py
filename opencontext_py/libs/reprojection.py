@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-import json
 import pyproj
 
 from pyproj import Proj, transform
 
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 
@@ -23,7 +21,6 @@ class ReprojectUtilities():
         self.input_crs = None
         self.output_crs = None
         self.invert_x_y_pairs = False
-        pass
     
     def set_in_out_crs(self, input_crs_id, output_crs_id):
         """Sets the input and output CRS by passing CRS ids. """

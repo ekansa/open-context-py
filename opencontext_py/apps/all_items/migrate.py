@@ -1,5 +1,4 @@
 
-import uuid as GenUUID
 import os
 
 from opencontext_py.apps.all_items import configs

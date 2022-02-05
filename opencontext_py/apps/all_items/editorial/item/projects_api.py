@@ -1,18 +1,9 @@
-import copy
-import json
 import uuid as GenUUID
 
 import reversion
 
-from django.conf import settings
-from django.core.validators import (
-    validate_slug as django_validate_slug,
-    URLValidator
-)
 
 from django.db.models import Q
-from django.db import transaction
-from django.utils import timezone
 
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict

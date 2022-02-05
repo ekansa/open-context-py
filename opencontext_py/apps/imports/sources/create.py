@@ -1,7 +1,5 @@
 import uuid as GenUUID
-import datetime
 from dateutil.parser import parse
-from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField

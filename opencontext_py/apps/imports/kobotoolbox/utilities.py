@@ -1,10 +1,7 @@
-from time import sleep
-import uuid as GenUUID
-import os, sys, shutil
+import os
 import numpy as np
 import pandas as pd
 import xlrd
-from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 LABEL_ALTERNATIVE_PARTS = {

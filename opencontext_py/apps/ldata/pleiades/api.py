@@ -1,5 +1,4 @@
 import hashlib
-import json
 import requests
 from time import sleep
 

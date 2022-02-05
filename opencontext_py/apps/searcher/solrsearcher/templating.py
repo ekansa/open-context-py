@@ -1,4 +1,3 @@
-import datetime
 from django.utils.html import strip_tags
 from django.http import QueryDict
 from django.conf import settings

@@ -2,7 +2,6 @@ import json
 import os
 import codecs
 from collections import OrderedDict
-from django.db import models
 from django.conf import settings
 
 

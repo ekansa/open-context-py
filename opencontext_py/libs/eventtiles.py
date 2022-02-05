@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import re
-import numbers
-import math
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 

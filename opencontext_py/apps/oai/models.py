@@ -4,7 +4,7 @@ import json
 import requests
 from lxml import etree
 from django.conf import settings
-from django.db.models import Max, Min, Count, Avg
+from django.db.models import Min
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache

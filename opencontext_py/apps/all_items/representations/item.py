@@ -1,10 +1,7 @@
 
 import copy
-import hashlib
-from sys import dont_write_bytecode
-import uuid as GenUUID
 
-from django.db.models import Q, OuterRef, Subquery
+from django.db.models import OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 

@@ -1,7 +1,6 @@
 
 import copy
 import hashlib
-import uuid as GenUUID
 
 import numpy as np
 import pandas as pd

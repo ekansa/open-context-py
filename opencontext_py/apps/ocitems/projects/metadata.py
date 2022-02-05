@@ -2,8 +2,6 @@ import json
 import numpy as np
 from numpy import vstack, array
 from scipy.cluster.vq import kmeans,vq
-from math import radians, cos, sin, asin, sqrt
-from django.db import models
 from django.db.models import Avg, Max, Min
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -149,7 +147,6 @@ class ProjectMeta():
             uuids.append(project_uuid)
         self.get_geo_range(uuids)
         if self.geo_range is False:
-            pass
             if self.print_progress:
                 print('Range fail: ' + str(self.geo_range) )
         else:

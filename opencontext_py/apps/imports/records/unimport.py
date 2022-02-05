@@ -1,5 +1,3 @@
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event

@@ -1,8 +1,6 @@
 import json
-import hashlib
 import uuid as GenUUID
 from django.conf import settings
-from django.db import models
 from unidecode import unidecode
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion

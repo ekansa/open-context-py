@@ -1,11 +1,7 @@
 #!/usr/bin/env python
-import json
-import math
 import numpy as np
 from numpy import vstack, array
 from scipy.cluster.vq import kmeans,vq
-from math import radians, cos, sin, asin, sqrt
-from django.conf import settings
 from shapely.geometry import shape, mapping 
 from shapely.ops import cascaded_union, unary_union
 from opencontext_py.libs.general import LastUpdatedOrderedDict

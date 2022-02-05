@@ -1,7 +1,5 @@
 import hashlib
-from django.conf import settings
 from django.core.cache import caches
-import django.utils.http as http
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity

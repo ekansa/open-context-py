@@ -8,7 +8,7 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.templating import ExpTableTemplating
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
-from django.template import RequestContext, loader
+from django.template import loader
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 

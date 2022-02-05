@@ -1,6 +1,5 @@
 import os
 import codecs
-import re
 import json
 from collections import OrderedDict
 from lxml import etree

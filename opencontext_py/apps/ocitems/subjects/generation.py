@@ -1,7 +1,5 @@
-import hashlib
 from django.db import IntegrityError
-from django.db import models
-from django.db.models import Avg, Max, Min
+from django.db.models import Max
 from unidecode import unidecode
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.ocitem.models import OCitem as OCitem

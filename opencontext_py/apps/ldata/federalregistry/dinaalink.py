@@ -1,14 +1,5 @@
-import json
-import os
-import codecs
-import requests
 import feedparser
-import hashlib
-from time import sleep
-from django.conf import settings
 from django.db import connection
-from django.db import models
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ocitems.manifest.models import Manifest

@@ -1,9 +1,5 @@
-import time
-import uuid as GenUUID
 from lxml import etree
 import lxml.html
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions

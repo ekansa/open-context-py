@@ -1,7 +1,6 @@
 from time import sleep
 import uuid as GenUUID
 from django.conf import settings
-from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile

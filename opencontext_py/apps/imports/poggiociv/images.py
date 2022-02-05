@@ -1,11 +1,7 @@
-import re
-import os, sys, shutil
-import codecs
+import os
 import uuid as GenUUID
 from time import sleep
-from django.db import models
 from django.conf import settings
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation

@@ -1,15 +1,10 @@
-import fnmatch
-from time import sleep
 import uuid as GenUUID
-import os, sys, shutil
-import codecs
+import os
+import shutil
 import numpy as np
 import pandas as pd
 
 from PIL import Image, ImageFile
-from django.db import models
-from django.db.models import Q
-from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.imports.kobotoolbox.utilities import (

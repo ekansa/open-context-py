@@ -1,6 +1,4 @@
 
-import copy
-import hashlib
 
 
 import numpy as np
@@ -9,13 +7,9 @@ import pandas as pd
 from sklearn.cluster import KMeans, AffinityPropagation, SpectralClustering
 from shapely.geometry import mapping, shape
 
-from math import radians, cos, sin, asin, sqrt
 
-from django.db.models import Avg, Max, Min
 from django.db.models import Q
 
-from django.core.cache import caches
-from django.db.models import OuterRef, Subquery
 
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 

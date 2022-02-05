@@ -1,6 +1,4 @@
-import copy
 import datetime
-import json
 from django.conf import settings
 from opencontext_py.libs.languages import Languages
 from django.utils.encoding import force_text

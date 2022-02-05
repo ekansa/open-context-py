@@ -1,7 +1,6 @@
 import json
 import lxml.html
 from django.conf import settings
-import django.utils.http as http
 from django.utils.html import strip_tags
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.memorycache import MemoryCache

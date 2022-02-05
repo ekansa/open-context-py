@@ -1,7 +1,4 @@
 
-import copy
-import datetime
-import hashlib
 
 from lxml import etree
 import lxml.html
@@ -10,7 +7,6 @@ from random import sample
 import uuid as GenUUID
 
 from django.db.models import Q
-from django.db.models import OuterRef, Subquery
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 

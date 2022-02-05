@@ -1,6 +1,3 @@
-import hashlib
-from django.conf import settings
-from django.db import models
 from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation

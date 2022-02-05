@@ -1,16 +1,7 @@
 import os
-from io import StringIO, BytesIO
-from os import listdir
-from os.path import isfile, join
 from lxml import etree
-import requests
-from time import sleep
-import datetime
 from dateutil.parser import parse
-from collections import OrderedDict
-from django.db import models
 from django.conf import settings
-from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest

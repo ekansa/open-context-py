@@ -1,11 +1,5 @@
-import json
-import requests
-from time import sleep
 from django.conf import settings
 from django.db import connection
-from django.db import models
-from django.db.models import Q
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.isoyears import ISOyears

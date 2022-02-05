@@ -1,5 +1,4 @@
 import copy
-from django.conf import settings
 
 from opencontext_py.apps.all_items import configs
 

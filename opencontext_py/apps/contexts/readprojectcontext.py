@@ -1,6 +1,4 @@
 import logging
-from django.conf import settings
-from django.core.cache import caches
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache

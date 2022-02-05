@@ -1,10 +1,6 @@
 import copy
-import json
 import logging
-from sys import flags
 import time
-from datetime import datetime
-from django.conf import settings
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.isoyears import ISOyears

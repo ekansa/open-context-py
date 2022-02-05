@@ -1,6 +1,3 @@
-import re
-import datetime
-from django.conf import settings
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.indexer.solrdocument import SolrDocument

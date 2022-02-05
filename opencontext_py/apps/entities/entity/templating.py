@@ -1,6 +1,3 @@
-from django.db import models
-from django.conf import settings
-from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.entities.uri.models import URImanagement

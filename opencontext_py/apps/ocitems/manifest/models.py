@@ -1,11 +1,9 @@
 import pytz
-import time
 import re
 import roman
 import reversion  # version control object
 import collections
 from jsonfield import JSONField  # json field for complex objects
-from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
 from math import pow

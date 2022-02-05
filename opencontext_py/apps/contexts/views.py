@@ -1,7 +1,5 @@
 import json
-from django.conf import settings
 from django.http import HttpResponse, Http404
-from django.template import RequestContext, loader
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.graph import (
     RDF_SERIALIZATIONS,
@@ -12,7 +10,6 @@ from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from django.views.decorators.cache import cache_control
-from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers
 
 

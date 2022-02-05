@@ -1,9 +1,6 @@
 import time
 import collections
 import hashlib
-from datetime import datetime
-from django.conf import settings
-from django.utils import timezone
 from django.db import models
 from jsonfield import JSONField
 

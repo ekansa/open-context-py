@@ -1,5 +1,4 @@
 import re
-from django.conf import settings
 
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 from opencontext_py.apps.indexer import solr_utils

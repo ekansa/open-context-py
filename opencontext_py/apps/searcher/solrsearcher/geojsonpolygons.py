@@ -1,12 +1,8 @@
-import re
 import json
 import geojson
-import copy
 from django.conf import settings
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
-from urllib.parse import urlparse, parse_qs
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator

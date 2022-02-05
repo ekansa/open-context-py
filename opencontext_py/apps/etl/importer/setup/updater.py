@@ -1,9 +1,5 @@
-import json
-import uuid as GenUUID
 
-from django.conf import settings
 
-from django.db.models import Q
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (

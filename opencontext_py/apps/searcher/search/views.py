@@ -1,7 +1,7 @@
 import json
 from django.conf import settings
 from django.shortcuts import redirect
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.template import RequestContext, loader
 from opencontext_py.libs.rootpath import RootPath
 
@@ -18,7 +18,6 @@ from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
 from opencontext_py.apps.searcher.solrsearcher.reconciliation import Reconciliation
 from opencontext_py.apps.searcher.solrsearcher.projtemplating import ProjectAugment
 from django.views.decorators.cache import cache_control
-from django.views.decorators.cache import never_cache
 from django.views.decorators.cache import cache_page
 from django.utils.cache import patch_vary_headers
 

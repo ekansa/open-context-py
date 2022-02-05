@@ -1,7 +1,4 @@
-import json
-from django.conf import settings
-from django.http import HttpResponse, Http404
-from django.template import RequestContext, loader
+from django.http import HttpResponse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.contexts.models import ItemContext

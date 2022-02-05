@@ -2,7 +2,6 @@ import pytest
 
 import os
 import logging
-import random
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.legacy_all import update_old_id

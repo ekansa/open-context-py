@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.db import models
 from django.db.models import Q, Count
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.libs.general import LastUpdatedOrderedDict

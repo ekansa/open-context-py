@@ -1,4 +1,3 @@
-from django.db import models
 from django.db.models import Max, Min, Count, Avg
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.assertions.models import Assertion

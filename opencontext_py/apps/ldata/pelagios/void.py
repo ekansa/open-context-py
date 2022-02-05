@@ -1,4 +1,3 @@
-import time
 from rdflib import Graph, URIRef, Literal, Namespace
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 from django.conf import settings

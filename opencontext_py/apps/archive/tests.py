@@ -2,8 +2,6 @@ import os
 import json
 import codecs
 import requests
-from django.db import models
-from django.db import transaction
 from django.conf import settings
 from django.test import TestCase
 from django.test.client import Client

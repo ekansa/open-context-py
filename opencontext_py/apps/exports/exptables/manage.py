@@ -1,9 +1,7 @@
 import os
-import json
 from time import sleep
 from unidecode import unidecode
 from django.db.models import Count
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity

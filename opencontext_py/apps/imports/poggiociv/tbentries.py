@@ -1,23 +1,13 @@
-import re
-import os
-import json
-import codecs
 import requests
-import time
 from lxml import etree
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import lxml.html
 from lxml.html.clean import Cleaner
 from unidecode import unidecode
-from django.conf import settings
-from django.db import connection
-from django.db.models import Q
-from django.db.models import Avg, Max, Min
 from time import sleep
 from django.db.models.functions import Length
 from opencontext_py.libs.isoyears import ISOyears
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
@@ -653,7 +643,6 @@ print(href)
                         ok = False
                     if ok is False:
                         old_s.delete()
-                        pass
                 for old_o in sub_links_o:
                     new_ass = old_o
                     new_ass.object_uuid = rel_unit.uuid
@@ -665,7 +654,6 @@ print(href)
                         ok = False
                     if ok is False:
                         old_o.delete()
-                        pass
             if all_ok:
                 print('Merged: ' + old_label + ' -> ' + new_man.label)
                 print('')

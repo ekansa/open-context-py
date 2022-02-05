@@ -1,6 +1,3 @@
-import hashlib
-from django.conf import settings
-from django.core.cache import caches
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath

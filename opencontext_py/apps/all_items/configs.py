@@ -1,5 +1,4 @@
 
-from django.conf import settings
 
 
 # Maximum depth of all Open Context hierarchies

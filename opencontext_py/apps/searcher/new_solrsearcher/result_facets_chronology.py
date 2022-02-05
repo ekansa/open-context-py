@@ -1,6 +1,5 @@
 import copy
 
-from django.conf import settings
 
 
 from opencontext_py.libs.utilities import chronotiles

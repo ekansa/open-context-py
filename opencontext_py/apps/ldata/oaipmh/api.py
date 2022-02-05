@@ -1,10 +1,6 @@
-import json
 import requests
-import hashlib
 from lxml import etree
 from time import sleep
-from django.conf import settings
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 

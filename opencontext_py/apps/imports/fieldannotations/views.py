@@ -7,8 +7,6 @@ from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubject
 from opencontext_py.apps.imports.fieldannotations.descriptions import ProcessDescriptions
 from opencontext_py.apps.imports.fieldannotations.links import ProcessLinks
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from django.template import RequestContext, loader
-from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 

@@ -1,6 +1,4 @@
-import json
 import requests
-from django.db import models
 from django.conf import settings
 from django.core.cache import caches
 from opencontext_py.apps.searcher.solrsearcher.solrdirect import SolrDirect

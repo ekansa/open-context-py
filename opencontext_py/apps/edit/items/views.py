@@ -1,5 +1,5 @@
 import json
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -17,7 +17,7 @@ from django.db import transaction
 import reversion
 from opencontext_py.apps.edit.versioning.models import VersionMetadata
 from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
-from django.template import RequestContext, loader
+from django.template import loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 

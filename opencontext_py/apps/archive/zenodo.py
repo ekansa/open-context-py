@@ -1,7 +1,6 @@
 import json
 import os
 import requests
-from io import BytesIO
 from time import sleep
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict

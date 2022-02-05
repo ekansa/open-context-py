@@ -1,7 +1,4 @@
-from django.conf import settings
-from datetime import datetime
 from django.utils import timezone
-from django.db import models
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 

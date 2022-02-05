@@ -1,7 +1,3 @@
-import uuid as GenUUID
-from django.conf import settings
-from django.db import models
-from django.utils.http import urlunquote
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.entities.entity.models import Entity

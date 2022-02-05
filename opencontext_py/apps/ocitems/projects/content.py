@@ -1,5 +1,3 @@
-from django import db
-from django.db import models
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.entities.entity.models import Entity

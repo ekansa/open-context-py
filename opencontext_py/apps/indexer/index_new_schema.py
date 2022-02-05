@@ -1,12 +1,9 @@
 
 import logging
-from math import remainder
 import time
 
-from datetime import datetime
 from itertools import islice
 
-from django.conf import settings
 from django.core.cache import caches
 
 from opencontext_py.apps.all_items.models import AllManifest

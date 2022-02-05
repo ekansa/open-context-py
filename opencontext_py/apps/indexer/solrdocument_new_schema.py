@@ -1,10 +1,7 @@
 import copy
 import datetime
-import json
-from django.conf import settings
 from django.core.cache import caches
 
-from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.utilities import chronotiles

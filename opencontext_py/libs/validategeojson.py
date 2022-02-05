@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 import math
-from django.db import models
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.geospace.models import Geospace

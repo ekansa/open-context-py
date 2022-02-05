@@ -4,7 +4,7 @@ import requests
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import SKOS, RDFS, OWL
 from django.conf import settings
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from django.utils.http import urlquote
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement

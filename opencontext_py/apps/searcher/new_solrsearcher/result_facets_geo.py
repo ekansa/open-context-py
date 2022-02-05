@@ -1,8 +1,6 @@
 import copy
-import json
 import logging
 
-from django.conf import settings
 
 
 from opencontext_py.libs.globalmaptiles import GlobalMercator

@@ -1,8 +1,3 @@
-import uuid as GenUUID
-import datetime
-from django.conf import settings
-from datetime import datetime, date, time
-from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.entities.uri.models import URImanagement

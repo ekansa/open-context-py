@@ -1,11 +1,8 @@
-import sys
 import csv
 import os
 import datetime
 import time
 import re
-from time import mktime
-from time import sleep
 from django.conf import settings
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest

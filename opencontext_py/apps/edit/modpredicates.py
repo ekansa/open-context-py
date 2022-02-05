@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -17,7 +15,6 @@ class PredicateMerge():
 
     def merge_identical_predicates(self, project_uuid):
         """ Merges identical predicates in a project """
-        pass
 
     def get_identical_predicates(self, project_uuid):
         """ Merges identical predicates in a project """

@@ -812,7 +812,6 @@ sd_b = sd_obj.fields
         """ get chronological metadata for 'predicate' and 'type' items
         
         """
-        pass
 
     def _process_category(self):
         """ Finds category / type data ('class_uri' n the manifest table)

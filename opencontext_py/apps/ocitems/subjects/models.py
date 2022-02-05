@@ -1,5 +1,4 @@
 import hashlib
-from django.db import IntegrityError
 from django.db import models
 
 

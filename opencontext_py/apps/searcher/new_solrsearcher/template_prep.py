@@ -1,14 +1,6 @@
-import copy
 import itertools
-import json
-import logging
-import re
-import time
-from datetime import datetime
 
-from django.utils.html import strip_tags
 
-from django.conf import settings
 
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict

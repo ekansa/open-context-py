@@ -1,5 +1,4 @@
 import re
-import json
 import requests
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict

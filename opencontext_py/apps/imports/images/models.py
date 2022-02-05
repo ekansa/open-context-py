@@ -1,7 +1,6 @@
-import os, sys, shutil
-import codecs
+import os
+import shutil
 from PIL import Image, ImageFile, ImageFilter
-from django.db import models
 from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.geospace.models import Geospace

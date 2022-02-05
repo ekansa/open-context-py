@@ -1,7 +1,3 @@
-import hashlib
-from django.core.cache import caches
-from django.db import models
-from django.db.models import Q
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache

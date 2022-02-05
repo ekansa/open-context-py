@@ -1,8 +1,6 @@
 import os
 import codecs
 from django.conf import settings
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest

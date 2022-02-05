@@ -1,7 +1,5 @@
 import json
-import mimetypes
 from django.http import HttpResponse, Http404
-from django.conf import settings
 from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -13,8 +11,6 @@ from opencontext_py.libs.graph import (
     strip_non_point_features
 )
 from opencontext_py.apps.entities.redirects.manage import RedirectURL
-from django.views.decorators.cache import cache_control
-from django.views.decorators.cache import never_cache
 from opencontext_py.apps.contexts.manage import consolidate_contexts
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 from django.utils.cache import patch_vary_headers    

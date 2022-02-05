@@ -1,7 +1,4 @@
 import re
-from django.conf import settings
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
@@ -33,7 +30,6 @@ class TrinomialManage():
 
     def __init__(self):
         self.remove_prepended_zeros = False
-        pass
 
     def prepend_qualifier_dash(self):
         """ goes through each identifier and prepends a '-' for

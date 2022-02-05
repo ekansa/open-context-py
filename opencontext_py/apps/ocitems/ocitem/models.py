@@ -2,14 +2,10 @@ import time
 import json
 import geojson
 import copy
-import hashlib
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
-from collections import OrderedDict
 from django.conf import settings
-from django.db import models
 from django.db.models import Q
-from django.core.cache import caches
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears

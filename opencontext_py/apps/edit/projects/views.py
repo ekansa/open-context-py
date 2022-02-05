@@ -1,4 +1,3 @@
-import json
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -6,7 +5,7 @@ from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.imports.sources.projects import ImportProjects
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.projects.overview import ProjectOverview
-from django.template import RequestContext, loader
+from django.template import loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 

@@ -1,10 +1,7 @@
 import json
 import pyproj
-import random
 
-from django.http import HttpResponse, Http404
-from django.conf import settings
-from django.template import RequestContext, loader
+from django.http import HttpResponse
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.reprojection import ReprojectUtilities

@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.db import models
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity

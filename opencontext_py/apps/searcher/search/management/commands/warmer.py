@@ -1,11 +1,9 @@
 import time
-import json
 import requests
 from unidecode import unidecode
 from time import sleep
 
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.rootpath import RootPath

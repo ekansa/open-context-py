@@ -2,7 +2,7 @@ import json
 from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
-from django.template import RequestContext, loader
+from django.template import loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from opencontext_py.apps.entities.entity.models import Entity

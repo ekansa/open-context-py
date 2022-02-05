@@ -1,7 +1,4 @@
 
-import copy
-import datetime
-import uuid as GenUUID
 
 from django.conf import settings
 

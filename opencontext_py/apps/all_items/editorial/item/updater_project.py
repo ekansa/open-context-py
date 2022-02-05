@@ -1,12 +1,8 @@
-import copy
-import json
 import logging
 import time
-import uuid as GenUUID
 
 import django_rq
 
-from django.conf import settings
 from django.core.cache import caches
 
 from opencontext_py.apps.all_items import configs

@@ -1,7 +1,5 @@
 import uuid as GenUUID
 import datetime
-from django.db import models
-from django.db.models import Q
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement

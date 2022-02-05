@@ -1,7 +1,4 @@
-import uuid as GenUUID
-from django.conf import settings
-from datetime import datetime, date, time
-from django.db import models
+from datetime import datetime
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement

@@ -1,13 +1,8 @@
 
-from time import sleep
-import uuid as GenUUID
-import os, sys, shutil
 import numpy as np
 import pandas as pd
 import xlrd
 
-from django.conf import settings
-from django.db.models import Q
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject

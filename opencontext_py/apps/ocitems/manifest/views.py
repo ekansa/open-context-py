@@ -1,14 +1,9 @@
-import json
-from django.utils.http import urlencode
-from django.conf import settings
 from django.shortcuts import redirect
 from django.http import HttpResponse, Http404
-from django.template import RequestContext, loader
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.manifest.feed import ManifestFeed
-from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 

@@ -1,4 +1,3 @@
-from django.db import models
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity, LinkEntityGeneration
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence

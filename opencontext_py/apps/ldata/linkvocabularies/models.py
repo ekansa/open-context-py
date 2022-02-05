@@ -1,5 +1,4 @@
 import itertools
-import json
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 from opencontext_py.libs.languages import Languages

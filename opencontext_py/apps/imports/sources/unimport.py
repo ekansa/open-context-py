@@ -1,6 +1,4 @@
-import datetime
-from django.db import models
-from django.db.models import Q, Max
+from django.db.models import Max
 from django.core.cache import cache
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace

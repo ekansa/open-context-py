@@ -1,14 +1,10 @@
 import copy
-import json
-import uuid as GenUUID
 
 import reversion
 
-from django.conf import settings
 from django.core.cache import caches
 
 from django.db.models import Q
-from django.db import transaction
 from django.utils import timezone
 
 

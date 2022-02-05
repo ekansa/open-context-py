@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User, Group
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (

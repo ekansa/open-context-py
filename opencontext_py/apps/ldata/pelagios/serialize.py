@@ -1,6 +1,5 @@
 import os
 import codecs
-from django.db import models
 from django.conf import settings
 from rdflib import Graph
 

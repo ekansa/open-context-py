@@ -1,4 +1,3 @@
-from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.contexts.models import (
     GeneralContext,

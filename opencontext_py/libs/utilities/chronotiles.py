@@ -1,4 +1,3 @@
-import enum
 import re
 import numbers
 

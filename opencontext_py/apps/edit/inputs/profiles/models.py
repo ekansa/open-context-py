@@ -1,6 +1,5 @@
 import reversion  # version control object
 from datetime import datetime
-from django.utils import timezone
 from django.db import models
 
 

@@ -1,7 +1,5 @@
 import uuid as GenUUID
 from unidecode import unidecode
-import datetime
-from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.refine.api import RefineAPI

@@ -1,9 +1,7 @@
 import csv
 import uuid as GenUUID
-import os
 import numpy as np
 import pandas as pd
-from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.projects.models import Project

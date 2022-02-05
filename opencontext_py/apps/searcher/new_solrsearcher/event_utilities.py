@@ -1,8 +1,5 @@
-import copy
-import json
 import logging
 
-from django.conf import settings
 from django.core.cache import caches
 
 from opencontext_py.libs.globalmaptiles import GlobalMercator

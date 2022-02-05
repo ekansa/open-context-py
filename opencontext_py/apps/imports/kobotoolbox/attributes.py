@@ -1,13 +1,6 @@
-import csv
-import uuid as GenUUID
-import os, sys, shutil
-import codecs
 import numpy as np
 import pandas as pd
 
-from django.db import models
-from django.db.models import Q
-from django.conf import settings
 
 # Needed to repoject the site grid
 from opencontext_py.libs.reprojection import ReprojectUtilities

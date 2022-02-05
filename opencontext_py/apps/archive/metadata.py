@@ -1,6 +1,4 @@
-import time
 import datetime
-from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict

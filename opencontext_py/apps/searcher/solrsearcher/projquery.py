@@ -1,5 +1,3 @@
-import json
-from django.conf import settings
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.projects.models import Project

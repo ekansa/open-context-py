@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import json
 
-from django.conf import settings
-from django.http import HttpResponse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from rdflib.plugin import register, Parser
 from rdflib import ConjunctiveGraph, Graph, URIRef, Literal

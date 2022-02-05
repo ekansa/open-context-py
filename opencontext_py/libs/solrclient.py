@@ -1,4 +1,3 @@
-import copy
 import pysolr
 
 from django.conf import settings

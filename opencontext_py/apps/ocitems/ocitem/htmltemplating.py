@@ -1,5 +1,4 @@
 import json
-import copy
 import datetime
 from random import randint
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection

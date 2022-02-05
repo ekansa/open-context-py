@@ -1,13 +1,7 @@
-import json
-from django.conf import settings
-from django.http import HttpResponse, Http404
-from django.template import RequestContext, loader
+from django.http import HttpResponse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.oai.models import OAIpmh
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.cache import cache_control
-from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 
 

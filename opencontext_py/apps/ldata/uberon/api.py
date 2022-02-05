@@ -1,9 +1,7 @@
-import json
-import requests
 from time import sleep
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import SKOS, RDFS, OWL
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from django.utils.http import quote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 

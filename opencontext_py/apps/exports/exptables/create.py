@@ -1,6 +1,4 @@
 import uuid as GenUUID
-from django.db import models
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.manage import ExpManage

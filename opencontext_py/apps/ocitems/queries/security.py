@@ -1,5 +1,4 @@
 import re
-from django.conf import settings
 
 
 class SecurityForQuery():

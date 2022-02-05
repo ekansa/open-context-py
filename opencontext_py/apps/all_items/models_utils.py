@@ -1,20 +1,14 @@
-import copy
-import hashlib
-import json
 import re
 import roman
 import requests
-import time
 
 # For geospace manipulations.
 from shapely.geometry import mapping, shape
 
-from datetime import datetime
 from math import pow
 from time import sleep
 from unidecode import unidecode
 
-from django.conf import settings
 from django.core.cache import caches
 
 from django.db.models import Q

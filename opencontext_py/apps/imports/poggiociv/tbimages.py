@@ -1,10 +1,9 @@
 import fnmatch
 from time import sleep
 import uuid as GenUUID
-import os, sys, shutil
-import codecs
+import os
+import shutil
 from PIL import Image, ImageFile
-from django.db import models
 from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
@@ -112,7 +111,6 @@ for tb_ass in tb_asses:
                                     files_prepped = self.make_in_use_tb_files(dirs,
                                                                               imp_file)
                                 if os.path.exists(full_file):
-                                    pass
                                     print('Make and link: ' + imp_file.record + ' with : ' + tb_part.label)
                                     self.make_link_tb_media(root_tb_uuid,
                                                             tb_part,

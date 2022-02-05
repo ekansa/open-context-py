@@ -1,5 +1,4 @@
 import time
-from django.conf import settings
 from opencontext_py.apps.entities.httpmetrics.request import RequestHttpMetric
 
 

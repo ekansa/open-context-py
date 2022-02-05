@@ -1,9 +1,5 @@
-import time
-import uuid as GenUUID
 from lxml import etree
 import lxml.html
-from django.db import models
-from django.db.models import Q
 from django.core.cache import caches
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict

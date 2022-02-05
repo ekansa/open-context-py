@@ -1,5 +1,4 @@
 import feedparser
-import requests
 from time import sleep
 from time import mktime
 from datetime import datetime

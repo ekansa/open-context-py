@@ -1,11 +1,8 @@
 import json
-import csv
 import os
 import numpy as np
 import pandas as pd
 import re
-import uuid as GenUUID
-from django.conf import settings
 
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
 from opencontext_py.apps.ldata.federalregistry.api import FederalRegistryAPI

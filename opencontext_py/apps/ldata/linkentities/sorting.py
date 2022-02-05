@@ -1,4 +1,3 @@
-from django.db import models
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
 

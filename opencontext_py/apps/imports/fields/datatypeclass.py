@@ -1,9 +1,7 @@
-import re
 import datetime
 import hashlib
 from unidecode import unidecode
 from dateutil.parser import parse
-from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 

@@ -1,7 +1,3 @@
-import json
-import requests
-from django.db import connection
-from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
 from opencontext_py.apps.ocitems.assertions.models import Assertion

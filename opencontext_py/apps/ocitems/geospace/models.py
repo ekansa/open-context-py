@@ -5,7 +5,6 @@ try:
 except:
     pass  # just to get this in production
 import reversion  # version control object
-from collections import OrderedDict
 from django.db import models
 
 

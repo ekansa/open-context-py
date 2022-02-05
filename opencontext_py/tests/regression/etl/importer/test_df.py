@@ -1,8 +1,6 @@
 import pytest
 
-import os
 import logging
-import random
 
 from opencontext_py.apps.all_items import configs
 

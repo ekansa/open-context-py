@@ -1,9 +1,6 @@
 
-import uuid as GenUUID
 import itertools
-import json
 
-from django.db.models import Q
 
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import RDF, RDFS, SKOS, OWL

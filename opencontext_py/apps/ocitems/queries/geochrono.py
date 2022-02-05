@@ -1,8 +1,4 @@
-from django.conf import settings
-from django.db import connection
-from django.db import models
-from django.db.models import Q, Max, Min, Count, Avg
-from django.core.cache import caches
+from django.db.models import Count, Max, Min
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict

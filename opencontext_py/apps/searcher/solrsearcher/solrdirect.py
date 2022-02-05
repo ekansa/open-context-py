@@ -1,6 +1,4 @@
-import json
 import requests
-from django.conf import settings
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 

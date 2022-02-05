@@ -8,7 +8,7 @@ from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.ocitems.subjects.supplement import SubjectSupplement
 from opencontext_py.apps.ocitems.ocitem.views import items_graph
-from django.template import RequestContext, loader
+from django.template import loader
 from django.utils.cache import patch_vary_headers
 
 

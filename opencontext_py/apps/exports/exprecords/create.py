@@ -1,8 +1,5 @@
-import copy
 import datetime
-import json
-from django.db import models
-from django.db.models import Avg, Max, Min, Q
+from django.db.models import Max, Q
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.expfields.models import ExpField

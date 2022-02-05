@@ -1,7 +1,6 @@
 
 import copy
 
-from django.conf import settings
 from django.core.cache import caches
 
 from opencontext_py.apps.all_items import configs

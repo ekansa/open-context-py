@@ -1,10 +1,6 @@
-import json
-import os, sys, shutil
-import codecs
-import requests
-from io import BytesIO
+import os
+import shutil
 from time import sleep
-from django.db import models
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles

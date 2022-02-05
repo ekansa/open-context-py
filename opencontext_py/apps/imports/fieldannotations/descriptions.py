@@ -1,9 +1,5 @@
-import uuid as GenUUID
-import re
-import datetime
 from dateutil.parser import parse
 from django.conf import settings
-from django.db import models
 from django.db.models import Q
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -535,7 +531,6 @@ class ProcessDescriptions():
                     object_imp_cell_objs.append(cell)
         else:
             print('cannot find field_valueofs for ' + str(field_num))
-            pass
         return object_imp_cell_objs
 
 

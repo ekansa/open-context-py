@@ -1,10 +1,7 @@
-import time
 import reversion  # version control object
 import uuid as GenUUID
 import collections
 from datetime import datetime
-from django.conf import settings
-from django.utils import timezone
 from django.db import models
 from jsonfield import JSONField
 
