@@ -1,7 +1,7 @@
 import copy
 
 from django.core.cache import caches
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from opencontext_py.apps.all_items.models import AllManifest
 from opencontext_py.libs.isoyears import ISOyears
@@ -107,7 +107,7 @@ def get_solr_data_type_from_data_type(data_type, prefix=''):
 
 def ensure_text_solr_ok(text_str):
     """ Makes sure the text is solr escaped """
-    return force_text(
+    return force_str(
         text_str,
         encoding='utf-8',
         strings_only=False,

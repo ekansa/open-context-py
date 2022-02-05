@@ -1,8 +1,8 @@
 
 import copy
+from urllib.parse import quote
 
 from django.conf import settings
-from django.utils.http import urlquote
 
 from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -503,7 +503,7 @@ def check_cors_ok_or_proxy_url(url):
             return url
     # Use our proxy to make this CORS ok.
     rp = RootPath()
-    url = rp.get_baseurl() + '/entities/proxy/' + urlquote(url)
+    url = rp.get_baseurl() + '/entities/proxy/' + quote(url)
     return url
 
 

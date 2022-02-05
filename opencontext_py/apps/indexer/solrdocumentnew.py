@@ -1,7 +1,7 @@
 import datetime
 from django.conf import settings
 from opencontext_py.libs.languages import Languages
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.contexts.readprojectcontext import ReadProjectContextVocabGraph as projGraph
@@ -464,7 +464,7 @@ sd_obj_l.fields
     
     def ensure_text_ok(self):
         """ Makes sure the text is solr escaped """
-        self.fields['text'] = force_text(
+        self.fields['text'] = force_str(
             self.fields['text'],
             encoding='utf-8',
             strings_only=False,
@@ -1005,7 +1005,7 @@ sd_obj_l.fields
                     # Add all multi-lingual versions of the text to the text field.
                     act_str = lang_obj.get_all_value_str(val_obj['xsd:string'])
                     self.fields['text'] += str(act_str) + ' \n'
-                    act_str = force_text(
+                    act_str = force_str(
                         str(act_str),
                         encoding='utf-8',
                         strings_only=False,
@@ -1014,7 +1014,7 @@ sd_obj_l.fields
                     self.fields[solr_field_name].append(act_str)
                 else:
                     self.fields['text'] += str(val_obj) + ' \n'
-                    act_str = force_text(
+                    act_str = force_str(
                         str(val_obj),
                         encoding='utf-8',
                         strings_only=False,

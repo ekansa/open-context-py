@@ -1,8 +1,6 @@
 import decimal
 import hashlib
 import json
-import pytz
-import roman
 import reversion  # version control object
 import uuid as GenUUID
 
@@ -14,7 +12,7 @@ from unidecode import unidecode
 
 from django.db import models
 
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 

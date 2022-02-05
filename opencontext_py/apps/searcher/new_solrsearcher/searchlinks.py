@@ -1,6 +1,5 @@
 import copy
-from django.utils.http import quote_plus
-
+from urllib.parse import quote_plus
 
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms

@@ -1,7 +1,9 @@
+from urllib.parse import quote_plus
+
 from django.conf import settings
 from django.db import connection
 from django.db.models import Q
-from django.utils.http import quote_plus, urlquote_plus
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.isoyears import ISOyears
@@ -588,7 +590,7 @@ class OaItem():
             context_ex = [context]
         quote_context_list = []
         for c_part in context_ex:
-            url_c_part = urlquote_plus(c_part)
+            url_c_part = quote_plus(c_part)
             quote_context_list.append(url_c_part)
         return '/'.join(quote_context_list)        
     

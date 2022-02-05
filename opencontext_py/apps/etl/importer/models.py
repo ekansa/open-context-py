@@ -7,8 +7,7 @@ from unidecode import unidecode
 
 
 from django.db import models
-
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 
 # These are the "target schema" models.
 from opencontext_py.apps.all_items import configs

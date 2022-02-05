@@ -1,7 +1,5 @@
 import copy
-from django.utils.http import (
-    urlunquote_plus,
-)
+from urllib.parse import unquote_plus
 
 
 from opencontext_py.libs.rootpath import RootPath
@@ -348,7 +346,7 @@ class SearchFilters():
                 text_template_value = None
 
                 for act_val in hierarchy_vals:
-                    act_val = urlunquote_plus(act_val)
+                    act_val = unquote_plus(act_val)
                     parent_path_vals.append(act_val)
                     if hierarchy_delim:
                         act_full_path = hierarchy_delim.join(
