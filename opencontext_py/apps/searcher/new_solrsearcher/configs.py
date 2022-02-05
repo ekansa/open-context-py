@@ -23,7 +23,7 @@ REQUEST_URL_FORMAT_EXTENTIONS = [
 ]
 
 
-# Geospace and chronology related facets are in a hierachy of
+# Geospace and chronology related facets are in a hierarchy of
 # event classes. For now, we'll only use the root of the hierarchy, but
 # in the future we may want to implement features to allow queries and
 # visualizations of different types of geospatial and chronological 
