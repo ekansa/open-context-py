@@ -1,11 +1,9 @@
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.general import DCterms
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
-from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels

@@ -1,6 +1,4 @@
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity, LinkEntityGeneration
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext

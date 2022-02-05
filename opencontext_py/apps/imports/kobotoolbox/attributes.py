@@ -5,27 +5,8 @@ import pandas as pd
 # Needed to repoject the site grid
 from opencontext_py.libs.reprojection import ReprojectUtilities
 
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.subjects.models import Subject
 
-from opencontext_py.apps.imports.fields.models import ImportField
-from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
-from opencontext_py.apps.imports.records.models import ImportCell
-from opencontext_py.apps.imports.sources.models import ImportSource
 
-from opencontext_py.apps.imports.kobotoolbox.utilities import (
-    UUID_SOURCE_KOBOTOOLBOX,
-    UUID_SOURCE_OC_KOBO_ETL,
-    UUID_SOURCE_OC_LOOKUP,
-    list_excel_files,
-    read_excel_to_dataframes,
-    make_directory_files_df,
-    drop_empty_cols,
-    clean_up_multivalue_cols,
-    reorder_first_columns,
-    lookup_manifest_uuid,
-)
 
 REPROJECTED_LAT_COL = 'REPROJ_LAT'
 REPROJECTED_LON_COL = 'REPROJ_LON'

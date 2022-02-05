@@ -1,17 +1,10 @@
 from lxml import etree
 import lxml.html
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.ocitems.documents.models import OCdocument
-from opencontext_py.apps.ocitems.persons.models import Person
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
 
 class ItemLink():

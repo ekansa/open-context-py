@@ -9,13 +9,9 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
-    AllHistory,
     AllResource,
     AllIdentifier,
-    AllSpaceTime,
 )
-from opencontext_py.apps.all_items import utilities
-from opencontext_py.apps.all_items.project_contexts import context
 
 from opencontext_py.apps.all_items.representations import geojson
 from opencontext_py.apps.all_items.representations import metadata

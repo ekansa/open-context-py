@@ -2,7 +2,6 @@ from django.db.models import Q
 from opencontext_py.apps.entities.entity.models import Entity 
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
-from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.predicates.models import Predicate

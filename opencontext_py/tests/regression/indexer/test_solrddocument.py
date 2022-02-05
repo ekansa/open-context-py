@@ -1,6 +1,5 @@
 import pytest
 import logging
-from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 logger = logging.getLogger("tests-regression-logger")

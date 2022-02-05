@@ -5,14 +5,11 @@ from django.http import HttpResponse
 from django.template import RequestContext, loader
 from opencontext_py.libs.rootpath import RootPath
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
-from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.databasecache import DatabaseCache
 from opencontext_py.libs.filecache import FileCacheJSON
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
-from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
 from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
 from opencontext_py.apps.searcher.solrsearcher.reconciliation import Reconciliation

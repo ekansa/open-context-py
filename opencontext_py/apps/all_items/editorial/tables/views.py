@@ -5,22 +5,7 @@ import reversion
 from django.http import StreamingHttpResponse, HttpResponse, Http404
 
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
-from opencontext_py.apps.all_items.legacy_all import update_old_id
-from opencontext_py.apps.all_items.editorial import api as editorial_api
 
-from opencontext_py.apps.all_items.editorial.item import edit_configs
-from opencontext_py.apps.all_items.editorial.tables import create_df
 from opencontext_py.apps.all_items.editorial.tables import queue_utilities
 from opencontext_py.apps.all_items.editorial.tables import ui_utilities
 

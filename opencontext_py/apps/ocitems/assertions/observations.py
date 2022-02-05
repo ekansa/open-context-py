@@ -1,7 +1,5 @@
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.predicates.models import Predicate
 
 
 class AssertionObservations():

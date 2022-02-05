@@ -1,5 +1,4 @@
 from unidecode import unidecode
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.redirects.models import RedirectMapping
 from opencontext_py.apps.exports.exptables.identifiers import ExpTableIdentifiers
 

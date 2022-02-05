@@ -4,7 +4,6 @@ from time import sleep
 
 from django.core.cache import caches
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 
 from opencontext_py.apps.all_items.models import (

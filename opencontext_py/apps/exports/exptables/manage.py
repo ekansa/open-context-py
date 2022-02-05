@@ -4,8 +4,6 @@ from unidecode import unidecode
 from django.db.models import Count
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.identifiers import ExpTableIdentifiers

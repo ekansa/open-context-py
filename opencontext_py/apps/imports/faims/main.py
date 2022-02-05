@@ -1,16 +1,8 @@
 from dateutil.parser import parse
 from lxml import etree
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
-from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
-from opencontext_py.apps.imports.faims.files import FileManage
 from opencontext_py.apps.imports.faims.archents import ArchEntsImport
 from opencontext_py.apps.imports.faims.relations import RelationsImport
 from opencontext_py.apps.imports.faims.attributes import AttributesImport
-from opencontext_py.apps.imports.sources.models import ImportSource
-from opencontext_py.apps.imports.sources.unimport import UnImport
 
 
 class FaimsImport():

@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.oai.models import OAIpmh
 from django.views.decorators.csrf import csrf_exempt

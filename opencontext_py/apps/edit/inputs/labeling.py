@@ -1,10 +1,5 @@
 import re
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
-from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
-from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
-from opencontext_py.apps.edit.inputs.inputfields.models import InputField
-from opencontext_py.apps.edit.inputs.rules.models import InputRule
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.manifest.models import Manifest

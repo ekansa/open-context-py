@@ -1,8 +1,6 @@
 import hashlib
 from django.core.cache import caches
 from django.template.defaultfilters import slugify
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class DatabaseCache():

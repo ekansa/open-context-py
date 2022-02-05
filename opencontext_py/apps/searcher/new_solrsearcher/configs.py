@@ -1,4 +1,3 @@
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 

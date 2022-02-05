@@ -1,7 +1,6 @@
 import hashlib
 import reversion  # version control object
 from django.db import models
-from opencontext_py.apps.ocitems.geospace.models import Geospace
 
 
 # Events enables modeling of aspects of time and space for an item

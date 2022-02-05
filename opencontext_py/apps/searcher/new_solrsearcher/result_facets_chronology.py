@@ -7,7 +7,6 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 
-from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks

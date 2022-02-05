@@ -5,7 +5,6 @@ from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.entity.templating import EntityTemplate
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation

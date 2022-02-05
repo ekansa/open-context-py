@@ -1,8 +1,6 @@
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.eol.api import eolAPI
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity, LinkEntityGeneration
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 

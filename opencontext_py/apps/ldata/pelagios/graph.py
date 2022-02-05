@@ -3,9 +3,6 @@ from rdflib import Graph, URIRef, Literal, Namespace
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 from django.conf import settings
 from django.core.cache import caches
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.pelagios.models import PelagiosData
 from opencontext_py.apps.ldata.pelagios.gazannos import PelagiosGazetteerAnnotations
 from opencontext_py.apps.ldata.pelagios.serialize import SerizializeRDF

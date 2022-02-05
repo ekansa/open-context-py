@@ -1,8 +1,5 @@
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ldata.arachne.api import ArachneAPI
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 
 
 class TypeSupplement():

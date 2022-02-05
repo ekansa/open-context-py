@@ -1,6 +1,5 @@
 from django.shortcuts import redirect
 from django.http import HttpResponse, Http404
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.manifest.feed import ManifestFeed

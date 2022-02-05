@@ -3,11 +3,10 @@ from urllib.parse import unquote_plus
 
 
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities

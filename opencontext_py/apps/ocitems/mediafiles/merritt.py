@@ -6,13 +6,9 @@ from rdflib.namespace import SKOS, RDFS, OWL
 from django.conf import settings
 from django.utils.http import urlquote
 from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class MerrittMediaFiles():

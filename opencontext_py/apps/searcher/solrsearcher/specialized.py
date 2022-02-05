@@ -1,7 +1,4 @@
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
 class SpecialSearches():

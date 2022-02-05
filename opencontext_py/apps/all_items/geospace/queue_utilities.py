@@ -4,10 +4,6 @@ import time
 
 from django.core.cache import caches
 
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllSpaceTime,
-)
 
 
 from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
@@ -17,7 +13,6 @@ from opencontext_py.libs.queue_utilities import (
     wrap_func_for_rq,
     make_hash_id_from_args,
     reset_request_process_cache,
-    add_cache_key_to_request_cache_key_list,
     cache_item_and_cache_key_for_request,
 )
 

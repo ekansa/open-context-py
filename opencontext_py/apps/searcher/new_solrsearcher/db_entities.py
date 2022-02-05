@@ -7,7 +7,6 @@ from django.db.models import OuterRef, Subquery
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
-    AllSpaceTime,
     AllAssertion,
     AllResource,
 )

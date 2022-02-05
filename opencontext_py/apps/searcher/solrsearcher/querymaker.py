@@ -2,15 +2,12 @@ import re
 import datetime
 import itertools
 from django.http import Http404
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.general import DCterms
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.ocitems.assertions.math import MathAssertions
 from opencontext_py.apps.searcher.solrsearcher.caching import SearchGenerationCache
 
 

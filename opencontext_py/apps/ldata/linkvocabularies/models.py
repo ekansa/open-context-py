@@ -3,12 +3,10 @@ from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 from opencontext_py.libs.languages import Languages
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 # This class stores label and hierarchy data from RDF vocabularies used by Open Context

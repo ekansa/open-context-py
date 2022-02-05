@@ -4,10 +4,8 @@ from django.core.cache import caches
 from django.utils.encoding import force_str
 
 from opencontext_py.apps.all_items.models import AllManifest
-from opencontext_py.libs.isoyears import ISOyears
 
 from opencontext_py.libs.models import (
-    make_dict_json_safe, 
     make_model_object_json_safe_dict
 )
 

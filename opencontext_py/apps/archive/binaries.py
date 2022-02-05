@@ -11,7 +11,7 @@ from opencontext_py.apps.archive.zenodo import ArchiveZenodo
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
 
 class ArchiveBinaries():

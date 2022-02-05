@@ -1,6 +1,5 @@
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.events.models import Event
-from opencontext_py.apps.ocitems.octypes.models import OCtype
 
 
 class EventAssertions():

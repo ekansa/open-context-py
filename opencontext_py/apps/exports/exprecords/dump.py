@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
-from opencontext_py.apps.exports.exprecords.uuidlist import UUIDsRowsExportTable, ExportTableDump
+from opencontext_py.apps.exports.exprecords.uuidlist import ExportTableDump
 
 
 class CSVdump():

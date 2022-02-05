@@ -1,11 +1,7 @@
 import uuid as GenUUID
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
-from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
 from opencontext_py.apps.edit.inputs.inputfields.models import InputField
 from opencontext_py.apps.edit.inputs.inputfields.manage import ManageInputField
-from opencontext_py.apps.edit.inputs.rules.models import InputRule
 
 
 class ManageInputFieldGroup():

@@ -18,7 +18,6 @@ from opencontext_py.apps.imports.kobotoolbox.dbupdate import (
     load_attribute_data_into_oc,
 )
 
-from opencontext_py.apps.imports.sources.unimport import UnImport
 
 DINAA_ROOT_PROJECT_UUID = '416A274C-CF88-4471-3E31-93DB825E9E4A'
 SUB_PROJECT_UUID = 'e0ea772b-a64f-4758-93aa-8db3b07564a3'

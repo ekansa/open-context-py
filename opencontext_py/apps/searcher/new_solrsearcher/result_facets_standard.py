@@ -10,7 +10,6 @@ from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import (
-    get_path_value, 
     SearchLinks,
 )
 from opencontext_py.apps.searcher.new_solrsearcher import utilities

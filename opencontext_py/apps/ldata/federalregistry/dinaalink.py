@@ -1,10 +1,6 @@
 import feedparser
 from django.db import connection
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ldata.federalregistry.api import FederalRegistryAPI
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement

@@ -8,7 +8,6 @@ from PIL import Image, ImageFile
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
-    LABEL_ALTERNATIVE_PARTS,
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
@@ -17,8 +16,6 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
-    reorder_first_columns,
-    update_multivalue_col_vals,
     update_multivalue_columns,
     clean_up_multivalue_cols,
     get_alternate_labels,

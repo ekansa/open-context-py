@@ -1,7 +1,6 @@
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.languages import Languages
-from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
@@ -10,15 +9,10 @@ from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
-from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
-from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
 
 class ItemAttributes():

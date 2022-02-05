@@ -2,8 +2,7 @@ import time
 from django.db.models import Q
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.languages import Languages
-from opencontext_py.libs.isoyears import ISOyears
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
@@ -14,13 +13,8 @@ from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
-from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.ocitems.projects.metadata import ProjectRels, ProjectMeta
-from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
-from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
 
 # OCitem is a very general class for all Open Context items.

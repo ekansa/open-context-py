@@ -5,7 +5,6 @@ from django.conf import settings
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 
 

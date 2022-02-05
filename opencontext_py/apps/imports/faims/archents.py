@@ -7,13 +7,7 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ocitems.subjects.models import Subject
-from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
-from opencontext_py.apps.imports.fields.models import ImportField
-from opencontext_py.apps.imports.records.models import ImportCell
-from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
 from opencontext_py.apps.imports.faims.description import FaimsDescription
 from opencontext_py.apps.imports.faims.files import FileManage

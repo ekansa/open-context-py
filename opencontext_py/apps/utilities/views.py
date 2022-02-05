@@ -2,8 +2,6 @@ import json
 import pyproj
 
 from django.http import HttpResponse
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.reprojection import ReprojectUtilities
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator

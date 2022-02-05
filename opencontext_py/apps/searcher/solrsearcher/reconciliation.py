@@ -1,12 +1,9 @@
 import operator
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
-from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 class Reconciliation():
     """ Methods to transform normal JSON results

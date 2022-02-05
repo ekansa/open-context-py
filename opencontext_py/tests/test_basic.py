@@ -42,7 +42,6 @@ def test_project_context():
 
 def test_index_solr_doc():
 
-    from opencontext_py.apps.ocitems.manifest.models import Manifest
     from opencontext_py.apps.indexer.reindex import SolrReIndex
     uuids = ['3FAAA477-5572-4B05-8DC1-CA264FE1FC10']
     sri = SolrReIndex()

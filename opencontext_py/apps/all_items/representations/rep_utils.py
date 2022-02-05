@@ -5,15 +5,6 @@
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
-from opencontext_py.apps.all_items import utilities
 
 
 # This provides a mappig between a predicate.data_type and

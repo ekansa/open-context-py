@@ -1,9 +1,6 @@
 import json
 import uuid as GenUUID
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
 from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
 from opencontext_py.apps.edit.inputs.inputfields.models import InputField

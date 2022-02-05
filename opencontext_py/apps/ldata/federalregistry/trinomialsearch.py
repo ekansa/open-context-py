@@ -5,7 +5,6 @@ import pandas as pd
 import re
 
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
-from opencontext_py.apps.ldata.federalregistry.api import FederalRegistryAPI
 
 TRINOMIAL_PATTERNS = [
     "(\b([0-9]{1,2}[A-Z]{2,}[0-9]{1,})\b)",

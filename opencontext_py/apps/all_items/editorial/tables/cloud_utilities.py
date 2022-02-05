@@ -8,16 +8,7 @@ from django.conf import settings
 
 
 from opencontext_py.libs.cloudstorage import get_cloud_storage_driver
-from opencontext_py.apps.all_items import configs
 
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
 
 from opencontext_py.apps.all_items.editorial.tables import queue_utilities
 

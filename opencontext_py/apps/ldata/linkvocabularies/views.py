@@ -1,7 +1,6 @@
 import json
 from django.conf import settings
 from django.http import HttpResponse, Http404
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from django.template import loader

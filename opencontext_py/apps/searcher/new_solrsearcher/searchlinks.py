@@ -2,7 +2,6 @@ import copy
 from urllib.parse import quote_plus
 
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs

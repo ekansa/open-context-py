@@ -1198,9 +1198,8 @@ gimp.save_no_coord_file(rev_json, 'giza-areas', 'id-clean-coord-botany-areas-rev
 import json
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
+from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.imports.geojson.geojson import GeoJSONimport
-from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.libs.reprojection import ReprojectUtilities
 import pyproj
 from pyproj import Proj, transform
@@ -1550,7 +1549,6 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
-from opencontext_py.libs.solrconnection import SolrConnection
 project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
 area_proj_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
 source_id = 'ref:2289489501377'
@@ -1659,7 +1657,6 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
-from opencontext_py.libs.solrconnection import SolrConnection
 project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
 area_proj_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
 source_id = 'ref:1967003269393'
@@ -1785,7 +1782,6 @@ for s_type in type_uuids:
 
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
-from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from django.core.cache import caches
 plant_uri = 'http://eol.org/pages/281'
 done_fams = []

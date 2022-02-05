@@ -1,20 +1,14 @@
 import re
 
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
 
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
-    get_solr_predicate_type_string,
-    general_get_jsonldish_entity_parents,
     SolrDocumentNew as SolrDocument,
 )
 
-from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
-from opencontext_py.apps.ocitems.assertions.containment import Containment
 
 from opencontext_py.apps.all_items.configs import (
     URI_ITEM_TYPES,

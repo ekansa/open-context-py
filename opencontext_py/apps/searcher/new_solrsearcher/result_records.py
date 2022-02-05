@@ -8,24 +8,17 @@ from django.utils.html import strip_tags
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.validategeojson import ValidateGeoJson
 
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.all_items.models import (
-    AllManifest,
     AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
 )
 
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import event_utilities
-from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 

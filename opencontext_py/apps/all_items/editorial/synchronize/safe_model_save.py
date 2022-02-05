@@ -5,7 +5,6 @@ from django.core.cache import caches
 from django.db import transaction
 
 
-from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,

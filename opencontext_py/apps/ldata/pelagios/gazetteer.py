@@ -1,20 +1,13 @@
 from django.conf import settings
 from django.db import connection
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.subjects.models import Subject
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
-from opencontext_py.apps.searcher.solrsearcher.complete import CompleteQuery
 
 
 class PelagiosGazetteer():

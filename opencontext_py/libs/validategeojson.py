@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 import math
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace
 
 
 class ValidateGeoJson():

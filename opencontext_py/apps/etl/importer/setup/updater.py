@@ -2,20 +2,9 @@
 
 
 from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
-from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from opencontext_py.apps.etl.importer.models import (
-    DataSource,
     DataSourceField,
-    DataSourceRecord,
     DataSourceAnnotation,
 )
 

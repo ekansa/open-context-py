@@ -1,10 +1,7 @@
 
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ldata.linkentities.models import (
-    LinkEntity, 
-    LinkEntityGeneration
+    LinkEntity
 )
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.gbif.api import gbifAPI

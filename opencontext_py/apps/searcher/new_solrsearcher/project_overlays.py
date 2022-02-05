@@ -1,16 +1,12 @@
 import copy
 import logging
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.isoyears import ISOyears
 
-from opencontext_py.apps.contexts.models import SearchContext
 
 
 # Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
-from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 logger = logging.getLogger(__name__)

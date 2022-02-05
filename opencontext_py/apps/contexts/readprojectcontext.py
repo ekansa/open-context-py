@@ -2,12 +2,9 @@ import logging
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
-from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 
 """
 Testing:

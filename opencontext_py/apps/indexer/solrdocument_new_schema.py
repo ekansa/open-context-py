@@ -2,30 +2,20 @@ import copy
 import datetime
 from django.core.cache import caches
 
-from opencontext_py.libs.isoyears import ISOyears
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.utilities import chronotiles
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 from opencontext_py.apps.all_items.models import (
     AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
 )
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items import hierarchy
-from opencontext_py.apps.all_items import labels
 from opencontext_py.apps.all_items import sensitive_content
-from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
     TEXT_CONTENT_KEYS,
     NO_NODE_KEYS,
-    prepare_for_item_dict_solr_and_html_template,
-    prepare_for_item_dict_html_template
+    prepare_for_item_dict_solr_and_html_template
 )
 
 from opencontext_py.apps.indexer import solr_utils 

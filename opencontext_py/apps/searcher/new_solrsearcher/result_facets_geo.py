@@ -4,16 +4,11 @@ import logging
 
 
 from opencontext_py.libs.globalmaptiles import GlobalMercator
-from opencontext_py.libs.validategeojson import ValidateGeoJson
 
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllSpaceTime,
-)
 
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 

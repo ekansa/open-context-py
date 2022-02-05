@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.defaults import (
-    DEFAULT_ASSERTIONS,
     DEFAULT_MANIFESTS,
 )
 from opencontext_py.apps.all_items.models import (
@@ -22,9 +21,6 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.all_items import permissions
-from opencontext_py.apps.all_items import utilities as model_utils
-from opencontext_py.apps.all_items.legacy_all import update_old_id
-from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items.editorial.item import updater_general
 from opencontext_py.apps.all_items.editorial.item import item_validation
 from opencontext_py.apps.all_items.editorial.item.edit_configs import (
@@ -36,7 +32,6 @@ from opencontext_py.apps.all_items.editorial.tables import cloud_utilities
 from opencontext_py.apps.all_items.editorial.tables import metadata as tables_metadata
 
 from opencontext_py.libs.models import (
-    make_dict_json_safe, 
     make_model_object_json_safe_dict
 )
 

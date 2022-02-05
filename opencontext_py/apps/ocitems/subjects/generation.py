@@ -2,11 +2,9 @@ from django.db import IntegrityError
 from django.db.models import Max
 from unidecode import unidecode
 from opencontext_py.apps.ocitems.subjects.models import Subject
-from opencontext_py.apps.ocitems.ocitem.models import OCitem as OCitem
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.entities.entity.models import Entity
 from django.core.cache import caches
 
 

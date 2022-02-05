@@ -1,10 +1,6 @@
 from django.db.models import Q
-from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
 
 
 # This class is used to delete or merge entities

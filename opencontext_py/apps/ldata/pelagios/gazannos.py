@@ -1,12 +1,6 @@
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.libs.isoyears import ISOyears
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.pelagios.gazgraph import PelagiosGazetteerGraph
 from opencontext_py.apps.ldata.pelagios.models import PelagiosData, OaItem
 from opencontext_py.apps.ldata.tdar.api import tdarAPI

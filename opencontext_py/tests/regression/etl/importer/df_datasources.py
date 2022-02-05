@@ -9,7 +9,6 @@ from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.etl.importer.models import (
     DataSource,
     DataSourceField,
-    DataSourceRecord,
     DataSourceAnnotation,
 )
 
@@ -19,7 +18,6 @@ from opencontext_py.apps.etl.importer.transforms import reconcile
 from opencontext_py.tests.regression.etl.project_setup import (
     TEST_PROJECT_UUID,
     setup_etl_test_project_with_clean_state,
-    cleanup_etl_test_entities,
 )
 
 

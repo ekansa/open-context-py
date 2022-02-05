@@ -7,31 +7,6 @@ from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
 from django.core import serializers
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.events.models import Event
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.subjects.models import Subject
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
-from opencontext_py.apps.ocitems.documents.models import OCdocument
-from opencontext_py.apps.ocitems.persons.models import Person
-from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity
-from opencontext_py.apps.entities.redirects.models import RedirectMapping
-from opencontext_py.apps.exports.expfields.models import ExpField
-from opencontext_py.apps.exports.exprecords.models import ExpCell
-from opencontext_py.apps.exports.exptables.models import ExpTable
-from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
-from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
-from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
-from opencontext_py.apps.edit.inputs.inputfields.models import InputField
-from opencontext_py.apps.edit.inputs.rules.models import InputRule
 
 
 # Reads Serialized JSON from the Exporter

@@ -13,18 +13,12 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
 )
-from opencontext_py.apps.all_items import models_utils
 
 from opencontext_py.apps.etl.importer.models import (
     DataSource,
 )
 
-from opencontext_py.apps.all_items import utilities as model_utils
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial.api import manifest_obj_to_json_safe_dict
 

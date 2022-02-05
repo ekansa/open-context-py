@@ -4,8 +4,6 @@ import os
 import codecs
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 
 
 class Arcgis2geojson():

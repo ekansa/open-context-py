@@ -5,15 +5,12 @@ from django.utils.html import strip_tags
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.searcher.solrsearcher.caching import SearchGenerationCache
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
-from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class RecordProperties():

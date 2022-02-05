@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.records.models import ImportCell
-from opencontext_py.apps.imports.fields.create import ImportFields
 from opencontext_py.apps.imports.refine.api import RefineAPI
 
 

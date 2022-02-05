@@ -3,8 +3,6 @@ from django.utils.http import urlencode
 from django.core.paginator import Paginator
 from opencontext_py.apps.ocitems.manifest.pagedfeed import PagedFeedMaker
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project

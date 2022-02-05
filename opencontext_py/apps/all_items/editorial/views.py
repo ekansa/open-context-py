@@ -2,26 +2,8 @@ import json
 from django.http import HttpResponse
 
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
-from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
-from opencontext_py.apps.etl.importer.models import (
-    DataSource,
-    DataSourceField,
-    DataSourceRecord,
-    DataSourceAnnotation,
-)
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache

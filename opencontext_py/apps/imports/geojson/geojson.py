@@ -18,12 +18,10 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
-from opencontext_py.apps.imports.records.create import ImportRecords
 from opencontext_py.apps.imports.fields.create import ImportFields
 from opencontext_py.apps.imports.sources.create import ImportRefineSource
 

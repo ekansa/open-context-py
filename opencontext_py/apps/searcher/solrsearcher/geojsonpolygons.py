@@ -5,7 +5,6 @@ from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, F
 from geojson import MultiPoint, MultiLineString, LineString
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.ocitems.geospace.models import Geospace

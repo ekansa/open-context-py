@@ -3,14 +3,10 @@ import requests
 from time import sleep
 from internetarchive import get_session, get_item
 from django.conf import settings
-from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles
-from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
-from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.models import OCitem

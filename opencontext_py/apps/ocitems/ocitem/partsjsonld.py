@@ -1,6 +1,4 @@
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.languages import Languages
-from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache

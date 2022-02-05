@@ -1471,7 +1471,7 @@ for item in items:
 
 from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchiveMedia
 from time import sleep
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
 sm_types = [
     "oc-gen:thumbnail",

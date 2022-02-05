@@ -2,19 +2,13 @@ import logging
 
 from django.core.cache import caches
 
-from opencontext_py.libs.globalmaptiles import GlobalMercator
 
-from opencontext_py.libs.isoyears import ISOyears
 
 from opencontext_py.apps.all_items.models import (
-    AllManifest,
     AllSpaceTime,
 )
 
-from opencontext_py.apps.indexer import solrdocument_new_schema as solr_doc
 
-from opencontext_py.apps.searcher.new_solrsearcher import configs
-from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 logger = logging.getLogger(__name__)

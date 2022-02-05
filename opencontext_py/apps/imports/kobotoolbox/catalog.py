@@ -9,28 +9,17 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 
 from opencontext_py.apps.imports.kobotoolbox.contexts import (
     UNIT_LABEL_REPLACES,
-    prepare_trench_contexts,
-)
-from opencontext_py.apps.imports.kobotoolbox.preprocess import (
-    look_up_parent,
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
-    UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
     LINK_RELATION_TYPE_COL,
-    MULTI_VALUE_COL_PREFIXES,
-    make_directory_files_df,
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
     reorder_first_columns,
-    update_multivalue_col_vals,
     update_multivalue_columns,
     clean_up_multivalue_cols,
-    parse_opencontext_uuid,
-    parse_opencontext_type,
-    lookup_manifest_uuid,
 )
 
 

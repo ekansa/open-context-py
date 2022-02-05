@@ -2,7 +2,6 @@ import uuid as GenUUID
 import datetime
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 
 
 class PredicateManagement():

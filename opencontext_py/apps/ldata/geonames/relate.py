@@ -1,9 +1,7 @@
 from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
 

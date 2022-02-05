@@ -1,8 +1,5 @@
 from django.http import HttpResponse, Http404
-from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.pelagios.void import PelagiosVoid
 from opencontext_py.apps.ldata.pelagios.graph import PelagiosGraph

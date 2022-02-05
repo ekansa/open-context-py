@@ -2,18 +2,11 @@ import pytest
 
 import logging
 
-from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
 )
 
-from opencontext_py.apps.etl.importer.models import (
-    DataSource,
-    DataSourceField,
-    DataSourceRecord,
-    DataSourceAnnotation,
-)
 
 from opencontext_py.apps.etl.importer.transforms import subjects as etl_subjects
 from opencontext_py.apps.etl.importer.transforms import predicates_types_variables as etl_p_t_v
@@ -23,16 +16,12 @@ from opencontext_py.apps.etl.importer.transforms import assertions as etl_assert
 from opencontext_py.apps.etl.importer import utilities as etl_utils
 
 from opencontext_py.tests.regression.etl.project_setup import (
-    TEST_PROJECT_UUID,
-    setup_etl_test_project_with_clean_state,
     cleanup_etl_test_entities,
 )
 from opencontext_py.tests.regression.etl.importer.df_datasources import (
     TEST_SOURCE_ID,
-    TEST_SOURCE_UUID,
     TEST_FILE,
     get_or_load_test_data_dataframe,
-    update_fields_attributes,
     setup_valid_spatial_containment_annotations,
     setup_preds_types_vars_vals_fields_annotations,
     setup_described_by_fields_annotations,

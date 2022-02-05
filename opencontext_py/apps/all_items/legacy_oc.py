@@ -12,7 +12,6 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
-    AllHistory,
     AllResource,
     AllIdentifier,
     AllSpaceTime,
@@ -21,7 +20,6 @@ from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.legacy_ld import migrate_legacy_link_annotations
 
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -33,12 +31,10 @@ from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
-from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.geospace.models import Geospace as OldGeospace
 from opencontext_py.apps.ocitems.events.models import Event as OldEvent
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer as OldIdentifier
 
-from opencontext_py.libs.validategeojson import ValidateGeoJson
 
 """
 from opencontext_py.apps.all_items.legacy_oc import *

@@ -4,10 +4,6 @@ import copy
 from django.core.cache import caches
 
 from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-)
 from opencontext_py.apps.all_items import labels
 from opencontext_py.apps.all_items import models_utils
 

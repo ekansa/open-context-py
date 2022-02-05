@@ -4,11 +4,8 @@ from rdflib import Graph, URIRef, Literal, Namespace
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-from opencontext_py.libs.globalmaptiles import GlobalMercator
-from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion

@@ -3,18 +3,7 @@ from django.conf import settings
 from django.http import HttpResponse
 
 from django.template import loader
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
-from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
     prepare_for_item_dict_solr_and_html_template,

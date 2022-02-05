@@ -1,14 +1,8 @@
 from django.db.models import Count, Max, Min
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.libs.isoyears import ISOyears
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.queries.security import SecurityForQuery
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.events.models import Event
-from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.ocitems.projects.metadata import ProjectRels, ProjectMeta
+from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta
 
 
 class GeoChronoQueries():

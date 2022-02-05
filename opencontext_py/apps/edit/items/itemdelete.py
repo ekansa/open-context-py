@@ -3,20 +3,11 @@ import uuid as GenUUID
 from lxml import etree
 import lxml.html
 from django.core.cache import caches
-from opencontext_py.libs.languages import Languages
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
-from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
-from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
 from opencontext_py.apps.ocitems.editorials.models import Editorial
 from opencontext_py.apps.ocitems.editorials.manage import EditorialAction
 from opencontext_py.apps.edit.items.deletemerge import DeleteMerge

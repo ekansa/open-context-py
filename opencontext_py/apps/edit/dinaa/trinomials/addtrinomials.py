@@ -1,4 +1,3 @@
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.edit.dinaa.trinomials.models import Trinomial
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
 from opencontext_py.apps.ocitems.manifest.models import Manifest

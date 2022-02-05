@@ -2,8 +2,6 @@ import json
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion

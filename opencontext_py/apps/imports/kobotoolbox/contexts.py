@@ -10,12 +10,9 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
-    LINK_RELATION_TYPE_COL,
     list_excel_files,
     read_excel_to_dataframes,
-    drop_empty_cols,
-    reorder_first_columns,
-    lookup_manifest_uuid
+    reorder_first_columns
 )
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import

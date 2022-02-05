@@ -4,7 +4,6 @@ import pandas as pd
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
-from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 
 from opencontext_py.apps.imports.records.models import ImportCell
@@ -18,16 +17,8 @@ from opencontext_py.apps.imports.sources.unimport import UnImport
 from opencontext_py.apps.imports.sources.finalize import FinalizeImport
 
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
-    UUID_SOURCE_KOBOTOOLBOX,
-    UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
     LINK_RELATION_TYPE_COL,
-    list_excel_files,
-    read_excel_to_dataframes,
-    make_directory_files_df,
-    drop_empty_cols,
-    reorder_first_columns,
-    lookup_manifest_uuid,
 )
 from opencontext_py.apps.imports.kobotoolbox.attributes import (
     REPROJECTED_LAT_COL,

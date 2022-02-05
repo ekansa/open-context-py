@@ -2,11 +2,6 @@ from django.conf import settings
 from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.sources.models import ImportSource
-from opencontext_py.apps.imports.fields.models import ImportField
-from opencontext_py.apps.imports.fields.templating import ImportProfile
-from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
-from opencontext_py.apps.imports.records.models import ImportCell
-from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubjects
 from opencontext_py.apps.imports.fieldannotations.media import ProcessMedia

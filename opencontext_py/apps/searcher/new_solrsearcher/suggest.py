@@ -1,7 +1,5 @@
 import re
 
-from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
-from opencontext_py.apps.indexer import solr_utils
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities

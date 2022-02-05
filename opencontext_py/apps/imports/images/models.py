@@ -2,9 +2,6 @@ import os
 import shutil
 from PIL import Image, ImageFile, ImageFilter
 from django.conf import settings
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
 
 
 class ImageImport():

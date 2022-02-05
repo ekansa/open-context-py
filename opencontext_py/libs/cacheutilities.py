@@ -1,14 +1,5 @@
 import hashlib
 from django.core.cache import caches
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
-from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class CacheUtilities():

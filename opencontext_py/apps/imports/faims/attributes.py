@@ -1,11 +1,8 @@
 from dateutil.parser import parse
 from lxml import etree
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
-from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
-from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
 from opencontext_py.apps.imports.faims.files import FileManage
 
 

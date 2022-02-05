@@ -2,12 +2,10 @@ import json
 from opencontext_py.libs.rootpath import RootPath
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from opencontext_py.apps.imports.sources.projects import ImportProjects
-from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.sources.navtemplate import ImportNavigation
 from opencontext_py.apps.imports.sources.create import ImportRefineSource
 from opencontext_py.apps.imports.sources.finalize import FinalizeImport
 from opencontext_py.apps.imports.fields.templating import ImportProfile
-from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from django.template import loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control

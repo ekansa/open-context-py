@@ -7,14 +7,11 @@ import pandas as pd
 from django.core.cache import caches
 
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
-    AllManifest,
     AllAssertion,
 )
-from opencontext_py.apps.all_items import utilities
 
 
 logger = logging.getLogger("project-context-logger")

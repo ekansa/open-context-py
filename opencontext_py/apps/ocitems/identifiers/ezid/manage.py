@@ -1,6 +1,4 @@
 import datetime
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.identifiers.ezid.ezid import EZID
 from opencontext_py.apps.ocitems.identifiers.ezid.metaark import metaARK

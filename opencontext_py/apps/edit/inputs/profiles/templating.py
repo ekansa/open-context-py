@@ -1,15 +1,12 @@
 import json
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.profiles.manage import ManageInputProfile
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
-from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
 from opencontext_py.apps.edit.inputs.inputfields.models import InputField
-from opencontext_py.apps.edit.inputs.rules.models import InputRule
 
 
 class InputProfileTemplating():

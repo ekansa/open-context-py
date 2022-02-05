@@ -6,7 +6,6 @@ from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, F
 from geojson import MultiPoint, MultiLineString, LineString
 from django.conf import settings
 from django.db.models import Q
-from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms

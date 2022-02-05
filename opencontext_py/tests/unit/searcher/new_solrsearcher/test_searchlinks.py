@@ -1,7 +1,6 @@
 import copy
 import pytest
 import logging
-from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 
 logger = logging.getLogger("tests-unit-logger")

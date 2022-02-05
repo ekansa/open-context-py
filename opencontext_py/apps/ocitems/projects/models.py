@@ -3,7 +3,6 @@ import collections
 from jsonfield import JSONField  # json field for complex objects
 from django.db import models
 from django.db.models import Max
-from opencontext_py.apps.ocitems.geospace.models import Geospace
 
 
 # Project stores the content of a project resource (structured text)

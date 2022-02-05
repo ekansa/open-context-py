@@ -1,18 +1,7 @@
 import re
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ocitems.subjects.models import Subject
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
-from opencontext_py.apps.ocitems.documents.models import OCdocument
-from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.edit.dinaa.trinomials.models import Trinomial
 
 

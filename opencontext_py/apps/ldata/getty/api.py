@@ -1,6 +1,5 @@
 import requests
 from time import sleep
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 

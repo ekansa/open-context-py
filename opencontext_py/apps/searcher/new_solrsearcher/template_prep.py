@@ -2,7 +2,6 @@ import itertools
 
 
 
-from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs

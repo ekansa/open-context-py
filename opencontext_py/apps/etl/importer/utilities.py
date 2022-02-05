@@ -3,7 +3,6 @@ import pytz
 from dateutil.parser import parse
 
 from django.conf import settings
-from opencontext_py.apps.all_items import configs
 
 
 

@@ -8,8 +8,6 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
 from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
 
 class GeoJsonRecords():

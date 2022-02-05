@@ -4,9 +4,6 @@ import requests
 from time import sleep
 from internetarchive import get_session, get_item
 from django.conf import settings
-from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
-from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 class BinaryFiles():

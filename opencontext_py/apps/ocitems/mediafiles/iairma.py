@@ -8,9 +8,7 @@ from unidecode import unidecode
 from time import sleep
 from internetarchive import get_session, get_item
 from django.conf import settings
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.imports.records.models import ImportCell
 
 

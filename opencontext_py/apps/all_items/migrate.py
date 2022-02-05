@@ -1,15 +1,6 @@
 
 import os
 
-from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
-    AllIdentifier,
-    AllSpaceTime,
-)
 
 from opencontext_py.apps.all_items import defaults
 from opencontext_py.apps.all_items import owl_vocabulary

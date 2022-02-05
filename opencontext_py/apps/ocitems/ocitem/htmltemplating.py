@@ -16,16 +16,12 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.imageproxy import proxy_image_url_if_needed
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.contexts.readprojectcontext import ReadProjectContextVocabGraph
-from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
-from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
 from opencontext_py.apps.ldata.orcid.api import orcidAPI
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
 # Help organize the code, with a class to make templating easier

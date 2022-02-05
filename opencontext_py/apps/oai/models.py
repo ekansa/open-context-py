@@ -6,7 +6,6 @@ from lxml import etree
 from django.conf import settings
 from django.db.models import Min
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest

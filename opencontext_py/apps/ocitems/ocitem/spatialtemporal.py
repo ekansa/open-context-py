@@ -4,7 +4,6 @@ import copy
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -12,7 +11,6 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
-from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta

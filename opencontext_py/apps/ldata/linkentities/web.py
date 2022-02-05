@@ -1,12 +1,11 @@
 from django.utils.http import urlunquote
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity, LinkEntityGeneration
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
 from opencontext_py.apps.ldata.uberon.api import uberonAPI
 from opencontext_py.apps.ldata.eol.api import eolAPI
 from opencontext_py.apps.ldata.getty.api import gettyAPI
 from opencontext_py.apps.ldata.ansochre.api import ANSochreAPI
 from opencontext_py.apps.ldata.gbif.manage import (
-    GBIF_VOCAB_URI,
     add_get_gbif_link_entity_and_hierarchy
 )
 

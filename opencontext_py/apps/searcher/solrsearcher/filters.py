@@ -3,7 +3,6 @@ from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 

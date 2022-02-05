@@ -22,7 +22,6 @@ from opencontext_py.apps.all_items import models_utils
 
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.libs.models import (
-    make_dict_json_safe, 
     make_model_object_json_safe_dict
 )
 

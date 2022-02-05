@@ -1,5 +1,4 @@
 from django.db.models import Max, Min, Count, Avg
-from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion

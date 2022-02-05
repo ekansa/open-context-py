@@ -5,12 +5,10 @@ from opencontext_py.libs.languages import Languages
 from django.utils.encoding import force_str
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
 from opencontext_py.apps.ocitems.queries.geochrono import GeoChronoQueries
 from opencontext_py.libs.chronotiles import ChronoTile

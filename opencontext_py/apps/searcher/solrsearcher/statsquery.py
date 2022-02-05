@@ -1,5 +1,4 @@
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 

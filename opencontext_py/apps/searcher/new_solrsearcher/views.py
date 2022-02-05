@@ -4,11 +4,9 @@ from django.http import HttpResponse
 
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
-from opencontext_py.apps.searcher.new_solrsearcher.template_prep import SearchTemplate
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
 from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
 from opencontext_py.apps.searcher.new_solrsearcher import suggest

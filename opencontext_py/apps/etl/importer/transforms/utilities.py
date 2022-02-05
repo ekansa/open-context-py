@@ -4,33 +4,12 @@ import numpy as np
 import pandas as pd
 
 
-from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
-    AllManifest,
     AllAssertion,
-    AllSpaceTime,
-    AllResource,
-    AllIdentifier,
 )
 
-from opencontext_py.apps.etl.importer.models import (
-    DataSource,
-    DataSourceField,
-    DataSourceRecord,
-    DataSourceAnnotation,
-    get_immediate_context_parent_obj_db,
-    get_immediate_context_children_objs_db,
-)
 
-from opencontext_py.apps.etl.importer import df as etl_df
-from opencontext_py.apps.etl.importer import utilities as etl_utils
 
-from opencontext_py.apps.etl.importer.transforms import assertions
-from opencontext_py.apps.etl.importer.transforms import general_named_entities
-from opencontext_py.apps.etl.importer.transforms import media_resources
-from opencontext_py.apps.etl.importer.transforms import predicates_types_variables
-from opencontext_py.apps.etl.importer.transforms import space_time_events
-from opencontext_py.apps.etl.importer.transforms import subjects
 
 
 logger = logging.getLogger("etl-importer-logger")

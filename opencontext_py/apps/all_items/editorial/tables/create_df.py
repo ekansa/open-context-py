@@ -12,7 +12,6 @@ from opencontext_py.apps.all_items.defaults import (
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
-    AllHistory,
     AllResource,
     AllIdentifier,
     AllSpaceTime,

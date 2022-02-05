@@ -6,7 +6,6 @@ from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.sources.unimport import UnImport
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.refine.api import RefineAPI
 
 

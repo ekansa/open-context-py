@@ -3,7 +3,6 @@ import logging
 import random
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
 logger = logging.getLogger("tests-regression-logger")
 

@@ -1,16 +1,11 @@
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
 from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
-from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
-from opencontext_py.apps.imports.fieldannotations.subjects import CandidateSubject
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
 

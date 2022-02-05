@@ -1,9 +1,7 @@
 import pytest
 import logging
-from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.querymaker import (
     get_identifier_query_dict,
-    get_object_uri_query_dict,
 )
 
 logger = logging.getLogger("tests-unit-logger")

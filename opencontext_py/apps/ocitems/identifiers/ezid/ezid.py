@@ -4,7 +4,6 @@ from time import sleep
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
-from opencontext_py.apps.ocitems.identifiers.ezid.metaark import metaARK
 
 
 class EZID():

@@ -1,9 +1,6 @@
 import json
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
-from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.graph import (
     RDF_SERIALIZATIONS,

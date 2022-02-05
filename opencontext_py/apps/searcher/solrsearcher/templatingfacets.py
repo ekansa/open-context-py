@@ -1,9 +1,5 @@
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.globalmaptiles import GlobalMercator
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
-from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
 class FacetSearchTemplate():

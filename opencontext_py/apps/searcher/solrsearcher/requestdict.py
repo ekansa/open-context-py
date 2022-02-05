@@ -1,5 +1,4 @@
 import json
-from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 

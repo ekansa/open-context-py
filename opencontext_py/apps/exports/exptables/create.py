@@ -1,5 +1,4 @@
 import uuid as GenUUID
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.manage import ExpManage
 from opencontext_py.apps.exports.exprecords.create import Create

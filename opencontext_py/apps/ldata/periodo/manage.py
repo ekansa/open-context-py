@@ -1,6 +1,5 @@
 import re
 from unidecode import unidecode
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.periodo.api import PeriodoAPI
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity

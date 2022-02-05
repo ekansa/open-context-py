@@ -6,11 +6,9 @@ from django.db.models import Avg, Max, Min
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.projects.models import Project
 

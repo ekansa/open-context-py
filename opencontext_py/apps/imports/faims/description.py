@@ -1,5 +1,4 @@
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement

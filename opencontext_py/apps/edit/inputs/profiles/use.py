@@ -1,26 +1,11 @@
 from dateutil.parser import parse
 from django.core.cache import caches
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
-from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
-from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
-from opencontext_py.apps.edit.inputs.inputfields.models import InputField
-from opencontext_py.apps.edit.inputs.rules.models import InputRule
 from opencontext_py.apps.edit.items.itemassertion import ItemAssertion
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
-from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.manifest.classes import ManifestClasses
-from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
-from opencontext_py.apps.indexer.crawler import Crawler
 from opencontext_py.apps.indexer.reindex import SolrReIndex
 
 

@@ -3,14 +3,10 @@ from dateutil.parser import parse
 from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.validategeojson import ValidateGeoJson
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 from opencontext_py.apps.ocitems.events.models import Event
-from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
-from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta, ProjectRels
 

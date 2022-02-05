@@ -3,7 +3,6 @@ import pyproj
 
 from pyproj import Proj, transform
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 
 

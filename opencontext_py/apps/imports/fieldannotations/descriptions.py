@@ -11,7 +11,6 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation

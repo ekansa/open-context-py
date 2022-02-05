@@ -6,7 +6,6 @@ from itertools import islice
 
 from django.core.cache import caches
 
-from opencontext_py.apps.all_items.models import AllManifest
 
 
 from opencontext_py.libs.solrclient import SolrClient

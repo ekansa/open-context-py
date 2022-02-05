@@ -1,8 +1,5 @@
 from rdflib import Graph, URIRef, Literal, Namespace
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
-from opencontext_py.libs.languages import Languages
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ldata.pelagios.graph import PelagiosGraph

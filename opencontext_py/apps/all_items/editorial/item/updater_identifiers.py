@@ -5,26 +5,13 @@ import reversion
 from django.utils import timezone
 
 
-from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
-    AllAssertion,
-    AllHistory,
-    AllResource,
     AllIdentifier,
-    AllSpaceTime,
 )
 
-from opencontext_py.apps.all_items import permissions
-from opencontext_py.apps.all_items import utilities as model_utils
-from opencontext_py.apps.all_items.legacy_all import update_old_id
-from opencontext_py.apps.all_items.editorial import api as editorial_api
 from opencontext_py.apps.all_items.editorial.item import updater_general
 
-from opencontext_py.libs.models import (
-    make_dict_json_safe, 
-    make_model_object_json_safe_dict
-)
 
 
 #----------------------------------------------------------------------

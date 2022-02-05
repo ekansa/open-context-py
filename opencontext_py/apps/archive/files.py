@@ -3,15 +3,10 @@ import os
 import codecs
 from django.conf import settings
 from collections import OrderedDict
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem
-from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
 
 
 class ArchiveFiles():

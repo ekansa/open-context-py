@@ -3,8 +3,6 @@ from time import sleep
 
 from django.core.cache import caches
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 
 
 JSON_BASE_URL = 'https://api.gbif.org/v1/species/{}'

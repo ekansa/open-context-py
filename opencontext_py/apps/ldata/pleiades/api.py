@@ -4,8 +4,6 @@ from time import sleep
 
 from django.core.cache import caches
 
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 
 # JSON URL from a numeric pleiades ID
 JSON_ID_BASE_URL = 'https://pleiades.stoa.org/places/{}/json'

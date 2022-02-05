@@ -9,22 +9,17 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.etl.importer.models import (
-    DataSource,
     DataSourceField,
-    DataSourceRecord,
     DataSourceAnnotation,
 )
 
 from opencontext_py.apps.etl.importer.transforms import subjects as etl_subjects
 
 from opencontext_py.tests.regression.etl.project_setup import (
-    TEST_PROJECT_UUID,
-    setup_etl_test_project_with_clean_state,
     cleanup_etl_test_entities,
 )
 from opencontext_py.tests.regression.etl.importer.df_datasources import (
     TEST_SOURCE_ID,
-    TEST_SOURCE_UUID,
     TEST_FILE,
     SUBJECTS_FIELDS_ATTRIBUTE_DICTS,
     VALID_HIERARCHY_ANNOTATIONS,

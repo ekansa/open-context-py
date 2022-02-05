@@ -2,7 +2,6 @@ import uuid as GenUUID
 from lxml import etree
 import lxml.html
 from django.core.cache import caches
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions

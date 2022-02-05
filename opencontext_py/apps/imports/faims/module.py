@@ -5,9 +5,6 @@ import uuid as GenUUID
 from dateutil.parser import parse
 from collections import OrderedDict
 from django.conf import settings
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
 
 
 class ModuleImport():

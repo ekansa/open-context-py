@@ -3,12 +3,9 @@ import json
 from django.conf import settings
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.contexts.models import SearchContext
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.responsetypes import SolrResponseTypes
 from opencontext_py.apps.searcher.solrsearcher.sorting import SortingOptions
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks

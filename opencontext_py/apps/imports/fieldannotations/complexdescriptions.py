@@ -1,7 +1,4 @@
 from django.conf import settings
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.fields.templating import ImportProfile
@@ -11,7 +8,6 @@ from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
 from opencontext_py.apps.ocitems.complexdescriptions.models import ComplexDescription
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 
 

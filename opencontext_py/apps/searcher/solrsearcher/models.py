@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from django.conf import settings
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.searcher.solrsearcher.sorting import SortingOptions

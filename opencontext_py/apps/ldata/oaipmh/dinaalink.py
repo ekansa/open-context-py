@@ -5,19 +5,12 @@ import csv
 from lxml import etree
 from io import BytesIO
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
 from opencontext_py.apps.ldata.oaipmh.api import OaiPmhClientAPI
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.strings.manage import StringManagement
-from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
-from opencontext_py.apps.indexer.reindex import SolrReIndex
 
 
 class OaiPmhDinaaLink():

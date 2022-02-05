@@ -3,7 +3,6 @@ from time import sleep
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.filecache import FileCacheJSON
 
 
 class WaybackUp():

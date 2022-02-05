@@ -3,8 +3,6 @@ import requests
 from django.conf import settings
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.imports.fields.models import ImportField
-from opencontext_py.apps.imports.records.models import ImportCell
 
 
 class RefineAPI():

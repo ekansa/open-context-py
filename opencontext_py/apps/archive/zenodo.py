@@ -3,7 +3,6 @@ import os
 import requests
 from time import sleep
 from django.conf import settings
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 
 
