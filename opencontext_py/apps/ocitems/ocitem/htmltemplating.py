@@ -4,10 +4,12 @@ import datetime
 from random import randint
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
+from urllib.parse import quote,  quote_plus
+
 from django.conf import settings
 from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.languages import Languages
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -626,7 +628,7 @@ class HTMLtemplate():
             # if the base URL is not in the sting, we need to use a proxy
             if base_url not in self.og_image:
                 proxy_url = base_url + '/entities/proxy/'
-                proxy_url += urlquote_plus(self.og_image)
+                proxy_url += quote_plus(self.og_image)
                 self.og_image = proxy_url
         self.og_title = self.citation.cite_title
         if not isinstance(self.og_description, str):
@@ -652,7 +654,7 @@ class HTMLtemplate():
                 break
         if make_proxy:
             rp = RootPath()
-            url = rp.get_baseurl() + '/entities/proxy/' + urlquote(url)
+            url = rp.get_baseurl() + '/entities/proxy/' + quote(url)
         return url
 
 class ItemMetadata():
@@ -1724,9 +1726,9 @@ class LinkedData():
             of the predicate slug
         """
         if 'http://' in predicate or 'https://' in predicate:
-            predicate = urlquote_plus(predicate)
+            predicate = quote_plus(predicate)
         if 'http://' in obj or 'https://' in obj:
-            obj = urlquote_plus(obj)
+            obj = quote_plus(obj)
         dc_terms_obj = DCterms()
         if predicate in dc_terms_obj.DC_SLUG_TO_FIELDS:
             # there's a query parameter for this dc-terms metadata

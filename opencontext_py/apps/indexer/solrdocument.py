@@ -2,7 +2,7 @@ import datetime
 import json
 from django.conf import settings
 from opencontext_py.libs.languages import Languages
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.rootpath import RootPath
@@ -132,10 +132,12 @@ sd_b = sd_obj.fields
 
     def ensure_text_ok(self):
         """ makes sure the text is solr escaped """
-        self.fields['text'] = force_text(self.fields['text'],
-                                         encoding='utf-8',
-                                         strings_only=False,
-                                         errors='surrogateescape')
+        self.fields['text'] = force_str(
+            self.fields['text'],
+            encoding='utf-8',
+            strings_only=False,
+            errors='surrogateescape'
+        )
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name

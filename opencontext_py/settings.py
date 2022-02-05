@@ -18,7 +18,7 @@ PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
 # The following reads secret settings from a JSON file called 'secrets.json'
 import json
 import os.path
-from os.path import abspath, basename, dirname, join, normpath
+from os.path import join, normpath
 from django.core.exceptions import ImproperlyConfigured
 
 if os.path.isfile('secrets.json'):

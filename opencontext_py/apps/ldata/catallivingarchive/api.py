@@ -2,7 +2,7 @@ import re
 import json
 import requests
 from time import sleep
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from urllib.parse import quote
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 
@@ -69,7 +69,7 @@ class CatalLivingArchiveAPI():
                                     oc_obj['slug'] = 'unit-' + str(unit_id)
                                     oc_obj['label'] = prop_key + ': ' + str(value)
                                 else:
-                                    oc_obj['id'] = '#' + urlquote(self.BASE_HTML_URL + '#unit-' + str(unit_id))
+                                    oc_obj['id'] = '#' + quote(self.BASE_HTML_URL + '#unit-' + str(unit_id))
                                     oc_obj['xsd:string'] = '<strong>' + prop_key.title() + '</strong>: ' + str(value)
                                 self.properties.append(oc_obj)
                         self.props_count = len(self.properties)
@@ -95,15 +95,15 @@ class CatalLivingArchiveAPI():
                                and class_id != 'Faunal Bone':
                                 oc_obj = LastUpdatedOrderedDict()
                                 if self.id_results:
-                                    oc_obj['id'] = self.BASE_HTML_URL + '#find-' + urlquote(find_id)
-                                    oc_obj['slug'] = 'find-' + urlquote(find_id)
+                                    oc_obj['id'] = self.BASE_HTML_URL + '#find-' + quote(find_id)
+                                    oc_obj['slug'] = 'find-' + quote(find_id)
                                     oc_obj['label'] = find_id
                                     oc_obj['label'] += ' (' + class_id + ')'
                                     if descript is not False \
                                        and descript is not None:
                                         oc_obj['label'] += ', ' + descript
                                 else:
-                                    oc_obj['id'] = '#' + urlquote(self.BASE_HTML_URL + '#find-' + str(find_id))
+                                    oc_obj['id'] = '#' + quote(self.BASE_HTML_URL + '#find-' + str(find_id))
                                     oc_obj['xsd:string'] = '<strong>' + find_id + '</strong>'
                                     oc_obj['xsd:string'] += ' (' + class_id + ')'
                                     if descript is not False \

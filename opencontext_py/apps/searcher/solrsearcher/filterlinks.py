@@ -1,6 +1,6 @@
 import json
-from urllib.parse import urlparse, parse_qs
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from urllib.parse import urlparse, parse_qs, quote_plus
+
 from django.conf import settings
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath

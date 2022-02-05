@@ -1,8 +1,9 @@
-import json
+
 import requests
 import feedparser
 from time import sleep
-from django.utils.http import urlquote, quote_plus, urlquote_plus
+from urllib.parse import quote
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 
@@ -121,7 +122,7 @@ class tdarAPI():
             i = 0
             for site_name in site_names:
                 act_param = '&groups%5B0%5D.siteNames%5B' + str(i) + '%5D='
-                act_param += urlquote(site_name)
+                act_param += quote(site_name)
                 feed_url += act_param
                 self.html_url += act_param
                 i += 1

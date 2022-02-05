@@ -8,8 +8,6 @@ https://docs.djangoproject.com/en/1.6/howto/deployment/wsgi/
 """
 
 import os
-import sys
-import site
 
 """
 # This proved very useful for getting this to work on an Ubuntu Server

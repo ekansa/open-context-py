@@ -1,8 +1,4 @@
 import json
-import django.utils.http as http
-from django.conf import settings
-from urllib.parse import urlparse, parse_qs
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
