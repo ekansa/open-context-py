@@ -1,5 +1,5 @@
 
-import Vue from 'vue'
+const Vue = require('vue');
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
@@ -43,9 +43,3 @@ Vue.use(IconsPlugin)
 // Use the imported addons
 Vue.use(VueCookies)
 Vue.use(VueApexCharts)
-
-
-export default () => {
-    /* eslint-disable no-new */
-    new Vue({});
-}

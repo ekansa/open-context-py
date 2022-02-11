@@ -1,0 +1,61 @@
+{% block head %}
+<head>
+    <title>{{ PAGE_TITLE }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="{{ BASE_URL }}/static/oc/images/oc-favicon.ico" />
+
+    <!-- Load jquery and bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+
+    <!-- Load required Bootstrap and BootstrapVue CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css" />
+
+    <!-- Load polyfills to support older browsers -->
+    <script src="//polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver" crossorigin="anonymous"></script>
+
+    <!-- Load Vue followed by BootstrapVue -->
+    <script src="//unpkg.com/vue@2.6.12/dist/vue.min.js"></script>
+    <script src="//unpkg.com/vue-cookies@latest/vue-cookies.js"></script>
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
+    
+    <!-- Autocomplete, search typeahead -->
+    <link href="//unpkg.com/vue-bootstrap-typeahead/dist/VueBootstrapTypeahead.css" rel="stylesheet">
+    <script src="//unpkg.com/vue-bootstrap-typeahead@0.2.6/dist/VueBootstrapTypeahead.umd.min.js"></script>
+
+    <!-- Load a Vue router-->
+    <script src="https://unpkg.com/vue-router@3.0.1"></script>
+
+    <!-- Load the following for BootstrapVueIcons support -->
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Two+Tone" rel="stylesheet">
+
+    <!-- Load the leaflet libraries -->
+    <link rel="stylesheet" href="//unpkg.com/leaflet/dist/leaflet.css" />
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo"></script>
+    <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="//unpkg.com/vue2-leaflet"></script>
+    <script src="//cdn.jsdelivr.net/npm/heatmapjs"></script>
+    <script src="//cdn.jsdelivr.net/npm/leaflet-heatmap"></script>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+    <script src="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+    <script src="{{ BASE_URL }}/static/oc/js/mapping-rev/GoogleMutant.js"></script>
+
+    <!-- Load Vue-apexcharts.js -->
+    <script src="//unpkg.com/apexcharts"></script>
+    <script src="//unpkg.com/vue-apexcharts"></script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    
+    <!-- Load Open Context specific resources -->
+    <link rel="stylesheet" href="{{ BASE_URL }}/static/oc/css/oc-general-v2.css" />
+    <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/url-utilities.js"></script>
+    <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/general-utilities.js"></script>
+    <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/color-scales.js"></script>
+
+</head>
+{% endblock %}
