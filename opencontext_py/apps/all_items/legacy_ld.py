@@ -106,8 +106,8 @@ INSTANCE_URIS = [
 REPLACE_URIS = {
     ('www.worldcat.org', 'www.worldcat.org/oclc',),
     ('opencontext.org/about/concepts', 'opencontext.org/vocabularies/oc-general'),
-    ('bibo:status/forthcoming', '')
-    ('eol.org/pages/32609438#gbif-sub', 'en.wikipedia.org/wiki/Ovicaprid')
+    ('bibo:status/forthcoming', ''),
+    ('eol.org/pages/32609438#gbif-sub', 'en.wikipedia.org/wiki/Ovicaprid'),
 }
 
 URI_SLUG_MAPPINGS = {
