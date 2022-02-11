@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
