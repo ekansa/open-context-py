@@ -220,9 +220,9 @@ class ProcessLinks():
                                         if object_uuid == 'False':
                                              object_ok = False
                                         if object_ok and subject_ok:
-                                            message = 'Attempt link: ' + subject_record + ' ('+ subject_uuid + ') -> '
-                                            message += predicate_uuid + ' -> ' + object_record + ' ('+ object_uuid + ')'
-                                            message += 'in rows: ' + str(act_in_rows)
+                                            message = f'Attempt link: {subject_record} ({subject_uuid}) -> '
+                                            message += f'{predicate_uuid} -> {object_record} ({object_uuid})'
+                                            message += f'in rows: {act_in_rows}'
                                             # print(message)
                                             cla = CandidateLinkAssertion()
                                             cla.project_uuid = self.project_uuid
