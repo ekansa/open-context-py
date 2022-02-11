@@ -114,10 +114,9 @@
 
   {% endif %}
 
-
+    
     var vm = new Vue(
       {
-        router: router,
         delimiters: ['[[', ']]'],
         ref: 'item_app',
         el: '#item-app',
@@ -127,14 +126,7 @@
             human_remains_ok: HUMAN_REMAINS_OK,
         },
         computed: {
-            act_route: function () {
-                return this.$route;
-            },
-        },
-        watch: {
-            $route(to, from) {
-            // react to route changes...
-            }
+            
         },
         methods: {
             toggle_human_remains_ok: function(human_remains_ok) {

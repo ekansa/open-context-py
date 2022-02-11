@@ -42,3 +42,5 @@ static/d3/d3.v3.min.js
 .oc-dev-venv/
 .vs-code/
 .venv/
+frontend/node_modules
+frontend/dist
