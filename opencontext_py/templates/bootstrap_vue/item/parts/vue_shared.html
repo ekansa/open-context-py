@@ -2,11 +2,6 @@
 
 
 <script type="text/javascript">
-
-  // Import Vue2Leaflet components. 
-  const GEO_JSON = JSON.parse('{{ GEO_JSON|escapejs }}');
-  const item_json = JSON.parse('{{ item_json|escapejs }}');
-  const ITEM_UUID = item_json.uuid;
   
   const router = new VueRouter({
     mode: 'history',
@@ -15,4 +10,3 @@
   });
 
 </script>
-

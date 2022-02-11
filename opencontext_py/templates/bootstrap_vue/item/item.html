@@ -104,6 +104,15 @@
 
 <script type="text/javascript">
 
+  // Import Vue2Leaflet components. 
+  {% if GEO_JSON %}
+  const GEO_JSON = JSON.parse('{{ GEO_JSON|escapejs }}');
+  {% else %}
+  let GEO_JSON = null;
+  {% endif %}
+  const item_json = JSON.parse('{{ item_json|escapejs }}');
+  const ITEM_UUID = item_json.uuid;
+
   {% if item.flag_human_remains %}
   // Initial state from the request session token.
   const HUMAN_REMAINS_FLAGGED = true;
