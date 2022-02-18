@@ -324,6 +324,10 @@ MANAGERS = (
     (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'))
 )
 
+DEFAULT_REDIS_HOST = '127.0.0.1:6379'
+REDIS_HOST = secrets.get('REDIS_HOST', DEFAULT_REDIS_HOST)
+REDIS_HOST = os.environ.get('REDIS_HOST', DEFAULT_REDIS_HOST)
+
 
 if DEBUG:
     # Short caching for debugging
@@ -339,7 +343,7 @@ if DEBUG:
         },
         'redis': {
             'BACKEND': 'redis_cache.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
             'OPTIONS': {
                 'MAX_ENTRIES': 100000
@@ -372,7 +376,7 @@ else:
         },
         'redis': {
             'BACKEND': 'redis_cache.cache.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 60),  # 1 hour for cache
             'OPTIONS': {
                 'MAX_ENTRIES': 100000,
