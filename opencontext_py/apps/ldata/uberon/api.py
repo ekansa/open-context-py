@@ -1,7 +1,8 @@
+from urllib.parse import quote_plus
 from time import sleep
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import SKOS, RDFS, OWL
-from django.utils.http import quote_plus
+
 
 
 class uberonAPI():

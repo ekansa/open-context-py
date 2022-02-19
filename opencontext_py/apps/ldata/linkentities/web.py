@@ -1,4 +1,4 @@
-from django.utils.http import urlunquote
+from urllib.parse import unquote
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
 from opencontext_py.apps.ldata.uberon.api import uberonAPI
@@ -61,7 +61,7 @@ web_le.check_add_link_entity(uri)
         elif 'wikipedia.org' in uri:
             # page name in the URI of the article
             link_ex = uri.split('/')
-            label = urlunquote(link_ex[-1])
+            label = unquote(link_ex[-1])
             label = label.replace('_', ' ')  # underscores in Wikipedia titles
             alt_label = label
             vocab_uri = 'http://www.wikipedia.org/'
@@ -105,4 +105,3 @@ web_le.check_add_link_entity(uri)
         ent.sort = ''
         ent.save()
         return ent
-
