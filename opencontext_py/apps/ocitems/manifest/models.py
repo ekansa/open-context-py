@@ -54,6 +54,9 @@ class Manifest(models.Model):
         """ Makes both a slug and a sort value, done this way
            with the same ManifiestGeneration object so
            we don't have to look up the project index twice """
+        if self.slug and self.sort:
+            # We already have a slug and sort provided.
+            return None
         man_gen = ManifestGeneration()
         slug = man_gen.make_manifest_slug(self.uuid,
                                           self.label,
