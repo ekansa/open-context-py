@@ -317,12 +317,12 @@ if secrets.get('PROD_DATABASES_HOST'):
     }
 
 
-ADMINS = (
+ADMINS = [(
     (get_secret('ADMIN_NAME'), get_secret('ADMIN_EMAIL'))
-)
-MANAGERS = (
+)]
+MANAGERS = [(
     (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'))
-)
+)]
 
 DEFAULT_REDIS_HOST = '127.0.0.1:6379'
 REDIS_HOST = secrets.get('REDIS_HOST', DEFAULT_REDIS_HOST)
