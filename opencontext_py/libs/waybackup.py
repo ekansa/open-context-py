@@ -2,7 +2,34 @@ import requests
 from time import sleep
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+
+from internetarchive import get_session, upload_file
+from django.conf import settings
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+
+
+def start_ia_session():
+    """ starts an internet archive session """
+    config = dict(s3=dict(acccess=settings.INTERNET_ARCHIVE_ACCESS_KEY,
+                            secret=settings.INTERNET_ARCHIVE_SECRET_KEY))
+    s = get_session(config=config,
+                    debug=True)
+    s.access_key = settings.INTERNET_ARCHIVE_ACCESS_KEY
+    s.secret_key = settings.INTERNET_ARCHIVE_SECRET_KEY
+    return s
+
+
+def clean_url(raw_url):
+    raw_url = str(raw_url)
+    rem_chars = ['\\', '"', "'"]
+    for ch in rem_chars:
+        raw_url = raw_url.replace(ch, '')
+    return raw_url
+
+
+
+
 
 
 class WaybackUp():
@@ -124,6 +151,7 @@ for url in urls:
         self.working_dir = 'web-archiving'
         self.cache_filekey = 'web-archive-urls'
         self.cached_json = None
+        self.session = start_ia_session()
     
     def archive_urls(self):
         """ Archives a list of URLs to the Way Back machine,
@@ -179,9 +207,10 @@ for url in urls:
                 # now execute the request to the internet archive API
                 # s_url = self.wb_save_url + quote(url, safe='')
                 s_url = self.wb_save_url + url
-                r = requests.get(s_url,
-                                 timeout=240,
-                                 headers=self.client_headers)
+                r = self.session.get(s_url,
+                    timeout=240,
+                    headers=self.client_headers
+                )
                 r.raise_for_status()
                 ok = True
             except:
@@ -299,6 +328,7 @@ for url in urls:
                             else:
                                 # we have a relative URL, make it absolute
                                 new_url = urljoin(url, raw_url)
+                                new_url = clean_url(new_url)
                                 if new_url not in urls:
                                     urls.append(new_url)
                 if self.do_img_src:
@@ -307,30 +337,34 @@ for url in urls:
                     for img in soup.find_all('img'):
                         do_raw_url = True
                         raw_url = img.get('src')
-                        if isinstance(raw_url, str):
-                            raw_url = raw_url.strip() # remove whitespaces, etc.
-                            raw_url = raw_url.replace('\\r', '')  # common URL problem
-                            raw_url = raw_url.replace('\\n', '')  # common URL problem
-                            if '#' in raw_url:
-                                # skip fragment identifiers in URLs
-                                url_ex = raw_url.split('#')
-                                raw_url = url_ex[0]
-                            for skip_domain in skip_domains:
-                                if skip_domain in raw_url:
-                                    # skip it, it's for a social media site
-                                    do_raw_url = False
-                            if do_raw_url:
-                                # do it
-                                if raw_url[0:7] == 'http://' or \
-                                   raw_url[0:8] == 'https://':
-                                    # we have an absolute URL
-                                    if raw_url not in img_src_urls:
-                                        img_src_urls.append(raw_url)
-                                else:
-                                    # we have a relative URL, make it absolute
-                                    new_url = urljoin(url, raw_url)
-                                    if new_url not in img_src_urls:
-                                        img_src_urls.append(new_url)
+                        if not isinstance(raw_url, str):
+                            continue
+                        raw_url = raw_url.strip() # remove whitespaces, etc.
+                        raw_url = raw_url.replace('\\r', '')  # common URL problem
+                        raw_url = raw_url.replace('\\n', '')  # common URL problem
+                        if '#' in raw_url:
+                            # skip fragment identifiers in URLs
+                            url_ex = raw_url.split('#')
+                            raw_url = url_ex[0]
+                        for skip_domain in skip_domains:
+                            if skip_domain in raw_url:
+                                # skip it, it's for a social media site
+                                do_raw_url = False
+                        if not do_raw_url:
+                            continue
+                        # do it
+                        if raw_url[0:7] == 'http://' or \
+                            raw_url[0:8] == 'https://':
+                            # we have an absolute URL
+                            raw_url = clean_url(raw_url)
+                            if raw_url not in img_src_urls:
+                                img_src_urls.append(raw_url)
+                        else:
+                            # we have a relative URL, make it absolute
+                            new_url = urljoin(url, raw_url)
+                            new_url = clean_url(new_url)
+                            if new_url not in img_src_urls:
+                                img_src_urls.append(new_url)
                     print('Found image URLs: ' + str(len(img_src_urls)))
                     for src_url in img_src_urls:
                         if src_url not in self.failed_urls \
