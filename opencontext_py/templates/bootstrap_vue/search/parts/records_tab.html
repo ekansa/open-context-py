@@ -232,6 +232,9 @@
 
 <script type="text/javascript">
 
+// If true, we'll link to the testing 'all-items' new templates for
+// links to specific item records.
+const USE_TEST_ALL_ITEMS_HREF = true
 
 const SORT_OPTIONS_FRONTEND = JSON.parse('{{ SORT_OPTIONS_FRONTEND|escapejs }}');
 
@@ -437,6 +440,10 @@ var vc_records_tab = Vue.component(
                     let href = url;
                     if('href' in props){
                         href = props['href'];
+                        if(USE_TEST_ALL_ITEMS_HREF){
+                            href_ex = href.split('/');
+                            href = BASE_URL + '/all-items/' + href_ex[(href_ex.length - 1)];
+                        }
                     }
 
                     let context = '(No spatial context)';
