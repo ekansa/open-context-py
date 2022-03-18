@@ -126,10 +126,17 @@ LEGACY_ROOT_SUBJECTS = [
     ('b86fecaf-dce0-4df4-8636-d9f724184af0', 'France', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('20404f92-9a24-4f5a-bc9b-536c563edd4a', 'Gabon', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('2_Global_Germany', 'Germany', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
+
     ('337eef63-9258-4fb7-834a-ebe723a089eb', 'Ghana', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
+
+    ('4a5c6aab-3370-4c46-bb14-df6e591993c0', 'Guatemala', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
+
     ('1e13889f-188b-408f-ac1e-133cda2c7482', 'Guinea', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('367616d7-9dd4-41ff-b072-704abf72da29', 'Guinea-Bissau', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('82916fcc-04b8-47b2-97b1-31f7019b862e', 'Greece', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
+
+    ('76a84406-1530-40e7-a81a-4fc99eecadff', 'Haiti', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
+
     ('cc5a7f34-ef5e-4650-af7b-f30a74a31007', 'Iceland', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('6_global_India', 'India', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('0519B7C7-1973-4D55-17FE-6D97176B1001', 'Indian Ocean', configs.DEFAULT_SUBJECTS_OCEANIA_UUID),
