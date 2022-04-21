@@ -1,0 +1,132 @@
+{% block search_exporter %}
+
+{% load humanize %}
+
+<template id="search_exporter_ui">
+    <b-modal
+        size="lg"
+        scrollable
+        class="exporter-ui-modal"
+        ref="exporter-modal"
+        id="exporter-modal"
+        title="Export Records for Download"
+        @shown="on_shown"
+    >
+        <p><small>This tool exports the current set of records as a data table or a GIS output. 
+            GIS exports can be saved and previewed on the search result map. For convenience, 
+            these outputs represent data in somewhat simplified formats. If you need more 
+            expressive and complete representations of these data, 
+            please see the <a href="../../about/services" target="_blank">API documentation</a>. 
+            Please also note that geospatial data for certain records may be approximated as a 
+            security precaution. The API provides full documentation about geospatial precision 
+            for each record of data.
+        </small></p>
+
+        <template #modal-footer="{ ok, cancel, hide }">
+            <b-button size="sm" variant="outline-secondary" @click="cancel_close">
+              Cancel
+            </b-button>
+          </template>
+    </b-modal>
+</template>
+    
+
+<script type="text/javascript">
+
+var vc_search_exporter_ui = Vue.component(
+    'search-exporter-ui',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'result',
+            'frontend_state_obj',
+            'base_search_url',
+        ],
+        data() {
+            return {
+                result: null,
+                frontend_state_obj: null,
+                base_search_url: null,
+                default_field_mappings: {
+                    'uri': 'URI',
+                    'citation uri': 'Citation URI',
+                    'label': 'Item Label',
+                    'project label': 'Project Label',
+                    'project uri': 'Project URI',
+                    'context label': 'Context',
+                    'context uri': 'Context URI',
+                    'latitude': 'Latitude (WGS-84)',
+                    'longitude': 'Longitude (WGS-84)',
+                    'early bce/ce': 'Early BCE/CE',
+                    'late bce/ce': 'Late BCE/CE',
+                    'item category': 'Item Category',
+                    'published': 'Published Date',
+                    'updated': 'Updated Date',
+                },
+                sleep_pause: 325,
+                max_export: 200000,
+                records_per_page: 100,
+                default_csv_name: 'open-context-records',
+                default_geojson_name: 'open-context-geo-spatial-records',
+                param_response_value: 'metadata,geo-record',
+                record_sets: {},
+            }
+        },
+        template: '#search_exporter_ui',
+        computed: {
+            
+        },
+        methods: {
+            on_shown: function(){
+                return null;
+            },
+            cancel_close: function(){
+                this.$bvModal.hide('exporter-modal');
+            },
+            make_record_fetch_start_url: function(url){
+                let remove_params = [
+                    'rows',
+                    'start',
+                ];
+                for (let param of remove_params){
+                    url = removeURLParameter(url, param);
+                }
+                return url;
+            },
+            fetch_oc_records_api: function (){
+                this.error = null;
+                this.loading = true;
+                fetch(
+                    this.$route.fullPath,
+                    {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                    }
+                )
+                .then(this.loading = false)
+                .then(response => response.json())
+                .then(json => {
+                    this.result = json;
+                    this.route_key_index += 1;
+                    this.update_frontent_state_obj();
+                    if(this.emit_update_fetch_done){
+                        this.emit_update_fetch_done = false;
+                        this.$emit('update_fetch_done', true);
+                    }
+                });
+            },
+        },
+        components: {
+            
+        }
+    }
+);
+
+
+
+</script>
+
+
+
+{% endblock %}

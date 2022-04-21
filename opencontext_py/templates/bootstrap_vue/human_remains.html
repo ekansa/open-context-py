@@ -14,7 +14,7 @@
     
 
 <template id="human-remains-results-alert">
-    <b-alert :show="human_remains_flagged" variant="warning">
+    <b-alert :id="'human_remains_alert_' + alert_type" :show="human_remains_flagged" variant="warning">
         <b-row align-v="center">
             <b-col>
                 <span v-if="alert_type == 'item'">

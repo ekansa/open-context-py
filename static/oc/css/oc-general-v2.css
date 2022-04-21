@@ -302,7 +302,16 @@ Search
 #app {
 	min-height: 800px;
 }
+#search_export_button {
+	margin-top: 12px;
+}
+#human_remains_alert_search {
+	margin-top: 36px;
+}
 #filtered-fulltext {
+	margin-top: 36px;
+}
+#search_filters {
 	margin-top: 36px;
 }
 #main_facets_all {
