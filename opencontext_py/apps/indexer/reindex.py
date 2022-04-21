@@ -66,6 +66,11 @@ sri = SolrReIndex()
 sri.reindex_uuids(uuids)
 
 
+# Delete an item from the index
+from opencontext_py.libs.solrconnection import SolrConnection
+solr = SolrConnection().connection
+solr.delete_by_key('d2560eff-dcb0-480f-aead-932b331b33b9')
+
 
     """
 
