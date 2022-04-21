@@ -135,6 +135,8 @@ add_tris.add_trinomials_to_items()
                                      predicate_uuid=predicate.uuid)[:1]
             if len(t_ass) < 1:
                 ok_to_create = True
+            else:
+                return True
         else:
             ok_to_create = True
         if manifest.project_uuid in self.source_ids:

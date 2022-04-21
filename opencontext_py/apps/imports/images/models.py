@@ -1,8 +1,11 @@
 import os
 import shutil
-from PIL import Image, ImageFile, ImageFilter
-from django.conf import settings
+from unidecode import unidecode
 
+from PIL import Image, ImageFile, ImageFilter
+
+from django.conf import settings
+from django.template.defaultfilters import slugify
 
 class ImageImport():
     """ Imports images
@@ -12,7 +15,9 @@ ii = ImageImport()
 ii.force_dashes = True
 ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 ii.gaussian_blur_radius = 2
-ii.make_image_versions('giza-seeds')
+ii.slugify = True
+ii.make_image_versions('kerma')
+
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -29,6 +34,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.preview_dir = 'preview'
         self.thumbs_dir = 'thumbs'
         self.force_dashes = False  # make sure the new filenames have dashes, not spaces or underscores
+        self.slugify = False
         self.errors = []
         self.max_image_size = 35000000000
         self.single_size_limit = 250000000  # break up if the image has more than this number of pixel
@@ -64,10 +70,19 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                 for filename in filenames:
                     src_file = os.path.join(dirpath, filename)
                     print(f'Working on src_file: {src_file}')
+                    if self.slugify:
+                        f_split = filename.split('.')
+                        if len(f_split) > 2:
+                            filename = slugify(unidecode('.'.join(f_split[:-1]))) + '.' + f_split[-1]
+                        elif len(f_split) == 2:
+                            filename = slugify(unidecode(f_split[0])) + '.' + f_split[1]
+                        else:
+                            filename = slugify(unidecode(filename))
                     if self.force_dashes:
                         # make sure the new filenames have dashes, not spaces or underscores
                         filename = filename.replace(' ', '-')
                         filename = filename.replace('_', '-')
+
                     if new_dir == self.full_dir:
                         new_file = os.path.join(act_dir, filename)
                     else:
