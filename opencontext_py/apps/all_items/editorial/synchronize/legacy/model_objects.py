@@ -50,7 +50,6 @@ model_objects.update_prod_from_default(
 )
 
 # model_objects.update_default_from_prod(after_date=after_date)
-
 """
 
 

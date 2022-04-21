@@ -430,6 +430,50 @@ def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
     return df
 
 
+def make_project_space_time_qs(man_obj):
+    """Make a project space_time_qs
+    
+   :param AllManifest man_obj: The AllManifest object project 
+        instance for which we will generate aggregate spatial 
+        regions
+    
+    return space_time_qs
+    """
+    done = False
+    subj_uuids = AllManifest.objects.filter(
+        item_type='subjects',
+        project=man_obj
+    ).values_list('uuid', flat=True)
+    i = 0
+    while not done:
+        i += 1
+        space_time_qs = AllSpaceTime.objects.filter(
+            Q(project=man_obj)
+            |Q(item__project=man_obj)
+            |Q(item_id__in=subj_uuids)
+        ).filter(
+            latitude__isnull=False, 
+            longitude__isnull=False
+        )
+        if space_time_qs.count() > 0:
+            done = True
+            return space_time_qs
+        # Get the parents of the subj_uuids to if they
+        # have spatial coordinates.
+        count_old_subs = len(subj_uuids)
+        subj_uuids = AllManifest.objects.filter(
+            item_type='subjects',
+            uuid__in=subj_uuids,
+        ).distinct('context').order_by('context').values_list(
+            'context_id', flat=True
+        )
+        count_new_subs = len(subj_uuids)
+        print(f'No lat/lon for {count_old_subs} project items, looking at {count_new_subs} parent items')
+        if i >= 5:
+            done = True
+    return space_time_qs
+
+
 def make_geo_json_of_regions_for_man_obj(
     man_obj,
     max_clusters=MAX_CLUSTERS,
@@ -449,10 +493,7 @@ def make_geo_json_of_regions_for_man_obj(
     """
     
     if man_obj.item_type == 'projects':
-        space_time_qs = AllSpaceTime.objects.filter(
-            Q(project=man_obj)
-            |Q(item__project=man_obj)
-        )
+        space_time_qs = make_project_space_time_qs(man_obj)
     elif man_obj.item_type == 'subjects':
         space_time_qs = AllSpaceTime.objects.filter(
            item__path__startswith=man_obj.path
