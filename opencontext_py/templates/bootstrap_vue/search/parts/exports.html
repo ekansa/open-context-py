@@ -22,6 +22,22 @@
             for each record of data.
         </small></p>
 
+        <b-button size="sm" variant="outline-primary" @click="get_records">
+            Test Fetch
+        </b-button>
+
+        <b-row v-if="dl_progress" class="progress_row">
+            <b-col cols="12">
+      
+              <b-progress max="1" height="2rem" variant="success">
+                <b-progress-bar :value="dl_progress">
+                  <span><strong>[[ (dl_progress * 100).toFixed(1) ]] %</strong> ([[ dl_message ]])</span>
+                </b-progress-bar>
+              </b-progress>
+      
+            </b-col>
+        </b-row>
+
         <template #modal-footer="{ ok, cancel, hide }">
             <b-button size="sm" variant="outline-secondary" @click="cancel_close">
               Cancel
@@ -39,13 +55,11 @@ var vc_search_exporter_ui = Vue.component(
         delimiters: ['[[', ']]'],
         props: [
             'result',
-            'frontend_state_obj',
             'base_search_url',
         ],
         data() {
             return {
                 result: null,
-                frontend_state_obj: null,
                 base_search_url: null,
                 default_field_mappings: {
                     'uri': 'URI',
@@ -69,12 +83,44 @@ var vc_search_exporter_ui = Vue.component(
                 default_csv_name: 'open-context-records',
                 default_geojson_name: 'open-context-geo-spatial-records',
                 param_response_value: 'metadata,geo-record',
-                record_sets: {},
+                record_sets: null,
+                loading: false,
+                error: null,
+                act_start_url: null,
+                act_page_url: null,
+                act_total_count: null,
+                act_downloaded_count: null,
             }
         },
         template: '#search_exporter_ui',
         computed: {
-            
+            dl_progress: function(){
+                if(this.act_total_count == null){
+                    return null;
+                }
+                let dl_count = this.act_downloaded_count;
+                if(this.act_total_count == 0){
+                    return 1;
+                }
+                if(dl_count == null){
+                    dl_count = 0;
+                }
+                let prop_done = dl_count / this.act_total_count;
+                return prop_done;
+            },
+            dl_message: function(){
+                if(this.act_total_count == null){
+                    return null;
+                }
+                let dl_count = this.act_downloaded_count;
+                if(dl_count == null){
+                    dl_count = 0;
+                }
+                if(this.act_total_count < 1){
+                    return 'No records to download';
+                }
+                return `${dl_count} of ${this.act_total_count} records downloaded`;
+            }
         },
         methods: {
             on_shown: function(){
@@ -84,38 +130,133 @@ var vc_search_exporter_ui = Vue.component(
                 this.$bvModal.hide('exporter-modal');
             },
             make_record_fetch_start_url: function(url){
-                let remove_params = [
-                    'rows',
-                    'start',
+                let params_vals = [
+                    {p: 'rows', v: this.records_per_page,},
+                    {p: 'start', v: 0,},
                 ];
-                for (let param of remove_params){
-                    url = removeURLParameter(url, param);
+                for (let p_v of params_vals){
+                    url = replaceURLparameter(url, p_v.p, p_v.v);
                 }
                 return url;
             },
-            fetch_oc_records_api: function (){
+            prep_record_fetches: function(){
+                this.act_start_url = this.make_record_fetch_start_url(
+                    this.base_search_url
+                );
+                let act_start_url = this.act_start_url;
+                if(this.record_sets == null){
+                    this.record_sets = {
+                        ok: true,
+                    };
+                }
+                if(act_start_url in this.record_sets && this.record_sets[act_start_url] != null){
+                    return this.record_sets[act_start_url].metadata.totalResults;
+                }
+                
+                let start_metadata = JSON.parse(JSON.stringify(this.result)); // prevent mutation of the result.
+                if(start_metadata.hasOwnProperty('features')){
+                    delete start_metadata.features;
+                }
+                this.record_sets[act_start_url] = {
+                    'label': this.default_csv_name,
+                    'metadata': start_metadata,
+                    'pages': [],
+                }
+                return this.record_sets[act_start_url].metadata.totalResults;
+            },
+            add_page_json_to_record_sets: function(page_json){
+                if(!page_json){
+                    console.log('Problem: page_json missing')
+                    return false;
+                }
+                if(!page_json.hasOwnProperty('id')){
+                    console.log('Problem: page_json missing id attribute')
+                    return false;
+                }
+                if((this.act_start_url == null) || (this.record_sets == null)){
+                    console.log('Problem: null act_start_url or null record_sets')
+                    return false;
+                }
+                let act_start_url = this.act_start_url;
+                if(!act_start_url in this.record_sets){
+                    console.log('Problem: no ' + act_start_url + ' key in record_sets')
+                    return false;
+                }
+                // Check to see if the page of results is new, and if it is, add it.
+                let page_new = true;
+                let page_id = page_json.id;
+                let num_pages = this.record_sets[act_start_url].pages.length;
+                let downloaded_count = 0;
+                for(let old_page of this.record_sets[act_start_url].pages){
+                    if(old_page.id == page_id){
+                        page_new = false;
+                    }
+                    if(old_page.hasOwnProperty('features')){
+                        // Add up the number of existing records.
+                        downloaded_count += old_page.features.length;
+                    }
+                }
+                if(!page_new){
+                    // Not new, but still valid or OK
+                    console.log('NOTE! ' + page_id + ' is not new in ' + num_pages + ' pages.');
+                    return true;
+                }
+                if(page_json.hasOwnProperty('features')){
+                    // Add the new page's feature count to the total downloaded count.
+                    downloaded_count += page_json.features.length;
+                }
+                this.record_sets[act_start_url].pages.push(page_json);
+                this.act_downloaded_count = downloaded_count;
+                console.log('Added ' + page_id + ' now ' + this.record_sets[act_start_url].pages.length + ' pages.');
+                // New and valid.
+                return true;
+            },
+            recursive_fetch_oc_records_api: function (url){
                 this.error = null;
                 this.loading = true;
+                url = replaceURLparameter(url, 'response', this.param_response_value);
                 fetch(
-                    this.$route.fullPath,
+                    url,
                     {
                         headers:{
                             'Accept': 'application/json',
                         }
                     }
-                )
-                .then(this.loading = false)
-                .then(response => response.json())
-                .then(json => {
-                    this.result = json;
-                    this.route_key_index += 1;
-                    this.update_frontent_state_obj();
-                    if(this.emit_update_fetch_done){
-                        this.emit_update_fetch_done = false;
-                        this.$emit('update_fetch_done', true);
+                ).then(async response => {
+                    const page_data = await response.json();
+                    this.loading = false;
+                    // check for error response
+                    if (!response.ok) {
+                        // get error message from body or default to response status
+                        const error = response.status;
+                        return Promise.reject(error);
                     }
+                    let page_ok = this.add_page_json_to_record_sets(page_data);
+                    this.act_page_url = null;
+                    if(page_ok){
+                        if(page_data.hasOwnProperty('next')){
+                            this.act_page_url = page_data.next;
+                        }
+                    }
+                    if(this.act_page_url != null){
+                        console.log('Fetch next act page ' + this.act_page_url);
+                        setTimeout(() => { 
+                            this.recursive_fetch_oc_records_api(this.act_page_url); 
+                        }, this.sleep_pause);
+                    }
+                })
+                .catch(error => {
+                    this.errorMessage = error;
+                    console.error('There was an error!', error);
                 });
             },
+            get_records: function(){
+                this.act_total_count = this.prep_record_fetches();
+                this.act_downloaded_count = 0;
+                this.act_page_url = this.act_start_url;
+                console.log('start url is: ' + this.act_start_url);
+                this.recursive_fetch_oc_records_api(this.act_page_url);
+            }
         },
         components: {
             
