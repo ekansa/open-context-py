@@ -2,9 +2,56 @@
 
 {% load humanize %}
 
+<template id="search_exporter_selectable_dl_attribs">
+    <b-list-group-item v-if="show_attribs_exist">
+        <b-row>
+            <b-col cols="3">
+                <strong v-if="data_type == 'id'">
+                    Types or Relations
+                </strong>
+                <strong v-else-if="data_type == 'int'">
+                    Integer
+                </strong>
+                <strong v-else-if="data_type == 'double'">
+                    Decimal
+                </strong>
+                <strong v-else-if="data_type == 'date'">
+                    Date
+                </strong>
+                <strong v-else-if="data_type == 'bool'">
+                    Boolean (T/F)
+                </strong>
+                <strong v-else>
+                    Free text
+                </strong>
+            </b-col>
+            <b-col cols="9">
+                <div v-for="(freq_type, ft_index) in attrib_freq_types">
+                    <div v-if="show_attribs[freq_type].length > 0">
+                        <span>Fields used with [[ freq_type ]] records</span><br/>
+                        <span v-for="(attrib, index) in show_attribs[freq_type]">
+                            <b-button
+                                class="download-selected-attribs"
+                                pill
+                                size="sm"
+                                variant="outline-primary"
+                                :title="'Click to add \'' + attrib.label + '\''"
+                                @click="add_selected_attrib(attrib)"
+                                >
+                                [[ attrib.s_label ]] <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
+                            </b-button>
+                        </span>
+                    </div>
+                </div>
+            </b-col>
+        </b-row>
+    </b-list-group-item>
+</template>
+
+
 <template id="search_exporter_ui">
     <b-modal
-        size="lg"
+        size="xl"
         scrollable
         class="exporter-ui-modal"
         ref="exporter-modal"
@@ -12,32 +59,130 @@
         title="Export Records for Download"
         @shown="on_shown"
     >
-        <p><small>This tool exports the current set of records as a data table or a GIS output. 
-            GIS exports can be saved and previewed on the search result map. For convenience, 
-            these outputs represent data in somewhat simplified formats. If you need more 
-            expressive and complete representations of these data, 
-            please see the <a href="../../about/services" target="_blank">API documentation</a>. 
-            Please also note that geospatial data for certain records may be approximated as a 
-            security precaution. The API provides full documentation about geospatial precision 
-            for each record of data.
-        </small></p>
-
-        <b-button size="sm" variant="outline-primary" @click="get_records">
-            Test Fetch
-        </b-button>
-
-        <b-row v-if="dl_progress" class="progress_row">
+        <b-row>
             <b-col cols="12">
-      
-              <b-progress max="1" height="2rem" variant="success">
-                <b-progress-bar :value="dl_progress">
-                  <span><strong>[[ (dl_progress * 100).toFixed(1) ]] %</strong> ([[ dl_message ]])</span>
-                </b-progress-bar>
-              </b-progress>
-      
+                <p><small>This tool exports the current set of records as a data table or a GIS output. 
+                    GIS exports can be saved and previewed on the search result map. For convenience, 
+                    these outputs represent data in somewhat simplified formats. If you need more 
+                    expressive and complete representations of these data, 
+                    please see the <a href="../../about/services" target="_blank">API documentation</a>. 
+                    Please also note that location data for certain records may be approximated as a 
+                    security precaution or because precise data is not available.</small>
+                </p>
             </b-col>
         </b-row>
 
+        <b-row id="download-button-prog-bar-row">
+            <b-col cols="2">
+                <b-button
+                    :disabled="dl_button_disable"
+                    size="sm" 
+                    variant="outline-primary" 
+                    @click="get_records">
+                    <b-icon-download></b-icon-download> Download
+                </b-button>
+            </b-col>
+            <b-col cols="10">
+
+                <b-row v-if="dl_progress" class="progress_row">
+                    <b-col cols="12">
+              
+                      <b-progress max="1" height="2rem" variant="success">
+                        <b-progress-bar :value="dl_progress">
+                          <span><strong>[[ (dl_progress * 100).toFixed(1) ]] %</strong> ([[ dl_message ]])</span>
+                        </b-progress-bar>
+                      </b-progress>
+              
+                    </b-col>
+                </b-row>
+                
+            </b-col>
+        </b-row>
+
+        <b-row>
+            <b-col cols="6">
+                <h5>Fields / Attributes to Include in Export</h5>
+                <span v-for="(attrib, index) in default_attribs">
+                    <b-badge
+                        pill
+                        class="download-default-attribs"
+                        title="Default, always included attribute"
+                        variant="secondary">
+                        [[ attrib ]]
+                    </b-badge>
+                </span>
+                <div id="download-selected-attribs-div" if="act_download_attribs">
+                    <span v-for="(attrib, index) in act_download_attribs">
+                        <b-button
+                            class="download-selected-attribs"
+                            pill
+                            size="sm"
+                            variant="primary"
+                            :title="'Click to remove \'' + attrib.label + '\''"
+                            @click="remove_selected_attrib(attrib)"
+                            :disabled="dl_started || dl_complete"
+                            >
+                            [[ attrib.s_label ]] <b-icon-dash-circle-fill></b-icon-dash-circle-fill>
+                        </b-button>
+                    </span>
+                </div>
+            </b-col>
+            <b-col cols="6">
+                <div v-if="dl_started & !dl_complete" class="text-center">
+                    <h5>Download of <strong>[[ human_act_total_count ]]</strong> records in progress...</h5>
+                    <b-spinner variant="success" label="Spinning"></b-spinner>
+                </div>
+                <div v-else-if="dl_complete" class="text-center">
+                    <h5>Download of <strong>[[ human_act_total_count ]]</strong> records completed.</h5>
+
+                    <vue-json-to-csv
+                        v-bind:json-data="dl_csv_data">
+                        <b-button variant="primary">Save Data as CSV <b-icon-table></b-icon-table></b-button>
+                    </vue-json-to-csv>
+
+                </div>
+                <div v-if="!dl_started">
+                    <div class="accordion" role="tablist" v-if="act_attribs">
+                        <h5>Choose Additional Fields / Attributes to Include in Export</h5>
+                        <b-card 
+                            no-body
+                            class="mb-1"
+                            v-for="(attrib_grp, a_grp_index) in act_attribs">
+                            <b-card-header header-tag="header" class="p-1" role="tab">
+                                <b-button 
+                                    block
+                                    v-b-toggle="'attrib_grp_panel_' + a_grp_index"
+                                    variant="secondary"><i class="bi bi-arrows-expand"></i> [[attrib_grp.label]]</b-button>
+                            </b-card-header>
+                            <b-collapse 
+                                :id="'attrib_grp_panel_' + a_grp_index"
+                                visible
+                                :accordion="'attrib_grp_panel_accordion_' + a_grp_index" 
+                                role="tabpanel">
+                                <b-card-body>
+                                    <small v-if="attrib_grp.note">[[attrib_grp.note]]</small>
+                                    <b-list-group flush>
+                                        
+                                        <selectable-dl-attribs
+                                            v-for="(attrib_dt_grp, a_dt_grp_index) in attrib_grp.attribs"
+                                            v-bind:attrib_freq_types="attrib_freq_types"
+                                            v-bind:attrib_dt_grp="attrib_dt_grp"
+                                            v-bind:data_type="attrib_dt_grp.data_type"
+                                            v-bind:act_download_attribs="act_download_attribs">
+                                        </selectable-dl-attribs>
+                                            
+                                    </b-list-group>
+                                </b-card-body>
+                            </b-collapse>
+                        </b-card>
+                    </div>
+                    <div v-else>
+                        Download not currently supported.
+                    </div>
+                </div>
+            </b-col>
+        </b-row>
+       
         <template #modal-footer="{ ok, cancel, hide }">
             <b-button size="sm" variant="outline-secondary" @click="cancel_close">
               Cancel
@@ -48,6 +193,93 @@
     
 
 <script type="text/javascript">
+Vue.use(VueJsonToCsv);
+/*
+const vc_json_to_csv = Vue.component(
+    'vue-json-to-csv', 
+    window.VueJsonToCsv,
+);
+*/
+
+var vc_selectable_dl_attribs = Vue.component(
+    'selectable-dl-attribs',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'attrib_dt_grp',
+            'data_type',
+            'attrib_freq_types',
+            'act_download_attribs',
+        ],
+        data() {
+            return {
+                attrib_dt_grp: null,
+                data_type: null,
+                attrib_freq_types: null,
+                act_download_attribs: null,
+            };
+        },
+        computed: {
+            show_attribs_exist: function() {
+                if(this.attrib_dt_grp == null || this.act_download_attribs == null){
+                    return false;
+                }
+                if(this.attrib_freq_types == null){
+                    return false;
+                }
+                let output = false;
+                for(let freq_type of this.attrib_freq_types){
+                    if(!this.attrib_dt_grp.hasOwnProperty(freq_type)){
+                        continue;
+                    }
+                    for(let attrib of this.attrib_dt_grp[freq_type]){
+                        if(this.in_download_attribs(attrib)){
+                            continue;
+                        }
+                        output = true;
+                    }
+                }
+                return output;
+            },
+            show_attribs: function(){
+                if(this.attrib_dt_grp == null || this.act_download_attribs == null){
+                    return false;
+                }
+                if(this.attrib_freq_types == null){
+                    return false;
+                }
+                let show_attribs = {};
+                for(let freq_type of this.attrib_freq_types){
+                    show_attribs[freq_type] = [];
+                    if(!this.attrib_dt_grp.hasOwnProperty(freq_type)){
+                        continue;
+                    }
+                    for(let attrib of this.attrib_dt_grp[freq_type]){
+                        if(this.in_download_attribs(attrib)){
+                            continue;
+                        }
+                        show_attribs[freq_type].push(attrib);
+                    }
+                }
+                return show_attribs;
+            }
+        },
+        template: '#search_exporter_selectable_dl_attribs',
+        methods: {
+            in_download_attribs: function(attrib){
+                for(let act_attrib of this.act_download_attribs){
+                    if(act_attrib.slug == attrib.slug){
+                        return true;
+                    }
+                }
+                return false;
+            },
+            add_selected_attrib: function(attrib){
+                this.act_download_attribs.push(attrib);
+            },
+        }
+    }
+);
 
 var vc_search_exporter_ui = Vue.component(
     'search-exporter-ui',
@@ -83,17 +315,42 @@ var vc_search_exporter_ui = Vue.component(
                 default_csv_name: 'open-context-records',
                 default_geojson_name: 'open-context-geo-spatial-records',
                 param_response_value: 'metadata,geo-record',
+                default_add_common_attribs: true,
+                attrib_freq_types: ['most', 'many', 'some', 'few'],
                 record_sets: null,
                 loading: false,
                 error: null,
+                act_attribs: null,
+                act_download_attribs: null,
                 act_start_url: null,
                 act_page_url: null,
                 act_total_count: null,
                 act_downloaded_count: null,
+                dl_started: false,
+                dl_complete: null,
             }
         },
         template: '#search_exporter_ui',
         computed: {
+            default_attribs: function() {
+                let attribs = [];
+                for(let [key, val] of Object.entries(this.default_field_mappings)){
+                    attribs.push(val);
+                }
+                return attribs;
+            },
+            human_act_total_count: function(){
+                if(this.act_downloaded_count == null){
+                    return null;
+                }
+                return this.act_downloaded_count.toLocaleString();
+            },
+            dl_button_disable: function(){
+                if(this.act_downloaded_count == null){
+                    return false;
+                }
+                return true;
+            },
             dl_progress: function(){
                 if(this.act_total_count == null){
                     return null;
@@ -120,14 +377,58 @@ var vc_search_exporter_ui = Vue.component(
                     return 'No records to download';
                 }
                 return `${dl_count} of ${this.act_total_count} records downloaded`;
-            }
+            },
+            dl_csv_data: function(){
+                if(!this.dl_complete){
+                    return null;
+                }
+                let act_record_set = this.get_act_record_set();
+                if(act_record_set == null){
+                    return null;
+                }
+                let data = [];
+                for(let page of act_record_set.pages){
+                    if(!page.hasOwnProperty('features')){
+                        continue;
+                    }
+                    for(let feature of page.features){
+                        if(!feature.hasOwnProperty('properties')){
+                            continue;
+                        }
+                        data.push(feature.properties);
+                    }
+                }
+                return data;
+            },
         },
         methods: {
             on_shown: function(){
+                this.make_act_attribs();
                 return null;
             },
             cancel_close: function(){
                 this.$bvModal.hide('exporter-modal');
+            },
+            remove_selected_attrib: function(attrib){
+                console.log('Remove click');
+                console.log(attrib);
+                let rev_attribs = [];
+                for(let act_attrib of this.act_download_attribs){
+                    if(act_attrib.slug == attrib.slug){
+                        continue
+                    }
+                    rev_attribs.push(act_attrib);
+                }
+                this.act_download_attribs = rev_attribs;
+                return true;
+            },
+            in_download_attribs: function(attrib){
+                for(let act_attrib of this.act_download_attribs){
+                    if(act_attrib.slug == attrib.slug){
+                        return true;
+                    }
+                }
+                return false;
             },
             make_record_fetch_start_url: function(url){
                 let params_vals = [
@@ -139,10 +440,138 @@ var vc_search_exporter_ui = Vue.component(
                 }
                 return url;
             },
+            make_attribute_lists: function(metadata){
+                let all_attribs = [];
+                if(!metadata.hasOwnProperty('oc-api:has-facets')){
+                    return all_attribs;
+                }
+                for (let f_field of metadata['oc-api:has-facets']){
+                    if(!f_field.hasOwnProperty('type')){
+                        continue;
+                    }
+                    if(f_field.type != 'oc-api:facet-prop'){
+                        continue;
+                    }
+                    let is_standard = false;
+                    f_field.note = (
+                        'Project defined attributes, not in wider use '
+                        + 'across multiple data sources.'
+                    );
+                    if(f_field.label.indexOf('Standard') >=0 ){
+                        is_standard = true;
+                        f_field.note = 'Attributes used in common across multiple projects and data sources.';
+                    }
+                    f_field.attribs = [];
+                    let attrib_opt_count = 0;
+                    for (let opts_conf of FACETS_OPTIONS_LISTS_AND_DATA_TYPES) {
+                        if (!(opts_conf.list_key in f_field)){
+                            // Nothing to do, so keep on looping to check for other kinds of
+                            // options lists.
+                            continue;
+                        }
+                        let act_data_type_attribs = {
+                            data_type: opts_conf.data_type,
+                            most: [],
+                            many: [],
+                            some: [],
+                            few: [],
+                        };
+                        for(let act_opt of f_field[opts_conf.list_key]){
+                            act_opt.percent = Math.round(act_opt.count / metadata.totalResults, 2) * 100;
+                            act_opt.s_label = act_opt.label;
+                            if(!is_standard && act_opt.hasOwnProperty('rdfs:isDefinedBy')){
+                                if(act_opt['rdfs:isDefinedBy'].indexOf('/predicates/') < 0){
+                                    // This is NOT a predicate, so it's not a descriptive attribute.
+                                    continue;
+                                }
+                            }
+                            if (act_opt.s_label.length > 36) {
+                                act_opt.s_label = act_opt.label.substring(0, 34) + '..';
+                            }
+                            if(act_opt.percent >=75){
+                                act_data_type_attribs.most.push(act_opt);
+                                attrib_opt_count += 1;
+                            }
+                            else if (act_opt.percent >= 33 && act_opt.percent < 75) {
+                                act_data_type_attribs.many.push(act_opt);
+                                attrib_opt_count += 1;
+                            }
+                            else if (act_opt.percent >= 10 && act_opt.percent < 33) {
+                                act_data_type_attribs.some.push(act_opt);
+                                attrib_opt_count += 1;
+                            }
+                            else{
+                                act_data_type_attribs.few.push(act_opt);
+                                attrib_opt_count += 1;
+                            }
+                        }
+                        f_field.attribs.push(act_data_type_attribs);
+                    }
+                    if(attrib_opt_count < 1){
+                        continue;
+                    }
+                    all_attribs.push(f_field);
+                }
+                return all_attribs;
+            },
+            make_act_attribs: function(){
+                if(this.act_attribs != null){
+                    // this is already defined.
+                    return null;
+                }
+                if(!this.result){
+                    this.act_attribs = null;
+                    return null;
+                }
+                let start_metadata = JSON.parse(JSON.stringify(this.result)); // prevent mutation of the result.
+                if(start_metadata.hasOwnProperty('features')){
+                    delete start_metadata.features;
+                }
+                console.log('Made act attribs');
+                this.act_attribs = this.make_attribute_lists(start_metadata);
+                console.log(this.act_attribs);
+                if(this.default_add_common_attribs){
+                    this.act_download_attribs = [];
+                    for(let field_grp of this.act_attribs){
+                        if(!field_grp.hasOwnProperty('attribs')){
+                            continue;
+                        }
+                        for(let dt_attribs of field_grp.attribs){
+                            if(!dt_attribs.hasOwnProperty('most')){
+                                continue;
+                            }
+                            for(let attrib of dt_attribs.most){
+                                if(!attrib.hasOwnProperty('slug')){
+                                    continue;
+                                }
+                                this.act_download_attribs.push(attrib);
+                            }
+                        }
+                    }
+                    console.log('Added default download attribs ' + this.act_download_attribs.length);
+                    console.log(this.act_download_attribs);
+                }
+            },
             prep_record_fetches: function(){
                 this.act_start_url = this.make_record_fetch_start_url(
                     this.base_search_url
                 );
+
+                let attrib_slugs = [];
+                for(let attrib of this.act_download_attribs){
+                    if(!attrib.hasOwnProperty('slug')){
+                        continue;
+                    }
+                    attrib_slugs.push(attrib.slug);
+                }
+                if(attrib_slugs.length > 0){
+                    this.act_start_url = replaceURLparameter(
+                        this.act_start_url,
+                        'attributes',
+                        attrib_slugs.join(',')
+                    );
+                }
+
                 let act_start_url = this.act_start_url;
                 if(this.record_sets == null){
                     this.record_sets = {
@@ -158,11 +587,55 @@ var vc_search_exporter_ui = Vue.component(
                     delete start_metadata.features;
                 }
                 this.record_sets[act_start_url] = {
-                    'label': this.default_csv_name,
-                    'metadata': start_metadata,
-                    'pages': [],
+                    label: this.default_csv_name,
+                    metadata: start_metadata,
+                    pages: [],
                 }
                 return this.record_sets[act_start_url].metadata.totalResults;
+            },
+            get_act_record_set: function(){
+                let act_start_url = this.act_start_url;
+                if((act_start_url == null) || (this.record_sets == null)){
+                    console.log('Problem: null act_start_url or null record_sets');
+                    return null;
+                }
+                if(!act_start_url in this.record_sets){
+                    console.log('No ' + act_start_url + ' key in record_sets')
+                    return null;
+                }
+                return this.record_sets[act_start_url];
+            },
+            check_page_in_record_sets: function(page_id){
+                let page_res = {
+                    ok: null, 
+                    page_new: null,
+                    next_url: null,
+                    downloaded_count: null,
+                };
+                let act_start_url = this.act_start_url;
+                let act_record_set = this.get_act_record_set();
+                if(act_record_set == null){
+                    page_res.ok = false;
+                    return page_res;
+                }
+                // Check to see if the page of results is new, and if it is, add it.
+                page_res.ok = true;
+                page_res.page_new = true;
+                page_res.downloaded_count = 0;
+                let num_pages = this.record_sets[act_start_url].pages.length;
+                for(let old_page of this.record_sets[act_start_url].pages){
+                    if(old_page.id == page_id){
+                        page_res.page_new = false;
+                        if(old_page.hasOwnProperty('next')){
+                            page_res.next_url = old_page.next;
+                        }
+                    }
+                    if(old_page.hasOwnProperty('features')){
+                        // Add up the number of existing records.
+                        page_res.downloaded_count += old_page.features.length;
+                    }
+                }
+                return page_res;
             },
             add_page_json_to_record_sets: function(page_json){
                 if(!page_json){
@@ -173,48 +646,47 @@ var vc_search_exporter_ui = Vue.component(
                     console.log('Problem: page_json missing id attribute')
                     return false;
                 }
-                if((this.act_start_url == null) || (this.record_sets == null)){
-                    console.log('Problem: null act_start_url or null record_sets')
+                let page_res = this.check_page_in_record_sets(page_json.id);
+                if(!page_res.ok){
                     return false;
                 }
-                let act_start_url = this.act_start_url;
-                if(!act_start_url in this.record_sets){
-                    console.log('Problem: no ' + act_start_url + ' key in record_sets')
-                    return false;
-                }
-                // Check to see if the page of results is new, and if it is, add it.
-                let page_new = true;
-                let page_id = page_json.id;
-                let num_pages = this.record_sets[act_start_url].pages.length;
-                let downloaded_count = 0;
-                for(let old_page of this.record_sets[act_start_url].pages){
-                    if(old_page.id == page_id){
-                        page_new = false;
-                    }
-                    if(old_page.hasOwnProperty('features')){
-                        // Add up the number of existing records.
-                        downloaded_count += old_page.features.length;
-                    }
-                }
-                if(!page_new){
-                    // Not new, but still valid or OK
-                    console.log('NOTE! ' + page_id + ' is not new in ' + num_pages + ' pages.');
+                let downloaded_count = page_res.downloaded_count;
+                if(!page_res.page_new){
+                    // We already have this page downloaded.
+                    this.act_downloaded_count = downloaded_count;
                     return true;
                 }
+                // Everything below happens if the page is new.
                 if(page_json.hasOwnProperty('features')){
                     // Add the new page's feature count to the total downloaded count.
                     downloaded_count += page_json.features.length;
                 }
+                let act_start_url = this.act_start_url;
                 this.record_sets[act_start_url].pages.push(page_json);
                 this.act_downloaded_count = downloaded_count;
-                console.log('Added ' + page_id + ' now ' + this.record_sets[act_start_url].pages.length + ' pages.');
+                console.log('Added ' + page_json.id + ' now ' + this.record_sets[act_start_url].pages.length + ' pages.');
                 // New and valid.
+                if(this.act_downloaded_count >= this.act_total_count){
+                    this.dl_complete = true;
+                }
                 return true;
             },
             recursive_fetch_oc_records_api: function (url){
                 this.error = null;
                 this.loading = true;
                 url = replaceURLparameter(url, 'response', this.param_response_value);
+                let page_res = this.check_page_in_record_sets(url);
+                if(!page_res.ok){
+                    return false;
+                }
+                if(!page_res.page_new){
+                    // We already have this page downloaded.
+                    this.act_downloaded_count = page_res.downloaded_count;
+                    if(page_res.next_url != null){
+                        this.recursive_fetch_oc_records_api(page_res.next_url); 
+                    }
+                    return true;
+                }
                 fetch(
                     url,
                     {
@@ -255,11 +727,14 @@ var vc_search_exporter_ui = Vue.component(
                 this.act_downloaded_count = 0;
                 this.act_page_url = this.act_start_url;
                 console.log('start url is: ' + this.act_start_url);
+                this.dl_started = true;
+                this.dl_complete = false;
                 this.recursive_fetch_oc_records_api(this.act_page_url);
             }
         },
         components: {
-            
+            'selectable-dl-attribs': vc_selectable_dl_attribs,
+            // 'vue-json-to-csv': vc_json_to_csv,
         }
     }
 );

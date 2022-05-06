@@ -322,8 +322,8 @@ Search
 	color: #212529;
 }
 .filter_heading_labels {
-	text-decoration: none;
-	color: #212529;
+	text-decoration:x none;
+	color: #212529;c
 }
 .numeric_chart {
 	margin-bottom: 24px;
@@ -364,4 +364,26 @@ Search
 .result-snippet dd mark {
 	font-style: normal;
 	font-weight: bold;
+}
+/* IDs and Classes for search data export */
+#download-button-prog-bar-row {
+	margin-bottom: 12px;
+}
+.download-default-attribs {
+	margin-top: 2px;
+	margin-bottom: 2px;
+	margin-right: 4px;
+	font-size: 14px;
+	font-family: var(--bs-font-monospace);
+}
+#download-selected-attribs-div {
+	margin-top: 2px;
+}
+.download-selected-attribs {
+	margin-top: 2px;
+	margin-bottom: 2px;
+	margin-right: 4px;
+	padding-top: 1px;
+	padding-bottom: 1px;
+	font-family: var(--bs-font-monospace);
 }
