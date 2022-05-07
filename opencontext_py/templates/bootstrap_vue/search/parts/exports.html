@@ -134,12 +134,25 @@
                 </div>
                 <div v-else-if="dl_complete" class="text-center">
                     <h5>Download of <strong>[[ human_act_total_count ]]</strong> records completed.</h5>
+                    <p>Data for all records are fully downloaded and can be saved in a tabular (CSV) and/or 
+                       a GIS (GeoJSON) format using the buttons below.
+                    </p>
+                    <b-row>
+                        <b-col cols="6">
 
-                    <vue-json-to-csv
-                        v-bind:json-data="dl_csv_data">
-                        <b-button variant="primary">Save Data as CSV <b-icon-table></b-icon-table></b-button>
-                    </vue-json-to-csv>
-
+                            <vue-json-to-csv
+                                v-bind:json-data="dl_csv_data">
+                                <b-button variant="primary">Save Data as CSV <b-icon-table></b-icon-table>
+                                </b-button>
+                            </vue-json-to-csv>
+                        </b-col>
+                        <b-col cols="6">
+                            <b-button
+                                @click="save_dl_geojson"
+                                variant="primary">Save Data as GeoJSON (GIS) <b-icon-pin-map-fill></b-icon-pin-map-fill>
+                            </b-button>
+                        </b-col>
+                    </b-row>
                 </div>
                 <div v-if="!dl_started">
                     <div class="accordion" role="tablist" v-if="act_attribs">
@@ -408,6 +421,44 @@ var vc_search_exporter_ui = Vue.component(
             },
             cancel_close: function(){
                 this.$bvModal.hide('exporter-modal');
+            },
+            save_file: function(str_data, file_name, mime_type) {
+                const blob = new Blob([str_data], {type: 'text/plain'})
+                const e = document.createEvent('MouseEvents'),
+                a = document.createElement('a');
+                a.download = file_name;
+                a.href = window.URL.createObjectURL(blob);
+                a.dataset.downloadurl = [mime_type, a.download, a.href].join(':');
+                e.initEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                a.dispatchEvent(e);
+            },
+            save_dl_geojson: function(){
+                if(!this.dl_complete){
+                    return null;
+                }
+                let act_record_set = this.get_act_record_set();
+                if(act_record_set == null){
+                    return null;
+                }
+                let features = [];
+                for(let page of act_record_set.pages){
+                    if(!page.hasOwnProperty('features')){
+                        continue;
+                    }
+                    for(let feature of page.features){
+                        features.push(feature);
+                    }
+                }
+                let str_data = JSON.stringify(
+                    {type: 'FeatureCollection', features: features}, 
+                    null, 
+                    4
+                );
+                this.save_file(
+                    str_data, 
+                    'open-context-geojson.json', 
+                    'text/json'
+                );
             },
             remove_selected_attrib: function(attrib){
                 console.log('Remove click');
