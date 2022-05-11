@@ -366,7 +366,17 @@ Search
 	font-weight: bold;
 }
 /* IDs and Classes for search data export */
-#download-button-prog-bar-row {
+#download-attribs-save-opts-row {
+	margin-top: 42px;
+}
+#download-dl-button-row {
+	margin-top: 42px;
+}
+#download-prog-bar-row {
+	margin-top: 36px;
+}
+.download-filesave-row {
+	margin-top: 24px;
 	margin-bottom: 12px;
 }
 .download-default-attribs {

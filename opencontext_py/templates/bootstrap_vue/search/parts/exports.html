@@ -61,33 +61,170 @@
     >
         <b-row>
             <b-col cols="12">
-                <p><small>This tool exports the current set of records as a data table or a GIS output. 
+                <p>This tool exports the current set of records as a data table or a GIS output. 
                     GIS exports can be saved and previewed on the search result map. For convenience, 
                     these outputs represent data in somewhat simplified formats. If you need more 
                     expressive and complete representations of these data, 
                     please see the <a href="../../about/services" target="_blank">API documentation</a>. 
                     Please also note that location data for certain records may be approximated as a 
-                    security precaution or because precise data is not available.</small>
+                    security precaution or because precise data is not available.
                 </p>
             </b-col>
         </b-row>
 
-        <b-row id="download-button-prog-bar-row">
-            <b-col cols="2">
-                <b-button
-                    :disabled="dl_button_disable"
-                    size="sm" 
-                    variant="outline-primary" 
-                    @click="get_records">
-                    <b-icon-download></b-icon-download> Download
-                </b-button>
+
+        <b-row id="download-attribs-save-opts-row" >
+            <b-col cols="6">
+                <b-row>
+                    <b-col cols="12">
+                        <h5>Fields / Attributes to Include in Export</h5>
+                        <small>Default attributes:</small><br/>
+                        <span v-for="(attrib, index) in default_attribs">
+                            <b-badge
+                                pill
+                                class="download-default-attribs"
+                                title="Default, always included attribute"
+                                variant="secondary">
+                                [[ attrib ]]
+                            </b-badge>
+                        </span>
+                        <div id="download-selected-attribs-div" if="act_download_attribs">
+                            <small>Selected optional attributes:</small><br/>
+                            <span v-for="(attrib, index) in act_download_attribs">
+                                <b-button
+                                    class="download-selected-attribs"
+                                    pill
+                                    size="sm"
+                                    variant="primary"
+                                    :title="'Click to remove \'' + attrib.label + '\''"
+                                    @click="remove_selected_attrib(attrib)"
+                                    :disabled="dl_started || dl_complete"
+                                    >
+                                    [[ attrib.s_label ]] <b-icon-dash-circle-fill></b-icon-dash-circle-fill>
+                                </b-button>
+                            </span>
+                        </div>
+                    </b-col>
+                </b-row>
+
+                <b-row id="download-dl-button-row" v-if="!dl_started">
+                    <b-col cols="12">
+                        <b-alert show variant="info">
+                            <small>
+                                After you have selected attributes to include in your download, click the button below to 
+                                begin the download. Once the download is complete, you will see options to save the downloaded
+                                records on your device. 
+                            </small>
+                            <br/>
+                            <br/>
+                            <b-button
+                                block
+                                :disabled="dl_button_disable"
+                                size="sm" 
+                                variant="primary" 
+                                @click="get_records">
+                                <b-icon-download></b-icon-download> Download
+                            </b-button>
+                        </b-alert>
+                    </b-col>
+                </b-row>
+
             </b-col>
-            <b-col cols="10">
+            <b-col cols="6">
+                <b-row>
+                    <b-col cols="12">
+                        <div v-if="dl_started & !dl_complete" class="text-center">
+                            <h5>Download of <strong>[[ human_act_total_count ]]</strong> records in progress...</h5>
+                            <b-spinner variant="success" label="Spinning"></b-spinner>
+                        </div>
+                        <b-alert show variant="info" v-else-if="dl_complete">
+                            <h5 class="text-center">Download of <strong>[[ human_act_total_count ]]</strong> records completed.</h5>
+                            <p>Data for all records are fully downloaded and can be saved on your device in a tabular (CSV) and/or 
+                            a GIS (GeoJSON) format using the buttons below.
+                            </p>
+                            <b-row align-v="center" class="download-filesave-row">
+                                <b-col cols="8">
+                                    <small>Choose the CSV (Comma Separated Value) format to save data as a
+                                        table for use in a spreadsheet or database application. This format is also
+                                        well-suited for statistical analyses using scripting languages like
+                                        <strong>R</strong> or <strong>Python</strong>.
+                                    </small>
+                                </b-col>
+                                <b-col cols="4">
+                                    <vue-json-to-csv
+                                        v-bind:json-data="dl_csv_data">
+                                        <b-button variant="primary">Save Data as CSV <b-icon-table></b-icon-table>
+                                        </b-button>
+                                    </vue-json-to-csv>
+                                </b-col>
+                            </b-row>
+                            <b-row align-v="center" class="download-filesave-row">
+                                <b-col cols="8">
+                                    <small>Choose the GeoJSON format to save data as a
+                                        geospatial data file for use in a GIS application like QGIS or ArcGIS.
+                                        GeoJSON is a widely supported and
+                                        <a href="https://en.wikipedia.org/wiki/GeoJSON" target="_blank">nonproprietary Internet standard</a>.
+                                    </small>
+                                </b-col>
+                                <b-col cols="4">
+                                    <b-button
+                                        @click="save_dl_geojson"
+                                        variant="primary">Save Data as GeoJSON (GIS) <b-icon-pin-map-fill></b-icon-pin-map-fill>
+                                    </b-button>
+                                </b-col>
+                            </b-row>
+                        </b-alert>
+                        <div v-if="!dl_started">
+                            <div class="accordion" role="tablist" v-if="act_attribs">
+                                <h5>Choose Additional Fields / Attributes to Include in Export</h5>
+                                <b-card 
+                                    no-body
+                                    class="mb-1"
+                                    v-for="(attrib_grp, a_grp_index) in act_attribs">
+                                    <b-card-header header-tag="header" class="p-1" role="tab">
+                                        <b-button 
+                                            block
+                                            v-b-toggle="'attrib_grp_panel_' + a_grp_index"
+                                            variant="secondary"><i class="bi bi-arrows-expand"></i> [[attrib_grp.label]]</b-button>
+                                    </b-card-header>
+                                    <b-collapse 
+                                        :id="'attrib_grp_panel_' + a_grp_index"
+                                        visible
+                                        :accordion="'attrib_grp_panel_accordion_' + a_grp_index" 
+                                        role="tabpanel">
+                                        <b-card-body>
+                                            <small v-if="attrib_grp.note">[[attrib_grp.note]]</small>
+                                            <b-list-group flush>
+                                                
+                                                <selectable-dl-attribs
+                                                    v-for="(attrib_dt_grp, a_dt_grp_index) in attrib_grp.attribs"
+                                                    v-bind:attrib_freq_types="attrib_freq_types"
+                                                    v-bind:attrib_dt_grp="attrib_dt_grp"
+                                                    v-bind:data_type="attrib_dt_grp.data_type"
+                                                    v-bind:act_download_attribs="act_download_attribs">
+                                                </selectable-dl-attribs>
+                                                    
+                                            </b-list-group>
+                                        </b-card-body>
+                                    </b-collapse>
+                                </b-card>
+                            </div>
+                            <div v-else>
+                                Download not currently supported.
+                            </div>
+                        </div>
+                    </b-col>
+                </b-row>
+            </b-col>
+        </b-row>
+
+        <b-row id="download-prog-bar-row">
+            <b-col cols="12">
 
                 <b-row v-if="dl_progress" class="progress_row">
                     <b-col cols="12">
               
-                      <b-progress max="1" height="2rem" variant="success">
+                      <b-progress max="1" height="2rem" variant="secondary">
                         <b-progress-bar :value="dl_progress">
                           <span><strong>[[ (dl_progress * 100).toFixed(1) ]] %</strong> ([[ dl_message ]])</span>
                         </b-progress-bar>
@@ -96,103 +233,6 @@
                     </b-col>
                 </b-row>
                 
-            </b-col>
-        </b-row>
-
-        <b-row>
-            <b-col cols="6">
-                <h5>Fields / Attributes to Include in Export</h5>
-                <span v-for="(attrib, index) in default_attribs">
-                    <b-badge
-                        pill
-                        class="download-default-attribs"
-                        title="Default, always included attribute"
-                        variant="secondary">
-                        [[ attrib ]]
-                    </b-badge>
-                </span>
-                <div id="download-selected-attribs-div" if="act_download_attribs">
-                    <span v-for="(attrib, index) in act_download_attribs">
-                        <b-button
-                            class="download-selected-attribs"
-                            pill
-                            size="sm"
-                            variant="primary"
-                            :title="'Click to remove \'' + attrib.label + '\''"
-                            @click="remove_selected_attrib(attrib)"
-                            :disabled="dl_started || dl_complete"
-                            >
-                            [[ attrib.s_label ]] <b-icon-dash-circle-fill></b-icon-dash-circle-fill>
-                        </b-button>
-                    </span>
-                </div>
-            </b-col>
-            <b-col cols="6">
-                <div v-if="dl_started & !dl_complete" class="text-center">
-                    <h5>Download of <strong>[[ human_act_total_count ]]</strong> records in progress...</h5>
-                    <b-spinner variant="success" label="Spinning"></b-spinner>
-                </div>
-                <div v-else-if="dl_complete" class="text-center">
-                    <h5>Download of <strong>[[ human_act_total_count ]]</strong> records completed.</h5>
-                    <p>Data for all records are fully downloaded and can be saved in a tabular (CSV) and/or 
-                       a GIS (GeoJSON) format using the buttons below.
-                    </p>
-                    <b-row>
-                        <b-col cols="6">
-
-                            <vue-json-to-csv
-                                v-bind:json-data="dl_csv_data">
-                                <b-button variant="primary">Save Data as CSV <b-icon-table></b-icon-table>
-                                </b-button>
-                            </vue-json-to-csv>
-                        </b-col>
-                        <b-col cols="6">
-                            <b-button
-                                @click="save_dl_geojson"
-                                variant="primary">Save Data as GeoJSON (GIS) <b-icon-pin-map-fill></b-icon-pin-map-fill>
-                            </b-button>
-                        </b-col>
-                    </b-row>
-                </div>
-                <div v-if="!dl_started">
-                    <div class="accordion" role="tablist" v-if="act_attribs">
-                        <h5>Choose Additional Fields / Attributes to Include in Export</h5>
-                        <b-card 
-                            no-body
-                            class="mb-1"
-                            v-for="(attrib_grp, a_grp_index) in act_attribs">
-                            <b-card-header header-tag="header" class="p-1" role="tab">
-                                <b-button 
-                                    block
-                                    v-b-toggle="'attrib_grp_panel_' + a_grp_index"
-                                    variant="secondary"><i class="bi bi-arrows-expand"></i> [[attrib_grp.label]]</b-button>
-                            </b-card-header>
-                            <b-collapse 
-                                :id="'attrib_grp_panel_' + a_grp_index"
-                                visible
-                                :accordion="'attrib_grp_panel_accordion_' + a_grp_index" 
-                                role="tabpanel">
-                                <b-card-body>
-                                    <small v-if="attrib_grp.note">[[attrib_grp.note]]</small>
-                                    <b-list-group flush>
-                                        
-                                        <selectable-dl-attribs
-                                            v-for="(attrib_dt_grp, a_dt_grp_index) in attrib_grp.attribs"
-                                            v-bind:attrib_freq_types="attrib_freq_types"
-                                            v-bind:attrib_dt_grp="attrib_dt_grp"
-                                            v-bind:data_type="attrib_dt_grp.data_type"
-                                            v-bind:act_download_attribs="act_download_attribs">
-                                        </selectable-dl-attribs>
-                                            
-                                    </b-list-group>
-                                </b-card-body>
-                            </b-collapse>
-                        </b-card>
-                    </div>
-                    <div v-else>
-                        Download not currently supported.
-                    </div>
-                </div>
             </b-col>
         </b-row>
        
