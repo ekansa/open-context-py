@@ -462,7 +462,7 @@ class SearchSolr():
                         self.slugs_for_config_facets.append(cat_slug_key)
                         # Add additional facet fields configured for use with a
                         # given category. This is especially useful for zooarchaeology where
-                        # some useful standard fields may be "buried" too deep in a hierachy
+                        # some useful standard fields may be "buried" too deep in a hierarchy
                         # to be easily accessible to users.
                         for cat_raw_path, cat_facet_field in cat_facet_fields_tups:
                             print(f'check add {cat_facet_field}')
