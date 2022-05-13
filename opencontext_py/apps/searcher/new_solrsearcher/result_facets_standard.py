@@ -40,7 +40,7 @@ class ResultFacetsStandard():
         # Dictionary of keyed by facet fields that are derived from the
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
-        self.facet_fields_to_client_request = facet_fields_to_client_request
+        self.facet_fields_to_client_request = copy.deepcopy(facet_fields_to_client_request)
         # Keep track of the slugs that have pre-defined facets configs.
         self.slugs_for_config_facets = copy.deepcopy(slugs_for_config_facets)
     
@@ -316,7 +316,7 @@ class ResultFacetsStandard():
         :param str delim: A hierarchy path delimiter
         :param list options_tuples: List of (facet_value, count) tuples 
 
-        return preconfig_facet, remaing_options_tuples
+        return preconfig_facet, remaining_options_tuples
         """
         if not preconfig_facet or not options_tuples or not len(options_tuples):
             return preconfig_facet, options_tuples

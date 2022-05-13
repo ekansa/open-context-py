@@ -487,8 +487,8 @@ def make_request_obj_dict(request, spatial_context=None):
     request_dict['path'] = spatial_context
     if request:
         # "for key in request.GET" works too.
-        for key, key_val in request.GET.items():
-            request_dict[key] = request.GET.getlist(key).copy()
+        for key, _ in request.GET.items():
+            request_dict[key] = copy.deepcopy(request.GET.getlist(key))
     return request_dict
 
 
