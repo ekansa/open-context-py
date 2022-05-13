@@ -388,6 +388,13 @@ var vc_search_exporter_ui = Vue.component(
                     'published': 'Published Date',
                     'updated': 'Updated Date',
                 },
+                skip_default_attribute_slugs: [
+                    'dc-terms-coverage',
+                    'dc-terms-license',
+                    'dc-terms-subject',
+                    'dc-terms-temporal',
+                    'dc-terms-spatial',
+                ],
                 sleep_pause: 325,
                 max_export: 200000,
                 records_per_page: 100,
@@ -596,13 +603,14 @@ var vc_search_exporter_ui = Vue.component(
                     lon = feature.geometry.coordinates[0];
                     lat = feature.geometry.coordinates[1];
                 }
-                else if (feature.geometry.type === 'Polygon') {
+                else if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
                     
                     let centroid = turf.centroid(feature);
                     lon = centroid.geometry.coordinates[0];
                     lat = centroid.geometry.coordinates[1];
                 }
                 else {
+                    // we don't know what to do to get a point. skip out.
                     return feature.properties;
                 }
                 if(lat == null || lon == null){
@@ -910,6 +918,10 @@ var vc_search_exporter_ui = Vue.component(
                             }
                             for(let attrib of dt_attribs.most){
                                 if(!attrib.hasOwnProperty('slug')){
+                                    continue;
+                                }
+                                if(this.skip_default_attribute_slugs.indexOf(attrib.slug) >=0 ){
+                                    // In the list of skipped default attributes.
                                     continue;
                                 }
                                 this.act_download_attribs.push(attrib);
