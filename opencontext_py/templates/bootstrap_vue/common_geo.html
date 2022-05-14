@@ -1205,16 +1205,131 @@ var vc_common_map = Vue.component(
             if(feature.properties.length < 1){
                 return '';
             }
-            var prop_content = [];
-            for (var prop in feature.properties) {
-                let prop_str = this.add_links(feature.properties[prop]);
-                prop_content.push(
+            // First update the property labels (keys) using a constant config.
+            let mapped_props = {};
+            let mapped_prop_keys = [];
+            for(let [key, val] of Object.entries(feature.properties)){
+                if(skip_excluded_property_key(key)){
+                    continue;
+                }
+                if(val == null){
+                    continue;
+                }
+                let mapped_key = map_property_key_to_field(key);
+                mapped_props[mapped_key] = val;
+                mapped_prop_keys.push(mapped_key);
+            }
+            // Consolidate properties with their links.
+            let link_consolidate = JSON.parse(JSON.stringify(UI_RECORD_PROPERTY_LINK_CONSOLIDATE));
+            for(let a_prop of mapped_prop_keys){
+                if(a_prop.indexOf(' [URI]') >= 0){
+                    continue;
+                }
+                for(let b_prop of mapped_prop_keys){
+                    if(b_prop == a_prop){
+                        continue;
+                    }
+                    if(b_prop.indexOf(' [URI]') < 0){
+                        continue;
+                    }
+                    let b_prop_first = b_prop.split(' [URI]')[0];
+                    if(a_prop.indexOf(b_prop_first) >= 0){
+                        //b prop is the link for the a_prop.
+                        link_consolidate[a_prop] = b_prop;
+                    }
+                }
+            }
+            // Make the HTML for the (mapped) properties and their values.
+            let used_keys = [];
+            let prop_content = [];
+            let label_index = null;
+            for(let [mapped_key, val] of Object.entries(mapped_props)){
+                if(used_keys.indexOf(mapped_key) >=0){
+                    continue;
+                }
+                let link_val = null;
+                if(link_consolidate.hasOwnProperty(mapped_key)){
+                    let link_prop = link_consolidate[mapped_key];
+                    if(link_prop == null){
+                        // Don't make a link with this field.
+                        used_keys.push(link_prop);
+                        continue;
+                    }
+                    if(mapped_props.hasOwnProperty(link_prop)){
+                        link_val = mapped_props[link_prop];
+                        used_keys.push(link_prop);
+                    }
+                }
+                // Values for a property can be in a list/array, so make
+                // this the worst.
+                let val_list = null;
+                if(Array.isArray(val)){
+                    val_list = val;
+                }
+                else{
+                    val_list = [val];
+                }
+                if(val_list == null){
+                    continue;
+                }
+                // Iterate through the val list to make a list of HTML to generate.
+                let val_html_list = [];
+                let val_index = 0;
+                for(let act_val of val_list){
+                    let val_html = act_val;
+                    if(link_val != null){
+                        let act_link = link_val;
+                        if(Array.isArray(link_val)){
+                            if(val_index >= link_val.length){
+                                // problem, no link at this value index.
+                                continue;
+                            }
+                            // Assumes the URI for the act_val is at the same index
+                            // as the act_val.
+                            act_link = link_val[val_index];
+                        }
+                        val_html = `<a target="_blank" href="${act_link}">${act_val}</a>`;
+                    }
+                    if(mapped_key == 'Thumbnail'){
+                        val_html = `<img src="${act_val}" alt="Thumbnail image" style="max-width: 90%;" />`;
+                    }
+                    if(val_list.length > 1){
+                        val_html = `<li>${val_html}</li>`;
+                    }
+                    val_html_list.push(val_html);
+                    val_index += 1;
+                }
+
+                // Consolidate all of the val_html_list into one string.
+                let all_vals_html = null;
+                if(val_html_list.length == 1){
+                    all_vals_html = val_html_list[0];
+                }
+                else if(val_html_list.length > 1){
+                    all_vals_html = '<ul>' + val_html_list.join('\n') + '</ul>';
+                }
+                else{
+                    continue;
+                }
+                let prop_html = (
                     `<dl class="row">
-                    <dt class="col">${prop}</dt>
-                    <dd class="col">${prop_str}</dd>
+                    <dt class="col-5">${mapped_key}</dt>
+                    <dd class="col-7">${all_vals_html}</dd>
                     </dl>
                     `
                 );
+
+                if(mapped_key == 'Item Label'){
+                    label_index = prop_content.length;
+                }
+                if(mapped_key == 'Thumbnail' && label_index != null){
+                    // Make sure the thumbnail is always after the item label.
+                    prop_content.splice((label_index + 1), 0, prop_html);
+                }
+                else{
+                    prop_content.push(prop_html);
+                }
+                used_keys.push(mapped_key);
             }
             var all_props = prop_content.join('\n');
             var popup_content = (
@@ -1752,7 +1867,7 @@ var vc_common_map = Vue.component(
             }
 
         },
-        finese_item_view: function(){
+        finesse_item_view: function(){
             if(!this.map){
                 return null;
             }
@@ -1864,7 +1979,7 @@ var vc_common_map = Vue.component(
             this.frontend_obj_overlays_prep();
             this.update_map_legends();
             this.fit_bounds();
-            this.finese_item_view();
+            this.finesse_item_view();
             // this.update_map_legends();
             this.map.auto_fit = false;
             this.map.overlay_ready = true;
@@ -1910,7 +2025,7 @@ var vc_common_map = Vue.component(
             this.map_size_reset();
             this.frontend_obj_overlays_prep();
             this.fit_bounds();
-            this.finese_item_view();
+            this.finesse_item_view();
             this.get_item_location_info();
             this.update_map_legends();
             // console.log('updated map');

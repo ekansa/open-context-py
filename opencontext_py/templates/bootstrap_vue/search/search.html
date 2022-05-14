@@ -80,7 +80,7 @@
 
             </div>
 
-            <div class="row" v-if="result">
+            <div class="row" v-if="exporter_ok">
                 <search-exporter-ui
                     v-bind:result="result"
                     v-bind:base_search_url="result.id"
@@ -98,7 +98,7 @@
 
     const FACET_CHANGE_RESET_MAP_STATE_KEYS = ['lat', 'lng'];
     const FILTER_CHANGE_RESET_MAP_STATE_KEYS = ['zm', 'lat', 'lng'];
-    const MAP_HIDE_INTERAL_STATE_KEYS = ['zoom', 'center'];
+    const MAP_HIDE_INTERNAL_STATE_KEYS = ['zoom', 'center'];
     const GEO_JSON = null;
     const MIN_GEOTILE_ZOOM = {{ configs.MIN_GEOTILE_ZOOM }} ;
     const MAX_GEOTILE_ZOOM = {{ configs.MAX_GEOTILE_ZOOM }} ;
@@ -125,6 +125,7 @@
             frontend_state_obj: null,
             human_remains_ok: HUMAN_REMAINS_OK,
             geojson_record_layers: null,
+            exporter_ok: null,
         },
         created(){
             this.fetch_oc_api();
@@ -162,9 +163,10 @@
                     {},
                     null,
                     current_path + '#' + hash_str
-                )
+                );
             },
             fetch_oc_api: function (){
+                this.exporter_ok = false,
                 this.error = null;
                 this.loading = true;
                 fetch(
@@ -180,6 +182,11 @@
                 .then(json => {
                     this.result = json;
                     this.route_key_index += 1;
+                    if(this.result.hasOwnProperty('totalResults')){
+                        if(this.result.totalResults > 0){
+                            this.exporter_ok = true;
+                        }
+                    }
                     this.update_frontent_state_obj();
                     if(this.emit_update_fetch_done){
                         this.emit_update_fetch_done = false;
@@ -195,7 +202,7 @@
                 if(!frontend_state_obj){
                     return null;
                 }
-                for(bad_key of MAP_HIDE_INTERAL_STATE_KEYS){
+                for(bad_key of MAP_HIDE_INTERNAL_STATE_KEYS){
                     if(frontend_state_obj.hasOwnProperty(bad_key)){
                         delete frontend_state_obj[bad_key];
                     }
@@ -219,6 +226,9 @@
                 console.log('do ready');
             },
             add_geojson_record_layers: function(geojson){
+                this.exporter_ok = true;
+                let temp_result_str = JSON.stringify(this.result); // prevent mutation of the result.
+                this.result = null;
                 if(this.geojson_record_layers == null){
                     this.geojson_record_layers = [];
                 }
@@ -233,6 +243,8 @@
                 if(is_new){
                     this.geojson_record_layers.push(geojson);
                 }
+                this.route_key_index += 1;
+                this.result = JSON.parse(temp_result_str);
             },
             show_exporter_modal: function (){
                 this.$bvModal.show('exporter-modal');

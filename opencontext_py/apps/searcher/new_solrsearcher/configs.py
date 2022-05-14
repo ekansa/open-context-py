@@ -1024,3 +1024,42 @@ MAX_GEOTILE_ZOOM = SolrDoc.MAX_GEOTILE_ZOOM
 # querying for image overlays
 MAX_PROJECTS_FOR_OVERLAYS = 5
 GEO_OVERLAY_OPACITY_DEFAULT = 0.9
+
+
+# These are geojson feature properties for individual records
+# that should be excluded from the UI and downloads.
+UI_RECORD_EXCLUDE_PROPERTY_KEYS = [
+    'id',
+    'feature-type',
+    'href',
+]
+
+# These are geojson feature property keys (used in individual records)
+# mapped to more human readable labels.
+UI_RECORD_PROPERTY_KEY_HUMAN_READABLE_MAPPINGS = {
+    'uri': 'URI',
+    'citation uri': 'Citation URI',
+    'label': 'Item Label',
+    'project label': 'Project Label',
+    'project href': 'Project URI',
+    'context label': 'Context',
+    'context href': 'Context URI',
+    'latitude': 'Latitude (WGS-84)',
+    'longitude': 'Longitude (WGS-84)',
+    'early bce/ce': 'Early BCE/CE',
+    'late bce/ce': 'Late BCE/CE',
+    'item category': 'Item Category',
+    'snippet': 'Search-term Snippet',
+    'published': 'Published Date',
+    'updated': 'Updated Date',
+}
+
+UI_RECORD_PROPERTY_LINK_CONSOLIDATE = {
+    'URI': None,
+    'Item Label': 'URI',
+    'Citation URI': 'Citation URI',
+    'Project URI': None,
+    'Project Label': 'Project URI',
+    'Context URI': None,
+    'Context': 'Context URI',
+}

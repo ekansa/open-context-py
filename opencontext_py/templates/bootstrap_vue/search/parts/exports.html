@@ -58,6 +58,7 @@
         id="exporter-modal"
         title="Export Records for Download"
         @shown="on_shown"
+        @close="on_close"
     >
         <b-row>
             <b-col cols="12">
@@ -398,6 +399,7 @@ var vc_search_exporter_ui = Vue.component(
                     'early bce/ce': 'Early BCE/CE',
                     'late bce/ce': 'Late BCE/CE',
                     'item category': 'Item Category',
+                    'snippet': 'Search-term Snippet',
                     'published': 'Published Date',
                     'updated': 'Updated Date',
                 },
@@ -560,20 +562,11 @@ var vc_search_exporter_ui = Vue.component(
                 }
                 return null;
             },
+            on_close: function(){
+                
+            },
             cancel_close: function(){
                 this.$bvModal.hide('exporter-modal');
-            },
-            skip_excluded_property_key: function(key){
-                if(this.exclude_fields.indexOf(key) >= 0){
-                    return true;
-                }
-                return false;
-            },
-            map_property_key_to_field: function(key){
-                if(this.default_field_mappings.hasOwnProperty(key)){
-                   return this.default_field_mappings[key];
-                }
-                return key;
             },
             fill_in_missing_fields: function(raw_data){
                 let data = JSON.parse(JSON.stringify(raw_data));
@@ -669,15 +662,15 @@ var vc_search_exporter_ui = Vue.component(
                 }
                 return clean_props;
             },
-            props_to_seperate_multivalue_fields: function(properties, split_contexts){
+            props_to_separate_multivalue_fields: function(properties, split_contexts){
                 // Reformat properties so multi-values are put into different
                 // fields.
                 let clean_props = {};
                 for(let [key, val] of Object.entries(properties)){
-                    if(this.skip_excluded_property_key(key)){
+                    if(skip_excluded_property_key(key)){
                         continue;
                     }
-                    let mapped_key = this.map_property_key_to_field(key);
+                    let mapped_key = map_property_key_to_field(key);
                     let val_list = [val];
                     if(split_contexts && mapped_key == 'Context'){
                         val_list = val.split('/');
@@ -700,10 +693,10 @@ var vc_search_exporter_ui = Vue.component(
                 // string value split by a delimiter.
                 let clean_props = {};
                 for(let [key, val] of Object.entries(properties)){
-                    if(this.skip_excluded_property_key(key)){
+                    if(skip_excluded_property_key(key)){
                         continue;
                     }
-                    let mapped_key = this.map_property_key_to_field(key);
+                    let mapped_key = map_property_key_to_field(key);
                     if(split_contexts && mapped_key == 'Context'){
                         // Special treatment for the 'Context' field.
                         val_list = val.split('/');
@@ -726,10 +719,10 @@ var vc_search_exporter_ui = Vue.component(
             props_to_mapped_fields_no_multi_value_change: function(properties){
                 let clean_props = {};
                 for(let [key, val] of Object.entries(properties)){
-                    if(this.skip_excluded_property_key(key)){
+                    if(skip_excluded_property_key(key)){
                         continue;
                     }
-                    let mapped_key = this.map_property_key_to_field(key);
+                    let mapped_key = map_property_key_to_field(key);
                     clean_props[mapped_key] = val;
                 }
                 return clean_props;
@@ -737,7 +730,7 @@ var vc_search_exporter_ui = Vue.component(
             props_to_multivalue_output: function(raw_properties, split_contexts){
                 let properties = JSON.parse(JSON.stringify(raw_properties)); // prevent mutation of the result.
                 if(this.multi_value_save_option === 'separate-fields'){
-                    return this.props_to_seperate_multivalue_fields(properties, split_contexts);
+                    return this.props_to_separate_multivalue_fields(properties, split_contexts);
                 }
                 else if(this.multi_value_save_option === 'delimiter'){
                     return this.props_to_join_multivalues(properties, split_contexts);
