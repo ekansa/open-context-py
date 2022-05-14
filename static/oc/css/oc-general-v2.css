@@ -323,7 +323,10 @@ Search
 }
 .filter_heading_labels {
 	text-decoration:x none;
-	color: #212529;c
+	color: #212529;
+}
+.facet_link {
+	display: inline;
 }
 .numeric_chart {
 	margin-bottom: 24px;

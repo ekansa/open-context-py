@@ -31,6 +31,7 @@
                 v-bind:route_key_index="route_key_index"
                 v-bind:geo_json="result"
                 v-bind:geo_overlays="project_image_overlays"
+                v-bind:geojson_record_layers="geojson_record_layers"
                 @set_frontend_state_obj="set_frontend_state_obj($event)"
                 ></common_map>
             </div>
@@ -139,7 +140,8 @@ var vc_all_search_tabs = Vue.component(
         'frontend_state_obj',
         'start_full_path',
         'tab',
-        'human_remains_ok'
+        'human_remains_ok',
+        'geojson_record_layers',
       ],
       template: '#all-search-tabs-temp',
       data() {
@@ -159,6 +161,7 @@ var vc_all_search_tabs = Vue.component(
           ],
           map_tab: 0,
           human_remains_ok: HUMAN_REMAINS_OK,
+          geojson_record_layers: null,
         };
       },
       mounted(){

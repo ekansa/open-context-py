@@ -78,7 +78,7 @@
                 <b-row v-if="dl_progress" class="progress_row">
                     <b-col cols="12">
               
-                      <b-progress max="1" height="2rem" variant="secondary">
+                      <b-progress max="1" height="2rem" variant="success">
                         <b-progress-bar :value="dl_progress">
                           <span><strong>[[ (dl_progress * 100).toFixed(1) ]] %</strong> ([[ dl_message ]])</span>
                         </b-progress-bar>
@@ -137,7 +137,6 @@
                             <b-button
                                 block
                                 :disabled="dl_button_disable"
-                                size="sm" 
                                 variant="primary" 
                                 @click="get_records">
                                 <b-icon-download></b-icon-download> Download
@@ -160,16 +159,30 @@
                             a GIS (GeoJSON) format using the buttons below.
                             </p>
 
+                            <b-row align-v="center">
+                                <b-col cols="4">
+                                    <strong>Label this download</strong>
+                                </b-col>
+                                <b-col cols="8">
+                                    <b-form-input
+                                        debounce="100"
+                                        @change="update_act_download_label"
+                                        type="text" 
+                                        v-model="act_download_label" 
+                                        value="act_download_label"></b-form-input>
+                                </b-col>
+                            </b-row>
                             <b-row align-v="center" class="download-filesave-row">
                                 <b-col cols="8">
                                     <small><strong>CSV (Comma Separated Value)</strong> format to save data as a
-                                        table for use in a spreadsheet, database application, or 
-                                        analysid using scripting languages like
+                                        table for use in a spreadsheet or database application, or 
+                                        for analysis using scripting languages like
                                         <strong>R</strong> or <strong>Python</strong>.
                                     </small>
                                 </b-col>
                                 <b-col cols="4">
                                     <vue-json-to-csv
+                                        v-bind:csv-title="act_download_label"
                                         v-bind:json-data="dl_csv_data">
                                         <b-button variant="primary">Save Data as CSV <b-icon-table></b-icon-table>
                                         </b-button>
@@ -198,8 +211,8 @@
                             </p>
 
                             <b-form-group>
-                                <b-form-radio v-model="multi_value_save_option" name="multi_value_save_option" value="separate-fields">Split values across added fields</b-form-radio>
-                                <b-form-radio v-model="multi_value_save_option" name="multi_value_save_option" value="delimiter">Join multiple values using a delimiter</b-form-radio>
+                                <b-form-radio v-model="multi_value_save_option" name="multi_value_save_option" value="separate-fields">Split values across multiple fields</b-form-radio>
+                                <b-form-radio v-model="multi_value_save_option" name="multi_value_save_option" value="delimiter">Join values using a delimiter, keeping all within one field</b-form-radio>
                             </b-form-group>
 
                             <b-row v-if="multi_value_save_option == 'delimiter'" align-v="center">
@@ -398,8 +411,6 @@ var vc_search_exporter_ui = Vue.component(
                 sleep_pause: 325,
                 max_export: 200000,
                 records_per_page: 100,
-                default_csv_name: 'open-context-records',
-                default_geojson_name: 'open-context-geo-spatial-records',
                 param_response_value: 'metadata,geo-record',
                 default_add_common_attribs: true,
                 attrib_freq_types: ['most', 'many', 'some', 'few'],
@@ -417,6 +428,7 @@ var vc_search_exporter_ui = Vue.component(
                     act_page_url: null,
                     act_total_count: null,
                     act_downloaded_count: null,
+                    act_download_label: null,
                     dl_started: false,
                     dl_complete: null,
                 },
@@ -428,6 +440,7 @@ var vc_search_exporter_ui = Vue.component(
                 act_page_url: null,
                 act_total_count: null,
                 act_downloaded_count: null,
+                act_download_label: null,
                 dl_started: false,
                 dl_complete: null,
             }
@@ -536,6 +549,7 @@ var vc_search_exporter_ui = Vue.component(
                 this.act_page_url = act_state.act_page_url;
                 this.act_total_count = act_state.act_total_count;
                 this.act_downloaded_count = act_state.act_downloaded_count;
+                this.act_download_label = act_state.act_download_label;
                 this.dl_started = act_state.dl_started;
                 this.dl_complete = act_state.dl_complete;
             },
@@ -761,6 +775,28 @@ var vc_search_exporter_ui = Vue.component(
                 }
                 return JSON.parse(JSON.stringify(features)); // prevent mutation of the result.
             },
+            add_geojson_record_layers: function(){
+                let act_record_set = this.get_act_record_set();
+                let raw_features = this.gather_act_geojson_features();
+                if(raw_features == null){
+                    return null;
+                }
+                let features = [];
+                for(let feature of raw_features){
+                    if(!feature.hasOwnProperty('properties')){
+                        continue;
+                    }
+                    feature.properties = this.props_to_mapped_fields_no_multi_value_change(feature.properties);
+                    features.push(feature);
+                }
+                let geojson = {
+                    id: this.act_start_url,
+                    label: act_record_set.label,
+                    type: 'FeatureCollection', 
+                    features: features,
+                };
+                this.$emit('add_geojson_record_layers', geojson);
+            },
             save_dl_geojson: function(){
                 let raw_features = this.gather_act_geojson_features();
                 if(raw_features == null){
@@ -781,7 +817,7 @@ var vc_search_exporter_ui = Vue.component(
                 );
                 this.save_file(
                     str_data, 
-                    'open-context-geojson.json', 
+                    `${this.act_download_label}.json`, 
                     'text/json'
                 );
             },
@@ -967,10 +1003,11 @@ var vc_search_exporter_ui = Vue.component(
                     delete start_metadata.features;
                 }
                 this.record_sets[act_start_url] = {
-                    label: this.default_csv_name,
+                    label: `open-context-${start_metadata.totalResults}-records`,
                     metadata: start_metadata,
                     pages: [],
                 }
+                this.act_download_label = this.record_sets[act_start_url].label;
                 return this.record_sets[act_start_url].metadata.totalResults;
             },
             get_act_record_set: function(){
@@ -984,6 +1021,14 @@ var vc_search_exporter_ui = Vue.component(
                     return null;
                 }
                 return this.record_sets[act_start_url];
+            },
+            update_act_download_label: function(){
+                let act_rec_set = this.get_act_record_set();
+                if(act_rec_set == null){
+                    return null;
+                }
+                act_rec_set.label = this.act_download_label;
+                this.add_geojson_record_layers();
             },
             check_page_in_record_sets: function(page_id){
                 let page_res = {

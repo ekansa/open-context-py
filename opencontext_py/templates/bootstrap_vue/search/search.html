@@ -36,6 +36,7 @@
                         v-bind:route_key_index="route_key_index"
                         v-bind:frontend_state_obj="frontend_state_obj"
                         v-bind:human_remains_ok="human_remains_ok"
+                        v-bind:geojson_record_layers="geojson_record_layers"
                         @set_frontend_state_obj="set_frontend_state_obj($event)"
                     >
                     </all-search-tabs>
@@ -83,6 +84,7 @@
                 <search-exporter-ui
                     v-bind:result="result"
                     v-bind:base_search_url="result.id"
+                    @add_geojson_record_layers="add_geojson_record_layers($event)"
                 ></search-exporter-ui>
             </div>
         </div>
@@ -118,12 +120,11 @@
         data: {
             message: 'Open Context Search Result',
             result: null,
-            map: null,
-            tile_layer: null,
             emit_update_fetch_done: false,
             route_key_index: 0,
             frontend_state_obj: null,
             human_remains_ok: HUMAN_REMAINS_OK,
+            geojson_record_layers: null,
         },
         created(){
             this.fetch_oc_api();
@@ -217,6 +218,22 @@
             do_ready: function (){
                 console.log('do ready');
             },
+            add_geojson_record_layers: function(geojson){
+                if(this.geojson_record_layers == null){
+                    this.geojson_record_layers = [];
+                }
+                let is_new = true;
+                for(let old_geojson of this.geojson_record_layers){
+                    if (old_geojson.id === geojson.id){
+                        // label update only, don't add
+                        old_geojson.label = geojson.label;
+                        is_new = false;
+                    }
+                }
+                if(is_new){
+                    this.geojson_record_layers.push(geojson);
+                }
+            },
             show_exporter_modal: function (){
                 this.$bvModal.show('exporter-modal');
             },
@@ -259,8 +276,6 @@
             }
         },
         components: {
-            // 'common_map': vc_common_map,
-            // 'chronotiles': vc_chronotiles,
             'human-remains-results-alert': vc_human_remains_results_alert,
             'all-search-tabs': vc_all_search_tabs,
             'all-filters': vc_all_filters,

@@ -590,6 +590,7 @@ var vc_common_map = Vue.component(
         'route_key_index',
         'frontend_state_obj',
         'show_default_overlay',
+        'geojson_record_layers',
     ],
     data() {
         return {
@@ -625,6 +626,7 @@ var vc_common_map = Vue.component(
                 item: 16,
                 generic: 12,
             },
+            geojson_record_layers: null,
             default_tilelayer_name: 'Google Aerial',
             geo_tile_facets: null,
             geo_region_facets: null,
@@ -1622,6 +1624,11 @@ var vc_common_map = Vue.component(
             }
             if(this.geo_all_records && this.geo_all_records.features.length > 0){
                 overlays_geojson.push(this.geo_all_records);
+            }
+            if(this.geojson_record_layers && this.geojson_record_layers.length > 0){
+                for(let geo_rec_layer of this.geojson_record_layers){
+                    overlays_geojson.push(geo_rec_layer);
+                }
             }
             if(overlays_geojson.length < 1){
                 return null;
