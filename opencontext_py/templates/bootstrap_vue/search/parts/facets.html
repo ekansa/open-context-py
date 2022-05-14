@@ -121,8 +121,8 @@
 
 <template id="facets-xfacet-xdtype-xgroup-xopt-multi-template">
     <b-list-group-item v-bind:class="get_class()">
-        <b-form-checkbox :name="radio_name" :value="option.id">[[ option.label ]]</b-form-checkbox>
-                
+        <b-form-checkbox :name="radio_name" :value="option.id">[[ option.label ]] <small v-if="option.alt_label" class="text-muted">[[ option.alt_label ]]</small></b-form-checkbox>
+        <a class="text-right" v-if="option.define_uri" :href="option.define_uri" target="_blank" title="Link about this option"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>  
         <span class="badge badge-secondary badge-pill">[[option.count]]</span>
     </b-list-group-item>
 </template>
@@ -130,9 +130,11 @@
 
 <template id="facets-xfacet-xdtype-xgroup-xopt-template">
     <li v-bind:class="get_class()">
-        <router-link :to="option.id" :id="option.dom_id" :class="'f-op-l' + option.dom_id" :title="'Filter by: ' + option.label" >[[option.label]]</router-link>
-        <a v-if="option['rdfs:isDefinedBy']" :href="option['rdfs:isDefinedBy']" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
-                
+        <span>
+            <router-link :to="option.id" :id="option.dom_id" :class="'facet_link f-op-l' + option.dom_id" :title="'Filter by: ' + option.label" >[[option.label]]</router-link>
+            <small v-if="option.alt_label" class="text-left text-muted">[[ option.alt_label ]]</small>
+            <a v-if="option.define_uri" :href="option.define_uri" target="_blank" title="Link about this option"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>   
+        </span>
         <span class="badge badge-secondary badge-pill">[[option.count]]</span>
     </li>
 </template>
@@ -511,6 +513,14 @@ function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
     f_opt.key = `${prefix}-option-${i}`;
     f_opt.dom_id = `${prefix}-option-${i}`;
     f_opt.last_hash = make_last_hash(hash_prefix, f_opt.slug);
+    f_opt.alt_label = null;
+    if(f_opt.hasOwnProperty('skos:altLabel')){
+        f_opt.alt_label = f_opt['skos:altLabel'];
+    }
+    f_opt.define_uri = null;
+    if(f_opt.hasOwnProperty('rdfs:isDefinedBy')){
+        f_opt.define_uri = f_opt['rdfs:isDefinedBy'];
+    }   
     if (typeof(f_opt.id) === 'undefined'){
         console.log('No id in ' + f_opt);
         return null;
