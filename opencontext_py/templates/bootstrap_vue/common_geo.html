@@ -1288,6 +1288,7 @@ var vc_common_map = Vue.component(
                             // as the act_val.
                             act_link = link_val[val_index];
                         }
+                        act_link = use_all_items_href(act_link, BASE_URL, USE_TEST_ALL_ITEMS_HREF);
                         val_html = `<a target="_blank" href="${act_link}">${act_val}</a>`;
                     }
                     if(mapped_key == 'Thumbnail'){

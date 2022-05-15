@@ -277,3 +277,31 @@ function abs_to_rel_url_with_frag_obj(url, base_url, frag_obj){
     url = abs_to_rel_url(url, base_url);
     return url;
 }
+
+
+function use_all_items_href(href, base_url, use_all_items_href){
+    if(!use_all_items_href){
+        return href;
+    }
+    let do_all_items = false;
+    if(href.indexOf('://opencontext.org/') >= 0){
+        do_all_items = true;
+    }
+    if(href.indexOf('opencontext.org/vocabularies/') >= 0){
+        do_all_items = false;
+    }
+    if(href.indexOf(base_url) >= 0){
+        do_all_items = true;
+    }
+    if(href.indexOf(base_url + '/vocabularies/') >= 0){
+        do_all_items = false;
+    }
+    if(href.indexOf(base_url + '/about/') >= 0){
+        do_all_items = false;
+    }
+    if(!do_all_items){
+        return href;
+    }
+    href_ex = href.split('/');
+    return base_url + '/all-items/' + href_ex[(href_ex.length - 1)];
+}

@@ -232,9 +232,6 @@
 
 <script type="text/javascript">
 
-// If true, we'll link to the testing 'all-items' new templates for
-// links to specific item records.
-const USE_TEST_ALL_ITEMS_HREF = true
 
 const SORT_OPTIONS_FRONTEND = JSON.parse('{{ SORT_OPTIONS_FRONTEND|escapejs }}');
 
@@ -431,6 +428,7 @@ var vc_records_tab = Vue.component(
                     let props = feature['properties'];
                     let url = feature['rdfs:isDefinedBy'];
                     url = abs_to_rel_url(url, BASE_URL);
+                    url = use_all_items_href(url, BASE_URL, USE_TEST_ALL_ITEMS_HREF);
 
                     let human_remains_flag = false;
                     if('oc-api:human-remains-related' in feature){
@@ -439,11 +437,7 @@ var vc_records_tab = Vue.component(
 
                     let href = url;
                     if('href' in props){
-                        href = props['href'];
-                        if(USE_TEST_ALL_ITEMS_HREF){
-                            href_ex = href.split('/');
-                            href = BASE_URL + '/all-items/' + href_ex[(href_ex.length - 1)];
-                        }
+                        href = use_all_items_href(props['href'], BASE_URL, USE_TEST_ALL_ITEMS_HREF);
                     }
 
                     let context = '(No spatial context)';
@@ -456,6 +450,7 @@ var vc_records_tab = Vue.component(
                             props['context href'],
                             BASE_URL,
                         );
+                        context_url = use_all_items_href(context_url, BASE_URL, USE_TEST_ALL_ITEMS_HREF);
                     }
                     let item_class = '(Uncateorized)';
                     if('item category' in props){
