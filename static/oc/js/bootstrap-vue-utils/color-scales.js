@@ -114,6 +114,14 @@ const COLOR_GRADIENTS = {
 	],
 };
 
+// ordered by preference for OC map
+const COLOR_PALLET = [
+	'#0072B2',
+	'#F0E442',
+	'#009E73',
+	'#D55E00',
+	'#CC79A7',
+];
 
 function hex (c) {
 	// converts decimal to hexidecimal value

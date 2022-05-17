@@ -642,7 +642,7 @@ var vc_common_map = Vue.component(
             },
             geo_tile_facets_default: {
                 type: "FeatureCollection",
-                label: "Summary as squares",
+                label: "Area counts (squares)",
                 ov_id: 'sqr',
                 ref: "map-tile-geojson-" + this.ref_suffix,
                 min_count: null,
@@ -652,7 +652,7 @@ var vc_common_map = Vue.component(
             },
             geo_facets_circles_default: {
                 type: "FeatureCollection",
-                label: "Summary as circles",
+                label: "Area counts (circles)",
                 ov_id: 'crc',
                 ref: "map-circle-geojson-" + this.ref_suffix,
                 min_count: null,
@@ -687,7 +687,7 @@ var vc_common_map = Vue.component(
                 features: [],
             },
             heatmap_data_default: {
-                label: "Summary as heatmap",
+                label: "Area counts (heatmap)",
                 ov_id: 'heat',
                 ref: "map-heatmap-" + this.ref_suffix,
                 max: null,
@@ -1363,10 +1363,19 @@ var vc_common_map = Vue.component(
                 return '';
             }
             let act_prop_val = null;
-            for (var prop in feature.properties) {
-                act_prop_val = {k: prop, v:feature.properties[prop]};
-                break;
+            if(feature.properties.hasOwnProperty('label')){
+                act_prop_val = {k: 'Item', v:feature.properties.label};
             }
+            else if(feature.properties.hasOwnProperty('Item Label')){
+                act_prop_val = {k: 'Item', v:feature.properties['Item Label']};
+            }
+            else{
+                // use the first property
+                for (var prop in feature.properties) {
+                    act_prop_val = {k: prop, v:feature.properties[prop]};
+                    break;
+                }
+            }   
             if(!act_prop_val){
                 return '';
             }
@@ -1471,6 +1480,24 @@ var vc_common_map = Vue.component(
                 feature.count,
                 feature.max_count,
             );
+            return L.circleMarker(latlng, marker_opts);
+        },
+        circle_record_style: function(){
+            let marker_opts = {
+                radius: 8,
+                fillColor: '#337ab7',
+                color: '#149bdf',
+                weight: 1,
+				opacity: 1,
+				fillOpacity: 0.9,
+                boostType: 'balloon',
+                boostScale: 3,
+                boostExp: 0.25,
+            };
+            return marker_opts;
+        },
+        circle_record_pointToLayer: function(feature,  latlng){
+            let marker_opts = this.circle_record_style();
             return L.circleMarker(latlng, marker_opts);
         },
         make_legend_example_values: function(min_count, max_count){
@@ -1769,6 +1796,7 @@ var vc_common_map = Vue.component(
                     act_layer = L.geoJson(
                         act_geojson,
                         {
+                            pointToLayer: this.circle_record_pointToLayer,
                             onEachFeature: this.onEachFeatureFunction,
                         },
                     );

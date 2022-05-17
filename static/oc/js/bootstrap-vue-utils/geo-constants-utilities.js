@@ -18,7 +18,7 @@ const UI_RECORD_PROPERTY_KEY_HUMAN_READABLE_MAPPINGS = {
     'uri': 'URI',
     'citation uri': 'Citation URI',
     'label': 'Item Label',
-    'project label': 'Project Label',
+    'project label': 'Project',
     'project href': 'Project URI',
     'context label': 'Context',
     'context href': 'Context URI',
@@ -28,7 +28,7 @@ const UI_RECORD_PROPERTY_KEY_HUMAN_READABLE_MAPPINGS = {
     'late bce/ce': 'Late BCE/CE',
     'item category': 'Item Category',
     'thumbnail': 'Thumbnail',
-    'snippet': 'Search-term Snippet',
+    'snippet': 'Search-Term Snippet',
     'published': 'Published Date',
     'updated': 'Updated Date',
 };
@@ -40,7 +40,7 @@ const UI_RECORD_PROPERTY_LINK_CONSOLIDATE = {
     'Item Label': 'URI',
     'Citation URI': 'Citation URI',
     'Project URI': null,
-    'Project Label': 'Project URI',
+    'Project': 'Project URI',
     'Context URI': null,
     'Context': 'Context URI',
 }
