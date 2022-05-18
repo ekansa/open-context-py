@@ -2063,6 +2063,11 @@ var vc_common_map = Vue.component(
                 }
                 valid_ov_ids.push(fr_ov_id);
             }
+            if(valid_ov_ids.length < 0){
+                // no valid overlays found, so delete this key and skip out.
+                delete this.frontend_state_obj.ov;
+                return null;
+            }
             this.frontend_state_obj.ov = valid_ov_ids;
 
             for(let ov_id in this.map.overlay_layers_by_id){
