@@ -2052,6 +2052,12 @@ var vc_common_map = Vue.component(
                 // No overlays passed from frontend state object.
                 return null;
             }
+            if(this.frontend_state_obj.ov == null || this.frontend_state_obj.ov == ''){
+                // No overlays passed from frontend state object.
+                delete this.frontend_state_obj.ov;
+                this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+                return null;
+            }
             if(typeof this.frontend_state_obj.ov === 'string'){
                 // No overlays passed from frontend state object.
                 this.frontend_state_obj.ov = [this.frontend_state_obj.ov];
@@ -2063,12 +2069,13 @@ var vc_common_map = Vue.component(
                 }
                 valid_ov_ids.push(fr_ov_id);
             }
+            this.frontend_state_obj.ov = valid_ov_ids;
             if(valid_ov_ids.length < 0){
                 // no valid overlays found, so delete this key and skip out.
                 delete this.frontend_state_obj.ov;
+                this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
                 return null;
             }
-            this.frontend_state_obj.ov = valid_ov_ids;
 
             for(let ov_id in this.map.overlay_layers_by_id){
                 if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){
