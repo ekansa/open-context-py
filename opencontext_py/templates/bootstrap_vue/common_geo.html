@@ -103,6 +103,17 @@
                                 </b-col>
                             </b-row>
                         </div>
+
+                        <div v-if="legend.type == 'record'">
+                            <b-row>
+                                <b-col cols="3" class="text-center">
+                                    <svg :height="(legend.crc.radius * 2) + 4" :width="(legend.crc.radius * 2) + 4">
+                                        <circle :cx="legend.crc.radius + 2" :cy="legend.crc.radius + 2" :r="legend.crc.radius" :style="legend.crc.svg_style" />
+                                    </svg><br/>
+                                    <small>Item marker</small>
+                                </b-col>
+                            </b-row>
+                        </div>
                         
                     </b-col>
                 </b-row>
@@ -393,7 +404,7 @@
             frag_obj.lat = center.lat.toFixed(precision);
             frag_obj.lng = center.lng.toFixed(precision);
             if(Math.round(frag_obj.lat, 1) == 0 && Math.round(frag_obj.lng, 1) == 0){
-                console.log('Bad coodinates do not update');
+                console.log('Bad coordinates do not update');
                 delete frag_obj.zm;
                 delete frag_obj.lat;
                 delete frag_obj.lng;
@@ -678,14 +689,7 @@ var vc_common_map = Vue.component(
                 legend: null,
                 features: [],
             },
-            geo_all_records_default: {
-                type: "FeatureCollection",
-                label: "Records (all selected)",
-                ov_id: 'all-recs',
-                ref: "map-all-recs-geojson-" + this.ref_suffix,
-                legend: null,
-                features: [],
-            },
+            default_ov_ids: ['sqr', 'crc', 'cntx', 'heat', 'pg-recs'],
             heatmap_data_default: {
                 label: "Area counts (heatmap)",
                 ov_id: 'heat',
@@ -906,7 +910,12 @@ var vc_common_map = Vue.component(
             }
             // console.log('Map legend state key is new');
             this.map_legends = [];
-            let order_legends = ['sqr', 'crc', 'cntx', 'heat'];
+            let order_legends = JSON.parse(JSON.stringify(this.default_ov_ids));
+            if(this.geojson_record_layers && this.geojson_record_layers.length > 0){
+                for(let geo_rec_layer of this.geojson_record_layers){
+                    order_legends.push(geo_rec_layer.ov_id);
+                }
+            }
             for(let ov_id of order_legends){
                 if(this.map.visible_overlay_ids.indexOf(ov_id) < 0){
                     continue;
@@ -1124,6 +1133,10 @@ var vc_common_map = Vue.component(
                 }
                 if(!e.hasOwnProperty('layer') || !e.layer.hasOwnProperty('ov_id')){
                     console.log('Image overlay, no state recording');
+                    return null;
+                }
+                if(!e.layer.hasOwnProperty('legend') || e.layer.legend == null){
+                    console.log('No legend, no state recording');
                     return null;
                 }
                 
@@ -1482,11 +1495,30 @@ var vc_common_map = Vue.component(
             );
             return L.circleMarker(latlng, marker_opts);
         },
-        circle_record_style: function(){
+        circle_record_style: function(record_layer_index){
+            let fill_color = '#332288';
+            let radius = 9;
+            if(record_layer_index >= 0){
+                radius -= (record_layer_index * 2);
+                let color_i = record_layer_index % COLOR_PALLET.length;
+                if( record_layer_index == 0){
+                    color_i = 0;
+                }
+                fill_color = COLOR_PALLET[color_i];
+            }
+            if(radius < 6){
+                radius = 6;
+            }
+            // make an outline color that's blended with white for contrast.
+            let gradient_list = [
+                {v: 0, color: '#FFFFFF', },
+		        {v: 1, color: fill_color, },
+            ];
+            let outline_color = make_hex_color_in_gradient(0.5, gradient_list);
             let marker_opts = {
-                radius: 8,
-                fillColor: '#337ab7',
-                color: '#149bdf',
+                radius: radius,
+                fillColor: fill_color,
+                color: outline_color,
                 weight: 1,
 				opacity: 1,
 				fillOpacity: 0.9,
@@ -1497,7 +1529,11 @@ var vc_common_map = Vue.component(
             return marker_opts;
         },
         circle_record_pointToLayer: function(feature,  latlng){
-            let marker_opts = this.circle_record_style();
+            let record_layer_index = -1;
+            if(feature.hasOwnProperty('record_layer_index')){
+                record_layer_index = feature.record_layer_index;
+            }
+            let marker_opts = this.circle_record_style(record_layer_index);
             return L.circleMarker(latlng, marker_opts);
         },
         make_legend_example_values: function(min_count, max_count){
@@ -1535,6 +1571,7 @@ var vc_common_map = Vue.component(
             legend.ov_id = act_layer.ov_id;
             legend.label = act_layer.label;
             legend.icon = null;
+            legend.type = 'count-summary';
             if(this.overlay_icons.hasOwnProperty(act_layer.ov_id)){
                 legend.icon = this.overlay_icons[act_layer.ov_id];
             }
@@ -1575,6 +1612,41 @@ var vc_common_map = Vue.component(
                     background-image: linear-gradient(${l_gradient_parts.join(', ')});`
                 );
             }
+            return legend;
+        },
+        make_record_layer_legend: function(act_layer){
+            if(!act_layer.hasOwnProperty('ov_id')){
+                return null;
+            }
+            if(!act_layer.hasOwnProperty('options')){
+                return null;
+            }
+            if(!act_layer.options.hasOwnProperty('pointToLayer')){
+                return null;
+            }
+            let legend = {
+                ov_id: act_layer.ov_id,
+                label: act_layer.label,
+                icon: null,
+                type: 'record',
+            };
+            console.log('make record legend');
+            let record_layer_index = -1;
+            if(act_layer.hasOwnProperty('record_layer_index')){
+                record_layer_index = act_layer.record_layer_index;
+            }
+            let opts = this.circle_record_style(record_layer_index);
+            opts.fillOpacity = 0.95;
+            legend.crc = {
+                radius: opts.radius,
+                svg_style: (
+                    `fill:${opts.fillColor};
+                    fill-opacity:${opts.fillOpacity};
+                    stroke:${opts.color};
+                    stroke-width:${opts.weight};
+                    stroke-opacity:1.0;`
+                ),
+            };
             return legend;
         },
         get_map_geodeep_from_geojson: function(act_geojson){
@@ -1770,6 +1842,7 @@ var vc_common_map = Vue.component(
             }
             if(this.geojson_record_layers && this.geojson_record_layers.length > 0){
                 for(let geo_rec_layer of this.geojson_record_layers){
+                    geo_rec_layer.ref = "map-all-" + geo_rec_layer.ov_id + "-geojson-" + this.ref_suffix
                     overlays_geojson.push(geo_rec_layer);
                 }
             }
@@ -1800,6 +1873,10 @@ var vc_common_map = Vue.component(
                             onEachFeature: this.onEachFeatureFunction,
                         },
                     );
+                    if(act_geojson.hasOwnProperty('record_layer_index')){
+                        // Need for legend styling.
+                        act_layer.record_layer_index = act_geojson.record_layer_index;
+                    }
                 }
                 i += 1;
                 act_layer.ref = act_geojson.ref;
@@ -1812,6 +1889,10 @@ var vc_common_map = Vue.component(
                 }
                 // Add the layer legend if applicable.
                 act_layer.legend = this.make_layer_legend(act_layer, 'poly_list');
+                if(!act_layer.hasOwnProperty('min_count')){
+                    act_layer.legend = this.make_record_layer_legend(act_layer);
+                }
+
                 // Now add it again fresh.
                 act_layer.addTo(this.map, act_geojson.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
@@ -1975,6 +2056,14 @@ var vc_common_map = Vue.component(
                 // No overlays passed from frontend state object.
                 this.frontend_state_obj.ov = [this.frontend_state_obj.ov];
             }
+            let valid_ov_ids = [];
+            for(let fr_ov_id of this.frontend_state_obj.ov){
+                if(!this.map.overlay_layers_by_id.hasOwnProperty(fr_ov_id)){
+                    continue;
+                }
+                valid_ov_ids.push(fr_ov_id);
+            }
+            this.frontend_state_obj.ov = valid_ov_ids;
 
             for(let ov_id in this.map.overlay_layers_by_id){
                 if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){

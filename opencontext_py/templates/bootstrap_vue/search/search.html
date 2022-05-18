@@ -84,6 +84,7 @@
                 <search-exporter-ui
                     v-bind:result="result"
                     v-bind:base_search_url="result.id"
+                    v-bind:geo_json_record_layer_count="geo_json_record_layer_count"
                     @add_geojson_record_layers="add_geojson_record_layers($event)"
                 ></search-exporter-ui>
             </div>
@@ -289,6 +290,14 @@
                     return false;
                 }
                 return this.result['oc-api:human-remains-flagged'];
+            },
+            geo_json_record_layer_count: function(){
+                if(this.geojson_record_layers == null){
+                    return 0;
+                }
+                else{
+                    return this.geojson_record_layers.length;
+                }
             }
         },
         components: {

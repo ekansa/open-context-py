@@ -376,6 +376,7 @@ var vc_search_exporter_ui = Vue.component(
         props: [
             'result',
             'base_search_url',
+            'geo_json_record_layer_count',
         ],
         data() {
             return {
@@ -386,23 +387,7 @@ var vc_search_exporter_ui = Vue.component(
                     'feature-type',
                     'href',
                 ],
-                default_field_mappings: {
-                    'uri': 'URI',
-                    'citation uri': 'Citation URI',
-                    'label': 'Item Label',
-                    'project label': 'Project Label',
-                    'project href': 'Project URI',
-                    'context label': 'Context',
-                    'context href': 'Context URI',
-                    'latitude': 'Latitude (WGS-84)',
-                    'longitude': 'Longitude (WGS-84)',
-                    'early bce/ce': 'Early BCE/CE',
-                    'late bce/ce': 'Late BCE/CE',
-                    'item category': 'Item Category',
-                    'snippet': 'Search-term Snippet',
-                    'published': 'Published Date',
-                    'updated': 'Updated Date',
-                },
+                default_field_mappings: UI_RECORD_PROPERTY_KEY_HUMAN_READABLE_MAPPINGS,
                 skip_default_attribute_slugs: [
                     'dc-terms-coverage',
                     'dc-terms-license',
@@ -419,6 +404,7 @@ var vc_search_exporter_ui = Vue.component(
                 multi_value_save_option: 'delimiter',
                 multi_value_delim: '|',
                 csv_null_value: "",
+                geo_json_record_layer_count: 0,
                 record_sets: null,
                 base_search_url_export_states: null,
                 initial_export_states: {
@@ -563,7 +549,20 @@ var vc_search_exporter_ui = Vue.component(
                 return null;
             },
             on_close: function(){
-                
+                let act_state = {};
+                act_state.loading = this.loading;
+                act_state.error = this.error;
+                act_state.act_attribs = this.act_attribs;
+                act_state.act_download_attribs = this.act_download_attribs;
+                act_state.act_start_url = this.act_start_url;
+                act_state.act_page_url = this.act_page_url;
+                act_state.act_total_count = this.act_total_count;
+                act_state.act_downloaded_count = this.act_downloaded_count;
+                act_state.act_download_label = this.act_download_label;
+                act_state.dl_started = this.dl_started;
+                act_state.dl_complete = this.dl_complete;
+                let base_search_url = this.base_search_url;
+                this.base_search_url_export_states[base_search_url] = act_state;
             },
             cancel_close: function(){
                 this.$bvModal.hide('exporter-modal');
@@ -774,17 +773,21 @@ var vc_search_exporter_ui = Vue.component(
                 if(raw_features == null){
                     return null;
                 }
+                console.log('New layer index ' +  act_record_set.record_layer_index + '; ' + act_record_set.label);
                 let features = [];
                 for(let feature of raw_features){
                     if(!feature.hasOwnProperty('properties')){
                         continue;
                     }
+                    feature.record_layer_index = act_record_set.record_layer_index;
                     feature.properties = this.props_to_mapped_fields_no_multi_value_change(feature.properties);
                     features.push(feature);
                 }
                 let geojson = {
                     id: this.act_start_url,
                     label: act_record_set.label,
+                    record_layer_index: act_record_set.record_layer_index,
+                    ov_id: 'records-' + act_record_set.record_layer_index,
                     type: 'FeatureCollection', 
                     features: features,
                 };
@@ -983,11 +986,14 @@ var vc_search_exporter_ui = Vue.component(
 
                 let act_start_url = this.act_start_url;
                 if(this.record_sets == null){
-                    this.record_sets = {
-                        ok: true,
-                    };
+                    let record_sets = {};
+                    record_sets[act_start_url] = null;
+                    this.record_sets = JSON.parse(JSON.stringify(record_sets));
                 }
-                if(act_start_url in this.record_sets && this.record_sets[act_start_url] != null){
+                
+                let record_layer_index = this.geo_json_record_layer_count;
+                if(this.record_sets[act_start_url] != null){
+                    // Skip out, we already have this.
                     return this.record_sets[act_start_url].metadata.totalResults;
                 }
                 
@@ -997,9 +1003,12 @@ var vc_search_exporter_ui = Vue.component(
                 }
                 this.record_sets[act_start_url] = {
                     label: `open-context-${start_metadata.totalResults}-records`,
+                    record_layer_index: record_layer_index,
                     metadata: start_metadata,
                     pages: [],
                 }
+                console.log('Created new download record set');
+                console.log(this.record_sets[act_start_url]);
                 this.act_download_label = this.record_sets[act_start_url].label;
                 return this.record_sets[act_start_url].metadata.totalResults;
             },
