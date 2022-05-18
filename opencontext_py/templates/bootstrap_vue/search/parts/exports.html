@@ -125,13 +125,14 @@
                     </b-col>
                 </b-row>
 
-                <b-row id="download-dl-button-row" v-if="!dl_started">
+                <b-row id="download-dl-button-row">
                     <b-col cols="12">
-                        <b-alert show variant="info">
+                        <b-alert show variant="info"  v-if="!dl_started">
                             <small>
                                 After you have selected attributes to include in your download, click the button below to 
                                 begin the download. Once the download is complete, you will see options to save the downloaded
-                                records on your device. 
+                                records on your device. You will also be able to view the downloaded records on Open Context's
+                                map interface.
                             </small>
                             <br/>
                             <br/>
@@ -140,8 +141,15 @@
                                 :disabled="dl_button_disable"
                                 variant="primary" 
                                 @click="get_records">
-                                <b-icon-download></b-icon-download> Download
+                                <b-icon-download></b-icon-download> Start Download
                             </b-button>
+                        </b-alert>
+                        <b-alert show variant="secondary" v-if="dl_complete">
+                            <p><strong>NOTE</strong><br/>
+                            Your completed download is now available to view on the map. Open the map layer options 
+                            to select the downloaded records for view. However, the map view is only kept temporarily on
+                            your browser. If you reload this page, you will need to redo the download to view on the map.
+                            </p>
                         </b-alert>
                     </b-col>
                 </b-row>
@@ -1095,6 +1103,7 @@ var vc_search_exporter_ui = Vue.component(
                 // New and valid.
                 if(this.act_downloaded_count >= this.act_total_count){
                     this.dl_complete = true;
+                    this.add_geojson_record_layers();
                 }
                 return true;
             },
