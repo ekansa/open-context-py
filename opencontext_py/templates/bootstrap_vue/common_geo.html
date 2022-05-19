@@ -657,6 +657,7 @@ var vc_common_map = Vue.component(
             selectedTileSet: TILE_PROVIDERS[0], 
             tileProviders: TILE_PROVIDERS,
             google_tile_configs: GOOGLE_TILE_CONFIGS,
+            map_scale: null,
             added_google_tiles: false,
             added_google_tile_types: [],
             minZoom_def: 1,
@@ -681,6 +682,12 @@ var vc_common_map = Vue.component(
             map_type_default_zooms: {
                 item: 16,
                 generic: 12,
+            },
+            map_scale_options: {
+                metric: true,
+                imperial: true,
+                maxWidth: 240,
+                position: 'bottomleft',
             },
             geojson_record_layers: null,
             default_tilelayer_name: 'Google Aerial',
@@ -1533,6 +1540,19 @@ var vc_common_map = Vue.component(
             }
             this.added_google_tiles = true;
         },
+        add_map_scale: function(){
+            if(this.map_scale != null){
+                //Already created.
+                return null;
+            }
+            if(!this.map){
+                // Map isn't ready
+                return null;
+            }
+            console.log('MAP SCALE creation');
+            let map_scale = L.control.scale(this.map_scale_options).addTo(this.map);
+            this.map_scale = map_scale;
+        },
         count_style: function(gradient_key, act_count, max_count){
             let act_gradient = COLOR_GRADIENTS[MAP_DEFAULT_COLOR_GRADIENT_KEY];
             if(gradient_key in COLOR_GRADIENTS){
@@ -2203,6 +2223,7 @@ var vc_common_map = Vue.component(
             this.update_map_legends();
             this.fit_bounds();
             this.finesse_item_view();
+            this.add_map_scale();
             // this.update_map_legends();
             this.map.auto_fit = false;
             this.map.overlay_ready = true;
@@ -2251,6 +2272,7 @@ var vc_common_map = Vue.component(
             this.finesse_item_view();
             this.get_item_location_info();
             this.update_map_legends();
+            this.add_map_scale();
             // console.log('updated map');
             // console.log('current frontend state');
             // console.log(this.frontend_state_obj);
