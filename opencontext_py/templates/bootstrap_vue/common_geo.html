@@ -55,6 +55,19 @@
                             v-html="legend.icon">
                         </b-avatar>
                             <strong>[[ legend.label ]]</strong>
+                            <span v-if="legend.label_edit_ok">
+                                <b-button size="sm" :id="'popover-target-' + legend.ov_id" variant="light"><b-icon-pencil-square></b-icon-pencil-square></b-button>
+                                <b-popover :target="'popover-target-' + legend.ov_id" triggers="hover" placement="topright">
+                                    <template #title>Edit downloaded layer label</template>
+                                    
+                                    <b-form-input
+                                        debounce="100"
+                                        @change="update_layer_label(legend)"
+                                        type="text" 
+                                        v-model="edit_label"
+                                        :value="legend.label"></b-form-input>
+                                </b-popover>
+                            </span>
                         </small>
                     </b-col>
                     <b-col>
@@ -111,6 +124,11 @@
                                         <circle :cx="legend.crc.radius + 2" :cy="legend.crc.radius + 2" :r="legend.crc.radius" :style="legend.crc.svg_style" />
                                     </svg><br/>
                                     <small>Item marker</small>
+                                </b-col>
+                                <b-col cols="9">
+                                    <small v-if="legend.totalResults"><strong>[[ legend.totalResults ]]</strong> downloaded records temporarily
+                                    stored in your browser's memory. If you reload or navigate away from this page, you will need to download these records again.
+                                    </small>
                                 </b-col>
                             </b-row>
                         </div>
@@ -200,7 +218,9 @@
                 v-bind:selected_gradient_key="selected_gradient_key"
                 @set_selected_gradient_key="set_selected_gradient_key"
             ></map-color-ui>
-            <map-legends v-bind:legends="map_legends"></map-legends>
+            <map-legends
+                @update_layer_label="update_layer_label($event)"
+                v-bind:legends="map_legends"></map-legends>
         </div>
     </div>
 </template>
@@ -572,11 +592,34 @@ var vc_map_legends = Vue.component(
         data() {
             return {
                 legends: null,
+                edit_label: null,
             };
         },
         template: '#map_legends',
         methods: {
-            
+            update_layer_label: function(legend){
+                console.log('updating label to ' + this.edit_label);
+                console.log(legend);
+                if(!this.edit_label){
+                    return null;
+                }
+                if(!legend.hasOwnProperty('label_edit_ok')){
+                    // not a download layer, can't edit
+                    return null;
+                }
+                if(!legend.label_edit_ok){
+                    // not a download layer, can't edit
+                    return null;
+                }
+                if(legend.label == this.edit_label){
+                    return null;
+                }
+                if(this.edit_label.length < 1){
+                    return null;
+                }
+                legend.label = this.edit_label;
+                this.$emit('update_layer_label', legend);
+            }
         },
         components: {
             
@@ -1571,6 +1614,7 @@ var vc_common_map = Vue.component(
             legend.ov_id = act_layer.ov_id;
             legend.label = act_layer.label;
             legend.icon = null;
+            legend.label_edit_ok = false;
             legend.type = 'count-summary';
             if(this.overlay_icons.hasOwnProperty(act_layer.ov_id)){
                 legend.icon = this.overlay_icons[act_layer.ov_id];
@@ -1629,11 +1673,21 @@ var vc_common_map = Vue.component(
                 label: act_layer.label,
                 icon: null,
                 type: 'record',
+                label_edit_ok: false,
+                query_url: null,
+                totalResults: null,
             };
             console.log('make record legend');
             let record_layer_index = -1;
             if(act_layer.hasOwnProperty('record_layer_index')){
                 record_layer_index = act_layer.record_layer_index;
+            }
+            if(act_layer.hasOwnProperty('query_url')){
+                legend.query_url = act_layer.query_url;
+            }
+            if(act_layer.hasOwnProperty('totalResults')){
+                legend.totalResults = act_layer.totalResults;
+                legend.label_edit_ok = true;
             }
             let opts = this.circle_record_style(record_layer_index);
             opts.fillOpacity = 0.95;
@@ -1874,8 +1928,10 @@ var vc_common_map = Vue.component(
                         },
                     );
                     if(act_geojson.hasOwnProperty('record_layer_index')){
-                        // Need for legend styling.
+                        // Need for legend styling of record download layers
                         act_layer.record_layer_index = act_geojson.record_layer_index;
+                        act_layer.query_url = act_geojson.query_url;
+                        act_layer.totalResults = act_geojson.totalResults;
                     }
                 }
                 i += 1;
@@ -2187,6 +2243,58 @@ var vc_common_map = Vue.component(
                 this.geo_json = json;
                 console.log('fetched geojson');
             });
+        },
+        reset_overlay_layer_control: function(act_layer){
+            this.$refs[this.l_controls_ref].mapObject.removeLayer(
+                act_layer, 
+            );
+            this.$refs[this.l_controls_ref].mapObject.addOverlay(
+                act_layer, 
+                act_layer.label
+            );
+        },
+        update_layer_label: function(legend){
+            let ov_id = legend.ov_id;
+            console.log('update layer id: ' + ov_id + ' to label ' + legend.label);
+            if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){
+                return null;
+            }
+
+            let act_layer = this.map.overlay_layers_by_id[ov_id];
+            act_layer.label = legend.label;
+
+            let dl_layer_ov_ids = [];
+            if(this.geojson_record_layers && this.geojson_record_layers.length > 0){
+                // mutates the object everywhere.
+                for(let geo_rec_layer of this.geojson_record_layers){
+                    if(geo_rec_layer.ov_id === ov_id){
+                        geo_rec_layer.label = legend.label;
+                    }
+                    dl_layer_ov_ids.push(geo_rec_layer.ov_id);
+                }
+            }
+            // iterate through all of the download layers to reset their overlay
+            // control.
+            for(let loop_ov_id of dl_layer_ov_ids){
+                if(!this.map.overlay_layers_by_id.hasOwnProperty(loop_ov_id)){
+                    continue;
+                }
+                let loop_layer = this.map.overlay_layers_by_id[loop_ov_id];
+                if(loop_ov_id == ov_id){
+                    // make sure we pass in the new label.
+                    loop_layer.label = act_layer.label;
+                }
+                this.reset_overlay_layer_control(loop_layer);
+            }
+            // toggle visibility to update the map overlay menu
+            if(this.map.visible_overlay_ids.indexOf(act_layer.ov_id) >= 0){
+                this.map.removeLayer(act_layer);
+                this.map.addLayer(act_layer);
+            }
+            else{
+                this.map.addLayer(act_layer);
+                this.map.removeLayer(act_layer);
+            }
         },
     },
     components: {

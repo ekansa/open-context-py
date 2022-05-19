@@ -68,7 +68,7 @@
                     expressive and complete representations of these data, 
                     please see the <a href="../../about/services" target="_blank">API documentation</a>. 
                     Please also note that location data for certain records may be approximated as a 
-                    security precaution or because precise data is not available.
+                    security precaution or because precise data are not available.
                 </p>
             </b-col>
         </b-row>
@@ -385,6 +385,7 @@ var vc_search_exporter_ui = Vue.component(
             'result',
             'base_search_url',
             'geo_json_record_layer_count',
+            'record_sets',
         ],
         data() {
             return {
@@ -796,6 +797,8 @@ var vc_search_exporter_ui = Vue.component(
                     label: act_record_set.label,
                     record_layer_index: act_record_set.record_layer_index,
                     ov_id: 'records-' + act_record_set.record_layer_index,
+                    totalResults: act_record_set.metadata.totalResults,
+                    query_url: this.act_start_url,
                     type: 'FeatureCollection', 
                     features: features,
                 };

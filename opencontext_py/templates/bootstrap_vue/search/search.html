@@ -85,6 +85,7 @@
                     v-bind:result="result"
                     v-bind:base_search_url="result.id"
                     v-bind:geo_json_record_layer_count="geo_json_record_layer_count"
+                    v-bind:record_sets="record_sets"
                     @add_geojson_record_layers="add_geojson_record_layers($event)"
                 ></search-exporter-ui>
             </div>
@@ -131,6 +132,7 @@
             human_remains_ok: HUMAN_REMAINS_OK,
             geojson_record_layers: null,
             exporter_ok: null,
+            record_sets: null,
         },
         created(){
             this.fetch_oc_api();
