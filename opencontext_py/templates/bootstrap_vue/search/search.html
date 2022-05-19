@@ -232,7 +232,9 @@
             do_ready: function (){
                 console.log('do ready');
             },
-            add_geojson_record_layers: function(geojson){
+            add_geojson_record_layers: function(input_obj){
+                let geojson = input_obj.geojson;
+                this.record_sets = input_obj.record_sets;
                 this.exporter_ok = true;
                 let temp_result_str = JSON.stringify(this.result); // prevent mutation of the result.
                 this.result = null;

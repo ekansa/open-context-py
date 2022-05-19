@@ -802,7 +802,7 @@ var vc_search_exporter_ui = Vue.component(
                     type: 'FeatureCollection', 
                     features: features,
                 };
-                this.$emit('add_geojson_record_layers', geojson);
+                this.$emit('add_geojson_record_layers', {geojson: geojson, record_sets:this.record_sets});
             },
             save_dl_geojson: function(){
                 let raw_features = this.gather_act_geojson_features();
@@ -1111,19 +1111,24 @@ var vc_search_exporter_ui = Vue.component(
                 return true;
             },
             recursive_fetch_oc_records_api: function (url){
-                this.error = null;
-                this.loading = true;
+                if(this.dl_complete){
+                    return true;
+                }
                 url = replaceURLparameter(url, 'response', this.param_response_value);
                 let page_res = this.check_page_in_record_sets(url);
                 if(!page_res.ok){
                     return false;
                 }
+                this.error = null;
+                this.loading = true;
                 if(!page_res.page_new){
                     // We already have this page downloaded.
                     this.act_downloaded_count = page_res.downloaded_count;
-                    if(page_res.next_url != null){
+                    if(!this.dl_complete && page_res.next_url != null){
                         this.recursive_fetch_oc_records_api(page_res.next_url); 
                     }
+                    this.error = null;
+                    this.loading = false;
                     return true;
                 }
                 fetch(
@@ -1148,6 +1153,10 @@ var vc_search_exporter_ui = Vue.component(
                         if(page_data.hasOwnProperty('next')){
                             this.act_page_url = page_data.next;
                         }
+                    }
+                    if(this.dl_complete || (this.act_downloaded_count >= this.act_total_count)){
+                        this.dl_complete = true;
+                        this.act_page_url = null;
                     }
                     if(this.act_page_url != null){
                         console.log('Fetch next act page ' + this.act_page_url);
