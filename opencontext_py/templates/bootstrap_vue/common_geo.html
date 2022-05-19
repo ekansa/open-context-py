@@ -645,6 +645,7 @@ var vc_common_map = Vue.component(
         'frontend_state_obj',
         'show_default_overlay',
         'geojson_record_layers',
+        'result_count_human',
     ],
     data() {
         return {
@@ -662,6 +663,7 @@ var vc_common_map = Vue.component(
             maxZoom_def: MAX_ZOOM,
             show_mapsets_default: true,
             center: null,
+            result_count_human: null,
             geo_json_url: null,
             geo_json: null,
             geo_overlays: null,
@@ -1254,7 +1256,32 @@ var vc_common_map = Vue.component(
             }
             return feature_data;
         },
-        make_generic_feature_popup(feature){
+        make_area_count_feature_popup(feature){
+            // for an area (count) aggregate summary feature
+            if(!feature.hasOwnProperty('count')){
+                return '';
+            }
+            if(!feature.hasOwnProperty('id')){
+                return '';
+            }
+            let area_html =  (
+                `<dl class="row">
+                <dt class="col-5">Count of Records in this Area</dt>
+                <dd class="col-7"><b>${feature.count}</b> of <b>${this.result_count_human}</b> total items</dd>
+                </dl>
+                <dl class="row">
+                <dt class="col-5">Filter</dt>
+                <dd class="col-7"><a href="${feature.id}">Query</a> to only include the ${feature.count} items within this area</dd>
+                </dl>
+                `
+            );
+            let popup_content = (
+                `<div class="container geo_feature_popup">${area_html}</div>`
+            );
+            return popup_content;
+        },
+        make_record_feature_popup(feature){
+            // for records in a query result page or download
             if(!feature.hasOwnProperty('properties')){
                 return '';
             }
@@ -1407,11 +1434,21 @@ var vc_common_map = Vue.component(
         },
         make_feature_popup(feature){
             if(this.map_type == 'generic' || !this.item_json){
+                if(feature.hasOwnProperty('count')){
+                    // for an area (count) aggregate summary feature
+                    return this.make_area_count_feature_popup(feature);
+                } else {
+                    // for records in a query result page or download
+                    return this.make_record_feature_popup(feature);
+                }
                 return this.make_generic_feature_popup(feature);
             }
             return this.make_item_feature_popup(feature);
         },
         make_generic_feature_tooltip(feature){
+            if(feature.hasOwnProperty('count')){
+                return `<div>Area containing ${feature.count} items</div>`;
+            }
             if(!feature.hasOwnProperty('properties')){
                 return '';
             }
