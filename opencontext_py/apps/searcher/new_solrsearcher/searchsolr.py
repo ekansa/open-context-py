@@ -318,8 +318,9 @@ class SearchSolr():
         )
         if raw_disc_geo:
             do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile 
+            # Do the actual query using the high resolution parameter.
             query_dict = querymaker.get_discovery_geotile_query_dict(
-                raw_disc_geo
+                raw_disc_geo, low_res=False
             )
             # Now add results of disc-geotile to the over-all query.
             query = utilities.combine_query_dict_lists(
