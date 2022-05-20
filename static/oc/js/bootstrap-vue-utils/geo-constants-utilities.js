@@ -180,6 +180,7 @@ L.Control.ZoomBox = L.Control.extend({
                     console.log('Cannot find query method');
                     return null;
                 }
+                map.boxZoom.b_points = [];
                 map.update_with_bbox_query(bbox_query);
                 return null;
             }
