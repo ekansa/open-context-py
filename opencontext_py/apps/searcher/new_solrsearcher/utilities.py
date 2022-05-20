@@ -780,10 +780,12 @@ def get_aggregation_depth_to_group_paths(
 
 def validate_geo_coordinate(coordinate, coord_type):
     """Validates a geo-spatial coordinate """
-    try:
-        fl_coord = float(coordinate)
-    except ValueError:
-        return False
+    fl_coord = coordinate
+    if not isinstance(coordinate, float):
+        try:
+            fl_coord = float(coordinate)
+        except ValueError:
+            return False
     if 'lat' in coord_type:
         if (fl_coord <= 90 
             and fl_coord >= -90):
@@ -809,20 +811,24 @@ def validate_bbox_coordinates(bbox_coors):
     """Validates a set of bounding box coordinates """
     if len(bbox_coors) != 4:
         # Need four coordinates (2 points) for a box
+        print(f'bad len {bbox_coors}')
         return False
 
     lower_left_valid = validate_geo_lon_lat(
         bbox_coors[0], bbox_coors[1]
     )
     top_right_valid = validate_geo_lon_lat(
-        bbox_coors[2], bbox_coors[3])
+        bbox_coors[2], bbox_coors[3]
+    )
     if not lower_left_valid or not top_right_valid:
+        print(f'lower left valid {lower_left_valid}; top right valid {top_right_valid}')
         return False
 
-    if (float(bbox_coors[0]) < float(bbox_coors[2]) 
-        and float(bbox_coors[1]) < float(bbox_coors[3])):
+    if ((bbox_coors[0] < bbox_coors[2]) 
+        and (bbox_coors[1] < bbox_coors[3])):
         return True
     else:
+        print(f'Bad coordinate less than greater than order')
         return False
 
 def return_validated_bbox_coords(bbox_str):
@@ -831,12 +837,18 @@ def return_validated_bbox_coords(bbox_str):
         return False
     if not ',' in bbox_str:
         return False
-    bbox_coors = [c.strip() for c in bbox_str.split(',')]
+    bbox_coor_str = [c.strip() for c in bbox_str.split(',')]
+    bbox_coors = []
+    for c in bbox_coor_str:
+        try:
+            c_float = float(c)
+        except:
+            return False
+        bbox_coors.append(c_float)
     valid = validate_bbox_coordinates(bbox_coors)
     if not valid:
         return False
-    valid_bbox_coors = [float(c) for c in bbox_coors]
-    return valid_bbox_coors
+    return bbox_coors
 
 def estimate_good_coordinate_rounding(
     lon_a, 

@@ -202,7 +202,7 @@ class SearchFilters():
                 act_val
             )
         
-        elif param_key == 'allevent-bbox':
+        elif param_key in ['allevent-bbox', 'bbox']:
             act_filter['label'] = make_bbox_filter_label(
                 act_val
             )

@@ -237,17 +237,13 @@ def get_discovery_bbox_query_dict(raw_disc_bbox):
         bbox_coors = utilities.return_validated_bbox_coords(bbox_str)
         if not bbox_coors:
             # Not valid so skip out of the function
+            print(f'Invalid coordinates {bbox_str}')
             return None
         # Valid bounding box, now make a solr-query
         # not how solr expacts latitude / longitude order, which
         # is the revserse of geojson!
-        q_bbox = '[{lat_0},{lon_0} TO {lat_1},{lon_1}]'.format(
-            lat_0=bbox_coors[1],
-            lon_0=bbox_coors[0],
-            lat_1=bbox_coors[3],
-            lon_1=bbox_coors[2],
-        )
-        fq_term = f'{configs.ROOT_EVENT_CLASS}___geolocation: ' + q_bbox
+        q_bbox = f'[{bbox_coors[1]},{bbox_coors[0]} TO {bbox_coors[3]},{bbox_coors[2]}]'
+        fq_term = f'{configs.ROOT_EVENT_CLASS}___geo_location_rpt:{q_bbox}'
         terms.append(fq_term)
     # Join the various bounding box query OR terms.
     query_dict['fq'].append(

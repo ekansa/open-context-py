@@ -43,7 +43,6 @@
     >
         <b-list-group flush>
             <b-list-group-item v-for="(legend, index) in legends" class="map-overlay-legend-item">
-
                 <b-row align-v="center">
                     <b-col cols="3">
                         <small>
@@ -140,6 +139,15 @@
                         <small><em>
                             Circle markers aggregate counts from up to 4 adjacent regions,
                             so the maximum value of a circle marker may differ from other visualization layers.
+                        </em>
+                        </small>
+                    </b-col>
+                </b-row>
+                <b-row v-if="legend.heat_style">
+                    <b-col>
+                        <small><em>
+                            When the <b>Heatmap</b> visualization is active, you will not be able to click on features
+                            in other layers.
                         </em>
                         </small>
                     </b-col>
@@ -703,8 +711,6 @@ var vc_common_map = Vue.component(
                 crc: '<span class="material-icons">circle</span>',
                 heat: '<span class="material-icons">thermostat</span>',
             },
-            bbox_icon: '<span class="material-icons-two-tone">crop</span>',
-            bbox_icon_alt: '<span class="material-icons-two-tone">tab_unselected</span>',
             geo_tile_facets_default: {
                 type: "FeatureCollection",
                 label: "Area counts (squares)",
@@ -856,6 +862,21 @@ var vc_common_map = Vue.component(
             let current_url = this.geo_json.id;
             let url = replaceURLparameter(current_url, 'geodeep', geodeep);
             this.update_router(url);
+        },
+        update_with_bbox_query: function(bbox_query){
+            if(!this.geo_json){
+                return null;
+            }
+            let current_url = this.geo_json.id;
+            let frontend_state_obj = JSON.parse(JSON.stringify(this.frontend_state_obj));
+            frontend_state_obj.zm = null;
+            frontend_state_obj.lat = null;
+            frontend_state_obj.lng = null;
+            let hash = encode_frag_obj(frontend_state_obj);
+            let url = replaceURLparameter(current_url, 'bbox', bbox_query);
+            url += '#' + hash;
+            url = abs_to_rel_url(url, BASE_URL);
+            router.push(url);
         },
         get_centroid: function(arr) {
             // get the centroid of a polygon
@@ -1056,7 +1077,7 @@ var vc_common_map = Vue.component(
                 if(map.hash_obj){
                     map.hash_obj.forceHashChange();
                 }
-            },
+            };
             this.map.add_search_map_extra_controls = function(map){
                 let search_map_extra_controls = [];
                 let deep_tile_control = L.easyButton(
@@ -2210,6 +2231,27 @@ var vc_common_map = Vue.component(
                 }
             }
         },
+        add_bbox_obj: function(){
+            if(!this.geo_json){
+                return null;
+            }
+            if(!this.map){
+                return null;
+            }
+            if(this.map.hasOwnProperty('bbox_zoom')){
+                // Deactivate this, because we changed state
+                this.map.bbox_zoom.deactivate();
+                return null;
+            }
+            var options = {
+                modal: true,
+                title: "Box area filter"
+            };
+            var bbox_zoom = L.control.zoomBox(options);
+            this.map.update_with_bbox_query = this.update_with_bbox_query;
+            this.map.addControl(bbox_zoom);
+            this.map.bbox_zoom = bbox_zoom;
+        },
         ready_map_setup: function(){
             this.map = this.$refs[this.map_ref].mapObject;
             this.map._layersMaxZoom = MAX_ZOOM;
@@ -2221,6 +2263,7 @@ var vc_common_map = Vue.component(
             this.add_search_map_hash();
             this.add_overlay_layers();
             this.add_search_map_extra_controls();
+            this.add_bbox_obj();
             this.frontend_obj_overlays_prep();
             this.update_map_legends();
             this.fit_bounds();
@@ -2275,6 +2318,7 @@ var vc_common_map = Vue.component(
             this.get_item_location_info();
             this.update_map_legends();
             this.add_map_scale();
+            this.add_bbox_obj();
             // console.log('updated map');
             // console.log('current frontend state');
             // console.log(this.frontend_state_obj);
