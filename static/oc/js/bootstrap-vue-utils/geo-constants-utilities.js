@@ -95,6 +95,47 @@ L.Control.ZoomBox = L.Control.extend({
         this._link.setAttribute('role', 'button');
         this._link.setAttribute('aria-pressed', 'false');
 
+
+        let _check_do_bbox_query = function(map){
+            if (map.boxZoom.hasOwnProperty('b_points')) {
+                console.log('Prepare bbox query');
+                console.log(map.boxZoom.b_points);
+                if(map.boxZoom.b_points.length >=2 ){
+                    ok_search = true;
+                }
+            }
+            if(!ok_search){
+                return null;
+            }
+            let min_lat = map.boxZoom.b_points[0].lat;
+            let min_lng = map.boxZoom.b_points[0].lng;
+            let max_lat = map.boxZoom.b_points[0].lat;
+            let max_lng = map.boxZoom.b_points[0].lng;
+            for (let act_point of map.boxZoom.b_points){
+                if (act_point.lat < min_lat) {
+                    min_lat = act_point.lat;
+                }
+                if (act_point.lng < min_lng) {
+                    min_lng = act_point.lng;
+                }
+                if (act_point.lat > max_lat) {
+                    max_lat = act_point.lat;
+                }
+                if (act_point.lng > max_lng) {
+                    max_lng = act_point.lng;
+                }    
+            }
+            let bbox_query = [min_lng, min_lat, max_lng, max_lat].join(',');
+            console.log('bbox_query is: ' + bbox_query);
+            if (!map.hasOwnProperty('update_with_bbox_query')) {
+                console.log('Cannot find query method');
+                return null;
+            }
+            map.boxZoom.b_points = [];
+            map.update_with_bbox_query(bbox_query);
+            return null;
+        }
+
         // Bind to the map's boxZoom handler for mouse down
         var _origMouseDown = map.boxZoom._onMouseDown;
         map.boxZoom._onMouseDown = function(e){
@@ -133,6 +174,8 @@ L.Control.ZoomBox = L.Control.extend({
             map.boxZoom.b_points.push(box_point);
             console.log('Add mouse up bounding box point');
             console.log(box_point);
+            // Since this is the mouse up event, do the query if it's ready.
+            _check_do_bbox_query(map);
         };
 
         map.on('zoomend', function(){
@@ -146,44 +189,7 @@ L.Control.ZoomBox = L.Control.extend({
             }
 
             console.log('finished zoom');
-            console.log(map.boxZoom);
-            let ok_search = false;
-            if (map.boxZoom.hasOwnProperty('b_points')) {
-                console.log('Prepare bbox query');
-                console.log(map.boxZoom.b_points);
-                if(map.boxZoom.b_points.length >=2 ){
-                    ok_search = true;
-                }
-            }
-            if(ok_search){
-                let min_lat = map.boxZoom.b_points[0].lat;
-                let min_lng = map.boxZoom.b_points[0].lng;
-                let max_lat = map.boxZoom.b_points[0].lat;
-                let max_lng = map.boxZoom.b_points[0].lng;
-                for (let act_point of map.boxZoom.b_points){
-                    if (act_point.lat < min_lat) {
-                        min_lat = act_point.lat;
-                    }
-                    if (act_point.lng < min_lng) {
-                        min_lng = act_point.lng;
-                    }
-                    if (act_point.lat > max_lat) {
-                        max_lat = act_point.lat;
-                    }
-                    if (act_point.lng > max_lng) {
-                        max_lng = act_point.lng;
-                    }    
-                }
-                let bbox_query = [min_lng, min_lat, max_lng, max_lat].join(',');
-                console.log('bbox_query is: ' + bbox_query);
-                if (!map.hasOwnProperty('update_with_bbox_query')) {
-                    console.log('Cannot find query method');
-                    return null;
-                }
-                map.boxZoom.b_points = [];
-                map.update_with_bbox_query(bbox_query);
-                return null;
-            }
+            // _check_do_bbox_query(map);
         }, this);
         if (!this.options.modal) {
             map.on('boxzoomend', this.deactivate, this);
@@ -218,6 +224,12 @@ L.Control.ZoomBox = L.Control.extend({
         L.DomUtil.removeClass(this._map.getContainer(), 'leaflet-zoom-box-crosshair');
         this._active = false;
         this._link.setAttribute('aria-pressed', 'false');
+    },
+    reset_points: function() {
+        // Resets any points in memory.
+        if (this._map.boxZoom.hasOwnProperty('b_points')) {
+            this._map.boxZoom.b_points = [];
+        }
     }
 });
 

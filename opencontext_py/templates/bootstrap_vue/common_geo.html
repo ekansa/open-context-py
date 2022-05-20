@@ -2241,6 +2241,8 @@ var vc_common_map = Vue.component(
             if(this.map.hasOwnProperty('bbox_zoom')){
                 // Deactivate this, because we changed state
                 this.map.bbox_zoom.deactivate();
+                this.map.bbox_zoom.reset_points();
+                /*
                 if (this.map.bbox_zoom.hasOwnProperty('b_points')) {
                     this.map.bbox_zoom.b_points = [];
                 }
@@ -2250,6 +2252,7 @@ var vc_common_map = Vue.component(
                         this.map.boxZoom.b_points = [];
                     }
                 }
+                */
                 return null;
             }
             var options = {
