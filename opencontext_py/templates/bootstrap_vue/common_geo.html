@@ -2241,6 +2241,15 @@ var vc_common_map = Vue.component(
             if(this.map.hasOwnProperty('bbox_zoom')){
                 // Deactivate this, because we changed state
                 this.map.bbox_zoom.deactivate();
+                if (this.map.bbox_zoom.hasOwnProperty('b_points')) {
+                    this.map.bbox_zoom.b_points = [];
+                }
+                // a little extra safety to reset the bounding box zoom
+                if (this.map.hasOwnProperty('boxZoom')) {
+                    if (this.map.boxZoom.hasOwnProperty('b_points')) {
+                        this.map.boxZoom.b_points = [];
+                    }
+                }
                 return null;
             }
             var options = {
