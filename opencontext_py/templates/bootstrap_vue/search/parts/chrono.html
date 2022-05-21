@@ -17,7 +17,7 @@
 
         <color-gradient-ui
             v-bind:selected_gradient_key="selected_gradient_key"
-            @set_selected_gradient_key="set_selected_gradient_key"
+            @set_selected_gradient_key="set_selected_gradient_key($event)"
         >
         </color-gradient-ui>
 
@@ -47,6 +47,7 @@
                 id="chrono-chart"
                 width="100%" 
                 type="area"
+                :key="'chrono-chart-apex-' + apex_key"
                 :options="options"
                 :series="data_series">
             </apexchart>
@@ -57,7 +58,15 @@
                 </div>
             </div>
             <b-row class="text-center" align-v="center">
-                <b-col lg="5"><small><strong>Filter within time range</strong><br/>(Move markers or type years BCE/CE ranges)</small></b-col>
+                <b-col lg="1">
+                    <b-button 
+                        title="Change visualization colors" 
+                        variant="outline-secondary" 
+                        size="sm"
+                        :pressed="color_gradient_select_modal_pressed"
+                        @click="show_color_ui"><span class="material-icons-two-tone">palette</span></b-button>
+                </b-col>
+                <b-col lg="4"><small><strong>Filter within time range</strong><br/>(Move markers or type years BCE/CE ranges)</small></b-col>
                 <b-col lg="2">
                     <b-form-input @change="input_time_range_change" type="number" v-model="input_min" size="sm" class="text-center"></b-form-input>
                 </b-col>
@@ -90,7 +99,7 @@
 
     <chrono-color-ui 
         v-bind:selected_gradient_key="selected_gradient_key"
-        @set_selected_gradient_key="set_selected_gradient_key"
+        @set_selected_gradient_key="set_selected_gradient_key($event)"
     ></chrono-color-ui>
         
 </div>
@@ -255,6 +264,7 @@ var vc_chronotiles = Vue.component(
                 chrono_facets: null,
                 frontend_state_obj: null,
                 selected_gradient_key: CHRONO_DEFAULT_COLOR_GRADIENT_KEY,
+                apex_key: 0,
                 data_series: [],
                 data_series_colors: [],
                 // data_series_fill_opacities: [],
@@ -462,6 +472,9 @@ var vc_chronotiles = Vue.component(
                 url = abs_to_rel_url(url, BASE_URL);
                 return url;
             },
+            color_gradient_select_modal_pressed(){
+                return false;
+            },
         },
         methods: {
             round_date(date){
@@ -500,6 +513,9 @@ var vc_chronotiles = Vue.component(
                     return null;
                 }
                 this.selected_gradient_key = gradient_key;
+                this.apex_key += 1;
+                console.log('color gradient key is now: ' + this.selected_gradient_key);
+                this.make_all_data_series();
             },
             make_span_data_series(chrono){
                 let c_per_year = chrono.count / chrono.t_span;
@@ -590,7 +606,7 @@ var vc_chronotiles = Vue.component(
                 if(!this.chrono_facets || this.chrono_facets.length < 1){
                     return null;
                 }
-                
+                console.log('Make chart with color gradient key: ' + this.selected_gradient_key);
                 let chrono_counts = [];
                 let chrono_counts_per_year = [];
                 let chrono_id_t_spans = {};
@@ -660,6 +676,9 @@ var vc_chronotiles = Vue.component(
                     }
                 }
                 // console.log(this.data_series);
+            },
+            show_color_ui: function(){
+                this.$bvModal.show('chrono-color-modal');
             },
         },
         components: {
