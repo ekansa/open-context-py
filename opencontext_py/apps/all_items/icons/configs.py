@@ -389,7 +389,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Architectural Element",
             "item_class__item_key": "oc-gen:cat-arch-element",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-arch-element",
-            "item_class__slug": "oc-gen-cat-arch-element"
+            "item_class__slug": "oc-gen-cat-arch-element",
             "icon": "../../static/oc/icons-v2/noun-architecture-column-3507450.svg",
         },
         {
