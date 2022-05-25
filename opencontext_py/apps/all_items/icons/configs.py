@@ -301,7 +301,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-lot",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-lot",
             "item_class__slug": "oc-gen-cat-lot",
-            "icon": "../../static/oc/icons-v2/noun-context-trowel-3586734.svg",
+            "icon": "../../static/oc/icons-v2/oc-context-icon.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-600d-a274-f02367a32c33",
@@ -309,7 +309,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-locus",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-locus",
             "item_class__slug": "oc-gen-cat-locus",
-            "icon": "../../static/oc/icons-v2/noun-context-trowel-3586734.svg",
+            "icon": "../../static/oc/icons-v2/oc-context-icon.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-65d0-e0e4-27fa67c62929",
@@ -435,7 +435,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-exc-unit",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-exc-unit",
             "item_class__slug": "oc-gen-cat-exc-unit",
-            "icon": "../../static/oc/icons-v2/noun-context-trowel-3586734.svg",
+            "icon": "../../static/oc/icons-v2/oc-context-icon.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-d0cd-df8d-4dbb6c2bd1dd",
@@ -458,7 +458,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-unit",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-unit",
             "item_class__slug": "oc-gen-cat-unit",
-            "icon": "../../static/oc/icons-v2/noun-context-trowel-3586734.svg",
+            "icon": "../../static/oc/icons-v2/oc-context-icon.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-e55c-6c25-5d7204d9115c",
