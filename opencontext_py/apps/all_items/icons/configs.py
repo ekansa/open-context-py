@@ -419,6 +419,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-trench",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-trench",
             "item_class__slug": "oc-gen-cat-trench",
+            "icon": "../../static/oc/icons-v2/oc-trench-icon.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-c7f5-a746-2ec91b5f1825",
