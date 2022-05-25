@@ -443,7 +443,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-glass",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-glass",
             "item_class__slug": "oc-gen-cat-glass",
-            "icon": "../../static/oc/icons-v2/noun-columns-4438180.svg",
+            "icon": "../../static/oc/icons-v2/noun-glass-bottle-4152315.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-d81b-3d32-07ed62bbaab1",
