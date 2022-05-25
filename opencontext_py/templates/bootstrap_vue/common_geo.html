@@ -2238,6 +2238,10 @@ var vc_common_map = Vue.component(
             if(!this.map){
                 return null;
             }
+            if(!this.frontend_state_obj){
+                // not a search map, no search map controls.
+                return null;
+            }
             if(this.map.hasOwnProperty('bbox_zoom')){
                 // Deactivate this, because we changed state
                 this.map.bbox_zoom.deactivate();
