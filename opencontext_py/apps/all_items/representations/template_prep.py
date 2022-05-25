@@ -9,8 +9,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 
 from opencontext_py.apps.all_items import configs
-
-
+from opencontext_py.apps.all_items.icons import configs as icon_configs
 
 
 KEY_FIND_REPLACES = [
@@ -69,16 +68,6 @@ SPECIAL_KEYS = [
 ITEM_METADATA_OBS_ID = '#item-metadata'
 ITEM_METADATA_OBS_LABEL = 'Item Metadata'
 
-DEFAULT_ITEM_TYPE_ICONS = {
-    'documents': '../../static/oc/icons-v2/noun-document-3183378.svg',
-    'persons': '../../static/oc/icons-v2/noun-people-3393687.svg',
-    'projects': '../../static/oc/icons-v2/noun-research-project-2341022.svg',
-    # 'subjects': '../../static/oc/icons-v2/noun-object-3504999.svg',
-    # 'subjects_children': '../../static/oc/icons-v2/noun-object-3504999.svg',
-    'subjects': '../../static/oc/icons-v2/object-icon-draft-2.svg',
-    'subjects_children': '../../static/oc/icons-v2/object-icon-draft-2.svg',
-    'tables': '../../static/oc/icons-v2/noun-table-4305.svg',
-}
 
 DEFAULT_LICENSE_ICONS = {
     'creativecommons.org/licenses/by/': '../../static/oc/cc-icons/cc-by.svg',
@@ -90,6 +79,45 @@ DEFAULT_LICENSE_ICONS = {
     'creativecommons.org/publicdomain/mark/': '../../static/oc/cc-icons/cc-publicdomain.svg',
     'creativecommons.org/publicdomain/zero/': '../../static/oc/cc-icons/cc-zero.svg',
 }
+
+
+def get_icon_by_item_type_class(dict_obj, item_type_override=None):
+    """Adds an icon for an item, by class or by item type
+
+    :param dict dict_obj: An item in a dictionary object representation
+    """
+
+    item_type = dict_obj.get('object__item_type', dict_obj.get('item_type'))
+    if not item_type:
+        # Can't find an item type, so skip out.
+        return dict_obj
+    if item_type_override:
+        # We're overriding the item_type, because of the context of this dict_obj.
+        # Do this for "subjects_children" for item_type "subjects" that are in a
+        # spatial containment relationship.
+        item_type_icon = icon_configs.DEFAULT_ITEM_TYPE_ICONS.get(item_type_override)
+    else:  
+        item_type_icon = icon_configs.DEFAULT_ITEM_TYPE_ICONS.get(item_type)
+    if not item_type_icon:
+        # Can't find an item type icon so skip out.
+        return dict_obj
+    class_icon = None
+    for class_conf in icon_configs.ITEM_TYPE_CLASS_ICONS_DICT.get(item_type, []):
+        if not class_conf.get('icon'):
+            # No icon configured for this class, so skip
+            continue
+        class_slug = class_conf.get('item_class__slug')
+        if not class_slug:
+            continue
+        if class_slug == dict_obj.get('object__item_class__slug', dict_obj.get('item_class__slug')):
+            class_icon = class_conf.get('icon')
+        if class_icon is not None:
+            break
+    if class_icon:
+        dict_obj['object_class_icon'] = class_icon
+        return dict_obj
+    dict_obj['object_class_icon'] = item_type_icon
+    return dict_obj
 
 
 def _make_key_template_ok(key, key_find_replaces=KEY_FIND_REPLACES):
@@ -251,7 +279,7 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
             if act_item_type == 'subjects' and pred_key == 'oc-pred:oc-gen-contains':
                 # NOTE: We're treating the (children) subjects of 
                 # spatial containment relations somewhat differently in our
-                # tempate
+                # template
                 act_item_type = 'subjects_children'
             if pred_key in ['oc-pred:oc-gen-links', 'oc-pred:oc-gen-contains']:
                 # The predicate is a default type that does not need to be
@@ -259,9 +287,11 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
                 act_val['no_display_pred'] = True
             
             # Add a default icon to an item type if missing and default exists.
-            if not act_val.get('object_class_icon') and DEFAULT_ITEM_TYPE_ICONS.get(act_item_type):
-                act_val['object_class_icon'] = DEFAULT_ITEM_TYPE_ICONS.get(act_item_type)
-
+            if act_item_type == 'subjects_children':
+                act_val = get_icon_by_item_type_class(act_val, item_type_override=act_item_type)
+            else:
+                act_val = get_icon_by_item_type_class(act_val, item_type_override=None)
+    
             new_attrib_group['relations'].setdefault(
                 act_item_type,
                 LastUpdatedOrderedDict()

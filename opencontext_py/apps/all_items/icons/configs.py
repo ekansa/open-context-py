@@ -11,9 +11,8 @@ DEFAULT_LICENSE_ICONS = {
 }
 
 
-
 DEFAULT_ITEM_TYPE_ICONS = {
-    'attribute-groups': '../../static/oc/icons-v2/noun-attributes-1592671.svg',
+    'attribute-groups': '../../static/oc/icons-v2/noun-attribute-group-analysis-4808151.svg',
     'class': '../../static/oc/icons-v2/noun-tree-diagram-152829.svg',
     'documents': '../../static/oc/icons-v2/noun-document-3183378.svg',
     'events': '../../static/oc/icons-v2/noun-event-address-book-timing-997565.svg',
@@ -56,13 +55,6 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
             "item_class__slug": "oc-default-class"
         },
-        {
-            "item_class__uuid": None,
-            "item_class__label": None,
-            "item_class__item_key": None,
-            "item_class__uri": None,
-            "item_class__slug": None
-        }
     ],
     "documents": [
         {
@@ -70,7 +62,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
+            "item_class__slug": "oc-default-class",
         }
     ],
     "events": [
@@ -113,7 +105,8 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-language-3091153.svg",
         }
     ],
     "media": [
@@ -172,8 +165,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
-        }
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-media-types-format-3644407.svg",
+        },
     ],
     "observations": [
         {
@@ -181,8 +175,10 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
-        }
+            "item_class__slug": "oc-default-class",
+            # see also: noun-observations-research-3325851.svg
+            "icon": "../../static/oc/icons-v2/noun-observations-research-4824813.svg",
+        },
     ],
     "persons": [
         {
@@ -200,7 +196,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__uri": "xmlns.com/foaf/spec/#term_Person",
             "item_class__slug": "foaf-person",
             "icon": "../../static/oc/icons-v2/noun-people-3393687.svg",
-        }
+        },
     ],
     "predicates": [
         {
@@ -208,7 +204,8 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-predicates-attributes-4562668.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-4637-cc82-fb0add3bb01b",
@@ -225,7 +222,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__uri": "opencontext.org/vocabularies/oc-general/links",
             "item_class__slug": "oc-gen-pred-links",
             "icon": "../../static/oc/icons-v2/noun-network-614248.svg",
-        }
+        },
     ],
     "projects": [
         {
@@ -233,8 +230,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
-        }
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-research-project-2341022.svg",
+        },
     ],
     "property": [
         {
@@ -242,15 +240,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-predicates-attributes-4562668.svg",
         },
-        {
-            "item_class__uuid": None,
-            "item_class__label": None,
-            "item_class__item_key": None,
-            "item_class__uri": None,
-            "item_class__slug": None
-        }
     ],
     "publishers": [
         {
@@ -258,8 +250,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
-        }
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-publishers-1275981.svg",
+        },
     ],
     "subjects": [
         {
@@ -397,6 +390,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__item_key": "oc-gen:cat-arch-element",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-arch-element",
             "item_class__slug": "oc-gen-cat-arch-element"
+            "icon": "../../static/oc/icons-v2/noun-architecture-column-3507450.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-a029-1e7b-9879507510af",
@@ -470,7 +464,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-animal-bone",
             "item_class__slug": "oc-gen-cat-animal-bone",
             "icon": "../../static/oc/icons-v2/noun-camel-4109324.svg",
-        }
+        },
     ],
     "types": [
         {
@@ -478,8 +472,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
-        }
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-types-hierarchy-1535342.svg",
+        },
     ],
     "units": [
         {
@@ -487,8 +482,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
-        }
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-units-ruler-and-pencil-892938.svg",
+        },
     ],
     "uri": [
         {
@@ -496,15 +492,9 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-website-88991.svg",
         },
-        {
-            "item_class__uuid": None,
-            "item_class__label": None,
-            "item_class__item_key": None,
-            "item_class__uri": None,
-            "item_class__slug": None
-        }
     ],
     "vocabularies": [
         {
@@ -512,14 +502,8 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Default (null) class",
             "item_class__item_key": None,
             "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
-            "item_class__slug": "oc-default-class"
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-hierarchy-564708.svg",
         },
-        {
-            "item_class__uuid": None,
-            "item_class__label": None,
-            "item_class__item_key": None,
-            "item_class__uri": None,
-            "item_class__slug": None
-        }
     ]
 }

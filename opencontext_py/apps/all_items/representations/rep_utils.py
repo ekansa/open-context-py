@@ -78,6 +78,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
                     obj['object__context__meta_json'] = assert_obj.object.context.meta_json
                 if assert_obj.object.item_class:
                     obj['object__item_class__label'] = assert_obj.object.item_class.label
+                    obj['object__item_class__slug'] = assert_obj.object.item_class.slug
                 if hasattr(assert_obj, 'object_class_icon'):
                     obj['object__item_class__icon'] = f'https://{assert_obj.object_class_icon}'
                 if hasattr(assert_obj, 'object_geo_overlay'):
