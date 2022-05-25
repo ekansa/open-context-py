@@ -374,7 +374,8 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Reference Collection",
             "item_class__item_key": "oc-gen:cat-ref-col",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-ref-col",
-            "item_class__slug": "oc-gen-cat-ref-col"
+            "item_class__slug": "oc-gen-cat-ref-col",
+            "icon": "../../static/oc/icons-v2/noun-ref-collection-inventory-4022838.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-9eed-7071-53ba4dfbec32",
@@ -434,7 +435,8 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Glass",
             "item_class__item_key": "oc-gen:cat-glass",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-glass",
-            "item_class__slug": "oc-gen-cat-glass"
+            "item_class__slug": "oc-gen-cat-glass",
+            "icon": "../../static/oc/icons-v2/noun-columns-4438180.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-d81b-3d32-07ed62bbaab1",
@@ -455,7 +457,8 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__label": "Region",
             "item_class__item_key": "oc-gen:cat-region",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-region",
-            "item_class__slug": "oc-gen-cat-region"
+            "item_class__slug": "oc-gen-cat-region",
+            "icon": "../../static/oc/icons-v2/noun-region-3097495.svg",
         },
         {
             "item_class__uuid": "00000000-6e24-f30b-8381-0e608046f9b5",
