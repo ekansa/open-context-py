@@ -1,5 +1,7 @@
 {% block navbar %}
 
+{% include './suggest.html' %}
+
 <style type="text/css">
     #oc-bv-nav {
         background-color: #141518;
@@ -37,6 +39,7 @@
             </ul>
         
         </div>
+            <!--
             <form class="navbar-form navbar-right d-flex" role="search" method="get" action="{{ BASE_URL }}/search">
                 
                 <input type="text" class="form-control me-2" placeholder="Search whole site" name="q" title="Text search box" />
@@ -45,9 +48,46 @@
                 </button>
                 
             </form>
-        
-            
+            -->
+            <form class="navbar-form navbar-right d-flex" role="search" id="nav-app">
+                <oc-search-typeahead
+                    v-bind:top_nav="1"
+                    v-bind:search_via_router="0"
+                    :base_search_url="'/query'"
+                    >
+                </oc-search-typeahead>
+            </form>
     </div>
 </nav>
+
+
+<script type="text/javascript">
+
+const BASE_URL = '{{ BASE_URL|safe }}';
+
+var vm_nav = new Vue(
+    {
+      delimiters: ['[[', ']]'],
+      ref: 'nav_app',
+      el: '#nav-app',
+      data: {
+          base_url: { BASE_URL },
+      },
+      computed: {
+          
+      },
+      methods: {
+         
+      },
+      created() {
+  
+      },
+      components: {
+        'oc-search-typeahead': vc_oc_seach_typeahead,
+      },
+    },
+  ).$mount('#nav-app');
+
+</script>
 
 {% endblock %}
