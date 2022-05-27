@@ -126,7 +126,14 @@ var vc_oc_seach_typeahead = Vue.component(
                         }
                     }
                 }
-                let url = replaceURLparameter(this.base_search_url, 'q', this.query);
+                let url = this.base_search_url;
+                if(url.indexOf('?') < 0){
+                    if(!url.endsWith('/')){
+                        // make sure the URL ends with a slash prior to making a search.
+                        url += '/';
+                    }
+                }
+                url = replaceURLparameter(url, 'q', this.query);
                 url = abs_to_rel_url_with_frag_obj(url, BASE_URL, frontend_state);
                 return url;
             },

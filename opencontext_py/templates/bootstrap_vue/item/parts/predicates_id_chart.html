@@ -1,0 +1,329 @@
+{% block predicates_chart %}
+
+
+<template id="id-predicates-template">
+  <div>
+
+    <div :ref="'id-predicates-' + route_key_index">
+
+      <div v-if="loading">
+        <div class="container-fluid text-muted text-center">
+          <h1 class="display-4">Preparing data...</h1>
+          <b-spinner class="m-5" label="Busy"></b-spinner>
+        </div>
+      </div>
+
+      <div v-else>
+
+        <div v-if="indexed_count < 1" >
+
+          <div class="container-fluid text-muted text-center">
+            <h1 class="display-4">No records</h1>
+            <p>Records associated with this predicate have yet to be
+              indexed. These records are still in preparation and not
+              yet fully published.</p>
+          </div>
+
+        </div>
+        <div v-else>
+
+          <apexchart
+            :id="'chart-' + chart_id"
+            :ref="'chart-' + chart_id"
+            width="100%" 
+            :options="options"
+            :series="data_series">
+          </apexchart>
+    
+        </div>
+          
+      </div>
+    </div>
+
+  </div>
+</template>
+
+
+
+<script type="text/javascript">
+
+  var vc_id_predicates = Vue.component(
+    'id-predicates',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#id-predicates-template',
+      props: [
+        'base_search_url',
+        'predicate_label',
+        'predicate_slug',
+        'predicate_class_slug',
+        'data_type',
+      ],
+      data() {
+        return {
+          loading: true,
+          base_search_url: '/query',
+          predicate_label: null,
+          predicate_slug: null,
+          predicate_class_slug: null,
+          data_type: 'id',
+          facets_data: null,
+          indexed_count: 0,
+          do_consolidate_rare_opts: true,
+          is_rare_portion: 0.01, // portion that's considered to be rare
+          chart_id: 0,
+          options: {
+            chart: {
+              type: 'bar',
+              events: {
+                click(event, chartContext, config) {
+                  console.log('click event');
+                  let data_index = config.dataPointIndex;
+                  if(!(data_index >= 0)){
+                    return null;
+                  }
+                  let act_item = config.config.series[config.seriesIndex].data[data_index];
+                  console.log(act_item);
+                  window.open(act_item.href);
+                },
+              },
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+              }
+            },
+            title: {
+              text: `Chart for ${this.predicate_label}`,
+              align: 'center',
+              style: {
+                fontFamily: 'Open Sans',
+              },
+            },
+            tooltip: {
+              y: {
+                formatter: function(value, { series, seriesIndex, dataPointIndex, w }) {
+                  return value;
+                },
+              },
+            }
+          },
+          data_series: [],
+          // chart_type: 'bar',
+          chart_type: 'bar',
+          chart_height: 'auto',
+          x_axis_type: 'category',
+          default_gradient_type: 'blue_red',
+          route_key_index: 0,
+        };
+      },
+      computed: {
+        
+      },
+      created(){
+        this.fetch_oc_api();
+      },
+      watch: {
+        
+      },
+      methods: {
+        fetch_oc_api: function(){
+          if(!this.predicate_slug){
+            // missing our query criteria
+            return null;
+          }
+          if(this.facets_data != null){
+            // We already have the data
+            return null;
+          }
+          this.loading = true;
+          let params = {
+            prop: this.predicate_slug,
+            rows: 1,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          fetch(
+            url,
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+          )
+          .then(response => response.json())
+          .then(json => {
+            this.route_key_index += 1;
+            this.facets_data = json;
+            if(!this.facets_data.hasOwnProperty('totalResults')){
+              this.facets_data = null;
+            }
+            else if(this.facets_data.totalResults == 0){
+              this.facets_data = null;
+            }
+            else{
+              this.indexed_count = this.facets_data.totalResults;
+              console.log('Predicated indexed with ' + this.facets_data.totalResults + ' items');
+            }
+          }).finally(() => {
+            this.loading = false;
+            this.data_series = this.prep_data(this.facets_data);
+            console.log(this.data_series);
+          });
+        },
+        on_click: function(event, chartContext, config){
+          console.log('do: on_marker_click');
+          console.log(event);
+          console.log(chartContext);
+          console.log(config);
+        },
+        split_label_on_delim: function(label, delim, later_part_prefix){
+          let labels = [];
+          let prior_label = '';
+          for(let l of label.split(delim)){
+            l = l.trim();
+            if(l.length < 3){
+              // This makes sure we don't have a part that's
+              // too small.
+              if(labels.length > 0){
+                prior_label = later_part_prefix + l;
+              }
+              else{
+                prior_label = l;
+              }
+              continue;
+            }
+            if(labels.length > 0){
+              l = later_part_prefix + l;
+            }
+            if(prior_label != ''){
+              l = prior_label + l;
+            }
+            else{
+              l = l.trim();
+            }
+            prior_label = '';
+            labels.push(l);
+          }
+          return labels;
+        },
+        label_length_format: function(label){
+          if(label.length < 19 ){
+            return label;
+          }
+          if(label.indexOf('/') > 2){
+            return this.split_label_on_delim(label, '/', '/ ');
+          }
+          if(label.indexOf('::') > 4){
+            return this.split_label_on_delim(label, '::', '::');
+          }
+          // If only 1 parentheses, split on the open parenthesis
+          let par_count = label.split("(").length - 1;
+          if(par_count === 1){
+            return this.split_label_on_delim(label, '(', '(');
+          }
+          if(label.indexOf(' ') > 3){
+            return this.split_label_on_delim(label, ' ', ' ');
+          }
+          return label;
+        },
+        add_rare_opts_to_series: function(rare_opts, data_series){
+          let rare_len = rare_opts.length;
+          if(rare_len < 1){
+            return data_series;
+          }
+          if(rare_len === 1){
+            data_series.push(rare_opts[0]);
+            return data_series;
+          }
+          let slugs = [];
+          let total_count = 0;
+          for(let item of rare_opts){
+            slugs.push(item.slug);
+            total_count += item.y;
+          }
+          let other_label = `OTHER (${rare_len} low freq. types)`;
+          let q_param = this.predicate_slug + '---' + slugs.join('||');
+          let params = {
+            prop: q_param ,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          let item = {
+            x: this.label_length_format(other_label),
+            href: url,
+            y: total_count,
+            rare_opts: rare_opts,
+          }
+          data_series.push(item);
+          return data_series;
+        },
+        prep_data: function(facets_data){
+          this.chart_id += 1;
+          let data_series = [];
+          let rare_opts = [];
+          let raw_opt_count = null;
+          if(!facets_data){
+            return data_series;
+          }
+          if(!facets_data.hasOwnProperty('oc-api:has-facets')){
+            return data_series;
+          }
+          for(let facet of facets_data['oc-api:has-facets']){
+            if(!facet.hasOwnProperty('slug')){
+              continue;
+            }
+            if(!facet.hasOwnProperty('oc-api:has-id-options')){
+              continue;
+            }
+            if(facet.slug != this.predicate_slug){
+              continue;
+            }
+            raw_opt_count = facet['oc-api:has-id-options'].length;
+            for(let opt of facet['oc-api:has-id-options']){
+              if(!opt.hasOwnProperty('count')){
+                continue;
+              }
+              if(!opt.hasOwnProperty('slug')){
+                continue;
+              }
+              if(!opt.hasOwnProperty('label')){
+                continue;
+              }
+              let item = {
+                x: this.label_length_format(opt.label),
+                slug: opt.slug,
+                href: opt.id,
+                y: opt.count,
+                rare_opts: null,
+              }
+              if(this.do_consolidate_rare_opts && opt.count < (this.indexed_count * this.is_rare_portion)){
+                rare_opts.push(item);
+                continue
+              }
+
+              data_series.push(item);
+            }
+          }
+          if(raw_opt_count > 0){
+            this.options.title.text = `Currently indexed ${raw_opt_count} options for ${this.predicate_label}`;
+          }
+          else{
+            this.options.title.text = `No options currently indexed ${this.predicate_label}`;
+          }
+          data_series = this.add_rare_opts_to_series(rare_opts, data_series);
+          let series = [{
+            name: 'Records:',
+            data: data_series,
+          }];
+          return series;
+        },
+      },
+      components: {
+        apexchart: VueApexCharts,
+      }
+    }
+  );
+  
+</script>
+
+
+{% endblock %}

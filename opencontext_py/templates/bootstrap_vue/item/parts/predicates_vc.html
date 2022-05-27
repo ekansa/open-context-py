@@ -1,0 +1,57 @@
+{% block predicates_vc %}
+
+{% include './predicates_id_chart.html' %}
+
+
+<template id="predicates-template">
+  <div>
+    <id-predicates
+      v-if="data_type == 'id'"
+      v-bind:base_search_url="base_search_url"
+      v-bind:predicate_label="predicate_label"
+      v-bind:predicate_slug="predicate_slug"
+      v-bind:predicate_class_slug="predicate_class_slug"
+      v-bind:data_type="data_type"
+    > </id-predicates>
+  </div>
+</template>
+
+
+<script type="text/javascript">
+
+var vc_predicates = Vue.component(
+  'vc-predicates',
+  {
+    delimiters: ['[[', ']]'],
+    template: '#predicates-template',
+    props: [
+      'base_search_url',
+      'predicate_label',
+      'predicate_slug',
+      'predicate_class_slug',
+      'data_type',
+    ],
+    data() {
+      return {
+        base_search_url: '/query',
+        predicate_label: null,
+        predicate_slug: null,
+        predicate_class_slug: null,
+        data_type: null,
+      };
+    },
+    computed: {
+      
+    },
+    methods: {
+      
+    },
+    components: {
+      'id-predicates': vc_id_predicates,
+    }
+  }
+);
+  
+</script>
+
+{% endblock %}

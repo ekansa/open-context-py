@@ -1,7 +1,8 @@
 {% load humanize %}
 
-
+{% if GEO_JSON %}
   <common_map
+    v-if="GEO_JSON"
     :map_key="0"
     :map_class="'map_item'"
     :min_height="300"
@@ -17,3 +18,4 @@
 
 
 </script>
+{% endif %}

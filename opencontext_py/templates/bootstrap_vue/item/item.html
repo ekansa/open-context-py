@@ -2,11 +2,20 @@
 
 {% block content %}
 
+
 {% include '../item/parts/vue_shared.html' %}
 {% include '../item/parts/vue_images_human_remains.html' %}
 {% include '../color_gradients.html' %}
-{% include '../common_geo.html' %}
 
+{% if GEO_JSON %}
+{% include '../common_geo.html' %}
+{%endif%}
+
+{% if man_obj.item_type == 'predicates' %}
+
+    {% include '../item/parts/predicates_vc.html' %}
+
+{%endif%}
 
 
 
@@ -61,6 +70,29 @@
             {% include '../item/parts/preview_geojson.html' %}
 
         {%endif%}
+
+        {% if man_obj.item_type == 'predicates' %}
+            <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
+            <div class="card">
+                <div class="card-header">
+                {% if man_obj.item_class.slug == 'oc-gen-variables' %}
+                <h5><b>{{ man_obj.label }}</b> (Descriptive Attribute)</h5>
+                {%else%}
+                <h5><b>{{ man_obj.label }}</b> (Linking Relation)</h5>
+                {%endif%}
+                </div>
+                <div class="card-body">
+                    <vc-predicates
+                        :base_search_url="'/query'"
+                        v-bind:predicate_label="'{{ man_obj.label|safe }}'"
+                        v-bind:predicate_slug="'{{ man_obj.slug|safe }}'"
+                        v-bind:predicate_class_slug="'{{ man_obj.item_class.slug|safe }}'"
+                        v-bind:data_type="'{{ man_obj.data_type|safe }}'"
+                    ></vc-predicates>
+                </div>
+            </div>
+        {%endif%}
+
 
             {% include '../item/parts/content_text.html' %}
             {% include '../item/parts/observations.html' %}
@@ -146,9 +178,16 @@
     
         },
         components: {
-          'common_map': vc_common_map,
-          'human-remains-results-alert': vc_human_remains_results_alert,
-          'human-remains-image': vc_human_remains_image,
+            {% if GEO_JSON %}
+            'common_map': vc_common_map,
+            {%endif%}
+
+            'human-remains-results-alert': vc_human_remains_results_alert,
+            'human-remains-image': vc_human_remains_image,
+            
+            {% if man_obj.item_type == 'predicates' %}
+            'vc-predicates': vc_predicates,
+            {%endif%}
         },
       },
     ).$mount('#app');
