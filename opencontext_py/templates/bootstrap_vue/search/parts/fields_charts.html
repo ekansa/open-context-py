@@ -253,6 +253,13 @@ var vc_fields_chart = Vue.component(
                 }
                 return y_x_defaults;
             },
+            make_ui_friendly_date: function(iso_datetime_str){
+                if(iso_datetime_str.indexOf('T') < 0){
+                    return iso_datetime_str;
+                }
+                let sp_date = iso_datetime_str.split('T');
+                return sp_date[0];
+            },
             find_str_dif(str1, str2){ 
                 let diff= "";
                 str2.split('').forEach(function(val, i){
@@ -318,8 +325,12 @@ var vc_fields_chart = Vue.component(
                 let opt_urls = [];
                 let data_vals = [];
                 for (let r_opt of this.range_facet_obj['oc-api:has-range-options']){
+                    let label = r_opt['label'];
+                    if(this.data_type == 'xsd:date'){
+                        label = this.make_ui_friendly_date(label);
+                    }
                     let act_pair = {
-                        x: r_opt['label'],
+                        x: label,
                         y: r_opt['count'],
                     }
                     data_vals.push(act_pair);
