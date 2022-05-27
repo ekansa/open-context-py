@@ -654,6 +654,7 @@ def get_path_facet_value_count_tuples(
 # ---------------------------------------------------------------------
 # Date-Time Related Functions
 # ---------------------------------------------------------------------
+
 def date_convert(date_str):
     """Converts to a python datetime if not already so """
     if isinstance(date_str, str):
@@ -668,6 +669,7 @@ def date_convert(date_str):
 def datetime_to_solr_date_str(dt):
     """Makes a solr date string form a datetime object"""
     return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 
 def convert_date_to_solr_date(date_str):
     """Converts a string for a date into a Solr formated datetime string """

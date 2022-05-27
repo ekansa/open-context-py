@@ -1,5 +1,6 @@
 import copy
 
+
 from operator import itemgetter
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -142,7 +143,7 @@ class ResultFacetsStandard():
         :param str match_old_value: If not None, this is for iterating
             through lists of values for a given request parameter so we
             can replace that value
-        :param str delim: Delimiter for hieararchy path values
+        :param str delim: Delimiter for hierarchy path values
         :param str data_type: Solr data-type to match for inclusion
             in the output options list.
         :param list options_tuples: List of (facet_value, count) tuples
@@ -531,6 +532,7 @@ class ResultFacetsStandard():
                 max_value = float(max_value)
             elif data_type == 'xsd:date':
                 min_value = facet_value
+
             else:
                 # How van we even be here with the wrong data-type?
                 continue
