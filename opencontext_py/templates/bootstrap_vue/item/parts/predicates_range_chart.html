@@ -1,10 +1,10 @@
 {% block predicates_chart %}
 
 
-<template id="id-predicates-template">
+<template id="range-predicates-template">
   <div>
 
-    <div :ref="'id-predicates-' + route_key_index">
+    <div :ref="'range-predicates-' + route_key_index">
 
       <div v-if="loading">
         <div class="container-fluid text-muted text-center">
@@ -48,11 +48,11 @@
 
 <script type="text/javascript">
 
-  var vc_id_predicates = Vue.component(
-    'id-predicates',
+  var vc_range_predicates = Vue.component(
+    'range-predicates',
     {
       delimiters: ['[[', ']]'],
-      template: '#id-predicates-template',
+      template: '#range-predicates-template',
       props: [
         'base_search_url',
         'predicate_label',
@@ -70,12 +70,11 @@
           data_type: 'id',
           facets_data: null,
           indexed_count: 0,
-          do_consolidate_rare_opts: true,
-          is_rare_portion: 0.01, // portion that's considered to be rare
           chart_id: 0,
+          chart_type: 'bar',
           options: {
             chart: {
-              type: 'bar',
+              type: 'histogram',
               events: {
                 click(event, chartContext, config) {
                   console.log('click event');
@@ -91,7 +90,10 @@
             },
             plotOptions: {
               bar: {
-                horizontal: true,
+                borderRadius: 4,
+                dataLabels: {
+                    position: 'top', // top, center, bottom
+                },
               }
             },
             title: {
@@ -110,9 +112,8 @@
             }
           },
           data_series: null,
-          chart_height: 'auto',
-          x_axis_type: 'category',
-          default_gradient_type: 'blue_red',
+          min_value: null,
+          max_value: null,
           route_key_index: 0,
         };
       },
@@ -169,142 +170,78 @@
             console.log(this.data_series);
           });
         },
-        split_label_on_delim: function(label, delim, later_part_prefix){
-          let labels = [];
-          let prior_label = '';
-          for(let l of label.split(delim)){
-            l = l.trim();
-            if(l.length < 3){
-              // This makes sure we don't have a part that's
-              // too small.
-              if(labels.length > 0){
-                prior_label = later_part_prefix + l;
+        make_default_zero_series(data_type, min, max, gap){
+          let y_x_defaults = {};
+          if((data_type == 'xsd:double') || (data_type == 'xsd:integer')){
+              for (let step = min; step < (max + gap); step += gap) {
+                  y_x_defaults[step] = 0;
               }
-              else{
-                prior_label = l;
-              }
-              continue;
-            }
-            if(labels.length > 0){
-              l = later_part_prefix + l;
-            }
-            if(prior_label != ''){
-              l = prior_label + l;
-            }
-            else{
-              l = l.trim();
-            }
-            prior_label = '';
-            labels.push(l);
           }
-          return labels;
+          return y_x_defaults;
         },
-        label_length_format: function(label){
-          if(label.length < 19 ){
-            return label;
-          }
-          if(label.indexOf('/') > 2){
-            return this.split_label_on_delim(label, '/', '/ ');
-          }
-          if(label.indexOf('::') > 4){
-            return this.split_label_on_delim(label, '::', '::');
-          }
-          // If only 1 parentheses, split on the open parenthesis
-          let par_count = label.split("(").length - 1;
-          if(par_count === 1){
-            return this.split_label_on_delim(label, '(', '(');
-          }
-          if(label.indexOf(' ') > 3){
-            return this.split_label_on_delim(label, ' ', ' ');
-          }
-          return label;
-        },
-        add_rare_opts_to_series: function(rare_opts, data_series){
-          let rare_len = rare_opts.length;
-          if(rare_len < 1){
-            return data_series;
-          }
-          if(rare_len === 1){
-            data_series.push(rare_opts[0]);
-            return data_series;
-          }
-          let slugs = [];
-          let total_count = 0;
-          for(let item of rare_opts){
-            slugs.push(item.slug);
-            total_count += item.y;
-          }
-          let other_label = `OTHER (${rare_len} low freq. types)`;
-          let q_param = this.predicate_slug + '---' + slugs.join('||');
-          let params = {
-            prop: q_param ,
-          };
-          let url = this.base_search_url + '/?' + new URLSearchParams(params);
-          let item = {
-            x: this.label_length_format(other_label),
-            href: url,
-            y: total_count,
-            rare_opts: rare_opts,
-          }
-          data_series.push(item);
-          return data_series;
+        make_ui_friendly_date: function(iso_datetime_str){
+            if(iso_datetime_str.indexOf('T') < 0){
+                return iso_datetime_str;
+            }
+            let sp_date = iso_datetime_str.split('T');
+            return sp_date[0];
         },
         prep_data: function(facets_data){
           this.chart_id += 1;
           let data_series = [];
-          let rare_opts = [];
-          let raw_opt_count = null;
           if(!facets_data){
             return data_series;
           }
-          if(!facets_data.hasOwnProperty('oc-api:has-facets')){
+          if(!facets_data.hasOwnProperty('oc-api:has-range-facets')){
             return data_series;
           }
-          for(let facet of facets_data['oc-api:has-facets']){
+          for(let facet of facets_data['oc-api:has-range-facets']){
             if(!facet.hasOwnProperty('slug')){
               continue;
             }
-            if(!facet.hasOwnProperty('oc-api:has-id-options')){
+            if(!facet.hasOwnProperty('oc-api:has-range-options')){
               continue;
             }
             if(facet.slug != this.predicate_slug){
               continue;
             }
-            raw_opt_count = facet['oc-api:has-id-options'].length;
-            for(let opt of facet['oc-api:has-id-options']){
+            if(facet.hasOwnProperty('oc-api:min')){
+              this.min_value = facet['oc-api:min'];
+            }
+            if(facet.hasOwnProperty('oc-api:max')){
+              this.max_value = facet['oc-api:max'];
+            }
+            for(let opt of facet['oc-api:has-range-options']){
               if(!opt.hasOwnProperty('count')){
-                continue;
-              }
-              if(!opt.hasOwnProperty('slug')){
                 continue;
               }
               if(!opt.hasOwnProperty('label')){
                 continue;
               }
+              let label = opt.label;
+              if(this.data_type == 'xsd:date'){
+                label = this.make_ui_friendly_date(label);
+              }
               let item = {
-                x: this.label_length_format(opt.label),
-                slug: opt.slug,
+                x: label,
                 href: opt.id,
                 y: opt.count,
-                rare_opts: null,
               }
-              if(this.do_consolidate_rare_opts && opt.count < (this.indexed_count * this.is_rare_portion)){
-                rare_opts.push(item);
-                continue
-              }
-
               data_series.push(item);
             }
           }
-          if(raw_opt_count > 0){
-            this.options.title.text = `Currently indexed ${raw_opt_count} options for ${this.predicate_label}`;
+          let min_ui = this.min_value;
+          let max_ui = this.max_value;
+          if(this.data_type == 'xsd:date'){
+            min_ui = this.make_ui_friendly_date(min_ui);
+            max_ui = this.make_ui_friendly_date(max_ui);
           }
-          else{
-            this.options.title.text = `No options currently indexed ${this.predicate_label}`;
-          }
-          data_series = this.add_rare_opts_to_series(rare_opts, data_series);
+          this.options.title.text = (
+            `Currently indexed values from ${min_ui} to ${max_ui} for ${this.predicate_label}`
+          );
           let series = [{
             name: 'Records:',
+            type: 'column',
             data: data_series,
           }];
           return series;

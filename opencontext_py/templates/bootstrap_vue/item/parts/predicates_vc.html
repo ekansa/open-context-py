@@ -1,6 +1,7 @@
 {% block predicates_vc %}
 
 {% include './predicates_id_chart.html' %}
+{% include './predicates_range_chart.html' %}
 
 
 <template id="predicates-template">
@@ -13,6 +14,18 @@
       v-bind:predicate_class_slug="predicate_class_slug"
       v-bind:data_type="data_type"
     > </id-predicates>
+    <div 
+      v-else-if="data_type == 'xsd:string'">
+      User interface for free-text attributes is not yet supported.
+    </div>
+    <range-predicates 
+      v-else
+      v-bind:base_search_url="base_search_url"
+      v-bind:predicate_label="predicate_label"
+      v-bind:predicate_slug="predicate_slug"
+      v-bind:predicate_class_slug="predicate_class_slug"
+      v-bind:data_type="data_type"
+    ></range-predicates>
   </div>
 </template>
 
@@ -48,6 +61,7 @@ var vc_predicates = Vue.component(
     },
     components: {
       'id-predicates': vc_id_predicates,
+      'range-predicates': vc_range_predicates,
     }
   }
 );
