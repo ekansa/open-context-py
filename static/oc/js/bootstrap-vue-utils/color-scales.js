@@ -95,6 +95,15 @@ const COLOR_GRADIENTS = {
 		{v:0.85, color: '#88419d', },
 		{v: 1, color: '#6e016b', },
 	],
+	oc_blue: [
+		{v: 0, color: '#cababe', },
+		{v:0.15, color: '#7ea3b3', },
+		{v:0.35, color: '#63819f', },
+		{v: 0.5, color: '#4c608a', },
+		{v:0.65, color: '#374076', },
+		{v:0.85, color: '#202161', },
+		{v: 1, color: '#00004d', },
+	],
 	oc: [
 		{v: 0, color: '#ffffb2', },
 		{v:0.15, color: '#fed976', },
