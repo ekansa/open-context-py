@@ -35,6 +35,15 @@
             :options="options"
             :series="data_series">
           </apexchart>
+
+          <b-row align-v="center"  align-h="end" v-if="query_href">
+            <b-col cols="12" cols="12" md="auto">
+              <small><em>Click button to go to more visualization and querying options.</em></small>
+              <b-button :href="query_href" target="_blank" variant="outline-secondary">
+                <b-avatar :size="24"><span class="material-icons-two-tone">query_stats</span></b-avatar> [[ predicate_label ]]
+              </b-button>
+            </b-col>
+          </b-row>
     
         </div>
           
@@ -118,7 +127,21 @@
         };
       },
       computed: {
-        
+        query_href: function (){
+          if(!this.predicate_slug){
+            return null;
+          }
+          let params = {
+            prop: this.predicate_slug,
+          };
+          let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
+          let frag_str = encode_frag_obj({
+            tab: 2,
+            aq: this.predicate_slug,
+          });
+          url += '#' + frag_str;
+          return url;
+        },
       },
       created(){
         this.fetch_oc_api();
