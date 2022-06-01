@@ -170,3 +170,36 @@ def update_prod_from_default(
             f'Migrated to PROD {model._meta.label}: {migrated_model_objs}, '
             f'total {all_migrated_objs}'
         )
+
+
+def sync_prod_events(project_uuid, after_date=None):
+    e_qs = Event.objects.using('default').filter(project_uuid=project_uuid)
+    if after_date:
+        e_qs = e_qs.filter(updated__gte=after_date)
+    for eobj in e_qs:
+        ok = None
+        try:
+            eobj.save(using='prod')
+            ok = True
+        except:
+            ok = False
+        if ok:
+            print(f'Event {eobj.hash_id} updated or inserted OK')
+            continue
+        n = Event.objects.using(
+            'prod'
+        ).filter(
+            uuid=eobj.uuid,
+            meta_type=eobj.meta_type,
+            feature_id=eobj.feature_id,
+            event_id=eobj.event_id,
+        ).update(
+            source_id=eobj.source_id,
+            earliest=eobj.earliest,
+            start=eobj.start,
+            stop=eobj.stop,
+            latest=eobj.latest,
+            updated=eobj.updated,
+            when_type=eobj.when_type,
+        )
+        print(f'Event {eobj.hash_id} updated {n} on prod')
