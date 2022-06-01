@@ -4,9 +4,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from django.conf import settings
 from django.core.cache import caches
-
-
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
@@ -16,7 +15,10 @@ from opencontext_py.apps.all_items.models import (
 
 logger = logging.getLogger("project-context-logger")
 
-DEFAULT_TIMEOUT = 60 * 60   # 60 minutes.
+if settings.DEBUG:
+    DEFAULT_TIMEOUT = 60 * 60   # 60 minutes.
+else:
+    DEFAULT_TIMEOUT = None # Do NOT time out.
 
 
 # ---------------------------------------------------------------------
