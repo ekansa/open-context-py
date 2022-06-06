@@ -419,7 +419,8 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
         
         # NOTE: We will want to save a table export CSV data to cloud storage
         # before we go on to make the item.
-        cloud_obj = None
+        full_cloud_obj = None
+        preview_cloud_obj = None
         export_id = None
         if item_add.get('export_id') and item_type == 'tables':
             # Get the export table uuid, if set. At this point, we know
