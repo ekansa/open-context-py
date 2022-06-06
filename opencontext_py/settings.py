@@ -602,6 +602,12 @@ if 'CORS_OK_DOMAINS' in secrets:
 else:
     CORS_OK_DOMAINS = [] 
 
+# Added to fix 
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS = [
+        DEPLOYED_HOST,
+        'https://*.opencontext.org',
+    ]
 
 ITEM_TYPES = (
     ('subjects', 'subjects'),
