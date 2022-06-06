@@ -251,7 +251,7 @@ def validate_project_short_id(raw_short_id, exclude_uuid=None):
     return report
 
 
-def validate_slug(slug, exclude_uuid=None):
+def validate_slug(slug, filter_args=None, exclude_uuid=None):
     """Validates a slug identifier"""
     slug = str(slug).strip()
     errors = []
@@ -284,7 +284,7 @@ def validate_slug(slug, exclude_uuid=None):
     return report
 
 
-def validate_uuid(uuid, exclude_uuid=None):
+def validate_uuid(uuid, filter_args=None, exclude_uuid=None):
     """Validates a slug identifier"""
 
     # NOTE: exclude_uuid is not used, but accepted for sake of consistency.
@@ -313,7 +313,7 @@ def validate_uuid(uuid, exclude_uuid=None):
     return report
 
 
-def validate_item_key(item_key, exclude_uuid=None):
+def validate_item_key(item_key, filter_args=None, exclude_uuid=None):
     """Validates a item_key identifier"""
     item_key = str(item_key).strip()
     m_qs = AllManifest.objects.filter(
@@ -326,7 +326,7 @@ def validate_item_key(item_key, exclude_uuid=None):
     return report
 
 
-def validate_uri(raw_uri, exclude_uuid=None):
+def validate_uri(raw_uri, filter_args=None, exclude_uuid=None):
     """Validates a uri identifier"""
     uri = AllManifest().clean_uri(raw_uri)
     errors = []
