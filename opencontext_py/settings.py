@@ -607,6 +607,7 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         DEPLOYED_HOST,
         'https://*.opencontext.org',
+        'http://*.opencontext.org',
     ]
 
 ITEM_TYPES = (
