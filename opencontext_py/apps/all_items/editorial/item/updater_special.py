@@ -59,6 +59,27 @@ def recursive_merge_duplicate_subjects_by_path(
         will be deleted after merging into the keep_man_obj. And it's children
         objects will be deleted.
     """
+    # NOTE: This function will merge duplicate records inside context "paths".
+    # Duplicates are identified by having the same item_class, project, label,
+    # and mostly the same containment path (except for different roots of the
+    # containment path). This function is needed to merge together duplicate
+    # records created by error because of a root context had an unwanted
+    # duplicate. For example, the records:
+    #
+    # (keep item) /Asia/Iraq/Surezha 
+    # (to delete item) /Asia/Iraq/Tell Surezha (to delete item)
+    #
+    # This function would find and merge contexts like:
+    # (keep item) /Asia/Iraq/Surezha/Operation 1/Locus 1
+    # (to delete item) /Asia/Iraq/Tell Surezha/Operation 1/Locus 1
+    # (keep item) /Asia/Iraq/Surezha/Operation 1
+    # (to delete item) /Asia/Iraq/Tell Surezha/Operation 1
+    # (keep item) /Asia/Iraq/Surezha
+    # (to delete item) /Asia/Iraq/Tell Surezha
+    #
+    # If an item exists in the path that's being deleted but does not exist in
+    # the corresponding keep_man_obj path, it will be RETAINED and it's context
+    # will be updated into the appropriate context of the keep_man_obj path
     if note is None:
         note = ''
     if merges is None:
