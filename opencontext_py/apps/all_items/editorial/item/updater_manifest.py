@@ -737,6 +737,7 @@ def merge_manifest_objs(
     related_models_attribs = [
         (
             AllManifest,
+            True, 
             [
                 'publisher',
                 'project',
@@ -745,7 +746,8 @@ def merge_manifest_objs(
             ],
         ),
         (
-            AllSpaceTime, 
+            AllSpaceTime,
+            False, 
             [
                 'publisher',
                 'project',
@@ -755,6 +757,7 @@ def merge_manifest_objs(
         ),
         (
             AllAssertion,
+            False,
             [
                 'publisher',
                 'project',
@@ -768,7 +771,8 @@ def merge_manifest_objs(
             ],
         ),
         (
-            AllResource, 
+            AllResource,
+            False, 
             [
                 'project',
                 'item',
@@ -777,11 +781,13 @@ def merge_manifest_objs(
             ],
         ),
         (
-            AllIdentifier, 
+            AllIdentifier,
+            False, 
             ['item',],
         ),
         (
-            AllHistory, 
+            AllHistory,
+            False,
             ['item',],
         ),
     ]
@@ -793,7 +799,7 @@ def merge_manifest_objs(
     after_edit_model_dict = updater_general.make_models_dict(item_obj=keep_man_obj)
 
     total_objects = 0
-    for model, attrib_list in related_models_attribs:
+    for model, is_manifest, attrib_list in related_models_attribs:
         exclude_attrib = exclude_keep_attribs.get(model)
         for attrib in attrib_list:
             filter_dict = {
@@ -816,6 +822,21 @@ def merge_manifest_objs(
             )
             updated_objs = []
             for legacy_obj in qs:
+                if is_manifest:
+                    # Special handling for manifest objects. We don't change their
+                    # UUID / PKs.
+                    setattr(legacy_obj, attrib, keep_man_obj)
+                    ok_save = None
+                    try:
+                        legacy_obj.save()
+                        ok_save = True
+                    except:
+                        ok_save = False
+                    if not ok_save:
+                        warnings.append(f'Could not update {legacy_obj} {attrib} to {keep_man_obj}')
+                        continue
+                    updated_objs.append(legacy_obj)
+                    continue
                 # First check about 'rank', which we use to allow multiple records
                 # that should otherwise be unique.
                 new_rank = get_rank(keep_man_obj, legacy_obj, model)
@@ -833,7 +854,7 @@ def merge_manifest_objs(
                 except:
                     new_obj = None
                 if not new_obj:
-                    warnings.append(f'Could not migrate {legacy_obj} to {keep_man_obj}')
+                    warnings.append(f'Could not migrate {legacy_obj} {attrib} to {keep_man_obj}')
                     continue
                 updated_objs.append(new_obj)
 
