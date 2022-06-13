@@ -86,4 +86,3 @@ look ups of live data published by Open Context, and because the Kobotoolbox doe
 CSVs, we can't use Open Context to periodically update CSV encoded picklists for data capture forms. Therefore, assignment
 and references of different identififiers for finds, objects, loci, trench books, etc. is still pretty manual and
 error prone.
-
