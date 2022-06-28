@@ -17,155 +17,137 @@ from opencontext_py.apps.etl.kobo import utilities
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
-import csv
-from django.conf import settings
-from opencontext_py.apps.imports.kobotoolbox.contexts import (
-    context_sources_to_dfs,
-    preload_contexts_to_df,
-    prepare_all_contexts
-)
+This is intended for use with the Poggio Civitate project.
 
-excels_filepath = settings.STATIC_IMPORTS_ROOT + 'pc-2018/'
-all_contexts_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/all-contexts-subjects.csv'
-project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-all_contexts_df = preload_contexts_to_df(project_uuid)
-source_dfs = context_sources_to_dfs(excels_filepath)
-all_contexts_df = prepare_all_contexts(project_uuid, 2018, source_dfs)
-all_contexts_df.to_csv(all_contexts_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
+import importlib
+from opencontext_py.apps.etl.kobo import subjects
+importlib.reload(subjects)
+
+excel_dirpath = '/home/ekansa/data-dumps/pc-2022/kobo-data'
+trench_csv_path = '/home/ekansa/data-dumps/pc-2022/trenches-2022.csv'
+
+subj_dfs = subjects.make_subjects_df(excel_dirpath, trench_csv_path)
+
 
 """
-# Columns that define the context path for an item 
-PATH_CONTEXT_COLS = [
-    'region',
-    'site',
-    'area',
-    'trench_name',
-    'unit_name',
-    'locus_name',
-    'locus_content_name',
+
+TRENCH_CSV_PATH = '~/data-dumps/pc-2022/trenches-2022.csv'
+
+# The column in the Kobo exports with the trench identifier
+
+KOBO_TRENCH_COL = 'Trench ID'
+
+TRENCH_CSV_COLS = [
+    # Tuples as follows:
+    # (csv_column_name, col_output_rename)
+    ('site', 'site'),
+    ('area', 'area'),
+    ('p_trench', 'p_trench_name'),
+    ('p_trench_uuid', 'p_trench_uuid'),
+    ('label_oc', 'unit_name'),
+    ('uuid', 'unit_uuid'),
 ]
 
-# Columns for the all_contexts_df that should come first
-FIRST_CONTEXT_COLS = [
-    'label',
-    'context_uuid',
-    'uuid_source',
-    'class_uri',
-    'parent_uuid',
-    'parent_uuid_source',
-] + PATH_CONTEXT_COLS
-
-
-UNIT_CLASS_URI = 'oc-gen:cat-exc-unit'
-
-# List of string replace arguments to cleanup
-# labels generated from templates.
-CONTEXT_LABEL_REPLACES = [
-    (' (not tile)', ''),
-    (' element', ''),
-    ('PC', 'PC '),
-    ('pc', 'PC '),
-    ('PC  ', 'PC '),
-    ('VDM', 'VdM '),
-    ('vdm', 'VdM '),
-    ('Vdm', 'VdM '),
-    ('VdM  ', 'VdM '),
-    ('  ', ' '),
+SUBJECTS_GENERAL_KOBO_COLS = [
+    ('__version__', 'kobo_source_version',),
+    ('_id', 'kobo_row_id',),
+    ('_index', 'kobo_row_index',),
 ]
 
-UNIT_LABEL_REPLACES = [
-      ('vt', 'Vescovado ',),
-      ('vdm', 'Vescovado ',),
-      ('cd8', 'Civitate D 8',),
-      ('t25', 'Tesoro 25',),
-      ('t62', 'Tesoro 62',),
-      ('t89', 'Tesoro 89',),
-      ('tr7', 'Tesoro Rectangle 7'),
-]
-
-# Override the general class_uri with a tuple of
-# column - value -> class_uri mappings
-COL_CLASS_URI_MAPPINGS = {
-    'Object General Type': [
-        ('Architectural', 'oc-gen:cat-arch-element',),
-        ('Vessel', 'oc-gen:cat-pottery',),
+SUBJECTS_SHEET_COLS = {
+    'Locus Summary Entry 2022': [
+        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        ('Field Season', 'trench_year',),
+        ('Locus ID', 'locus_number',),
+        ('OC Locus', 'locus_name',),
+        ('_uuid', 'locus_uuid',),
+    ],
+    'Field Small Find Entry 2022': [
+        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        ('Field Season', 'trench_year',),
+        ('Locus ID', 'locus_number',),
+        ('OC Locus', 'locus_name',),
+        ('Find ID', 'find_name',),
+        ('_uuid', 'find_uuid',),
+    ],
+    'Field Bulk Finds Entry 2022': [
+        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        ('Field Season', 'trench_year',),
+        ('Locus ID', 'locus_number',),
+        ('OC Locus', 'locus_name',),
+        ('OC Bulk', 'bulk_name',),
+        ('_uuid', 'bulk_uuid',),
+    ],
+    'Catalog Entry 2022': [
+        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        ('Year', 'trench_year',),
+        ('Locus ID', 'locus_number',),
+        ('OC Locus', 'locus_name',),
+        ('Catalog ID (PC)', 'catalog_name',),
+        ('_uuid', 'catalog_uuid',),
+        ('Object General Type', 'object_general_type'),
     ],
 }
 
-CONTEXT_SOURCES = {
-    'Locus Summary Entry': {
-        'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID'],
-        'class_uri': 'oc-gen:cat-locus',
-        'templates': {
-            'label': {
-                'template': 'Locus {}',
-                'temp_cols': ['Locus ID'],
-            },
-        },
-        'last_context_col': 'locus_name',
-    },
-    'Field Bulk Finds Entry': {
-        'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID', 'Bulk ID', 'Find Type'],
-        'class_uri': 'oc-gen:cat-sample-col',
-        'templates': {
-            'label': {
-                'template': 'Bulk {}-{}-{}-{}-{}',
-                'temp_cols': [
-                    'Find Type',
-                    'Year',
-                    'Trench ID',
-                    'Locus ID',
-                    'Bulk ID'
-                ],
-            },
-            'locus_name': {
-                'template': 'Locus {}',
-                'temp_cols': ['Locus ID'],
-            },
-        },
-        'last_context_col': 'locus_content_name',
-    },
-    'Field Small Find Entry': {
-        'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID', 'Find Number'],
-        'class_uri': 'oc-gen:cat-sample',
-        'templates': {
-            'label': {
-                'template': 'SF {}-{}-{}-{}',
-                'temp_cols': [
-                    'Year',
-                    'Trench ID',
-                    'Locus ID',
-                    'Find Number',
-                ],
-            },
-            'locus_name': {
-                'template': 'Locus {}',
-                'temp_cols': ['Locus ID'],
-            },
-        },
-        'last_context_col': 'locus_content_name',
-    },
-    'Catalog Entry': {
-        'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID', 'Catalog ID (PC)', 'Object General Type'],
-        'class_uri': 'oc-gen:cat-object',
-        'templates': {
-            'label': {
-                'template': '{}',
-                'temp_cols': ['Catalog ID (PC)'],
-            },
-            'locus_name': {
-                'template': 'Locus {}',
-                'temp_cols': ['Locus ID'],
-            },
-        },
-        'last_context_col': 'locus_content_name',
-    },
-}
+
+def limit_rename_cols_by_config_tuples(df, config_tups):
+    """Limits and renames dataframe columns by a list of config
+    tuples
+    """
+    ok_cols = [c for c, _ in config_tups if c in df.columns]
+    df = df[ok_cols].copy()
+    rename_cols = {c:r_c for c, r_c in config_tups if c in df.columns}
+    df.rename(columns=rename_cols, inplace=True)
+    return df
 
 
-def make_subjects_df(excel_dirpath, trench_csv_path):
+def merge_trench_df(df, trench_df):
+    if not KOBO_TRENCH_COL in df.columns:
+        return None
+    df.rename(columns={KOBO_TRENCH_COL:'trench_id',}, inplace=True)
+    df = pd.merge(df, trench_df, on='trench_id', how='left')
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+
+def make_subjects_df(excel_dirpath, trench_csv_path=TRENCH_CSV_PATH):
+    trench_df = pd.read_csv(trench_csv_path)
+    if not 'trench_id' in trench_df.columns:
+        trench_df['trench_id'] = trench_df['name']
+    trench_configs = [('trench_id', 'trench_id')]
+    trench_configs += TRENCH_CSV_COLS
+    trench_df = limit_rename_cols_by_config_tuples(
+        trench_df, 
+        trench_configs,
+    )
+    final_cols = [r_c for _, r_c in trench_configs]
     xlsx_files = utilities.list_excel_files(excel_dirpath)
     if not xlsx_files:
         return None
+    subj_dfs = []
+    last_final_cols = [f_c for _, f_c in SUBJECTS_GENERAL_KOBO_COLS]
     for excel_filepath in xlsx_files:
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
+        for sheet_name, df in dfs.items():
+            sheet_config = SUBJECTS_SHEET_COLS.get(sheet_name)
+            if not sheet_config:
+                continue
+            sheet_config += SUBJECTS_GENERAL_KOBO_COLS
+            df = limit_rename_cols_by_config_tuples(
+                df, 
+                sheet_config,
+            )
+            df = merge_trench_df(df, trench_df)
+            if df is None:
+                continue
+            final_cols += [
+                c for c in df.columns.tolist() 
+                if c not in final_cols and c not in last_final_cols
+            ]
+            subj_dfs.append(df)
+    df = pd.concat(subj_dfs, axis=0)
+    final_cols += [c for c in last_final_cols if c in df.columns] 
+    df = df[final_cols].copy()
+    df.reset_index(drop=True, inplace=True)
+    return df
+    

@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
-import xlrd
+from openpyxl import load_workbook
+import openpyxl
 from opencontext_py.apps.all_items.models import AllManifest
 
 LABEL_ALTERNATIVE_PARTS = {
@@ -62,12 +63,12 @@ def list_excel_files(excel_dirpath):
 def read_excel_to_dataframes(excel_filepath):
     """Reads an Excel workbook into a dictionary of dataframes keyed by sheet names."""
     dfs = {}
-    xls = xlrd.open_workbook(excel_filepath)
-    for sheet_name in xls.sheet_names():
+    wb = load_workbook(excel_filepath)
+    for sheet_name in wb.sheetnames:
         print('Reading sheet ' + sheet_name)
         # This probably needs an upgraded pandas
         # dfs[sheet_name] = pd.read_excel(xls, sheet_name=sheet_name, engine='xlrd')
-        dfs[sheet_name] = pd.read_excel(xls, sheet_name, engine='xlrd')
+        dfs[sheet_name] = pd.read_excel(wb, sheet_name, engine='openpyxl')
     return dfs
 
 def reorder_first_columns(df, first_columns):
