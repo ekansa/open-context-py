@@ -5,40 +5,7 @@ import pandas as pd
 # Needed to re-project the site grid
 from opencontext_py.libs.reprojection import ReprojectUtilities
 
-
-REPROJECTED_LAT_COL = 'REPROJ_LAT'
-REPROJECTED_LON_COL = 'REPROJ_LON'
-X_Y_GRID_COLS = [
-    ('Find Spot/Grid X', 'Find Spot/Grid Y', ),
-]
-
-GRID_GROUPBY_COLS = ['Trench ID']
-GRID_PROBLEM_COL = 'GRID_PROBLEM_FLAG'
-ATTRIBUTE_HIERARCHY_DELIM = '::'
-    
-
-def process_hierarchy_col_values(df, delim=ATTRIBUTE_HIERARCHY_DELIM):
-    """Processes columns with hierarchy values."""
-    # NOTE: this assumes only 2 level hierarchy in column names
-    hierarchy_preds = {}
-    for col in df.columns.tolist():
-        if not delim in col:
-            continue
-        col_parts = col.split(delim)
-        pred_label = col_parts[0].strip()
-        parent_val = col_parts[-1].strip()
-        if not pred_label in hierarchy_preds:
-            hierarchy_preds[pred_label] = []
-        hierarchy_preds[pred_label].append(col)
-        change_indx = (~df[col].isnull())
-        df.loc[change_indx, col] = parent_val + delim + df[col]
-        df.rename(
-            columns={
-                col: f'{pred_label}/{len(hierarchy_preds[pred_label])}'
-            },
-            inplace=True,
-        )
-    return df
+from opencontext_py.apps.etl.kobo import pc_configs
 
 
 def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='poggio-civitate'):
@@ -46,8 +13,8 @@ def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='po
     if (not grid_x_col in df.columns) or (not grid_y_col in df.columns):
         # No local coordinate columns to process for lat, lon columns.
         return df
-    df[REPROJECTED_LAT_COL] = np.nan
-    df[REPROJECTED_LON_COL] = np.nan
+    df[pc_configs.REPROJECTED_LAT_COL] = np.nan
+    df[pc_configs.REPROJECTED_LON_COL] = np.nan
     coord_indx = (
         (~df[grid_x_col].isnull()) & (~df[grid_y_col].isnull())
     )
@@ -85,8 +52,8 @@ def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='po
         )
         # Remember that lat, Lon is the same as y, x !
         update_indx = (df['_uuid'] == row['_uuid'])
-        df.loc[update_indx, REPROJECTED_LAT_COL] = out_y[0]
-        df.loc[update_indx, REPROJECTED_LON_COL] = out_x[0]
+        df.loc[update_indx, pc_configs.REPROJECTED_LAT_COL] = out_y[0]
+        df.loc[update_indx, pc_configs.REPROJECTED_LON_COL] = out_x[0]
     return df
 
 
@@ -138,7 +105,7 @@ def create_grid_validation_columns(
             on=groupby_cols
         )
         df[flag_col] = np.nan
-        # flags based on extreme x and y values.
+        # flags based on extreme x and 2y values.
         bad_indx = (
             (
                 (df[(grid_x_col, 'size')] > 4)
@@ -153,11 +120,4 @@ def create_grid_validation_columns(
             )
         )
         df.loc[bad_indx, flag_col] = 'Check Grid X-Y'
-        
     return df
-
-
-    
-
-
-    

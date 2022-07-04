@@ -3,15 +3,12 @@ import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 import openpyxl
+
+from django.db.models import Q
 from opencontext_py.apps.all_items.models import AllManifest
 
-LABEL_ALTERNATIVE_PARTS = {
-    # Keyed by project_uuid
-    'df043419-f23b-41da-7e4d-ee52af22f92f': {
-        'PC': ['PC', 'PC '], 
-        'VDM': ['VDM', 'VdM', 'VdM ']
-    }
-}
+from opencontext_py.apps.etl.kobo import pc_configs
+
 
 MULTI_VALUE_COL_PREFIXES = [
     'Preliminary Phasing/',
@@ -28,13 +25,13 @@ UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox' # UUID minted by kobotoolbox
 UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl' # UUID minted by this ETL process
 UUID_SOURCE_OC_LOOKUP = 'open-context' # UUID existing in Open Context
 
-LINK_RELATION_TYPE_COL = 'Relation_type'
+LINK_RELATION_TYPE_COL = 'relation_type'
 
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
     file_data = {
         'path':[],
-        'path-uuid':[],
+        'path_uuid':[],
         'filename': [],
     }
     for dirpath, _, filenames in os.walk(attachments_path):
@@ -42,7 +39,7 @@ def make_directory_files_df(attachments_path):
             file_path = os.path.join(dirpath, filename)
             uuid_dir = os.path.split(os.path.abspath(dirpath))[-1]
             file_data['path'].append(file_path)
-            file_data['path-uuid'].append(uuid_dir)
+            file_data['path_uuid'].append(uuid_dir)
             file_data['filename'].append(filename)
     df = pd.DataFrame(data=file_data)
     return df
@@ -177,11 +174,15 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
     return df
             
 
-def get_alternate_labels(label, project_uuid, config=None):
+def get_alternate_labels(
+    label, 
+    project_uuid=pc_configs.PROJECT_UUID, 
+    config=None
+):
     """Returns a list of a label and alternative versions based on project config"""
     label = str(label)
     if config is None:
-        config = LABEL_ALTERNATIVE_PARTS
+        config = pc_configs.LABEL_ALTERNATIVE_PARTS
     if not project_uuid in config:
         return [label]
     label_variations = []
@@ -222,14 +223,97 @@ def parse_opencontext_type(s):
     item_type, _ = parse_opencontext_url(s)
     return item_type
 
+
+def get_trench_unit_mapping_dict(trench_id):
+    """Gets mapping information for a trench_id based on prefix string"""
+    for prefix, map_dict in pc_configs.TRENCH_CONTEXT_MAPPINGS.items():
+        if not trench_id.startswith(prefix):
+            continue
+        return map_dict
+    return None
+
+
+def db_reconcile_trench_unit(trench_id, trench_year):
+    """Database reconciliation of a trench unit"""
+    map_dict = get_trench_unit_mapping_dict(trench_id)
+    if not map_dict:
+        return None
+    unit_num = ''.join([c for c in trench_id if c.isnumeric()])
+    trench_name = f"{map_dict['area']} {unit_num}"
+    search_path = f"{map_dict['site']}/{map_dict['area']}/{trench_name}"
+    b_trench_name = f"{map_dict['area']}{unit_num}"
+    b_search_path = f"{map_dict['site']}/{map_dict['area']}/{b_trench_name}"
+    man_qs = AllManifest.objects.filter(
+        item_type='subjects',
+        project__uuid=pc_configs.PROJECT_UUID,
+        label__contains=str(trench_year),
+        item_class__slug='oc-gen-cat-exc-unit',
+    ).filter(
+        Q(path__contains=search_path)
+        |Q(path__contains=b_search_path)
+    ).select_related('context')
+    if man_qs.count() == 1:
+        # Happy scenario where we found exactly 1, unambiguous match!
+        return man_qs[0]
+    elif man_qs.count() > 1:
+        print(
+            f'PROBLEM: Found {man_qs.count()} matches for '
+            f'unit number: {unit_num}, year {trench_year} in {search_path}'
+        )
+    print(
+        f'PROBLEM: Found NO matches for '
+        f'unit number: {unit_num}, year {trench_year} in {search_path}'
+    )
+    return None
+
+
+def db_reconcile_locus(unit_uuid, locus_name):
+    """Database reconciliation of a locus within a unit"""
+    man_qs = AllManifest.objects.filter(
+        item_type='subjects',
+        project__uuid=pc_configs.PROJECT_UUID,
+        label=locus_name,
+        item_class__slug='oc-gen-cat-locus',
+        context__uuid=unit_uuid
+    ).select_related('context')
+    if man_qs.count() == 1:
+        # Happy scenario where we found exactly 1, unambiguous match!
+        return man_qs[0]
+    elif man_qs.count() > 1:
+        print(
+            f'PROBLEM: Found {man_qs.count()} matches for '
+            f'locus: {locus_name} in {unit_uuid}'
+        )
+    print(
+        f'PROBLEM: Found NO matches for '
+        f'locus: {locus_name} in {unit_uuid}'
+    )
+    return None
+
+
 def lookup_manifest_obj(
     label,
-    project_uuid,
     item_type,
     label_alt_configs=None,
-    class_slugs=None
+    class_slugs=None,
+    trench_id=None,
+    trench_year=None,
+    unit_uuid=None,
+    locus_name=None,
+    project_uuid=pc_configs.PROJECT_UUID,
 ):
     """Returns a manifest object based on label variations"""
+    if unit_uuid and locus_name and 'oc-gen-cat-locus' in class_slugs:
+        return db_reconcile_locus(unit_uuid, locus_name)
+    if trench_id and trench_year and 'oc-gen-cat-locus' in class_slugs:
+        unit_obj = db_reconcile_trench_unit(trench_id, trench_year)
+        if not unit_obj:
+            return None
+        return  db_reconcile_locus(unit_obj.uuid, label)
+    if trench_id and trench_year and 'oc-gen-cat-exc-unit' in class_slugs:
+        return db_reconcile_trench_unit(trench_id, trench_year)
+    if trench_year and 'oc-gen-cat-exc-unit' in class_slugs:
+        return db_reconcile_trench_unit(label, trench_year)
     label_variations = get_alternate_labels(
         label,
         project_uuid,

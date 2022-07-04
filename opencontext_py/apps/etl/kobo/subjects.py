@@ -10,6 +10,8 @@ from django.db.models import Q
 from opencontext_py.apps.all_items.models import (
     AllManifest,
 )
+
+from opencontext_py.apps.etl.kobo import pc_configs
 from opencontext_py.apps.etl.kobo import utilities
 
 
@@ -22,6 +24,7 @@ import importlib
 
 from pathlib import Path
 from opencontext_py.apps.etl.kobo import subjects
+from opencontext_py.apps.etl.kobo import pc_configs
 importlib.reload(subjects)
 
 home = str(Path.home())
@@ -32,20 +35,12 @@ save_path = f'{home}/data-dumps/pc-2022/'
 df = subjects.make_and_classify_subjects_df(
     excel_dirpath, 
     trench_csv_path,
-    save_path=subjects.SUBJECTS_CSV_PATH,
+    save_path=pc_configs.SUBJECTS_CSV_PATH,
 )
 
 
 """
 
-PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-HOME = str(Path.home())
-TRENCH_CSV_PATH = f'{HOME}/data-dumps/pc-2022/trenches-2022.csv'
-SUBJECTS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/subjects.csv'
-
-# The column in the Kobo exports with the trench identifier
-
-KOBO_TRENCH_COL = 'Trench ID'
 
 TRENCH_CSV_COLS = [
     # Tuples as follows:
@@ -66,14 +61,14 @@ SUBJECTS_GENERAL_KOBO_COLS = [
 
 SUBJECTS_SHEET_COLS = {
     'Locus Summary Entry 2022': [
-        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
         ('_uuid', 'locus_uuid',),
     ],
     'Field Small Find Entry 2022': [
-        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
@@ -81,7 +76,7 @@ SUBJECTS_SHEET_COLS = {
         ('_uuid', 'find_uuid',),
     ],
     'Field Bulk Finds Entry 2022': [
-        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
@@ -89,7 +84,7 @@ SUBJECTS_SHEET_COLS = {
         ('_uuid', 'bulk_uuid',),
     ],
     'Catalog Entry 2022': [
-        (KOBO_TRENCH_COL, KOBO_TRENCH_COL,),
+        (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Year', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
@@ -100,21 +95,16 @@ SUBJECTS_SHEET_COLS = {
 }
 
 
-# Trench context mappings:
-TRENCH_CONTEXT_MAPPINGS = {
-    'CA': {
-        'site':'Poggio Civitate',
-        'area': 'Civitate A',
-    },
-    'CB': {
-        'site':'Poggio Civitate',
-        'area': 'Civitate B',
-    },
-    'T': {
-        'site':'Poggio Civitate',
-        'area': 'Tesoro',
-    },
-}
+SUBJECTS_IMPORT_COLS = [
+    # Tuples organized in hierarchic containment order.
+    # Tuples as follows:
+    # (parent_context_col, child_label_col, child_uuid_col, child_class_slug_col)
+    ('p_trench_uuid', 'unit_name', 'unit_uuid', 'unit_item_class_slug'),
+    ('unit_uuid', 'locus_name', 'locus_uuid', 'locus_item_class_slug'),
+    ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug'),
+    ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug'),
+    ('locus_uuid', 'catalog_name', 'catalog_uuid', 'catalog_item_class_slug'),
+]
 
 
 # The following configures item_classes for the
@@ -152,15 +142,15 @@ def limit_rename_cols_by_config_tuples(df, config_tups):
 
 
 def merge_trench_df(df, trench_df):
-    if not KOBO_TRENCH_COL in df.columns:
+    if not pc_configs.KOBO_TRENCH_COL in df.columns:
         return None
-    df.rename(columns={KOBO_TRENCH_COL:'trench_id',}, inplace=True)
+    df.rename(columns={pc_configs.KOBO_TRENCH_COL:'trench_id',}, inplace=True)
     df = pd.merge(df, trench_df, on='trench_id', how='left')
     df.reset_index(drop=True, inplace=True)
     return df
 
 
-def make_subjects_df(excel_dirpath, trench_csv_path=TRENCH_CSV_PATH):
+def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
     trench_df = pd.read_csv(trench_csv_path)
     if not 'trench_id' in trench_df.columns:
         trench_df['trench_id'] = trench_df['name']
@@ -234,74 +224,6 @@ def update_object_general_type_item_class_slugs(df):
     return df
 
 
-def get_trench_unit_mapping_dict(trench_id):
-    """Gets mapping information for a trench_id based on prefix string"""
-    for prefix, map_dict in TRENCH_CONTEXT_MAPPINGS.items():
-        if not trench_id.startswith(prefix):
-            continue
-        return map_dict
-    return None
-
-
-def db_reconcile_trench_unit(trench_id, trench_year):
-    """Database reconciliation of a trench unit"""
-    map_dict = get_trench_unit_mapping_dict(trench_id)
-    if not map_dict:
-        return None
-    unit_num = ''.join([c for c in trench_id if c.isnumeric()])
-    trench_name = f"{map_dict['area']} {unit_num}"
-    search_path = f"{map_dict['site']}/{map_dict['area']}/{trench_name}"
-    b_trench_name = f"{map_dict['area']}{unit_num}"
-    b_search_path = f"{map_dict['site']}/{map_dict['area']}/{b_trench_name}"
-    man_qs = AllManifest.objects.filter(
-        item_type='subjects',
-        project__uuid=PROJECT_UUID,
-        label__contains=str(trench_year),
-        item_class__slug='oc-gen-cat-exc-unit',
-    ).filter(
-        Q(path__contains=search_path)
-        |Q(path__contains=b_search_path)
-    ).select_related('context')
-    if man_qs.count() == 1:
-        # Happy scenario where we found exactly 1, unambiguous match!
-        return man_qs[0]
-    elif man_qs.count() > 1:
-        print(
-            f'PROBLEM: Found {man_qs.count()} matches for '
-            f'unit number: {unit_num}, year {trench_year} in {search_path}'
-        )
-    print(
-        f'PROBLEM: Found NO matches for '
-        f'unit number: {unit_num}, year {trench_year} in {search_path}'
-    )
-    return None
-
-
-
-def db_reconcile_locus(unit_uuid, locus_name):
-    """Database reconciliation of a locus within a unit"""
-    man_qs = AllManifest.objects.filter(
-        item_type='subjects',
-        project__uuid=PROJECT_UUID,
-        label=locus_name,
-        item_class__slug='oc-gen-cat-locus',
-        context__uuid=unit_uuid
-    ).select_related('context')
-    if man_qs.count() == 1:
-        # Happy scenario where we found exactly 1, unambiguous match!
-        return man_qs[0]
-    elif man_qs.count() > 1:
-        print(
-            f'PROBLEM: Found {man_qs.count()} matches for '
-            f'locus: {locus_name} in {unit_uuid}'
-        )
-    print(
-        f'PROBLEM: Found NO matches for '
-        f'locus: {locus_name} in {unit_uuid}'
-    )
-    return None
-
-
 def add_missing_unit_contexts(df):
     """Adds missing unit (trench) uuid information"""
     needed_cols = ['trench_id', 'unit_uuid', 'trench_year']
@@ -323,12 +245,12 @@ def add_missing_unit_contexts(df):
     for _, row in df_g.iterrows():
         trench_id = str(row['trench_id'])
         trench_year = row['trench_year']
-        map_dict = get_trench_unit_mapping_dict(trench_id)
+        map_dict = utilities.get_trench_unit_mapping_dict(trench_id)
         if not map_dict:
             # We don't have mapping configured for this
             # trench.
             continue
-        man_obj = db_reconcile_trench_unit(trench_id, trench_year)
+        man_obj = utilities.db_reconcile_trench_unit(trench_id, trench_year)
         if not man_obj:
             # We could find any unambiguous matches.
             continue
@@ -379,7 +301,7 @@ def add_missing_locus_contexts(df):
         if not locus_uuid:
             # Look in the database to find the locus within
             # this unit.
-            man_obj = db_reconcile_locus(unit_uuid, locus_name)
+            man_obj = utilities.db_reconcile_locus(unit_uuid, locus_name)
             if man_obj:
                 locus_uuid = str(man_obj.uuid)
         if not locus_uuid:
@@ -414,7 +336,7 @@ def add_item_class_slugs(df):
             continue
         # Make sure we have 
         new_cols.append(item_classs_slug_col)
-        # Add8 the default item_class_slug value for this 
+        # Add8 the default item_c2lass_slug value for this 
         # uuid column
         df[item_classs_slug_col] = np.nan
         not_null_indx = ~df[c].isnull()
@@ -430,7 +352,7 @@ def add_item_class_slugs(df):
 
 def make_and_classify_subjects_df(
     excel_dirpath, 
-    trench_csv_path=TRENCH_CSV_PATH,
+    trench_csv_path=pc_configs.TRENCH_CSV_PATH,
     save_path=None
 ):
     """Makes a subjects df with item_class_slug classifications"""
