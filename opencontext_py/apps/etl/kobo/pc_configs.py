@@ -37,13 +37,52 @@ TRENCH_CONTEXT_MAPPINGS = {
 LABEL_ALTERNATIVE_PARTS = {
     # Keyed by project_uuid
     PROJECT_UUID: {
-        'PC': ['PC', 'PC '], 2
+        'PC': ['PC', 'PC '],
         'VDM': ['VDM', 'VdM', 'VdM ']
     },
 }
 
 
 LINK_RELATION_TYPE_COL = 'link_rel'
+
+
+REL_SUBJECTS_PREFIXES = {
+    'Small Find': (
+        ['SF '],
+        ['oc-gen-cat-sample',],
+    ),
+    'Cataloged Object': (
+        ['PC ', 'VdM ',],
+        [
+            'oc-gen-cat-object',
+            'oc-gen-cat-arch-element',
+            'oc-gen-cat-coin',
+            'oc-gen-cat-bio-subj-ecofact',
+            'oc-gen-cat-pottery',
+        ],
+    ),
+    'Supplemental Find': (
+        [
+            'Bulk Architecture-',
+            'Bulk Bone-',
+            'Bulk Ceramic-',
+            'Bulk Metal-',
+            'Bulk Other-',
+            'Bulk Tile-',
+        ],
+        ['oc-gen-cat-sample-col',],
+    ),
+    'Locus': (
+        ['Locus ',],
+        ['oc-gen-cat-locus',],
+    ),
+    'Trench': (
+        [''],
+        ['oc-gen-cat-exc-unit',],
+    ),
+}
+
+
 
 
 REPROJECTED_LAT_COL = 'REPROJ_LAT'
@@ -57,21 +96,6 @@ GRID_PROBLEM_COL = 'GRID_PROBLEM_FLAG'
 ATTRIBUTE_HIERARCHY_DELIM = '::'
 
 
-
-
-CLASS_CONTEXT_IMPORT_ORDER = [
-    'oc-gen:cat-region',
-    'oc-gen:cat-site',
-    'oc-gen:cat-area',
-    'oc-gen:cat-trench',
-    'oc-gen:cat-exc-unit',
-    'oc-gen:cat-locus',
-    'oc-gen:cat-sample-col',
-    'oc-gen:cat-sample',
-    'oc-gen:cat-object',
-    'oc-gen:cat-arch-element',
-    'oc-gen:cat-pottery',
-]
 
 MEDIA_FILETYPE_ATTRIBUTE_CONFIGS = [
     {
@@ -136,7 +160,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     {
         'source_col': 'label',
         'sources': ['bulk-finds',],
-        'match_type': 'exact'2,
+        'match_type': 'exact',
         'field_args': {
             'label': 'Bulk Find Label',
             'item_type': 'subjects',
@@ -149,7 +173,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'source_col': 'label',
         'sources': ['small-finds',],
         'match_type': 'exact',
-        'field_args': {2
+        'field_args': {
             'label': 'Small Find Label',
             'item_type': 'subjects',
             'item_class_id': '00000000-6e24-0b70-0230-0cc0398d6184',
@@ -286,7 +310,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_type': 'description',
             'data_type': 'xsd:string',
         },
-    },2
+    },
     
     {
         'source_col': 'Description',
@@ -982,3 +1006,13 @@ LINK_REL_PRED_MAPPINGS = {
     'Comparanda, based on form': ('46037eb4-c4b7-432b-bebb-500aff0e4fe6', '46037eb4-c4b7-432b-bebb-500aff0e4fe6'),
     'Comparanda, based on motif': ('1c5a1fca-0853-4612-9663-f908d9c081b2', '1c5a1fca-0853-4612-9663-f908d9c081b2'),
 }
+
+
+# Trench book related predicates
+TB_ENTRY_DATE_PRED_UUID = '8b812e4f-edc4-44f1-a88d-4ad358aaf9aa'
+TB_START_PAGE_PRED_UUID = 'becad1af-0245-44e0-cd2a-f2f7bd080443'
+TB_END_PAGE_PRED_UUID = '506924aa-b53d-41b5-9d02-9a7929ea6d6d'
+
+# UUID lookup sources
+UUID_SOURCE_OC_LOOKUP = 'oc-db-lookup'
+UUID_SOURCE_KOBOTOOLBOX = 'kobo-data-lookup'

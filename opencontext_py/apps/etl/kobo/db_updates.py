@@ -23,137 +23,14 @@ from opencontext_py.apps.all_items import configs
 
 from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 
-
+from opencontext_py.apps.etl.kobo import db_lookups
 from opencontext_py.apps.etl.kobo import pc_configs
-
-
 
 
 DB_LOAD_RESULT_A_COL = 'OC_DB_LOAD_OK'
 DB_LOAD_RESULT_B_COL = 'OC_DB_LOAD_B_OK'
 DEFAULT_OBS_NUM = 1
 
-RECONCILE_PROJECT_IDS = [
-    configs.OPEN_CONTEXT_PROJ_UUID,
-    pc_configs.PROJECT_UUID,
-]
-
-
-def make_cache_key(item_id):
-    hash_obj = hashlib.sha1()
-    item_id = str(item_id)
-    hash_obj.update(item_id.encode('utf-8'))
-    return 'key-' + hash_obj.hexdigest()
-
-
-def cache_get_man_obj_by_any_id(item_id):
-    cache_key = make_cache_key(item_id)
-    cache = caches['redis']
-    item_obj = cache.get(cache_key)
-    if item_obj:
-        return item_obj
-    item_obj = get_man_obj_by_any_id(item_id)
-    try:
-        cache.set(cache_key, item_obj)
-    except:
-        pass
-    return item_obj
-
-
-def reconcile_manifest_obj(
-    item_type,
-    item_label,
-    item_class_obj,
-    item_any_id=None,
-    context=None,
-    reconcile_project_ids=None,
-    item_data_type='id',
-    meta_json=None,
-):
-    """Attempts to reconcile a manifest item via arguments."""
-    if not meta_json:
-        meta_json = {}
-
-    if not reconcile_project_ids:
-        reconcile_project_ids = copy.deepcopy(RECONCILE_PROJECT_IDS)
-
-    if context and item_type == 'subjects' and context.item_type == 'projects':
-        # We are only trying to reconcile by a project, we lack a
-        # parent spatial context for item
-        reconcile_project_ids.append(context.uuid)
-        context = None
-
-    item_label = AllManifest().clean_label(item_label)
-    man_qs = AllManifest.objects.filter(
-        project_id__in=reconcile_project_ids,
-        item_type=item_type,
-        data_type=item_data_type,
-    )
-    if context:
-        if item_type == 'subjects' and context.item_type == 'projects':
-            # Don't do a context filter.
-            pass
-        else:
-            man_qs = man_qs.filter(context=context)
-
-    if not item_any_id:
-        item_any_id = item_label
-
-    if item_type in configs.URI_CONTEXT_PREFIX_ITEM_TYPES:
-        # Some flexibility in reconcile these.
-        man_qs = man_qs.filter(
-            Q(uri=AllManifest().clean_uri(item_any_id))
-            | Q(item_key=item_any_id)
-            | Q(slug=item_any_id)
-            | Q(label=item_label)
-        )
-    elif item_type == 'persons' and meta_json.get('reconcile_on_initials'):
-        # We're allowing reconciliation on initials.
-        man_qs = man_qs.filter(
-            Q(meta_json__initials=item_label)
-            | Q(meta_json__combined_name=item_label)
-            | Q(label=item_label)
-        )
-    elif item_type == 'persons' and not meta_json.get('reconcile_on_initials'):
-        # We're reconciling a persons item, but not with initials.
-        man_qs = man_qs.filter(
-            Q(meta_json__combined_name=item_label)
-            | Q(label=item_label)
-        )
-    else:
-        # Use the label as the main identifier (obviously with other
-        # filter to contextualize)
-        man_qs = man_qs.filter(
-            Q(label=item_label)
-            | Q(slug=item_any_id)
-        )
-       
-    if (item_type == 'predicates'
-        and (
-            not item_class_obj 
-            or 
-            str(item_class_obj.uuid) not in configs.CLASS_LIST_OC_PREDICATES
-        )
-    ):
-        # We are attempting to reconcile an item_type = 'predicates'
-        # item, but we don't have a correct record_item_class_obj set. So
-        # default to the class for a variable (not a link)
-        item_class_obj = cache_get_man_obj_by_any_id(
-            configs.CLASS_OC_VARIABLES_UUID
-        )
-
-    if item_class_obj:
-        man_qs = man_qs.filter(item_class=item_class_obj)
-    
-    # Now handle the results where of our query to attempt to 
-    # find matching records for this specific item.
-    made_new = False
-    num_matching = len(man_qs) 
-    if num_matching == 1:
-        # We have found exactly one match for this, meaning this
-        # entity already exists so return it
-        return man_qs[0], made_new, num_matching
-    return None, made_new, num_matching
 
 
 def get_or_create_manifest_obj(
@@ -176,7 +53,7 @@ def get_or_create_manifest_obj(
             uuid=item_uuid
         ).first()
     else:
-        man_obj, made_new, num_matching = reconcile_manifest_obj(
+        man_obj, num_matching = db_lookups.reconcile_manifest_obj(
             item_type=item_type,
             item_label=item_label,
             item_class_obj=item_class_obj,
@@ -237,14 +114,14 @@ def load_subject_and_containment(
     child_item_class_slug,
 ):
     """Loads a subject item and containment relation into the database"""
-    item_class_obj = cache_get_man_obj_by_any_id(child_item_class_slug)
+    item_class_obj = db_lookups.cache_get_man_obj_by_any_id(child_item_class_slug)
     if not item_class_obj:
         print(
             f'Cannot find item_class {child_item_class_slug} '
         )
         # Skip the rest.
         return False
-    parent_man_obj = cache_get_man_obj_by_any_id(parent_uuid)
+    parent_man_obj = db_lookups.cache_get_man_obj_by_any_id(parent_uuid)
     if parent_man_obj is None:
         print(
             f'Cannot find parent_uuid {parent_uuid} '
@@ -258,7 +135,7 @@ def load_subject_and_containment(
         item_label=child_label,
         item_class=item_class_obj,
         source_id=source_id,
-        contex2t=parent_man_obj,
+        context=parent_man_obj,
     )
     if not man_obj:
         # We failed to make or reconcile the item.

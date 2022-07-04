@@ -6,11 +6,8 @@ import pandas as pd
 
 from pathlib import Path
 
-from django.db.models import Q
-from opencontext_py.apps.all_items.models import (
-    AllManifest,
-)
 
+from opencontext_py.apps.etl.kobo import db_lookups
 from opencontext_py.apps.etl.kobo import pc_configs
 from opencontext_py.apps.etl.kobo import utilities
 
@@ -250,7 +247,7 @@ def add_missing_unit_contexts(df):
             # We don't have mapping configured for this
             # trench.
             continue
-        man_obj = utilities.db_reconcile_trench_unit(trench_id, trench_year)
+        man_obj = db_lookups.db_reconcile_trench_unit(trench_id, trench_year)
         if not man_obj:
             # We could find any unambiguous matches.
             continue
@@ -301,7 +298,7 @@ def add_missing_locus_contexts(df):
         if not locus_uuid:
             # Look in the database to find the locus within
             # this unit.
-            man_obj = utilities.db_reconcile_locus(unit_uuid, locus_name)
+            man_obj = db_lookups.db_reconcile_locus(unit_uuid, locus_name)
             if man_obj:
                 locus_uuid = str(man_obj.uuid)
         if not locus_uuid:

@@ -11,6 +11,7 @@ from opencontext_py.apps.all_items.models import (
 )
 from opencontext_py.apps.all_items import configs
 
+from opencontext_py.apps.etl.kobo import db_lookups
 from opencontext_py.apps.etl.kobo import kobo_oc_configs
 from opencontext_py.apps.etl.kobo import pc_configs
 from opencontext_py.apps.etl.kobo import utilities
@@ -138,41 +139,6 @@ REL_COLS = [
     'object_related_type',
 ]
 
-REL_PREFIXES = {
-    'Small Find': (
-        ['SF '],
-        ['oc-gen-cat-sample',],
-    ),
-    'Cataloged Object': (
-        ['PC ', 'VdM ',],
-        [
-            'oc-gen-cat-object',
-            'oc-gen-cat-arch-element',
-            'oc-gen-cat-coin',
-            'oc-gen-cat-bio-subj-ecofact',
-            'oc-gen-cat-pottery',
-        ],
-    ),
-    'Supplemental Find': (
-        [
-            'Bulk Architecture-',
-            'Bulk Bone-',
-            'Bulk Ceramic-',
-            'Bulk Metal-',
-            'Bulk Other-',
-            'Bulk Tile-',
-        ],
-        ['oc-gen-cat-sample-col',],
-    ),
-    'Locus': (
-        ['Locus ',],
-        ['oc-gen-cat-locus',],
-    ),
-    'Trench': (
-        [''],
-        ['oc-gen-cat-exc-unit',],
-    ),
-}
 
 def revise_filename(filename):
     """Revises a filename to be URL friendly."""
@@ -391,8 +357,8 @@ def make_image_versions_src_and_new_file(
     src_file,
     new_file_name,
     over_write=False,
-    preview_width=MAX_PREVIEW_WIDTH,
-    thumbnail_width=MAX_THUMBNAIL_WIDTH
+    preview_width=kobo_oc_configs.MAX_PREVIEW_WIDTH,
+    thumbnail_width=kobo_oc_configs.MAX_THUMBNAIL_WIDTH
 ):
     """Make different file versions in different directories."""
     if not isinstance(src_file, str):
@@ -576,7 +542,7 @@ def prepare_media_links_from_dfs(dfs, all_contexts_df):
             label=raw_object_id,
             project_uuid=pc_configs.PROJECT_UUID,
         )
-        act_prefixes, act_classes = REL_PREFIXES.get(object_type, ([], []))
+        act_prefixes, act_classes = pc_configs.REL_SUBJECTS_PREFIXES.get(object_type, ([], []))
         if object_type in ['Locus', 'Trench']:
             act_labels += [prefix + str(raw_object_id) for prefix in act_prefixes]
             if object_type == 'Trench':
@@ -594,7 +560,7 @@ def prepare_media_links_from_dfs(dfs, all_contexts_df):
             object_uuid = all_contexts_df[context_indx]['context_uuid'].iloc[0]
             object_uuid_source = all_contexts_df[context_indx]['uuid_source'].iloc[0]
         else:
-            object_uuid = utilities.lookup_manifest_uuid(
+            object_uuid = db_lookups.db_lookup_manifest_uuid(
                 label=raw_object_id,
                 item_type='subjects',
                 class_slugs=act_classes
