@@ -1,3 +1,4 @@
+import copy
 import json
 from django.conf import settings
 from django.http import HttpResponse
@@ -33,8 +34,8 @@ def process_solr_query(request_dict):
     solr_response = search_solr.query_solr(query)
     result_maker = ResultMaker(
         request_dict=request_dict,
-        facet_fields_to_client_request=search_solr.facet_fields_to_client_request,
-        slugs_for_config_facets=search_solr.slugs_for_config_facets,
+        facet_fields_to_client_request=copy.deepcopy(search_solr.facet_fields_to_client_request),
+        slugs_for_config_facets=copy.deepcopy(search_solr.slugs_for_config_facets),
         base_search_url='/query/',
     )
     result_maker.create_result(
