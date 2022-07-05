@@ -393,7 +393,7 @@ class ResultFacetsStandard():
         )
         if not solr_facet_fields_dict:
             # No facets active, so skip out
-            return facets
+            return []
 
         for (
                 suffix, 
@@ -429,7 +429,7 @@ class ResultFacetsStandard():
                 # Add to the preconfigured facet, of it exists, and if criteria
                 # match.
                 preconfig_facet, options_tuples = self.prep_preconfig_facet_options(
-                    preconfig_facet,
+                    copy.deepcopy(preconfig_facet),
                     solr_facet_field_key,
                     param_key, 
                     delim, 
@@ -454,7 +454,7 @@ class ResultFacetsStandard():
                 # Add options lists for different data-types present in
                 # the options tuples list.
                 facet = self.add_options_lists_to_facet(
-                    facet, 
+                    copy.deepcopy(facet), 
                     solr_facet_field_key, 
                     param_key, 
                     delim, 
