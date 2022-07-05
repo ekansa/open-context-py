@@ -617,8 +617,8 @@ class ResultMaker():
         facets_standard = ResultFacetsStandard(
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
-            facet_fields_to_client_request=self.facet_fields_to_client_request,
-            slugs_for_config_facets=self.slugs_for_config_facets,
+            facet_fields_to_client_request=copy.deepcopy(self.facet_fields_to_client_request),
+            slugs_for_config_facets=copy.deepcopy(self.slugs_for_config_facets),
             base_search_url=self.base_search_url,
         ) 
         facets = facets_standard.get_facets_and_options(

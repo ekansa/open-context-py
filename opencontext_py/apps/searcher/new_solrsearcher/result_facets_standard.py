@@ -102,17 +102,9 @@ class ResultFacetsStandard():
             id_prefix = 'range-facet'
 
         if is_related:
-            facet['id'] = '#{}-{}{}'.format(
-                id_prefix,
-                configs.RELATED_ENTITY_ID_PREFIX,
-                slugs_id
-            )
+            facet['id'] = f'#{id_prefix}-{configs.RELATED_ENTITY_ID_PREFIX}{slugs_id}'
         else:
-            facet['id'] = '#{}-{}'.format(
-                id_prefix,
-                slugs_id
-            )
-        
+            facet['id'] = f'#{id_prefix}-{slugs_id}'
         labels = [item.label for item in items]
         if len(labels) == 1:
             labels.append(facet_labeling)
