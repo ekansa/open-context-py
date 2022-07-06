@@ -227,6 +227,7 @@
                 @set_selected_gradient_key="set_selected_gradient_key"
             ></map-color-ui>
             <map-legends
+                :key="legend_key"
                 @update_layer_label="update_layer_label($event)"
                 v-bind:legends="map_legends"></map-legends>
         </div>
@@ -660,6 +661,7 @@ var vc_common_map = Vue.component(
             // Map Options
             map: null,
             map_key: 0,
+            legend_key: this.map_key + '-legend',
             zoom_def: 13,
             base_layers: {},
             selectedTileSet: TILE_PROVIDERS[0], 
@@ -876,7 +878,23 @@ var vc_common_map = Vue.component(
             let url = replaceURLparameter(current_url, 'bbox', bbox_query);
             url += '#' + hash;
             url = abs_to_rel_url(url, BASE_URL);
+
+            if(this.route_map_legends == null){
+                this.route_map_legends = {};
+            }
+            for([key, val] of Object.entries(this.route_map_legends)){
+                delete this.route_map_legends[key];
+            }
+            this.map_legends = [];
             router.push(url);
+        },
+        get_current_geo_json_id: function(){
+            if(this.geo_json){
+                if(this.geo_json.hasOwnProperty('id')){
+                    return this.geo_json.id; 
+                }
+            }
+            return null;
         },
         get_centroid: function(arr) {
             // get the centroid of a polygon
@@ -950,11 +968,7 @@ var vc_common_map = Vue.component(
                 this.update_map_legends();
             }, 250);
         },
-        update_map_legends: function() {
-            let req_props = ['overlay_layers_by_id', 'visible_overlay_ids'];
-            if(!this.util_search_map_ok_with_props(req_props)){
-                return null;
-            }
+        get_current_state_key: function(){
             // Use relevant parts of the current frontend object state
             // to track the state ff the legend. This means we won't make
             // a new legend everytime the map is panned or zoom levels change.
@@ -974,13 +988,42 @@ var vc_common_map = Vue.component(
                 + '#' 
                 + encode_frag_obj(act_legend_state)
             );
-            // console.log(this.$route);
-            // console.log('Map legend state key is: ' + state_key);
+            return state_key;
+        },
+        update_map_legends: function() {
+            let req_props = ['overlay_layers_by_id', 'visible_overlay_ids'];
+            if(!this.util_search_map_ok_with_props(req_props)){
+                return null;
+            }
+            // Use relevant parts of the current frontend object state
+            // to track the state ff the legend. This means we won't make
+            // a new legend everytime the map is panned or zoom levels change.
+            // Only if the query changes or the overlays change will we update
+            // the legends.
+            let state_key = this.get_current_state_key();
+            if(this.route_map_legends == null){
+                this.route_map_legends = {};
+            }
             if(state_key in this.route_map_legends){
                 if(this.route_map_legends[state_key].length > 0){
-                    // console.log('Map legend state key already exists');
-                    this.map_legends = this.route_map_legends[state_key];
-                    return null;
+                    // console.log('Map legend state key already exists ' + state_key);
+                    let prior_ok = true;
+                    let geo_json_id = this.get_current_geo_json_id();
+                    // console.log('current geo_json_id: ' + geo_json_id);
+                    for(let legend of this.route_map_legends[state_key]){
+                        // console.log(legend);
+                        if(legend.hasOwnProperty('geo_json_id')){
+                            // console.log('geo_json_id: ' + legend.geo_json_id + ' ' + geo_json_id);
+                            if(legend.geo_json_id != geo_json_id){
+                                prior_ok = false;
+                            }
+                        }
+                    }
+                    if(prior_ok){
+                        // The prior layer legends are OK to use.
+                        this.map_legends = this.route_map_legends[state_key];
+                        return null;
+                    }
                 }
             }
             // console.log('Map legend state key is new');
@@ -1696,6 +1739,8 @@ var vc_common_map = Vue.component(
             legend.icon = null;
             legend.label_edit_ok = false;
             legend.type = 'count-summary';
+            legend.geo_json_id = this.get_current_geo_json_id();
+            
             if(this.overlay_icons.hasOwnProperty(act_layer.ov_id)){
                 legend.icon = this.overlay_icons[act_layer.ov_id];
             }
@@ -1736,6 +1781,8 @@ var vc_common_map = Vue.component(
                     background-image: linear-gradient(${l_gradient_parts.join(', ')});`
                 );
             }
+            // console.log('Finished making legend');
+            // console.log(legend);
             return legend;
         },
         make_record_layer_legend: function(act_layer){
@@ -1956,6 +2003,7 @@ var vc_common_map = Vue.component(
                     this.$refs[this.l_controls_ref].mapObject.removeLayer(
                         act_layer, 
                     );
+                    delete this.map.overlay_layers_by_id[ov_id];
                 }
             }
             this.map.overlay_layers_by_id = null;
@@ -1998,6 +2046,7 @@ var vc_common_map = Vue.component(
                     );
                     act_layer.min_count = act_geojson.min_count;
                     act_layer.max_count = act_geojson.max_count;
+                    act_layer.id = act_geojson.id;
                 }
                 else{
                     act_layer = L.geoJson(
@@ -2246,17 +2295,15 @@ var vc_common_map = Vue.component(
                 // Deactivate this, because we changed state
                 this.map.bbox_zoom.deactivate();
                 this.map.bbox_zoom.reset_points();
-                /*
-                if (this.map.bbox_zoom.hasOwnProperty('b_points')) {
-                    this.map.bbox_zoom.b_points = [];
+                let state_key = this.get_current_state_key();
+                if(this.route_map_legends == null){
+                    this.route_map_legends = {};
                 }
-                // a little extra safety to reset the bounding box zoom
-                if (this.map.hasOwnProperty('boxZoom')) {
-                    if (this.map.boxZoom.hasOwnProperty('b_points')) {
-                        this.map.boxZoom.b_points = [];
-                    }
+                // Reset the map legends state key until we're
+                // actually ready to use the zoom again.
+                if(state_key in this.route_map_legends){
+                    //delete this.route_map_legends[state_key];
                 }
-                */
                 return null;
             }
             var options = {
