@@ -89,7 +89,7 @@ def get_simple_hierarchy_items(solr_doc, all_obj_field, solr_slug_format=False):
     hierarchy_items = []
     solr_ent_str_list = solr_doc.get(all_obj_field)
     if not solr_ent_str_list:
-        # No heirarchic entities, return an empty list.
+        # No hierarchic entities, return an empty list.
         return hierarchy_items
     for solr_ent_str in solr_ent_str_list:
         hierarchy_item = utilities.parse_solr_encoded_entity_str(
@@ -893,14 +893,18 @@ class ResultRecords():
         )
         for raw_prop_path in raw_props_paths:
             # These can have OR conditions along with hierarchy
-            # delimiters, so split these appart to get a list of
+            # delimiters, so split these apart to get a list of
             # slugs.
+            # print(f'Raw path in filter: {raw_prop_path}')
             paths_as_lists = utilities.infer_multiple_or_hierarchy_paths(
                 raw_prop_path,
                 hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
                 or_delim=configs.REQUEST_OR_OPERATOR
             )
             for path_list in paths_as_lists:
+                if not isinstance(path_list, list):
+                    path_list = [path_list]
+                # print(f'Path list in filter: {path_list}')
                 # Add the elements of this list to the list
                 # of requested_attrib_slugs. Some of these won't be
                 # 'property' (predicate) attributes, but that doesn't
@@ -910,7 +914,7 @@ class ResultRecords():
         
         # De-duplicate the slugs in the requested_attrib_slugs.
         requested_attrib_slugs = list(set(requested_attrib_slugs))
-
+        # print(f'Props in filter: {requested_attrib_slugs}')
         raw_attributes = utilities.get_request_param_value(
             self.request_dict, 
             param='attributes',
@@ -928,7 +932,6 @@ class ResultRecords():
             attrib_list = raw_attributes.split(
                 configs.MULTIVALUE_ATTRIB_CLIENT_DELIM
             )
-        
         # De-duplicate the slugs in the requested_attrib_slugs.
         requested_attrib_slugs = list(
             set(requested_attrib_slugs + attrib_list)
