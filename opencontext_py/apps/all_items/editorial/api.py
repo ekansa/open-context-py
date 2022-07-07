@@ -156,10 +156,23 @@ OTHER_LABEL_PREDICATE_IDS = [
 ]
 
 
+
+def get_html_entities():
+    return """
+    <!DOCTYPE doc [
+        <!ENTITY % ISOEntities PUBLIC 'ISO 8879-1986//ENTITIES ISO Character Entities 20030531//EN//XML' 'http://www.s1000d.org/S1000D_4-1/ent/ISOEntities'>
+        %ISOEntities;]
+    >
+    """
+
 def html_validate(check_str):
     """ checks to see if a string is OK as HTML """
-    parser = etree.XMLParser()
-    check_str = '<div>' + check_str + '</div>'
+    parser = etree.XMLParser(
+        load_dtd=True,
+        no_network=False,
+        encoding='utf-8',
+    )
+    check_str = get_html_entities() + f'<div>{check_str}</div>'
     errors = []
     try:
         is_valid = True
