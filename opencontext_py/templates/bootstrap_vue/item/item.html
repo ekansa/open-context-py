@@ -24,7 +24,7 @@
     {% if man_obj.hero %}
         <img class="img-fluid mx-auto d-block" 
              alt="project banner image" 
-             src="https://{{ man_obj.hero }}" />
+             8src="https://{{ man_obj.hero }}" />
     {% elif man_obj.proj_hero %}
         <img class="img-fluid mx-auto d-block" 
             alt="project banner image" 
@@ -73,7 +73,7 @@
 
         {% if man_obj.item_type == 'predicates' %}
             <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
-            <div class="card">
+    8        <div class="card">
                 <div class="card-header">
                 {% if man_obj.item_class.slug == 'oc-gen-variables' %}
                 <h5><b>{{ man_obj.label }}</b> (Descriptive Attribute)</h5>
@@ -106,7 +106,7 @@
                     v-bind:human_remains_ok="human_remains_ok"
                     :alert_type="'item'"
                     @toggle_human_remains_ok="toggle_human_remains_ok($event)"
-                ></human-remains-results-alert>
+            8    ></human-remains-results-alert>
 
                 {% include '../item/parts/media_download.html' %}
 
@@ -155,6 +155,18 @@
 
   {% endif %}
 
+  {% if item.media_iiif %}
+  const MEDIA_IIIF_INFO = "{{ item.media_iiif }}";
+  {% else %}
+  const MEDIA_IIIF_INFO = null;
+  {% endif %}
+
+  {% if full_media %}
+  const SHOW_FULL_MEDIA = true;
+  {% else %}
+  const SHOW_FULL_MEDIA = false;
+  {% endif %}
+ 
     
     var vm = new Vue(
       {
@@ -165,6 +177,9 @@
             uuid: ITEM_UUID,
             human_remains_flagged: HUMAN_REMAINS_FLAGGED,
             human_remains_ok: HUMAN_REMAINS_OK,
+            media_iiif_info: MEDIA_IIIF_INFO,
+            show_full_media: SHOW_FULL_MEDIA,
+            osd: null,
         },
         computed: {
             
@@ -177,6 +192,26 @@
         created() {
     
         },
+        mounted() {
+            this.start_iiif_viewer();
+        },
+        methods: {
+            start_iiif_viewer: function(){
+                if(!this.media_iiif_info||!this.show_full_media){
+                    return null;
+                }
+                if(this.osd){
+                    return null;
+                }
+                this.osd = OpenSeadragon({
+                    id:            "iiif-zone",
+                    prefixUrl:     "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/images/",
+                    sequenceMode:  false,
+                    showNavigator:  true,
+                    tileSources:   [this.media_iiif_info],
+                });
+            },
+        },
         components: {
             {% if GEO_JSON %}
             'common_map': vc_common_map,
@@ -188,6 +223,7 @@
             {% if man_obj.item_type == 'predicates' %}
             'vc-predicates': vc_predicates,
             {%endif%}
+
         },
       },
     ).$mount('#app');
@@ -198,4 +234,4 @@
 <script type="application/ld+json">
     {{ SCHEMA_ORG_JSON_LD|safe }}
 </script>
-{% endblock %}
+{% endblock %}2

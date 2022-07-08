@@ -2,9 +2,11 @@
 
 {% if item.media_iiif %}
 
+<!--
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/openseadragon.min.js" 
         integrity="sha512-qvQYH6mPuE46uFcWLI8BdGaJpB5taX4lltbSIw5GF4iODh2xIgyz5ii1WpuzPFUknHCps0mi4mFGR44bjdZlZg==" 
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+-->
 
 <div class="card media_preview">
   <div class="card-header">
@@ -20,6 +22,7 @@
     
     </div>
 
+
     <p class="small text-center">The Open Context team gratefully thanks the 
       <a href="https://archive.org/" target="_blank">Internet Archive</a>'s 
       <a href="https://www.archivelab.org/" target="_blank">Archive Lab</a> 
@@ -30,16 +33,6 @@
   </div>
 </div>
 
-<script type="text/javascript">
-  let osd = OpenSeadragon({
-      id:            "iiif-zone",
-      prefixUrl:     "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/images/",
-      sequenceMode:  false,
-      showNavigator:  true,
-      tileSources:   ["{{ item.media_iiif }}"],
-  });
-
-</script>
 
 {%endif%}
 
