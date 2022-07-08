@@ -576,6 +576,59 @@ var vc_search_exporter_ui = Vue.component(
             cancel_close: function(){
                 this.$bvModal.hide('exporter-modal');
             },
+            get_field_number: function(field){
+                let num_start = field.indexOf('[');
+                let num_end = field.indexOf(']');
+                if(num_start < 1){
+                    // not a numbered field, so it is the
+                    // first field.
+                    return 1;
+                }
+                let field_num = parseInt(field.slice((num_start + 1), num_end));
+                if(field_num > 1){
+                    // we found a field number.
+                    return field_num;
+                }
+                // default to the first (field 1 field)
+                return 1;
+            },
+            get_field_without_field_num(field){
+                // removes the number part of a numbered field.
+                let field_num = this.get_field_number(field);
+                if(field_num == 1){
+                    return field;
+                }
+                let num_start = field.indexOf('[');
+                return field.slice(0, num_start).trim();
+            },
+            order_numbered_fields: function(field, i, field_list){
+                let field_num = this.get_field_number(field);
+                if(field_num == 1){
+                    // Simple case, the field is not numbered.
+                    field_list.splice(i, 0, field);
+                    return field_list;
+                }
+                let base_field = this.get_field_without_field_num(field);
+                let new_field_list = [];
+                for(let old_field of field_list){
+                    new_field_list.push(old_field);
+                    if(old_field.startsWith(base_field)){
+                        let old_field_num = this.get_field_number(old_field);
+                        if(field_num == (old_field_num + 1)){
+                            // the field num is the next in the sequence, so
+                            // add it after the old_field.
+                            new_field_list.push(field);
+                        }
+                    }
+                }
+                if(new_field_list.indexOf(field) < 0){
+                    // Something went wrong, so append the
+                    // field using the other method
+                    field_list.splice(i, 0, field);
+                    return field_list; 
+                }
+                return new_field_list;
+            },
             fill_in_missing_fields: function(raw_data){
                 let data = JSON.parse(JSON.stringify(raw_data));
                 let field_list = [];
@@ -584,28 +637,34 @@ var vc_search_exporter_ui = Vue.component(
                     let i = 0;
                     for(let [field, val] of Object.entries(rec)){
                         if(field_list.indexOf(field) >=0 ){
+                            i +=1;
                             continue;
                         }
                         if(rec_i < 1){
                             field_list.push(field);
+                            i +=1;
+                            continue;
                         }
-                        else{
-                            // this adds the field while preserving consisting ordering
-                            field_list.splice(i, 0, field);
-                        }
+                        // this adds the field while preserving consisting ordering
+                        field_list = this.order_numbered_fields(field, i, field_list);
                         i +=1;
                     }
                     rec_i += 1;
                 }
+                console.log('Gathered all fields!');
+                console.log(field_list);
                 let new_data = [];
                 for(let rec of data){
+                    let new_rec = {}
                     for(let field of field_list){
                         if(rec.hasOwnProperty(field)){
-                            continue;
+                            new_rec[field] = rec[field];
                         }
-                        rec[field] = this.csv_null_value;
+                        else{
+                            new_rec[field] = this.csv_null_value;
+                        }
                     }
-                    new_data.push(rec);
+                    new_data.push(new_rec);
                 }
                 return new_data;
             },
