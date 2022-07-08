@@ -106,7 +106,7 @@ def make_solr_doc_in_html(request, ok_uuid):
 
 
 @never_cache
-def test_html(request, uuid):
+def test_html(request, uuid, full_media=False):
     """HTML representation for searching Open Context """
     # NOTE: There is NO templating here, this is strictly so we can 
     # use the Django debugger to optimize queries
@@ -161,7 +161,7 @@ def test_html(request, uuid):
         'edit_status': man_obj.project.meta_json.get('edit_status'),
         'item': item_dict,
         'item_json': json_output,
-        'full_media': request.GET.get('full', False),
+        'full_media': full_media,
         # for debugging.
         'show_json': request.GET.get('json', False),
         # Consent to view human remains defaults to False if not actually set.
@@ -171,3 +171,11 @@ def test_html(request, uuid):
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response
+
+
+@never_cache
+def test_html_full(request, uuid):
+    """HTML Media Full representation for searching Open Context """
+    # NOTE: There is NO templating here, this is strictly so we can 
+    # use the Django debugger to optimize queries
+    return test_html(request, uuid, full_media=True)

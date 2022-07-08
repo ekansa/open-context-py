@@ -115,6 +115,7 @@ urlpatterns = [
 
     # New all_items testing views
     re_path(r'^all-items/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='all_items_json'),
+     re_path(r'^all-items/(?P<uuid>\S+)/full', AllItemsViews.test_html_full, name='all_items_full'),
     re_path(r'^all-items/(?P<uuid>\S+)', AllItemsViews.test_html, name='all_items_html'),
 
     # New add_items administrative (for editing, etl) views
