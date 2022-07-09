@@ -225,9 +225,10 @@ def load_subjects_dataframe(
 # ---------------------------------------------------------------------
 # ATTRIBUTES RELATED FUNCTIONS
 # Attributes are loaded into the importer that normally gets data from
-# an Open Refine source. The following functions load data from a
+# via the user interface. The following functions load data from a
 # dataframe with attributes, sets up the field types and relationships,
 # assigns UUIDs where feasible, and imports the data into Open Context.
 # The main expectation is that entities receiving attributes have been
 # already created. 
 # ---------------------------------------------------------------------
+

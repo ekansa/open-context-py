@@ -118,6 +118,7 @@ def make_catalog_small_finds_links_df(dfs, all_contexts_df):
     ]
     return df_link
 
+
 def make_catalog_tb_links_df(dfs, tb_df):
     """Makes dataframe for a catalog links to trench book entries"""
     obj_prop_cols = [
@@ -236,6 +237,7 @@ def get_links_from_rel_ids(dfs, all_contexts_df):
         df_rel.loc[update_indx, 'object_uuid'] = object_uuid
         df_rel.loc[update_indx, 'object_uuid_source'] = object_uuid_source
     return df_rel
+
 
 def make_catalog_links_df(dfs, tb_df, all_contexts_df):
     """Makes a dataframe for catalog object linking relations"""

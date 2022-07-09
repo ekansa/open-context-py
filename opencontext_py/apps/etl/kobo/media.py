@@ -19,40 +19,6 @@ from opencontext_py.apps.etl.kobo import utilities
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
-import csv
-from django.conf import settings
-from opencontext_py.apps.imports.kobotoolbox.media import (
-    make_all_export_media_df,
-    combine_media_with_files,
-    prepare_media
-)
-from opencontext_py.apps.imports.kobotoolbox.utilities import (
-    make_directory_files_df,
-    lookup_manifest_uuid
-)
-
-files_path = settings.STATIC_IMPORTS_ROOT + 'pc-2019/attachments'
-excels_filepath = settings.STATIC_IMPORTS_ROOT + 'pc-2019/'
-oc_media_root_dir = settings.STATIC_IMPORTS_ROOT + 'pc-2019/2019-media'
-all_media_csv_path = settings.STATIC_IMPORTS_ROOT + 'pc-2019/2019-oc-etl/all-media-files.csv'
-base_url = 'https://artiraq.org/static/opencontext/poggio-civitate/2019-media/'
-
-df_media = make_all_export_media_df(excels_filepath)
-df_files = make_directory_files_df(files_path)
-df_all = combine_media_with_files(df_media, df_files)
-print('All recs {} paths {}'.format(
-        len(df_all.index),
-        len(df_all['path'].unique().tolist())
-    )
-)
-
-df_all = prepare_media(
-    excels_filepath,
-    files_path,
-    oc_media_root_dir,
-    base_url
-)
-df_all.to_csv(all_8media_csv_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 """
 
@@ -290,7 +256,6 @@ def get_make_directories(oc_media_root_dir, oc_sub_dirs=None):
 
 def get_image_obj(src_file, new_file):
     """Gets an image object and png flag."""
-    output = None
     png = False
     if src_file.lower().endswith('.png'):
         png = True
@@ -403,7 +368,7 @@ def check_prepare_media_uuid(df_all):
     df_all['media_created'] = np.nan
     df_all['media_uuid_source'] = np.nan
     df_working = df_all.copy()
-    for i, row in df_working.iterrows():
+    for _, row in df_working.iterrows():
         man_obj = None
         update_indx = (
             df_all['filename']==row['filename']
@@ -524,13 +489,13 @@ def prepare_media_links_from_dfs(dfs, all_contexts_df):
         df_all_parents,
         how='left',
         on=['subject_uuid']
-    )2
+    )
     # Now look up the UUIDs for the objects.
     df_link['object_related_id'] = df_link['object_related_id'].astype(str)
     df_link['object_uuid'] = np.nan
     df_link['object_uuid_source'] = np.nan
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'link'
-    for i, row in df_link.iterrows():
+    for _, row in df_link.iterrows():
         object_uuid = None
         object_uuid_source = None
         raw_object_id = row['object_related_id']

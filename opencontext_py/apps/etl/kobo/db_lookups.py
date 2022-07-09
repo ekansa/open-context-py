@@ -341,16 +341,14 @@ def db_lookup_smallfind(
 
 def db_lookup_manifest_uuid(
     label,
-    project_uuid,
     item_type,
     label_alt_configs=None,
     class_slugs=None
 ):
     """Returns a manifest object uuid on label variations"""
     man_obj = db_lookup_manifest_obj(
-        label,
-        project_uuid,
-        item_type,
+        label=label,
+        item_type=item_type,
         label_alt_configs=label_alt_configs,
         class_slugs=class_slugs,
     )
