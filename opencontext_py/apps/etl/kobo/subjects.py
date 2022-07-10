@@ -187,6 +187,8 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
                     and not c.startswith('locus_')
                 )
             ]
+            print('Made subject df')
+            print(df.head())
             subj_dfs.append(df)
     df = pd.concat(subj_dfs, axis=0)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
@@ -247,6 +249,7 @@ def add_missing_unit_contexts(df):
             # We don't have mapping configured for this
             # trench.
             continue
+        print(f'Lookup trench_id {trench_id}, trench_year {trench_year}')
         man_obj = db_lookups.db_reconcile_trench_unit(trench_id, trench_year)
         if not man_obj:
             # We could find any unambiguous matches.
@@ -286,21 +289,30 @@ def add_missing_locus_contexts(df):
         unit_uuid = str(row['unit_uuid'])
         locus_name = str(row['locus_name'])
         locus_uuid = None
+        if locus_name == 'Locus -1':
+            # A hack. There are no loci in earlier years of
+            # excavation at the site, so skip lookups.
+            continue
+        # Always defer to the the database to find the locus within
+        # this unit.
+        man_obj = db_lookups.db_reconcile_locus(unit_uuid, locus_name)
+        if man_obj:
+            locus_uuid = str(man_obj.uuid)
+            up_index = (
+                (df['unit_uuid'] == unit_uuid)
+                & (df['locus_name'] == locus_name)
+            )
+            df.loc[up_index, 'locus_uuid'] = str(locus_uuid)
         exist_indx = (
             (df['unit_uuid'] == unit_uuid)
             & (df['locus_name'] == locus_name)
             & ~df['locus_uuid'].isnull()
         )
-        if not df[exist_indx].empty:
+        if not locus_uuid and not df[exist_indx].empty:
+            # This is a NEW locus, so use the Kobo provided UUID.
             # We're using data from elsewhere in the df to 
             # set the locus_uuid (no need to hit the database)
             locus_uuid = df[exist_indx]['locus_uuid'].iloc[0]
-        if not locus_uuid:
-            # Look in the database to find the locus within
-            # this unit.
-            man_obj = db_lookups.db_reconcile_locus(unit_uuid, locus_name)
-            if man_obj:
-                locus_uuid = str(man_obj.uuid)
         if not locus_uuid:
             # We failed in finding a locus uuid to match
             continue

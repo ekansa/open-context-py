@@ -170,7 +170,8 @@ def load_subject_and_containment(
 def load_subjects_parent_child_cols_df(
     source_id,
     subjects_df,
-    parent_child_col_tup
+    parent_child_col_tup,
+    extra_filter_index=None,
 ):
     if not set(parent_child_col_tup).issubset(subjects_df.columns.tolist()):
         print(f'Missing required import columns {str(parent_child_col_tup)}')
@@ -182,6 +183,8 @@ def load_subjects_parent_child_cols_df(
         & ~subjects_df[child_uuid_col].isnull()
         & ~subjects_df[child_class_slug_col].isnull()
     )
+    if extra_filter_index is not None:
+        index &= extra_filter_index
     if subjects_df[indx].empty:
         print(f'No data to import columns {str(parent_child_col_tup)}')
         return subjects_df
@@ -206,6 +209,44 @@ def load_subjects_parent_child_cols_df(
     return subjects_df
 
 
+def load_catalog_no_locus(
+    source_id,
+    subjects_df,
+):
+    """Loads catalog subjects not contained in a locus"""
+    req_cols = [
+        'unit_uuid', 
+        'locus_name',
+        'locus_uuid',
+        'trench_year',
+        'catalog_name', 
+        'catalog_uuid', 
+        'catalog_item_class_slug',
+    ]
+    if not set(req_cols).issubset(subjects_df.columns.tolist()):
+        print(f'Missing required import columns {str(req_cols)}')
+        return subjects_df
+    no_loci_indx = (
+        (
+            (subjects_df['locus_name'] == 'Locus -1')
+            | (subjects_df['trench_year'] < 1995)
+        )
+        & subjects_df['locus_uuid'].isnull()
+    )
+    parent_child_col_tup = (
+        'unit_uuid',
+        'catalog_name', 
+        'catalog_uuid', 
+        'catalog_item_class_slug',
+    )
+    return load_subjects_parent_child_cols_df(
+        source_id,
+        subjects_df,
+        parent_child_col_tup,
+        extra_filter_index=no_loci_indx,
+    )
+
+
 def load_subjects_dataframe(
     source_id,
     subjects_df,
@@ -213,12 +254,17 @@ def load_subjects_dataframe(
     """Loads the subjects dataframe"""
     if subjects_df is None or subjects_df.empty:
         return subjects_df
-    for parent_child_col_tup in pc_configs.SUBJECTS_IMPORT_COLS:
+    for parent_child_col_tup in pc_configs.SUBJECTS_IMPORT_TREE_COL_TUPS:
         subjects_df = load_subjects_parent_child_cols_df(
             source_id,
             subjects_df,
             parent_child_col_tup
         )
+    # Load catalog items that are not contained in a locus.
+    subjects_df = load_catalog_no_locus(
+        source_id,
+        subjects_df,
+    )
     return subjects_df
 
 

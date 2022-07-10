@@ -1016,3 +1016,15 @@ TB_END_PAGE_PRED_UUID = '506924aa-b53d-41b5-9d02-9a7929ea6d6d'
 # UUID lookup sources
 UUID_SOURCE_OC_LOOKUP = 'oc-db-lookup'
 UUID_SOURCE_KOBOTOOLBOX = 'kobo-data-lookup'
+
+
+# Configuration to import the subjects (locations/objects) items
+# in their proper hierarchy
+SUBJECTS_IMPORT_TREE_COL_TUPS = [
+    # (parent_context_col, child_label_col, child_uuid_col, child_class_slug_col)
+    ('p_trench_uuid', 'unit_name', 'unit_uuid', 'unit_item_class_slug', ),
+    ('unit_uuid', 'locus_name', 'locus_uuid', 'locus_item_class_slug',),
+    ('locus_uuid', 'catalog_name', 'catalog_uuid', 'catalog_item_class_slug',),
+    ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug',),
+    ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug',),
+]

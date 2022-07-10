@@ -155,6 +155,10 @@ def db_reconcile_trench_unit(trench_id, trench_year):
     map_dict = utilities.get_trench_unit_mapping_dict(trench_id)
     if not map_dict:
         return None
+    if ' ' in trench_id:
+        t_ex = trench_id.split(' ')
+        if t_ex[-1].isnumeric():
+            trench_id = t_ex[0]
     unit_num = ''.join([c for c in trench_id if c.isnumeric()])
     trench_name = f"{map_dict['area']} {unit_num}"
     search_path = f"{map_dict['site']}/{map_dict['area']}/{trench_name}"
