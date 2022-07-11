@@ -233,3 +233,13 @@ def get_trench_unit_mapping_dict(trench_id):
     return None
 
 
+def normalize_catalog_label(raw_label):
+    """Makes a catalog label fit Poggio Civitate conventions"""
+    prefix = ''
+    num_part = ''
+    for c in str(raw_label):
+        if c.isnumeric():
+            num_part += c
+        else:
+            prefix += c
+    return f'{prefix} {num_part}'

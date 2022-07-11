@@ -2,6 +2,7 @@ import copy
 import hashlib
 from operator import sub
 import re
+from turtle import st
 
 import numpy as np
 import pandas as pd
@@ -268,9 +269,17 @@ def db_lookup_trenchbooks_linked_to_trench_id(trench_id, trench_year):
     doc_uuids = [str(a.object.uuid) for a in linked_docs_qs]
     return doc_uuids
 
+def int_convert(val):
+    try:
+        int_val = int(float(val))
+    except:
+        int_val = None
+    return int_val
 
 def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_page):
     """Look up trenchbook entries via database queries."""
+    start_page = int_convert(start_page)
+    end_page = int_convert(end_page)
     doc_uuids = db_lookup_trenchbooks_linked_to_trench_id(trench_id, trench_year)
     # Further filter the documents for the ones on the correct date.
     tb_qs = AllManifest.objects.filter(
@@ -279,6 +288,14 @@ def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_pag
         label__contains=entry_date,
     )
     if len(tb_qs) == 0:
+        # Match on page numbers only, so don't
+        # worry about the specific date of the trench
+        # book entry.
+        tb_qs = AllManifest.objects.filter(
+            uuid__in=doc_uuids,
+            item_type='documents',
+        )
+    if len(tb_qs) == 0:
         print(f'No trench book for trench id: {trench_id}, date: {entry_date}')
         # Sad case, not found at all.
         return None
@@ -286,32 +303,34 @@ def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_pag
         # Happy case, no need to match pages.
         print(f'One trench book match for trench id: {trench_id}, date: {entry_date}')
         return tb_qs[0]
+    if not start_page:
+        return tb_qs[0]
     # OK, now try to narrow down by pages
     tb_uuids = [str(m.uuid) for m in tb_qs]
     ass_start_qs = AllAssertion.objects.filter(
         subject_id__in=tb_uuids,
         predicate_id=pc_configs.TB_START_PAGE_PRED_UUID,
         obj_integer__gte=start_page
+    ).order_by(
+        'obj_integer'
     )
     if len(ass_start_qs) < 1:
         print(f'No trench book match for trench id: {trench_id}, start page: {start_page}')
         return None
     st_uuids = list(set([str(a.subject.uuid) for a in ass_start_qs]))
-    if len(st_uuids) == 1:
+    if len(st_uuids) == 1 or not end_page:
         # We found it by the only matched page start
         return ass_start_qs[0].subject
     ass_end_qs = AllAssertion.objects.filter(
         subject_id__in=st_uuids,
         predicate_id=pc_configs.TB_END_PAGE_PRED_UUID,
         obj_integer__lte=end_page
+    ).order_by(
+        'obj_integer'
     )
     if len(ass_end_qs) < 1:
         print(f'No trench book match for trench id: {trench_id}, pages: {start_page} to {end_page}')
         return None
-    end_uuids = list(set([str(a.subject.uuid) for a in ass_end_qs]))
-    if len(end_uuids) == 1:
-        # We found it by the only matched page end
-        return ass_end_qs[0].subject
     # Return the first match
     return ass_end_qs[0].subject
     

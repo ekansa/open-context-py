@@ -19,21 +19,11 @@ This is intended for use with the Poggio Civitate project.
 
 import importlib
 
-from pathlib import Path
 from opencontext_py.apps.etl.kobo import subjects
 from opencontext_py.apps.etl.kobo import pc_configs
 importlib.reload(subjects)
 
-home = str(Path.home())
-excel_dirpath = f'{home}/data-dumps/pc-2022/kobo-data'
-trench_csv_path = f'{home}/data-dumps/pc-2022/trenches-2022.csv'
-save_path = f'{home}/data-dumps/pc-2022/'
-
-df = subjects.make_and_classify_subjects_df(
-    excel_dirpath, 
-    trench_csv_path,
-    save_path=pc_configs.SUBJECTS_CSV_PATH,
-)
+df = subjects.make_and_classify_subjects_df()
 
 
 """
@@ -358,16 +348,26 @@ def add_item_class_slugs(df):
     df = df[new_cols].copy()
     return df
 
+def normalize_catalog_labels(df):
+    """Makes catalog labels fit Poggio Civitate conventions"""
+    if not 'catalog_name' in df.columns:
+        return df
+    up_indx = ~df['catalog_name'].isnull() 
+    df.loc[up_indx, 'catalog_name'] = df[up_indx]['catalog_name'].apply(
+        utilities.normalize_catalog_label
+    )
+    return df
 
 def make_and_classify_subjects_df(
-    excel_dirpath, 
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
     trench_csv_path=pc_configs.TRENCH_CSV_PATH,
-    save_path=None
+    save_path=pc_configs.SUBJECTS_CSV_PATH,
 ):
     """Makes a subjects df with item_class_slug classifications"""
     df = make_subjects_df(excel_dirpath, trench_csv_path)
     df = add_missing_contexts(df)
     df = add_item_class_slugs(df)
+    df = normalize_catalog_labels(df)
     if save_path:
         df.to_csv(save_path, index=False)
     return df

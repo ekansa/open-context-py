@@ -10,9 +10,12 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
 HOME = str(Path.home())
+KOBO_EXCEL_FILES_PATH = f'{HOME}/data-dumps/pc-2022/kobo-data'
 TRENCH_CSV_PATH = f'{HOME}/data-dumps/pc-2022/trenches-2022.csv'
 SUBJECTS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/subjects.csv'
 
+CATALOG_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-attribs.csv'
+CATALOG_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-links.csv'
 # The column in the Kobo exports with the trench identifier
 
 KOBO_TRENCH_COL = 'Trench ID'
