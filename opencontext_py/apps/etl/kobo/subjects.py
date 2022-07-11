@@ -44,6 +44,8 @@ SUBJECTS_GENERAL_KOBO_COLS = [
     ('__version__', 'kobo_source_version',),
     ('_id', 'kobo_row_id',),
     ('_index', 'kobo_row_index',),
+    ('kobo_uuid', 'kobo_uuid',),
+    ('kobo_form', 'kobo_form'),
 ]
 
 SUBJECTS_SHEET_COLS = {
@@ -161,6 +163,10 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             if not sheet_config:
                 continue
             sheet_config += copy.deepcopy(SUBJECTS_GENERAL_KOBO_COLS)
+            df['kobo_form'] = utilities.get_general_form_type_from_sheet_name(
+                sheet_name
+            )
+            df['kobo_uuid'] = df['_uuid']
             df = limit_rename_cols_by_config_tuples(
                 df, 
                 sheet_config,

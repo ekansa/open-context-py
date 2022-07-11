@@ -11,8 +11,11 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
 HOME = str(Path.home())
 KOBO_EXCEL_FILES_PATH = f'{HOME}/data-dumps/pc-2022/kobo-data'
+MEDIA_FILES_PATH = f'{HOME}/data-dumps/pc-2022/kobo-media-files'
 TRENCH_CSV_PATH = f'{HOME}/data-dumps/pc-2022/trenches-2022.csv'
 SUBJECTS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/subjects.csv'
+MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/all-media-kobo-files.csv'
+
 
 CATALOG_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-attribs.csv'
 CATALOG_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-links.csv'
@@ -1042,6 +1045,22 @@ RELS_RENAME_COLS = {
 }
 
 
+# The subjects.csv (subjects_df) will sometimes update UUIDs
+# for entities submitted on Kobo forms with existing UUIDs from
+# the database. This config maps between different form types
+# and the best entity label and entity uuids as stored on the
+# subjects_df (subjects.csv) dataset.
+# See: utilites.get_general_form_type_from_sheet_name to get
+# the keys for this config.
+SUBJECTS_SHEET_PRIMARY_IDs = {
+    'locus': ('locus_name', 'locus_uuid',),
+    'small find': ('find_name', 'find_uuid',),
+    'bulk find': ('bulk_name', 'bulk_uuid',),
+    'catalog': ('catalog_name', 'catalog_uuid',),
+}
+
+
+
 
 # Configuration to import the subjects (locations/objects) items
 # in their proper hierarchy
@@ -1053,5 +1072,7 @@ SUBJECTS_IMPORT_TREE_COL_TUPS = [
     ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug',),
     ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug',),
 ]
+
+
 
 

@@ -322,3 +322,77 @@ def get_prepare_df_link_from_rel_id_sheet(dfs):
             continue
         df_link[c] = np.nan
     return df_link
+
+
+def get_general_form_type_from_sheet_name(sheet_name):
+    sheet_name = sheet_name.lower()
+    form_types = [
+        'locus',
+        'small find',
+        'bulk find',
+        'catalog',
+        'media',
+        'trench book',
+    ]
+    for act_type in form_types:
+        if act_type in sheet_name:
+            return act_type
+    return None
+
+
+def get_general_form_type_from_file_sheet_name(file_or_sheet_name):
+    file_or_sheet_name = file_or_sheet_name.replace('_', ' ')
+    file_or_sheet_name = file_or_sheet_name.replace('-', ' ')
+    return get_general_form_type_from_sheet_name(
+        file_or_sheet_name
+    )
+
+
+def add_final_subjects_uuid_label_cols(
+    df, 
+    subjects_df,
+    form_type,
+    final_label_col='subject_label',
+    final_uuid_col='subject_uuid',
+    final_uuid_source_col='subject_uuid_source',
+    orig_uuid_col='_uuid',
+):
+    final_cols = [
+        final_label_col,
+        final_uuid_col,
+        final_uuid_source_col,
+    ]
+    for col in final_cols:
+        if col in df.columns:
+            continue
+        df[col] = np.nan
+    if orig_uuid_col not in df.columns:
+        return df
+    s_label, s_uuid = pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(
+        form_type, 
+        (None, None)
+    )
+    if not s_uuid:
+        return df
+    if not set([s_label, s_uuid]).issubset(subjects_df.columns.tolist()):
+        return df
+    for orig_uuid in df[orig_uuid_col].unique().tolist():
+        sub_indx = (
+            subjects_df['kobo_uuid'] == orig_uuid
+        )
+        if subjects_df[sub_indx].empty:
+            # We don't have this, so can't add these values.
+            continue
+        df_indx = (
+            df[orig_uuid_col] == orig_uuid
+        )
+        # Update the df final label and final uuid columns with the applicable values
+        # from the subjects_df
+        df.loc[df_indx, final_label_col] = subjects_df[sub_indx][s_label].iloc[0]
+        df.loc[df_indx, final_uuid_col] = subjects_df[sub_indx][s_uuid].iloc[0]
+        # Indicate if the uuid as original or if we're using an OC database uuid
+        if subjects_df[sub_indx][s_uuid].iloc[0] == orig_uuid:
+            df.loc[df_indx, final_uuid_source_col] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
+        else:
+            df.loc[df_indx, final_uuid_source_col] = pc_configs.UUID_SOURCE_OC_LOOKUP
+    return df

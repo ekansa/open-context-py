@@ -163,6 +163,7 @@ def make_catalog_tb_links_df(dfs):
     ]
     return df_link
 
+
 def get_links_from_rel_ids(dfs):
     """Gets links from the related links sheet"""
     # import pdb; pdb.set_trace()
