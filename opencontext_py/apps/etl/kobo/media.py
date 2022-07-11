@@ -24,16 +24,16 @@ from opencontext_py.apps.etl.kobo import utilities
 
 
 MEDIAFILE_COLS_ENDSWITH = [
-    ('/Primary Image', 'link-primary', '_uuid', 'link_uuid'),
-    ('/Supplemental Image', 'link-supplemental', '_submission__uuid', 'link_uuid'),
-    ('/Image File', 'primary', '_uuid', 'media_uuid'),
-    ('/Video File', 'primary', '_uuid', 'media_uuid'),
-    ('/Audio File', 'primary', '_uuid', 'media_uuid'),
+    ('Primary Image', 'link-primary', '_uuid', 'link_uuid'),
+    ('Supplemental Image', 'link-supplemental', '_submission__uuid', 'link_uuid'),
+    ('Image File', 'primary', '_uuid', 'media_uuid'),
+    ('Video File', 'primary', '_uuid', 'media_uuid'),
+    ('Audio File', 'primary', '_uuid', 'media_uuid'),
 ]
 
 MEDIA_DESCRIPTION_COLS_ENDSWITH = [
-    '/Note about Primary Image',
-    '/Note about Supplemental Image',
+    'Note about Primary Image',
+    'Note about Supplemental Image',
     'File Title', 
     'Date Metadata Recorded', 
     'Date Created', 
@@ -84,14 +84,6 @@ MEDIA_SOURCE_COMPOSITION_TYPES = {
 
 MEDIA_ATTRIBUTES_SHEET = 'Media File Metadata Entry'
 MEDIA_RELS_SHEET = 'Rel_ID_Group_Rep'
-
-RELS_RENAME_COLS = {
-    '_submission__uuid': 'subject_uuid',
-    'Related Identifiers/Add related identifier/Related ID': 'object_related_id',
-    'Related Identifiers/Add related identifier/Type of Related ID': 'object_related_type',
-    'Related Identifiers/Add related identifier/Year': 'trench_year',
-    'Related Identifiers/Add related identifier/Trench ID': 'Trench ID',
-}
 
 
 REL_COLS = [
@@ -474,10 +466,14 @@ def prepare_media(
     make_opencontext_file_versions(df_all, oc_media_root_dir)
     return df_all
 
+
+
+
+
 def prepare_media_links_from_dfs(dfs, all_contexts_df):
     """Prepares a dataframe of links between media items and related objects"""
     df_link = dfs[MEDIA_RELS_SHEET].copy()
-    df_link.rename(columns=RELS_RENAME_COLS, inplace=True)
+    df_link.rename(columns=pc_configs.RELS_RENAME_COLS, inplace=True)
     media_subject_uuids = df_link['subject_uuid'].unique().tolist()
     df_all_parents = dfs[MEDIA_ATTRIBUTES_SHEET].copy()
     df_all_parents['subject_uuid'] = df_all_parents['_uuid']

@@ -243,3 +243,82 @@ def normalize_catalog_label(raw_label):
         else:
             prefix += c
     return f'{prefix} {num_part}'
+
+
+def df_fill_in_by_shared_id_cols(df, col_to_fill, id_cols):
+    """Fills in the value of a dataframe column based if
+    there are values for the same entity identified by values
+    in shared ID columns
+    
+    :param str col_to_fill: The column with blank values that
+        we want to fill with values for the same entities 
+        identified by values in shared ID columns 
+    :param list id_cols: A list of columns that are used to
+        uniquely identify the same entities
+    
+    return df
+    """
+    grp_cols = [col_to_fill] + id_cols
+    if not set(grp_cols).issubset(set(df.columns.tolist())):
+        # missing the required columns
+        return df
+    bad_index = df[col_to_fill].isnull()
+    if df[bad_index].empty:
+        # Nothing to fill in.
+        return df
+    good_index = ~df[col_to_fill].isnull()
+    if df[good_index].empty:
+        # We have no good values to fill by
+        return df
+    df_g = df[good_index][grp_cols].groupby(grp_cols, as_index=False).first()
+    df_g.reset_index(drop=True, inplace=True) 
+    for _, row in df_g.iterrows():
+        # Build an act_index to identify rows with
+        # an empty col_to_fill value, but with the same
+        # shared id_col values
+        act_indx = df[col_to_fill].isnull()
+        for c in id_cols:
+            act_indx &= (df[c] == row[c])
+        df.loc[act_indx, col_to_fill] = row[col_to_fill]
+    return df
+
+
+def get_df_by_sheet_name_part(dfs, sheet_name_part):
+    for sheet_name, df in dfs.items():
+        if not sheet_name_part in sheet_name:
+            continue
+        return df, sheet_name
+    return None, None
+
+
+def get_df_with_rel_id_cols(dfs):
+    """Gets a dataframe and sheet_name with related ID columns"""
+    rel_cols = [c for c,_ in pc_configs.RELS_RENAME_COLS.items()]
+    for sheet_name, df in dfs.items():
+        if not set(rel_cols).issubset(set(df.columns.tolist())):
+            continue
+        return df, sheet_name
+    return None, None
+
+
+def get_prepare_df_link_from_rel_id_sheet(dfs):
+    """Gets and prepares a df_link from a rel-id sheet"""
+    df_link, _ = get_df_with_rel_id_cols(dfs)
+    if df_link is None:
+        return None
+    df_link.rename(
+        columns=pc_configs.RELS_RENAME_COLS,
+        inplace=True
+    )
+    check_cols = (
+        pc_configs.FIRST_LINK_REL_COLS
+        + [
+            'object_related_id',
+            'object_related_type',
+        ]
+    )
+    for c in check_cols:
+        if c in df_link.columns:
+            continue
+        df_link[c] = np.nan
+    return df_link

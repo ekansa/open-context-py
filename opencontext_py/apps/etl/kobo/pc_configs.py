@@ -1021,6 +1021,28 @@ UUID_SOURCE_OC_LOOKUP = 'oc-db-lookup'
 UUID_SOURCE_KOBOTOOLBOX = 'kobo-data-lookup'
 
 
+# First link columns for related entities dataframes
+FIRST_LINK_REL_COLS = [
+    'subject_label',
+    'subject_uuid',
+    LINK_RELATION_TYPE_COL,
+    'object_label',
+    'object_uuid',
+    'object_uuid_source'
+]
+
+
+# Column renames for Related ID sheets
+RELS_RENAME_COLS = {
+    '_submission__uuid': 'subject_uuid',
+    'Type of Relationship': LINK_RELATION_TYPE_COL,
+    'Related ID': 'object_related_id',
+    'Type of Related ID': 'object_related_type',
+    'Note about Relationship': 'object_related_note',
+}
+
+
+
 # Configuration to import the subjects (locations/objects) items
 # in their proper hierarchy
 SUBJECTS_IMPORT_TREE_COL_TUPS = [
@@ -1031,3 +1053,5 @@ SUBJECTS_IMPORT_TREE_COL_TUPS = [
     ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug',),
     ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug',),
 ]
+
+

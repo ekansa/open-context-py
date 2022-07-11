@@ -34,24 +34,6 @@ dfs = catalog.prepare_catalog()
 CATALOG_ATTRIBUTES_SHEET = 'Catalog Entry'
 CATALOG_RELS_SHEET = 'rel_ids_repeat'
 
-
-FIRST_LINK_REL_COLS = [
-    'subject_label',
-    'subject_uuid',
-    pc_configs.LINK_RELATION_TYPE_COL,
-    'object_label',
-    'object_uuid',
-    'object_uuid_source'
-]
-
-RELS_RENAME_COLS = {
-    '_submission__uuid': 'subject_uuid',
-    'Type of Relationship': pc_configs.LINK_RELATION_TYPE_COL,
-    'Related ID': 'object_related_id',
-    'Type of Related ID': 'object_related_type',
-    'Note about Relationship': 'object_related_note',
-}
-
 SMALL_FIND_OBJ_COLS = [
     'Trench ID',
     'Year',
@@ -68,30 +50,18 @@ TRENCH_OBJ_COLS = [
 ]
 
 DF_REL_ALL_COLS = (
-    FIRST_LINK_REL_COLS
-    + [c for _,c in RELS_RENAME_COLS.items() if c not in FIRST_LINK_REL_COLS]
+    pc_configs.FIRST_LINK_REL_COLS
+    + [c for _,c in pc_configs.RELS_RENAME_COLS.items() if c not in pc_configs.FIRST_LINK_REL_COLS]
     + SMALL_FIND_OBJ_COLS
     + TRENCH_OBJ_COLS
 )
 
 
-def get_df_by_sheet_name_part(dfs, sheet_name_part):
-    for sheet_name, df in dfs.items():
-        if not sheet_name_part in sheet_name:
-            continue
-        return df, sheet_name
-    return None, None
-
-
-def get_main_catalog_df(dfs):
-    return get_df_by_sheet_name_part(
+def prep_df_link_from_attrib_sheet(dfs):
+    df_link, _ = utilities.get_df_by_sheet_name_part(
         dfs, 
         sheet_name_part='Catalog'
     )
-
-
-def prep_df_link_from_attrib_sheet(dfs):
-    df_link, _ = get_main_catalog_df(dfs)
     if df_link is None:
         return None
     df_link = df_link.copy().reset_index(drop=True)
@@ -144,7 +114,7 @@ def make_catalog_small_finds_links_df(dfs):
         df_link.loc[up_indx, 'object_uuid_source'] = object_source
     df_link = df_link[
         (
-           FIRST_LINK_REL_COLS
+           pc_configs.FIRST_LINK_REL_COLS
             + SMALL_FIND_OBJ_COLS
         )
     ]
@@ -187,7 +157,7 @@ def make_catalog_tb_links_df(dfs):
     
     df_link = df_link[
         (
-           FIRST_LINK_REL_COLS
+           pc_configs.FIRST_LINK_REL_COLS
             + TRENCH_OBJ_COLS
         )
     ]
@@ -196,27 +166,9 @@ def make_catalog_tb_links_df(dfs):
 def get_links_from_rel_ids(dfs):
     """Gets links from the related links sheet"""
     # import pdb; pdb.set_trace()
-    df_link, _ = get_df_by_sheet_name_part(
-        dfs, 
-        sheet_name_part='rel_ids'
-    )
+    df_link = utilities.get_prepare_df_link_from_rel_id_sheet(dfs)
     if df_link is None:
         return None
-    df_link.rename(
-        columns=RELS_RENAME_COLS,
-        inplace=True
-    )
-    check_cols = (
-        FIRST_LINK_REL_COLS
-        + [
-            'object_related_id',
-            'object_related_type',
-        ]
-    )
-    for c in check_cols:
-        if c in df_link.columns:
-            continue
-        df_link[c] = np.nan
     link_indx = ~df_link['object_related_id'].isnull()
     # Now look up the UUIDs for the objects.
     for i, row in df_link[link_indx].iterrows():
@@ -281,6 +233,11 @@ def make_catalog_links_df(
     df_all_links = pd.concat(df_list)
     cols = [c for c in DF_REL_ALL_COLS if c in df_all_links.columns]
     df_all_links = df_all_links[cols].copy()
+    df_all_links = utilities.df_fill_in_by_shared_id_cols(
+        df=df_all_links, 
+        col_to_fill='subject_label', 
+        id_cols=['subject_uuid'],
+    )
     if links_csv_path:
         df_all_links.to_csv(links_csv_path, index=False)
     return df_all_links
@@ -288,7 +245,10 @@ def make_catalog_links_df(
 
 def prep_catalog_attribs(dfs, attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH):
     """Prepares the catalog attribute data"""
-    df_f, sheet_name = get_main_catalog_df(dfs)
+    df_f, sheet_name = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Catalog'
+    )
     if df_f is None:
         return dfs
     df_f = utilities.drop_empty_cols(df_f)
