@@ -55,44 +55,33 @@ def get_main_catalog_df(dfs):
     return None, None
 
 
-def make_catalog_small_finds_links_df(dfs, all_contexts_df):
-    """Makes dataframe for a catalog links to trench book entries"""
+def make_catalog_small_finds_links_df(dfs):
+    """Makes dataframe for a catalog links to small finds entries"""
     obj_prop_cols = [
         'Trench ID',
         'Year',
         'Locus ID',
         'Field Given Find ID',
     ]
-    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy().reset_index(drop=True)
+    df_link, _ = get_main_catalog_df(dfs)
+    df_link = df_link.copy().reset_index(drop=True)
     df_link['subject_uuid'] = df_link['_uuid']
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Initially documented as'
     for i, row in df_link[df_link['Field Given Find ID'].notnull()].iterrows():
         object_uuid = None
         object_source = None
         find_num = int(float(row['Field Given Find ID']))
-        small_finds_indx = (
-            (all_contexts_df['Trench ID'] == row['Trench ID'])
-            & (all_contexts_df['Year'] == row['Year'])
-            & (all_contexts_df['Locus ID'] == row['Locus ID'])
-            & (all_contexts_df['Find Number'] == find_num)
+        # Try looking in the database for a match
+        obj = db_lookups.db_lookup_smallfind(
+            row['Trench ID'],
+            row['Year'],
+            row['Locus ID'],
+            find_num
         )
-        if not all_contexts_df[small_finds_indx].empty:
-            # Choose the first match, no need to get too fussy if
-            # there are multiple matches.
-            object_uuid = all_contexts_df[small_finds_indx]['context_uuid'].iloc[0]
-            object_source = all_contexts_df[small_finds_indx]['uuid_source'].iloc[0]
-        else:
-            # Try looking in the database for a match
-            obj = db_lookups.db_lookup_smallfind(
-                row['Trench ID'],
-                row['Year'],
-                row['Locus ID'],
-                find_num
-            )
-            if not obj:
-                continue
-            object_uuid = str(obj.uuid)
-            object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        if not obj:
+            continue
+        object_uuid = str(obj.uuid)
+        object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
         print('Catalog small find lookup: {}-{}-{}-{} -> {}'.format(
                 row['Year'],
                 row['Trench ID'],
@@ -101,13 +90,13 @@ def make_catalog_small_finds_links_df(dfs, all_contexts_df):
                 object_uuid,
             )
         )
-        if object_uuid is None:
-            # No match, just continue
-            continue
-        sub_indx = (df_link['subject_uuid'] == row['subject_uuid'])
-        df_link.loc[sub_indx, 'object_uuid'] = object_uuid
-        df_link.loc[sub_indx, 'object_uuid_source'] = object_source
-    8
+        up_indx = (
+            (df_link['Year'] == row['Year'])
+            & (df_link['Trench ID'] == row['Trench ID'])
+            & (df_link['Locus ID'] == row['Locus ID'])
+        )
+        df_link.loc[up_indx, 'object_uuid'] = object_uuid
+        df_link.loc[up_indx, 'object_uuid_source'] = object_source
     df_link = df_link[
         (
             ['subject_label', 'subject_item_class_slug', 'uuid_source', 'subject_uuid']
@@ -119,7 +108,7 @@ def make_catalog_small_finds_links_df(dfs, all_contexts_df):
     return df_link
 
 
-def make_catalog_tb_links_df(dfs, tb_df):
+def make_catalog_tb_links_df(dfs):
     """Makes dataframe for a catalog links to trench book entries"""
     obj_prop_cols = [
         'Trench ID',
@@ -128,45 +117,36 @@ def make_catalog_tb_links_df(dfs, tb_df):
         'Trench Book Start Page',
         'Trench Book End Page'
     ]
-    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy().reset_index(drop=True)
+    df_link, _ = get_main_catalog_df(dfs)
+    df_link = df_link.copy().reset_index(drop=True)
     df_link['subject_uuid'] = df_link['_uuid']
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
     for i, row in df_link.iterrows():
         object_uuid = None
         object_source = None
-        tb_indx = (
-            (tb_df['Trench ID'] == row['Trench ID'])
-            & (tb_df['Entry Year'] == row['Year'])
-            # & (tb_df['Date Documented'] == row['Trench Book Entry Date'])
-            & (tb_df['Start Page'] >= row['Trench Book Start Page'])
-            & (tb_df['End Page'] <= row['Trench Book End Page'])
+        # Try looking in the database for a match
+        obj = db_lookups.db_lookup_trenchbook(
+            row['Trench ID'],
+            row['Year'],
+            row['Trench Book Entry Date'],
+            row['Trench Book Start Page'],
+            row['Trench Book End Page']
         )
-        if not tb_df[tb_indx].empty:
-            # Choose the first match, no need to get too fussy if
-            # there are multiple matches.
-            object_uuid = tb_df[tb_indx]['_uuid'].iloc[0]
-            object_source = pc_configs.UUID_SOURCE_KOBOTOOLBOX
-        else:
-            # Try looking in the database for a match
-            obj = db_lookups.db_lookup_trenchbook(
-                row['Trench ID'],
-                row['Year'],
-                row['Trench Book Entry Date'],
-                row['Trench Book Start Page'],
-                row['Trench Book End Page']
-            )
-            if not obj:
-                continue
-            object_uuid = str(obj.uuid)
-            object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
-        if object_uuid is None:
-            # No match, just continue
+        if not obj:
             continue
-        sub_indx = (df_link['subject_uuid'] == row['subject_uuid'])
-        df_link.loc[sub_indx, 'object_uuid'] = object_uuid
-        df_link.loc[sub_indx, 'object_uuid_source'] = object_source
+        object_uuid = str(obj.uuid)
+        object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        up_indx = (
+            (df_link['Trench ID'] == row['Trench ID'])
+            & (df_link['Year'] == row['Year'])
+            # & (tb_df['Date Documented'] == row['Trench Book Entry Date'])
+            & (df_link['Trench Book Start Page'] >= row['Trench Book Start Page'])
+            & (df_link['Trench Book Start Page'] <= row['Trench Book Start Page'])
+        )
+        df_link.loc[up_indx, 'object_uuid'] = object_uuid
+        df_link.loc[up_indx, 'object_uuid_source'] = object_source
     
-    df_link = df_link[2
+    df_link = df_link[
         (
             ['subject_label', 'subject_item_class_slug', 'uuid_source', 'subject_uuid']
             + [pc_configs.LINK_RELATION_TYPE_COL]
@@ -176,26 +156,14 @@ def make_catalog_tb_links_df(dfs, tb_df):
     ]
     return df_link
 
-def get_links_from_rel_ids(dfs, all_contexts_df):
+def get_links_from_rel_ids(dfs):
     """Gets links from the related links sheet"""
-    df_rel, sheet_name = get_main_catalog_df(dfs)
+    df_rel, _ = get_main_catalog_df(dfs)
     if df_rel is None:
         return None
     df_rel.rename(
         columns=RELS_RENAME_COLS,
         inplace=True
-    )
-    # Join in metadata about the subjects (the catalog object entities)
-    subject_uuids = df_rel['subject_uuid'].unique().tolist()
-    df_all_parents = dfs[CATALOG_ATTRIBUTES_SHEET].copy().reset_index(drop=True)
-    df_all_parents['subject_uuid'] = df_all_parents['_uuid']
-    df_all_parents = df_all_parents[df_all_parents['subject_uuid'].isin(subject_uuids)]
-    df_all_parents = df_all_parents[['subject_label', 'subject_item_class_slug', 'uuid_source', 'subject_uuid']]
-    df_rel = pd.merge(
-        df_rel,
-        df_all_parents,
-        how='left',
-        on=['subject_uuid']
     )
     # Now look up the UUIDs for the objects.
     for i, row in df_rel.iterrows():
@@ -209,27 +177,19 @@ def get_links_from_rel_ids(dfs, all_contexts_df):
             # Didn't find any classes in our object type lookup, so continue
             continue
         act_labels += [p + str(raw_object_id) for p in act_prefixes]
-        context_indx = (
-            all_contexts_df['subject_label'].isin(act_labels)
-            & all_contexts_df['subject_item_class_slug'].isin(act_classes)
+        
+        man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
+            label_list=act_labels, 
+            item_class_slug_list=act_classes,
         )
-        if not all_contexts_df[context_indx].empty:
-            object_uuid = all_contexts_df[context_indx]['context_uuid'].iloc[0]
-            object_uuid_source = all_contexts_df[context_indx]['uuid_source'].iloc[0]
-        if object_uuid is None:
-            man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
-                label_list=act_labels, 
-                item_class_slug_list=act_classes,
-            )
-            if man_obj:
-                # Only accept a single result from the 
-                # lookup.
-                object_uuid = str(man_obj.uuid)
-                object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
-        # Now update the df_rel values.
-        if object_uuid is None:
+        if not man_obj:
             object_uuid = np.nan
             object_uuid_source = np.nan
+        else:
+            # Only accept a single result from the 
+            # lookup.
+            object_uuid = str(man_obj.uuid)
+            object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
         update_indx = (
             (df_rel['object_related_id'] == raw_object_id)
             & (df_rel['object_related_type'] == object_type)
@@ -239,19 +199,16 @@ def get_links_from_rel_ids(dfs, all_contexts_df):
     return df_rel
 
 
-def make_catalog_links_df(dfs, tb_df, all_contexts_df):
+def make_catalog_links_df(dfs):
     """Makes a dataframe for catalog object linking relations"""
     df_small_finds_link = make_catalog_small_finds_links_df(
         dfs,
-        all_contexts_df
     )
     df_tb_link = make_catalog_tb_links_df(
         dfs,
-        tb_df
     )
     df_rel = get_links_from_rel_ids(
         dfs,
-        all_contexts_df
     )
     df_all_links = pd.concat([df_small_finds_link, df_tb_link, df_rel])
     df_all_links = utilities.reorder_first_columns(
