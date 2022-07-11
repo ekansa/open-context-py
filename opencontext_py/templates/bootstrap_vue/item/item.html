@@ -73,7 +73,7 @@
 
         {% if man_obj.item_type == 'predicates' %}
             <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
-    8        <div class="card">
+            <div class="card">
                 <div class="card-header">
                 {% if man_obj.item_class.slug == 'oc-gen-variables' %}
                 <h5><b>{{ man_obj.label }}</b> (Descriptive Attribute)</h5>
@@ -106,7 +106,7 @@
                     v-bind:human_remains_ok="human_remains_ok"
                     :alert_type="'item'"
                     @toggle_human_remains_ok="toggle_human_remains_ok($event)"
-            8    ></human-remains-results-alert>
+                ></human-remains-results-alert>
 
                 {% include '../item/parts/media_download.html' %}
 
