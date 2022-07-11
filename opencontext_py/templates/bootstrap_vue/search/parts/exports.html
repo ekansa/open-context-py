@@ -576,6 +576,15 @@ var vc_search_exporter_ui = Vue.component(
             cancel_close: function(){
                 this.$bvModal.hide('exporter-modal');
             },
+            csv_call_value_clean: function(cell_val){
+                if(!cell_val){
+                    return cell_val;
+                }
+                cell_val = "" + cell_val;
+                cell_val = cell_val.replace(/(\r\n|\n|\r)/gm," ");
+                cell_val = cell_val.replace(/['"]+/g, ' ')
+                return cell_val;
+            },
             get_field_number: function(field){
                 let num_start = field.indexOf('[');
                 let num_end = field.indexOf(']');
@@ -658,7 +667,9 @@ var vc_search_exporter_ui = Vue.component(
                     let new_rec = {}
                     for(let field of field_list){
                         if(rec.hasOwnProperty(field)){
-                            new_rec[field] = rec[field];
+                            new_rec[field] = this.csv_call_value_clean(
+                                rec[field]
+                            );
                         }
                         else{
                             new_rec[field] = this.csv_null_value;
