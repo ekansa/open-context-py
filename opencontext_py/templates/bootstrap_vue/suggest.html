@@ -134,6 +134,7 @@ var vc_oc_seach_typeahead = Vue.component(
                     }
                 }
                 url = replaceURLparameter(url, 'q', this.query);
+                url = removeURLParameter(url, 'start');
                 url = abs_to_rel_url_with_frag_obj(url, BASE_URL, frontend_state);
                 return url;
             },

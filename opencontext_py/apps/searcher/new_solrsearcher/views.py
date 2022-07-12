@@ -41,7 +41,8 @@ def process_solr_query(request_dict):
     result_maker.create_result(
         solr_json=solr_response
     )
-    result_maker.result['query'] = query
+    if isinstance(result_maker.result, dict):
+        result_maker.result['query'] = query
     return result_maker.result
 
 

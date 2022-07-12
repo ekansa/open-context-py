@@ -209,6 +209,7 @@ var vc_fields_chart = Vue.component(
                 if(url.indexOf(hash) < 0){
                     url += hash;
                 }
+                url = removeURLParameter(url, 'start');
                 url = abs_to_rel_url(url, BASE_URL);
                 return url;
             },
