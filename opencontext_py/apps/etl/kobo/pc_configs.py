@@ -106,7 +106,7 @@ ATTRIBUTE_HIERARCHY_DELIM = '::'
 MEDIA_FILETYPE_ATTRIBUTE_CONFIGS = [
     {
         'source_col': file_type['col'],
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': file_type['col'],
@@ -123,7 +123,7 @@ MEDIA_FILETYPE_ATTRIBUTE_CONFIGS = [
 GEO_ATTRIBUTE_CONFIGS = [
     {
         'source_col': REPROJECTED_LAT_COL,
-        'sources': ['catalog', 'locus', 'bulk-finds', 'small-finds', 'trench-book',],
+        'form_type': ['catalog', 'locus', 'bulk find', 'small find', 'trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': REPROJECTED_LAT_COL,
@@ -136,7 +136,7 @@ GEO_ATTRIBUTE_CONFIGS = [
     },
     {
         'source_col': REPROJECTED_LON_COL,
-        'sources': ['catalog', 'locus', 'bulk-finds', 'small-finds', 'trench-book',],
+        'form_type': ['catalog', 'locus', 'bulk find', 'small find', 'trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': REPROJECTED_LON_COL,
@@ -153,7 +153,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'label',
-        'sources': ['locus',],
+        'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Locus Label',
@@ -165,7 +165,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'label',
-        'sources': ['bulk-finds',],
+        'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Bulk Find Label',
@@ -177,7 +177,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'label',
-        'sources': ['small-finds',],
+        'form_type': ['small find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Small Find Label',
@@ -189,7 +189,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'label',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Catalog Label',
@@ -201,7 +201,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Trench Book Title',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Trench Book Title',
@@ -212,7 +212,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Entry Text',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Entry Text',
@@ -225,7 +225,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'File Title',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'File Title',
@@ -236,7 +236,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Data Entry Person',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Data Entry Person',
@@ -251,7 +251,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Data Entry Person',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'File Creator',
@@ -266,7 +266,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'File Creator',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'File Creator',
@@ -281,7 +281,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Trench Supervisor',
-        'sources': ['catalog', 'locus', 'bulk-finds', 'small-finds', 'trench-book',],
+        'form_type': ['catalog', 'locus', 'bulk find', 'small find', 'trench book',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Trench Supervisor',
@@ -296,7 +296,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Size (Notes)',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Size',
@@ -308,7 +308,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Condition (Notes)',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Condition',
@@ -320,7 +320,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Description',
-        'sources': ['catalog', 'all-media',],
+        'form_type': ['catalog', 'media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -332,7 +332,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Trench ID',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Trench',
@@ -344,7 +344,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Date Cataloged',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Date Cataloged',
@@ -356,7 +356,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Year',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Year',
@@ -368,7 +368,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Record Type',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Record Type',
@@ -380,7 +380,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Supplemental Find Identification Note',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Supplemental Find Identification Note',
@@ -392,7 +392,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Munsell Color',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Munsell Color',
@@ -404,7 +404,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Fabric Category',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Fabric Category',
@@ -416,7 +416,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Other Fabric Note',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Other Fabric Note',
@@ -428,9 +428,22 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Object General Type',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
+            'label': 'Object Type',  # Note the difference from the source-column!
+            'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
+            'item_type': 'description',
+            'data_type': 'id',
+        },
+    },
+
+    {
+        'source_col': 'Alternative Object General Type',
+        'form_type': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            # NOTE: This is also mapped to the 'Object Type' predicate.
             'label': 'Object Type',  # Note the difference from the source-column!
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
             'item_type': 'description',
@@ -440,7 +453,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Object Type',
-        'sources': ['catalog', 'small-finds',],
+        'form_type': ['catalog', 'small find',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Object Type', 
@@ -452,7 +465,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Object Type, Title',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Catalog ID Note',
@@ -464,7 +477,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Decorative Techniques and Motifs/Decorative Technique',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Decorative Technique',
@@ -476,7 +489,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Decorative Techniques and Motifs/Other Decorative Technique Note',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Other Decorative Technique Note',
@@ -488,7 +501,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Decorative Techniques and Motifs/Motif',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Motif',
@@ -500,7 +513,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Decorative Techniques and Motifs/Other Motif Note',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Other Motif Note',
@@ -512,7 +525,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Vessel Form',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Vessel Form',
@@ -524,7 +537,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Vessel Part Present',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Vessel Part Present',
@@ -536,7 +549,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Vessel Part Present',
-        'sources': ['catalog',],
+        'form_type': ['catalog',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Vessel Part Present',
@@ -548,7 +561,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
 
     {
         'source_col': 'Find Spot/Grid X',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Grid (X)',
@@ -560,7 +573,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Spot/Grid Y',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Grid (Y)',
@@ -572,7 +585,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Spot/Elevation',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Elevation',
@@ -584,7 +597,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Spot/Measurement Uncertainties/Grid X Uncertainty (+/- cm)',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Grid X Uncertainty (+/- cm)',
@@ -596,7 +609,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Spot/Measurement Uncertainties/Grid Y Uncertainty (+/- cm)',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Grid Y Uncertainty (+/- cm)',
@@ -608,7 +621,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Spot/Measurement Uncertainties/Elevation Uncertainty (+/- cm)',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Elevation Uncertainty (+/- cm)',
@@ -620,7 +633,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Spot/Measurement Uncertainties/Uncertainty Comment',
-        'sources': ['catalog', 'small-find',],
+        'form_type': ['catalog', 'small-find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Measurement Uncertainties Comment',
@@ -632,7 +645,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Type',
-        'sources': ['bulk-finds',],
+        'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Find Type',
@@ -644,7 +657,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Find Type (Other)',
-        'sources': ['bulk-finds',],
+        'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Find Type (Other)',
@@ -656,7 +669,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Object Count',
-        'sources': ['bulk-finds',],
+        'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Object Count',
@@ -668,7 +681,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Count Type',
-        'sources': ['bulk-finds',],
+        'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Count Type',
@@ -680,7 +693,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Count Type (Other)',
-        'sources': ['bulk-finds',],
+        'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Count Type (Other)',
@@ -692,7 +705,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'General Description',
-        'sources': ['bulk-finds', 'locus'],
+        'form_type': ['bulk find', 'locus'],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -704,7 +717,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Date Discovered',
-        'sources': ['bulk-finds', 'small-finds'],
+        'form_type': ['bulk find', 'small find'],
         'match_type': 'exact',
         'field_args': {
             'label': 'Date Discovered',
@@ -715,32 +728,8 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Preliminary Phasing',
-        'sources': ['locus',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'Preliminary Phasing',
-            'context_id': 'c2b40ac1-3b8d-4307-b217-c61732236d68',
-            'item_type': 'description',
-            'data_type': 'id',
-        },
-    },
-    
-    {
-        'source_col': 'Munsell Color',
-        'sources': ['locus',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'Munsell Color',
-            'context_id': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
-            'item_type': 'description',
-            'data_type': 'xsd:string',
-        },
-    },
-
-    {
         'source_col': 'Deposit Compaction',
-        'sources': ['locus',],
+        'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Deposit Compaction',
@@ -752,7 +741,55 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
 
     {
         'source_col': 'Stratigraphic Reliability',
-        'sources': ['locus',],
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Stratigraphic Reliability',
+            'context_id': '1ed85342-864a-4ae9-81ed-3a484233ec43',
+            'item_type': 'description',
+            'data_type': 'id',
+        },
+    },
+
+    {
+        'source_col': 'Preliminary Phasing',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Preliminary Phasing',
+            'context_id': 'c2b40ac1-3b8d-4307-b217-c61732236d68',
+            'item_type': 'description',
+            'data_type': 'id',
+        },
+    },
+    
+    {
+        'source_col': 'Munsell Color',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Munsell Color',
+            'context_id': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
+            'item_type': 'description',
+            'data_type': 'xsd:string',
+        },
+    },
+
+    {
+        'source_col': 'Deposit Compaction',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Deposit Compaction',
+            'context_id': '3eb4639d-a67e-47e6-9435-a87723486a82',
+            'item_type': 'description',
+            'data_type': 'id',
+        },
+    },
+
+    {
+        'source_col': 'Stratigraphic Reliability',
+        'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Stratigraphic Reliability',
@@ -764,7 +801,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Date Opened',
-        'sources': ['locus',],
+        'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Date Opened',
@@ -776,7 +813,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Date Closed',
-        'sources': ['locus',],
+        'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Date Closed',
@@ -788,7 +825,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Trench',
-        'sources': ['locus',],
+        'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Trench',
@@ -800,7 +837,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Field Season',
-        'sources': ['small-finds',],
+        'form_type': ['small find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Year',
@@ -812,7 +849,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Entry Type',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Entry Type',
@@ -824,7 +861,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Document Type',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Document Type',
@@ -836,7 +873,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Date Documented',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Trench Book Entry Date',
@@ -848,7 +885,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Entry Year',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Entry Year',
@@ -860,7 +897,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Book Year',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Book Year',
@@ -872,7 +909,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Start Page',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Start Page',
@@ -884,7 +921,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'End Page',
-        'sources': ['trench-book',],
+        'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
             'label': 'End Page',
@@ -896,7 +933,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Date Created',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Date Created',
@@ -908,7 +945,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Direction or Orientation Notes/Direction Faced in Field',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Direction Faced in Field',
@@ -920,7 +957,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Direction or Orientation Notes/Object Orientation Note',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Object Orientation Note',
@@ -932,7 +969,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Image Type',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Image Type',
@@ -944,7 +981,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Images/Note about Primary Image',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -956,7 +993,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Images/Supplemental Files/Note about Supplemental Image',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -968,7 +1005,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Media Type',
-        'sources': ['all-media',],
+        'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Media Type',

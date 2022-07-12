@@ -170,6 +170,7 @@ def get_links_from_rel_ids(dfs):
     df_link = utilities.get_prepare_df_link_from_rel_id_sheet(dfs)
     if df_link is None:
         return None
+    
     link_indx = ~df_link['object_related_id'].isnull()
     # Now look up the UUIDs for the objects.
     for i, row in df_link[link_indx].iterrows():
@@ -210,6 +211,7 @@ def get_links_from_rel_ids(dfs):
 
 def make_catalog_links_df(
     dfs,
+    subjects_df,
     links_csv_path=pc_configs.CATALOG_LINKS_CSV_PATH
 ):
     """Makes a dataframe for catalog object linking relations"""
@@ -234,6 +236,17 @@ def make_catalog_links_df(
     df_all_links = pd.concat(df_list)
     cols = [c for c in DF_REL_ALL_COLS if c in df_all_links.columns]
     df_all_links = df_all_links[cols].copy()
+    # Update the catalog entry uuids based on the
+    # subjects_df uuids.
+    df_all_links = utilities.add_final_subjects_uuid_label_cols(
+        df=df_all_links, 
+        subjects_df=subjects_df,
+        form_type='catalog',
+        final_label_col='subject_label',
+        final_uuid_col='subject_uuid',
+        final_uuid_source_col='subject_uuid_source',
+        orig_uuid_col='subject_uuid',
+    )
     df_all_links = utilities.df_fill_in_by_shared_id_cols(
         df=df_all_links, 
         col_to_fill='subject_label', 
@@ -244,7 +257,11 @@ def make_catalog_links_df(
     return df_all_links
 
 
-def prep_catalog_attribs(dfs, attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH):
+def prep_catalog_attribs(
+    dfs,
+    subjects_df, 
+    attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH,
+):
     """Prepares the catalog attribute data"""
     df_f, sheet_name = utilities.get_df_by_sheet_name_part(
         dfs, 
@@ -259,6 +276,17 @@ def prep_catalog_attribs(dfs, attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH
     df_f['catalog_name'] = df_f['Catalog ID (PC)'].apply(
         lambda x: utilities.normalize_catalog_label(x), 
     )
+    # Update the catalog entry uuids based on the
+    # subjects_df uuids.
+    df_f = utilities.add_final_subjects_uuid_label_cols(
+        df=df_f, 
+        subjects_df=subjects_df,
+        form_type='catalog',
+        final_label_col='subject_label',
+        final_uuid_col='subject_uuid',
+        final_uuid_source_col='subject_uuid_source',
+        orig_uuid_col='_uuid',
+    )
     if attrib_csv_path:
         df_f.to_csv(attrib_csv_path, index=False)
     dfs[sheet_name] = df_f
@@ -268,23 +296,27 @@ def prep_catalog_attribs(dfs, attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH
 def prepare_catalog(
     excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
     attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH,
-    links_csv_path=pc_configs.CATALOG_LINKS_CSV_PATH
+    links_csv_path=pc_configs.CATALOG_LINKS_CSV_PATH,
+    subjects_path=pc_configs.SUBJECTS_CSV_PATH,
 ):
     """Prepares catalog dataframes."""
     xlsx_files = utilities.list_excel_files(excel_dirpath)
     if not xlsx_files:
         return None
+    subjects_df = pd.read_csv(subjects_path)
     dfs = None
     for excel_filepath in xlsx_files:
         if not 'Catalog' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         dfs = prep_catalog_attribs(
-            dfs, 
+            dfs,
+            subjects_df,
             attrib_csv_path=attrib_csv_path
         )
-    df_all_links = make_catalog_links_df(
+    _ = make_catalog_links_df(
         dfs,
+        subjects_df,
         links_csv_path=links_csv_path,
     )
     return dfs

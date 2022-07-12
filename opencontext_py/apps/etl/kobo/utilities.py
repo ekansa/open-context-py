@@ -361,6 +361,7 @@ def add_final_subjects_uuid_label_cols(
         final_label_col,
         final_uuid_col,
         final_uuid_source_col,
+        'kobo_uuid',
     ]
     for col in final_cols:
         if col in df.columns:
@@ -390,6 +391,9 @@ def add_final_subjects_uuid_label_cols(
         # from the subjects_df
         df.loc[df_indx, final_label_col] = subjects_df[sub_indx][s_label].iloc[0]
         df.loc[df_indx, final_uuid_col] = subjects_df[sub_indx][s_uuid].iloc[0]
+        # Note the kobo provided uuid, which may differ from the uuid we get from
+        # the subjects_df
+        df.loc[df_indx, 'kobo_uuid'] = orig_uuid
         # Indicate if the uuid as original or if we're using an OC database uuid
         if subjects_df[sub_indx][s_uuid].iloc[0] == orig_uuid:
             df.loc[df_indx, final_uuid_source_col] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
