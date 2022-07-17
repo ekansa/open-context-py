@@ -209,6 +209,9 @@ def default_safe_save_model_object_and_related(model_object, raise_on_error=True
     all_fk_ok = True
     for fk_attrib in fk_attribs:
         fk_obj = getattr(model_object, fk_attrib)
+        if not fk_obj:
+            print(f'No attribute {str(fk_attrib)} in {str(act_model._meta.label)}')
+            continue
         fk_ok = default_safe_save_model_object_and_related(
             fk_obj, 
             raise_on_error=raise_on_error,
