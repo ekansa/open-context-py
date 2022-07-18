@@ -374,7 +374,7 @@ def add_related_media_files_dicts(item_man_obj, act_dict=None):
         res_dict['type'] = rep_utils.get_item_key_or_uri_value(res_obj.resourcetype)
         if res_obj.mediatype:
             res_dict['dc-terms:hasFormat'] = f'https://{res_obj.mediatype.uri}'
-        if res_obj.filesize > 1:
+        if res_obj.filesize and res_obj.filesize > 1:
             res_dict['dcat:size'] = int(res_obj.filesize)
         act_dict["oc-gen:has-files"].append(res_dict)
     return act_dict

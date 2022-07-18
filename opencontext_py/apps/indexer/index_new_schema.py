@@ -45,6 +45,23 @@ for p_uuid in p_uuids:
     ).exclude(subject_id__in=uuids).first()
     if act_ass:
         uuids.append(str(act_ass.subject.uuid))
+
+# Update recently edited items
+after_date = '2022-07-01'
+uuids = AllAssertion.objects.filter(
+    updated__gte=after_date,
+    subject__item_type__in=['projects', 'subjects', 'media', 'documents'],
+).distinct(
+    'subject'
+).order_by(
+    'subject_id'
+).values_list(
+    'subject_id', 
+    flat=True
+)
+new_ind.clear_caches()
+new_ind.make_indexed_solr_documents_in_chunks(uuids)
+
 """
 
 
