@@ -9,9 +9,9 @@
           <li id="context_start">Context: </li>
           {% for act_con in item.contexts %}
             {% if forloop.first %}  
-            <li class="breadcrumb-item"><a href="{% url 'all_items_html' act_con.object_id %}">{{ act_con.label }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'subjects_html' act_con.object_id %}">{{ act_con.label }}</a></li>
             {% else %}
-            <li class="breadcrumb-item"><a href="{% url 'all_items_html' act_con.object_id %}">{{ act_con.label }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'subjects_html' act_con.object_id %}">{{ act_con.label }}</a></li>
             {% endif %}
           {% endfor %}
           {% if man_obj.item_type == 'subjects' %}

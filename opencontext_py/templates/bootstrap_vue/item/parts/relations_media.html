@@ -4,7 +4,7 @@
   {% for val in vals %}    
       <div class="col">
         <figure class="figure text-center">
-          <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
+          <a title="{{ val.label }}" href="{% url 'media_html' val.object_id %}">
             {% if val.object__meta_json.flag_human_remains %}
             
             <human-remains-image

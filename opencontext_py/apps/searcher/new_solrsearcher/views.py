@@ -139,6 +139,7 @@ def query_html(request, spatial_context=None):
     # API.
     # search_temp = SearchTemplate(response_dict.copy())
     context = {
+        'NAV_ITEMS': settings.NAV_ITEMS,
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
         'BASE_URL': rp.get_baseurl(),
         'st': response_dict.copy(),

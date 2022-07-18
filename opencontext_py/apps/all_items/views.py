@@ -1,9 +1,11 @@
 import json
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
+from django.shortcuts import redirect
 
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
     prepare_for_item_dict_solr_and_html_template,
@@ -17,17 +19,42 @@ from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
 
+from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
+
 from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers
 
 
+def make_redirect_url(request, path, ok_uuid, extension=''):
+    request = RequestNegotiation().anonymize_request(request)
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    new_url = f'{base_url}/{path}/{ok_uuid}{extension}'
+    return redirect(new_url, permanent=True)
 
+
+def evaluate_update_id(uuid):
+    """Evaluates and, if needed, updates a UUID"""
+    _, ok_uuid = update_old_id(uuid)
+    if ok_uuid == uuid:
+        return uuid, False
+    item_obj = get_man_obj_by_any_id(ok_uuid)
+    if item_obj:
+        return item_obj.uuid, True
+    item_obj = get_man_obj_by_any_id(uuid)
+    if item_obj:
+        return item_obj.uuid, True
+    return None, False
 
 
 @never_cache
 def test_json(request, uuid):
     """ API for searching Open Context """
-    _, ok_uuid = update_old_id(uuid)
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'all-items', ok_uuid, extension='.json')
     if request.GET.get('solr') == 'prep':
         # with added stuff for Solr
         man_obj, rep_dict = item.make_representation_dict(
@@ -91,6 +118,7 @@ def make_solr_doc_in_html(request, ok_uuid):
     solrdoc.make_solr_doc()
     rp = RootPath()
     context = {
+        'NAV_ITEMS': settings.NAV_ITEMS,
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Solr Doc: {man_obj.label}',
         'solr_json': json.dumps(
@@ -108,9 +136,11 @@ def make_solr_doc_in_html(request, ok_uuid):
 @never_cache
 def test_html(request, uuid, full_media=False):
     """HTML representation for searching Open Context """
-    # NOTE: There is NO templating here, this is strictly so we can 
-    # use the Django debugger to optimize queries
-    _, ok_uuid = update_old_id(uuid)
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'all-items', ok_uuid, extension='')
     if request.GET.get('solr') == 'solr':
         # with added stuff for Solr
         return make_solr_doc_in_html(request, ok_uuid)
@@ -138,6 +168,7 @@ def test_html(request, uuid, full_media=False):
         )
     rp = RootPath()
     context = {
+        'NAV_ITEMS': settings.NAV_ITEMS,
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
         'SCHEMA_ORG_JSON_LD': json.dumps(
@@ -179,3 +210,77 @@ def test_html_full(request, uuid):
     # NOTE: There is NO templating here, this is strictly so we can 
     # use the Django debugger to optimize queries
     return test_html(request, uuid, full_media=True)
+
+
+def subjects_html(request, uuid):
+    """HTML Subjects Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'subjects', ok_uuid, extension='')
+    return test_html(request, ok_uuid)
+
+def subjects_json(request, uuid):
+    """JSON Subjects Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'subjects', ok_uuid, extension='.json')
+    return test_json(request, ok_uuid)
+
+
+
+def media_html(request, uuid):
+    """HTML Media Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'media', ok_uuid, extension='')
+    return test_html(request, ok_uuid)
+
+def media_full_html(request, uuid):
+    """HTML Media full Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        ok_uuid = str(ok_uuid)
+        return make_redirect_url(
+            request, 
+            'media', 
+            f'{ok_uuid}/full', 
+            extension=''
+        )
+    return test_html(request, ok_uuid, full_media=True)
+
+def media_json(request, uuid):
+    """JSON Media Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'media', ok_uuid, extension='.json')
+    return test_json(request, ok_uuid)
+
+
+
+def documents_html(request, uuid):
+    """HTML Documents Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'documents', ok_uuid, extension='')
+    return test_html(request, ok_uuid)
+
+def documents_json(request, uuid):
+    """JSON Media Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'documents', ok_uuid, extension='.json')
+    return test_json(request, ok_uuid)
