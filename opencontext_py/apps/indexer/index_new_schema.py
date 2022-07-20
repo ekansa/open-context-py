@@ -48,7 +48,12 @@ for p_uuid in p_uuids:
 
 # Update recently edited items
 after_date = '2022-07-01'
-uuids = AllAssertion.objects.filter(
+m_qs = AllManifest.objects.filter(
+    updated__gte=after_date,
+    item_type__in=['projects', 'subjects', 'media', 'documents'],
+)
+uuids = [str(m.uuid) for m in m_qs]
+a_uuids = AllAssertion.objects.filter(
     updated__gte=after_date,
     subject__item_type__in=['projects', 'subjects', 'media', 'documents'],
 ).distinct(
@@ -59,6 +64,7 @@ uuids = AllAssertion.objects.filter(
     'subject_id', 
     flat=True
 )
+uuids += [str(u) for u in a_uuids if not str(u) in uuids]
 new_ind.clear_caches()
 new_ind.make_indexed_solr_documents_in_chunks(uuids)
 
