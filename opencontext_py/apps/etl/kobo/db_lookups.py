@@ -281,6 +281,8 @@ def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_pag
     start_page = int_convert(start_page)
     end_page = int_convert(end_page)
     doc_uuids = db_lookup_trenchbooks_linked_to_trench_id(trench_id, trench_year)
+    if not doc_uuids:
+        return None
     # Further filter the documents for the ones on the correct date.
     tb_qs = AllManifest.objects.filter(
         uuid__in=doc_uuids,
