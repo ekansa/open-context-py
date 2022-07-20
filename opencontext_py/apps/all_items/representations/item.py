@@ -193,6 +193,10 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         'object__item_class'
     ).select_related( 
         'object__context'
+    ).order_by(
+        'sort',
+        'object__item_class__label',
+        'object__sort',
     ).annotate(
         object_thumbnail=Subquery(thumbs_qs)
     ).annotate(
