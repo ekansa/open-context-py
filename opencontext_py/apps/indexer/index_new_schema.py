@@ -194,3 +194,13 @@ def make_indexed_solr_documents_in_chunks(
         )
     full_rate = get_crawl_rate_in_seconds(total_count, all_start)
     print(f'ALL {total_count} items indexed at rate: {full_rate} items/second')
+
+
+def delete_solr_documents(uuids, solr=None):
+    """Deletes solr documents identified by a list of uuids"""
+    if not solr:
+        solr = get_solr_connection()
+    print(f'Delete {len(uuids)} solr documents from solr index.')
+    for uuid in uuids:
+        solr.delete(id=uuid)
+    solr.commit()

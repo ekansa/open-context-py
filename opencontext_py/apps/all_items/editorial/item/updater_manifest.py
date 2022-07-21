@@ -35,6 +35,7 @@ from opencontext_py.libs.models import (
     make_model_object_json_safe_dict
 )
 
+from opencontext_py.apps.indexer import index_new_schema as new_ind
 
 #----------------------------------------------------------------------
 # NOTE: These are methods for handling requests to change individual 
@@ -634,6 +635,8 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, note=None, d
         'deleted_id': delete_uuid,
     }
     deleted.append(delete_dict)
+    # Now delete the item from the solr index.
+    new_ind.delete_solr_documents(uuids=[delete_uuid])
     return deleted, errors
 
 
