@@ -134,6 +134,12 @@ def merge_trench_df(df, trench_df):
     if not pc_configs.KOBO_TRENCH_COL in df.columns:
         return None
     df.rename(columns={pc_configs.KOBO_TRENCH_COL:'trench_id',}, inplace=True)
+    fill_t_index = (
+        ~df['trench_id'].isnull()
+        & ~df['trench_id'].str.contains('_')
+        & (df['trench_year'] == 2022)
+    )
+    df.loc[fill_t_index, 'trench_id'] = df['trench_id'] + '_' + df['trench_year'].astype(str)
     df = pd.merge(df, trench_df, on='trench_id', how='left')
     df.reset_index(drop=True, inplace=True)
     return df

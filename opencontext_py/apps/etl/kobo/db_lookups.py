@@ -161,9 +161,13 @@ def db_reconcile_trench_unit(trench_id, trench_year):
         if t_ex[-1].isnumeric():
             trench_id = t_ex[0]
     unit_num = ''.join([c for c in trench_id if c.isnumeric()])
-    trench_name = f"{map_dict['area']} {unit_num}"
+    if not map_dict.get('prefix'):
+        trench_name = f"{map_dict['area']} {unit_num}"
+        b_trench_name = f"{map_dict['area']}{unit_num}"
+    else:
+        trench_name = f"{map_dict['prefix']} {unit_num}"
+        b_trench_name = f"{map_dict['prefix']}{unit_num}"
     search_path = f"{map_dict['site']}/{map_dict['area']}/{trench_name}"
-    b_trench_name = f"{map_dict['area']}{unit_num}"
     b_search_path = f"{map_dict['site']}/{map_dict['area']}/{b_trench_name}"
     man_qs = AllManifest.objects.filter(
         item_type='subjects',
@@ -179,9 +183,10 @@ def db_reconcile_trench_unit(trench_id, trench_year):
         return man_qs[0]
     elif man_qs.count() > 1:
         print(
-            f'PROBLEM: Found {man_qs.count()} matches for '
+            f'WARNING: Found {man_qs.count()} matches for '
             f'unit number: {unit_num}, year {trench_year} in {search_path}'
         )
+        return man_qs[0]
     print(
         f'PROBLEM: Found NO matches for '
         f'unit number: {unit_num}, year {trench_year} in {search_path}'

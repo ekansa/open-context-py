@@ -1,6 +1,7 @@
 
 
 from opencontext_py.apps.etl.kobo import catalog
+from opencontext_py.apps.etl.kobo import locus
 from opencontext_py.apps.etl.kobo import media
 from opencontext_py.apps.etl.kobo import subjects
 
@@ -25,5 +26,7 @@ def extract_transform_kobo_data():
     print(f'Made a subjects_df with {len(subjects_df.index)} rows.')
     _ = catalog.prepare_catalog()
     print(f'Prepared catalog attributes and links.')
+    _ = locus.prepare_locus()
+    print(f'Prepared locus attributes and links.')
     df_media = media.make_all_export_media_df()
     print(f'Extracted media {len(df_media.index)} references from all Kobo excel files.')

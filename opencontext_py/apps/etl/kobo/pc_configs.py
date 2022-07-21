@@ -19,6 +19,9 @@ MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/all-media-k
 
 CATALOG_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-attribs.csv'
 CATALOG_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-links.csv'
+LOCUS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-attribs.csv'
+LOCUS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-links.csv'
+LOCUS_GEO_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-geo.csv'
 # The column in the Kobo exports with the trench identifier
 
 KOBO_TRENCH_COL = 'Trench ID'
@@ -36,6 +39,15 @@ TRENCH_CONTEXT_MAPPINGS = {
     'T': {
         'site':'Poggio Civitate',
         'area': 'Tesoro',
+    },
+    'Agger': {
+        'site':'Poggio Civitate',
+        'area': 'Agger',
+    },
+    'VT': {
+        'site':'Vescovado di Murlo',
+        'area': 'Upper Vescovado',
+        'prefix': 'Vescovado',
     },
 }
 
@@ -95,12 +107,27 @@ REPROJECTED_LAT_COL = 'REPROJ_LAT'
 REPROJECTED_LON_COL = 'REPROJ_LON'
 X_Y_GRID_COLS = [
     ('Find Spot/Grid X', 'Find Spot/Grid Y', ),
+    ('Grid X', 'Grid Y', ),
 ]
 
 GRID_GROUPBY_COLS = ['Trench ID']
 GRID_PROBLEM_COL = 'GRID_PROBLEM_FLAG'
 ATTRIBUTE_HIERARCHY_DELIM = '::'
 
+
+LOCUS_GRID_COLS = [
+    ('Elevations/Elevation', 'Elevation', ),
+    ('Elevations/Grid X', 'Grid X',),
+    ('Elevations/Grid Y', 'Grid Y',),
+    ('Elevations/Measurement Uncertainties/Elevation Uncertainty (+/- cm)', 'Elevation Uncertainty (+/- cm)',),
+    ('Elevations/Measurement Uncertainties/Grid X Uncertainty (+/- cm)', 'Grid X Uncertainty (+/- cm)',),
+    ('Elevations/Measurement Uncertainties/Grid Y Uncertainty (+/- cm)', 'Grid Y Uncertainty (+/- cm)',),
+    ('Elevations/Elevation Type', 'Elevation Type', ),
+    ('Elevations/Elevation Location', 'Elevation Location',),
+    ('Elevations/Elevation Other Location', 'Elevation Other Location',),
+    ('Elevations/Elevation Note', 'Elevation Note',),
+    ('_submission__uuid', '_uuid',),
+]
 
 
 MEDIA_FILETYPE_ATTRIBUTE_CONFIGS = [
@@ -1109,7 +1136,3 @@ SUBJECTS_IMPORT_TREE_COL_TUPS = [
     ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug',),
     ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug',),
 ]
-
-
-
-

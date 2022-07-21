@@ -13,6 +13,7 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.etl.kobo import db_lookups
+from opencontext_py.apps.etl.kobo import grid_geo
 from opencontext_py.apps.etl.kobo import pc_configs
 from opencontext_py.apps.etl.kobo import utilities
 
@@ -287,6 +288,8 @@ def prep_catalog_attribs(
         final_uuid_source_col='subject_uuid_source',
         orig_uuid_col='_uuid',
     )
+    # Add geospatial coordinates
+    df_f = grid_geo.create_global_lat_lon_columns(df_f)
     if attrib_csv_path:
         df_f.to_csv(attrib_csv_path, index=False)
     dfs[sheet_name] = df_f
