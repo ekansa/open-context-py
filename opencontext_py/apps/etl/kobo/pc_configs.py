@@ -19,6 +19,10 @@ MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/all-media-k
 
 CATALOG_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-attribs.csv'
 CATALOG_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-links.csv'
+
+SMALL_FINDS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/small-finds-attribs.csv'
+SMALL_FINDS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/small-finds-links.csv'
+
 LOCUS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-attribs.csv'
 LOCUS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-links.csv'
 LOCUS_GEO_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-geo.csv'
@@ -1045,7 +1049,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
 ]
 
 LINK_REL_PRED_MAPPINGS = {
-    # This describes mappings between link/relation types extrated and derived from the
+    # This describes mappings between link/relation types extracted and derived from the
     # source data from Kobo and predicate_uuid identifiers for use in the Open Context
     # Assertions table. This dictionary is keyed by a text string of link/relation types.
     # The tuple value for each key expresses the predicate_uuid for the
@@ -1070,6 +1074,7 @@ LINK_REL_PRED_MAPPINGS = {
     'Related Open Locus': ('b0149b7c-88c8-4913-b6c8-81375239e71f', 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Related Small Find': (configs.PREDICATE_LINK_UUID, 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Initially documented as': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
+    'Cataloged as': ('17012df0-ef2f-41a8-b8d6-ddf5b6687a7e', 'd58724ee-ecb9-4c2c-87a1-02f853edc2f2'),
     
     # Added for PC 2019
     'Other relation': (configs.PREDICATE_LINK_UUID, configs.PREDICATE_LINK_UUID),

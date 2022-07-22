@@ -10,17 +10,21 @@ from opencontext_py.apps.etl.kobo import pc_configs
 
 
 def grid_x_y_to_lat_lon(grid_x, grid_y, site_proj='poggio-civitate'):
+    if not isinstance(grid_x, list):
+        grid_x = [grid_x]
+    if not isinstance(grid_y, list):
+        grid_y = [grid_y]
     reproj = ReprojectUtilities()
     if site_proj in ReprojectUtilities.MURLO_PRE_TRANSFORMS:
         proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(
-            [grid_x],
-            [grid_y],
+            grid_x,
+            grid_y,
             site_proj
         )
         site_proj = ReprojectUtilities.MURLO_PRE_TRANSFORMS[site_proj]
     else:
-        proj_x_vals = [grid_x]
-        proj_y_vals = [grid_y]
+        proj_x_vals = grid_x
+        proj_y_vals = grid_y 
     reproj.set_in_out_crs(site_proj, 'EPSG:4326')
     out_x, out_y = reproj.reproject_coordinates(
         proj_x_vals,

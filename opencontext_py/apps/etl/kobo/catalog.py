@@ -210,7 +210,7 @@ def get_links_from_rel_ids(dfs):
     return df_link
 
 
-def make_catalog_links_df(
+def prep_links_df(
     dfs,
     subjects_df,
     links_csv_path=pc_configs.CATALOG_LINKS_CSV_PATH
@@ -258,7 +258,7 @@ def make_catalog_links_df(
     return df_all_links
 
 
-def prep_catalog_attribs(
+def prep_attributes_df(
     dfs,
     subjects_df, 
     attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH,
@@ -296,7 +296,7 @@ def prep_catalog_attribs(
     return dfs
 
 
-def prepare_catalog(
+def prepare_attributes_links(
     excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
     attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH,
     links_csv_path=pc_configs.CATALOG_LINKS_CSV_PATH,
@@ -312,12 +312,12 @@ def prepare_catalog(
         if not 'Catalog' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
-        dfs = prep_catalog_attribs(
+        dfs = prep_attributes_df(
             dfs,
             subjects_df,
             attrib_csv_path=attrib_csv_path
         )
-    _ = make_catalog_links_df(
+    _ = prep_links_df(
         dfs,
         subjects_df,
         links_csv_path=links_csv_path,

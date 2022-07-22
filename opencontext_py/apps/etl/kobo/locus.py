@@ -1,5 +1,6 @@
 
 import copy
+from re import S
 import uuid as GenUUID
 import json
 import os
@@ -57,6 +58,7 @@ DF_REL_ALL_COLS = (
     + [c for _,c in pc_configs.RELS_RENAME_COLS.items() if c not in pc_configs.FIRST_LINK_REL_COLS]
     + TRENCH_OBJ_COLS
 )
+
 
 def make_locus_grid_df(dfs, subjects_df):
     df_grid, _ = utilities.get_df_by_sheet_name_part(
@@ -206,8 +208,77 @@ def make_locus_tb_links_df(dfs, subjects_df):
     return df_link
 
 
+def make_strat_link_df(df, dfs, subjects_df):
+    """Makes a single dataframe for locus stratigraphy relations"""
+    df = utilities.add_final_subjects_uuid_label_cols(
+        df=df, 
+        subjects_df=subjects_df,
+        form_type='locus',
+        final_label_col='subject_label',
+        final_uuid_col='subject_uuid',
+        final_uuid_source_col='subject_uuid_source',
+        orig_uuid_col='_submission__uuid',
+    )
+    # Add the trench_id column to the df_link.
+    df = add_trench_cols_to_df_link(df, dfs)
+    act_col = None
+    for c in df.columns.tolist():
+        if c.startswith('Stratigraphy'):
+            act_col = c
+    if not act_col:
+        return None
+    df[pc_configs.LINK_RELATION_TYPE_COL] = act_col
+    df['object_label'] = np.nan
+    df['object_uuid'] = np.nan
+    df['object_orig_uuid'] = np.nan
+    df['object_uuid_source'] = np.nan
+    df_f, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Locus'
+    )
+    act_indx = ~df[act_col].isnull()
+    for _, row in df[act_indx].iterrows():
+        rel_locus_index = (
+            (df_f['Trench ID'] == row['trench_id'])
+            & (df_f['Locus ID'] == row[act_col])
+        )
+        if df_f[rel_locus_index].empty:
+            continue
+        up_index = (
+            (df['trench_id'] == row['trench_id'])
+            & (df[act_col] == row[act_col])
+        )
+        df.loc[up_index, 'object_orig_uuid'] = df_f[rel_locus_index]['_uuid'].iloc[0]
+    # Now update the uuids of the related loci
+    df = utilities.add_final_subjects_uuid_label_cols(
+        df=df, 
+        subjects_df=subjects_df,
+        form_type='locus',
+        final_label_col='object_label',
+        final_uuid_col='object_uuid',
+        final_uuid_source_col='object_uuid_source',
+        orig_uuid_col='object_orig_uuid',
+    )
+    return df
 
-def make_locus_links_df(
+
+def make_strat_links_dfs(
+    dfs,
+    subjects_df,
+    df_list,
+):
+    """Makes dataframes for locus stratigraphy relations"""
+    for sheet_key, df in dfs.items():
+        if not sheet_key.startswith('group_strat_'):
+            continue
+        df = make_strat_link_df(df, dfs, subjects_df)
+        if df is None:
+            continue
+        df_list.append(df)
+    return df_list
+
+
+def prep_links_df(
     dfs,
     subjects_df,
     links_csv_path=pc_configs.LOCUS_LINKS_CSV_PATH
@@ -217,6 +288,7 @@ def make_locus_links_df(
     df_tb_link = make_locus_tb_links_df(dfs, subjects_df)
     if df_tb_link is not None:
         df_list.append(df_tb_link)
+    df_list = make_strat_links_dfs(dfs, subjects_df, df_list)
     if len(df_list) == 0:
         return None
     df_all_links = pd.concat(df_list)
@@ -232,7 +304,7 @@ def make_locus_links_df(
     return df_all_links
 
 
-def prep_locus_attribs(
+def prep_attributes_df(
     dfs,
     subjects_df, 
     attrib_csv_path=pc_configs.LOCUS_ATTRIB_CSV_PATH,
@@ -264,7 +336,7 @@ def prep_locus_attribs(
     return dfs
 
 
-def prepare_locus(
+def prepare_attributes_links(
     excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
     attrib_csv_path=pc_configs.LOCUS_ATTRIB_CSV_PATH,
     links_csv_path=pc_configs.LOCUS_LINKS_CSV_PATH,
@@ -281,12 +353,12 @@ def prepare_locus(
         if not 'Locus' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
-        dfs = prep_locus_attribs(
+        dfs = prep_attributes_df(
             dfs,
             subjects_df,
             attrib_csv_path=attrib_csv_path
         )
-    _ = make_locus_links_df(
+    _ = prep_links_df(
         dfs,
         subjects_df,
         links_csv_path=links_csv_path,
