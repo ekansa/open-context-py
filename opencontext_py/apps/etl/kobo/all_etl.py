@@ -1,5 +1,6 @@
 
 
+from opencontext_py.apps.etl.kobo import bulk_finds
 from opencontext_py.apps.etl.kobo import catalog
 from opencontext_py.apps.etl.kobo import locus
 from opencontext_py.apps.etl.kobo import media
@@ -25,6 +26,8 @@ def extract_transform_kobo_data():
     """Extracts and transforms kobo data prior to loading."""
     subjects_df = subjects.make_and_classify_subjects_df()
     print(f'Made a subjects_df with {len(subjects_df.index)} rows.')
+    _ = bulk_finds.prepare_attributes_links()
+    print(f'Prepared bulk finds attributes and links.')
     _ = catalog.prepare_attributes_links()
     print(f'Prepared catalog attributes and links.')
     _ = small_finds.prepare_attributes_links()

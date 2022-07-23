@@ -34,9 +34,6 @@ dfs = catalog.prepare_catalog()
 
 """
 
-CATALOG_ATTRIBUTES_SHEET = 'Catalog Entry'
-CATALOG_RELS_SHEET = 'rel_ids_repeat'
-
 TRENCH_COL_RENAMES = {
     'group_trench_book/Trench Book Date': 'Trench Book Entry Date',
     'group_trench_book/Trench Book Start Page': 'Trench Book Start Page',

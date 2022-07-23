@@ -32,9 +32,6 @@ dfs = small_finds.prepare_attributes_links()
 
 """
 
-CATALOG_ATTRIBUTES_SHEET = 'Catalog Entry'
-CATALOG_RELS_SHEET = 'rel_ids_repeat'
-
 CATALOG_OBJ_COLS = [
     'Catalog ID',
 ]

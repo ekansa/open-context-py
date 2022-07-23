@@ -23,6 +23,9 @@ CATALOG_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-links.csv
 SMALL_FINDS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/small-finds-attribs.csv'
 SMALL_FINDS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/small-finds-links.csv'
 
+BULK_FINDS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/bulk-finds-attribs.csv'
+
+
 LOCUS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-attribs.csv'
 LOCUS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-links.csv'
 LOCUS_GEO_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-geo.csv'
