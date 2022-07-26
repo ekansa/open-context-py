@@ -48,9 +48,22 @@ PAGE_LINKS_RENAMES = {
     'End Page': 'end_page',
 }
 
+LOCUS_LINK_COLS = [
+    'subject_label',
+    'subject_uuid',
+    'subject_uuid_source',
+    'unit_label',
+    'unit_uuid',
+    pc_configs.LINK_RELATION_TYPE_COL,
+    'object_label',
+    'object_uuid',
+    'object_uuid_source',
+    'locus_number',
+]
+
 
 def make_df_sub_subjects(dfs):
-    "Makes a df_sub subjects only"
+    """Makes a df_sub subjects only"""
     df_sub, sheet_name = utilities.get_df_by_sheet_name_part(
         dfs, 
         sheet_name_part='Trench Book'
@@ -169,7 +182,7 @@ def make_tb_main_links_df(df_sub):
     return df_main
     
 
-def get_df_sub(dfs):
+def get_df_sub(dfs, subjects_df):
     """Gets the trench books as subject items """
     df_sub = make_df_sub_subjects(dfs)
     if df_sub is None:
@@ -183,9 +196,119 @@ def get_df_sub(dfs):
         unit_uuid_col='object_uuid', 
         unit_uuid_source_col='object_uuid_source',
     )
+    # Use the subjects_df to fill in missing trench/unit ids.
+    missing_indx = (
+        df_sub['object_uuid'].isnull()
+        & ~df_sub['trench_id'].isnull()
+        & ~df_sub['trench_year'].isnull()
+    )
+    for _, row in df_sub[missing_indx].iterrows():
+        lookup_indx = (
+            (subjects_df['trench_id'] == row['trench_id'])
+            & (subjects_df['trench_year'] == row['trench_year'])
+        )
+        if subjects_df[lookup_indx].empty:
+            continue
+        act_indx = (
+            (df_sub['trench_id'] == row['trench_id'])
+            & (df_sub['trench_year'] == row['trench_year'])
+        )
+        df_sub.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
+        df_sub.loc[act_indx, 'object_label'] = subjects_df[lookup_indx]['unit_name'].iloc[0]
+        df_sub.loc[act_indx, 'object_uuid'] = subjects_df[lookup_indx]['unit_uuid'].iloc[0]
+        df_sub.loc[act_indx, 'object_uuid_source'] = 'subjects_df'
     cols = [c for c in SUB_LINK_COLS if c in df_sub.columns]
     df_sub = df_sub[cols].copy()
     return df_sub
+
+
+def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, related_new_col):
+    """Makes a dataframe of items related to trenchbooks that includes unit_labels, unit_uuids"""
+    df, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part=sheet_name_part,
+    )
+    if df is None:
+        return None
+    df['subject_uuid'] = df['_submission__uuid']
+    df[related_new_col] = df[related_orig_col]
+    df = df[['subject_uuid', related_new_col]].copy()
+    # Now merge the df_sub, which has the trench/unit uuid associated.
+    df_sub = df_sub.copy()
+    df_sub.rename(columns={'object_label': 'unit_name', 'object_uuid': 'unit_uuid'}, inplace=True)
+    df_sub = df_sub[
+        [
+            'subject_label', 
+            'subject_uuid', 
+            'subject_uuid_source',
+            'unit_name',
+            'unit_uuid',
+            'trench_id',
+            'trench_year',
+        ]
+    ].copy()
+    df = pd.merge(df, df_sub, on='subject_uuid', how='left')
+    for col in [pc_configs.LINK_RELATION_TYPE_COL, 'object_label', 'object_uuid', 'object_uuid_source']:
+        df[col] = np.nan
+    return df
+
+
+def make_locus_links_df(df_sub, subjects_df, dfs):
+    """Make a dataframe for linking relations with loci"""
+    df_loci = make_df_rel_with_units(
+        dfs=dfs, 
+        df_sub=df_sub, 
+        sheet_name_part='locus', 
+        related_orig_col='Related Locus', 
+        related_new_col='locus_number'
+    )
+    if df_loci is None:
+        return None
+    for _, row in df_loci.iterrows():
+        lookup_indx = (
+            (subjects_df['unit_uuid'] == row['unit_uuid'])
+            & (subjects_df['locus_number'] == row['locus_number'])
+        )
+        if subjects_df[lookup_indx].empty:
+            continue
+        act_indx = (
+            (df_loci['unit_uuid'] == row['unit_uuid'])
+            & (df_loci['locus_number'] == row['locus_number'])
+        )
+        df_loci.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Open Locus'
+        df_loci.loc[act_indx, 'object_label'] = subjects_df[lookup_indx]['locus_name'].iloc[0]
+        df_loci.loc[act_indx, 'object_uuid'] = subjects_df[lookup_indx]['locus_uuid'].iloc[0]
+        df_loci.loc[act_indx, 'object_uuid_source'] = 'subjects_df'
+    return df_loci
+
+
+def make_small_find_links_df(df_sub, subjects_df, dfs):
+    """Make a dataframe for linking relations with loci"""
+    df_sf = make_df_rel_with_units(
+        dfs=dfs, 
+        df_sub=df_sub, 
+        sheet_name_part='find', 
+        related_orig_col='Related Find', 
+        related_new_col='rel_find'
+    )
+    if df_sf is None:
+        return None
+    for _, row in df_sf.iterrows():
+        lookup_indx = (
+            (subjects_df['unit_uuid'] == row['unit_uuid'])
+            & (subjects_df['find_name'].str.endswith(f"-{row['rel_find']}"))
+        )
+        if subjects_df[lookup_indx].empty:
+            continue
+        act_indx = (
+            (df_sf['unit_uuid'] == row['unit_uuid'])
+            & (df_sf['rel_find'] == row['rel_find'])
+        )
+        df_sf.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Small Find'
+        df_sf.loc[act_indx, 'object_label'] = subjects_df[lookup_indx]['find_name'].iloc[0]
+        df_sf.loc[act_indx, 'object_uuid'] = subjects_df[lookup_indx]['find_uuid'].iloc[0]
+        df_sf.loc[act_indx, 'object_uuid_source'] = 'subjects_df'
+    return df_sf
 
 
 def prep_links_df(
@@ -195,7 +318,7 @@ def prep_links_df(
 ):
     """Prepares the trench book attribute data"""
     df_list = []
-    df_sub = get_df_sub(dfs)
+    df_sub = get_df_sub(dfs, subjects_df)
     if df_sub is None:
         return dfs
     df_list.append(df_sub)
@@ -204,6 +327,12 @@ def prep_links_df(
     df_all_paging = make_paging_links_df(dfs)
     if df_all_paging is not None:
         df_list.append(df_all_paging)
+    df_loci = make_locus_links_df(df_sub, subjects_df, dfs)
+    if df_loci is not None:
+        df_list.append(df_loci)
+    df_sf = make_small_find_links_df(df_sub, subjects_df, dfs)
+    if df_sf is not None:
+        df_list.append(df_sf)
     df_all_links = pd.concat(df_list)
     if links_csv_path:
         df_all_links.to_csv(links_csv_path, index=False)
