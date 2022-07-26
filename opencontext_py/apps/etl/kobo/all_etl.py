@@ -6,6 +6,7 @@ from opencontext_py.apps.etl.kobo import locus
 from opencontext_py.apps.etl.kobo import media
 from opencontext_py.apps.etl.kobo import small_finds
 from opencontext_py.apps.etl.kobo import subjects
+from opencontext_py.apps.etl.kobo import trenchbooks
 
 from opencontext_py.apps.etl.kobo import pc_configs
 
@@ -18,6 +19,7 @@ import importlib
 from opencontext_py.apps.etl.kobo import all_etl
 
 all_etl.extract_transform_kobo_data()
+all_etl.prepare_media_files()
 
 """
 
@@ -34,5 +36,11 @@ def extract_transform_kobo_data():
     print(f'Prepared small finds attributes and links.')
     _ = locus.prepare_attributes_links()
     print(f'Prepared locus attributes and links.')
-    df_media = media.make_all_export_media_df()
+    _ = trenchbooks.prepare_attributes_links()
+    print(f'Prepared trenchbooks attributes and links.')
+    df_media = media.prepare_media()
     print(f'Extracted media {len(df_media.index)} references from all Kobo excel files.')
+
+
+def prepare_media_files():
+    df_media = media.make_opencontext_file_versions()

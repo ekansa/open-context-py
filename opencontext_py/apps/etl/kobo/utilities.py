@@ -36,6 +36,9 @@ def make_directory_files_df(attachments_path):
     }
     for dirpath, _, filenames in os.walk(attachments_path):
         for filename in filenames:
+            if filename.endswith(':Zone.Identifier'):
+                # A convenience hack for Windows subsystem for linux
+                continue
             file_path = os.path.join(dirpath, filename)
             uuid_dir = os.path.split(os.path.abspath(dirpath))[-1]
             file_data['path'].append(file_path)

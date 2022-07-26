@@ -9,29 +9,52 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
+DEFAULT_IMPORT_YEAR = 2022
+
 HOME = str(Path.home())
-KOBO_EXCEL_FILES_PATH = f'{HOME}/data-dumps/pc-2022/kobo-data'
-MEDIA_FILES_PATH = f'{HOME}/data-dumps/pc-2022/kobo-media-files'
-TRENCH_CSV_PATH = f'{HOME}/data-dumps/pc-2022/trenches-2022.csv'
-SUBJECTS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/subjects.csv'
-MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/all-media-kobo-files.csv'
+ALL_IMPORTS_PATH = f'{HOME}/data-dumps/pc-{DEFAULT_IMPORT_YEAR}'
+KOBO_EXCEL_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-data'
+KOBO_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-media-files'
+
+OC_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-media-files'
+OC_IMPORT_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-import'
+
+TRENCH_CSV_PATH = f'{ALL_IMPORTS_PATH}/trenches-2022.csv'
+SUBJECTS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/subjects.csv'
+MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/all-media-files.csv'
+
+CATALOG_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/catalog-attribs.csv'
+CATALOG_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/catalog-links.csv'
+
+SMALL_FINDS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/small-finds-attribs.csv'
+SMALL_FINDS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/small-finds-links.csv'
+
+BULK_FINDS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/bulk-finds-attribs.csv'
+
+LOCUS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-attribs.csv'
+LOCUS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-links.csv'
+LOCUS_GEO_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-geo.csv'
+
+TB_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-attribs.csv'
+TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
 
 
-CATALOG_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-attribs.csv'
-CATALOG_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/catalog-links.csv'
-
-SMALL_FINDS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/small-finds-attribs.csv'
-SMALL_FINDS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/small-finds-links.csv'
-
-BULK_FINDS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/bulk-finds-attribs.csv'
-
-
-LOCUS_ATTRIB_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-attribs.csv'
-LOCUS_LINKS_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-links.csv'
-LOCUS_GEO_CSV_PATH = f'{HOME}/data-dumps/pc-2022/oc-import/locus-geo.csv'
 # The column in the Kobo exports with the trench identifier
-
 KOBO_TRENCH_COL = 'Trench ID'
+
+SOURCE_ID_PREFIX = f'pc{DEFAULT_IMPORT_YEAR}'
+SOURCE_ID_SUBJECTS = f'{SOURCE_ID_PREFIX}-subjects'
+SOURCE_ID_MEDIA_FILES = f'{SOURCE_ID_PREFIX}-files'
+SOURCE_ID_CATALOG_ATTRIB = f'{SOURCE_ID_PREFIX}-cat-attrib'
+SOURCE_ID_CATALOG_LINKS = f'{SOURCE_ID_PREFIX}-cat-link'
+SOURCE_ID_SMALL_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-small-attrib'
+SOURCE_ID_SMALL_FINDS_LINKS = f'{SOURCE_ID_PREFIX}-small-link'
+SOURCE_ID_BULK_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-bulk-attrib'
+SOURCE_ID_LOCUS_ATTRIB = f'{SOURCE_ID_PREFIX}-locus-attrib'
+SOURCE_ID_LOCUS_LINKS = f'{SOURCE_ID_PREFIX}-locus-link'
+SOURCE_ID_LOCUS_GEO = f'{SOURCE_ID_PREFIX}-locus-geo'
+SOURCE_ID_TB_ATTRIB = f'{SOURCE_ID_PREFIX}-tb-attrib'
+SOURCE_ID_TB_LINKS = f'{SOURCE_ID_PREFIX}-tb-link'
 
 # Trench context mappings:
 TRENCH_CONTEXT_MAPPINGS = {
@@ -1073,6 +1096,7 @@ LINK_REL_PRED_MAPPINGS = {
     'Objects join, refit together': ('5E41E490-0618-4D15-0826-38E3B4681C58', '5E41E490-0618-4D15-0826-38E3B4681C58'),
     'Additional ID': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
     'Associated in Context': ('3d4a7baa-8b52-4363-9a10-3f3a70cf919c', '3d4a7baa-8b52-4363-9a10-3f3a70cf919c'),
+    'Has Related Trench': (configs.PREDICATE_LINK_UUID, 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Has Related Trench Book Entry': ('f20e9e2e-246f-4421-b1dd-e31e8b58805c', configs.PREDICATE_LINK_UUID),
     'Related Open Locus': ('b0149b7c-88c8-4913-b6c8-81375239e71f', 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Related Small Find': (configs.PREDICATE_LINK_UUID, 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
@@ -1144,3 +1168,14 @@ SUBJECTS_IMPORT_TREE_COL_TUPS = [
     ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug',),
     ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug',),
 ]
+
+
+MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/2022-media'
+
+
+MAIN_TRENCH_BOOKS = {
+    'T90_2022': ('Trench Book T90 2022', 'b01c144b-5fdc-44ff-b00f-5bcd36e91b56',),
+    'T100_2022': ('Trench Book T100 2022', '7227c029-e202-42ed-a786-844bc0e42edb',), 
+    'CA90_2022': ('Trench Book CA90 2022', 'e911d2b1-898b-413b-8e8e-d45271bca34d',),
+    'CA92_2022': ('Trench Book CA92 2022', '1d4d7311-9dc0-4667-bdb0-93bda1f8bd65',), 
+}

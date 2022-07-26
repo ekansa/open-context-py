@@ -168,9 +168,9 @@ def load_subject_and_containment(
 
 
 def load_subjects_parent_child_cols_df(
-    source_id,
     subjects_df,
     parent_child_col_tup,
+    source_id=pc_configs.SOURCE_ID_SUBJECTS,
     extra_filter_index=None,
 ):
     if not set(parent_child_col_tup).issubset(subjects_df.columns.tolist()):
@@ -210,8 +210,8 @@ def load_subjects_parent_child_cols_df(
 
 
 def load_catalog_no_locus(
-    source_id,
     subjects_df,
+    source_id=pc_configs.SOURCE_ID_SUBJECTS,
 ):
     """Loads catalog subjects not contained in a locus"""
     req_cols = [
@@ -248,22 +248,22 @@ def load_catalog_no_locus(
 
 
 def load_subjects_dataframe(
-    source_id,
     subjects_df,
+    source_id=pc_configs.SOURCE_ID_SUBJECTS,
 ):
     """Loads the subjects dataframe"""
     if subjects_df is None or subjects_df.empty:
         return subjects_df
     for parent_child_col_tup in pc_configs.SUBJECTS_IMPORT_TREE_COL_TUPS:
         subjects_df = load_subjects_parent_child_cols_df(
-            source_id,
             subjects_df,
-            parent_child_col_tup
+            parent_child_col_tup,
+            source_id,
         )
     # Load catalog items that are not contained in a locus.
     subjects_df = load_catalog_no_locus(
-        source_id,
         subjects_df,
+        source_id=source_id,
     )
     return subjects_df
 
@@ -277,4 +277,3 @@ def load_subjects_dataframe(
 # The main expectation is that entities receiving attributes have been
 # already created. 
 # ---------------------------------------------------------------------
-

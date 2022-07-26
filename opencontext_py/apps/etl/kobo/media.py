@@ -208,7 +208,7 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
     if df_media.empty:
         return None
     if '_uuid' in df_media.columns:
-        df_media.drop(columns=['_uuid'], inplace=True)
+        df_media.rename(columns={'_uuid': 'path_uuid'}, inplace=True)
     return df_media
 
 
@@ -387,24 +387,53 @@ def make_image_versions_src_and_new_file(
         make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
     return full_file, prev_file, thumb_file
 
+
+def make_media_url(file_path, file_type, media_base_url=pc_configs.MEDIA_BASE_URL):
+    """Makes a media URL for a give file type"""
+    type_dir = f'/{file_type}/'
+    if not type_dir in file_path:
+        return None
+    f_ex = file_path.split(type_dir)
+    return f'{media_base_url}{type_dir}{f_ex[-1]}'
+
+
 def make_opencontext_file_versions(
-    df_all,
-    oc_media_root_dir,
-    oc_sub_dirs=None
+    all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH,
+    oc_media_root_dir=pc_configs.OC_MEDIA_FILES_PATH,
+    oc_sub_dirs=None,
 ):
     """Makes different file versions expected by Open Context."""
+    df_media = pd.read_csv(all_media_kobo_files_path)
     dirs = get_make_directories(oc_media_root_dir, oc_sub_dirs=oc_sub_dirs)
-    df_all_use = df_all[
-        df_all['path'].notnull() &
-        df_all['new_filename'].notnull()
-    ]
-    print(df_all.head(10))
-    for _, row in df_all_use.iterrows():
+    for col in ['FULL_URL', 'PREVIEW_URL', 'THUMBS_URL']:
+        if col in df_media.columns:
+            continue
+        df_media[col] = np.nan
+    files_indx = (
+        df_media['path'].notnull() & df_media['new_filename'].notnull()
+    )
+    for _, row in df_media[files_indx].iterrows():
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
             dirs,
             row['path'],
             row['new_filename']
         )
+        act_index = (df_media['path'] == row['path'])
+        df_media.loc[act_index, 'FULL_URL'] = make_media_url(
+            file_path=full_file, 
+            file_type='full'
+        )
+        df_media.loc[act_index, 'PREVIEW_URL'] = make_media_url(
+            file_path=prev_file, 
+            file_type='preview'
+        )
+        df_media.loc[act_index, 'THUMBS_URL'] = make_media_url(
+            file_path=thumb_file, 
+            file_type='thumbs'
+        )
+    df_media.to_csv(all_media_kobo_files_path, index=False)
+    return df_media
+    
 
 def check_prepare_media_uuid(df_all):
     """Checks on the media-uuid, adding uuids that are needing."""
@@ -499,13 +528,23 @@ def finalize_combined_media_df(
     df_all['_uuid'] = df_all['media_uuid']
     return df_all
 
+
 def prepare_media(
     excels_filepath=pc_configs.KOBO_EXCEL_FILES_PATH,
-    files_path=pc_configs.MEDIA_FILES_PATH,
+    files_path=pc_configs.KOBO_MEDIA_FILES_PATH,
+    all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH,
 ):
     """Prepares a dataframe consolidating media from all export excels."""
     df_media = make_all_export_media_df(excels_filepath)
     df_files = utilities.make_directory_files_df(files_path)
+    df_media = pd.merge(
+        df_media, 
+        df_files, 
+        on=['path_uuid', 'filename'], 
+        how='left'
+    )
+    if all_media_kobo_files_path:
+        df_media.to_csv(all_media_kobo_files_path, index=False)
     return df_media
 
 
