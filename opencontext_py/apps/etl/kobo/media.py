@@ -14,6 +14,8 @@ from django.template.defaultfilters import slugify
 from opencontext_py.apps.all_items.models import (
     AllManifest,
 )
+from opencontext_py.apps.all_items.legacy_all import update_old_id
+
 from opencontext_py.apps.all_items import configs
 
 from opencontext_py.apps.etl.kobo import db_lookups
@@ -110,6 +112,14 @@ REL_COLS = [
 ]
 
 
+def make_deterministic_media_uuid(row):
+    """Makes a deterministic media item uuid based on inputs"""
+    # import pdb; pdb.set_trace()
+    input = str(row['filename']) + ' ' + str(row['subject_uuid'])
+    _, media_uuid = update_old_id(input)
+    return media_uuid
+
+
 def get_path_uuid_from_url(url):
     """Gets the path_uuid from the file URL"""
     if not '%2F' in url:
@@ -192,7 +202,6 @@ def make_sheet_media_df(
     df_sheet_media.dropna(subset=[media_col], inplace=True)
     df_sheet_media['filename'] = df_sheet_media[media_col].apply(get_filename_from_url)
     df_sheet_media['path_uuid'] = df_sheet_media[media_col].apply(get_path_uuid_from_url)
-    df_sheet_media.drop(columns=[media_col], inplace=True)
     df_sheet_media['media_source_type'] = media_source_type
     df_sheet_media['kobo_form'] = form_type
     if pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(form_type):
@@ -210,9 +219,13 @@ def make_sheet_media_df(
             columns={act_uuid: new_uuid,},
             inplace=True
         )
+    all_drop_cols = [media_col, '_uuid', '_submission__uuid',]
+    drop_cols = [c for c in all_drop_cols if c in df_sheet_media.columns]
+    df_sheet_media.drop(columns=drop_cols, inplace=True)
     df_sheet_media.reset_index(drop=True, inplace=True)
     if df_sheet_media.empty:
         return None
+    df_sheet_media['media_uuid'] = df_sheet_media.apply(make_deterministic_media_uuid, axis=1)
     return df_sheet_media
 
 
