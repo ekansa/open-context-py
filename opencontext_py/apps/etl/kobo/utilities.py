@@ -1,3 +1,4 @@
+from copy import copy
 import os
 import numpy as np
 import pandas as pd
@@ -29,11 +30,7 @@ LINK_RELATION_TYPE_COL = 'relation_type'
 
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
-    file_data = {
-        'path':[],
-        'path_uuid':[],
-        'filename': [],
-    }
+    file_data = []
     for dirpath, _, filenames in os.walk(attachments_path):
         for filename in filenames:
             if filename.endswith(':Zone.Identifier'):
@@ -41,9 +38,12 @@ def make_directory_files_df(attachments_path):
                 continue
             file_path = os.path.join(dirpath, filename)
             uuid_dir = os.path.split(os.path.abspath(dirpath))[-1]
-            file_data['path'].append(file_path)
-            file_data['path_uuid'].append(uuid_dir)
-            file_data['filename'].append(filename)
+            rec = {
+                'path': file_path,
+                'path_uuid': uuid_dir,
+                'filename': filename,
+            }
+            file_data.append(rec)
     df = pd.DataFrame(data=file_data)
     return df
 
@@ -360,6 +360,7 @@ def add_final_subjects_uuid_label_cols(
     final_uuid_source_col='subject_uuid_source',
     orig_uuid_col='_uuid',
 ):
+    """Adds the final (db reconciled) uuids and labels for subjects items"""
     final_cols = [
         final_label_col,
         final_uuid_col,
@@ -403,3 +404,35 @@ def add_final_subjects_uuid_label_cols(
         else:
             df.loc[df_indx, final_uuid_source_col] = pc_configs.UUID_SOURCE_OC_LOOKUP
     return df
+
+
+def make_trench_supervisor_link_df(df):
+    """Makes a link dataframe to associate persons """
+    cols = ['subject_label', 'subject_uuid', 'Trench Supervisor']
+    if not set(cols).issubset(set(df.columns.tolist())):
+        return None
+    df_persons = pd.read_csv(pc_configs.PEOPLE_CSV_PATH)
+    df = df[cols].copy()
+    df.rename(columns={'Trench Supervisor': 'name'}, inplace=True)
+    # This explodes space separated names into multiple rows.
+    df_super = df.assign(name=df['name'].str.split(' ')).explode('name').reset_index(drop=True)
+    # Merge the df_persons into this.
+    df_super = pd.merge(df_super, df_persons, on='name', how='left')
+    df_super[pc_configs.LINK_RELATION_TYPE_COL] = 'Supervised by'
+    df_super.rename(
+        columns={
+            'label_oc': 'object_label',
+            'uuid': 'object_uuid',
+        },
+        inplace=True,
+    )
+    final_cols = [
+        'subject_label', 
+        'subject_uuid',
+        pc_configs.LINK_RELATION_TYPE_COL,
+        'object_label',
+        'object_uuid',
+        'name',
+    ]
+    df_super = df_super[final_cols]
+    return df_super

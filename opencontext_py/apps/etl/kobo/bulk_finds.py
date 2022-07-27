@@ -32,6 +32,36 @@ dfs = bulk_finds.prepare_attributes_links()
 
 """
 
+def prep_links_df(
+    dfs,
+    subjects_df,
+    links_csv_path=pc_configs.BULK_FINDS_LINKS_CSV_PATH,
+):
+    """Makes a dataframe for bulk finds linking relations"""
+    df, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Bulk Find'
+    )
+    if df is None:
+        return None
+    # Update the buk find entry uuids based on the
+    # subjects_df uuids.
+    df = utilities.add_final_subjects_uuid_label_cols(
+        df=df, 
+        subjects_df=subjects_df,
+        form_type='bulk find',
+        final_label_col='subject_label',
+        final_uuid_col='subject_uuid',
+        final_uuid_source_col='subject_uuid_source',
+        orig_uuid_col='_uuid',
+    )
+    df_all_links = utilities.make_trench_supervisor_link_df(df)
+    if df_all_links is None:
+        return None
+    if links_csv_path:
+        df_all_links.to_csv(links_csv_path, index=False)
+    return df_all_links
+
 
 def prep_attributes_df(
     dfs,
@@ -48,7 +78,7 @@ def prep_attributes_df(
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
-    # Update the catalog entry uuids based on the
+    # Update the buk find entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(
         df=df_f, 
@@ -68,6 +98,7 @@ def prep_attributes_df(
 def prepare_attributes_links(
     excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
     attrib_csv_path=pc_configs.BULK_FINDS_ATTRIB_CSV_PATH,
+    links_csv_path=pc_configs.BULK_FINDS_LINKS_CSV_PATH,
     subjects_path=pc_configs.SUBJECTS_CSV_PATH,
 ):
     """Prepares Bulk Find dataframes."""
@@ -85,5 +116,10 @@ def prepare_attributes_links(
             subjects_df,
             attrib_csv_path=attrib_csv_path
         )
-    # NOTE: No links in this dataset
+    # NOTE: Only trench supervisor links in this dataset
+    _ = prep_links_df(
+        dfs,
+        subjects_df,
+        links_csv_path=links_csv_path,
+    )
     return dfs

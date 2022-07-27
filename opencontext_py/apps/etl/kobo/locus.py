@@ -275,6 +275,28 @@ def make_strat_links_dfs(
     return df_list
 
 
+def make_trench_super_link_df(dfs, subjects_df):
+    """Makes a dataframe for locus trench supervisors"""
+    df, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Locus'
+    )
+    if df is None:
+        return None
+    # Update the locus entry uuids based on the
+    # subjects_df uuids.
+    df = utilities.add_final_subjects_uuid_label_cols(
+        df=df, 
+        subjects_df=subjects_df,
+        form_type='locus',
+        final_label_col='subject_label',
+        final_uuid_col='subject_uuid',
+        final_uuid_source_col='subject_uuid_source',
+        orig_uuid_col='_uuid',
+    )
+    return utilities.make_trench_supervisor_link_df(df)
+
+
 def prep_links_df(
     dfs,
     subjects_df,
@@ -285,6 +307,10 @@ def prep_links_df(
     df_tb_link = make_locus_tb_links_df(dfs, subjects_df)
     if df_tb_link is not None:
         df_list.append(df_tb_link)
+    # Make a dataframe of trench supervisors
+    df_super = make_trench_super_link_df(dfs, subjects_df)
+    if df_super is not None:
+        df_list.append(df_super)
     df_list = make_strat_links_dfs(dfs, subjects_df, df_list)
     if len(df_list) == 0:
         return None

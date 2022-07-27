@@ -15,9 +15,12 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from opencontext_py.apps.etl.importer.models import (
+    DataSource,
     DataSourceField,
     DataSourceAnnotation,
+    DataSourceRecord,
 )
+from opencontext_py.apps.etl.importer.df import load_csv_for_etl
 
 from opencontext_py.apps.all_items import configs
 

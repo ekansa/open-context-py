@@ -4,8 +4,13 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from unidecode import unidecode
 
 from PIL import Image, ImageFile
+
+
+from django.template.defaultfilters import slugify
+
 from opencontext_py.apps.all_items.models import (
     AllManifest,
 )
@@ -31,8 +36,8 @@ df = media.make_all_export_media_df()
 
 
 MEDIAFILE_COLS_ENDSWITH = [
-    ('Primary Image', 'link-primary', '_uuid', 'subject_uuid'),
-    ('Supplemental Image', 'link-supplemental', '_submission__uuid', 'subject_uuid'),
+    ('Primary Image_URL', 'link-primary', '_uuid', 'subject_uuid'),
+    ('Supplemental Image_URL', 'link-supplemental', '_submission__uuid', 'subject_uuid'),
     ('Image File', 'primary', '_uuid', 'media_uuid'),
     ('Video File', 'primary', '_uuid', 'media_uuid'),
     ('Audio File', 'primary', '_uuid', 'media_uuid'),
@@ -105,11 +110,43 @@ REL_COLS = [
 ]
 
 
-def revise_filename(filename):
-    """Revises a filename to be URL friendly."""
-    filename = filename.lower()
-    filename = filename.replace(' ', '-').replace('_', '-')
+def get_path_uuid_from_url(url):
+    """Gets the path_uuid from the file URL"""
+    if not '%2F' in url:
+        return None
+    url_ex = url.split('%2F')
+    if len(url_ex) < 2:
+        return None
+    return url_ex[-2]
+
+
+def get_filename_from_url(url):
+    """Gets the filename from the file URL"""
+    if not '%2F' in url:
+        return None
+    url_ex = url.split('%2F')
+    return url_ex[-1]
+
+
+def make_fs_filename(filename):
+    """Makes a filesystem OK filename for linking purposes"""
+    filename = filename.replace(' ', '_').replace(',', '')
     return filename
+
+
+def make_oc_filename(filename):
+    """Makes an Open Context filename to be URL friendly."""
+    filename = filename.lower()
+    ext = ''
+    if '.' in filename:
+        f_explode = filename.split('.')
+        ext = f'.{f_explode[-1]}'
+        filename = '-'.join(f_explode[0:-1])
+    ext = ext.replace('.jpeg', '.jpg')
+    filename = slugify(unidecode(filename))
+    filename = filename.replace(' ', '-').replace('_', '-').replace(',', '-')
+    filename = filename.replace('----', '-').replace('---', '-').replace('--', '-')
+    return filename + ext
 
 
 def make_sheet_media_df(
@@ -153,12 +190,11 @@ def make_sheet_media_df(
     ].copy()
     df_sheet_media[media_col].replace('', np.nan, inplace=True)
     df_sheet_media.dropna(subset=[media_col], inplace=True)
+    df_sheet_media['filename'] = df_sheet_media[media_col].apply(get_filename_from_url)
+    df_sheet_media['path_uuid'] = df_sheet_media[media_col].apply(get_path_uuid_from_url)
+    df_sheet_media.drop(columns=[media_col], inplace=True)
     df_sheet_media['media_source_type'] = media_source_type
     df_sheet_media['kobo_form'] = form_type
-    df_sheet_media.rename(
-        columns={media_col: 'filename'},
-        inplace=True
-    )
     if pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(form_type):
         df_sheet_media = utilities.add_final_subjects_uuid_label_cols(
             df=df_sheet_media, 
@@ -207,8 +243,6 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
     df_media = pd.concat(df_media_list)
     if df_media.empty:
         return None
-    if '_uuid' in df_media.columns:
-        df_media.rename(columns={'_uuid': 'path_uuid'}, inplace=True)
     return df_media
 
 
@@ -233,7 +267,7 @@ def make_all_export_media_df(
         )
         if df_media is None:
             continue
-        df_media['new_filename'] = df_media['filename'].apply(revise_filename)
+        df_media['new_filename'] = df_media['filename'].apply(make_oc_filename)
         for file_start, prefix in MEDIA_SOURCE_FILE_PREFIXS.items():
             if not excel_file.startswith(file_start):
                 continue

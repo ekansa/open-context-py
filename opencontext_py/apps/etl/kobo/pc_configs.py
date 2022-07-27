@@ -20,6 +20,7 @@ OC_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-media-files'
 OC_IMPORT_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-import'
 
 TRENCH_CSV_PATH = f'{ALL_IMPORTS_PATH}/trenches-2022.csv'
+PEOPLE_CSV_PATH = f'{ALL_IMPORTS_PATH}/people-2022.csv'
 SUBJECTS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/subjects.csv'
 MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/all-media-files.csv'
 
@@ -30,6 +31,7 @@ SMALL_FINDS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/small-finds-attribs.csv'
 SMALL_FINDS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/small-finds-links.csv'
 
 BULK_FINDS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/bulk-finds-attribs.csv'
+BULK_FINDS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/bulk-finds-links.csv'
 
 LOCUS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-attribs.csv'
 LOCUS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-links.csv'
@@ -1102,6 +1104,7 @@ LINK_REL_PRED_MAPPINGS = {
     'Related Small Find': (configs.PREDICATE_LINK_UUID, 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Initially documented as': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
     'Cataloged as': ('17012df0-ef2f-41a8-b8d6-ddf5b6687a7e', 'd58724ee-ecb9-4c2c-87a1-02f853edc2f2'),
+    'Supervised by': ('4c15bbbf-4c0d-4262-8bcc-f6d9236813af', None),
     
     # Added for PC 2019
     'Other relation': (configs.PREDICATE_LINK_UUID, configs.PREDICATE_LINK_UUID),

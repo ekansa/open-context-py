@@ -76,6 +76,14 @@ def make_df_sub_subjects(dfs):
     return df_sub
 
 
+def make_trench_super_link_df(dfs):
+    """Makes a dataframe for locus trench supervisors"""
+    df = make_df_sub_subjects(dfs)
+    if df is None:
+        return None
+    return utilities.make_trench_supervisor_link_df(df)
+
+
 def make_paging_links_df(dfs):
     """Makes paging links for trench books"""
     df_sub = make_df_sub_subjects(dfs)
@@ -333,6 +341,10 @@ def prep_links_df(
     df_sf = make_small_find_links_df(df_sub, subjects_df, dfs)
     if df_sf is not None:
         df_list.append(df_sf)
+    # Make a dataframe of trench supervisors
+    df_super = make_trench_super_link_df(dfs)
+    if df_super is not None:
+        df_list.append(df_super)
     df_all_links = pd.concat(df_list)
     if links_csv_path:
         df_all_links.to_csv(links_csv_path, index=False)

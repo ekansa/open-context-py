@@ -93,6 +93,28 @@ def get_links_from_rel_ids(dfs):
     return df_link
 
 
+def make_trench_super_link_df(dfs, subjects_df):
+    """Makes a dataframe for locus trench supervisors"""
+    df, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Small Find'
+    )
+    if df is None:
+        return None
+    # Update the locus entry uuids based on the
+    # subjects_df uuids.
+    df = utilities.add_final_subjects_uuid_label_cols(
+        df=df, 
+        subjects_df=subjects_df,
+        form_type='small find',
+        final_label_col='subject_label',
+        final_uuid_col='subject_uuid',
+        final_uuid_source_col='subject_uuid_source',
+        orig_uuid_col='_uuid',
+    )
+    return utilities.make_trench_supervisor_link_df(df)
+
+
 def prep_links_df(
     dfs,
     subjects_df,
@@ -105,6 +127,10 @@ def prep_links_df(
     )
     if df_rel is not None:
         df_list.append(df_rel)
+    # Make a dataframe of trench supervisors
+    df_super = make_trench_super_link_df(dfs, subjects_df)
+    if df_super is not None:
+        df_list.append(df_super)
     if len(df_list) == 0:
         return None
     df_all_links = pd.concat(df_list)

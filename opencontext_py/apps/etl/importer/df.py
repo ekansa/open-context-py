@@ -451,7 +451,13 @@ def load_df_for_etl(
     return ds_source
 
 
-def load_csv_for_etl(project, file_path, data_source_label=None, source_exists="raise"):
+def load_csv_for_etl(
+    project, 
+    file_path, 
+    data_source_label=None, 
+    prelim_source_id=None, 
+    source_exists="raise"
+):
     """Loads a csv file for an ETL process.
 
     :param AllManifest project: A manifest object for the project that we
@@ -460,6 +466,8 @@ def load_csv_for_etl(project, file_path, data_source_label=None, source_exists="
         a dataframe for ingest in an ETL process.
     :param str data_source_label: A human readable label for to give this
         datafile a bit of descriptive metadata.
+    :param str prelim_source_id: An informal identifier for this specific
+        dataset.
     :param str source_exists: Handling options if a prelim_source_id
         already exists in the ETL records. If "raise" then throw an
         exception, if "replace" then replace the prior data source with 
@@ -471,11 +479,13 @@ def load_csv_for_etl(project, file_path, data_source_label=None, source_exists="
     if df is None:
         # No data returned from loading the CSV.
         return None
-    filename = os.path.basename(file_path)
+    if not prelim_source_id:
+        # No prelim_source_id, so use the filename.
+        prelim_source_id = os.path.basename(file_path)
     return load_df_for_etl(
         df=df,
         project=project, 
-        prelim_source_id=filename, 
+        prelim_source_id= prelim_source_id, 
         data_source_label=data_source_label, 
         source_exists=source_exists
     )
