@@ -77,20 +77,20 @@ MEDIA_DESCRIPTION_COLS_ENDSWITH = [
 MEDIA_SOURCE_FILE_PREFIXS = {
     'Catalog': 'cat-',
     'Conservation': 'consrv-',
-    'Field Bulk': 'field-bulk-',
-    'Field Small': 'field-small-',
+    'Field_Bulk': 'field-bulk-',
+    'Field_Small': 'field-small-',
     'Locus': 'locus-',
     'Media': '',
-    'Trench Book': 'trench-book-',
+    'Trench_Book': 'trench-book-',
 }
 
 MEDIA_SOURCE_COMPOSITION_TYPES = {
     'Catalog': 'Object (artifact, ecofact)',
     'Conservation': 'Conservation',
-    'Field Bulk': 'Field',
-    'Field Small': 'Field',
+    'Field_Bulk': 'Field',
+    'Field_Small': 'Field',
     'Locus': 'Field',
-    'Trench Book': 'Field',
+    'Trench_Book': 'Field',
 }
 
 
@@ -580,8 +580,6 @@ def prepare_media(
     if all_media_kobo_files_path:
         df_media.to_csv(all_media_kobo_files_path, index=False)
     return df_media
-
-
 
 
 
