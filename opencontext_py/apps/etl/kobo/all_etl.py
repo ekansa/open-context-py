@@ -9,7 +9,7 @@ from opencontext_py.apps.etl.kobo import subjects
 from opencontext_py.apps.etl.kobo import trenchbooks
 
 from opencontext_py.apps.etl.kobo import pc_configs
-
+from opencontext_py.apps.etl.kobo import db_updates
 
 """Consolidates all ETL related functions to extract and
 transform data from Kobo Excel files.
@@ -24,10 +24,19 @@ all_etl.prepare_media_files()
 """
 
 
+def extract_transform_load_subject_items():
+    subjects_df = subjects.make_and_classify_subjects_df()
+    print(f'Made a subjects_df with {len(subjects_df.index)} rows.')
+    db_updates.load_subjects_dataframe(subjects_df)
+
+
+
 def extract_transform_kobo_data():
     """Extracts and transforms kobo data prior to loading."""
     subjects_df = subjects.make_and_classify_subjects_df()
     print(f'Made a subjects_df with {len(subjects_df.index)} rows.')
+    _ = trenchbooks.prepare_attributes_links()
+    print(f'Prepared trenchbooks attributes and links.')
     _ = bulk_finds.prepare_attributes_links()
     print(f'Prepared bulk finds attributes and links.')
     _ = catalog.prepare_attributes_links()
@@ -36,8 +45,6 @@ def extract_transform_kobo_data():
     print(f'Prepared small finds attributes and links.')
     _ = locus.prepare_attributes_links()
     print(f'Prepared locus attributes and links.')
-    _ = trenchbooks.prepare_attributes_links()
-    print(f'Prepared trenchbooks attributes and links.')
     df_media = media.prepare_media()
     print(f'Extracted media {len(df_media.index)} references from all Kobo excel files.')
 
