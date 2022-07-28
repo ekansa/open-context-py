@@ -19,7 +19,7 @@ import importlib
 from opencontext_py.apps.etl.kobo import all_etl
 
 all_etl.extract_transform_kobo_data()
-all_etl.prepare_media_files()
+all_etl.prepare_media_files_and_links()
 
 """
 
@@ -28,6 +28,7 @@ def extract_transform_load_subject_items():
     subjects_df = subjects.make_and_classify_subjects_df()
     print(f'Made a subjects_df with {len(subjects_df.index)} rows.')
     db_updates.load_subjects_dataframe(subjects_df)
+
 
 
 
@@ -49,5 +50,6 @@ def extract_transform_kobo_data():
     print(f'Extracted media {len(df_media.index)} references from all Kobo excel files.')
 
 
-def prepare_media_files():
+def prepare_media_files_and_links():
     df_media = media.make_opencontext_file_versions()
+    _ = media.prepare_media_links_df()

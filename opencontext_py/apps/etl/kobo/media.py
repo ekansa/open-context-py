@@ -40,9 +40,9 @@ df = media.make_all_export_media_df()
 MEDIAFILE_COLS_ENDSWITH = [
     ('Primary Image_URL', 'link-primary', '_uuid', 'subject_uuid'),
     ('Supplemental Image_URL', 'link-supplemental', '_submission__uuid', 'subject_uuid'),
-    ('Image File', 'primary', '_uuid', 'media_uuid'),
-    ('Video File', 'primary', '_uuid', 'media_uuid'),
-    ('Audio File', 'primary', '_uuid', 'media_uuid'),
+    ('Image File_URL', 'primary', '_uuid', 'media_uuid'),
+    ('Video File_URL', 'primary', '_uuid', 'media_uuid'),
+    ('Audio File_URL', 'primary', '_uuid', 'media_uuid'),
 ]
 
 MEDIA_DESCRIPTION_COLS_ENDSWITH = [
@@ -67,7 +67,6 @@ MEDIA_DESCRIPTION_COLS_ENDSWITH = [
     'Direction or Orientation Notes/Object Orientation Note', 
     'Direction or Orientation Notes/Direction Faced in Field', 
     'Description', 
-    'Upload a File with Form?',  
     'Media File Details (file not to be uploaded with this form)/Other Media Type Note', 
     'Media File Details (file not to be uploaded with this form)/File Storage Type', 
     'Media File Details (file not to be uploaded with this form)/Web URL', 
@@ -101,10 +100,11 @@ MEDIA_RELS_SHEET = 'Rel_ID_Group_Rep'
 
 
 REL_COLS = [
-    'File Upload/Image File',
+    'subject_label',
     'subject_uuid',
     'subject_uuid_source',
     pc_configs.LINK_RELATION_TYPE_COL,
+    'object_label',
     'object_uuid',
     'object_uuid_source',
     'object_related_id',
@@ -215,6 +215,14 @@ def make_sheet_media_df(
             orig_uuid_col=act_uuid,
         )
     else:
+        if form_type == 'trench book' and 'Open Context Label' in df.columns:
+            # This is a special case hack, because the trench book won't
+            # have labels available on the subjects_df. So we'll bring in the
+            # trench book labels as subject_labels via a merge.
+            act_df = df.copy()
+            act_df['subject_label'] = act_df['Open Context Label']
+            act_df = act_df[[act_uuid, 'subject_label']]
+            df_sheet_media = pd.merge(df_sheet_media, act_df, on=[act_uuid], how='left')
         df_sheet_media.rename(
             columns={act_uuid: new_uuid,},
             inplace=True
@@ -225,7 +233,15 @@ def make_sheet_media_df(
     df_sheet_media.reset_index(drop=True, inplace=True)
     if df_sheet_media.empty:
         return None
-    df_sheet_media['media_uuid'] = df_sheet_media.apply(make_deterministic_media_uuid, axis=1)
+    if not 'media_uuid' in df_sheet_media.columns:
+        # Make a deterministic media_uuid if not already present.
+        df_sheet_media['media_uuid'] = df_sheet_media.apply(
+            make_deterministic_media_uuid, 
+            axis=1
+        )
+    df_sheet_media = utilities.drop_empty_cols(df_sheet_media)
+    df_sheet_media = utilities.update_multivalue_columns(df_sheet_media)
+    df_sheet_media = utilities.clean_up_multivalue_cols(df_sheet_media)
     return df_sheet_media
 
 
@@ -256,6 +272,11 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
     df_media = pd.concat(df_media_list)
     if df_media.empty:
         return None
+    df_media = utilities.df_fill_in_by_shared_id_cols(
+        df=df_media, 
+        col_to_fill='subject_label', 
+        id_cols=['subject_uuid'],
+    )
     return df_media
 
 
@@ -595,26 +616,58 @@ def prepare_media(
     return df_media
 
 
+def extract_links_df_from_all_media_df(
+    all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH
+):
+    """Make a links df from the all-media df"""
+    df_media = pd.read_csv(all_media_kobo_files_path)
+    act_indx = (
+        ~df_media['subject_uuid'].isnull()
+        & ~df_media['media_uuid'].isnull()
+    )
+    if df_media[act_indx].empty:
+        return None
+    df_link = df_media[act_indx].copy()
+    df_link.reset_index(drop=True, inplace=True)
+    df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'link'
+    df_link['object_label'] = df_link['filename']
+    df_link['object_uuid'] = df_link['media_uuid']
+    act_cols = [c for c in REL_COLS if c in df_link.columns]
+    df_link = df_link[act_cols].copy()
+    return df_link
 
-def prepare_media_links_from_dfs(dfs, subjects_df):
+
+def prep_links_df(dfs):
     """Prepares a dataframe of links between media items and related objects"""
-    df_link = utilities.get_prepare_df_link_from_rel_id_sheet(dfs)
+    df_link, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Rel_ID'
+    )
     if df_link is None:
         return None
-    media_subject_uuids = df_link['subject_uuid'].unique().tolist()
-    df_all_parents = dfs[MEDIA_ATTRIBUTES_SHEET].copy()
-    df_all_parents['subject_uuid'] = df_all_parents['_uuid']
-    df_all_parents['subject_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
-    df_all_parents = df_all_parents[df_all_parents['subject_uuid'].isin(media_subject_uuids)]
-    df_all_parents = df_all_parents[['File Upload/Image File', 'subject_uuid', 'subject_uuid_source']]
+    df_link = utilities.prep_df_link_cols(df_link)
+    df_sub, _ = utilities.get_df_by_sheet_name_part(
+        dfs, 
+        sheet_name_part='Media'
+    )
+    df_sub['subject_label'] = df_sub['File Title']
+    df_sub['subject_uuid'] = df_sub['_uuid']
+    df_sub['subject_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
+    df_sub = df_sub[['subject_label', 'subject_uuid', 'subject_uuid_source']].copy()
+    # Get rid of columns that we don't want, because we want to replace these with a merge
+    # from df_sub
+    bad_cols = [c for c in ['subject_label', 'subject_uuid_source'] if c in df_link.columns]
+    df_link.drop(columns=bad_cols, inplace=True)
+    # Now do the merge
     df_link = pd.merge(
         df_link,
-        df_all_parents,
+        df_sub,
         how='left',
         on=['subject_uuid']
     )
     # Now look up the UUIDs for the objects.
     df_link['object_related_id'] = df_link['object_related_id'].astype(str)
+    df_link['object_label'] = np.nan
     df_link['object_uuid'] = np.nan
     df_link['object_uuid_source'] = np.nan
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'link'
@@ -623,64 +676,62 @@ def prepare_media_links_from_dfs(dfs, subjects_df):
         object_uuid_source = None
         raw_object_id = row['object_related_id']
         object_type = row['object_related_type']
-        if not raw_object_id:
-            # Empty string, so skip.
-            continue
-        act_labels = utilities.get_alternate_labels(
-            label=raw_object_id,
-            project_uuid=pc_configs.PROJECT_UUID,
-        )
+        act_labels = [str(raw_object_id)]
         act_prefixes, act_classes = pc_configs.REL_SUBJECTS_PREFIXES.get(object_type, ([], []))
-        if object_type in ['Locus', 'Trench']:
-            act_labels += [prefix + str(raw_object_id) for prefix in act_prefixes]
-            if object_type == 'Trench':
-                act_labels.append('{} {}'.format(raw_object_id, row['Year']))
-            context_indx = (
-                subjects_df['label'].isin(act_labels)
-                & (subjects_df['Trench ID'] == row['Trench ID'])
-            )
-        else:
-            context_indx = (subjects_df['label'].isin(act_labels))
-        
-        if len(act_classes) > 0:
-            context_indx &= (subjects_df['class_uri'].isin(act_classes))
-        if not subjects_df[context_indx].empty:
-            object_uuid = subjects_df[context_indx]['context_uuid'].iloc[0]
-            object_uuid_source = subjects_df[context_indx]['uuid_source'].iloc[0]
-        else:
-            object_uuid = db_lookups.db_lookup_manifest_uuid(
-                label=raw_object_id,
-                item_type='subjects',
-                class_slugs=act_classes
-            )
-            if object_uuid is not None:
-                object_uuid_source = utilities.UUID_SOURCE_OC_LOOKUP
-        if object_uuid is None:
-            # Don't do an update if we don't have an object_uuid.
+        if len(act_classes) == 0:
+            # Didn't find any classes in our object type lookup, so continue
             continue
-        update_indx = (
+        act_labels += [p + str(raw_object_id) for p in act_prefixes]
+        act_labels.append(utilities.normalize_catalog_label(raw_object_id))
+        man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
+            label_list=act_labels, 
+            item_class_slug_list=act_classes,
+        )
+        if not man_obj:
+            object_label = np.nan
+            object_uuid = np.nan
+            object_uuid_source = np.nan
+        else:
+            # Only accept a single result from the 
+            # lookup.
+            object_label = man_obj.label
+            object_uuid = str(man_obj.uuid)
+            object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        up_indx = (
             (df_link['object_related_id'] == raw_object_id)
             & (df_link['object_related_type'] == object_type)
         )
-        df_link.loc[update_indx, 'object_uuid'] = object_uuid
-        df_link.loc[update_indx, 'object_uuid_source'] = object_uuid_source
-    df_link = df_link[REL_COLS]
+        df_link.loc[up_indx, 'object_label'] = object_label
+        df_link.loc[up_indx, 'object_uuid'] = object_uuid
+        df_link.loc[up_indx, 'object_uuid_source'] = object_uuid_source
+    cols = [c for c in REL_COLS if c in df_link.columns]
+    df_link = df_link[cols].copy()
     return df_link
 
 
 def prepare_media_links_df(
-    excel_dirpath, 
-    subjects_path=pc_configs.SUBJECTS_CSV_PATH
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
+    links_csv_path=pc_configs.MEDIA_ALL_LINKS_CSV_PATH,
 ):
     """Prepares a media link dataframe."""
-    df_link = None
-    subjects_df = pd.read_csv(subjects_path)
+    df_links = []
     for excel_filepath in utilities.list_excel_files(excel_dirpath):
         if not 'Media' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
-        df_link = prepare_media_links_from_dfs(
+        df_link = prep_links_df(
             dfs,
-            subjects_df
         )
-    return df_link
+        if df_link is not None:
+            df_links.append(df_link)
+    df_other_link = extract_links_df_from_all_media_df()
+    if df_other_link is not None:
+        df_links.append(df_other_link)
+    if len(df_links) == 0:
+        return None
+    df_all_links = pd.concat(df_links)
+    if df_all_links.empty:
+        return None
+    if links_csv_path:
+        df_all_links.to_csv(links_csv_path, index=False)
+    return df_all_links

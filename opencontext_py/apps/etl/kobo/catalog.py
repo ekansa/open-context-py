@@ -184,8 +184,7 @@ def get_links_from_rel_ids(dfs):
         if len(act_classes) == 0:
             # Didn't find any classes in our object type lookup, so continue
             continue
-        act_labels += [p + str(raw_object_id) for p in act_prefixes]
-        
+        act_labels += [p + str(raw_object_id) for p in act_prefixes] 
         man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
             label_list=act_labels, 
             item_class_slug_list=act_classes,

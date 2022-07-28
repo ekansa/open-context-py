@@ -304,13 +304,11 @@ def get_df_with_rel_id_cols(dfs):
     return None, None
 
 
-def get_prepare_df_link_from_rel_id_sheet(dfs):
-    """Gets and prepares a df_link from a rel-id sheet"""
-    df_link, _ = get_df_with_rel_id_cols(dfs)
-    if df_link is None:
-        return None
+def prep_df_link_cols(df_link):
+    """Prepares columns for a related links dataframe"""
+    renames = {c:r_c for c, r_c in pc_configs.RELS_RENAME_COLS.items() if c in df_link.columns}
     df_link.rename(
-        columns=pc_configs.RELS_RENAME_COLS,
+        columns=renames,
         inplace=True
     )
     check_cols = (
@@ -325,6 +323,15 @@ def get_prepare_df_link_from_rel_id_sheet(dfs):
             continue
         df_link[c] = np.nan
     return df_link
+
+
+
+def get_prepare_df_link_from_rel_id_sheet(dfs):
+    """Gets and prepares a df_link from a rel-id sheet"""
+    df_link, _ = get_df_with_rel_id_cols(dfs)
+    if df_link is None:
+        return None
+    return prep_df_link_cols(df_link)
 
 
 def get_general_form_type_from_sheet_name(sheet_name):
