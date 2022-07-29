@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from django.core.cache import caches
+from django.db.models import Q
 
 from opencontext_py.apps.all_items.models import (
     AllManifest,
@@ -280,3 +281,123 @@ def load_subjects_dataframe(
 # The main expectation is that entities receiving attributes have been
 # already created. 
 # ---------------------------------------------------------------------
+def prep_subject_uuid_field(ds_source, sub_field):
+    uuid_field = DataSourceField.objects.filter(
+        data_source=ds_source,
+        label='subject_uuid'
+    ).first()
+    if not uuid_field:
+        return None
+    uuid_field.item_type = 'uuid'
+    uuid_field.save()
+    des_exists = DataSourceAnnotation.objects.filter(
+        data_source=ds_source,
+        object_field=uuid_field,
+        predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+    ).first()
+    if des_exists:
+        return uuid_field
+    dsa = DataSourceAnnotation()
+    dsa.data_source = ds_source
+    dsa.subject_field = sub_field
+    dsa.predicate_id = configs.PREDICATE_OC_ETL_DESCRIBED_BY
+    dsa.object_field = uuid_field
+    dsa.save()
+    return uuid_field
+
+
+def prepare_ds_source_attribute_cols(form_type, ds_source):
+    """Assigns attributes to the columns for a data source"""
+    sub_field = DataSourceField.objects.filter(
+        data_source=ds_source,
+        label='subject_label'
+    ).first()
+    if not sub_field:
+        return None
+    uuid_field = prep_subject_uuid_field(ds_source, sub_field)
+    if not uuid_field:
+        return None
+    for config in pc_configs.DF_ATTRIBUTE_CONFIGS:
+        if not form_type in config.get('form_type', []):
+            continue
+        dsf_qs = DataSourceField.objects.filter(
+            data_source=ds_source,
+        )
+        q_term = (
+            Q(label=config['source_col'])
+            | Q(ref_orig_name=config['source_col'])
+        )
+        if config['match_type'] == 'startswith':
+            q_term |= Q(label__startswith=config['source_col'])
+            q_term |= Q(ref_orig_name__startswith=config['source_col'])
+        elif config['match_type'] == 'endswith':
+            q_term |= Q(label__endswith=config['source_col'])
+            q_term |= Q(ref_orig_name__endswith=config['source_col'])
+        
+        dsf_qs = dsf_qs.filter(q_term)
+        if dsf_qs.count() < 1:
+            print(f"Cannot find source_col {config['source_col']}")
+            continue
+        for obj_field in dsf_qs:
+            obj_field.ref_orig_name = obj_field.label
+            for attrib_key, val in config['field_args'].items():
+                setattr(obj_field, attrib_key, val)
+            obj_field.save()
+            print(f"Updated column: {obj_field.label} ({obj_field.field_num})")
+            if obj_field.label == 'subject_label':
+                continue
+            pred_rel = 'described by'
+            predicate_id = configs.PREDICATE_OC_ETL_DESCRIBED_BY
+            if obj_field.label.startswith('MEDIA_URL_'):
+                pred_rel = 'has media resource url'
+                predicate_id = configs.PREDICATE_OC_ETL_MEDIA_HAS_FILES
+            des_exists = DataSourceAnnotation.objects.filter(
+                data_source=ds_source,
+                object_field=obj_field,
+                predicate_id=predicate_id,
+            ).first()
+            if des_exists:
+                continue
+            print(f'Make {pred_rel} relation for: {obj_field.label}')
+            dsa = DataSourceAnnotation()
+            dsa.data_source = ds_source
+            dsa.subject_field = sub_field
+            dsa.predicate_id = predicate_id
+            dsa.object_field = obj_field
+            dsa.save()
+
+
+def load_trench_books_and_attributes(
+    form_type='trench book',
+    source_id=pc_configs.SOURCE_ID_TB_ATTRIB,
+    attrib_csv_path=pc_configs.TB_ATTRIB_CSV_PATH,
+):
+    project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
+    ds_source = load_csv_for_etl(
+        project=project, 
+        file_path=attrib_csv_path, 
+        data_source_label=source_id, 
+        prelim_source_id=source_id, 
+        source_exists="replace"
+    )
+    prepare_ds_source_attribute_cols(form_type, ds_source)
+    print(f'Prepared ds_source {ds_source.__dict__}')
+    return ds_source
+
+
+def load_media_files_and_attributes(
+    form_type='media',
+    source_id=pc_configs.SOURCE_ID_MEDIA_FILES,
+    attrib_csv_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH,
+):
+    project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
+    ds_source = load_csv_for_etl(
+        project=project, 
+        file_path=attrib_csv_path, 
+        data_source_label=source_id, 
+        prelim_source_id=source_id, 
+        source_exists="replace"
+    )
+    prepare_ds_source_attribute_cols(form_type, ds_source)
+    print(f'Prepared ds_source {ds_source.__dict__}')
+    return ds_source

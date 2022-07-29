@@ -494,6 +494,7 @@ class DataSourceAnnotation(models.Model):
     # These are OK to be used as objects of PREDICATE_OC_ETL_DESCRIBED_BY
     DESCRIBED_BY_OK_OBJECT_TYPES = [
         'predicates',
+        'property',
         'types',
         'variables',
         'uuid',

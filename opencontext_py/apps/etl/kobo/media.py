@@ -504,7 +504,7 @@ def make_opencontext_file_versions(
     """Makes different file versions expected by Open Context."""
     df_media = pd.read_csv(all_media_kobo_files_path)
     dirs = get_make_directories(oc_media_root_dir, oc_sub_dirs=oc_sub_dirs)
-    for col in ['FULL_URL', 'PREVIEW_URL', 'THUMBS_URL']:
+    for col in ['MEDIA_URL_full', 'MEDIA_URL_preview', 'MEDIA_URL_thumbs']:
         if col in df_media.columns:
             continue
         df_media[col] = np.nan
@@ -518,15 +518,15 @@ def make_opencontext_file_versions(
             row['new_filename']
         )
         act_index = (df_media['path'] == row['path'])
-        df_media.loc[act_index, 'FULL_URL'] = make_media_url(
+        df_media.loc[act_index, 'MEDIA_URL_full'] = make_media_url(
             file_path=full_file, 
             file_type='full'
         )
-        df_media.loc[act_index, 'PREVIEW_URL'] = make_media_url(
+        df_media.loc[act_index, 'MEDIA_URL_preview'] = make_media_url(
             file_path=prev_file, 
             file_type='preview'
         )
-        df_media.loc[act_index, 'THUMBS_URL'] = make_media_url(
+        df_media.loc[act_index, 'MEDIA_URL_thumbs'] = make_media_url(
             file_path=thumb_file, 
             file_type='thumbs'
         )

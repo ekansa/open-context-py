@@ -49,6 +49,7 @@ KOBO_TRENCH_COL = 'Trench ID'
 SOURCE_ID_PREFIX = f'pc{DEFAULT_IMPORT_YEAR}'
 SOURCE_ID_SUBJECTS = f'{SOURCE_ID_PREFIX}-subjects'
 SOURCE_ID_MEDIA_FILES = f'{SOURCE_ID_PREFIX}-files'
+SOURCE_ID_MEDIA_LINKS = f'{SOURCE_ID_PREFIX}-files-link'
 SOURCE_ID_CATALOG_ATTRIB = f'{SOURCE_ID_PREFIX}-cat-attrib'
 SOURCE_ID_CATALOG_LINKS = f'{SOURCE_ID_PREFIX}-cat-link'
 SOURCE_ID_SMALL_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-small-attrib'
@@ -59,6 +60,22 @@ SOURCE_ID_LOCUS_LINKS = f'{SOURCE_ID_PREFIX}-locus-link'
 SOURCE_ID_LOCUS_GEO = f'{SOURCE_ID_PREFIX}-locus-geo'
 SOURCE_ID_TB_ATTRIB = f'{SOURCE_ID_PREFIX}-tb-attrib'
 SOURCE_ID_TB_LINKS = f'{SOURCE_ID_PREFIX}-tb-link'
+
+
+ENTITY_CREATE_SOURCE_FILE_LIST = [
+    # (form_type, source_id, attrib_csv_path,)
+    ('trench book', SOURCE_ID_TB_ATTRIB, TB_ATTRIB_CSV_PATH,),
+    ('media', SOURCE_ID_MEDIA_FILES, MEDIA_ALL_KOBO_REFS_CSV_PATH,),
+]
+
+GENERAL_ATTRIB_SOURCE_FILE_LIST = [
+    # (form_type, source_id, attrib_csv_path,)
+    ('catalog', SOURCE_ID_CATALOG_ATTRIB, CATALOG_ATTRIB_CSV_PATH,),
+    ('small find', SOURCE_ID_SMALL_FINDS_ATTRIB, SMALL_FINDS_ATTRIB_CSV_PATH,),
+    ('bulk find', SOURCE_ID_BULK_FINDS_ATTRIB, BULK_FINDS_ATTRIB_CSV_PATH,),
+    ('locus', SOURCE_ID_LOCUS_ATTRIB, LOCUS_ATTRIB_CSV_PATH,),
+]
+
 
 # Trench context mappings:
 TRENCH_CONTEXT_MAPPINGS = {
@@ -171,7 +188,7 @@ MEDIA_FILETYPE_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': file_type['col'],
-            'item_type': 'media',
+            'item_type': 'resources',
             'item_class_id': file_type['resourcetype']
         },
         'field_rel': {
@@ -213,11 +230,11 @@ GEO_ATTRIBUTE_CONFIGS = [
 DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS + [
     
     {
-        'source_col': 'label',
+        'source_col': 'subject_label',
         'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
-            'label': 'Locus Label',
+            'label': 'subject_label',
             'item_type': 'subjects',
             'item_class_id': '00000000-6e24-600d-a274-f02367a32c33',
         },
@@ -225,11 +242,11 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'label',
+        'source_col': 'subject_label',
         'form_type': ['bulk find',],
         'match_type': 'exact',
         'field_args': {
-            'label': 'Bulk Find Label',
+            'label': 'subject_label',
             'item_type': 'subjects',
             'item_class_id': '00000000-6e24-1147-b189-ad24b8a86f76',
         },
@@ -237,11 +254,11 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'label',
+        'source_col': 'subject_label',
         'form_type': ['small find',],
         'match_type': 'exact',
         'field_args': {
-            'label': 'Small Find Label',
+            'label': 'subject_label',
             'item_type': 'subjects',
             'item_class_id': '00000000-6e24-0b70-0230-0cc0398d6184',
         },
@@ -249,11 +266,11 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'label',
+        'source_col': 'subject_label',
         'form_type': ['catalog',],
         'match_type': 'exact',
         'field_args': {
-            'label': 'Catalog Label',
+            'label': 'subject_label',
             'item_type': 'subjects',
             'item_class_id': '00000000-6e24-2339-9f63-582218c3f76a',
         },
@@ -261,11 +278,11 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Trench Book Title',
+        'source_col': 'subject_label',
         'form_type': ['trench book',],
         'match_type': 'exact',
         'field_args': {
-            'label': 'Trench Book Title',
+            'label': 'subject_label',
             'item_type': 'documents',
         },
         'subject_pk': True,
@@ -281,78 +298,20 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'data_type': 'xsd:string',
             # schema:text (The schema.org text property)
             'context_id': '00000000-4ad5-1d91-3710-6f501a79e9f3',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
     {
-        'source_col': 'File Title',
+        'source_col': 'subject_label',
         'form_type': ['media',],
         'match_type': 'exact',
         'field_args': {
-            'label': 'File Title',
+            'label': 'subject_label',
             'item_type': 'media',
+            'item_class_id': configs.CLASS_OC_IMAGE_MEDIA,
         },
         'subject_pk': True,
-    },
-    
-    {
-        'source_col': 'Data Entry Person',
-        'form_type': ['catalog',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'Data Entry Person',
-            'item_type': 'persons',
-            'data_type': 'id',
-            'item_class_id': configs.CLASS_FOAF_PERSON_UUID,
-        },
-        'field_rel': {
-            'predicate_id': '0487907f-59a4-ae5d-7e18-5716e8f16baf',  # Catalogued by
-        },
-    },
-    
-    {
-        'source_col': 'Data Entry Person',
-        'form_type': ['media',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'File Creator',
-            'item_type': 'persons',
-            'data_type': 'id',
-            'item_class_id': configs.CLASS_FOAF_PERSON_UUID,
-        },
-        'field_rel': {
-            'predicate_id': 'd2fe0142-e4c7-9601-5011-08f47580dae1',  # Photographed by
-        },
-    },
-    
-    {
-        'source_col': 'File Creator',
-        'form_type': ['media',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'File Creator',
-            'item_type': 'persons',
-            'data_type': 'id',
-            'item_class_id': configs.CLASS_FOAF_PERSON_UUID,
-        },
-        'field_rel': {
-            'predicate_id': 'd2fe0142-e4c7-9601-5011-08f47580dae1',  # Photographed by
-        },
-    },
-    
-    {
-        'source_col': 'Trench Supervisor',
-        'form_type': ['catalog', 'locus', 'bulk find', 'small find', 'trench book',],
-        'match_type': 'startswith',
-        'field_args': {
-            'label': 'Trench Supervisor',
-            'item_type': 'persons',
-            'data_type': 'id',
-            'item_class_id': configs.CLASS_FOAF_PERSON_UUID,
-        },
-        'field_rel': {
-            'predicate_id': 'b4f7df9b-47a8-5cd4-d2e1-021087f03815',  # Principal Author / Analyst
-        },
     },
     
     {
@@ -362,8 +321,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Size',
             'context_id': 'b6d48580-af49-409c-1172-e27cba31f235',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -374,8 +334,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Condition',
             'context_id': '4909306f-3102-47a2-66a3-561c296147bb',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -386,8 +347,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Description',
             'context_id': '7dbb5cb7-599f-42d5-61ee-1955cf898990',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -398,8 +360,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Trench',
             'context_id': 'bd3aba0c-672a-4a1e-81ea-5408768ce407',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -410,8 +373,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Date Cataloged',
             'context_id': '2d60965b-5151-446c-99b7-402e94e44c25',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:date',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -422,8 +386,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Year',
             'context_id': '2c7fe888-c431-4fbd-39f4-38b7d969a811',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -434,8 +399,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Record Type',
             'context_id': '609ff344-7304-48e3-8db4-64b47dd12215',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -446,8 +412,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Supplemental Find Identification Note',
             'context_id': 'b065bd99-859c-4ac2-ae54-9b1721e25c33',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -458,8 +425,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Munsell Color',
             'context_id': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -470,8 +438,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Fabric Category',
             'context_id': 'a70236ca-1599-42f5-4a12-acec8c423850',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -482,8 +451,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Other Fabric Note',
             'context_id': 'cfb6e3c6-a51f-4da9-a794-dca7b92e56fd',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -494,8 +464,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Object Type',  # Note the difference from the source-column!
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
 
@@ -507,8 +478,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             # NOTE: This is also mapped to the 'Object Type' predicate.
             'label': 'Object Type',  # Note the difference from the source-column!
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -519,8 +491,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Object Type', 
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -531,8 +504,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Catalog ID Note',
             'context_id': '46c4ea6d-232f-45ec-97f8-3dd2762bcb56',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -543,8 +517,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Decorative Technique',
             'context_id': 'f07c30bc-6c71-4c97-7893-d61ff6d0b59b',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -555,8 +530,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Other Decorative Technique Note',
             'context_id': '8cbd3c5a-b3ec-4e3a-b1eb-bf2d53b01781',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -567,8 +543,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Motif',
             'context_id': '9b260671-cbbd-490e-48b0-cdc48f5df62d',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -579,8 +556,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Other Motif Note',
             'context_id': '5dd0bdb8-782f-42fb-93c4-60018860fb24',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -591,8 +569,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Vessel Form',
             'context_id': '6a890b60-3811-44ae-a554-cc8245c4d946',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -603,8 +582,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Vessel Part Present',
             'context_id': 'c16a0682-5956-4180-af94-9981f937651a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -615,8 +595,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Vessel Part Present',
             'context_id': 'c16a0682-5956-4180-af94-9981f937651a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
 
@@ -627,8 +608,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Grid (X)',
             'context_id': 'b428ff04-670b-4912-a237-ad8ff9635f5a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -639,8 +621,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Grid (Y)',
             'context_id': '3e0c2eb3-266b-4fa4-ba59-c5c793a1e96d',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -651,8 +634,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Elevation',
             'context_id': 'aaa910a0-51c1-472e-9bd6-67e333e63bbd',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -663,8 +647,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Grid X Uncertainty (+/- cm)',
             'context_id': '074574a6-43bd-4bc4-9bd2-001d44512cc3',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -675,8 +660,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Grid Y Uncertainty (+/- cm)',
             'context_id': '1bb7b997-c572-4fe5-ac89-c372c322ed78',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -687,8 +673,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Elevation Uncertainty (+/- cm)',
             'context_id': '529e931c-51ed-4d85-9759-5c9d4069dbb6',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -699,8 +686,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Measurement Uncertainties Comment',
             'context_id': None,
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -711,8 +699,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Find Type',
             'context_id': '464b90e2-ce62-4570-bcea-58b7f9b5bb33',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -723,8 +712,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Find Type (Other)',
             'context_id': '36027b0c-3c4b-49df-9ab0-d110cdb5d9b4',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -735,8 +725,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Object Count',
             'context_id': '84525f14-5e20-4765-a74e-303a5dbb4db8',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -747,8 +738,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Count Type',
             'context_id': 'fa2e0286-de17-45e6-959f-9dab8c8cc5f5',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -759,8 +751,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Count Type (Other)',
             'context_id': '630e3548-7050-4891-9971-94e91593b74d',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -771,8 +764,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Description',
             'context_id': '7dbb5cb7-599f-42d5-61ee-1955cf898990',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -783,8 +777,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Date Discovered',
             'context_id': '23ff0204-2b40-47b4-909a-66ec8d150528',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:date',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -795,8 +790,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Deposit Compaction',
             'context_id': '3eb4639d-a67e-47e6-9435-a87723486a82',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
 
@@ -807,8 +803,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Stratigraphic Reliability',
             'context_id': '1ed85342-864a-4ae9-81ed-3a484233ec43',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
 
@@ -819,8 +816,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Preliminary Phasing',
             'context_id': 'c2b40ac1-3b8d-4307-b217-c61732236d68',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -831,8 +829,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Munsell Color',
             'context_id': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
 
@@ -843,8 +842,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Deposit Compaction',
             'context_id': '3eb4639d-a67e-47e6-9435-a87723486a82',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
 
@@ -855,8 +855,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Stratigraphic Reliability',
             'context_id': '1ed85342-864a-4ae9-81ed-3a484233ec43',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -867,8 +868,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Date Opened',
             'context_id': '0ea21cdb-ffab-4b68-9d47-78b180f08162',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:date',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -879,8 +881,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Date Closed',
             'context_id': '99684fbb-55d5-447a-8159-7d54fea80b50',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:date',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -891,8 +894,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Trench',
             'context_id': 'bd3aba0c-672a-4a1e-81ea-5408768ce407',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -903,8 +907,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Year',
             'context_id': '2c7fe888-c431-4fbd-39f4-38b7d969a811',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -915,8 +920,22 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Entry Type',
             'context_id': 'eea8648f-7df4-48f6-a58e-2971f001d245',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Entry Title',
+        'form_type': ['trench book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Title',
+            'context_id': '08bc76a7-5240-48cc-1998-8f861eeb08bf',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -927,8 +946,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Document Type',
             'context_id': '565672fe-eee1-4e85-3c66-538137e6d332',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -939,8 +959,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Trench Book Entry Date',
             'context_id': '8b812e4f-edc4-44f1-a88d-4ad358aaf9aa',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:date',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -951,8 +972,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Entry Year',
             'context_id': '37e30449-43fa-45e0-8142-8e3f6a70441b',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -963,8 +985,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Book Year',
             'context_id': '8fb4a650-ef81-4238-a75b-603e07dd4455',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -975,8 +998,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Start Page',
             'context_id': 'becad1af-0245-44e0-cd2a-f2f7bd080443',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -987,8 +1011,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'End Page',
             'context_id': '506924aa-b53d-41b5-9d02-9a7929ea6d6d',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -999,8 +1024,61 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Date Created',
             'context_id': 'e4671bb6-094d-4001-bb10-32685a168bc1',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:date',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Type of Composition Subject',
+        'form_type': ['media',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Composition Subject Type',
+            'context_id': '7bf4999e-264d-4515-a468-c041848a6259',
+            'item_type': 'predicates',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Note about Supplemental Image',
+        'form_type': ['media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Image Note',
+            'context_id': '12cc9a67-f902-4319-91b0-ef22f8dca380',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'File Title',
+        'form_type': ['media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Title',
+            'context_id': '08bc76a7-5240-48cc-1998-8f861eeb08bf',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Note about Primary Image',
+        'form_type': ['media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Image Note',
+            'context_id': '12cc9a67-f902-4319-91b0-ef22f8dca380',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -1011,8 +1089,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Direction Faced in Field',
             'context_id': None,
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -1023,8 +1102,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Object Orientation Note',
             'context_id': '804bf2fe-043c-4405-bd4a-558a5ffd7d50',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -1035,8 +1115,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Image Type',
             'context_id': 'b8556eaa-cf52-446b-39fa-ae4798c13a6b',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -1047,8 +1128,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Description',
             'context_id': '7dbb5cb7-599f-42d5-61ee-1955cf898990',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -1059,8 +1141,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Description',
             'context_id': '7dbb5cb7-599f-42d5-61ee-1955cf898990',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     
@@ -1071,8 +1154,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Media Type',
             'context_id': 'eced82b8-8f45-4ca3-b9f9-b94ddcd3d2ab',
-            'item_type': 'description',
+            'item_type': 'predicates',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
     

@@ -24,6 +24,7 @@ TB_ATTRIBUTE_COLS = [
     'subject_uuid_source',
     'Entry Type',
     'Entry Title',
+    'Entry Year',
     'Date Documented',
     'Start Page',
     'End Page',
