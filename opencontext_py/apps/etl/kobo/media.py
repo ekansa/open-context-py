@@ -109,6 +109,8 @@ REL_COLS = [
     'object_uuid_source',
     'object_related_id',
     'object_related_type',
+    'Data Entry Person',
+    'File Creator',
 ]
 
 
@@ -239,9 +241,32 @@ def make_sheet_media_df(
             make_deterministic_media_uuid, 
             axis=1
         )
+        df_sheet_media['media_uuid_source'] = 'deterministic'
+    else:
+        df_sheet_media['media_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
     df_sheet_media = utilities.drop_empty_cols(df_sheet_media)
     df_sheet_media = utilities.update_multivalue_columns(df_sheet_media)
     df_sheet_media = utilities.clean_up_multivalue_cols(df_sheet_media)
+    # Now make the 'subject_label' and 'subject_uuid' the objects
+    # to keep things consistent, where the media item is the subject and
+    # the associated other records are the objects.
+    df_sheet_media['media_label'] = df_sheet_media['filename'] 
+    df_sheet_media.rename(
+        columns={
+            'subject_label': 'object_label',
+            'subject_uuid': 'object_uuid',
+            'subject_uuid_source': 'object_uuid_source',
+        },
+        inplace=True,
+    )
+    df_sheet_media.rename(
+        columns={
+            'media_label': 'subject_label',
+            'media_uuid': 'subject_uuid',
+            'media_uuid_source': 'subject_uuid_source',
+        },
+        inplace=True,
+    )
     return df_sheet_media
 
 
@@ -277,6 +302,12 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
         col_to_fill='subject_label', 
         id_cols=['subject_uuid'],
     )
+    df_media = utilities.df_fill_in_by_shared_id_cols(
+        df=df_media, 
+        col_to_fill='object_label', 
+        id_cols=['object_uuid'],
+    )
+    
     return df_media
 
 
@@ -616,25 +647,70 @@ def prepare_media(
     return df_media
 
 
-def extract_links_df_from_all_media_df(
+def get_prep_all_media_files_for_links(
     all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH
 ):
-    """Make a links df from the all-media df"""
     df_media = pd.read_csv(all_media_kobo_files_path)
     act_indx = (
         ~df_media['subject_uuid'].isnull()
-        & ~df_media['media_uuid'].isnull()
     )
     if df_media[act_indx].empty:
         return None
     df_link = df_media[act_indx].copy()
     df_link.reset_index(drop=True, inplace=True)
+    return df_link
+
+
+def extract_links_df_from_all_media_df(
+    all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH
+):
+    """Make a links df from the all-media df"""
+    df_link = get_prep_all_media_files_for_links(
+        all_media_kobo_files_path
+    )
+    if df_link is None:
+        return None
+    act_indx = (
+        ~df_link['subject_uuid'].isnull()
+        & ~df_link['object_uuid'].isnull()
+    )
+    if df_link[act_indx].empty:
+        return None
+    df_link = df_link[act_indx].copy()
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'link'
-    df_link['object_label'] = df_link['filename']
-    df_link['object_uuid'] = df_link['media_uuid']
     act_cols = [c for c in REL_COLS if c in df_link.columns]
     df_link = df_link[act_cols].copy()
     return df_link
+
+
+def add_creator_links_from_all_media_df(
+    df_links,
+    all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH
+):
+    df_other_link = get_prep_all_media_files_for_links(
+        all_media_kobo_files_path
+    )
+    if df_other_link is None:
+        return df_links
+    for person_col in ['Data Entry Person', 'File Creator']:
+        cols = ['subject_label', 'subject_uuid', 'subject_uuid_source', person_col]
+        if not set(cols).issubset(set(df_other_link.columns.tolist())):
+            continue
+        df_orig = df_other_link[cols].copy()
+        # Get the unique combination of the subjects and non-null creator values.
+        act_index = ~df_orig[person_col].isnull()
+        df = df_orig[act_index].groupby(cols, as_index=False).first()
+        df.reset_index(drop=True, inplace=True)
+        df = utilities.add_person_object_rels(
+            df=df, 
+            person_col=person_col,
+            link_rel='Photographed by', 
+        )
+        ok_index = ~df['object_uuid'].isnull()
+        if df[ok_index].empty:
+            continue
+        df_links.append(df)
+    return df_links
 
 
 def prep_links_df(dfs):
@@ -727,6 +803,8 @@ def prepare_media_links_df(
     df_other_link = extract_links_df_from_all_media_df()
     if df_other_link is not None:
         df_links.append(df_other_link)
+    # Use the all media df to find the media person creators.
+    df_links = add_creator_links_from_all_media_df(df_links)
     if len(df_links) == 0:
         return None
     df_all_links = pd.concat(df_links)

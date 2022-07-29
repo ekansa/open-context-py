@@ -1107,7 +1107,9 @@ LINK_REL_PRED_MAPPINGS = {
     'Initially documented as': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
     'Cataloged as': ('17012df0-ef2f-41a8-b8d6-ddf5b6687a7e', 'd58724ee-ecb9-4c2c-87a1-02f853edc2f2'),
     'Supervised by': ('4c15bbbf-4c0d-4262-8bcc-f6d9236813af', None),
-    
+    'Creator': ('00000000-ed50-3cf1-c266-683c89afdac4', None),
+    'Photographed by': ('d2fe0142-e4c7-9601-5011-08f47580dae1', None),
+
     # Added for PC 2019
     'Other relation': (configs.PREDICATE_LINK_UUID, configs.PREDICATE_LINK_UUID),
     'Comparanda, based on form': ('46037eb4-c4b7-432b-bebb-500aff0e4fe6', '46037eb4-c4b7-432b-bebb-500aff0e4fe6'),

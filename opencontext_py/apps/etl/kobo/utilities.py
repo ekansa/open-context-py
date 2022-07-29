@@ -413,19 +413,22 @@ def add_final_subjects_uuid_label_cols(
     return df
 
 
-def make_trench_supervisor_link_df(df):
+def make_trench_supervisor_link_df(
+    df, 
+    person_col='Trench Supervisor',
+    link_rel='Supervised by'
+):
     """Makes a link dataframe to associate persons """
-    cols = ['subject_label', 'subject_uuid', 'Trench Supervisor']
+    cols = ['subject_label', 'subject_uuid', person_col]
     if not set(cols).issubset(set(df.columns.tolist())):
         return None
     df_persons = pd.read_csv(pc_configs.PEOPLE_CSV_PATH)
     df = df[cols].copy()
-    df.rename(columns={'Trench Supervisor': 'name'}, inplace=True)
+    df.rename(columns={person_col: 'name'}, inplace=True)
     # This explodes space separated names into multiple rows.
     df_super = df.assign(name=df['name'].str.split(' ')).explode('name').reset_index(drop=True)
     # Merge the df_persons into this.
     df_super = pd.merge(df_super, df_persons, on='name', how='left')
-    df_super[pc_configs.LINK_RELATION_TYPE_COL] = 'Supervised by'
     df_super.rename(
         columns={
             'label_oc': 'object_label',
@@ -433,6 +436,7 @@ def make_trench_supervisor_link_df(df):
         },
         inplace=True,
     )
+    df_super[pc_configs.LINK_RELATION_TYPE_COL] = link_rel
     final_cols = [
         'subject_label', 
         'subject_uuid',
@@ -443,3 +447,67 @@ def make_trench_supervisor_link_df(df):
     ]
     df_super = df_super[final_cols]
     return df_super
+
+
+def look_up_in_df_persons(lookup_name, df_persons):
+    """Return a person label, uuid tuple from the df_persons"""
+    lookup_name = lookup_name.strip()
+    if not ' ' in lookup_name:
+        # Abbreviation only, so we can only use the df_persons for a lookup
+        act_index = (df_persons['name'] == lookup_name)
+    else:
+        name_ex = lookup_name.split(' ')
+        act_index = (
+            (
+                (df_persons['label'] == lookup_name)
+            | 
+                (
+                    df_persons['label'].str.startswith(name_ex[0])
+                    & df_persons['label'].str.endswith(name_ex[-1])
+                )
+            )
+        )
+    if df_persons[act_index].empty:
+        return None, None
+    return (
+        df_persons[act_index]['label_oc'].iloc[0],
+        df_persons[act_index]['uuid'].iloc[0],
+    )
+
+
+def add_person_object_rels(
+    df, 
+    person_col,
+    link_rel, 
+    person_label_col='object_label', 
+    person_uuid_col='object_uuid',
+    person_uuid_source_col='object_uuid_source', 
+):
+    cols = [person_col]
+    if not set(cols).issubset(set(df.columns.tolist())):
+        return df
+    add_cols = [
+        pc_configs.LINK_RELATION_TYPE_COL,
+        person_label_col,
+        person_uuid_col,
+        person_uuid_source_col,
+    ]
+    for c in add_cols:
+        if c in df.columns:
+            continue
+        df[c] = np.nan
+    df_persons = pd.read_csv(pc_configs.PEOPLE_CSV_PATH)
+    act_index = ~df[person_col].isnull()
+    for lookup_name in df[act_index][person_col].unique().tolist():
+        person_label, person_uuid = look_up_in_df_persons(
+            lookup_name, 
+            df_persons,
+        )
+        if not person_uuid:
+            continue
+        up_index = df[person_col] == lookup_name
+        df.loc[up_index, pc_configs.LINK_RELATION_TYPE_COL] = link_rel
+        df.loc[up_index, person_label_col] = person_label
+        df.loc[up_index, person_uuid_col] = person_uuid
+        df.loc[up_index, person_uuid_source_col] = 'df_persons'
+    return df
