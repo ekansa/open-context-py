@@ -55,6 +55,7 @@ SOURCE_ID_CATALOG_LINKS = f'{SOURCE_ID_PREFIX}-cat-link'
 SOURCE_ID_SMALL_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-small-attrib'
 SOURCE_ID_SMALL_FINDS_LINKS = f'{SOURCE_ID_PREFIX}-small-link'
 SOURCE_ID_BULK_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-bulk-attrib'
+SOURCE_ID_BULK_FINDS_LINKS = f'{SOURCE_ID_PREFIX}-bulk-link'
 SOURCE_ID_LOCUS_ATTRIB = f'{SOURCE_ID_PREFIX}-locus-attrib'
 SOURCE_ID_LOCUS_LINKS = f'{SOURCE_ID_PREFIX}-locus-link'
 SOURCE_ID_LOCUS_GEO = f'{SOURCE_ID_PREFIX}-locus-geo'
@@ -74,8 +75,18 @@ GENERAL_ATTRIB_SOURCE_FILE_LIST = [
     ('small find', SOURCE_ID_SMALL_FINDS_ATTRIB, SMALL_FINDS_ATTRIB_CSV_PATH,),
     ('bulk find', SOURCE_ID_BULK_FINDS_ATTRIB, BULK_FINDS_ATTRIB_CSV_PATH,),
     ('locus', SOURCE_ID_LOCUS_ATTRIB, LOCUS_ATTRIB_CSV_PATH,),
+    ('locus', SOURCE_ID_LOCUS_GEO, LOCUS_GEO_CSV_PATH,),
 ]
 
+ALL_LINK_SOURCE_FILE_LIST = [
+    # (source_id, attrib_csv_path,)
+    (SOURCE_ID_CATALOG_LINKS, CATALOG_LINKS_CSV_PATH,),
+    (SOURCE_ID_SMALL_FINDS_LINKS, SMALL_FINDS_LINKS_CSV_PATH,),
+    (SOURCE_ID_BULK_FINDS_LINKS, BULK_FINDS_LINKS_CSV_PATH,),
+    (SOURCE_ID_LOCUS_LINKS, LOCUS_LINKS_CSV_PATH,),
+    (SOURCE_ID_TB_LINKS, TB_LINKS_CSV_PATH,),
+    (SOURCE_ID_MEDIA_LINKS, MEDIA_ALL_LINKS_CSV_PATH,),
+]
 
 # Trench context mappings:
 TRENCH_CONTEXT_MAPPINGS = {
@@ -156,6 +167,8 @@ REL_SUBJECTS_PREFIXES = {
 
 REPROJECTED_LAT_COL = 'REPROJ_LAT'
 REPROJECTED_LON_COL = 'REPROJ_LON'
+REPROJECTED_GEOJSON_COL = 'REPROJ_GEOJSON'
+EVENT_GEOJSON_COL = 'EVENT_GEOJSON'
 X_Y_GRID_COLS = [
     ('Find Spot/Grid X', 'Find Spot/Grid Y', ),
     ('Grid X', 'Grid Y', ),
@@ -220,6 +233,32 @@ GEO_ATTRIBUTE_CONFIGS = [
             'label': REPROJECTED_LON_COL,
             'item_type': 'longitude',
             'data_type': 'xsd:double',
+        },
+        'field_rel': {
+            'predicate_id': configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+        },
+    },
+    {
+        'source_col': REPROJECTED_GEOJSON_COL,
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': REPROJECTED_GEOJSON_COL,
+            'item_type': 'geometry',
+            'data_type': 'xsd:string',
+        },
+        'field_rel': {
+            'predicate_id': configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+        },
+    },
+    {
+        'source_col': EVENT_GEOJSON_COL,
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': EVENT_GEOJSON_COL,
+            'item_type': 'events',
+            'data_type': 'id',
         },
         'field_rel': {
             'predicate_id': configs.PREDICATE_OC_ETL_DESCRIBED_BY,
@@ -400,7 +439,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Record Type',
-        'form_type': ['catalog',],
+        'form_type': ['catalog', 'small find'],
         'match_type': 'exact',
         'field_args': {
             'label': 'Record Type',
@@ -470,8 +509,8 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Object Type',  # Note the difference from the source-column!
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
-            'item_type': 'predicates',
-            'data_type': 'types',
+            'item_type': 'types',
+            'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
@@ -517,9 +556,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Decorative Techniques and Motifs/Decorative Technique',
+        'source_col': 'Decorative Technique',
         'form_type': ['catalog',],
-        'match_type': 'startswith',
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Decorative Technique',
             'context_id': 'f07c30bc-6c71-4c97-7893-d61ff6d0b59b',
@@ -530,9 +569,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Decorative Techniques and Motifs/Other Decorative Technique Note',
+        'source_col': 'Other Decorative Technique Note',
         'form_type': ['catalog',],
-        'match_type': 'exact',
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Other Decorative Technique Note',
             'context_id': '8cbd3c5a-b3ec-4e3a-b1eb-bf2d53b01781',
@@ -543,9 +582,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Decorative Techniques and Motifs/Motif',
+        'source_col': 'Motif',
         'form_type': ['catalog',],
-        'match_type': 'startswith',
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Motif',
             'context_id': '9b260671-cbbd-490e-48b0-cdc48f5df62d',
@@ -556,9 +595,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Decorative Techniques and Motifs/Other Motif Note',
+        'source_col': 'Other Motif Note',
         'form_type': ['catalog',],
-        'match_type': 'exact',
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Other Motif Note',
             'context_id': '5dd0bdb8-782f-42fb-93c4-60018860fb24',
@@ -608,9 +647,35 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
-        'source_col': 'Find Spot/Grid X',
-        'form_type': ['catalog', 'small-find',],
+        'source_col': 'Modification',
+        'form_type': ['catalog',],
+        'match_type': 'endswith',
+        'field_args': {
+            'label': 'Modification',
+            'context_id': 'fb59a2ed-e2f5-4a88-a651-0aa5f779eb54',
+            'item_type': 'types',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Other Modification Note',
+        'form_type': ['catalog',],
         'match_type': 'exact',
+        'field_args': {
+            'label': 'Modification Description',
+            'context_id': '26fe0b22-e88b-4777-8457-a61e6cc0ed8b',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Grid X',
+        'form_type': ['catalog', 'small find',],
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Grid (X)',
             'context_id': 'b428ff04-670b-4912-a237-ad8ff9635f5a',
@@ -621,9 +686,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Find Spot/Grid Y',
-        'form_type': ['catalog', 'small-find',],
-        'match_type': 'exact',
+        'source_col': 'Grid Y',
+        'form_type': ['catalog', 'small find',],
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Grid (Y)',
             'context_id': '3e0c2eb3-266b-4fa4-ba59-c5c793a1e96d',
@@ -634,8 +699,8 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Find Spot/Elevation',
-        'form_type': ['catalog', 'small-find',],
+        'source_col': 'Elevation',
+        'form_type': ['catalog', 'small find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Elevation',
@@ -647,9 +712,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Find Spot/Measurement Uncertainties/Grid X Uncertainty (+/- cm)',
-        'form_type': ['catalog', 'small-find',],
-        'match_type': 'exact',
+        'source_col': 'Grid X Uncertainty (+/- cm)',
+        'form_type': ['catalog', 'small find',],
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Grid X Uncertainty (+/- cm)',
             'context_id': '074574a6-43bd-4bc4-9bd2-001d44512cc3',
@@ -660,9 +725,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Find Spot/Measurement Uncertainties/Grid Y Uncertainty (+/- cm)',
-        'form_type': ['catalog', 'small-find',],
-        'match_type': 'exact',
+        'source_col': 'Grid Y Uncertainty (+/- cm)',
+        'form_type': ['catalog', 'small find',],
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Grid Y Uncertainty (+/- cm)',
             'context_id': '1bb7b997-c572-4fe5-ac89-c372c322ed78',
@@ -673,9 +738,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Find Spot/Measurement Uncertainties/Elevation Uncertainty (+/- cm)',
-        'form_type': ['catalog', 'small-find',],
-        'match_type': 'exact',
+        'source_col': 'Elevation Uncertainty (+/- cm)',
+        'form_type': ['catalog', 'small find',],
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Elevation Uncertainty (+/- cm)',
             'context_id': '529e931c-51ed-4d85-9759-5c9d4069dbb6',
@@ -686,9 +751,9 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
     
     {
-        'source_col': 'Find Spot/Measurement Uncertainties/Uncertainty Comment',
-        'form_type': ['catalog', 'small-find',],
-        'match_type': 'exact',
+        'source_col': 'Uncertainty Comment',
+        'form_type': ['catalog', 'small find',],
+        'match_type': 'endswith',
         'field_args': {
             'label': 'Measurement Uncertainties Comment',
             'context_id': None,
@@ -765,7 +830,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'General Description',
-        'form_type': ['bulk find', 'locus'],
+        'form_type': ['small find', 'bulk find', 'locus'],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -816,13 +881,39 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
-        'source_col': 'Preliminary Phasing',
+        'source_col': 'Locus Type',
         'form_type': ['locus',],
         'match_type': 'exact',
         'field_args': {
+            'label': 'Locus Type',
+            'context_id': '12eb02f4-d1a6-48cd-8bde-93162c12ca01',
+            'item_type': 'types',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+     {
+        'source_col': 'Locus Type Note',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Locus Type Note',
+            'context_id': '98e374e8-7da8-4b21-a95c-ec8f40aeec6e',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Preliminary Phasing',
+        'form_type': ['locus',],
+        'match_type': 'startswith',
+        'field_args': {
             'label': 'Preliminary Phasing',
             'context_id': 'c2b40ac1-3b8d-4307-b217-c61732236d68',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -908,7 +999,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     
     {
         'source_col': 'Field Season',
-        'form_type': ['small find',],
+        'form_type': ['small find', 'bulk find', 'locus',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Year',

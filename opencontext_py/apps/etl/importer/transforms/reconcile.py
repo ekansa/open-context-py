@@ -467,14 +467,28 @@ def df_reconcile_id_field(
         # An empty list, so don't try to get the next children down.
         child_field_objs = []
 
-    # Now iterate through all the unique record values within the column
+    done_rec_uuid_tups = []
+    # Now iterate through all the record values within the column
     # as subsetted by the current index.
-    for raw_column_record in df[current_index][col].unique():
-        item_obj = None
-        act_index = current_index & (df[col] == raw_column_record)
+    # NOTE: Because of the possibility that a raw_column_record maybe
+    # associated with a UUID, we need to iterate through all the rows
+    # so as to maintain the association between raw_column_record and
+    # UUID. 
+    for _, row in  df[current_index].iterrows():
+        raw_column_record = row[col]
         record_uuid = None
         if col_uuid:
-            record_uuid = is_valid_uuid(df[act_index][col_uuid].iloc[0])
+            record_uuid = is_valid_uuid(row[col_uuid])
+        act_index = current_index & (df[col] == raw_column_record)
+        if record_uuid:
+            act_index &= (df[col_uuid] == row[col_uuid])
+        act_rec_uuid_tup = (raw_column_record, record_uuid)
+        if act_rec_uuid_tup in done_rec_uuid_tups:
+            # We've already done this combination of raw_column_record and 
+            # record uuid, so continue to the next one.
+            continue
+        done_rec_uuid_tups.append(act_rec_uuid_tup)
+        item_obj = None
         if raw_column_record:
             item_obj, made_new, num_matching = get_or_create_manifest_entity(
                 ds_field, 

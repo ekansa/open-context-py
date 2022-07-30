@@ -283,6 +283,22 @@ def load_subjects_dataframe(
 # The main expectation is that entities receiving attributes have been
 # already created. 
 # ---------------------------------------------------------------------
+def record_original_field_names(ds_source):
+    ds_field_qs = DataSourceField.objects.filter(
+        data_source=ds_source,
+    ).filter(
+        Q(ref_orig_name__isnull=True)
+        |Q(ref_orig_name__exact='')
+    )
+    for ds_field in ds_field_qs:
+        ds_field.ref_orig_name = ds_field.label
+        if ds_field.label != 'subject_label':
+            ds_field.item_type = None
+            ds_field.data_type = None
+            ds_field.context = None
+        ds_field.save()
+
+
 def import_from_ds_source(ds_source):
     # finalize_all.delete_data_source_reconciled_associations(ds_source)
     finalize_all.delete_imported_from_datasource(ds_source)
@@ -301,6 +317,7 @@ def import_from_ds_source(ds_source):
             use_column_labels=False,
         )
         func_output = func(ds_source, df=df)
+
 
 def prep_subject_uuid_field(ds_source, sub_field):
     uuid_field = DataSourceField.objects.filter(
@@ -327,8 +344,24 @@ def prep_subject_uuid_field(ds_source, sub_field):
     return uuid_field
 
 
+def add_event_field_for_geometry(dsa, ds_source):
+    if dsa.object_field.item_type != 'geometry':
+        return None
+    event_field = DataSourceField.objects.filter(
+        data_source=ds_source,
+        item_type='events'
+    ).first()
+    if not event_field:
+        return None
+    dsa.event_field = event_field
+    dsa.save()
+
+
 def prepare_ds_source_attribute_cols(form_type, ds_source):
     """Assigns attributes to the columns for a data source"""
+    # Make sure we have the original field names recorded
+    # properly.
+    record_original_field_names(ds_source)
     sub_field = DataSourceField.objects.filter(
         data_source=ds_source,
         label='subject_label'
@@ -345,14 +378,11 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
             data_source=ds_source,
         )
         q_term = (
-            Q(label=config['source_col'])
-            | Q(ref_orig_name=config['source_col'])
+            Q(ref_orig_name=config['source_col'])
         )
         if config['match_type'] == 'startswith':
-            q_term |= Q(label__startswith=config['source_col'])
             q_term |= Q(ref_orig_name__startswith=config['source_col'])
         elif config['match_type'] == 'endswith':
-            q_term |= Q(label__endswith=config['source_col'])
             q_term |= Q(ref_orig_name__endswith=config['source_col'])
         
         dsf_qs = dsf_qs.filter(q_term)
@@ -360,7 +390,6 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
             print(f"Cannot find source_col {config['source_col']}")
             continue
         for obj_field in dsf_qs:
-            obj_field.ref_orig_name = obj_field.label
             for attrib_key, val in config['field_args'].items():
                 setattr(obj_field, attrib_key, val)
             obj_field.save()
@@ -372,6 +401,10 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
             if obj_field.label.startswith('MEDIA_URL_'):
                 pred_rel = 'has media resource url'
                 predicate_id = configs.PREDICATE_OC_ETL_MEDIA_HAS_FILES
+            if predicate_id == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
+                if not obj_field.item_type in DataSourceAnnotation.DESCRIBED_BY_OK_OBJECT_TYPES:
+                    # This has to be OK for a description relation
+                    continue
             des_exists = DataSourceAnnotation.objects.filter(
                 data_source=ds_source,
                 object_field=obj_field,
@@ -386,6 +419,9 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
             dsa.predicate_id = predicate_id
             dsa.object_field = obj_field
             dsa.save()
+            # For the locus geo case, where there's a geometry and event_field
+            # defined. Make sure the datasource annotation has the event field given.
+            add_event_field_for_geometry(dsa, ds_source)
 
 
 def load_trench_books_and_attributes(
@@ -393,6 +429,7 @@ def load_trench_books_and_attributes(
     source_id=pc_configs.SOURCE_ID_TB_ATTRIB,
     attrib_csv_path=pc_configs.TB_ATTRIB_CSV_PATH,
 ):
+    """Loads/creates trenchbook items and attributes"""
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
     ds_source = etl_df.load_csv_for_etl(
         project=project, 
@@ -412,6 +449,7 @@ def load_media_files_and_attributes(
     source_id=pc_configs.SOURCE_ID_MEDIA_FILES,
     attrib_csv_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH,
 ):
+    """Loads/creates media items, associate resource files and attributes"""
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
     ds_source = etl_df.load_csv_for_etl(
         project=project, 
@@ -424,3 +462,179 @@ def load_media_files_and_attributes(
     print(f'Prepared ds_source {ds_source.__dict__}')
     import_from_ds_source(ds_source)
     return ds_source
+
+
+def load_general_subjects_attributes(
+    configs=pc_configs.GENERAL_ATTRIB_SOURCE_FILE_LIST
+):
+    """Loads subjects (locations, objects) attributes"""
+    # NOTE: This does NOT create any new subjects items, it only
+    # adds attribute descriptions for those items already created.
+    project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
+    for form_type, source_id, attrib_csv_path in configs:
+        ds_source = etl_df.load_csv_for_etl(
+            project=project, 
+            file_path=attrib_csv_path, 
+            data_source_label=source_id, 
+            prelim_source_id=source_id, 
+            source_exists="replace"
+        )
+        prepare_ds_source_attribute_cols(form_type, ds_source)
+        print(f'Prepared ds_source {ds_source.__dict__}')
+        import_from_ds_source(ds_source)
+        print(f'Added attributes from {ds_source.source_id} ({ds_source.uuid})')
+
+
+# ---------------------------------------------------------------------
+# LINKS RELATED FUNCTIONS
+# Link assertions between named entities are structured as a set of
+# subject -> predicate (link relation) -> object relationships.
+# They are loaded from dataframes that store already reconciled IDs
+# for subject and object items. The predicates of the linking relationships
+# are human readable strings that get matched against the
+# pc_configs.LINK_REL_PRED_MAPPINGS config.
+# That config provides an identifier for the human readable linking
+# relation and a UUID plus an option UUID for the inverse relationship.
+#
+# The main expectation is that entities receiving links have been
+# already created. 
+# ---------------------------------------------------------------------
+
+def make_link_assertion(source_id, subject_obj, object_obj, predicate_obj):
+    """Makes a link subject, predicate, object assertion. """
+    if not subject_obj or not object_obj or not predicate_obj:
+        # We require these things to actually exist.
+        return False
+    asset_obj = AllAssertion.objects.filter(
+        subject=subject_obj,
+        predicate=predicate_obj,
+        object=object_obj,
+    ).first()
+    if asset_obj:
+        return assert_obj
+    assert_dict = {
+        'project_id': pc_configs.PROJECT_UUID,
+        'publisher_id': configs.OPEN_CONTEXT_PUB_UUID,
+        'source_id': source_id,
+        'subject': subject_obj,
+        'predicate': predicate_obj,
+        'object': object_obj,
+    }
+    assert_uuid = AllAssertion().primary_key_create(
+        subject_id=assert_dict['subject'].uuid,
+        predicate_id=assert_dict['predicate'].uuid,
+        object_id=assert_dict['object'].uuid,
+    )
+    assert_dict['uuid'] = assert_uuid
+    assert_obj = AllAssertion(**assert_dict)
+    try:
+        assert_obj.save()
+    except Exception as e:
+        print(str(e))
+        return None
+    return assert_obj
+
+
+def make_link_assertion_and_inverse(
+    source_id, 
+    subject_obj, 
+    object_obj, 
+    predicate_obj, 
+    inv_predicate_obj
+):
+    """Make a link assertion and inverse if applicable"""
+    inv_assert_obj = None
+    assert_obj = make_link_assertion(
+        source_id=source_id,
+        subject_obj=subject_obj,
+        object_obj=object_obj, 
+        predicate_obj=predicate_obj,
+    )
+    if inv_predicate_obj:
+        # Make the inverse relationship now
+        inv_assert_obj = make_link_assertion(
+            source_id=source_id,
+            subject_obj=object_obj, 
+            object_obj=subject_obj, 
+            predicate_obj=inv_predicate_obj
+        )
+    return assert_obj, inv_assert_obj
+
+
+def get_manifest_obj_from_dict_or_db(uuid, man_uuid_dict):
+    """Gets a manifest object from the man_uuid_dict or the database"""
+    if not uuid:
+        return None, man_uuid_dict
+    if man_uuid_dict.get(uuid):
+        return man_uuid_dict.get(uuid), man_uuid_dict
+    man_obj = AllManifest.objects.filter(uuid=uuid).first()
+    man_uuid_dict[uuid] = man_obj
+    return man_obj, man_uuid_dict
+
+
+def make_link_assertions_from_link_csv(source_id, links_csv_path):
+    """Makes link assertions from a link csv file"""
+    df = pd.read_csv(links_csv_path)
+    cols = ['subject_uuid', pc_configs.LINK_RELATION_TYPE_COL, 'object_uuid']
+    if not set(cols).issubset(set(df.columns.tolist())):
+        print(f'File {links_csv_path} missing required columns {cols}')
+        return None
+    act_index = (
+        ~df['subject_uuid'].isnull()
+        & ~df[pc_configs.LINK_RELATION_TYPE_COL].isnull()
+        & ~df['object_uuid'].isnull()
+    )
+    if df[act_index].empty:
+        print(f'File {links_csv_path} lacks valid linking assertion data')
+        return None
+    n = AllAssertion.objects.filter(
+        project_id=pc_configs.PROJECT_UUID,
+        source_id=source_id,
+    ).delete()
+    print(f'Deleted {n} linking assertions already existing for source_id {source_id}')
+    df_g = df[act_index][cols].groupby(cols, as_index=False).first()
+    man_uuid_dict = {}
+    for _, row in df_g.iterrows():
+        rel = row[pc_configs.LINK_RELATION_TYPE_COL]
+        pred_uuid, inv_pred_uuid = pc_configs.LINK_REL_PRED_MAPPINGS(
+            rel,
+            (None, None,)
+        )
+        if not pred_uuid:
+            print('-'*50)
+            print(f'PROBLEM! Relation {rel} has no configuration!')
+            print('-'*50)
+            continue
+        subject_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
+            uuid=str(row['subject_uuid']), 
+            man_uuid_dict=man_uuid_dict
+        )
+        object_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
+            uuid=str(row['object_uuid']), 
+            man_uuid_dict=man_uuid_dict
+        )
+        predicate_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
+            uuid=pred_uuid, 
+            man_uuid_dict=man_uuid_dict
+        )
+        inv_predicate_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
+            uuid=inv_pred_uuid, 
+            man_uuid_dict=man_uuid_dict
+        )
+        assert_obj, inv_assert_obj = make_link_assertion_and_inverse(
+            source_id, 
+            subject_obj, 
+            object_obj, 
+            predicate_obj, 
+            inv_predicate_obj
+        )
+        print(f'Link: {assert_obj}')
+        print(f'Inverse Link: {inv_assert_obj}')
+
+
+def make_all_link_assertion(
+    configs=pc_configs.ALL_LINK_SOURCE_FILE_LIST
+):  
+    """Makes all link assertions based on extracted, transformed data in CSV files"""
+    for source_id, links_csv_path in configs:
+        make_link_assertions_from_link_csv(source_id, links_csv_path)

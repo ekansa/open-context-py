@@ -234,6 +234,13 @@ class DataSourceField(models.Model):
         self.validate_item_type_data_types()
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceField, self).save(*args, **kwargs)
+    
+    def __str__(self):
+        out = (
+            f'{self.label}: field_num: {self.field_num} [{self.uuid}] '
+            f'-> {self.data_source.source_id} [{self.data_source.uuid}]'
+        )
+        return out
 
     class Meta:
         db_table = 'etl_fields'
@@ -500,7 +507,7 @@ class DataSourceAnnotation(models.Model):
         'uuid',
         'latitude',
         'longitude',
-        'geojson',
+        'geometry',
         'earliest',
         'latest',
     ]

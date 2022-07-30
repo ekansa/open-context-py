@@ -119,8 +119,8 @@ def make_locus_geo_df(df_grid):
                 'subject_label': row['subject_label'],
                 'subject_uuid': row['subject_uuid'],
                 'subject_uuid_source': row['subject_uuid_source'],
-                'feature_type': f_type,
-                'geojson': geojson,
+                pc_configs.EVENT_GEOJSON_COL: f_type,
+                pc_configs.REPROJECTED_GEOJSON_COL: geojson,
             }
             recs.append(rec)
     df_geo = pd.DataFrame(data=recs)
