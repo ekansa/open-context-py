@@ -272,6 +272,9 @@ def prep_attributes_df(
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
+    # Catalog data has lots of Kobo expressed slugs that need to be
+    # normalized to normal Open Context slugs
+    df_f = utilities.make_oc_normal_slug_values(df_f)
     # import pdb; pdb.set_trace()
     df_f['catalog_name'] = df_f['Catalog ID (PC)'].apply(
         lambda x: utilities.normalize_catalog_label(x), 

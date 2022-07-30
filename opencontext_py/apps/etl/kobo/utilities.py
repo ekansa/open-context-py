@@ -511,3 +511,20 @@ def add_person_object_rels(
         df.loc[up_index, person_uuid_col] = person_uuid
         df.loc[up_index, person_uuid_source_col] = 'df_persons'
     return df
+
+
+def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
+    """Updates attribute columns so slug values are consistent 
+    with Open Context expectations
+    """
+    for col in df.columns.tolist():
+        if not pd.api.types.is_string_dtype(df[col]):
+            continue
+        act_index = (
+            ~df[col].isnull()
+            & df[col].str.startswith(prefix_for_slugs)
+        )
+        if df[act_index].empty:
+            continue
+        df.loc[act_index, col] = df[act_index][col].str.replace('_', '-')
+    return df

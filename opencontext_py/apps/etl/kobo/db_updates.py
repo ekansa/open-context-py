@@ -21,7 +21,9 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceAnnotation,
     DataSourceRecord,
 )
-from opencontext_py.apps.etl.importer.df import load_csv_for_etl
+
+from opencontext_py.apps.etl.importer import df as etl_df
+from opencontext_py.apps.etl.importer.transforms import finalize_all
 
 from opencontext_py.apps.all_items import configs
 
@@ -281,6 +283,25 @@ def load_subjects_dataframe(
 # The main expectation is that entities receiving attributes have been
 # already created. 
 # ---------------------------------------------------------------------
+def import_from_ds_source(ds_source):
+    # finalize_all.delete_data_source_reconciled_associations(ds_source)
+    finalize_all.delete_imported_from_datasource(ds_source)
+    for _, stage_label, func, _, updates_df in finalize_all.PROCESS_STAGES:
+        if func is None:
+            continue
+        print(f'Working on import stage: {stage_label}')
+        if not updates_df:
+            func_output = func(ds_source)
+            print(f'Made {func_output} annotations') 
+            continue
+        df = etl_df.db_make_dataframe_from_etl_data_source(
+            ds_source, 
+            include_uuid_cols=True,
+            include_error_cols=True,
+            use_column_labels=False,
+        )
+        func_output = func(ds_source, df=df)
+
 def prep_subject_uuid_field(ds_source, sub_field):
     uuid_field = DataSourceField.objects.filter(
         data_source=ds_source,
@@ -373,7 +394,7 @@ def load_trench_books_and_attributes(
     attrib_csv_path=pc_configs.TB_ATTRIB_CSV_PATH,
 ):
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
-    ds_source = load_csv_for_etl(
+    ds_source = etl_df.load_csv_for_etl(
         project=project, 
         file_path=attrib_csv_path, 
         data_source_label=source_id, 
@@ -382,6 +403,7 @@ def load_trench_books_and_attributes(
     )
     prepare_ds_source_attribute_cols(form_type, ds_source)
     print(f'Prepared ds_source {ds_source.__dict__}')
+    import_from_ds_source(ds_source)
     return ds_source
 
 
@@ -391,7 +413,7 @@ def load_media_files_and_attributes(
     attrib_csv_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH,
 ):
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
-    ds_source = load_csv_for_etl(
+    ds_source = etl_df.load_csv_for_etl(
         project=project, 
         file_path=attrib_csv_path, 
         data_source_label=source_id, 
@@ -400,4 +422,5 @@ def load_media_files_and_attributes(
     )
     prepare_ds_source_attribute_cols(form_type, ds_source)
     print(f'Prepared ds_source {ds_source.__dict__}')
+    import_from_ds_source(ds_source)
     return ds_source

@@ -1,9 +1,13 @@
 import logging
+from tkinter import E
 
 import numpy as np
 import pandas as pd
 
+from unidecode import unidecode
+
 from django.db.models import Q
+from django.template.defaultfilters import slugify
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
@@ -14,6 +18,8 @@ from opencontext_py.apps.etl.importer.models import (
     DataSourceRecord,
     DataSourceAnnotation,
 )
+
+from opencontext_py.apps.all_items.legacy_all import is_valid_uuid
 
 from opencontext_py.apps.etl.importer import df as etl_df
 
@@ -52,6 +58,8 @@ def get_or_create_single_predicate_manifest_entity(
         data_type=data_type,
         label=label,
     )
+    if new_uuid:
+        man_qs = man_qs.filter(uuid=new_uuid)
     
     # Now handle the results where of our query to attempt to 
     # find matching records for this specific item.
@@ -105,7 +113,63 @@ def get_ds_field_context(ds_field, context=None):
     return ds_field.data_source.project
 
 
-def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_item_class=None):
+def ensure_ok_item_class_for_item_type(ds_field, context, record_item_class=None):
+    """Makes sure the item_type and item_class are OK"""
+    item_type = ds_field.item_type
+    if (
+        record_item_class is None 
+        and ds_field.item_class 
+        and str(ds_field.item_class.uuid) != configs.DEFAULT_CLASS_UUID
+    ):
+        record_item_class = ds_field.item_class
+    
+    if not ds_field.item_type in ['predicates', 'types']:
+        return item_type, record_item_class
+    
+    if (
+        ds_field.data_type == 'id'
+        and context.item_type == 'predicates' 
+        and (
+            (str(context.item_class.uuid) == configs.CLASS_OC_VARIABLES_UUID)
+            or (
+                ds_field.item_class 
+                and
+                str(ds_field.item_class.uuid) == configs.CLASS_OC_VARIABLES_UUID
+            )
+        )
+    ):
+        # The ds_field has a predicates context, and that context is
+        # a variable, meaning it has types items as values.
+        item_type = 'types'
+        record_item_class = AllManifest.objects.filter(
+            uuid=configs.DEFAULT_CLASS_UUID
+        ).first()
+        return item_type, record_item_class
+    
+    if (ds_field.item_type == 'predicates'
+        and (
+            not record_item_class 
+            or 
+            str(record_item_class.uuid) not in configs.CLASS_LIST_OC_PREDICATES
+        )
+    ):
+        # We are attempting to reconcile an item_type = 'predicates'
+        # item, but we don't have a correct record_item_class set. So
+        # default to the class for a variable (not a link)
+        record_item_class = AllManifest.objects.filter(
+            uuid=configs.CLASS_OC_VARIABLES_UUID
+        ).first()
+    return item_type, record_item_class
+
+
+
+def get_or_create_manifest_entity(
+    ds_field, 
+    context, 
+    raw_column_record, 
+    record_item_class=None, 
+    record_uuid=None
+):
     """Gets or creates a manifest entity after reconciliation"""
 
     # Limit the projects in which we will search for matching spatial items
@@ -120,20 +184,41 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         # parent spatial context for item in this ds_field.
         reconcile_project_ids.append(context.uuid)
         context = None
+    
+    item_type, record_item_class = ensure_ok_item_class_for_item_type(
+        ds_field, 
+        context, 
+        record_item_class
+    )
 
+    # Pass in a slug identifier to use to identify an item.
+    slug_check = slugify(unidecode(str(raw_column_record)))
+    if str(raw_column_record) != slug_check:
+        # The raw_column_record is not a slug.
+        slug_check = None
+
+    # Prepare the item label. 
     item_label = str(raw_column_record)
     if ds_field.value_prefix:
         item_label = ds_field.value_prefix + raw_column_record
-
-    item_label = AllManifest().clean_label(item_label)
+    item_label = AllManifest().clean_label(item_label, item_type=item_type)
 
     man_qs = AllManifest.objects.filter(
         project_id__in=reconcile_project_ids,
-        item_type=ds_field.item_type,
+        item_type=item_type,
         data_type=ds_field.data_type,
     )
-    if context:
+    # If we're passing a UUID argument, use it!
+    if record_uuid: 
+        man_qs = man_qs.filter(uuid=record_uuid)
+
+    # Limit by context if we don't know the uuid
+    if context and not record_uuid:
         man_qs = man_qs.filter(context=context)
+    
+    # Limit by item_class if we don't know the uuid
+    if record_item_class and not record_uuid:
+        man_qs = man_qs.filter(item_class=record_item_class)
 
     if ds_field.item_type in configs.URI_CONTEXT_PREFIX_ITEM_TYPES:
         # Some flexibility in reconcile these.
@@ -155,34 +240,15 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
             Q(meta_json__combined_name=item_label)
             | Q(label=item_label)
         )
+    elif slug_check:
+        man_qs = man_qs.filter(
+            Q(slug=slug_check)
+            | Q(label=item_label)
+        )
     else:
         # Use the label as the main identifier (obviously with other
         # filter to contextualize)
         man_qs = man_qs.filter(label=item_label)
-
-
-
-    if (record_item_class is None and ds_field.item_class 
-        and str(ds_field.item_class.uuid) != configs.DEFAULT_CLASS_UUID):
-        record_item_class = ds_field.item_class
-    
-    if (ds_field.item_type == 'predicates'
-        and (
-            not record_item_class 
-            or 
-            str(record_item_class.uuid) not in configs.CLASS_LIST_OC_PREDICATES
-        )
-    ):
-        # We are attempting to reconcile an item_type = 'predicates'
-        # item, but we don't have a correct record_item_class set. So
-        # default to the class for a variable (not a link)
-        record_item_class = AllManifest.objects.filter(
-            uuid=configs.CLASS_OC_VARIABLES_UUID
-        ).first()
-
-    if record_item_class:
-        man_qs = man_qs.filter(item_class=record_item_class)
-
 
     more_filter_args = ds_field.meta_json.get('reconcile_filter_args')
     more_exclude_args = ds_field.meta_json.get('reconcile_exclude_args')
@@ -207,7 +273,13 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         # We didn't find a match, but we lack the context to mint
         # a new item. This is likely a result of a subjects item that
         # we tried to match, but we lack context to assign it.
-        logger.info(f'NEED CONTEXT to make {ds_field.item_type}: {item_label}')
+        logger.info(f'NEED CONTEXT to make {item_type}: {item_label}')
+        return None, made_new, 0
+
+    if context and context.item_type != 'subjects' and item_type == 'subjects':
+        # We can't make a new subjects item if the context doesn't
+        # exist or if it is not a subjects item type
+        logger.info(f'NEED subjects CONTEXT to make {item_type}: {item_label}')
         return None, made_new, 0
 
     # Make a new Manifest item
@@ -215,11 +287,13 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         'publisher': ds_field.data_source.publisher,
         'project': ds_field.data_source.project,
         'source_id': ds_field.data_source.source_id,
-        'item_type': ds_field.item_type,
+        'item_type': item_type,
         'data_type': ds_field.data_type,
         'label': item_label,
         'context': context,
     }
+    if record_uuid:
+        man_dict['uuid'] = record_uuid
     if record_item_class:
         man_dict['item_class'] = record_item_class
     if ds_field.item_type == 'predicates':
@@ -231,10 +305,11 @@ def get_or_create_manifest_entity(ds_field, context, raw_column_record, record_i
         item_obj = AllManifest(**man_dict)
         item_obj.save()
         made_new = True
-    except:
+    except Exception as e:
         item_obj = None
         made_new = False
         print(f'Failed to make new manifest item: {str(man_dict)}')
+        print(f'Exception: {str(e)}')
     return item_obj, made_new, 0 
 
 
@@ -367,6 +442,17 @@ def df_reconcile_id_field(
     current_index = filter_index
     for index_col, index_col_record in col_record_tuples:
         current_index &= (df[index_col] == index_col_record)
+    
+    # Check to see if the ds_field has a uuid field.
+    col_uuid = None
+    ds_anno_uuid =  DataSourceAnnotation.objects.filter(
+        subject_field=ds_field,
+        predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+        object_field__item_type='uuid'
+    ).first()
+    if ds_anno_uuid:
+        col_uuid = f'{ds_anno_uuid.object_field.field_num}_col'
+
 
     col_context = f'{ds_field.field_num}_context'
     col_item =  f'{ds_field.field_num}_item'
@@ -386,11 +472,15 @@ def df_reconcile_id_field(
     for raw_column_record in df[current_index][col].unique():
         item_obj = None
         act_index = current_index & (df[col] == raw_column_record)
+        record_uuid = None
+        if col_uuid:
+            record_uuid = is_valid_uuid(df[act_index][col_uuid].iloc[0])
         if raw_column_record:
             item_obj, made_new, num_matching = get_or_create_manifest_entity(
                 ds_field, 
                 context, 
                 raw_column_record,
+                record_uuid=record_uuid,
             )
             if not item_obj:
                 logger.info(
@@ -445,8 +535,3 @@ def df_reconcile_id_field(
                 col_record_tuples=(col_record_tuples + [(col, raw_column_record,)])
             )
     return df
-
-
-
-
-

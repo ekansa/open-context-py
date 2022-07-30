@@ -236,6 +236,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'subject_label',
             'item_type': 'subjects',
+            'data_type': 'id',
             'item_class_id': '00000000-6e24-600d-a274-f02367a32c33',
         },
         'subject_pk': True,
@@ -248,6 +249,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'subject_label',
             'item_type': 'subjects',
+            'data_type': 'id',
             'item_class_id': '00000000-6e24-1147-b189-ad24b8a86f76',
         },
         'subject_pk': True,
@@ -260,6 +262,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'subject_label',
             'item_type': 'subjects',
+            'data_type': 'id',
             'item_class_id': '00000000-6e24-0b70-0230-0cc0398d6184',
         },
         'subject_pk': True,
@@ -272,6 +275,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'subject_label',
             'item_type': 'subjects',
+            'data_type': 'id',
             'item_class_id': '00000000-6e24-2339-9f63-582218c3f76a',
         },
         'subject_pk': True,
@@ -283,6 +287,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'match_type': 'exact',
         'field_args': {
             'label': 'subject_label',
+            'data_type': 'id',
             'item_type': 'documents',
         },
         'subject_pk': True,
@@ -309,6 +314,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'subject_label',
             'item_type': 'media',
+            'data_type': 'id',
             'item_class_id': configs.CLASS_OC_IMAGE_MEDIA,
         },
         'subject_pk': True,
@@ -399,7 +405,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Record Type',
             'context_id': '609ff344-7304-48e3-8db4-64b47dd12215',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -438,7 +444,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Fabric Category',
             'context_id': 'a70236ca-1599-42f5-4a12-acec8c423850',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -465,7 +471,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'label': 'Object Type',  # Note the difference from the source-column!
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
             'item_type': 'predicates',
-            'data_type': 'id',
+            'data_type': 'types',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
@@ -478,7 +484,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             # NOTE: This is also mapped to the 'Object Type' predicate.
             'label': 'Object Type',  # Note the difference from the source-column!
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -491,7 +497,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Object Type', 
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -517,7 +523,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Decorative Technique',
             'context_id': 'f07c30bc-6c71-4c97-7893-d61ff6d0b59b',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -543,7 +549,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Motif',
             'context_id': '9b260671-cbbd-490e-48b0-cdc48f5df62d',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -569,7 +575,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Vessel Form',
             'context_id': '6a890b60-3811-44ae-a554-cc8245c4d946',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -582,7 +588,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Vessel Part Present',
             'context_id': 'c16a0682-5956-4180-af94-9981f937651a',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -595,7 +601,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Vessel Part Present',
             'context_id': 'c16a0682-5956-4180-af94-9981f937651a',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -699,7 +705,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Find Type',
             'context_id': '464b90e2-ce62-4570-bcea-58b7f9b5bb33',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -738,7 +744,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Count Type',
             'context_id': 'fa2e0286-de17-45e6-959f-9dab8c8cc5f5',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -790,7 +796,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Deposit Compaction',
             'context_id': '3eb4639d-a67e-47e6-9435-a87723486a82',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -803,7 +809,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Stratigraphic Reliability',
             'context_id': '1ed85342-864a-4ae9-81ed-3a484233ec43',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -842,7 +848,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Deposit Compaction',
             'context_id': '3eb4639d-a67e-47e6-9435-a87723486a82',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -855,7 +861,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Stratigraphic Reliability',
             'context_id': '1ed85342-864a-4ae9-81ed-3a484233ec43',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -920,7 +926,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Entry Type',
             'context_id': 'eea8648f-7df4-48f6-a58e-2971f001d245',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -946,7 +952,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Document Type',
             'context_id': '565672fe-eee1-4e85-3c66-538137e6d332',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -1037,7 +1043,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Composition Subject Type',
             'context_id': '7bf4999e-264d-4515-a468-c041848a6259',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -1115,7 +1121,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Image Type',
             'context_id': 'b8556eaa-cf52-446b-39fa-ae4798c13a6b',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
@@ -1154,7 +1160,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'field_args': {
             'label': 'Media Type',
             'context_id': 'eced82b8-8f45-4ca3-b9f9-b94ddcd3d2ab',
-            'item_type': 'predicates',
+            'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
