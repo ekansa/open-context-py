@@ -532,6 +532,9 @@ var vc_records_tab = Vue.component(
                 return level;
             },
             onRowSelected(items){
+                if(!items){
+                    return null;
+                }
                 this.selected = items;
                 console.log(this.selected);
                 window.open(items[0].href, "_blank");
