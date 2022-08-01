@@ -165,6 +165,7 @@
             responsive="xl"
             :small="true"
             selectable
+            select-mode="single"
             hover
             @row-selected="onRowSelected"
             no-local-sorting
@@ -533,8 +534,10 @@ var vc_records_tab = Vue.component(
             },
             onRowSelected(items){
                 if(!items){
-                    return null;
+                    return None;
                 }
+                console.log('selected row')
+                console.log(items);
                 this.selected = items;
                 console.log(this.selected);
                 window.open(items[0].href, "_blank");
