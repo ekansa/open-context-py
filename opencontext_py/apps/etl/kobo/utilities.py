@@ -528,3 +528,10 @@ def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
             continue
         df.loc[act_index, col] = df[act_index][col].str.replace('_', '-')
     return df
+
+def not_null_subject_uuid(df):
+    if not 'subject_uuid' in df.columns:
+        return df
+    act_index = ~df['subject_uuid'].isnull()
+    df = df[act_index].copy()
+    return df

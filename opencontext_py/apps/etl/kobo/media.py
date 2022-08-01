@@ -307,7 +307,6 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
         col_to_fill='object_label', 
         id_cols=['object_uuid'],
     )
-    
     return df_media
 
 
@@ -357,6 +356,8 @@ def make_all_export_media_df(
                 len(df_all_media['new_filename'].unique().tolist())
             )
         )
+    # Make sure everything has a uuid.
+    df_all_media = utilities.not_null_subject_uuid(df_all_media)
     if all_media_kobo_files_path:
         df_all_media.to_csv(all_media_kobo_files_path, index=False)
     return df_all_media

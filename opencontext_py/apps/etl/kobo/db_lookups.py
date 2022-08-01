@@ -156,11 +156,16 @@ def db_reconcile_trench_unit(trench_id, trench_year):
     map_dict = utilities.get_trench_unit_mapping_dict(trench_id)
     if not map_dict:
         return None
+    if '_' in trench_id:
+        # no spaces if we have an underscore trench_id
+        trench_id = trench_id.replace(' ', '')
     if ' ' in trench_id:
         t_ex = trench_id.split(' ')
         if t_ex[-1].isnumeric():
             trench_id = t_ex[0]
     unit_num = ''.join([c for c in trench_id if c.isnumeric()])
+    if unit_num.endswith(str(trench_year)):
+        unit_num = unit_num[0:-(len(str(trench_year)))]
     if not map_dict.get('prefix'):
         trench_name = f"{map_dict['area']} {unit_num}"
         b_trench_name = f"{map_dict['area']}{unit_num}"
@@ -189,7 +194,7 @@ def db_reconcile_trench_unit(trench_id, trench_year):
         return man_qs[0]
     print(
         f'PROBLEM: Found NO matches for '
-        f'unit number: {unit_num}, year {trench_year} in {search_path}'
+        f'unit number: {unit_num}, year {trench_year} in {search_path} or {b_search_path}'
     )
     return None
 
@@ -216,6 +221,7 @@ def db_reconcile_locus(unit_uuid, locus_name):
         f'locus: {locus_name} in {unit_uuid}'
     )
     return None
+
 
 
 def db_lookup_manifest_obj(

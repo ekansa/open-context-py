@@ -353,6 +353,8 @@ def prep_attributes_df(
         final_uuid_source_col='subject_uuid_source',
         orig_uuid_col='_uuid',
     )
+    # Make sure everything has a uuid.
+    df_f = utilities.not_null_subject_uuid(df_f)
     if attrib_csv_path:
         df_f.to_csv(attrib_csv_path, index=False)
     dfs[sheet_name] = df_f

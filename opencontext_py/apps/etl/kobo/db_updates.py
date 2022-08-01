@@ -58,10 +58,12 @@ def get_or_create_manifest_obj(
         man_obj = AllManifest.objects.filter(
             uuid=item_uuid
         ).first()
+        if man_obj:
+            num_matching = 1
     else:
-        man_obj, num_matching = db_lookups.reconcile_manifest_obj(
-            item_type=item_type,
+        man_obj, num_matching = db_lookups.db_reconcile_manifest_obj(
             item_label=item_label,
+            item_type=item_type,
             item_class_obj=item_class_obj,
             item_any_id=item_any_id,
             context=context,
@@ -106,6 +108,10 @@ def get_or_create_manifest_obj(
         made_new = False
         print(f'Failed to make new manifest item: {str(man_dict)}')
         print(str(e))
+        raise(ValueError(f'{str(man_dict)}'))
+    if not man_obj:
+        return man_obj, made_new
+    print(f'---> Created {man_obj.label} ({man_obj.uuid}) in context {man_obj.context.label} ({man_obj.context.uuid})')
     return man_obj, made_new 
 
 
@@ -139,7 +145,8 @@ def load_subject_and_containment(
     man_obj, made_new = get_or_create_manifest_obj(
         item_type='subjects',
         item_label=child_label,
-        item_class=item_class_obj,
+        item_class_obj=item_class_obj,
+        item_uuid=child_uuid,
         source_id=source_id,
         context=parent_man_obj,
     )
@@ -190,15 +197,19 @@ def load_subjects_parent_child_cols_df(
         & ~subjects_df[child_class_slug_col].isnull()
     )
     if extra_filter_index is not None:
-        index &= extra_filter_index
+        indx &= extra_filter_index
     if subjects_df[indx].empty:
         print(f'No data to import columns {str(parent_child_col_tup)}')
         return subjects_df
     child_result_col = child_label_col.replace('_name', '_import')
     subjects_df[child_result_col] = np.nan
     grp_cols = list(parent_child_col_tup)
-    df_g = df[indx][grp_cols].groupby(grp_cols, as_index=False).first()
+    df_g = subjects_df[indx][grp_cols].groupby(grp_cols, as_index=False).first()
     df_g.reset_index(drop=True, inplace=True)
+    print(f'Reconcile containment in {parent_child_col_tup}')
+    # Clear the cache to make sure we get fresh lookups for items.
+    cache = caches['redis']
+    cache.clear()
     for _, row in df_g.iterrows():
         ok = load_subject_and_containment( 
             source_id=source_id, 
@@ -246,9 +257,9 @@ def load_catalog_no_locus(
         'catalog_item_class_slug',
     )
     return load_subjects_parent_child_cols_df(
-        source_id,
         subjects_df,
         parent_child_col_tup,
+        source_id=source_id,
         extra_filter_index=no_loci_indx,
     )
 
@@ -264,7 +275,7 @@ def load_subjects_dataframe(
         subjects_df = load_subjects_parent_child_cols_df(
             subjects_df,
             parent_child_col_tup,
-            source_id,
+            source_id=source_id,
         )
     # Load catalog items that are not contained in a locus.
     subjects_df = load_catalog_no_locus(
@@ -505,12 +516,12 @@ def make_link_assertion(source_id, subject_obj, object_obj, predicate_obj):
     if not subject_obj or not object_obj or not predicate_obj:
         # We require these things to actually exist.
         return False
-    asset_obj = AllAssertion.objects.filter(
+    assert_obj = AllAssertion.objects.filter(
         subject=subject_obj,
         predicate=predicate_obj,
         object=object_obj,
     ).first()
-    if asset_obj:
+    if assert_obj:
         return assert_obj
     assert_dict = {
         'project_id': pc_configs.PROJECT_UUID,
@@ -565,6 +576,7 @@ def get_manifest_obj_from_dict_or_db(uuid, man_uuid_dict):
     """Gets a manifest object from the man_uuid_dict or the database"""
     if not uuid:
         return None, man_uuid_dict
+    uuid = uuid.strip()
     if man_uuid_dict.get(uuid):
         return man_uuid_dict.get(uuid), man_uuid_dict
     man_obj = AllManifest.objects.filter(uuid=uuid).first()
@@ -596,7 +608,7 @@ def make_link_assertions_from_link_csv(source_id, links_csv_path):
     man_uuid_dict = {}
     for _, row in df_g.iterrows():
         rel = row[pc_configs.LINK_RELATION_TYPE_COL]
-        pred_uuid, inv_pred_uuid = pc_configs.LINK_REL_PRED_MAPPINGS(
+        pred_uuid, inv_pred_uuid = pc_configs.LINK_REL_PRED_MAPPINGS.get(
             rel,
             (None, None,)
         )

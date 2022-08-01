@@ -374,6 +374,8 @@ def prep_attributes_df(
     df_f['subject_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
     cols = [c for c in TB_ATTRIBUTE_COLS if c in df_f.columns]
     df_f = df_f[cols].copy()
+    # Make sure everything has a uuid.
+    df_f = utilities.not_null_subject_uuid(df_f)
     if attrib_csv_path:
         df_f.to_csv(attrib_csv_path, index=False)
     return dfs

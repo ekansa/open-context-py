@@ -34,8 +34,10 @@ TRENCH_CSV_COLS = [
     # (csv_column_name, col_output_rename)
     ('site', 'site'),
     ('area', 'area'),
-    ('p_trench', 'p_trench_name'),
-    ('p_trench_uuid', 'p_trench_uuid'),
+    ('area_uuid', 'area_uuid'),
+    ('ptrench_name', 'ptrench_name'),
+    ('ptrench_uuid', 'ptrench_uuid'),
+    ('ptrench_item_class_slug', 'ptrench_item_class_slug'),
     ('label_oc', 'unit_name'),
     ('uuid', 'unit_uuid'),
 ]
@@ -88,7 +90,8 @@ SUBJECTS_IMPORT_COLS = [
     # Tuples organized in hierarchic containment order.
     # Tuples as follows:
     # (parent_context_col, child_label_col, child_uuid_col, child_class_slug_col)
-    ('p_trench_uuid', 'unit_name', 'unit_uuid', 'unit_item_class_slug'),
+    ('area_uuid', 'ptrench_name', 'ptrench_uuid', 'ptrench_item_class_slug', ),
+    ('ptrench_uuid', 'unit_name', 'unit_uuid', 'unit_item_class_slug'),
     ('unit_uuid', 'locus_name', 'locus_uuid', 'locus_item_class_slug'),
     ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug'),
     ('locus_uuid', 'bulk_name', 'bulk_uuid', 'bulk_item_class_slug'),
@@ -263,8 +266,10 @@ def add_missing_unit_contexts(df):
         )
         df.loc[up_index, 'site'] = map_dict['site']
         df.loc[up_index, 'area'] = map_dict['area']
-        df.loc[up_index, 'p_trench_name'] = man_obj.context.label
-        df.loc[up_index, 'p_trench_uuid'] = str(man_obj.context.uuid)
+        df.loc[up_index, 'area_uuid'] = str(man_obj.context.context.uuid)
+        df.loc[up_index, 'ptrench_name'] = man_obj.context.label
+        df.loc[up_index, 'ptrench_uuid'] = str(man_obj.context.uuid)
+        df.loc[up_index, 'ptrench_class_slug'] = str(man_obj.context.item_class.slug)
         df.loc[up_index, 'unit_name'] = man_obj.label
         df.loc[up_index, 'unit_uuid'] = str(man_obj.uuid)
     return df
@@ -383,3 +388,41 @@ def make_and_classify_subjects_df(
     if save_path:
         df.to_csv(save_path, index=False)
     return df
+
+
+def validate_subjects_df(
+    load_path=pc_configs.SUBJECTS_CSV_PATH,
+    save_path=pc_configs.SUBJECTS_VALIDATION_CSV_PATH,
+    error_path=pc_configs.SUBJECTS_ERRORS_CSV_PATH,
+):
+    """Validates items for uniqueness"""
+    check_configs = [
+        (['unit_uuid', 'unit_name', 'locus_name'], 'locus_uuid'),
+        (['catalog_name'], 'catalog_uuid'),
+        (['unit_uuid', 'unit_name', 'locus_name', 'locus_uuid', 'bulk_name'], 'bulk_uuid'),
+        (['unit_uuid', 'unit_name', 'locus_name', 'locus_uuid', 'find_name'], 'find_uuid'),
+    ]
+    df = pd.read_csv(load_path)
+    df_list = []
+    for grp_cols, count_col in check_configs:
+        act_index = ~df[count_col].isnull()
+        for c in grp_cols:
+            act_index &= ~df[c].isnull()
+        all_cols = grp_cols + [count_col] + ['kobo_form']
+        df_g = df[act_index][all_cols].groupby(
+            grp_cols, 
+            as_index=False
+        ).agg(
+            {
+                count_col: pd.Series.nunique,
+                'kobo_form': 'first',
+            }
+        )
+        df_g['item_label'] = df_g[grp_cols[-1]]
+        df_g['item_unique_count'] = df_g[count_col]
+        df_g = df_g[['kobo_form', 'item_label', 'item_unique_count']].copy()
+        df_list.append(df_g)
+    df_all = pd.concat(df_list)
+    df_all.to_csv(save_path, index=False)
+    bad_index = df_all['item_unique_count'] > 1
+    df_all[bad_index].to_csv(error_path, index=False)

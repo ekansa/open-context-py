@@ -23,6 +23,8 @@ TRENCH_CSV_PATH = f'{ALL_IMPORTS_PATH}/trenches-2022.csv'
 PEOPLE_CSV_PATH = f'{ALL_IMPORTS_PATH}/people-2022.csv'
 
 SUBJECTS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/subjects.csv'
+SUBJECTS_VALIDATION_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/item-validation.csv'
+SUBJECTS_ERRORS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/item-duplicate-errors.csv'
 MEDIA_ALL_KOBO_REFS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/all-media-files.csv'
 MEDIA_ALL_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/all-media-links.csv'
 
@@ -62,6 +64,22 @@ SOURCE_ID_LOCUS_GEO = f'{SOURCE_ID_PREFIX}-locus-geo'
 SOURCE_ID_TB_ATTRIB = f'{SOURCE_ID_PREFIX}-tb-attrib'
 SOURCE_ID_TB_LINKS = f'{SOURCE_ID_PREFIX}-tb-link'
 
+ALL_SOURCE_IDS = [
+    SOURCE_ID_SUBJECTS,
+    SOURCE_ID_MEDIA_FILES,
+    SOURCE_ID_MEDIA_LINKS,
+    SOURCE_ID_CATALOG_ATTRIB,
+    SOURCE_ID_CATALOG_LINKS,
+    SOURCE_ID_SMALL_FINDS_ATTRIB,
+    SOURCE_ID_SMALL_FINDS_LINKS,
+    SOURCE_ID_BULK_FINDS_ATTRIB,
+    SOURCE_ID_BULK_FINDS_LINKS,
+    SOURCE_ID_LOCUS_ATTRIB,
+    SOURCE_ID_LOCUS_LINKS,
+    SOURCE_ID_LOCUS_GEO,
+    SOURCE_ID_TB_ATTRIB,
+    SOURCE_ID_TB_LINKS,
+]
 
 ENTITY_CREATE_SOURCE_FILE_LIST = [
     # (form_type, source_id, attrib_csv_path,)
@@ -259,9 +277,6 @@ GEO_ATTRIBUTE_CONFIGS = [
             'label': EVENT_GEOJSON_COL,
             'item_type': 'events',
             'data_type': 'id',
-        },
-        'field_rel': {
-            'predicate_id': configs.PREDICATE_OC_ETL_DESCRIBED_BY,
         },
     },
 ]
@@ -1350,7 +1365,8 @@ SUBJECTS_SHEET_PRIMARY_IDs = {
 # in their proper hierarchy
 SUBJECTS_IMPORT_TREE_COL_TUPS = [
     # (parent_context_col, child_label_col, child_uuid_col, child_class_slug_col)
-    ('p_trench_uuid', 'unit_name', 'unit_uuid', 'unit_item_class_slug', ),
+    ('area_uuid', 'ptrench_name', 'ptrench_uuid', 'ptrench_item_class_slug', ),
+    ('ptrench_uuid', 'unit_name', 'unit_uuid', 'unit_item_class_slug', ),
     ('unit_uuid', 'locus_name', 'locus_uuid', 'locus_item_class_slug',),
     ('locus_uuid', 'catalog_name', 'catalog_uuid', 'catalog_item_class_slug',),
     ('locus_uuid', 'find_name', 'find_uuid', 'find_item_class_slug',),

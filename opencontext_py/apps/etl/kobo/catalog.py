@@ -292,6 +292,8 @@ def prep_attributes_df(
     )
     # Add geospatial coordinates
     df_f = grid_geo.create_global_lat_lon_columns(df_f)
+    # Make sure everything has a uuid.
+    df_f = utilities.not_null_subject_uuid(df_f)
     if attrib_csv_path:
         df_f.to_csv(attrib_csv_path, index=False)
     dfs[sheet_name] = df_f
