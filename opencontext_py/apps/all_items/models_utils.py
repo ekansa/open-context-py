@@ -387,10 +387,17 @@ def make_manifest_slug(
     m_slug_count = AllManifest.objects.filter(
         slug__startswith=slug_prefix
     ).count()
-    return '{}-{}'.format(
-        slug_prefix,
-        (m_slug_count + 1) 
-    )
+    slug_exists = True
+    act_slug = f'{slug_prefix}-{m_slug_count}'
+    while slug_exists:
+        m_slug_count += 1
+        act_slug = f'{slug_prefix}-{m_slug_count}'
+        s_count = AllManifest.objects.filter(
+            slug=act_slug
+        ).count()
+        if s_count < 1:
+            slug_exists = False
+    return act_slug
 
 
 
@@ -819,7 +826,3 @@ def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='htt
                 protocol='http://'
             )
     return output
-
-
-
-
