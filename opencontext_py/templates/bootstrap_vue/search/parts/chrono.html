@@ -279,6 +279,8 @@ var vc_chronotiles = Vue.component(
                 chart_count_per_year: null,
                 chart_min_year: null,
                 chart_max_year: 2000,
+                t_span_min_proportion: 0.03,
+                t_span_default_min: 10,
                 t_span_min: 25,
                 curve_steps: [
                     0.5,
@@ -569,6 +571,26 @@ var vc_chronotiles = Vue.component(
                     data: series,
                 }
             },
+            determine_t_span_min(){
+                let all_dates = [];
+                for(let chrono of this.chrono_facets){
+                    let act_dates = [
+                        parseFloat(chrono.start),
+                        parseFloat(chrono.stop),
+                    ];
+                    all_dates = act_dates.concat(all_dates);
+                }
+                let min_date = Math.min.apply(Math, all_dates);
+                let max_date = Math.max.apply(Math, all_dates);
+                // To keep the visualization from looking too spiky, the minimum
+                // time span will be a % of the total time range for all results.
+                this.t_span_min = Math.round(
+                    ((max_date - min_date) * this.t_span_min_proportion)
+                );
+                if(this.t_span_min < this.t_span_default_min){
+                    this.t_span_min = this.t_span_default_min;
+                }
+            },
             add_chart_year_x_to_chrono(chrono){
                 chrono.t_span = parseFloat(chrono.stop) - parseFloat(chrono.start);
                 if(chrono.t_span < this.t_span_min){
@@ -576,13 +598,29 @@ var vc_chronotiles = Vue.component(
                 }
                 chrono.count_per_year =  chrono.count / chrono.t_span;
                 chrono.median_year =  Math.round(((parseFloat(chrono.stop) + parseFloat(chrono.start)) / 2));
+                let span_max_year = Math.round((chrono.median_year + (chrono.t_span * 0.5))) + 1;
+                if(span_max_year > this.chart_max_year){
+                    span_max_year = this.chart_max_year;
+                }
+                let span_min_year = span_max_year - chrono.t_span - 1;
                 chrono.chart_year_x = [
-                    Math.round((chrono.median_year - (chrono.t_span * 0.5))) - 1,
-                    Math.round((chrono.median_year + (chrono.t_span * 0.5))) + 1,
+                    span_min_year,
+                    span_max_year,
                 ];
+                chrono.median_year = Math.round(
+                    ((
+                        parseFloat(chrono.stop)
+                        + parseFloat(chrono.start)
+                        + span_min_year
+                        + span_max_year
+                    ) / 4)
+                );
                 for(let act_step of this.curve_steps){
                     let act_x_minus = Math.round((chrono.median_year - (chrono.t_span * act_step)));
                     let act_x_plus = Math.round((chrono.median_year + (chrono.t_span * act_step)));
+                    if(act_x_plus > this.chart_max_year){
+                        act_x_plus = this.chart_max_year;
+                    }
                     if(chrono.chart_year_x.indexOf(act_x_minus) < 0){
                         chrono.chart_year_x.push(act_x_minus);
                     }
@@ -608,6 +646,7 @@ var vc_chronotiles = Vue.component(
                     return null;
                 }
                 console.log('Make chart with color gradient key: ' + this.selected_gradient_key);
+                this.determine_t_span_min();
                 let chrono_counts = [];
                 let chrono_counts_per_year = [];
                 let chrono_id_t_spans = {};
