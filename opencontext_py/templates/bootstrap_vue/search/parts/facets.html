@@ -519,7 +519,9 @@ function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
     }
     f_opt.define_uri = null;
     if(f_opt.hasOwnProperty('rdfs:isDefinedBy')){
-        f_opt.define_uri = f_opt['rdfs:isDefinedBy'];
+        if(f_opt['rdfs:isDefinedBy'].startsWith('http')){
+            f_opt.define_uri = f_opt['rdfs:isDefinedBy'];
+        }
     }   
     if (typeof(f_opt.id) === 'undefined'){
         console.log('No id in ' + f_opt);
