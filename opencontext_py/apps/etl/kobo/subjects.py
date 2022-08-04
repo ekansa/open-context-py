@@ -192,9 +192,10 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
                     and not c.startswith('locus_')
                 )
             ]
-            print('Made subject df')
+            print(f'Made subject df from {sheet_name}')
             print(df.head())
             subj_dfs.append(df)
+    # import pdb; pdb.set_trace()
     df = pd.concat(subj_dfs, axis=0)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
     all_cols = start_cols + locus_cols + mid_cols + last_cols
@@ -269,7 +270,7 @@ def add_missing_unit_contexts(df):
         df.loc[up_index, 'area_uuid'] = str(man_obj.context.context.uuid)
         df.loc[up_index, 'ptrench_name'] = man_obj.context.label
         df.loc[up_index, 'ptrench_uuid'] = str(man_obj.context.uuid)
-        df.loc[up_index, 'ptrench_class_slug'] = str(man_obj.context.item_class.slug)
+        df.loc[up_index, 'ptrench_item_class_slug'] = str(man_obj.context.item_class.slug)
         df.loc[up_index, 'unit_name'] = man_obj.label
         df.loc[up_index, 'unit_uuid'] = str(man_obj.uuid)
     return df
