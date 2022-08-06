@@ -122,6 +122,32 @@ Item Context
     content: "\2194"; 
 }
 
+/*
+---------------------------------------------------------
+Project Explore
+---------------------------------------------------------
+*/
+#proj_explore {
+	margin-bottom: 24px;
+}
+#proj_explore_card_body {
+	padding-left: 0px;
+	padding-right: 0px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+#proj_explore_alert {
+	margin-left: 0px;
+	margin-right: 0px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+.proj_item_type_dropdowns {
+	margin-top: 12px;
+}
+
+
+
 
 /*
 ---------------------------------------------------------

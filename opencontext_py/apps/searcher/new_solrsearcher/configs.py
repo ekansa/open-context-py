@@ -464,7 +464,7 @@ SORT_OPTIONS_FRONTEND = {
 ITEM_TYPE_MAPPINGS = {
     'subjects': {
         'rdfs:isDefinedBy': 'oc-gen:subjects',
-        'label': 'Subjects',
+        'label': 'Subjects of Observation',
         'slug': 'oc-gen-subjects',
     },
     'media': {
@@ -534,7 +534,8 @@ FILTER_IGNORE_PARAMS = [
     'chronodeep',
     'sort',
     'rows',
-    'start'
+    'start',
+    'proj-summary',
 ]
 
 # Request parameters that describe different search or

@@ -294,3 +294,59 @@ def get_project_overlay_qs(
     except:
         pass
     return proj_overlay_qs
+
+
+def db_get_unique_project_item_class_list(
+    project_slugs
+):
+    m_qs = AllManifest.objects.filter(
+        project__slug__in=project_slugs
+    ).exclude(
+        item_class_id=configs.DEFAULT_CLASS_UUID,
+    ).distinct(
+        'item_type', 'item_class'
+    ).select_related(
+        'item_class'
+    ).order_by(
+        'item_type', 'item_class'
+    ).values(
+        'item_type',
+        'item_class_id',
+        'item_class__slug',
+        'item_class__label',
+        'item_class__uri',
+    )
+    proj_class_sum_list = [m for m in m_qs]
+    return proj_class_sum_list
+
+
+def get_unique_project_item_class_list(
+    projects=None, 
+    project_slugs=None, 
+    use_cache=True
+):
+    if not project_slugs and projects:
+        project_slugs = [p.slug for p in projects]
+    if not len(project_slugs):
+        return None
+    # Sort the slugs generating a consistent cache key
+    project_slugs.sort()
+    if not use_cache:
+        # Skip the case, just use the database.
+        return  db_get_unique_project_item_class_list(project_slugs)
+
+    hash_obj = hashlib.sha1()
+    path_item_str = f'projects-item-class-summary: {project_slugs}'
+    hash_obj.update(path_item_str.encode('utf-8'))
+    cache_key = f'proj-overlay-{str(hash_obj.hexdigest())}'
+    cache = caches['redis']
+    proj_class_sum_list = cache.get(cache_key)
+    if proj_class_sum_list is not None:
+        # We've already cached this, so returned the cached list
+        return proj_class_sum_list
+    proj_class_sum_list = db_get_unique_project_item_class_list(project_slugs)
+    try:
+        cache.set(cache_key, proj_class_sum_list)
+    except:
+        pass
+    return proj_class_sum_list

@@ -17,6 +17,12 @@
 
 {%endif%}
 
+{% if man_obj.item_type == 'projects' %}
+
+    {% include '../item/parts/projects_vc.html' %}
+
+{%endif%}
+
 
 
 
@@ -109,6 +115,16 @@
                 ></human-remains-results-alert>
 
                 {% include '../item/parts/media_download.html' %}
+
+                {% if man_obj.item_type == 'projects' %}
+
+                    <vc-projects
+                        :base_search_url="'/query'"
+                        v-bind:project_label="'{{ man_obj.label|safe }}'"
+                        v-bind:project_slug="'{{ man_obj.slug|safe }}'"
+                    ></vc-projects>
+
+                {%endif%}
 
                 {% include '../item/parts/citation.html' %}
 
@@ -222,6 +238,9 @@
             
             {% if man_obj.item_type == 'predicates' %}
             'vc-predicates': vc_predicates,
+            {%endif%}
+            {% if man_obj.item_type == 'projects' %}
+            'vc-projects': vc_projects,
             {%endif%}
 
         },

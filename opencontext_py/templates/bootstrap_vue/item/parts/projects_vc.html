@@ -1,0 +1,228 @@
+{% block projects_summary %}
+
+
+<template id="projects-item-type-template">
+
+  <b-dropdown v-if="item_type_obj" 
+    :id="'dropdown-proj-item-types-' + item_type_obj.slug" 
+    :text="item_type_obj.label"
+    block
+    offset="25"
+    variant="primary"
+    class="proj_item_type_dropdowns">
+    <b-dropdown-item target="_blank" :href="item_type_obj.id">[[ item_type_obj.label ]] <strong>(All)</strong>
+    </b-dropdown-item>
+    <b-dropdown-item 
+      v-for="(opt, index) in item_type_obj.options"
+      target="_blank" 
+      :href="opt.id">[[ opt.label ]]</b-dropdown-item>
+  </b-dropdown>
+
+</template>
+
+
+
+
+<template id="projects-template">
+  <div :ref="'projects-' + route_key_index" class="card bg-light" id="proj_explore">
+    <div class="card-header" >
+      <h5>Explore Project Data</h5>
+    </div>
+    <div class="card-body" id="proj_explore_card_body">
+      <div v-if="summary_data.length > 0" class="alert alert-info" id="proj_explore_alert">
+
+        <small>Use the dropdown options below to explore different types of information in this project.</small>
+        
+        <vc-projects-item-type
+          v-if="subjects_obj"
+          v-bind:item_type_obj="subjects_obj"></vc-projects-item-type>
+        
+        <vc-projects-item-type
+          v-if="media_obj"
+          v-bind:item_type_obj="media_obj"></vc-projects-item-type>
+        
+        <vc-projects-item-type
+          v-if="documents_obj"
+          v-bind:item_type_obj="documents_obj"></vc-projects-item-type>
+
+      </div>
+
+      <div v-else-if="loading">
+        <div class="container-fluid text-muted text-center">
+          <h1 class="display-5">Checking project...</h1>
+          <b-spinner class="m-5" label="Busy"></b-spinner>
+        </div>
+      </div>
+
+      <div v-else>
+
+          <div class="container-fluid text-muted text-center">
+            <h1 class="display-4">No records</h1>
+            <p>Records associated with this project have yet to be
+              indexed. These records are still in preparation and not
+              yet fully published.</p>
+          </div>
+
+      </div>
+          
+    </div>
+  </div>
+
+</template>
+
+
+
+<script type="text/javascript">
+
+var vc_projects_item_type = Vue.component(
+    'vc-projects-item-type',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#projects-item-type-template',
+      props: [
+        'item_type_obj',
+      ],
+      data() {
+        return {
+          item_type_obj: null,
+        };
+      },
+      computed: {
+        
+      },
+      methods: {
+        
+      },
+      components: {
+        
+      }
+    }
+  );
+
+  var vc_projects = Vue.component(
+    'vc-projects',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#projects-template',
+      props: [
+        'base_search_url',
+        'project_label',
+        'project_slug',
+      ],
+      data() {
+        return {
+          loading: true,
+          base_search_url: '/query',
+          project_label: null,
+          project_slug: null,
+          route_key_index: 0,
+          indexed_count: null,
+          summary_data: [],
+          subjects_obj: null,
+          media_obj: null,
+          documents_obj: null,
+        };
+      },
+      computed: {
+        
+      },
+      created(){
+        this.fetch_oc_api();
+      },
+      watch: {
+        
+      },
+      methods: {
+        fetch_oc_api: function(){
+          if(!this.project_slug){
+            // missing our query criteria
+            return null;
+          }
+          if(this.results != null){
+            // We already have the data
+            return null;
+          }
+          this.loading = true;
+          let params = {
+            proj: this.project_slug,
+            rows: 1,
+            'proj-summary': 1,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          fetch(
+            url,
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+          )
+          .then(response => response.json())
+          .then(json => {
+            this.route_key_index += 1;
+            this.results = json;
+            if(!this.results.hasOwnProperty('totalResults')){
+              this.indexed_count = null;
+              this.results = null;
+            }
+            else if(this.results.totalResults == 0){
+              this.indexed_count = 0;
+              this.results = null;
+            }
+            else{
+              this.indexed_count = this.results.totalResults;
+              console.log('Project indexed with ' + this.results.totalResults + ' items');
+            }
+          }).finally(() => {
+            this.loading = false;
+            this.summary_data = this.prep_data(this.results);
+            console.log(this.summary_data);
+          });
+        },
+        prep_data: function(results){
+          if(!results.hasOwnProperty('oc-api:project-item-classes')){
+            return [];
+          }
+          let summary_data = [];
+          for(let item_type_obj of results['oc-api:project-item-classes']){
+            if(!item_type_obj.hasOwnProperty('id')){
+              continue;
+            }
+            if(!item_type_obj.hasOwnProperty('slug')){
+              continue;
+            }
+            item_type_obj.id = removeURLParameter(item_type_obj.id, 'rows');
+            item_type_obj.options = [];
+            if(item_type_obj.hasOwnProperty('oc-api:has-id-options')){
+              for(let opt of item_type_obj['oc-api:has-id-options']){
+                if(!opt.hasOwnProperty('id')){
+                  continue;
+                }
+                opt.id = removeURLParameter(opt.id, 'rows');
+                item_type_obj.options.push(opt);
+              }
+            }
+            summary_data.push(item_type_obj);
+            if(item_type_obj.slug == 'oc-gen-subjects'){
+              this.subjects_obj = item_type_obj;
+            }
+            if(item_type_obj.slug == 'oc-gen-media'){
+              this.media_obj = item_type_obj;
+            }
+            if(item_type_obj.slug == 'oc-gen-documents'){
+              this.documents_obj = item_type_obj;
+            }
+          }
+          return summary_data;
+        },
+      },
+      components: {
+        'vc-projects-item-type': vc_projects_item_type,
+      }
+    }
+  );
+  
+</script>
+
+
+{% endblock %}

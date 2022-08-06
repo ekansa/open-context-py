@@ -43,6 +43,9 @@ def process_solr_query(request_dict):
     )
     if isinstance(result_maker.result, dict):
         result_maker.result['query'] = query
+    if 'no-docs' in request_dict.get('solr', []):
+        solr_response['response'].pop('docs')
+        result_maker.result = solr_response
     return result_maker.result
 
 

@@ -647,6 +647,11 @@ class ResultMaker():
             item_type_facet_dict,
             facet_type_key="oc-api:has-facets"
         )
+        proj_summary = facets_nonpath.make_project_item_class_summary_facets(
+            solr_json
+        )
+        if proj_summary:
+            self.result['oc-api:project-item-classes'] = proj_summary
 
 
     def add_rel_media_facets(self, solr_json):

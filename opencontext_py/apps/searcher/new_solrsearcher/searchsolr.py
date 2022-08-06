@@ -93,6 +93,15 @@ class SearchSolr():
                     param, raw_path
                 )
 
+    def _add_project_summary_query_terms(self, query):
+        """Adds project summary query terms"""
+        # Get facets for all the object category (item_class) entities
+        query['facet.field'].append('obj_all___project_id')
+        query['facet.pivot'] = [
+            'item_type,obj_all___oc_gen_category___pred_id'
+        ]
+        return query
+
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
@@ -484,7 +493,7 @@ class SearchSolr():
         # GEOSPACE and Chronology tiles.
         # -------------------------------------------------------------
         # Add the geo-tile facet field.
-        geodeep = start_pos = utilities.get_request_param_value(
+        geodeep = utilities.get_request_param_value(
             request_dict, 
             param='geodeep',
             default=0,
@@ -499,7 +508,7 @@ class SearchSolr():
         query['facet.field'].append(geo_tile_facet_field)
 
         # Add the chrono-tile facet field.
-        chronodeep = start_pos = utilities.get_request_param_value(
+        chronodeep = utilities.get_request_param_value(
             request_dict, 
             param='chronodeep',
             default=0,
@@ -512,6 +521,10 @@ class SearchSolr():
         else:
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
         query['facet.field'].append(chrono_tile_facet_field)
+
+        if request_dict.get('proj-summary'):
+            # we're making a project summary query.
+            query = self._add_project_summary_query_terms(query)
 
         return query
     
