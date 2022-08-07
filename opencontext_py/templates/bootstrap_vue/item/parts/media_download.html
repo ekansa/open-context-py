@@ -15,7 +15,7 @@
 
 {%endif%}
 
-{% if item.media_iiif and not full_media %}
+{% if item.item_class__slug == 'oc-gen-image' and item.media_iiif and not full_media %}
 
 <a href="{% url 'all_items_full' item.uuid %}" 
   role="button" 

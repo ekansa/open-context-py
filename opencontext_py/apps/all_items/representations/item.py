@@ -433,6 +433,7 @@ def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
             rep_dict['category'] = f'https://{item_man_obj.item_class.uri}'
     if for_solr_or_html:
         rep_dict['item_class__label'] = item_man_obj.item_class.label
+        rep_dict['item_class__slug'] = item_man_obj.item_class.slug
     return rep_dict
 
 

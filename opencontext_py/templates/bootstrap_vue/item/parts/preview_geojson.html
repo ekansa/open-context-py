@@ -1,4 +1,4 @@
-{% block preview_pdf %}
+{% block preview_geojson %}
 
 {% if item.media_preview_geojson %}
 
@@ -16,56 +16,12 @@
         :map_key="0"
         :map_class="'map_preview'"
         :min_height="800"
-        :ref_suffix="'preview-media-' + ITEM_UUID"
-        :geo_json_url="GEO_JSON_URL"></common_map>
+        v-bind:uuid="uuid"
+        v-bind:ref_suffix="'-preview-media-' + uuid"
+        v-bind:geo_json_url="GEO_JSON_URL"></common_map>
     </div>
   </div>
 </div>
-
-
-
-
-
-
-<script type="text/javascript">
-
-// Assume Import Vue2Leaflet components are 
-const GEO_JSON_URL = "{{ item.media_preview_geojson }}";
-
-var vm_media = new Vue(
-  {
-    router: router,
-    delimiters: ['[[', ']]'],
-    ref: 'media_app',
-    el: '#app_media',
-    data: {
-      uuid: ITEM_UUID,
-      geo_json_url: GEO_JSON_URL,
-    },
-    methods: {
-      
-    },
-    created() {
-     
-    },
-    components: {
-      'common_map': vc_common_map,
-    },
-  },
-).$mount('#app_media');
-
-</script>
-
-
-
-
-
-
-
-
-
-
-
 
 {%endif%}
 

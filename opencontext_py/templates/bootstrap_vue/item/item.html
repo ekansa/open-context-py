@@ -158,6 +158,16 @@
   {% else %}
   let GEO_JSON = null;
   {% endif %}
+
+  {% if item.media_preview_geojson %}
+  const GEO_JSON_URL = "{{ item.media_preview_geojson }}";
+  {% else %}
+  const GEO_JSON_URL = null;
+  {% endif %}
+
+
+  const USE_TEST_ALL_ITEMS_HREF = true;
+
   const item_json = JSON.parse('{{ item_json|escapejs }}');
   const ITEM_UUID = item_json.uuid;
 

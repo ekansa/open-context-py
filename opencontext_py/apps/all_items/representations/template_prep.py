@@ -53,6 +53,7 @@ SPECIAL_KEYS = [
     'label',
     'category',
     'item_class__label',
+    'item_class__slug',
     'type',
     'features',
     'oc-gen:has-obs',

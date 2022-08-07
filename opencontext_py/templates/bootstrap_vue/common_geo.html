@@ -641,6 +641,7 @@ var vc_common_map = Vue.component(
   'common_map', 
   {
     props: [
+        'uuid',
         'map_key',
         'ref_suffix',
         'geo_json_url',
@@ -659,8 +660,10 @@ var vc_common_map = Vue.component(
     data() {
         return {
             // Map Options
+            uuid: null,
             map: null,
             map_key: 0,
+            ref_suffix: '-map',
             legend_key: this.map_key + '-legend',
             zoom_def: 13,
             base_layers: {},
@@ -802,7 +805,12 @@ var vc_common_map = Vue.component(
             return (feature, layer) => {
                 let popup_content = this.make_feature_popup(feature);
                 let tooltip_content = this.make_feature_tooltip(feature);
-                layer.bindPopup(popup_content);
+                if(this.map_class == 'map_preview' && this.map_type != 'search'){
+                    layer.bindPopup(popup_content, {minWidth: 300});
+                }
+                else{
+                    layer.bindPopup(popup_content);
+                }
                 layer.bindTooltip(
                     tooltip_content, 
                     { permanent: false, sticky: true }
@@ -1489,6 +1497,7 @@ var vc_common_map = Vue.component(
                 used_keys.push(mapped_key);
             }
             var all_props = prop_content.join('\n');
+
             var popup_content = (
                 `<div class="container geo_feature_popup">${all_props}</div>`
             );
@@ -1514,7 +1523,7 @@ var vc_common_map = Vue.component(
                     // for records in a query result page or download
                     return this.make_record_feature_popup(feature);
                 }
-                return this.make_generic_feature_popup(feature);
+                //return this.make_generic_feature_popup(feature);
             }
             return this.make_item_feature_popup(feature);
         },
@@ -1951,16 +1960,71 @@ var vc_common_map = Vue.component(
             }
             return heatmap_data;
         },
+        remove_prior_overlays: function(){
+            if(!this.map){
+                return null;
+            }
+            // Removes prior geojson overlay layers from prior routing.
+            if(this.map.hasOwnProperty('overlay_layers_by_id')){
+                for(let ov_id in this.map.overlay_layers_by_id){
+                    if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){
+                        continue;
+                    }
+                    let act_layer = this.map.overlay_layers_by_id[ov_id];
+                    act_layer.removeFrom(this.map);
+                    this.$refs[this.l_controls_ref].mapObject.removeLayer(
+                        act_layer, 
+                    );
+                    delete this.map.overlay_layers_by_id[ov_id];
+                }
+            }
+            this.map.overlay_layers_by_id = null;
+        },
+        add_overlay_geojson_map_preview: function(){
+            if(!this.geo_json){
+                return null;
+            }
+            this.remove_prior_overlays();
+            this.map.overlay_layers_by_id = {};
+            let act_layer = L.geoJson(
+                this.geo_json,
+                {
+                    onEachFeature: this.onEachFeatureFunction,
+                },
+            );
+            act_layer.id = 'map-preview-layer-' + this.uuid;
+            act_layer.label = 'Map Preview';
+            act_layer.ref = 'map-preview';
+            act_layer.ov_id = 'overlay-' + act_layer.id;
+            act_layer.addTo(this.map, act_layer.label);
+            this.$refs[this.l_controls_ref].mapObject.addOverlay(
+                act_layer, 
+                act_layer.label
+            );
+            act_layer.bringToFront();
+            this.map.overlay_layers_by_id[act_layer.ov_id] = act_layer;
+            let bounds = act_layer.getBounds();
+            this.map.fitBounds(bounds);
+        },
         add_overlay_layers: function() {
             if(!this.geo_json){
                 return null;
             }
             if(!this.map){
+                this.map = this.$refs[this.map_ref].mapObject;
+                // this.ready_map_setup();
+            }
+            if(!this.map){
+                console.log('What map?');
                 return null;
             }
             if(this.$refs[this.l_controls_ref] == null){
                 console.log('no item: ' + this.l_controls_ref);
                 return null;
+            }
+            if(this.map_class == 'map_preview' && this.map_type != 'search'){
+                console.log('add map_preview overlay');
+                this.add_overlay_geojson_map_preview();
             }
             if(!this.frontend_state_obj){
                 // not a search map, no search map overlays.
@@ -1993,20 +2057,7 @@ var vc_common_map = Vue.component(
             );
 
             // Removes prior geojson overlay layers from prior routing.
-            if(this.map.hasOwnProperty('overlay_layers_by_id')){
-                for(let ov_id in this.map.overlay_layers_by_id){
-                    if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){
-                        continue;
-                    }
-                    let act_layer = this.map.overlay_layers_by_id[ov_id];
-                    act_layer.removeFrom(this.map);
-                    this.$refs[this.l_controls_ref].mapObject.removeLayer(
-                        act_layer, 
-                    );
-                    delete this.map.overlay_layers_by_id[ov_id];
-                }
-            }
-            this.map.overlay_layers_by_id = null;
+            this.remove_prior_overlays();
 
             // Gather all the types of 'raw' geojson used to build overlay layers.
             let overlays_geojson = [];
@@ -2338,6 +2389,7 @@ var vc_common_map = Vue.component(
         },
         map_size_reset: function(){
             if(!this.geo_json && GEO_JSON != null){
+                console.log('Missing this.geo_json, use GEO_JSON');
                 this.geo_json = GEO_JSON;
             }
             setTimeout(() => {
@@ -2368,6 +2420,14 @@ var vc_common_map = Vue.component(
             }
         },
         update_map_setup: function(){
+            if(!this.map){
+                this.map = this.$refs[this.map_ref].mapObject;
+                // this.ready_map_setup();
+            }
+            if(!this.map){
+                console.log('What map?');
+                return null;
+            }
             this.map.overlay_ready = false;
             if(this.map_type == 'search' && this.map_hash_obj){
                 this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
@@ -2386,6 +2446,8 @@ var vc_common_map = Vue.component(
             // console.log('current frontend state');
             // console.log(this.frontend_state_obj);
             this.map.overlay_ready = true;
+            console.log('update done...');
+            console.log(this.geo_json);
         },
         fetch_geojson: function() {
             if(!this.geo_json_url){
@@ -2410,6 +2472,7 @@ var vc_common_map = Vue.component(
             .then(json => {
                 this.geo_json = json;
                 console.log('fetched geojson');
+                console.log(this.geo_json);
             });
         },
         reset_overlay_layer_control: function(act_layer){
