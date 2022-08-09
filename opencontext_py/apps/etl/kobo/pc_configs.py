@@ -533,7 +533,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     {
         'source_col': 'Alternative Object General Type',
         'form_type': ['catalog',],
-        'match_type': 'exact',
+        'match_type': 'startswith',
         'field_args': {
             # NOTE: This is also mapped to the 'Object Type' predicate.
             'label': 'Object Type',  # Note the difference from the source-column!
@@ -573,7 +573,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     {
         'source_col': 'Decorative Technique',
         'form_type': ['catalog',],
-        'match_type': 'endswith',
+        'match_type': 'startswith',
         'field_args': {
             'label': 'Decorative Technique',
             'context_id': 'f07c30bc-6c71-4c97-7893-d61ff6d0b59b',
@@ -599,7 +599,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     {
         'source_col': 'Motif',
         'form_type': ['catalog',],
-        'match_type': 'endswith',
+        'match_type': 'startswith',
         'field_args': {
             'label': 'Motif',
             'context_id': '9b260671-cbbd-490e-48b0-cdc48f5df62d',
@@ -638,19 +638,6 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     {
         'source_col': 'Vessel Part Present',
         'form_type': ['catalog',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'Vessel Part Present',
-            'context_id': 'c16a0682-5956-4180-af94-9981f937651a',
-            'item_type': 'types',
-            'data_type': 'id',
-            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
-        },
-    },
-    
-    {
-        'source_col': 'Vessel Part Present',
-        'form_type': ['catalog',],
         'match_type': 'startswith',
         'field_args': {
             'label': 'Vessel Part Present',
@@ -664,7 +651,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     {
         'source_col': 'Modification',
         'form_type': ['catalog',],
-        'match_type': 'endswith',
+        'match_type': 'startswith',
         'field_args': {
             'label': 'Modification',
             'context_id': 'fb59a2ed-e2f5-4a88-a651-0aa5f779eb54',
@@ -1383,3 +1370,13 @@ MAIN_TRENCH_BOOKS = {
     'CA90_2022': ('Trench Book CA90 2022', 'e911d2b1-898b-413b-8e8e-d45271bca34d',),
     'CA92_2022': ('Trench Book CA92 2022', '1d4d7311-9dc0-4667-bdb0-93bda1f8bd65',), 
 }
+
+
+FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS = [
+    ('catalog', 'Fabric Category', ' '),
+    ('catalog', 'Alternative Object General Type', ' '),
+    ('catalog', 'Modification', ' '),
+    ('catalog', 'Vessel Part Present', ' '),
+    ('catalog', 'Motif', ' '),
+    ('catalog', 'Decorative Technique', ' '),
+]

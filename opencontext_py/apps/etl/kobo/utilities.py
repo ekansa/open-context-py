@@ -165,7 +165,7 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
             # values.
             df.loc[rep_indx, col] = df[col].str.replace(act_val, '')
             if delim in act_val:
-                # Remove the first part of a hiearchy delimited value from a likely parent column.
+                # Remove the first part of a hierarchy delimited value from a likely parent column.
                 df.loc[rep_indx, col] = df[col].str.replace(
                     act_val.split(delim)[0],
                     ''
@@ -175,7 +175,44 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
     # Now do a file cleanup, removing anything that's no longer present.
     df = drop_empty_cols(df)
     return df
-            
+
+
+def split_col_with_delim_into_multiple_cols(df, col, delim=' '):
+    """Splits a column with delimited values into multiple columns"""
+    if not col in df.columns:
+        return df
+    delim_count_col = f'{col}___delim_count'
+    df[delim_count_col] = np.nan
+    act_index = ~df[col].isnull()
+    df.loc[act_index, delim_count_col] = df[act_index][col].str.count(delim)
+    max_count = df[delim_count_col].max()
+    df.drop(columns=[delim_count_col], inplace=True)
+    if max_count < 1:
+        # No multiple values, so nothing to split.
+        return df
+    new_cols = []
+    i = 0
+    while i <= max_count:
+        new_cols.append(f'{col}/{i}')
+        i += 1
+    df[new_cols] = df[col].str.split(delim, expand=True)
+    df.drop(columns=[col], inplace=True)
+    df.rename(columns={f'{col}/0': col}, inplace=True)
+    return df
+
+
+def split_all_cols_with_delim_into_multiple_cols(
+    form_type, 
+    df, 
+    config_tups=pc_configs.FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS
+):
+    """Splits all columns with delimited values into multiple columns"""
+    for conf_form_type, col, delim in config_tups:
+        if form_type != conf_form_type:
+            continue
+        df = split_col_with_delim_into_multiple_cols(df, col, delim)
+    return df
+
 
 def get_alternate_labels(
     label, 

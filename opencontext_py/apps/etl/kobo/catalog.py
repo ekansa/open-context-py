@@ -1,5 +1,6 @@
 
 import copy
+from re import U
 import uuid as GenUUID
 import os
 import numpy as np
@@ -272,6 +273,10 @@ def prep_attributes_df(
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
+    df_f = utilities.split_all_cols_with_delim_into_multiple_cols(
+        form_type='catalog', 
+        df=df_f, 
+    )
     # Catalog data has lots of Kobo expressed slugs that need to be
     # normalized to normal Open Context slugs
     df_f = utilities.make_oc_normal_slug_values(df_f)
