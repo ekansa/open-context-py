@@ -277,6 +277,7 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
     
+    act_spacetime_features = None
     if item_man_obj.item_type in GEO_OK_ITEM_TYPES:
         # We're describing a subjects item, or another item that can 
         # have it's own GeoJSON
