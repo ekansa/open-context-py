@@ -48,17 +48,19 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     context_objs = [rel_subjects_man_obj]
     # Get a list of all the context objects in this manifest_obj
     # hierarchy.
-    act_man_obj = rel_subjects_man_obj
-    while (act_man_obj.context.item_type in GEO_OK_ITEM_TYPES
-       and str(act_man_obj.context.uuid) 
-       not in configs.DEFAULT_SUBJECTS_ROOTS):
-        print(f'check spacetime for {act_man_obj.label}')
-        if act_man_obj.context in context_objs:
-            # We've already seen this context, so skip out
-            # to avoid infinite looping.
-            break
-        context_objs.append(act_man_obj.context)
-        act_man_obj = act_man_obj.context
+    if rel_subjects_man_obj.item_type not in ['media', 'documents']:
+        # Only do this for items that are not media or documents.
+        act_man_obj = rel_subjects_man_obj
+        while (act_man_obj.context.item_type in GEO_OK_ITEM_TYPES
+        and str(act_man_obj.context.uuid) 
+        not in configs.DEFAULT_SUBJECTS_ROOTS):
+            print(f'check spacetime for {act_man_obj.label}')
+            if act_man_obj.context in context_objs:
+                # We've already seen this context, so skip out
+                # to avoid infinite looping.
+                break
+            context_objs.append(act_man_obj.context)
+            act_man_obj = act_man_obj.context
     
     # Now use these context objects to query for space time objects
     spacetime_qs = AllSpaceTime.objects.filter(
@@ -81,7 +83,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     act_geos = [] # List of spacetime objects with only geometry 
     act_chronos = [] # List of spacetime objects with only chronology
 
-    # Interate through the list of context_objs. These are ordered from most
+    # Integrate through the list of context_objs. These are ordered from most
     # specific to most general, all the way up to world regions. This will select
     # the spacetime objects with the most specific geometries and chronologies
     for context_obj in context_objs:
@@ -275,18 +277,19 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
     
-    if not rel_subjects_man_obj:
-        if item_man_obj.item_type in GEO_OK_ITEM_TYPES:
-            # We're describing a subjects item, or another item that can 
-            # have it's own GeoJSON
-            # so the rel_subjects_man_obj is the same manifest object.
-            rel_subjects_man_obj = item_man_obj
-        elif item_man_obj.item_type == "uri" and item_man_obj.context.uri in GAZETTEER_VOCAB_URIS:
-            # We're describing a geonames place item.
-            rel_subjects_man_obj = item_man_obj
+    if item_man_obj.item_type in GEO_OK_ITEM_TYPES:
+        # We're describing a subjects item, or another item that can 
+        # have it's own GeoJSON
+        # so the rel_subjects_man_obj is the same manifest object.
+        act_spacetime_features = get_spacetime_geo_and_chronos(item_man_obj)
+    elif item_man_obj.item_type == "uri" and item_man_obj.context.uri in GAZETTEER_VOCAB_URIS:
+        # We're describing a geonames place item.
+        act_spacetime_features = get_spacetime_geo_and_chronos(item_man_obj)
     
-    # Get the spacetime features for this rel_subjects_man_obj.
-    act_spacetime_features = get_spacetime_geo_and_chronos(rel_subjects_man_obj)
+    if rel_subjects_man_obj and not act_spacetime_features:
+        # Get the spacetime features for this rel_subjects_man_obj.
+        act_spacetime_features = get_spacetime_geo_and_chronos(rel_subjects_man_obj)
+    
     if not act_spacetime_features:
         # No geomtries found in the whole context hierarchy, so 
         # no geojson to add.
