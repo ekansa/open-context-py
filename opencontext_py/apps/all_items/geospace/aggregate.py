@@ -25,6 +25,8 @@ from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 
 from opencontext_py.apps.etl.importer.utilities import validate_transform_data_type_value
 
+from opencontext_py.apps.all_items.geospace import utilities as geo_utils
+
 """
 # testing
 
@@ -69,38 +71,6 @@ CLUSTER_METHODS = [
 ]
 
 DEFAULT_SOURCE_ID = 'geospace-aggregate'
-
-
-def get_centroid_of_coord_box(bbox_coordinates):
-    """Gets a centroid tuple from a coordinate box
-    
-    :param list bbox_coordinates: A list of coordinate
-        lists that meet GeoJSON geometry.coordinates expectations
-
-    returns tuple(longitude, latitude)
-    """
-    geometry = {
-        'type': 'Polygon',
-        'coordinates': bbox_coordinates,
-    }
-    s = shape(geometry)
-    coords = s.centroid.coords[0]
-    # Longitude, Latitude order
-    return coords[0], coords[1]
-
-
-def make_geojson_coord_box(min_lon, min_lat, max_lon, max_lat):
-    """ Makes geojson coordinates list for a bounding feature """
-    bbox_coordinates = []
-    outer_coords = []
-    # Right hand rule, counter clockwise outside
-    outer_coords.append([min_lon, min_lat])
-    outer_coords.append([max_lon, min_lat])
-    outer_coords.append([max_lon, max_lat])
-    outer_coords.append([min_lon, max_lat])
-    outer_coords.append([min_lon, min_lat])
-    bbox_coordinates.append(outer_coords)
-    return bbox_coordinates
 
 
 def make_min_size_region(region_dict, min_distance=MIN_CLUSTER_SIZE_KM):
@@ -359,14 +329,14 @@ def cluster_geo_centroids(
                 region_dict, 
                 min_distance=min_cluster_size_km
             )
-            region_dict['coordinates'] = make_geojson_coord_box(
+            region_dict['coordinates'] = geo_utils.make_geojson_coord_box(
                 region_dict['min_lon'],
                 region_dict['min_lat'],
                 region_dict['max_lon'],
                 region_dict['max_lat'],
             )
             region_dict['cent_lon'], region_dict['cent_lat'] = (
-                get_centroid_of_coord_box(region_dict['coordinates'])
+                geo_utils.get_centroid_of_coord_box(region_dict['coordinates'])
             )
             contains_enough = check_cluster_contains_enough(
                 region_dict, 

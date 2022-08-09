@@ -10,6 +10,8 @@ from opencontext_py.apps.all_items.models import (
 )
 from opencontext_py.apps.all_items.representations import rep_utils
 
+# Item types that may have their own geospatial data
+GEO_OK_ITEM_TYPES = ['subjects', 'projects', 'media']
 
 # List of URIs for gazetteer vocabularies to help identify
 # non-subjects manifest entities that may have spacetime objects.
@@ -40,14 +42,14 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     """
     if not rel_subjects_man_obj:
         return None
-    if (rel_subjects_man_obj.item_type not in ['subjects', 'projects']
+    if (rel_subjects_man_obj.item_type not in GEO_OK_ITEM_TYPES
         and rel_subjects_man_obj.context.uri not in GAZETTEER_VOCAB_URIS):
         return None
     context_objs = [rel_subjects_man_obj]
     # Get a list of all the context objects in this manifest_obj
     # hierarchy.
     act_man_obj = rel_subjects_man_obj
-    while (act_man_obj.context.item_type in ['subjects', 'projects']
+    while (act_man_obj.context.item_type in GEO_OK_ITEM_TYPES
        and str(act_man_obj.context.uuid) 
        not in configs.DEFAULT_SUBJECTS_ROOTS):
         print(f'check spacetime for {act_man_obj.label}')
@@ -274,12 +276,10 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
         act_dict = LastUpdatedOrderedDict()
     
     if not rel_subjects_man_obj:
-        if item_man_obj.item_type == "subjects":
-            # We're describing a subjects item, so the rel_subjects_man_obj
-            # is the same manifest object.
-            rel_subjects_man_obj = item_man_obj
-        elif item_man_obj.item_type == "projects":
-            # A project can have its own GeoJSON associated.
+        if item_man_obj.item_type in GEO_OK_ITEM_TYPES:
+            # We're describing a subjects item, or another item that can 
+            # have it's own GeoJSON
+            # so the rel_subjects_man_obj is the same manifest object.
             rel_subjects_man_obj = item_man_obj
         elif item_man_obj.item_type == "uri" and item_man_obj.context.uri in GAZETTEER_VOCAB_URIS:
             # We're describing a geonames place item.
