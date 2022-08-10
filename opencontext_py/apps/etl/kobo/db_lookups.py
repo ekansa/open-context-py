@@ -9,6 +9,7 @@ import pandas as pd
 
 from django.core.cache import caches
 from django.db.models import Q
+from django.db.models.functions import Length
 
 from opencontext_py.apps.all_items.models import (
     AllManifest,
@@ -299,6 +300,10 @@ def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_pag
         uuid__in=doc_uuids,
         item_type='documents',
         label__contains=entry_date,
+    ).annotate(
+        label_len=Length('label'),
+    ).order_by(
+        'sort', 'label_len', 'label'
     )
     if len(tb_qs) == 0:
         # Match on page numbers only, so don't
@@ -307,6 +312,8 @@ def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_pag
         tb_qs = AllManifest.objects.filter(
             uuid__in=doc_uuids,
             item_type='documents',
+        ).order_by(
+            'sort', 'label'
         )
     if len(tb_qs) == 0:
         print(f'No trench book for trench id: {trench_id}, date: {entry_date}')

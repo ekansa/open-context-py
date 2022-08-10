@@ -1,6 +1,7 @@
 
 import copy
 from re import U
+from turtle import up
 import uuid as GenUUID
 import os
 import numpy as np
@@ -110,6 +111,7 @@ def make_catalog_small_finds_links_df(dfs):
             (df_link['Year'] == row['Year'])
             & (df_link['Trench ID'] == row['Trench ID'])
             & (df_link['Locus ID'] == row['Locus ID'])
+            & (df_link['Field Given Find ID'] == row['Field Given Find ID'])
         )
         df_link.loc[up_indx, 'object_label'] = obj.label
         df_link.loc[up_indx, 'object_uuid'] = object_uuid
@@ -130,7 +132,13 @@ def make_catalog_tb_links_df(dfs):
         return None
     if not set(TRENCH_OBJ_COLS).issubset(set(df_link.columns.tolist())):
         return None
+    for col in df_link.columns:
+        df_link[col].replace('', np.nan, inplace=True)
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
+    for col in ['object_label', 'object_uuid', 'object_uuid_source']:
+        if col in df_link.columns:
+            continue
+        df_link[col] = np.nan
     for i, row in df_link.iterrows():
         object_uuid = None
         object_source = None
@@ -146,13 +154,39 @@ def make_catalog_tb_links_df(dfs):
             continue
         object_uuid = str(obj.uuid)
         object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        ind_criteria = []
         up_indx = (
-            (df_link['Trench ID'] == row['Trench ID'])
+            (df_link[pc_configs.LINK_RELATION_TYPE_COL] == 'Has Related Trench Book Entry')
+            & (df_link['Trench ID'] == row['Trench ID'])
             & (df_link['Year'] == row['Year'])
-            # & (tb_df['Date Documented'] == row['Trench Book Entry Date'])
-            & (df_link['Trench Book Start Page'] >= row['Trench Book Start Page'])
-            & (df_link['Trench Book Start Page'] <= row['Trench Book Start Page'])
         )
+        ind_criteria = [
+            f"trench_id {row['Trench ID']}", 
+            f"year {row['Year']}", 
+        ]
+        if isinstance(row['Trench Book Entry Date'], pd.Timestamp):
+            up_indx &= (df_link['Trench Book Entry Date'] == row['Trench Book Entry Date'])
+            ind_criteria.append(f"Entry {row['Trench Book Entry Date']}")
+        else:
+            up_indx &= df_link['Trench Book Entry Date'].isnull()
+            ind_criteria.append(f"entry is null")
+        if row['Trench Book Start Page'] > 0:
+            up_indx &= (df_link['Trench Book Start Page'] >= row['Trench Book Start Page'])
+            ind_criteria.append(f"start {row['Trench Book Start Page']}")
+        else:
+            up_indx &= df_link['Trench Book Start Page'].isnull()
+            ind_criteria.append(f"start is null")
+        if row['Trench Book End Page'] > 0:
+            up_indx &= (df_link['Trench Book End Page'] <= row['Trench Book End Page'])
+            ind_criteria.append(f"end {row['Trench Book Start Page']}")
+        else:
+            up_indx &= df_link['Trench Book End Page'].isnull()
+            ind_criteria.append(f"end is null")
+        if df_link[up_indx].empty:
+            print(f'Problem associating {obj.label} ({obj.uuid})')
+            print(', '.join(ind_criteria))
+            # import pdb; pdb.set_trace()
+            continue
         df_link.loc[up_indx, 'object_label'] = obj.label
         df_link.loc[up_indx, 'object_uuid'] = object_uuid
         df_link.loc[up_indx, 'object_uuid_source'] = object_source
@@ -172,7 +206,12 @@ def get_links_from_rel_ids(dfs):
     df_link = utilities.get_prepare_df_link_from_rel_id_sheet(dfs)
     if df_link is None:
         return None
-    
+    df_f = prep_df_link_from_attrib_sheet(dfs)
+    if df_f is None:
+        return None
+    df_f['subject_uuid'] = df_f['_uuid']
+    df_f = df_f[['subject_uuid', 'Year', 'Trench ID', 'Locus ID']].copy()
+    df_link = pd.merge(df_link, df_f, on='subject_uuid', how='left')
     link_indx = ~df_link['object_related_id'].isnull()
     # Now look up the UUIDs for the objects.
     for i, row in df_link[link_indx].iterrows():
@@ -181,16 +220,26 @@ def get_links_from_rel_ids(dfs):
         raw_object_id = row['object_related_id']
         object_type = row['object_related_type']
         act_labels = [str(raw_object_id)]
+        if object_type == 'Cataloged Object':
+            act_labels.append(utilities.normalize_catalog_label(str(raw_object_id)))
         act_prefixes, act_classes = pc_configs.REL_SUBJECTS_PREFIXES.get(object_type, ([], []))
         if len(act_classes) == 0:
             # Didn't find any classes in our object type lookup, so continue
             continue
-        act_labels += [p + str(raw_object_id) for p in act_prefixes] 
+        act_labels += [p + str(raw_object_id) for p in act_prefixes if not str(raw_object_id).startswith(p)] 
         man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
             label_list=act_labels, 
             item_class_slug_list=act_classes,
         )
+        if not man_obj and object_type == 'Small Find':
+            man_obj = db_lookups.db_lookup_smallfind(
+                row['Trench ID'],
+                row['Year'],
+                row['Locus ID'],
+                raw_object_id
+            )
         if not man_obj:
+            print(f'Cannot find labels {act_labels} for classes {act_classes}')
             object_label = np.nan
             object_uuid = np.nan
             object_uuid_source = np.nan
