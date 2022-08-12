@@ -290,11 +290,15 @@ def int_convert(val):
 
 def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_page):
     """Look up trenchbook entries via database queries."""
+    trench_year = int_convert(trench_year)
     start_page = int_convert(start_page)
     end_page = int_convert(end_page)
     doc_uuids = db_lookup_trenchbooks_linked_to_trench_id(trench_id, trench_year)
     if not doc_uuids:
         return None
+    if isinstance(entry_date, pd.Timestamp):
+        entry_date = entry_date.strftime('%Y-%m-%d')
+
     # Further filter the documents for the ones on the correct date.
     tb_qs = AllManifest.objects.filter(
         uuid__in=doc_uuids,
@@ -418,4 +422,31 @@ def db_reconcile_by_labels_item_class_slugs(
         print(f'Ambiguous: {man_qs.count()} results for {label_list} item-class: {item_class_slug_list}')
     return None
 
+
+
+def db_lookup_manifest_by_uri(uri, item_class_slugs=None):
+    """Returns a manifest object uuid on label variations
     
+    :param str uri: A URI to identify the item in the manifest
+    :param list item_class_slugs: An optional list of
+       slugs that we allow.
+    """
+    uuid_part = None
+    uri = AllManifest().clean_uri(uri)
+    if '/' in uri:
+        uri_ex = uri.split('/')
+        _, uuid_part = update_old_id(uri_ex[-1])
+    if uuid_part:
+        man_qs = AllManifest.objects.filter(
+            Q(uuid=uuid_part)
+            |Q(uri=uri)
+        )
+    else:
+        man_qs= AllManifest.objects.filter(
+            uri=uri
+        )
+    if item_class_slugs:
+        man_qs = man_qs.filter(
+            item_class__slug__in=item_class_slugs,
+        )
+    return man_qs.first()

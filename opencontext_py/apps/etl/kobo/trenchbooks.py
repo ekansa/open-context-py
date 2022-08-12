@@ -22,6 +22,8 @@ TB_ATTRIBUTE_COLS = [
     'subject_label',
     'subject_uuid',
     'subject_uuid_source',
+    'Book Year',
+    'Document Type',
     'Entry Type',
     'Entry Title',
     'Entry Year',
@@ -90,7 +92,7 @@ def make_paging_links_df(dfs):
     df_sub = make_df_sub_subjects(dfs)
     if df_sub is None:
         return None
-    sort_cols = ['trench_id', 'date_documented', 'start_page',  'end_page',]
+    sort_cols = ['trench_id', 'date_documented', 'start_page',  'end_page', ]
     df_sub.rename(columns=PAGE_LINKS_RENAMES, inplace=True)
     for c in SUB_LINK_COLS:
         if c in df_sub.columns:
@@ -115,17 +117,18 @@ def make_paging_links_df(dfs):
             trench_indx = (df['trench_id'] == trench_id)
             df_l = df_sub[trench_indx].copy().reset_index(drop=True)
             df_l.sort_values(by=sort_cols, inplace=True)
+            df_l.reset_index(drop=True, inplace=True)
             len_df_l = len(df_l.index)
             for i, row in df_l.iterrows():
                 other_index = i + index_dif
                 if other_index < 0 or other_index >= len_df_l:
                     # we're outside of the index range, so skip.
                     continue
-                act_indx = (df_l['subject_uuid'] == row['subject_uuid'])
-                df_l.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = rel_type
-                df_l.loc[act_indx, 'object_label'] = df_l['subject_label'].iloc[other_index]
-                df_l.loc[act_indx, 'object_uuid'] = df_l['subject_uuid'].iloc[other_index]
-                df_l.loc[act_indx, 'object_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
+                act_index = (df_l['subject_uuid'] == row['subject_uuid'])
+                df_l.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = rel_type
+                df_l.loc[act_index, 'object_label'] = df_l['subject_label'].iloc[other_index]
+                df_l.loc[act_index, 'object_uuid'] = df_l['subject_uuid'].iloc[other_index]
+                df_l.loc[act_index, 'object_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
             df_l = df_l[df_l[pc_configs.LINK_RELATION_TYPE_COL].notnull()]
             df_links.append(df_l)
     df_all_paging = pd.concat(df_links)
@@ -154,20 +157,72 @@ def add_trench_unit_uuids(
         )
         if not man_obj:
             continue
-        act_indx = (
+        act_index = (
             (df['trench_id'] == row['trench_id'])
             & (df['trench_year'] == row['trench_year'])
         )
-        df.loc[act_indx, unit_label_col] = man_obj.label
-        df.loc[act_indx, unit_uuid_col] = str(man_obj.uuid)
-        df.loc[act_indx, unit_uuid_source_col] = pc_configs.UUID_SOURCE_OC_LOOKUP
+        df.loc[act_index, unit_label_col] = man_obj.label
+        df.loc[act_index, unit_uuid_col] = str(man_obj.uuid)
+        df.loc[act_index, unit_uuid_source_col] = pc_configs.UUID_SOURCE_OC_LOOKUP
     return df
+
+
+def make_main_trench_books_df(trench_id_list):
+    """Makes a dataframe of the main trench books (these are added 'hubs') to bundle
+    multiple related trench book entries.
+    """
+    rows = []
+    for trench_id in trench_id_list:
+        subject_label, subject_uuid = pc_configs.MAIN_TRENCH_BOOKS.get(trench_id, (None, None))
+        if not subject_uuid:
+            continue
+        row = {
+            'subject_label': subject_label,
+            'subject_uuid': subject_uuid,
+            'subject_uuid_source': 'pc_configs',
+            'Trench ID': trench_id,
+            'trench_id': trench_id,
+            'trench_year': pc_configs.DEFAULT_IMPORT_YEAR,
+            'Book Year': pc_configs.DEFAULT_IMPORT_YEAR,
+            'Document Type': 'Trench Book',
+            'Entry Text': (
+                """
+                <div>
+                <p>A "trench book" provides a narrative account of excavations activities and initial (preliminary) interpretations. 
+                Trench book documentation can provide key information about archaeological context. 
+                To facilitate discovery, access, and use, the project's hand-written trench books have been transcribed and associated with other data.
+                </p> <br/> 
+                <p>The links below provide transcriptions of the entries for this trench book.</p>
+                </div>
+                """
+            ),
+        }
+        rows.append(row)
+    df_tb_m = pd.DataFrame(data=rows)
+    return df_tb_m
 
 
 def make_tb_main_links_df(df_sub):
     """Adds parent trenchbook links"""
-    rows = []
-    for trench_id in df_sub['trench_id'].unique().tolist():
+    df_links = []
+    act_index = ~df_sub['trench_id'].isnull()
+    trench_id_list = df_sub[act_index]['trench_id'].unique().tolist()
+
+    # First make the trench book main entries, and link them to their trenches (unit_uuids)
+    df_tb_m = make_main_trench_books_df(trench_id_list)
+    tb_m_cols = ['subject_label', 'subject_uuid', 'subject_uuid_source', 'trench_id', 'trench_year']
+    df_tb_m = df_tb_m[tb_m_cols]
+    df_tb_m[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
+    df_tb_m = add_trench_unit_uuids(
+        df=df_tb_m, 
+        unit_label_col='object_label',
+        unit_uuid_col='object_uuid', 
+        unit_uuid_source_col='object_uuid_source',
+    )
+    df_links.append(df_tb_m)
+
+    # Now link the various trench entries with their associate main trench books.
+    for trench_id in trench_id_list:
         tb_label, tb_uuid = pc_configs.MAIN_TRENCH_BOOKS.get(trench_id, (None, None))
         if not tb_label:
             print(f'Cannot find main trenchbook entry related to {trench_id}')
@@ -176,18 +231,15 @@ def make_tb_main_links_df(df_sub):
             (df_sub['trench_id'] == trench_id)
             & ~df_sub['subject_label'].isnull()
             & ~df_sub['subject_uuid'].isnull()
+            & (df_sub['subject_uuid'] != tb_uuid)
         )
-        rec = {
-            'subject_label': df_sub[act_index]['subject_label'].iloc[0],
-            'subject_uuid': df_sub[act_index]['subject_uuid'].iloc[0],
-            'subject_uuid_source': df_sub[act_index]['subject_uuid_source'].iloc[0],
-            pc_configs.LINK_RELATION_TYPE_COL: 'Is Part of',
-            'object_label': tb_label,
-            'object_uuid': tb_uuid,
-            'object_uuid_source': 'pc_configs',
-        }
-        rows.append(rec)
-    df_main = pd.DataFrame(data=rows)
+        df_new = df_sub[act_index].copy()
+        df_new[pc_configs.LINK_RELATION_TYPE_COL] = 'Is Part of'
+        df_new['object_label'] = tb_label
+        df_new['object_uuid'] = tb_uuid
+        df_new['object_uuid_source'] = 'pc_configs'
+        df_links.append(df_new)
+    df_main = pd.concat(df_links)
     return df_main
     
 
@@ -218,14 +270,14 @@ def get_df_sub(dfs, subjects_df):
         )
         if subjects_df[lookup_indx].empty:
             continue
-        act_indx = (
+        act_index = (
             (df_sub['trench_id'] == row['trench_id'])
             & (df_sub['trench_year'] == row['trench_year'])
         )
-        df_sub.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
-        df_sub.loc[act_indx, 'object_label'] = subjects_df[lookup_indx]['unit_name'].iloc[0]
-        df_sub.loc[act_indx, 'object_uuid'] = subjects_df[lookup_indx]['unit_uuid'].iloc[0]
-        df_sub.loc[act_indx, 'object_uuid_source'] = 'subjects_df'
+        df_sub.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
+        df_sub.loc[act_index, 'object_label'] = subjects_df[lookup_indx]['unit_name'].iloc[0]
+        df_sub.loc[act_index, 'object_uuid'] = subjects_df[lookup_indx]['unit_uuid'].iloc[0]
+        df_sub.loc[act_index, 'object_uuid_source'] = 'subjects_df'
     cols = [c for c in SUB_LINK_COLS if c in df_sub.columns]
     df_sub = df_sub[cols].copy()
     return df_sub
@@ -280,14 +332,14 @@ def make_locus_links_df(df_sub, subjects_df, dfs):
         )
         if subjects_df[lookup_indx].empty:
             continue
-        act_indx = (
+        act_index = (
             (df_loci['unit_uuid'] == row['unit_uuid'])
             & (df_loci['locus_number'] == row['locus_number'])
         )
-        df_loci.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Open Locus'
-        df_loci.loc[act_indx, 'object_label'] = subjects_df[lookup_indx]['locus_name'].iloc[0]
-        df_loci.loc[act_indx, 'object_uuid'] = subjects_df[lookup_indx]['locus_uuid'].iloc[0]
-        df_loci.loc[act_indx, 'object_uuid_source'] = 'subjects_df'
+        df_loci.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Open Locus'
+        df_loci.loc[act_index, 'object_label'] = subjects_df[lookup_indx]['locus_name'].iloc[0]
+        df_loci.loc[act_index, 'object_uuid'] = subjects_df[lookup_indx]['locus_uuid'].iloc[0]
+        df_loci.loc[act_index, 'object_uuid_source'] = 'subjects_df'
     return df_loci
 
 
@@ -309,14 +361,14 @@ def make_small_find_links_df(df_sub, subjects_df, dfs):
         )
         if subjects_df[lookup_indx].empty:
             continue
-        act_indx = (
+        act_index = (
             (df_sf['unit_uuid'] == row['unit_uuid'])
             & (df_sf['rel_find'] == row['rel_find'])
         )
-        df_sf.loc[act_indx, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Small Find'
-        df_sf.loc[act_indx, 'object_label'] = subjects_df[lookup_indx]['find_name'].iloc[0]
-        df_sf.loc[act_indx, 'object_uuid'] = subjects_df[lookup_indx]['find_uuid'].iloc[0]
-        df_sf.loc[act_indx, 'object_uuid_source'] = 'subjects_df'
+        df_sf.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Small Find'
+        df_sf.loc[act_index, 'object_label'] = subjects_df[lookup_indx]['find_name'].iloc[0]
+        df_sf.loc[act_index, 'object_uuid'] = subjects_df[lookup_indx]['find_uuid'].iloc[0]
+        df_sf.loc[act_index, 'object_uuid_source'] = 'subjects_df'
     return df_sf
 
 
@@ -352,6 +404,26 @@ def prep_links_df(
     return df_all_links
 
 
+def add_main_trench_books(df_f):
+    """Adds the main trench books so they can be imported with the others"""
+    act_index = ~df_f['Trench ID'].isnull()
+    trench_id_list = df_f[act_index]['Trench ID'].unique().tolist()
+    df_tb_m = make_main_trench_books_df(trench_id_list)
+    df_f = pd.concat([df_f, df_tb_m])
+    return df_f
+
+def add_tb_json_entries(df_f, json_path=pc_configs.KOBO_TB_JSON_PATH):
+    """Adds the Entry Text data to the attributes"""
+    # NOTE: Kobo can't export long entry text data into Excel or CSV,
+    # So we need to use the Kobo API to download these as JSON data.
+    # The JSON file of Trenchbook attributes has the expected data, and
+    # will merge this in via a join.
+    df_j = pd.read_json(json_path)
+    df_j['Entry Text'] = df_j['Entry_Text']
+    df_j = df_j[['_uuid', 'Entry Text']].copy()
+    df_f = pd.merge(df_f, df_j, on='_uuid', how='left')
+    return df_f
+
 def prep_attributes_df(
     dfs,
     attrib_csv_path=pc_configs.TB_ATTRIB_CSV_PATH,
@@ -363,6 +435,7 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+    df_f = add_tb_json_entries(df_f)
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
@@ -372,6 +445,8 @@ def prep_attributes_df(
     df_f['subject_label'] = df_f['Open Context Label']
     df_f['subject_uuid'] = df_f['_uuid']
     df_f['subject_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
+    # Add the main trench book records so they can be added to the 
+    df_f = add_main_trench_books(df_f)
     cols = [c for c in TB_ATTRIBUTE_COLS if c in df_f.columns]
     df_f = df_f[cols].copy()
     # Make sure everything has a uuid.

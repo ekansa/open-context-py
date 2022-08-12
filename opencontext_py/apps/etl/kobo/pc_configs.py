@@ -14,6 +14,7 @@ DEFAULT_IMPORT_YEAR = 2022
 HOME = str(Path.home())
 ALL_IMPORTS_PATH = f'{HOME}/data-dumps/pc-{DEFAULT_IMPORT_YEAR}'
 KOBO_EXCEL_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-data'
+KOBO_TB_JSON_PATH = f'{KOBO_EXCEL_FILES_PATH}/trench_books.json'
 KOBO_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-media-files'
 
 OC_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-media-files'
@@ -50,6 +51,7 @@ KOBO_TRENCH_COL = 'Trench ID'
 
 SOURCE_ID_PREFIX = f'pc{DEFAULT_IMPORT_YEAR}'
 SOURCE_ID_SUBJECTS = f'{SOURCE_ID_PREFIX}-subjects'
+SOURCE_ID_TB_DEFAULT = f'{SOURCE_ID_PREFIX}-tb-default'
 SOURCE_ID_MEDIA_FILES = f'{SOURCE_ID_PREFIX}-files'
 SOURCE_ID_MEDIA_LINKS = f'{SOURCE_ID_PREFIX}-files-link'
 SOURCE_ID_CATALOG_ATTRIB = f'{SOURCE_ID_PREFIX}-cat-attrib'
@@ -66,6 +68,7 @@ SOURCE_ID_TB_LINKS = f'{SOURCE_ID_PREFIX}-tb-link'
 
 ALL_SOURCE_IDS = [
     SOURCE_ID_SUBJECTS,
+    SOURCE_ID_TB_DEFAULT,
     SOURCE_ID_MEDIA_FILES,
     SOURCE_ID_MEDIA_LINKS,
     SOURCE_ID_CATALOG_ATTRIB,
@@ -797,7 +800,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'match_type': 'exact',
         'field_args': {
             'label': 'Object Count',
-            'context_id': '84525f14-5e20-4765-a74e-303a5dbb4db8',
+            'context_id': '056a3e7c-3d5d-4004-a9ed-7b0f88b74648',
             'item_type': 'predicates',
             'data_type': 'xsd:double',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
@@ -1276,10 +1279,15 @@ LINK_REL_PRED_MAPPINGS = {
     'Stratigraphy: Same/Same as Locus': ('254ea71a-ca2b-4568-bced-f82bf12cb2f9', '254ea71a-ca2b-4568-bced-f82bf12cb2f9'),
     'Same as': ('254ea71a-ca2b-4568-bced-f82bf12cb2f9', '254ea71a-ca2b-4568-bced-f82bf12cb2f9'),
     'Stratigraphy: Contemporary/Contemporary with Locus': ('eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53', 'eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53'),
+    'Contemporary with': ('eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53', 'eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53'),
     'Stratigraphy: Above/Above Locus': ('7895f4a8-d7e0-4219-bb47-9eef76c4acc0', '04a9d0b0-0ff8-412e-b134-23f705e666ca'),
+    'Above': ('7895f4a8-d7e0-4219-bb47-9eef76c4acc0', '04a9d0b0-0ff8-412e-b134-23f705e666ca'),
     'Stratigraphy: Below/Below Locus': ('04a9d0b0-0ff8-412e-b134-23f705e666ca', '7895f4a8-d7e0-4219-bb47-9eef76c4acc0'),
+    'Below': ('04a9d0b0-0ff8-412e-b134-23f705e666ca', '7895f4a8-d7e0-4219-bb47-9eef76c4acc0'),
     'Stratigraphy: Overlies/Overlies Locus': ('f2fd2edb-4505-447a-9403-13c18150d1d2', None),
+    'Overlies': ('f2fd2edb-4505-447a-9403-13c18150d1d2', None),
     'Stratigraphic Relations: Cuts/Cuts Locus': ('0d5daed7-873d-4415-a0eb-3e7ddf7f25f7', None),
+    'Cuts': ('0d5daed7-873d-4415-a0eb-3e7ddf7f25f7', None),
     'Objects join, refit together': ('5E41E490-0618-4D15-0826-38E3B4681C58', '5E41E490-0618-4D15-0826-38E3B4681C58'),
     'Additional ID': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
     'Associated in Context': ('3d4a7baa-8b52-4363-9a10-3f3a70cf919c', '3d4a7baa-8b52-4363-9a10-3f3a70cf919c'),
@@ -1298,6 +1306,7 @@ LINK_REL_PRED_MAPPINGS = {
     'Comparanda, based on form': ('46037eb4-c4b7-432b-bebb-500aff0e4fe6', '46037eb4-c4b7-432b-bebb-500aff0e4fe6'),
     'Comparanda, based on motif': ('1c5a1fca-0853-4612-9663-f908d9c081b2', '1c5a1fca-0853-4612-9663-f908d9c081b2'),
 }
+
 
 
 # Trench book related predicates
@@ -1365,9 +1374,15 @@ MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/2022-me
 
 
 MAIN_TRENCH_BOOKS = {
+    'T26_2022': ('Trench Book T26 2022', '028af835-57dc-4952-af76-1772295442bd',),
+    'T90_2022': ('Trench Book T90 2022', '5f0c8c1b-d993-4c7b-9d12-e9329265c8b9',), 
+    'CA91_2022': ('Trench Book CA91 2022', '77882d50-c328-45b8-aaa7-4a868ceb9fe8',), 
     'T90_2022': ('Trench Book T90 2022', 'b01c144b-5fdc-44ff-b00f-5bcd36e91b56',),
-    'T100_2022': ('Trench Book T100 2022', '7227c029-e202-42ed-a786-844bc0e42edb',), 
+    'T100_2022': ('Trench Book T100 2022', '7227c029-e202-42ed-a786-844bc0e42edb',),
+    'T101_2022': ('Trench Book T101 2022', 'd6a6080c-625d-4263-8bea-d20c19a0ee8a',),
+    'T101_2022': ('Trench Book T102 2022', '763b203b-c37c-4076-a12e-845cc9fb02ad',),
     'CA90_2022': ('Trench Book CA90 2022', 'e911d2b1-898b-413b-8e8e-d45271bca34d',),
+    'CA91_2022': ('Trench Book CA91 2022', 'b4ed4510-f6cf-4b38-aaea-4d2c136c4c57',), 
     'CA92_2022': ('Trench Book CA92 2022', '1d4d7311-9dc0-4667-bdb0-93bda1f8bd65',), 
 }
 

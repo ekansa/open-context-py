@@ -285,6 +285,7 @@ def load_subjects_dataframe(
     return subjects_df
 
 
+
 # ---------------------------------------------------------------------
 # ATTRIBUTES RELATED FUNCTIONS
 # Attributes are loaded into the importer that normally gets data from

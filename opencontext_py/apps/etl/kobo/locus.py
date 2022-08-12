@@ -182,6 +182,12 @@ def make_locus_tb_links_df(dfs, subjects_df):
             row['Trench Book End Page']
         )
         if not obj:
+            print(
+                f"Cannot find locus trenchbook: {row['trench_id']} "
+                f"year: {row['trench_year']} "
+                f"entry: {row['Trench Book Entry Date']}"
+                f"pages: {row['Trench Book Start Page']} - {row['Trench Book End Page']}"
+            )
             continue
         object_uuid = str(obj.uuid)
         object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
@@ -190,8 +196,16 @@ def make_locus_tb_links_df(dfs, subjects_df):
             & (df_link['trench_year'] == row['trench_year'])
             # & (tb_df['Date Documented'] == row['Trench Book Entry Date'])
             & (df_link['Trench Book Start Page'] >= row['Trench Book Start Page'])
-            & (df_link['Trench Book Start Page'] <= row['Trench Book Start Page'])
+            & (df_link['Trench Book End Page'] <= row['Trench Book End Page'])
         )
+        if df_link[up_indx].empty:
+            print(
+                f"Cannot update associate locus trenchbook: {row['trench_id']} "
+                f"year: {row['trench_year']} "
+                f"entry: {row['Trench Book Entry Date']}"
+                f"pages: {row['Trench Book Start Page']} - {row['Trench Book End Page']}"
+            )
+            continue
         df_link.loc[up_indx, 'object_label'] = obj.label
         df_link.loc[up_indx, 'object_uuid'] = object_uuid
         df_link.loc[up_indx, 'object_uuid_source'] = object_source
@@ -203,6 +217,48 @@ def make_locus_tb_links_df(dfs, subjects_df):
         )
     ]
     return df_link
+
+
+def make_strat_other_link_df(df):
+    """Makes a single dataframe for locus stratigraphy relations"""
+    cols_renames = {
+        'Stratigraphy: Relation with Prior Season Locus/Relation Type': 'kobo_rel',
+        'Stratigraphy: Relation with Prior Season Locus/URL to Locus': 'kobo_url',
+    }
+    cols = [c for c,_ in cols_renames.items()]
+    if not set(cols).issubset(set(df.columns.tolist())):
+        return None
+    df.rename(columns=cols_renames, inplace=True)
+    df[pc_configs.LINK_RELATION_TYPE_COL] = np.nan
+    df['object_label'] = np.nan
+    df['object_uuid'] = np.nan
+    df['object_orig_uuid'] = np.nan
+    df['object_uuid_source'] = np.nan
+    for _, row in df.iterrows():
+        obj = db_lookups.db_lookup_manifest_by_uri(
+            row['kobo_url'],
+            item_class_slugs=['oc-gen-cat-locus'],
+        )
+        if not obj:
+            continue
+        object_uuid = str(obj.uuid)
+        object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        up_indx = (
+            (df['kobo_url'] == row['kobo_url'])
+            & (df['kobo_rel'] == row['kobo_rel'])
+        )
+        if df[up_indx].empty:
+            print(
+                f"Cannot update associate locus : {row['kobo_url']} "
+                f"with obj: {obj.label} ({object_uuid})"
+            )
+            continue
+        df.loc[up_indx, pc_configs.LINK_RELATION_TYPE_COL] = row['kobo_rel']
+        df.loc[up_indx, 'object_label'] = obj.label
+        df.loc[up_indx, 'object_uuid'] = object_uuid
+        df.loc[up_indx, 'object_uuid_source'] = object_source
+    
+    return df
 
 
 def make_strat_link_df(df, dfs, subjects_df):
@@ -218,10 +274,15 @@ def make_strat_link_df(df, dfs, subjects_df):
     )
     # Add the trench_id column to the df_link.
     df = add_trench_cols_to_df_link(df, dfs)
+    do_other_rel = False
     act_col = None
     for c in df.columns.tolist():
         if c.startswith('Stratigraphy'):
             act_col = c
+        if 'Relation with Prior Season Locus' in c:
+            do_other_rel = True
+    if do_other_rel:
+        return make_strat_other_link_df(df)
     if not act_col:
         return None
     df[pc_configs.LINK_RELATION_TYPE_COL] = act_col
