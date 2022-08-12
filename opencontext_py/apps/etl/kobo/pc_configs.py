@@ -1375,12 +1375,10 @@ MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/2022-me
 
 MAIN_TRENCH_BOOKS = {
     'T26_2022': ('Trench Book T26 2022', '028af835-57dc-4952-af76-1772295442bd',),
-    'T90_2022': ('Trench Book T90 2022', '5f0c8c1b-d993-4c7b-9d12-e9329265c8b9',), 
-    'CA91_2022': ('Trench Book CA91 2022', '77882d50-c328-45b8-aaa7-4a868ceb9fe8',), 
     'T90_2022': ('Trench Book T90 2022', 'b01c144b-5fdc-44ff-b00f-5bcd36e91b56',),
     'T100_2022': ('Trench Book T100 2022', '7227c029-e202-42ed-a786-844bc0e42edb',),
     'T101_2022': ('Trench Book T101 2022', 'd6a6080c-625d-4263-8bea-d20c19a0ee8a',),
-    'T101_2022': ('Trench Book T102 2022', '763b203b-c37c-4076-a12e-845cc9fb02ad',),
+    'T102_2022': ('Trench Book T102 2022', '763b203b-c37c-4076-a12e-845cc9fb02ad',),
     'CA90_2022': ('Trench Book CA90 2022', 'e911d2b1-898b-413b-8e8e-d45271bca34d',),
     'CA91_2022': ('Trench Book CA91 2022', 'b4ed4510-f6cf-4b38-aaea-4d2c136c4c57',), 
     'CA92_2022': ('Trench Book CA92 2022', '1d4d7311-9dc0-4667-bdb0-93bda1f8bd65',), 
