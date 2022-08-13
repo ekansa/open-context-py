@@ -142,6 +142,9 @@ Project Explore
 	margin-top: 0px;
 	margin-bottom: 0px;
 }
+#proj_text_search {
+	margin-top: 12px;
+}
 .proj_item_type_dropdowns {
 	margin-top: 12px;
 }

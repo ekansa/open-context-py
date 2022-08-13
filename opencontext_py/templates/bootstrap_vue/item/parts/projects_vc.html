@@ -45,6 +45,16 @@
           v-if="documents_obj"
           v-bind:item_type_obj="documents_obj"></vc-projects-item-type>
 
+        <div id="proj_text_search">
+          <oc-search-typeahead
+            :act_place_holder="'Text search within project'"
+            v-bind:project_slugs="project_slugs"
+            v-bind:base_search_url="text_search_url"
+            v-bind:search_via_router="false"
+            >
+          </oc-search-typeahead>
+        </div>
+
       </div>
 
       <div v-else-if="loading">
@@ -88,7 +98,6 @@ var vc_projects_item_type = Vue.component(
         };
       },
       computed: {
-        
       },
       methods: {
         
@@ -124,7 +133,25 @@ var vc_projects_item_type = Vue.component(
         };
       },
       computed: {
-        
+        project_slugs: function(){
+          if(!this.project_slug){
+            return [];
+          }
+          return [this.project_slug];
+        },
+        text_search_url: function(){
+          if(!this.base_search_url){
+            return null;
+          }
+          if(!this.project_slug){
+            return null;
+          }
+          let params = {
+            proj: this.project_slug,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          return url;
+        }
       },
       created(){
         this.fetch_oc_api();
@@ -218,6 +245,7 @@ var vc_projects_item_type = Vue.component(
       },
       components: {
         'vc-projects-item-type': vc_projects_item_type,
+        'oc-search-typeahead': vc_oc_seach_typeahead,
       }
     }
   );
