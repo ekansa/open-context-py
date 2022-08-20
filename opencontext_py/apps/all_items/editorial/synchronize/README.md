@@ -14,7 +14,7 @@ If connecting to a Google Cloud hosted database server, be sure to configure
 sql proxy, use this invocation:
 
 
-    ./cloud_sql_proxy -instances=<INSTANCE NAME>=tcp:5434
+    ./cloud_sql_proxy -instances=<INSTANCE NAME>=tcp:5436
 
 
 The Django will connect to the Cloud sql proxy at the local host, so make sure you
