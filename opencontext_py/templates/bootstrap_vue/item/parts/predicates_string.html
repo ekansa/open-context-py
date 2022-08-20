@@ -1,0 +1,171 @@
+{% block predicates_chart %}
+
+
+<template id="string-predicates-template">
+  <div>
+
+    <div :ref="'string-predicates-' + route_key_index">
+
+      <div v-if="loading">
+        <div class="container-fluid text-muted text-center">
+          <h1 class="display-4">Preparing data...</h1>
+          <b-spinner class="m-5" label="Busy"></b-spinner>
+        </div>
+      </div>
+
+      <div v-else>
+
+        <div v-if="indexed_count < 1" >
+
+          <div class="container-fluid text-muted text-center">
+            <h1 class="display-4">No records</h1>
+            <p>Records associated with this predicate have yet to be
+              indexed. These records are still in preparation and not
+              yet fully published.</p>
+          </div>
+
+        </div>
+
+        <div v-else>
+
+          <div class="container-fluid" id="pred_string_search">
+            <h4>Search Text within this Attribute</h4>
+            <p>The free-text attribute <strong>[[ predicate_label ]]</strong> is used
+              in the description of <strong>[[ display_count ]]</strong> records. Type 
+              a term to search text within this attribute using for form below:</p>
+
+              <b-input-group>
+                <b-form-input
+                  v-model="search_text"
+                  placeholder="Search within attribute" 
+                  :type="'search'">
+                </b-form-input>
+                <b-input-group-append>
+                  <b-button :disabled="!query_href" :href="query_href" variant="primary">
+                    <i alt="Search Icon" class="bi-search"></i>
+                  </b-button>
+                </b-input-group-append>
+            </b-input-group>
+
+          </div>
+          
+    
+        </div>
+          
+      </div>
+    </div>
+
+  </div>
+</template>
+
+
+
+<script type="text/javascript">
+
+  var vc_string_predicates = Vue.component(
+    'string-predicates',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#string-predicates-template',
+      props: [
+        'base_search_url',
+        'predicate_label',
+        'predicate_slug',
+        'predicate_class_slug',
+        'data_type',
+      ],
+      data() {
+        return {
+          loading: true,
+          base_search_url: '/query',
+          predicate_label: null,
+          predicate_slug: null,
+          predicate_class_slug: null,
+          data_type: 'xsd:string',
+          facets_data: null,
+          indexed_count: 0,
+          search_text: null,
+          route_key_index: 0,
+        };
+      },
+      computed: {
+        query_href: function (){
+          if(!this.predicate_slug){
+            return null;
+          }
+          if(!this.search_text){
+            return null;
+          }
+          let params = {
+            prop: this.predicate_slug + '---' + this.search_text,
+          };
+          let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
+          return url;
+        },
+        display_count: function() {
+          if(this.indexed_count > 0){
+            return this.indexed_count.toLocaleString();
+          }
+          return null;
+        }
+      },
+      created(){
+        this.fetch_oc_api();
+      },
+      watch: {
+        
+      },
+      methods: {
+        fetch_oc_api: function(){
+          if(!this.predicate_slug){
+            // missing our query criteria
+            return null;
+          }
+          if(this.facets_data != null){
+            // We already have the data
+            return null;
+          }
+          this.loading = true;
+          let params = {
+            prop: this.predicate_slug,
+            rows: 1,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          fetch(
+            url,
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+          )
+          .then(response => response.json())
+          .then(json => {
+            this.route_key_index += 1;
+            this.facets_data = json;
+            if(!this.facets_data.hasOwnProperty('totalResults')){
+              this.facets_data = null;
+            }
+            else if(this.facets_data.totalResults == 0){
+              this.facets_data = null;
+            }
+            else{
+              this.indexed_count = this.facets_data.totalResults;
+              console.log('Predicated indexed with ' + this.facets_data.totalResults + ' items');
+            }
+          }).finally(() => {
+            this.loading = false;
+            this.indexed_count = this.facets_data.totalResults;
+          });
+        },
+      },
+      components: {
+        
+      }
+    }
+  );
+  
+</script>
+
+
+{% endblock %}

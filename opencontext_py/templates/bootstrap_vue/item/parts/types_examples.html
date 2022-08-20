@@ -1,0 +1,383 @@
+{% block types_examples %}
+
+
+<template id='record-thumbnail-template'>
+  <figure class="figure text-center" v-if="field_item">
+    <a :href="field_item.url" target="_bank">
+      <b-img-lazy 
+          v-if="field_item.media && (!field_item.human_remains_flag || human_remains_ok)" 
+          :src="field_item.media"
+          thumbnail
+          fluid
+          rounded
+          center
+          :alt="'Image related to ' + field_item.label">
+      </b-img-lazy>
+      <b-img-lazy 
+          v-else-if="field_item.media && field_item.human_remains_flag" 
+          :src="field_item.media"
+          thumbnail
+          fluid
+          rounded
+          center
+          class="human_remains_thumb_blur" 
+          :alt="'Image related to ' + field_item.label">
+      </b-img-lazy>
+      <b-img v-else
+          v-bind="blank_props"
+          blank-color="#cccccc"
+          center
+          :alt="'No image related to ' + field_item.label">
+      </b-img>
+    </a>
+    <figcaption class="figure-caption text-center">
+      [[ field_item.label ]]
+    </figcaption>
+    <div v-if="field_item.human_remains_flag">
+      <br/><span class="badge badge-pill badge-warning human_remains_warn text-center">
+      <i class="bi bi-exclamation-circle-fill"></i> Human Remains
+      </span>
+    </div>
+  </figure>
+</template>
+
+
+
+<template id="types-examples-template">
+  <div>
+
+    <div :ref="'types-examples-' + route_key_index">
+
+      <div v-if="loading">
+        <div class="container-fluid text-muted text-center">
+          <h1 class="display-4">Preparing data...</h1>
+          <b-spinner class="m-5" label="Busy"></b-spinner>
+        </div>
+      </div>
+
+      <div v-else>
+
+        <div v-if="indexed_count < 1" >
+
+          <div class="container-fluid text-muted text-center">
+            <h1 class="display-4">No records</h1>
+            <p>Records associated with this type have yet to be
+              indexed. These records are still in preparation and not
+              yet fully published.</p>
+          </div>
+
+        </div>
+
+        <div v-else>
+
+          <b-row align-v="center" v-if="display_count">
+            <b-col cols="12"  md="auto">
+              <p>The classification <b>[[predicate_label]] :: [[type_label]]</b> describes <strong>[[ display_count ]]</strong> records. 
+              Some examples of these records are provided below.
+              </p>
+            </b-col>
+          </b-row>
+
+          <div v-if="chunked_items">
+            <b-row v-for="(items, r_i) in chunked_items"
+              align-v="center"
+            >
+              <b-col v-for="(item, i_i) in items"
+                cols="2"
+                >
+                <record-thumbnail
+                  v-bind:field_item="item">
+                </record-thumbnail>
+              </b-col>
+            </b-row>
+          </div>
+
+          <b-row align-v="center"  align-h="end" v-if="query_href">
+            <b-col cols="12" md="auto">
+              <small><em>Click button to query and visualize records described by this classification.</em></small>
+              <b-button :href="query_href" target="_blank" variant="outline-secondary">
+                <b-avatar :size="24"><span class="material-icons-two-tone">query_stats</span></b-avatar> [[ type_label ]]
+              </b-button>
+            </b-col>
+          </b-row>
+
+        </div>
+          
+      </div>
+    </div>
+
+  </div>
+</template>
+
+
+
+<script type="text/javascript">
+
+
+var vs_record_thumbnail = Vue.component(
+    'record-thumbnail',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['field_item', 'human_remains_ok'],
+      data() {
+        return {
+            field_item: null,
+            blank_props: {
+                blank: true, 
+                width: 75, 
+                height: 75, 
+                class: 'm1',
+            },
+            human_remains_ok: HUMAN_REMAINS_OK,
+        };
+      },
+      template: '#record-thumbnail-template',
+      methods: {
+        
+      }
+    },
+);
+
+
+
+  var vc_types_examples = Vue.component(
+    'types-examples',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#types-examples-template',
+      props: [
+        'base_search_url',
+        'predicate_label',
+        'predicate_slug',
+        'type_label',
+        'type_slug',
+      ],
+      data() {
+        return {
+          loading: true,
+          base_search_url: '/query',
+          predicate_label: null,
+          predicate_slug: null,
+          type_label: null,
+          type_slug: null,
+          indexed_count: 0,
+          route_key_index: 0,
+          result_data: null,
+          item_chunk_size: 6,
+        };
+      },
+      computed: {
+        display_count: function() {
+          if(this.indexed_count > 0){
+            return this.indexed_count.toLocaleString();
+          }
+          return null;
+        },
+        query_href: function (){
+          if(!this.predicate_slug){
+            return null;
+          }
+          if(!this.type_slug){
+            return null;
+          }
+          let params = {
+            prop: this.predicate_slug + '---' + this.type_slug,
+          };
+          let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
+          let frag_str = encode_frag_obj({
+            tab: 0,
+            aq: this.type_slug,
+          });
+          url += '#' + frag_str;
+          return url;
+        },
+        chunked_items: function () {
+          if(!this.result_data){
+            return null;
+          }
+          if(!this.result_data.hasOwnProperty('features')){
+            return null;
+          }
+          let thumb_items = [];
+          let no_thumb_items = [];
+          for(let feature of this.result_data.features){
+            if(feature['category'] != 'oc-api:geo-record'){
+                continue;
+            }
+            if(!('properties' in feature)){
+                continue;
+            }
+              
+            let props = feature['properties'];
+            let url = feature['rdfs:isDefinedBy'];
+            url = abs_to_rel_url(url, BASE_URL);
+            url = use_all_items_href(url, BASE_URL, USE_TEST_ALL_ITEMS_HREF);
+
+            let human_remains_flag = false;
+            if('oc-api:human-remains-related' in feature){
+              human_remains_flag = feature['oc-api:human-remains-related'];
+            }
+
+            let href = url;
+            if('href' in props){
+                href = use_all_items_href(props['href'], BASE_URL, USE_TEST_ALL_ITEMS_HREF);
+            }
+
+            let context = '(No spatial context)';
+            let context_url = null;
+            if('context label' in props){
+                context = props['context label'];
+            }
+            if('context href' in props){
+              context_url = abs_to_rel_url(
+                  props['context href'],
+                  BASE_URL,
+              );
+              context_url = use_all_items_href(context_url, BASE_URL, USE_TEST_ALL_ITEMS_HREF);
+            }
+            let item_class = '(Uncateorized)';
+            if('item category' in props){
+              item_class = props['item category'];
+            }
+            let early = null;
+            let late = null;
+            let dates = null;
+            if('early bce/ce' in props){
+              early = style_bce_ce_year(props['early bce/ce'], null);
+            }
+            if('late bce/ce' in props){
+              late = style_bce_ce_year(props['late bce/ce'], null);
+            }
+            if((early != null) && (late != null)){
+              dates = early + ' to ' + late;
+            }
+            else if(early != null){
+              dates = early;
+            }
+            else if(late != null){
+              dates = late;
+            }
+            else {
+              dates = '(No dates)';
+            }
+            let thumb_uri = null;
+            if('thumbnail' in props){
+                thumb_uri = props['thumbnail'];
+            }
+            let updated = props['updated'];
+            let updated_ex = updated.split('T');
+            updated = updated_ex[0];
+
+            let snippet = null;
+            if('snippet' in props){
+                snippet = props['snippet'];
+                snippet = '...' + snippet.replace(context, '') + '...';
+            }
+
+            let item = {
+              label: feature['label'],
+              url: url,
+              href: href,
+              item_class: item_class,
+              context: context,
+              context_url: context_url,
+              project: props['project label'],
+              project_url: abs_to_rel_url(
+                  props['project href'],
+                  BASE_URL,
+              ),
+              chronology: dates,
+              updated: updated,
+              media: thumb_uri,
+              snippet: snippet,
+              human_remains_flag: human_remains_flag,
+            };
+            if(item.media){
+              thumb_items.push(item);
+            }
+            else{
+              no_thumb_items.push(item);
+            }
+          }
+          let all_items = thumb_items.concat(no_thumb_items);
+          let items = null;
+          if(all_items.length > (this.item_chunk_size * 6)){
+            items = all_items.slice(0, (this.item_chunk_size * 6));
+          }
+          else{
+            items = all_items;
+          }
+          return this.chunk(items, this.item_chunk_size);
+        },
+      },
+      created(){
+        this.fetch_oc_api();
+      },
+      watch: {
+        
+      },
+      methods: {
+        chunk: function(arr, len) {
+          let chunks = [];
+          let i = 0;
+          let n = arr.length;
+          while (i < n) {
+            chunks.push(arr.slice(i, i += len));
+          }
+          return chunks;
+        },
+        fetch_oc_api: function(){
+          if(!this.predicate_slug){
+            // missing our query criteria
+            return null;
+          }
+          if(!this.type_slug){
+            return null;
+          }
+          if(this.result_data != null){
+            // We already have the data
+            return null;
+          }
+          this.loading = true;
+          let params = {
+            prop: this.predicate_slug + '---' + this.type_slug,
+            rows: 100,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          fetch(
+            url,
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+          )
+          .then(response => response.json())
+          .then(json => {
+            this.route_key_index += 1;
+            this.result_data = json;
+            if(!this.result_data.hasOwnProperty('totalResults')){
+              this.result_data = null;
+            }
+            else if(this.result_data.totalResults == 0){
+              this.result_data = null;
+            }
+            else{
+              this.indexed_count = this.result_data.totalResults;
+            }
+          }).finally(() => {
+            this.loading = false;
+          });
+        },
+        
+      },
+      components: {
+        'record-thumbnail': vs_record_thumbnail,
+      }
+    }
+  );
+  
+</script>
+
+
+{% endblock %}

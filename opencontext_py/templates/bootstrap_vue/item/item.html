@@ -23,6 +23,11 @@
 
 {%endif%}
 
+{% if man_obj.item_type == 'types' %}
+
+    {% include '../item/parts/types_examples.html' %}
+
+{%endif%}
 
 
 
@@ -77,6 +82,8 @@
 
         {%endif%}
 
+
+
         {% if man_obj.item_type == 'predicates' %}
             <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
             <div class="card">
@@ -97,6 +104,24 @@
                     ></vc-predicates>
                 </div>
             </div>
+        {%endif%}
+
+        {% if man_obj.item_type == 'types' %}
+        <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
+        <div class="card">
+            <div class="card-header">
+                <h5><b>{{ man_obj.label }}</b> (Classification Category or Type)</h5>
+            </div>
+            <div class="card-body">
+                <types-examples
+                    :base_search_url="'/query'"
+                    v-bind:predicate_label="'{{ man_obj.context.label|safe }}'"
+                    v-bind:predicate_slug="'{{ man_obj.context.slug|safe }}'"
+                    v-bind:type_label="'{{ man_obj.label|safe }}'"
+                    v-bind:type_slug="'{{ man_obj.slug|safe }}'"
+                ></types-examples>
+            </div>
+        </div>
         {%endif%}
 
 
@@ -248,6 +273,9 @@
             
             {% if man_obj.item_type == 'predicates' %}
             'vc-predicates': vc_predicates,
+            {%endif%}
+            {% if man_obj.item_type == 'types' %}
+            'types-examples': vc_types_examples,
             {%endif%}
             {% if man_obj.item_type == 'projects' %}
             'vc-projects': vc_projects,
