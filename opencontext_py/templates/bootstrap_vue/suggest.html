@@ -3,39 +3,42 @@
 
 
 <template id="oc-search-typeahead">
+    <form 
+        :class="form_class"
+        @submit="do_search_query"
+        >
+        <vue-bootstrap-typeahead
+            v-bind:data="data"
+            v-bind:query="query"
+            v-model="query"
+            size="md"
+            :serializer="s => removeTags(s)"
+            :placeholder="place_holder"
+            debounce="50"
+            @hit="pick_selected_term($event)"
+            :class="input_class"
+        >
 
-    <vue-bootstrap-typeahead
-        v-bind:data="data"
-        v-bind:query="query"
-        v-model="query"
-        size="md"
-        :serializer="s => removeTags(s)"
-        :placeholder="place_holder"
-        debounce="50"
-        @hit="pick_selected_term($event)"
-        :class="input_class"
-    >
+            <template slot="suggestion" slot-scope="{ data }">
+                <span v-html="data"></span>
+            </template>
 
-        <template slot="suggestion" slot-scope="{ data }">
-            <span v-html="data"></span>
-        </template>
+            <template slot="append">
+                <b-button 
+                    :to="router_query_link" 
+                    :href="href_query_link" 
+                    :disabled="query.length < 2"
+                    class="btn btn-light" 
+                    v-if="top_nav" >
+                    <i alt="Search Icon" class="bi-search"></i>
+                </b-button>
+                <b-button :to="router_query_link" :href="href_query_link" :disabled="query.length < 2" v-else >
+                    <i alt="Search Icon" class="bi-search"></i>
+                </b-button>
+            </template>
 
-        <template slot="append">
-            <b-button 
-                :to="router_query_link" 
-                :href="href_query_link" 
-                :disabled="query.length < 2"
-                class="btn btn-light" 
-                v-if="top_nav" >
-                <i alt="Search Icon" class="bi-search"></i>
-            </b-button>
-            <b-button :to="router_query_link" :href="href_query_link" :disabled="query.length < 2" v-else >
-                <i alt="Search Icon" class="bi-search"></i>
-            </b-button>
-        </template>
-
-    </vue-bootstrap-typeahead>
-
+        </vue-bootstrap-typeahead>
+    </form>
 </template>
 
 
@@ -70,6 +73,11 @@ var vc_oc_seach_typeahead = Vue.component(
             };
         },
         computed: {
+            form_class: function(){
+                if(this.top_nav){
+                    return "navbar-form navbar-right d-flex";
+                }
+            },
             href_query_link: function(){
                 if(this.search_via_router){
                     return null;
@@ -131,6 +139,12 @@ var vc_oc_seach_typeahead = Vue.component(
                         }
                     }
                 }
+                if(!this.query){
+                    return null;
+                }
+                if(this.query.length < 2){
+                    return null;
+                }
                 let url = this.base_search_url;
                 if(url.indexOf('?') < 0){
                     if(!url.endsWith('/')){
@@ -142,6 +156,22 @@ var vc_oc_seach_typeahead = Vue.component(
                 url = removeURLParameter(url, 'start');
                 url = abs_to_rel_url_with_frag_obj(url, BASE_URL, frontend_state);
                 return url;
+            },
+            do_search_query: function(event){
+                event.preventDefault();
+                if(!this.query){
+                    return null;
+                }
+                let url = this.compose_query_link();
+                if(this.search_via_router){
+                    console.log('search via router: ' + url);
+                    router.push(url);
+                }
+                else{
+                    console.log('search no router: ' + url);
+                    window.open(url, '_self');
+                }
+                return true;
             },
             removeTags: function(str) {
                 if ((str===null) || (str==='')){
@@ -159,6 +189,10 @@ var vc_oc_seach_typeahead = Vue.component(
                 return term;
             },
             async get_suggestions(q_term) {
+                console.log('q_term: ' + q_term);
+                if(!q_term){
+                    return null;
+                }
                 if(q_term.length < 1){
                     return null;
                 }

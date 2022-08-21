@@ -47,7 +47,7 @@ for p_uuid in p_uuids:
         uuids.append(str(act_ass.subject.uuid))
 
 # Update recently edited items
-after_date = '2022-07-01'
+after_date = '2022-07-31'
 m_qs = AllManifest.objects.filter(
     updated__gte=after_date,
     item_type__in=['projects', 'subjects', 'media', 'documents'],

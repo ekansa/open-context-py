@@ -97,15 +97,6 @@
             </ul>
         
             <!--
-            <form class="navbar-form navbar-right d-flex" role="search" method="get" action="{{ BASE_URL }}/search">
-                
-                <input type="text" class="form-control me-2" placeholder="Search whole site" name="q" title="Text search box" />
-                <button alt="Search Button" id="nav-search-button" type="submit" class="btn btn-light" title="Submit search request" >
-                    <i alt="Search Icon" class="bi-search"></i>
-                </button>
-                
-            </form>
-            -->
             <form class="navbar-form navbar-right d-flex" role="search" id="nav-app">
                 <oc-search-typeahead
                     v-bind:top_nav="1"
@@ -114,6 +105,15 @@
                     >
                 </oc-search-typeahead>
             </form>
+            -->
+            <div id="nav-app">
+                <oc-search-typeahead
+                    v-bind:top_nav="1"
+                    v-bind:search_via_router="0"
+                    :base_search_url="'/query'"
+                    >
+                </oc-search-typeahead>
+            </div>
         </div>
     </div>
 </nav>
