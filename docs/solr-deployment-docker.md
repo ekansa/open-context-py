@@ -35,7 +35,7 @@ sudo docker stop oc_solr
 
 # Copy the Solr schema to the appropriate place in the persistent
 # solr data directory, add permissions
-export PATH_TO_SOLR_CONF=~/github/open-context-py/solr-config/Solr-8/
+export PATH_TO_SOLR_CONF=~/github/open-context-py/solr-config/Solr-9/
 sudo cp $PATH_TO_SOLR_CONF/schema.xml solr-oc-data/data/open-context/conf/managed-schema
 sudo cp $PATH_TO_SOLR_CONF/schema.xml solr-oc-data/data/open-context/conf/schema.xml
 sudo cp $PATH_TO_SOLR_CONF/currency.xml solr-oc-data/data/open-context/conf/currency.xml
