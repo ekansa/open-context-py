@@ -32,7 +32,8 @@
             v-if="data_series"
             :id="'chart-' + chart_id"
             :ref="'chart-' + chart_id"
-            width="100%" 
+            width="100%"
+            :height="chart_height"
             :options="options"
             :series="data_series">
           </apexchart>
@@ -83,6 +84,7 @@
           do_consolidate_rare_opts: true,
           is_rare_portion: 0.01, // portion that's considered to be rare
           chart_id: 0,
+          min_opt_height: 26,
           options: {
             chart: {
               type: 'bar',
@@ -198,7 +200,7 @@
           let prior_label = '';
           for(let l of label.split(delim)){
             l = l.trim();
-            if(l.length < 3){
+            if(l.length < 4){
               // This makes sure we don't have a part that's
               // too small.
               if(labels.length > 0){
@@ -328,6 +330,10 @@
             this.options.title.text = `No options currently indexed ${this.predicate_label}`;
           }
           data_series = this.add_rare_opts_to_series(rare_opts, data_series);
+          if(data_series.length >= 18){
+              this.chart_height = (this.min_opt_height * data_series.length) + 36;
+              console.log('Change chart height for ' + data_series.length + ' opts, now: ' + this.chart_height);
+            }
           let series = [{
             name: 'Records:',
             data: data_series,
