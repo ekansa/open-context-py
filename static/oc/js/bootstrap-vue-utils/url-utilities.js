@@ -5,6 +5,9 @@ in Vue templating.
 */
 
 function remove_prefix(str, prefix){
+    if(!str){
+        return null;
+    }
     if(str.startsWith(prefix)){
          return str.slice(prefix.length);
     } else {
@@ -282,6 +285,9 @@ function abs_to_rel_url_with_frag_obj(url, base_url, frag_obj){
 function use_all_items_href(href, base_url, use_all_items_href){
     if(!use_all_items_href){
         return href;
+    }
+    if(!href){
+        return null;
     }
     let do_all_items = false;
     if(href.indexOf('://opencontext.org/') >= 0){
