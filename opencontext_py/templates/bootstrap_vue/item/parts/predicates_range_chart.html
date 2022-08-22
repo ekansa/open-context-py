@@ -247,7 +247,7 @@
               }
               let item = {
                 x: label,
-                href: opt.id,
+                href: removeURLParameter(opt.id, 'row'),
                 y: opt.count,
               }
               data_series.push(item);

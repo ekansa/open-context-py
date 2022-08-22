@@ -308,7 +308,7 @@
               let item = {
                 x: this.label_length_format(opt.label),
                 slug: opt.slug,
-                href: opt.id,
+                href: removeURLParameter(opt.id, 'row'),
                 y: opt.count,
                 rare_opts: null,
               }
