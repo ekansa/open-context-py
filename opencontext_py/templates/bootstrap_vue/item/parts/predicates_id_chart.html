@@ -264,6 +264,7 @@
             prop: q_param ,
           };
           let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          uri = removeURLParameter(url, 'rows');
           let item = {
             x: this.label_length_format(other_label),
             href: url,
@@ -308,7 +309,7 @@
               let item = {
                 x: this.label_length_format(opt.label),
                 slug: opt.slug,
-                href: removeURLParameter(opt.id, 'row'),
+                href: removeURLParameter(opt.id, 'rows'),
                 y: opt.count,
                 rare_opts: null,
               }
