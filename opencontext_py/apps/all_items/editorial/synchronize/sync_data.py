@@ -21,6 +21,27 @@ importlib.reload(sync_data)
 sync_data.update_prod_from_default(after_date='2021-01-31')
 
 
+
+import importlib
+from opencontext_py.apps.all_items.editorial.synchronize import sync_data
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllAssertion,
+    AllHistory,
+    AllResource,
+    AllIdentifier,
+    AllSpaceTime,
+)
+project_uuid = 'df043419-f23b-41da-7e4d-ee52af22f92f'
+update_models = [
+    (AllSpaceTime, 'project_id',),
+    (AllAssertion, 'project_id',),
+    (AllResource, 'project_id',),
+    (AllHistory, 'item__project_id',),
+    (AllIdentifier, 'item__project_id',),
+]
+sync_data.update_default_from_prod(project_uuid=project_uuid, update_models=update_models)
+
 """
 
 # These configure foreign key relationships to 
@@ -52,15 +73,24 @@ def update_default_from_prod(
         return None
     
     all_migrated_objs = 0
-    for model, project_id_attrib in MODELS_TO_SYNC:
+    for model, project_id_attrib in update_models:
         filter_args = {}
         if project_uuid:
             filter_args[project_id_attrib] = project_uuid
         if after_date:
             filter_args[f'updated__gte'] = after_date
-        m_qs = model.objects.using('prod').all()
+        m_qs = model.objects.all()
         if filter_args:
             m_qs = m_qs.filter(**filter_args)
+        if model != AllManifest:
+            safe_model_save.bulk_update_create(
+                act_model=model, 
+                m_qs=m_qs, 
+                from_db='prod', 
+                to_db='default'
+            )
+            continue
+        m_qs = m_qs.using('prod')
         print(
             f'Prod queryset returns {model._meta.label}: {len(m_qs)}'
         )
@@ -97,7 +127,7 @@ def update_prod_from_default(
         return None
     
     all_migrated_objs = 0
-    for model, project_id_attrib in MODELS_TO_SYNC:
+    for model, project_id_attrib in update_models:
         filter_args = {}
         if project_uuid:
             filter_args[project_id_attrib] = project_uuid
@@ -106,9 +136,18 @@ def update_prod_from_default(
         
         # Check the default database to get rows that we may want to
         # transfer to prod.
-        m_qs = model.objects.using('default').all()
+        m_qs = model.objects.all()
         if filter_args:
             m_qs = m_qs.filter(**filter_args)
+        if model != AllManifest:
+            safe_model_save.bulk_update_create(
+                act_model=model, 
+                m_qs=m_qs, 
+                from_db='default', 
+                to_db='prod'
+            )
+            continue
+        m_qs = m_qs.using('default')
         print(
             f'Default (local) queryset returns {model._meta.label}: {len(m_qs)}'
         )
