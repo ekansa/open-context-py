@@ -303,7 +303,7 @@ def make_list_of_model_objs(act_ids, from_objs, act_model):
     return model_objs, update_attribs
 
 
-def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500):
+def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500, target_page=None):
     to_db_missing_ids = check_other_db_foreign_keys_in_qs(
         act_model=act_model, 
         m_qs=m_qs, 
@@ -330,6 +330,8 @@ def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500):
     m_qs = m_qs.using(from_db)
     paginator = Paginator(m_qs, chunk_size)
     for page in range(1, paginator.num_pages + 1):
+        if target_page and page != target_page:
+            continue
         from_objs = {}
         from_pks = []
         for model_object in paginator.page(page).object_list:
@@ -372,3 +374,8 @@ def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500):
                 create_items,
             )
             print(f'Created {len(n_new)} in {to_db}')
+            if len(n_new) != len(create_items):
+                raise ValueError(
+                    f'{page} of {paginator.num_pages}: '
+                    f'{to_db} has bulk_insert problem. {len(n_new)} of {len(create_items)} rows actually created!'
+                )
