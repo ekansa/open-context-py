@@ -6,7 +6,11 @@
       {% if val.object_class_icon %}
       <div class="row align-items-center">
         <div class="col-1 item_rel_cell_obj_class_icon">
+          {% if val.object__item_type == 'persons' %}
+          <a title="{{ val.label }}" href="{% url 'persons_html' val.object_id %}">
+          {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
+          {%endif%}
             <img 
             role="img" 
             src="{{ val.object_class_icon }}" 
@@ -15,7 +19,11 @@
           </a>
         </div>
         <div class="col">
+          {% if val.object__item_type == 'persons' %}
+          <a title="{{ val.label }}" href="{% url 'persons_html' val.object_id %}">{{ val.label }}</a>
+          {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
+          {%endif%}
           {% if val.object__meta_json.flag_human_remains %}
           <br/><span class="badge badge-pill badge-warning human_remains_warn">
             <i class="bi bi-exclamation-circle-fill"></i> Human Remains
@@ -24,7 +32,11 @@
         </div>
       </div>
       {%else%}
+        {% if val.object__item_type == 'persons' %}
+        <a title="{{ val.label }}" href="{% url 'persons_html' val.object_id %}">{{ val.label }}</a>
+        {%else%}
         <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
+        {%endif%}
         {% if val.object__meta_json.flag_human_remains %}
         <br/><span class="badge badge-pill badge-warning human_remains_warn">
           <i class="bi bi-exclamation-circle-fill"></i> Human Remains

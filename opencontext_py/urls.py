@@ -367,12 +367,9 @@ urlpatterns = [
     re_path(r'^documents/(?P<uuid>\S+)?\.json$', AllItemsViews.documents_json, name='documents_json'),
     re_path(r'^documents/(?P<uuid>\S+)', AllItemsViews.documents_html, name='documents_html'),
     # Person views for Person / organization items
-    re_path(r'^persons/(?P<uuid>\S+)?\.jsonld$', PersonViews.jsonld_view, name='persons_jsonld'),
-    re_path(r'^persons/(?P<uuid>\S+)?\.json$', PersonViews.json_view, name='persons_json'),
-    re_path(r'^persons/(?P<uuid>\S+)?\.nt$', PersonViews.ntrpls_view, name='persons_ntrpls'),
-    re_path(r'^persons/(?P<uuid>\S+)?\.rdf$', PersonViews.rdf_view, name='persons_rdf'),
-    re_path(r'^persons/(?P<uuid>\S+)?\.ttl$', PersonViews.turtle_view, name='persons_turtle'),
-    re_path(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='persons_html'),
+    re_path(r'^persons/(?P<uuid>\S+)?\.jsonld$', AllItemsViews.persons_json, name='persons_jsonld'),
+    re_path(r'^persons/(?P<uuid>\S+)?\.json$', AllItemsViews.persons_json, name='persons_json'),
+    re_path(r'^persons/(?P<uuid>\S+)', AllItemsViews.persons_html, name='persons_html'),
     re_path(r'^persons', AboutViews.index_view, name='about_index'),
     # Project views for projects
     re_path(r'^projects/(?P<uuid>\S+)?\.jsonld$', AllItemsViews.projects_json, name='projects_jsonld'),

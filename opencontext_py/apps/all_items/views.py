@@ -305,6 +305,25 @@ def projects_json(request, uuid):
     return test_json(request, ok_uuid)
 
 
+def persons_html(request, uuid):
+    """HTML Persons Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'persons', ok_uuid, extension='')
+    return test_html(request, ok_uuid)
+
+def persons_json(request, uuid):
+    """JSON Persons Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'persons', ok_uuid, extension='.json')
+    return test_json(request, ok_uuid)
+
+
 def predicates_html(request, uuid):
     """HTML Predicates Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
