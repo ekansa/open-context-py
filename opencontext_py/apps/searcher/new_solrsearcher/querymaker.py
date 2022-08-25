@@ -175,7 +175,7 @@ def get_object_uri_query_dict(raw_object_uri):
         # The act_id maybe a persistent URI, escape it and
         # query the persistent_uri string.
         escape_id = utilities.escape_solr_arg(act_id)
-        fq_term = 'object_uri:{}'.format(escape_id)
+        fq_term = f'((object_uri:{act_id}) OR (object_uri:{escape_id}))'
         if fq_term in fq_terms:
             # We already have this, so skip
             continue
