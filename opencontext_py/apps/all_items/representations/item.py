@@ -520,11 +520,11 @@ def add_persistent_identifiers(item_man_obj, rep_dict):
         rep_dict['dc-terms:identifier'] = []
     if item_man_obj.doi:
         rep_dict['dc-terms:identifier'].append(
-            AllIdentifier().make_id_url('doi', item_man_obj.ark, 'https://')
+            AllIdentifier().make_id_url('doi', item_man_obj.doi, 'https://')
         )
     if item_man_obj.orcid:
         rep_dict['dc-terms:identifier'].append(
-            AllIdentifier().make_id_url('orcid', item_man_obj.ark, 'https://')
+            AllIdentifier().make_id_url('orcid', item_man_obj.orcid, 'https://')
         )
     if item_man_obj.ark:
         rep_dict['dc-terms:identifier'].append(
