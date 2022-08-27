@@ -32,8 +32,17 @@
             </a>
             {%endif%}
         </div>
+
+        <button class="navbar-toggler" 
+            type="button" 
+            data-toggle="collapse" 
+            data-target="#navbar_nav_opts" 
+            aria-controls="navbar_nav_opts" 
+            aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
             
-        <div class="collapse navbar-collapse navbar-collapse-sm">
+        <div class="collapse navbar-collapse navbar-collapse-sm" id="navbar_nav_opts">
             <ul class="navbar-nav mr-auto">
                 
             {% for nav_dict in NAV_ITEMS %}
