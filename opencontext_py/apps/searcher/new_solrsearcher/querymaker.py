@@ -172,10 +172,17 @@ def get_object_uri_query_dict(raw_object_uri):
         id_list += utilities.make_uri_equivalence_list(value)
     
     for act_id in id_list:
+        # Allow any unique ID for the search, but solr only indexes
+        # URIs. So we first hit the database to get the manifest object
+        # for this ID so we can then use the manifest object's URI
+        # in the search.
+        man_obj = db_entities.get_cache_man_obj_by_any_id(act_id)
+        if not man_obj:
+            continue
         # The act_id maybe a persistent URI, escape it and
-        # query the persistent_uri string.
-        escape_id = utilities.escape_solr_arg(act_id)
-        fq_term = f'((object_uri:{act_id}) OR (object_uri:{escape_id}))'
+        # query the persistent_uri string. 
+        escape_id = utilities.escape_solr_arg(man_obj.uri)
+        fq_term = f'((object_uri:{man_obj.uri}) OR (object_uri:{escape_id}))'
         if fq_term in fq_terms:
             # We already have this, so skip
             continue
