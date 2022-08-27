@@ -375,7 +375,11 @@ def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500, target_p
             )
             print(f'Created {len(n_new)} in {to_db}')
             if len(n_new) != len(create_items):
-                raise ValueError(
+                msg = (
                     f'{page} of {paginator.num_pages}: '
                     f'{to_db} has bulk_insert problem. {len(n_new)} of {len(create_items)} rows actually created!'
                 )
+                if not target_page:
+                    raise ValueError(msg)
+                else:
+                    print(msg)
