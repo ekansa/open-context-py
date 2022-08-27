@@ -7,9 +7,10 @@
 
 {% elif act_val.predicate__data_type == 'id' and act_val.object__item_type != 'types' %}
 
-  <a href="https://{{ act_val.object__uri }}">{{ act_val.object__label }}</a>
+  <a href="https://{{ act_val.object__uri }}" title="View the definition of this concept" target="_blank">{{ act_val.object__label }} <span style="font-size: 18px; display:inline; " class="material-icons">
+    info
+    </span></a>
   <br/><small>Vocabulary: <a href="https://{{act_val.object__context__uri }}">{{ act_val.object__context__label }}</a></small>
-
 
 {% elif act_val.predicate__data_type == 'xsd:string' %}
 
