@@ -417,6 +417,12 @@ def get_image_obj(src_file, new_file):
         return None, None
     return im, png
 
+def replace_extension(filename, new_extension):
+    if filename.endswith(f'.{new_extension}'):
+        return filename
+    f_ex = filename.split('.')
+    return f'{f_ex[0]}.{new_extension}'
+
 def make_new_size_file(src_file, new_file, new_width):
     """Makes a new file with a new size."""
     output = None
@@ -439,24 +445,39 @@ def make_new_size_file(src_file, new_file, new_width):
         raise RuntimeWarning('Problem rescaling image for: ' + new_file)
     if not rescale_ok:
         return None
+    if not png:
+        # Make new files a jpg, unless it's a png.
+        new_file = replace_extension(new_file, new_extension='jpg')
     if png:
         im.thumbnail(size, Image.ANTIALIAS)
         background = Image.new("RGB", im.size, (255, 255, 255))
+        ok = None
         try:
             background.paste(im, mask=im.split()[3]) # 3 is the alpha channel
             background.save(new_file, "JPEG", quality=100)
             output = new_file
+            ok = True
+            del background
         except:
+            ok = False
+        if not ok:
+            new_file = replace_extension(new_file, new_extension='jpg')
+            try:
+                im.save(new_file, "JPEG", quality=100)
+                output = new_file
+                ok = True
+            except:
+                ok = False
+        if not ok:
             png = False
-            raise RuntimeWarning('Problem with PNG changes for: ' + new_file)
-        del background
+            raise RuntimeWarning(f'Problem with PNG changes from {src_file} to {new_file}')
     else:
         im.thumbnail(size, Image.ANTIALIAS)
         try:
             im.save(new_file, "JPEG", quality=100)
             output = new_file
         except:
-            raise RuntimeWarning('Problem with saving changes for: ' + new_file)
+            raise RuntimeWarning(f'Problem with saving changes rom {src_file} to {new_file}')
     im.close()
     return output
 
@@ -474,17 +495,25 @@ def make_image_versions_src_and_new_file(
     if not os.path.exists(src_file):
         raise RuntimeError('Cannot find {}'.format(src_file))
     full_file = os.path.join(dirs['full'], new_file_name)
-    prev_file = os.path.join(dirs['preview'], new_file_name)
-    thumb_file = os.path.join(dirs['thumbs'], new_file_name)
     if over_write or not os.path.exists(full_file):
         print('Copy full file {}'.format(new_file_name))
         shutil.copy2(src_file, full_file)
-    if over_write or not os.path.exists(prev_file):
-        print('Copy preview {}'.format(prev_file))
-        make_new_size_file(src_file, prev_file, new_width=preview_width)
-    if over_write or not os.path.exists(thumb_file):
-        print('Copy thumbnail {}'.format(thumb_file))
-        make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
+    mod_new_possible_files = [
+        new_file_name,
+        replace_extension(new_file_name, new_extension='jpg')
+    ]
+    for mod_new_file in mod_new_possible_files:
+        prev_file = os.path.join(dirs['preview'], mod_new_file)
+        if over_write or not os.path.exists(prev_file):
+            prev_file = make_new_size_file(src_file, prev_file, new_width=preview_width)
+            print(f'Made preview {prev_file}')
+            break
+    for mod_new_file in mod_new_possible_files:
+        thumb_file = os.path.join(dirs['thumbs'], mod_new_file)
+        if over_write or not os.path.exists(thumb_file):
+            thumb_file = make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
+            print(f'Made thumbnail {thumb_file}')
+            break
     return full_file, prev_file, thumb_file
 
 
