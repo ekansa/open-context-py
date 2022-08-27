@@ -166,6 +166,12 @@ def test_html(request, uuid, full_media=False):
             indent=4,
             ensure_ascii=False
         )
+    # Get the edit status for the specific item, and if it
+    # does not exist, get it for the parent project.
+    edit_status = man_obj.meta_json.get(
+        'edit_status',
+        man_obj.project.meta_json.get('edit_status')
+    )
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
@@ -189,7 +195,7 @@ def test_html(request, uuid, full_media=False):
         ],
         'citation':citation.make_citation_dict(rep_dict),
         'man_obj': man_obj,
-        'edit_status': man_obj.project.meta_json.get('edit_status'),
+        'edit_status': edit_status,
         'item': item_dict,
         'item_json': json_output,
         'full_media': full_media,
