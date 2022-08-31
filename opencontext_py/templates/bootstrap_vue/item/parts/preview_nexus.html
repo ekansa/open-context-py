@@ -79,7 +79,7 @@
   const CANVAS_DOM_ID = "draw-canvas";
   const MEASURE_OUTPUT_DOM_ID = "measure-output";
 
-  let presenter = new Presenter(CANVAS_DOM_ID);
+  let presenter = null;
   var canvas_width = 400;
 	var canvas_height = 500;
 
@@ -92,6 +92,9 @@
 
   function set_canvas_dimensions(){
     var act_dom = document.getElementById(CONTAINER_DOM_ID);
+    if(!act_dom){
+      return null;
+    }
     canvas_width = act_dom.offsetWidth;
     if (canvas_width < window.innerWidth * 0.33){
       canvas_width = window.innerWidth * 0.5;
@@ -100,6 +103,9 @@
   }
 
   function actionsToolbar(action) {
+    if(!presenter){
+      return null;
+    }
     if(action=='home') presenter.resetTrackball(); 
     else if(action=='zoomin') presenter.zoomIn();
     else if(action=='zoomout') presenter.zoomOut(); 
@@ -131,6 +137,9 @@
   window.addEventListener( 'resize', onWindowResize, false );
 
   function setup3dhop() { 
+    if(!presenter){
+      return null;
+    }
     presenter.setScene({
       meshes: {
         "{{ item.label }}" : { url: "{{ item.media_nexus_3d }}" }
@@ -148,6 +157,7 @@
     presenter._onEndMeasurement = onEndMeasure;
   }
 
+  /*
   $(document).ready(function(){
     init3dhop();
     setup3dhop();
@@ -156,6 +166,7 @@
     moveToolbar(20,20);
     set_canvas_title();
 	});
+  */
 
 </script>
 
