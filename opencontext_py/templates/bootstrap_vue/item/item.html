@@ -217,7 +217,13 @@
   {% else %}
   const SHOW_FULL_MEDIA = false;
   {% endif %}
- 
+
+  {% if item.media_nexus_3d %}
+  const NEXUS_URL = "{{ item.media_nexus_3d  }}";
+  {% else %}
+  const NEXUS_URL = null;
+  {% endif %}
+
     
     var vm = new Vue(
       {
@@ -230,7 +236,9 @@
             human_remains_ok: HUMAN_REMAINS_OK,
             media_iiif_info: MEDIA_IIIF_INFO,
             show_full_media: SHOW_FULL_MEDIA,
+            nexus_url: NEXUS_URL,
             osd: null,
+            nexus_presenter: null,
         },
         computed: {
             
@@ -245,6 +253,7 @@
         },
         mounted() {
             this.start_iiif_viewer();
+            this.start_nexus_viewer();
         },
         methods: {
             start_iiif_viewer: function(){
@@ -261,6 +270,25 @@
                     showNavigator:  true,
                     tileSources:   [this.media_iiif_info],
                 });
+            },
+            start_nexus_viewer: function(){
+                if(!this.nexus_url){
+                    return null;
+                }
+                if(this.nexus_presenter){
+                    // we already created the nexus presenter object
+                    return null;
+                }
+                // presenter is defined in the preview_nexus.html
+                presenter = new Presenter(CANVAS_DOM_ID);
+                init3dhop();
+                setup3dhop();
+                set_canvas_dimensions();
+                resizeCanvas(canvas_width, canvas_height);
+                moveToolbar(20,20);
+                set_canvas_title();
+                console.log('made nexus presenter');
+                this.nexus_presenter = presenter;
             },
         },
         components: {
