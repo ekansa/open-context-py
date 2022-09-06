@@ -566,6 +566,32 @@ class ResultRecord():
         self.iiif_json_uri = solr_doc.get('iiif_json_uri')
     
 
+    def make_snippet_resonable_size(self, snippet, temp_mark_pre, large_limit=480):
+        """Makes the snippet a resonable size, with some smart trimming"""
+        if len(snippet) < large_limit:
+            return snippet
+        term_pos = snippet.find(temp_mark_pre)
+        if term_pos <= 120:
+            return snippet
+        prefix_text_pos = term_pos - 140
+        if prefix_text_pos < 0:
+            prefix_text_pos = 0
+        prefix = snippet[prefix_text_pos:term_pos]
+        suffix = snippet[term_pos:]
+        # print(f'Prefix: "{prefix}"')
+        # print(f'Suffix: "{suffix}"')
+        nice_breaks = ['\n', ' ',]
+        for nb in nice_breaks:
+            # print(f'Check {nb} in {prefix}')
+            nb_pos = prefix.find(nb)
+            if nb_pos > 0 and nb_pos < (len(prefix) - 20):
+                # print(f'Found {nb} at {nb_pos}')
+                break
+        if nb_pos > 0:
+            prefix = prefix[nb_pos:]
+        return prefix + suffix
+
+
     def add_snippet_content(self, highlight_dict):
         """Add highlighting text for keyword searches """
         record_hl_dict = highlight_dict.get(self.uuid)
@@ -595,6 +621,11 @@ class ResultRecord():
         except:
             snippet = strip_tags(snippet)
         
+        snippet = self.make_snippet_resonable_size(
+            snippet=snippet, 
+            temp_mark_pre=temp_mark_pre,
+        )
+
         self.snippet = snippet.replace(
             temp_mark_pre,
             configs.RECORD_SNIPPET_HIGHLIGHT_TAG_PRE, 
