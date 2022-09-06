@@ -98,6 +98,7 @@ ALL_EVENTS_SOLR = 'all_events'
 
 EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 JOIN_SOLR = 'join_uuids'
+JOIN_PERSON_ORG_SOLR = 'join_person_orgs' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 FILE_SIZE_SOLR = 'filesize'
 FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 
@@ -1286,6 +1287,7 @@ class SolrDocumentNS:
             # Descriptive predicates are down in the events.
             for event_node in obs.get('oc-gen:has-events', []):
                 if not event_node.get('has_relations'):
+                    # there are no linking relations in this event node, so skip.
                     continue
                 for attrib_group in event_node.get('oc-gen:has-attribute-groups', []):
                     for rel_item_type, pred_value_dicts in attrib_group.get('relations', {}).items():
@@ -1294,7 +1296,18 @@ class SolrDocumentNS:
                             for _, pred_value_objects in pred_value_dicts.items():
                                 # Add to the count for this item type
                                 self.fields[solr_field] += len(pred_value_objects)
-                        elif rel_item_type == 'media':
+                        if rel_item_type == 'persons':
+                            # Add uuids for related person and organizations to make it easier to directly query
+                            # for items with some direct type of relationship with each person and org.
+                            if not JOIN_PERSON_ORG_SOLR in self.fields:
+                                self.fields[JOIN_PERSON_ORG_SOLR] = []
+                            for _, pred_value_objects in pred_value_dicts.items():
+                                for obj_dict in pred_value_objects:
+                                    self._add_solr_field_values(
+                                        JOIN_PERSON_ORG_SOLR,
+                                        [obj_dict]
+                                    )
+                        if rel_item_type == 'media':
                             for _, pred_value_objects in pred_value_dicts.items():
                                 for obj_dict in pred_value_objects:
                                     if obj_dict.get('type') == 'oc-gen:image':
