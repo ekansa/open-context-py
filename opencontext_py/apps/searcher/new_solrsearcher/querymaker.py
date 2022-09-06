@@ -197,6 +197,44 @@ def get_object_uri_query_dict(raw_object_uri):
     return query_dict
 
 
+def get_person_query_dict(raw_person_id):
+    """Make a query dict for joined persons"""
+    if not raw_person_id:
+        return None
+    query_dict = {'fq': [],}
+    # query_dict = {'fq': [], 'facet.field': []}
+    fq_terms = []
+
+    values_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_person_id,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    for value in values_list:
+        # Allow any unique ID for the search, but solr only indexes
+        # URIs. So we first hit the database to get the manifest object
+        # for this ID so we can then use the manifest object's URI
+        # in the search.
+        man_obj = db_entities.get_cache_man_obj_by_any_id(value)
+        if not man_obj:
+            continue
+        if man_obj.item_type != 'persons':
+            continue
+        solr_slug = man_obj.slug.replace('-', '_')
+        fq_term = f'join_person_orgs___pred_id:{solr_slug}___*'
+        if fq_term in fq_terms:
+            # We already have this, so skip
+            continue
+        fq_terms.append(fq_term)
+    # Join the various object_uri queries as OR terms.
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            fq_terms, operator='OR'
+        )
+    )
+    # query_dict['facet.field'].append('join_person_orgs___pred_id')
+    return query_dict
+
+
 
 # -------------------------------------------------------------
 # ITEM_TYPE FUNCTIONS

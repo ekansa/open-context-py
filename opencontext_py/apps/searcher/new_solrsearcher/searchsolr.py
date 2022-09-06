@@ -276,6 +276,21 @@ class SearchSolr():
                 main_query_dict=query,
             )
 
+        raw_person_id = utilities.get_request_param_value(
+            request_dict, 
+            param='pers',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_person_id:
+            print(f'do a person query {raw_person_id}')
+            query_dict = querymaker.get_person_query_dict(raw_person_id)
+            # Now add results of this person to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
 
         # -------------------------------------------------------------
         # Item Type

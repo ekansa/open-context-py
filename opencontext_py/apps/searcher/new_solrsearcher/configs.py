@@ -563,6 +563,11 @@ FILTER_PARAM_CONFIGS = {
         'is_spatial_context': False,
         'label-prop-template': 'Search Term(s): \'{act_val}\'',
     },
+    'pers': {
+        'oc-api:filter': 'Associated with Person or Organization',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
     'dc-subject': {
         'oc-api:filter': 'Has subject metadata',
         'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
