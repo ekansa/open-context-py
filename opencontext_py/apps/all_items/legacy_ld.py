@@ -233,9 +233,11 @@ def load_legacy_link_entity(old_le):
         for f_uri, r_uri in REPLACE_URIS:
             if vocab_uri.startswith(f_uri):
                 vocab_uri = r_uri
-        vocab_obj = AllManifest.objects.get(
+        vocab_obj = AllManifest.objects.filter(
             uri=vocab_uri 
-        )
+        ).first()
+        if not vocab_obj:
+            raise ValueError(f'Cannot find vocabulary {vocab_uri}')
         publisher_id = vocab_obj.publisher.uuid
         context_id = vocab_obj.uuid
 

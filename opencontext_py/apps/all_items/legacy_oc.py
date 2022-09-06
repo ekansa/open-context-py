@@ -45,7 +45,7 @@ migrate_legacy_spacetime_for_project(project_uuid='0')
 murlo = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 migrate_legacy_manifest_for_project(project_uuid=murlo)
 migrate_legacy_spacetime_for_project(project_uuid=murlo)
-migrate_legacy_identifiers_for_project(project=murlo)
+migrate_legacy_identifiers_for_project(project_uuid=murlo)
 orig_assert_migrate_errors = migrate_legacy_assertions_for_project(murlo)
 new_assert_mirgrate_errors = migrate_legacy_assertions_from_csv(
     project_uuid=murlo,
@@ -186,6 +186,7 @@ LEGACY_ROOT_SUBJECTS = [
     ('A11CD813-68C7-4F02-4DDA-4C388C422231', 'South Atlantic Ocean', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('3776e3e7-91ea-4c35-9481-0b1fae3afa9a', 'Spain', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     # ('18EA072A-726B-4019-4378-305257EB3AAB', 'Special Project  84', ),
+    ('2572daff-7242-474a-9b5c-f34943a684b4', 'Sudan', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('73738647-5987-40ac-ac13-12f11e58c60f', 'Sumatra', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('b8151439-71c0-41ee-87e7-1fcb155c0cf6', 'Surinam', configs.DEFAULT_SUBJECTS_ASIA_UUID),
     ('2bf133ba-d0cb-411f-8e39-cd728e5bd72b', 'Sweden', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
@@ -1260,12 +1261,6 @@ def get_cache_migrated_obs_metadata(project_uuid, source_id, obs_num, use_cache=
 
 def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=None, use_cache=True):
     """Migrates a legacy assertion object"""
-    if not project:
-        # We didn't pass the project as an arg, so look it up.
-        project = get_cache_new_manifest_obj_from_old_id(
-            old_assert.project_uuid, 
-            use_cache=use_cache
-        )
     subject_obj = get_cache_new_manifest_obj_from_old_id(
         old_assert.uuid, 
         use_cache=use_cache
@@ -1537,6 +1532,8 @@ def migrate_legacy_assertions_for_project(project_uuid, use_cache=True):
         project_uuid, 
         use_cache=use_cache
     )
+    if not project:
+        print(f'Cannot find project {project_uuid}')
     # Get the count of the old assertions.
     old_assert_count = old_asserts_qs = OldAssertion.objects.filter(
         project_uuid=project_uuid

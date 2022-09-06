@@ -51,6 +51,8 @@ def migrate_all_general():
         more_filters_dict=None,
         use_cache=True,
     )
+    # Now migrate legacy identifers
+    legacy_oc.migrate_legacy_identifiers_for_project(project_uuid='0')
 
 
 def migrate_single_project(old_project_uuid, error_path=''):
@@ -69,7 +71,8 @@ def migrate_single_project(old_project_uuid, error_path=''):
         file_name = f'assert-m-errors-{project.slug[:20]}.csv'
         file_path = os.path.join(error_path, file_name)
         legacy_oc.save_old_assertions_to_csv(file_path, orig_assert_migrate_errors)
-    
+    # Now migrate legacy identifers
+    legacy_oc.migrate_legacy_identifiers_for_project(project_uuid=old_project_uuid)
     # Now add the link data annotations specific to this project
     legacy_ld.migrate_legacy_link_annotations(
         project_uuid=old_project_uuid,
