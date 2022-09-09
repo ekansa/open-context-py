@@ -58,7 +58,7 @@ u_api.get_uri_graph('http://purl.obolibrary.org/obo/UBERON_0011674')
             else:
                 graph.parse(url)
         except:
-            print('Failed to load the graph.')
+            print(f'Failed to load the graph. Request for {uri}')
             graph = False
         if graph is not False:
             self.graph = graph

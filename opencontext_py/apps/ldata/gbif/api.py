@@ -27,8 +27,11 @@ class gbifAPI():
         sleep(self.delay_before_request)
         url = self.json_base_url.format(int(gbif_id))
         self.request_url = url
-        r = requests.get(url)
-        r.raise_for_status()
+        try:
+            r = requests.get(url)
+            r.raise_for_status()
+        except:
+            raise ValueError(f'Request failed: ' + url)
         return r.json()
 
     def get_gbif_species_json(self, gbif_id, use_cache=True):
@@ -75,8 +78,11 @@ class gbifAPI():
         """Get the first vernacular name from the GBIF API for an ID"""
         sleep(self.delay_before_request)
         url = self.vern_json_base_url.format(int(gbif_id))
-        r = requests.get(url)
-        r.raise_for_status()
+        try:
+            r = requests.get(url)
+            r.raise_for_status()
+        except:
+            raise ValueError(f'Request failed: ' + url)
         json_r = r.json()
         vern_name = None
         for result in json_r.get('results', []):
@@ -86,4 +92,3 @@ class gbifAPI():
             if vern_name is not None:
                 break
         return vern_name
-
