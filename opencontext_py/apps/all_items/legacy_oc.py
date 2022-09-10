@@ -1299,6 +1299,7 @@ def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=N
         'subject_id': subject_obj.uuid,
         'predicate_id': predicate_obj.uuid,
         'observation_id': observation_obj.uuid,
+        'obs_sort': old_assert.obs_num,
         'sort': float(old_assert.sort),
         'visible': (old_assert.visibility > 0),
         'created': old_assert.created,
