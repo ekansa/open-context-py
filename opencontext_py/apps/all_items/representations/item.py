@@ -194,6 +194,9 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
     ).select_related( 
         'object__context'
     ).order_by(
+        'obs_sort',
+        'event_sort',
+        'attribute_group_sort',
         'sort',
         'object__item_class__label',
         'object__sort',
