@@ -24,7 +24,7 @@
 
 {% if item.dc_terms__description %}
 <div class="jumbotron" id="project_description">
-  <h1 class="display-4">{{ item.label }}</h1>
+  <h1 class="display-5">{{ item.label }}</h1>
   {% with item.dc_terms__description|first as first_desc %}
   <p class="lead"> {{ first_desc.obj_string }} </p>
   {% endwith %}
