@@ -178,12 +178,26 @@ var vc_fields_chart = Vue.component(
                     return null;
                 }
                 let range_min = this.input_min;
-                if(this.input_min == null){
+                if(this.input_min == null || this.input_min == ''){
                     range_min = '*';
                 }
+                else if(this.data_type == 'xsd:date'){
+                    let min_date = new Date(this.input_min);
+                    range_min = min_date.toISOString().replace('.000Z', 'Z');
+                }
+                else{
+                    range_min = this.input_min;
+                }
                 let range_max = this.input_max;
-                if(this.input_max == null){
+                if(this.input_max == null || this.input_max == ''){
                     range_max = '*';
+                }
+                else if(this.data_type == 'xsd:date'){
+                    let max_date = new Date(this.input_max);
+                    range_max = max_date.toISOString().replace('.000Z', 'Z');
+                }
+                else{
+                    range_max = this.input_max;
                 }
                 let url = [
                     this.query_url_obj.prefix,
