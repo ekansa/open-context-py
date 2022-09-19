@@ -1,0 +1,273 @@
+{% block persons_summary %}
+
+
+<template id="persons-item-type-template">
+
+  <b-dropdown v-if="item_type_obj" 
+    :id="'dropdown-pers-item-types-' + item_type_obj.slug" 
+    :text="item_type_obj.label"
+    block
+    offset="25"
+    variant="primary"
+    class="pers_item_type_dropdowns">
+    <b-dropdown-item target="_blank" :href="item_type_obj.id">[[ item_type_obj.label ]] <strong>(All)</strong>
+    </b-dropdown-item>
+    <b-dropdown-item 
+      v-for="(opt, index) in item_type_obj.options"
+      target="_blank" 
+      :href="opt.id">[[ opt.label ]]</b-dropdown-item>
+  </b-dropdown>
+
+</template>
+
+
+
+
+<template id="persons-template">
+  <div :ref="'persons-' + route_key_index" class="card" id="pers_explore">
+    <div class="card-header" >
+      <h5>Explore Records Associated with [[ person_label ]]</h5>
+    </div>
+    <div class="card-body" id="pers_explore_card_body">
+      <div v-if="summary_data.length > 0" class="alert alert-info" id="pers_explore_alert">
+
+        <small>Use the dropdown options below to explore different types of information associated with this [[person_class_display_label]].</small>
+        
+        <vc-persons-item-type
+          v-if="subjects_obj"
+          v-bind:item_type_obj="subjects_obj"></vc-persons-item-type>
+        
+        <vc-persons-item-type
+          v-if="media_obj"
+          v-bind:item_type_obj="media_obj"></vc-persons-item-type>
+        
+        <vc-persons-item-type
+          v-if="documents_obj"
+          v-bind:item_type_obj="documents_obj"></vc-persons-item-type>
+
+        <div id="pers_text_search">
+          <oc-search-typeahead
+            :act_place_holder="'Text search linked to this ' + person_class_display_label"
+            v-bind:project_slugs="project_slugs"
+            v-bind:base_search_url="text_search_url"
+            v-bind:search_via_router="false"
+            >
+          </oc-search-typeahead>
+        </div>
+
+      </div>
+
+      <div v-else-if="loading">
+        <div class="container-fluid text-muted text-center">
+          <h1 class="display-5">Summarizing associated records...</h1>
+          <b-spinner class="m-5" label="Busy"></b-spinner>
+        </div>
+      </div>
+
+      <div v-else>
+
+          <div class="container-fluid text-muted text-center">
+            <h1 class="display-4">No records</h1>
+            <p>Records associated with this [[person_class_display_label]] have yet to be
+              indexed. These records are still in preparation and not
+              yet fully published.</p>
+          </div>
+
+      </div>
+          
+    </div>
+  </div>
+
+</template>
+
+
+
+<script type="text/javascript">
+
+var vc_persons_item_type = Vue.component(
+    'vc-persons-item-type',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#persons-item-type-template',
+      props: [
+        'item_type_obj',
+      ],
+      data() {
+        return {
+          item_type_obj: null,
+        };
+      },
+      computed: {
+      },
+      methods: {
+        
+      },
+      components: {
+        
+      }
+    }
+  );
+
+  var vc_persons = Vue.component(
+    'vc-persons',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#persons-template',
+      props: [
+        'base_search_url',
+        'project_label',
+        'project_slug',
+        'person_label',
+        'person_slug',
+        'person_class_label',
+      ],
+      data() {
+        return {
+          loading: true,
+          base_search_url: '/query',
+          project_label: null,
+          project_slug: null,
+          person_label: null,
+          person_slug: null,
+          person_class_label: null,
+          route_key_index: 0,
+          indexed_count: null,
+          summary_data: [],
+          subjects_obj: null,
+          media_obj: null,
+          documents_obj: null,
+        };
+      },
+      computed: {
+        person_class_display_label: function(){
+          if(this.person_class_label){
+            return this.person_class_label;
+          }
+          return 'person or organization';
+        },
+        project_slugs: function(){
+          if(!this.project_slug){
+            return [];
+          }
+          return [this.project_slug];
+        },
+        text_search_url: function(){
+          if(!this.base_search_url){
+            return null;
+          }
+          if(!this.project_slug){
+            return null;
+          }
+          if(!this.person_slug){
+            return null;
+          }
+          let params = {
+            proj: this.project_slug,
+            pers: this.person_slug,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          return url;
+        }
+      },
+      created(){
+        this.fetch_oc_api();
+      },
+      watch: {
+        
+      },
+      methods: {
+        fetch_oc_api: function(){
+          if(!this.project_slug){
+            // missing our query criteria
+            return null;
+          }
+          if(this.results != null){
+            // We already have the data
+            return null;
+          }
+          this.loading = true;
+          let params = {
+            proj: this.project_slug,
+            pers: this.person_slug,
+            rows: 1,
+            'proj-summary': 1,
+          };
+          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          fetch(
+            url,
+            {
+              headers:{
+                  'Accept': 'application/json',
+              }
+            }
+          )
+          .then(response => response.json())
+          .then(json => {
+            this.route_key_index += 1;
+            this.results = json;
+            if(!this.results.hasOwnProperty('totalResults')){
+              this.indexed_count = null;
+              this.results = null;
+            }
+            else if(this.results.totalResults == 0){
+              this.indexed_count = 0;
+              this.results = null;
+            }
+            else{
+              this.indexed_count = this.results.totalResults;
+              console.log('Project indexed with ' + this.results.totalResults + ' items');
+            }
+          }).finally(() => {
+            this.loading = false;
+            this.summary_data = this.prep_data(this.results);
+            console.log(this.summary_data);
+          });
+        },
+        prep_data: function(results){
+          if(!results.hasOwnProperty('oc-api:project-item-classes')){
+            return [];
+          }
+          let summary_data = [];
+          for(let item_type_obj of results['oc-api:project-item-classes']){
+            if(!item_type_obj.hasOwnProperty('id')){
+              continue;
+            }
+            if(!item_type_obj.hasOwnProperty('slug')){
+              continue;
+            }
+            item_type_obj.id = removeURLParameter(item_type_obj.id, 'rows');
+            item_type_obj.options = [];
+            if(item_type_obj.hasOwnProperty('oc-api:has-id-options')){
+              for(let opt of item_type_obj['oc-api:has-id-options']){
+                if(!opt.hasOwnProperty('id')){
+                  continue;
+                }
+                opt.id = removeURLParameter(opt.id, 'rows');
+                item_type_obj.options.push(opt);
+              }
+            }
+            summary_data.push(item_type_obj);
+            if(item_type_obj.slug == 'oc-gen-subjects'){
+              this.subjects_obj = item_type_obj;
+            }
+            if(item_type_obj.slug == 'oc-gen-media'){
+              this.media_obj = item_type_obj;
+            }
+            if(item_type_obj.slug == 'oc-gen-documents'){
+              this.documents_obj = item_type_obj;
+            }
+          }
+          return summary_data;
+        },
+      },
+      components: {
+        'vc-persons-item-type': vc_persons_item_type,
+        'oc-search-typeahead': vc_oc_seach_typeahead,
+      }
+    }
+  );
+  
+</script>
+
+
+{% endblock %}

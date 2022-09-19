@@ -29,6 +29,12 @@
 
 {%endif%}
 
+{% if man_obj.item_type == 'persons' %}
+
+    {% include '../item/parts/persons_vc.html' %}
+
+{%endif%}
+
 
 
 <div id="project_hero_banner">
@@ -122,6 +128,45 @@
                 ></types-examples>
             </div>
         </div>
+        {%endif%}
+        
+        {% if man_obj.item_type == 'persons' %}
+        <div class="card">
+            <div class="card-header">
+                <h5><b>{{ man_obj.label }}</b> ({{ man_obj.item_class.label }})</h5>
+            </div>
+            <div class="card-body">
+                {% if man_obj.meta_json.given_name %}
+                <dl class="row">
+                    <dt class="col-sm-3">Given Name</dt>
+                    <dd class="col-sm-9">{{ man_obj.meta_json.given_name }}</dd>
+                </dl>
+                {%endif%}
+                {% if man_obj.meta_json.surname %}
+                <dl class="row">
+                    <dt class="col-sm-3">Surname Name</dt>
+                    <dd class="col-sm-9">{{ man_obj.meta_json.surname }}</dd>
+                </dl>
+                {%endif%}
+                {% if item.ids_by_scheme.orcid %}
+                <dl class="row">
+                    <dt class="col-sm-3">ORCID</dt>
+                    <dd class="col-sm-9">
+                        <a target="_blank" href="{{ item.ids_by_scheme.orcid.url }}">{{ item.ids_by_scheme.orcid.id }}</a>
+                    </dd>
+                </dl>
+                {%endif%}
+            </div>
+        </div>
+
+        <vc-persons
+            :base_search_url="'/query'"
+            v-bind:person_label="'{{ man_obj.label|safe }}'"
+            v-bind:person_slug="'{{ man_obj.slug|safe }}'"
+            v-bind:project_label="'{{ man_obj.project.label|safe }}'"
+            v-bind:project_slug="'{{ man_obj.project.slug|safe }}'"
+            v-bind:person_class_label="'{{ man_obj.item_class.label|safe }}'"
+        ></vc-persons>
         {%endif%}
 
 
@@ -307,6 +352,9 @@
             {%endif%}
             {% if man_obj.item_type == 'projects' %}
             'vc-projects': vc_projects,
+            {%endif%}
+            {% if man_obj.item_type == 'persons' %}
+            'vc-persons': vc_persons,
             {%endif%}
 
         },

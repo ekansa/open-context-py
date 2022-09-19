@@ -8,6 +8,10 @@ from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllIdentifier,
+)
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.icons import configs as icon_configs
 
@@ -67,7 +71,7 @@ SPECIAL_KEYS = [
 
 
 ITEM_METADATA_OBS_ID = '#item-metadata'
-ITEM_METADATA_OBS_LABEL = 'Item Metadata'
+ITEM_METADATA_OBS_LABEL = 'Metadata'
 
 
 DEFAULT_LICENSE_ICONS = {
@@ -626,6 +630,31 @@ def find_human_remains_media(rep_dict):
     return False
 
 
+def gather_id_urls_by_scheme(rep_dict):
+    """Gathers ID urls by the URL scheme (DOI, ARK, ORCID)"""
+    act_ids = rep_dict.get('dc-terms:identifier', [])
+    act_ids += rep_dict.get('dc_terms__identifier', [])
+    rep_dict['ids_by_scheme'] = {}
+    for scheme, config in AllIdentifier.SCHEME_CONFIGS.items():
+        rep_dict['ids_by_scheme'][scheme] = None
+        url_root = config.get('url_root')
+        if not url_root:
+            continue
+        scheme_id = None
+        for url_id in act_ids:
+            # print(f'check {id} starts with {url_root } for scheme {scheme}')
+            url_no_prefix = AllManifest().clean_uri(url_id)
+            if url_no_prefix.startswith(url_root):
+               start_index = len(url_root)
+               id = url_no_prefix[start_index:]
+               scheme_id = {
+                    'url': url_id,
+                    'id': id,
+               }
+        rep_dict['ids_by_scheme'][scheme] = scheme_id
+    return rep_dict
+
+
 def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     """Prepares a representation dict for Solr indexing and HTML templating
     
@@ -664,6 +693,8 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     rep_dict['flag_human_remains'] = man_obj.meta_json.get('flag_human_remains', False)
     if not rep_dict['flag_human_remains']:
         rep_dict['flag_human_remains'] = find_human_remains_media(rep_dict)
+    
+    rep_dict = gather_id_urls_by_scheme(rep_dict)
     return rep_dict
 
 

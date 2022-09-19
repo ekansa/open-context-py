@@ -149,6 +149,33 @@ Project Explore
 	margin-top: 12px;
 }
 
+/*
+---------------------------------------------------------
+Persons Explore
+---------------------------------------------------------
+*/
+#pers_explore {
+	margin-top: 24px;
+	margin-bottom: 24px;
+}
+#pers_explore_card_body {
+	padding-left: 0px;
+	padding-right: 0px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+#pers_explore_alert {
+	margin-left: 0px;
+	margin-right: 0px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+#pers_text_search {
+	margin-top: 12px;
+}
+.pers_item_type_dropdowns {
+	margin-top: 12px;
+}
 
 /*
 ---------------------------------------------------------
