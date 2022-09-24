@@ -724,6 +724,7 @@ class CandidateDescription():
                     '0': 0,
                     '0.0': 0,
                     'y': 1,
+                    'x': 1,
                     'yes': 1,
                     'present': 1,
                     'true': 1,
