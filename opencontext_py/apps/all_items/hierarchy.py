@@ -39,6 +39,32 @@ ITEM_TYPES_FOR_VOCAB_PARENTS = [
 ]
 
 
+def get_list_concept_children_recursive(parent_obj, use_cache=True, all_children=None):
+    """Gets a list of objects that are children (in some way),
+       of a given parent_obj
+
+    :param AllManifest parent_obj: The item that we want to put
+            into a list of hierarchy lists.
+
+    return list of child concepts.
+    """
+    if not all_children:
+        all_children = []
+    act_children = models_utils.get_immediate_concept_children_objs(
+        parent_obj, 
+        use_cache=use_cache,
+    )
+    for act_obj in act_children:
+        if act_obj in all_children:
+            continue
+        all_children.append(act_obj)
+        all_children = get_list_concept_children_recursive(
+            parent_obj=act_obj,
+            use_cache=use_cache,
+            all_children=all_children,
+        )
+    return all_children
+
 
 def get_concept_parent_paths(child_obj, use_cache=True, paths=None):
     """Makes concept hierarchy paths for child concept. 
