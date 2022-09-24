@@ -5,6 +5,8 @@ import time
 from itertools import islice
 
 from django.core.cache import caches
+from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.models import AllAssertion, AllManifest
 
 
 
@@ -25,6 +27,18 @@ from opencontext_py.apps.all_items.models import (
 )
 from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
+
+# Reindex Getty AAT related items
+all_uuids = new_ind.get_uuids_associated_with_vocab(vocab_uri='vocab.getty.edu/aat')
+# Limit item type of reindexing, have good sorting.
+m_qs = AllManifest.objects.filter(
+    uuid__in=all_uuids,
+    item_type__in=['projects', 'subjects', 'media', 'documents'],
+).order_by('project_id', 'sort')
+uuids = [str(m.uuid) for m in m_qs]
+new_ind.clear_caches()
+new_ind.make_indexed_solr_documents_in_chunks(uuids)
+
 
 # Gabii for now.
 project_ids = ['3585b372-8d2d-436c-9a4c-b5c10fce3ccd', 'df043419-f23b-41da-7e4d-ee52af22f92f',]
@@ -194,6 +208,156 @@ def make_indexed_solr_documents_in_chunks(
         )
     full_rate = get_crawl_rate_in_seconds(total_count, all_start)
     print(f'ALL {total_count} items indexed at rate: {full_rate} items/second')
+
+
+def get_uuids_associated_with_vocab(
+    vocab_obj=None,
+    vocab_uuid=None,
+    vocab_uri=None,
+):
+    """Gets UUIDs for Open Context item types that have some sort of
+    relationship with entities in a given linked data vocabulary.
+    
+    :param AllManifest vocab_obj: An AllManifest object instance
+        for a vocabulary that's the target for reindexing
+    :param str(uuid) vocab_uuid: A uuid to identifier the vocab_obj if a
+        vocab_obj is not passed.
+    :param str vocab_uri: A uri to identifier the vocab_obj if a
+        vocab_obj is not passed.
+    """
+    if not vocab_obj and vocab_uuid:
+        vocab_obj = AllManifest.objects.get(uuid=vocab_uuid)
+    if not vocab_obj and vocab_uri:
+        vocab_uri = AllManifest().clean_uri(vocab_uri)
+        vocab_obj = AllManifest.objects.get(uri=vocab_uri)
+    # Now get just the predicates associated with entities in the
+    # vocabulary.
+    pred_s_qs = AllAssertion.objects.filter(
+        subject__item_type='predicates',
+        object__context=vocab_obj,
+    ).exclude(
+        subject__project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+        project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+    ).order_by(
+        'subject_id'
+    ).distinct(
+        'subject'
+    ).values_list(
+        'subject_id',
+        flat=True,
+    )
+    pred_uuids = [uuid for uuid in pred_s_qs]
+    pred_uuids = list(set(pred_uuids))
+    pred_o_qs = AllAssertion.objects.filter(
+        object__item_type='predicates',
+        subject__context=vocab_obj,
+    ).exclude(
+        object_id__in=pred_uuids,
+        object__project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+        project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+    ).order_by(
+        'object_id'
+    ).distinct(
+        'object'
+    ).values_list(
+        'object_id',
+        flat=True,
+    )
+    pred_uuids += [uuid for uuid in pred_o_qs]
+    pred_uuids = list(set(pred_uuids))
+    print(f'{len(pred_uuids)} predicates associated with {vocab_obj.label} ({vocab_obj.uri})')
+    # Now get just the types associated with entities in the
+    # vocabulary.
+    t_s_qs = AllAssertion.objects.filter(
+        subject__item_type='types',
+        object__context=vocab_obj,
+    ).order_by(
+        'subject_id'
+    ).distinct(
+        'subject'
+    ).values_list(
+        'subject_id',
+        flat=True,
+    )
+    t_uuids = [uuid for uuid in t_s_qs]
+    t_o_qs = AllAssertion.objects.filter(
+        object__item_type='types',
+        subject__context=vocab_obj,
+    ).exclude(
+        object_id__in=t_uuids,
+    ).order_by(
+        'object_id'
+    ).distinct(
+        'object'
+    ).values_list(
+        'object_id',
+        flat=True,
+    )
+    t_uuids += [uuid for uuid in t_o_qs]
+    t_uuids = list(set(t_uuids))
+    print(f'{len(t_uuids)} types associated with {vocab_obj.label} ({vocab_obj.uri})')
+    # Now get the subjects associated with predicates that are
+    # associated with the vocabulary (whew!)
+    sub_pred_qs = AllAssertion.objects.filter(
+        subject__item_type__in=configs.OC_ITEM_TYPES,
+        predicate_id__in=pred_uuids,
+    ).order_by(
+        'subject_id'
+    ).distinct(
+        'subject'
+    ).values_list(
+        'subject_id',
+        flat=True,
+    )
+    uuids = [uuid for uuid in sub_pred_qs]
+    uuids = list(set(uuids))
+    print(f'{len(uuids)} oc items via predicates associated with {vocab_obj.label} ({vocab_obj.uri})')
+    # Now get the subjects associated with types that are
+    # associated with the vocabulary (whew!)
+    sub_types_qs = AllAssertion.objects.filter(
+        subject__item_type__in=configs.OC_ITEM_TYPES,
+        object_id__in=t_uuids,
+    ).order_by(
+        'subject_id'
+    ).distinct(
+        'subject'
+    ).values_list(
+        'subject_id',
+        flat=True,
+    )
+    print(f'{len(sub_types_qs)} oc items via types (objs) associated with {vocab_obj.label} ({vocab_obj.uri})')
+    uuids += [uuid for uuid in sub_types_qs]
+    # Get UUIDS directly associated with the concepts in the vocab
+    subj_qs = AllAssertion.objects.filter(
+        subject__item_type__in=configs.OC_ITEM_TYPES,
+        object__context=vocab_obj,
+    ).order_by(
+        'subject_id'
+    ).distinct(
+        'subject'
+    ).values_list(
+        'subject_id',
+        flat=True,
+    )
+    print(f'{len(subj_qs)} oc items directly associated (as subjects) with {vocab_obj.label} ({vocab_obj.uri})')
+    uuids += [uuid for uuid in subj_qs]
+    obj_qs = AllAssertion.objects.filter(
+        subject__context=vocab_obj,
+        object__item_type__in=configs.OC_ITEM_TYPES,
+    ).order_by(
+        'object_id'
+    ).distinct(
+        'object'
+    ).values_list(
+        'object_id',
+        flat=True,
+    )
+    print(f'{len(obj_qs)} oc items directly associated (as objects) with {vocab_obj.label} ({vocab_obj.uri})')
+    uuids += [uuid for uuid in obj_qs]
+    print('Deduplicating uuids. This may take a bit...')
+    uuids = list(set(uuids))
+    print(f'{len(uuids)} oc items associated with {vocab_obj.label} ({vocab_obj.uri})')
+    return uuids
 
 
 def delete_solr_documents(uuids, solr=None):
