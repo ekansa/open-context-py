@@ -705,7 +705,7 @@ class SolrDocumentNS:
 
 
     def _check_meta_json_to_skip_index(self, item):
-        """Checks an item's meta_json (and context meta_json) if item sould be skipped
+        """Checks an item's meta_json (and context meta_json) if item should be skipped
         
         :param dict item: An item dictionary object with, expected to have
             meta_json and context__meta_json
