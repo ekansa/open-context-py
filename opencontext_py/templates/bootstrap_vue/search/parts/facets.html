@@ -454,7 +454,7 @@ function make_all_url_variants(uri_list){
     // Makes a list of all variants for uris in a list
     var big_uri_list = [];
     for (let act_uri of uri_list){
-        var act_uris = make_url_variants(act_uri);
+        var act_uris = make_url_variants(act_uri, add_missing_prefix=true);
         for(let new_uri of act_uris){
             if(big_uri_list.indexOf(new_uri) >= 0 ){
                 continue;
