@@ -19,8 +19,18 @@ function abs_to_rel_url(url, base_url=''){
     return remove_prefix(url, base_url);
 }
 
-function make_url_variants(url){
+function make_url_variants(url, add_missing_prefix=false){
     var urls = [url];
+    if(add_missing_prefix && (url.indexOf(':') < 0)){
+        let exp_prefixes = [
+            'http://',
+            'https://',
+        ]
+        for(let exp_prefix of exp_prefixes){
+            let new_url = exp_prefix + url;
+            urls.push(new_url);
+        }
+    }
     var prefixes = [
          {f: 'http://', r: 'https://'},
          {f: 'https://', r: 'http://'},
