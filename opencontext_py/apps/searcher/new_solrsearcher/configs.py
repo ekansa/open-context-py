@@ -925,11 +925,15 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
         'N. American Site (DINAA)',
     ),
     (
-        ['purl.obolibrary.org/obo/FOODON_00001303'], 
+        ['purl.obolibrary.org/obo/FOODON_00001303',], 
         'Standard Biological',
     ),
     (
-        ['opencontext.org/vocabularies/open-context-zooarch/'],
+        [
+            'opencontext.org/vocabularies/open-context-zooarch/', 
+            'staging.opencontext.org/vocabularies/open-context-zooarch/',
+            'http://127.0.0.1:8000/vocabularies/open-context-zooarch/',
+        ],
         'Standard Zooarchaeological',
     ),
     (
@@ -964,7 +968,7 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
         'Pleiades (Ancient Places Gazetteer)',
     ),
     (
-        ['levantineceramics.org/wares/'], 
+        ['levantineceramics.org/wares/', 'www.levantineceramics.org/wares/',], 
         'Levantine Ceramics Wares',
     ),
     (
