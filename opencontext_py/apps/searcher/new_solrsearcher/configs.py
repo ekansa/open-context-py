@@ -921,7 +921,11 @@ FACET_OPT_SUB_HEADING_DEFAULT = ([], FACET_OPT_SUB_HEADING_DEFAULT_LABEL,)
 
 FACET_OPT_ORDERED_SUB_HEADINGS = [
     (
-        ['opencontext.org/vocabularies/dinaa/'], 
+        [
+            'opencontext.org/vocabularies/dinaa/',
+            'staging.opencontext.org/vocabularies/dinaa/',
+            'http://127.0.0.1:8000/vocabularies/dinaa/',
+        ], 
         'N. American Site (DINAA)',
     ),
     (
@@ -974,6 +978,10 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
     (
         ['purl.org/dc/terms/'],
         'Publication Metadata (Dublin Core)',
+    ),
+    (
+        ['n2t.net/ark:/99152/p0', 'https://n2t.net/ark:/99152/p0', ],
+        'Time Periods (PeriodO)',
     ),
     (
         ['wikipedia.org/', 'en.wikipedia.org/wiki/',],
