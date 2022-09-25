@@ -916,7 +916,8 @@ FILTER_HIERARCHY_DELIMS = {
     'Context': ' / ',
 }
 
-FACET_OPT_SUB_HEADING_DEFAULT = ([], 'Other Attributes',)
+FACET_OPT_SUB_HEADING_DEFAULT_LABEL = 'Other Attributes'
+FACET_OPT_SUB_HEADING_DEFAULT = ([], FACET_OPT_SUB_HEADING_DEFAULT_LABEL,)
 
 FACET_OPT_ORDERED_SUB_HEADINGS = [
     (
@@ -965,6 +966,10 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
     (
         ['levantineceramics.org/wares/'], 
         'Levantine Ceramics Wares',
+    ),
+    (
+        ['purl.org/dc/terms/'],
+        'Publication Metadata (Dublin Core)',
     ),
     (
         ['wikipedia.org/'],
