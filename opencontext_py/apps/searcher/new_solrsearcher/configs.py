@@ -953,7 +953,7 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
     ),
     (   
         ['collection.britishmuseum.org'],
-        'British Museum Terms',
+        '(Deprecated) British Museum Terms',
     ),
     (   
         ['geonames.org/'], 
@@ -972,7 +972,7 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
         'Publication Metadata (Dublin Core)',
     ),
     (
-        ['wikipedia.org/'],
+        ['wikipedia.org/', 'en.wikipedia.org/wiki/',],
         'Wikipedia Topics',
     ),
     (   
