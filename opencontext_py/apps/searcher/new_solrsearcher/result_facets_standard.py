@@ -6,6 +6,8 @@ from operator import itemgetter
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 
+from opencontext_py.apps.all_items.representations import rep_utils
+
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
@@ -14,6 +16,7 @@ from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import (
     SearchLinks,
 )
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
+
 
 
 # ---------------------------------------------------------------------
@@ -111,7 +114,7 @@ class ResultFacetsStandard():
         # Put the last label in parentheses.
         labels[-1] = '({})'.format(labels[-1])
         facet['label'] = ' '.join(labels)
-        facet['rdfs:isDefinedBy'] = f'https://{items[0].uri}'
+        facet['rdfs:isDefinedBy'] = rep_utils.make_web_url(items[0])
         facet['slug'] = items[0].slug
         facet['type'] = facet_type
         if range_data_type:

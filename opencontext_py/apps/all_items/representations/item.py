@@ -384,10 +384,10 @@ def add_related_media_files_dicts(item_man_obj, act_dict=None):
     act_dict["oc-gen:has-files"] = []
     for res_obj in resource_qs:
         res_dict = LastUpdatedOrderedDict()
-        res_dict['id'] = f'https://{res_obj.uri}'
+        res_dict['id'] = rep_utils.make_web_url(res_obj)
         res_dict['type'] = rep_utils.get_item_key_or_uri_value(res_obj.resourcetype)
         if res_obj.mediatype:
-            res_dict['dc-terms:hasFormat'] = f'https://{res_obj.mediatype.uri}'
+            res_dict['dc-terms:hasFormat'] = rep_utils.make_web_url(res_obj.mediatype)
         if res_obj.filesize and res_obj.filesize > 1:
             res_dict['dcat:size'] = int(res_obj.filesize)
         act_dict["oc-gen:has-files"].append(res_dict)
@@ -409,7 +409,7 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
     if manifest_obj.item_type != 'subjects':
         return context_list
     item_dict = LastUpdatedOrderedDict()
-    item_dict['id'] = f'https://{manifest_obj.uri}'
+    item_dict['id'] = rep_utils.make_web_url(manifest_obj)
     item_dict['slug'] = manifest_obj.slug
     item_dict['label'] = manifest_obj.label
     item_dict['type'] = rep_utils.get_item_key_or_uri_value(manifest_obj.item_class)
@@ -432,7 +432,7 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
 def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
-    rep_dict['id'] = f'https://{item_man_obj.uri}'
+    rep_dict['id'] = rep_utils.make_web_url(item_man_obj)
     rep_dict['uuid'] = str(item_man_obj.uuid)
     rep_dict['slug'] = item_man_obj.slug
     rep_dict['label'] = item_man_obj.label
@@ -440,7 +440,7 @@ def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
         if item_man_obj.item_class.item_key:
             rep_dict['category'] = item_man_obj.item_class.item_key
         else:
-            rep_dict['category'] = f'https://{item_man_obj.item_class.uri}'
+            rep_dict['category'] = rep_utils.make_web_url(item_man_obj.item_class)
     if for_solr_or_html:
         rep_dict['item_class__label'] = item_man_obj.item_class.label
         rep_dict['item_class__slug'] = item_man_obj.item_class.slug

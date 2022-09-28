@@ -5,7 +5,7 @@
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
-
+from opencontext_py.apps.all_items.models import META_JSON_KEY_HTTP_ONLY
 
 # This provides a mappig between a predicate.data_type and
 # the attribute of an assertion object for the object of that
@@ -27,12 +27,20 @@ ASSERTION_DATA_TYPE_LITERAL_MAPPINGS = {
 # representation as a starting point.
 # ---------------------------------------------------------------------
 
+def make_web_url(manifest_obj):
+    """Makes a Web URL for a manifest object"""
+    if manifest_obj.meta_json.get(META_JSON_KEY_HTTP_ONLY):
+        return f"http://{manifest_obj.uri}"
+    elif manifest_obj.context.meta_json.get(META_JSON_KEY_HTTP_ONLY):
+        return f"http://{manifest_obj.uri}"
+    return f"https://{manifest_obj.uri}"
+
 
 def get_item_key_or_uri_value(manifest_obj):
     """Gets an item_key if set, falling back to uri value"""
     if manifest_obj.item_key:
         return manifest_obj.item_key
-    return f"https://{manifest_obj.uri}"
+    return make_web_url(manifest_obj)
 
 
 def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr_or_html=False):
@@ -53,7 +61,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
     for assert_obj in assert_objs:
         if predicate.data_type == 'id':
             obj = LastUpdatedOrderedDict()
-            obj['id'] = f'https://{assert_obj.object.uri}'
+            obj['id'] = make_web_url(assert_obj.object)
             obj['slug'] = assert_obj.object.slug
             obj['label'] = assert_obj.object.label
             if assert_obj.object.item_class and str(assert_obj.object.item_class.uuid) != configs.DEFAULT_CLASS_UUID:

@@ -545,6 +545,29 @@ def get_dict_path_value(path_keys_list, dict_obj, default=None):
 # ---------------------------------------------------------------------
 # Solr Response (JSON) Object Related Functions
 # ---------------------------------------------------------------------
+def is_http_only_url(no_protocol_url):
+    """Is a URL configured to be only http"""
+    for url_part in configs.HTTP_ONLY_URL_PARTS:
+        if url_part in no_protocol_url:
+            return True
+    return False
+
+
+def make_https_or_http_url(no_protocol_url):
+    # First clean the URL to make sure it has no protocol
+    # before we add one.
+    proto_list = [
+        'http://',
+        'https://',
+    ]
+    for proto in proto_list:
+        if no_protocol_url.startswith(proto):
+            no_protocol_url = no_protocol_url[len(proto):]
+    if is_http_only_url(no_protocol_url):
+        return f'http://{no_protocol_url}'
+    return f'https://{no_protocol_url}' 
+
+
 def parse_solr_encoded_entity_str(
     entity_str,
     base_url='', 
@@ -573,7 +596,7 @@ def parse_solr_encoded_entity_str(
     if parts[2].startswith(settings.CANONICAL_BASE_URL):
         uri = base_url + parts[2].split(settings.CANONICAL_BASE_URL)[-1]
     else:
-        uri = 'https://' + parts[2]
+        uri = make_https_or_http_url(parts[2])
     
     # Return a dictionary of the parsed entity.
     if not solr_slug_format:

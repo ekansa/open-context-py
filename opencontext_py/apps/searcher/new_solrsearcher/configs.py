@@ -1053,3 +1053,8 @@ MAX_GEOTILE_ZOOM = SolrDoc.MAX_GEOTILE_ZOOM
 # querying for image overlays
 MAX_PROJECTS_FOR_OVERLAYS = 5
 GEO_OVERLAY_OPACITY_DEFAULT = 0.9
+
+# URL parts that ONLY support the http protocol, not https
+HTTP_ONLY_URL_PARTS = [
+    'purl.obolibrary.org'
+]

@@ -26,6 +26,11 @@ from opencontext_py.libs.models import (
 )
 
 
+# A meta_json key to use with AllManifest and AllResource models
+# to indicate a URL only supports the http, not https protocol.
+META_JSON_KEY_HTTP_ONLY = 'http_only'
+
+
 # Manifest provides basic item metadata for all open context items that get a URI
 @reversion.register  # records in this model under version control
 class AllManifest(models.Model):
@@ -104,6 +109,9 @@ class AllManifest(models.Model):
     # Meta_json is where we store occasionally used attributes, such
     # as metadata about projects, persons, languages, etc.
     meta_json = JSONField(default=dict)
+
+    META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS = 'attribute_group_slugs'
+    META_JSON_KEY_HTTP_ONLY = META_JSON_KEY_HTTP_ONLY
 
     def clean_label(self, label, item_type='subjects'):
         label = label.strip()
@@ -1339,6 +1347,8 @@ class AllResource(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     meta_json = JSONField(default=dict)
+
+    META_JSON_KEY_HTTP_ONLY = META_JSON_KEY_HTTP_ONLY
 
     def make_hash_id(
         self, 
