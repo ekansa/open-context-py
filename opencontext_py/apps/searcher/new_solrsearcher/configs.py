@@ -502,6 +502,11 @@ ITEM_TYPE_MAPPINGS = {
         'label': 'Data tables',
         'slug': 'oc-gen-tables',
     },
+    'attribute-groups': {
+        'rdfs:isDefinedBy': 'oc-gen:attribute-groups',
+        'label': 'Attribute groups',
+        'slug': 'oc-gen-attribute-groups',
+    },
 }
 
 ITEM_TYPE_SLUG_MAPPINGS = {

@@ -1050,7 +1050,8 @@ class SolrDocumentNS:
         if attrib_group_man_obj:
             # Add the attribute group to the top of the hierarchy paths for this
             # predicate.
-            hierarchy_paths = [([attrib_group_man_obj] + [p]) for p in hierarchy_paths]
+            attrib_group_dict = solr_utils.solr_convert_man_obj_obj_dict(attrib_group_man_obj)
+            hierarchy_paths = [([attrib_group_dict] + p) for p in hierarchy_paths]
         
         # NOTE: Add the predicates, inside their hierarchy, 
         # to the solr document.
@@ -1083,6 +1084,8 @@ class SolrDocumentNS:
             pred_obj_all_field = None
             for index, item_obj in enumerate(hierarchy_items):
                 # Make sure this is a dictionary version of this item.
+                if False:
+                    print(f'act_solr_field: {act_solr_field} [{index}]: {item_obj}')
                 item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
 
                 if self._check_meta_json_to_skip_index(item):

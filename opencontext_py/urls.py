@@ -95,10 +95,15 @@ urlpatterns = [
     re_path(r'^query/(?P<spatial_context>\S+)?.json', NewSearchViews.query_json, name='new_search_json'),
     re_path(r'^query/(?P<spatial_context>\S+)?', NewSearchViews.query_html, name='new_search_html'),
 
-    # New all_items testing views
+    # New attribute-group dereference
+    re_path(r'^attribute-groups/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='attribute_groups_json'),
+    re_path(r'^attribute-groups/(?P<uuid>\S+)', AllItemsViews.test_html, name='attribute_groups'),
+
+    # Testing for all manifest items
     re_path(r'^all-items/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='all_items_json'),
-     re_path(r'^all-items/(?P<uuid>\S+)/full', AllItemsViews.test_html_full, name='all_items_full'),
+    re_path(r'^all-items/(?P<uuid>\S+)/full', AllItemsViews.test_html_full, name='all_items_full'),
     re_path(r'^all-items/(?P<uuid>\S+)', AllItemsViews.test_html, name='all_items_html'),
+    re_path(r'^all-items-solr/(?P<uuid>\S+)', AllItemsViews.make_solr_doc_in_html, name='all_items_solr_html'),
 
     # New add_items administrative (for editing, etl) views
     re_path(
