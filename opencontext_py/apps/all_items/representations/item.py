@@ -203,6 +203,7 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         'obs_sort',
         'event_sort',
         'attribute_group_sort',
+        'attribute_group__sort',
         'sort',
         'object__item_class__label',
         'object__sort',
