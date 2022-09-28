@@ -31,7 +31,7 @@ def make_web_url(manifest_obj):
     """Makes a Web URL for a manifest object"""
     if manifest_obj.meta_json.get(META_JSON_KEY_HTTP_ONLY):
         return f"http://{manifest_obj.uri}"
-    elif manifest_obj.context.meta_json.get(META_JSON_KEY_HTTP_ONLY):
+    elif getattr(manifest_obj, 'context', None) and manifest_obj.context.meta_json.get(META_JSON_KEY_HTTP_ONLY):
         return f"http://{manifest_obj.uri}"
     return f"https://{manifest_obj.uri}"
 
@@ -121,6 +121,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
             obj['event__label'] = assert_obj.event.label
             obj['event__slug'] = assert_obj.event.slug
             obj['attribute_group_id'] = str(assert_obj.attribute_group.uuid)
+            obj['attribute_group__is_default'] = str(assert_obj.attribute_group.uuid) == configs.DEFAULT_ATTRIBUTE_GROUP_UUID
             obj['attribute_group__label'] = assert_obj.attribute_group.label
             obj['attribute_group__slug'] = assert_obj.attribute_group.slug
             obj['predicate_id'] = str(predicate.uuid)

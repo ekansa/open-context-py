@@ -70,6 +70,7 @@
         'predicate_slug',
         'predicate_class_slug',
         'data_type',
+        'attribute_group_slugs',
       ],
       data() {
         return {
@@ -79,6 +80,7 @@
           predicate_slug: null,
           predicate_class_slug: null,
           data_type: 'id',
+          attribute_group_slugs: null,
           facets_data: null,
           indexed_count: 0,
           do_consolidate_rare_opts: true,
@@ -136,6 +138,9 @@
           let params = {
             prop: this.predicate_slug,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params['prop'] = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug;
+          }
           let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
           let frag_str = encode_frag_obj({
             tab: 0,
@@ -166,6 +171,9 @@
             prop: this.predicate_slug,
             rows: 1,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params['prop'] = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug;
+          }
           let url = this.base_search_url + '/?' + new URLSearchParams(params);
           fetch(
             url,
@@ -281,6 +289,10 @@
           let data_series = [];
           let rare_opts = [];
           let raw_opt_count = null;
+          let ok_slugs = [this.predicate_slug];
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            ok_slugs = ok_slugs.concat(this.attribute_group_slugs);
+          }
           if(!facets_data){
             return data_series;
           }
@@ -294,7 +306,7 @@
             if(!facet.hasOwnProperty('oc-api:has-id-options')){
               continue;
             }
-            if(facet.slug != this.predicate_slug){
+            if(ok_slugs.indexOf(facet.slug) < 0){
               continue;
             }
             raw_opt_count = facet['oc-api:has-id-options'].length;

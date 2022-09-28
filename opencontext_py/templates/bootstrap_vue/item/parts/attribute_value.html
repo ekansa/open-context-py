@@ -2,8 +2,11 @@
 
 {% if act_val.predicate__data_type == 'id' and act_val.object__item_type == 'types' %}
 
+  {% if act_val.attribute_group__is_default %}
   <a href="{% url 'types_html' act_val.object_id %}">{{ act_val.object__label }}</a>
-
+  {% else %}
+  <a href="{% url 'types_html' act_val.object_id %}?attribute-group={{act_val.attribute_group__slug}}">{{ act_val.object__label }}</a>
+  {% endif %}
 
 {% elif act_val.predicate__data_type == 'id' and act_val.object__item_type != 'types' %}
 

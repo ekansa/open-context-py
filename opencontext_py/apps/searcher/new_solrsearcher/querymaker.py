@@ -456,14 +456,14 @@ def get_spatial_context_query_dict(spatial_context=None):
 # GENERAL HIERARCHY FUNCTIONS
 # ---------------------------------------------------------------------
 
-def get_range_stats_fields(attribute_item_obj, field_fq):
+def get_range_stats_fields(attribute_item_obj, field_fq, attribute_group_obj_slug=None):
     """Prepares facet request for value range (numeric, date) fields"""
     # Strip the '_id' end of the field_fq (for the filter query).
     # The field_fq needs to be updated to have the suffix of the 
     # right type of literal that we're going t query.
 
     # NOTE: 'xsd:boolean' is excluded from range facets
-    
+    # print(f'attribute_item_obj {attribute_item_obj.slug} has data_type {attribute_item_obj.data_type}')
     if not attribute_item_obj.data_type in [
         'xsd:integer', 
         'xsd:double',  
@@ -475,11 +475,19 @@ def get_range_stats_fields(attribute_item_obj, field_fq):
         attribute_item_obj.data_type, 
         field_fq
     )
+    if attribute_group_obj_slug:
+        # We're working in the context of an attribute group, so make sure the range 
+        # query is about that attribute group.
+        field_fq = replace_slug_in_solr_field(
+            solr_field=field_fq, 
+            old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+            new_slug=attribute_group_obj_slug,
+        )
     query_dict = {'prequery-stats': []}
     query_dict['prequery-stats'].append(
         field_fq
     )  
-    return query_dict      
+    return query_dict
 
 
 def compose_filter_query_on_literal(raw_literal, attribute_item_obj, field_fq):
@@ -907,7 +915,8 @@ def get_general_hierarchic_path_query_dict(
                 # Gather numeric and date fields that need a 
                 range_query_dict = get_range_stats_fields(
                     attribute_item_obj,
-                    field_fq
+                    field_fq,
+                    attribute_group_obj_slug=attribute_group_obj_slug,
                 )
                 # Now combine the query dict for the range fields with
                 # the main query dict for this function
@@ -1035,4 +1044,5 @@ def get_general_hierarchic_paths_query_dict(
         path_terms, operator='OR'
     )
     query_dict['fq'] = [all_paths_term]
+    # print(f'query_dict: {query_dict}')
     return query_dict

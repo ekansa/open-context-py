@@ -22,7 +22,15 @@
       <tr>
         <td>
           {% if vals.0.predicate__item_type == "predicates" %}
-          <a href="{% url 'all_items_html' vals.0.predicate_id %}">{{ vals.0.predicate__label|capfirst }}</a>
+
+
+          {% if vals.0.attribute_group__is_default %}
+          <a href="{% url 'predicates_html' vals.0.predicate_id %}">{{ vals.0.predicate__label|capfirst }}</a>
+          {% else %}
+          <a href="{% url 'predicates_html' vals.0.predicate_id %}?attribute-group={{vals.0.attribute_group__slug}}">{{ vals.0.predicate__label|capfirst }}</a>
+          {% endif %}
+
+
           {% else %}
           <a href="https://{{ vals.0.predicate__uri }}">{{ vals.0.predicate__label|capfirst }}</a>
           {% endif %}

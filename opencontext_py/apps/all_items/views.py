@@ -204,6 +204,7 @@ def test_html(request, uuid, full_media=False):
         'item': item_dict,
         'item_json': json_output,
         'full_media': full_media,
+        'attribute_group': request.GET.get('attribute-group', None),
         # for debugging.
         'show_json': request.GET.get('json', False),
         # Consent to view human remains defaults to False if not actually set.

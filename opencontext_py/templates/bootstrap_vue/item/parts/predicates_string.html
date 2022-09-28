@@ -73,6 +73,7 @@
         'predicate_slug',
         'predicate_class_slug',
         'data_type',
+        'attribute_group_slugs',
       ],
       data() {
         return {
@@ -82,6 +83,7 @@
           predicate_slug: null,
           predicate_class_slug: null,
           data_type: 'xsd:string',
+          attribute_group_slugs: null,
           facets_data: null,
           indexed_count: 0,
           search_text: null,
@@ -99,6 +101,9 @@
           let params = {
             prop: this.predicate_slug + '---' + this.search_text,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params['prop'] = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug + '---' + this.search_text;
+          }
           let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
           return url;
         },
@@ -130,6 +135,9 @@
             prop: this.predicate_slug,
             rows: 1,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params['prop'] = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug;
+          }
           let url = this.base_search_url + '/?' + new URLSearchParams(params);
           fetch(
             url,

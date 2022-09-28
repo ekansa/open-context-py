@@ -68,6 +68,7 @@
         'predicate_slug',
         'predicate_class_slug',
         'data_type',
+        'attribute_group_slugs',
       ],
       data() {
         return {
@@ -76,7 +77,8 @@
           predicate_label: null,
           predicate_slug: null,
           predicate_class_slug: null,
-          data_type: 'id',
+          data_type: null,
+          attribute_group_slugs: null,
           facets_data: null,
           indexed_count: 0,
           chart_id: 0,
@@ -134,12 +136,22 @@
           let params = {
             prop: this.predicate_slug,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params['prop'] = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug;
+          }
           let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
           let frag_str = encode_frag_obj({
             tab: 2,
             aq: this.predicate_slug,
           });
-          url += '#' + frag_str;
+          if(this.attribute_group_slugs){
+            // don't add a frag string with an attribute group
+            return url;
+          }
+          if(false){
+            // skip this until we have fixed the search tab
+            url += '#' + frag_str;
+          }
           return url;
         },
       },
@@ -164,6 +176,9 @@
             prop: this.predicate_slug,
             rows: 1,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params.prop = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug;
+          }
           let url = this.base_search_url + '/?' + new URLSearchParams(params);
           fetch(
             url,
@@ -212,6 +227,10 @@
         prep_data: function(facets_data){
           this.chart_id += 1;
           let data_series = [];
+          let ok_slugs = [this.predicate_slug];
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            ok_slugs = ok_slugs.concat(this.attribute_group_slugs);
+          }
           if(!facets_data){
             return data_series;
           }
@@ -225,7 +244,7 @@
             if(!facet.hasOwnProperty('oc-api:has-range-options')){
               continue;
             }
-            if(facet.slug != this.predicate_slug){
+            if(ok_slugs.indexOf(facet.slug) < 0){
               continue;
             }
             if(facet.hasOwnProperty('oc-api:min')){

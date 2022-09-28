@@ -694,6 +694,9 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     if not rep_dict['flag_human_remains']:
         rep_dict['flag_human_remains'] = find_human_remains_media(rep_dict)
     
+    at_group_key = AllManifest.META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS
+    rep_dict[at_group_key] = man_obj.meta_json.get(at_group_key, None)
+
     rep_dict = gather_id_urls_by_scheme(rep_dict)
     return rep_dict
 

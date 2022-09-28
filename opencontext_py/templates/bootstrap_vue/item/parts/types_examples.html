@@ -151,6 +151,7 @@ var vs_record_thumbnail = Vue.component(
         'predicate_slug',
         'type_label',
         'type_slug',
+        'attribute_group_slugs',
       ],
       data() {
         return {
@@ -160,6 +161,7 @@ var vs_record_thumbnail = Vue.component(
           predicate_slug: null,
           type_label: null,
           type_slug: null,
+          attribute_group_slugs: null,
           indexed_count: 0,
           route_key_index: 0,
           result_data: null,
@@ -183,6 +185,9 @@ var vs_record_thumbnail = Vue.component(
           let params = {
             prop: this.predicate_slug + '---' + this.type_slug,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params.prop = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug + '---' + this.type_slug;
+          }
           let url = BASE_URL + this.base_search_url + '/?' + new URLSearchParams(params);
           let frag_str = encode_frag_obj({
             tab: 0,
@@ -343,6 +348,9 @@ var vs_record_thumbnail = Vue.component(
             prop: this.predicate_slug + '---' + this.type_slug,
             rows: 100,
           };
+          if(this.attribute_group_slugs && this.attribute_group_slugs.length > 0){
+            params.prop = this.attribute_group_slugs.join('||') + '---' + this.predicate_slug + '---' + this.type_slug;
+          }
           let url = this.base_search_url + '/?' + new URLSearchParams(params);
           fetch(
             url,

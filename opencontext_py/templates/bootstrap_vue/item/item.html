@@ -107,6 +107,7 @@
                         v-bind:predicate_slug="'{{ man_obj.slug|safe }}'"
                         v-bind:predicate_class_slug="'{{ man_obj.item_class.slug|safe }}'"
                         v-bind:data_type="'{{ man_obj.data_type|safe }}'"
+                        v-bind:attribute_group_slugs="attribute_group_slugs"
                     ></vc-predicates>
                 </div>
             </div>
@@ -125,6 +126,7 @@
                     v-bind:predicate_slug="'{{ man_obj.context.slug|safe }}'"
                     v-bind:type_label="'{{ man_obj.label|safe }}'"
                     v-bind:type_slug="'{{ man_obj.slug|safe }}'"
+                    v-bind:attribute_group_slugs="attribute_group_slugs"
                 ></types-examples>
             </div>
         </div>
@@ -244,11 +246,8 @@
   {% if item.flag_human_remains %}
   // Initial state from the request session token.
   const HUMAN_REMAINS_FLAGGED = true;
-  
   {% else %}
-
   const HUMAN_REMAINS_FLAGGED = false;
-
   {% endif %}
 
   {% if item.media_iiif %}
@@ -269,6 +268,12 @@
   const NEXUS_URL = null;
   {% endif %}
 
+  {% if attribute_group %}
+  const ATTRIBUTE_GROUP = "{{ attribute_group|safe }}";
+  {% else %}
+  const ATTRIBUTE_GROUP = null;
+  {% endif %}
+
     
     var vm = new Vue(
       {
@@ -286,7 +291,20 @@
             nexus_presenter: null,
         },
         computed: {
-            
+            attribute_group_slugs: function(){
+                if(!item_json){
+                    return null;
+                }
+                if(ATTRIBUTE_GROUP){
+                    return [ATTRIBUTE_GROUP];
+                }
+                if(!item_json.hasOwnProperty('attribute_group_slugs')){
+                    return null;
+                }
+                // We will turn this off for now!
+                return null;
+                //return item_json.attribute_group_slugs;
+            },
         },
         methods: {
             toggle_human_remains_ok: function(human_remains_ok) {
@@ -294,7 +312,7 @@
             },
         },
         created() {
-    
+            
         },
         mounted() {
             this.start_iiif_viewer();

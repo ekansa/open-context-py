@@ -984,6 +984,11 @@ class SolrDocumentNS:
                     old_slug=attrib_group_man_obj.slug, 
                     new_slug=ALL_ATTRIBUTE_GROUPS_SLUG,
                 )
+                slugs_key = AllManifest.META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS
+                if not item_man_obj_to_update.meta_json.get(slugs_key):
+                    item_man_obj_to_update.meta_json[slugs_key] = []
+                if not attrib_group_man_obj.slug in item_man_obj_to_update.meta_json[slugs_key]:
+                    item_man_obj_to_update.meta_json[slugs_key].append(attrib_group_man_obj.slug)
             update_str += f'{expected_key}:{expected_str}, '
             item_man_obj_to_update.meta_json[expected_key] = expected_str
 
