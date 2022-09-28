@@ -78,7 +78,10 @@ def home_html(request, source_id):
         uuid=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
         do_minimal=True,
     )
-
+    # Make a dictionary for node item types
+    node_item_type_by_key_value_dict = {
+        key:label for key, label, _ in DataSourceField.NODE_USER_SELECT_ITEM_TYPES
+    }
     context = {
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context ETL: {ds_source.label}',
@@ -91,6 +94,10 @@ def home_html(request, source_id):
         'DESCRIBED_BY_OK_OBJECT_TYPES': json.dumps(
             DataSourceAnnotation.DESCRIBED_BY_OK_OBJECT_TYPES
         ),
+        'DESCRIBED_BY_OK_OBJECT_TYPES': json.dumps(
+            DataSourceAnnotation.DESCRIBED_BY_OK_OBJECT_TYPES
+        ),
+        'NODE_ITEM_TYPES_BY_KEY_LABEL': json.dumps(node_item_type_by_key_value_dict),
         'PREDICATE_LINK': json.dumps(pred_link),
         'PREDICATE_CONTAINS': json.dumps(pred_contains),
         'PREDICATE_OC_ETL_MEDIA_HAS_FILES': json.dumps(pred_media_has_files),

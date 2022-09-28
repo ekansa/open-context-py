@@ -520,7 +520,7 @@ class DataSourceAnnotation(models.Model):
             ('objects', self.object_field,),
             ('observations', self.observation_field,),
             ('events', self.event_field,),
-            ('attribute_groups', self.attribute_group_field,),
+            ('attribute-groups', self.attribute_group_field,),
             ('languages', self.language_field,),
         ]
         for field_name, attribute_field in field_attributes:
@@ -573,7 +573,7 @@ class DataSourceAnnotation(models.Model):
                 ],
             ),
             (
-                'attribute_groups',
+                'attribute-groups',
                 [
                     self.attribute_group,
                     self.attribute_group_field
@@ -589,14 +589,16 @@ class DataSourceAnnotation(models.Model):
         ]
         for group_name, attribute_group in attribute_groups:
             count_not_null = 0
+            not_null_attribs = []
             for attribute in attribute_group:
                 if attribute is None:
                     continue
                 count_not_null += 1
+                not_null_attribs.append(attribute)
             if count_not_null != 1:
                 raise ValueError(
                     f'Need 1 not null field in the {group_name} group, '
-                    f'but {count_not_null} are not null.'
+                    f'but {count_not_null} are not null: {not_null_attribs}.'
                 )
     
 

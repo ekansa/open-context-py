@@ -108,6 +108,25 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
           >
           Remove Describes Link <b-icon-x-circle-fill></b-icon-x-circle-fill>
           </b-button>
+
+          <div v-if="node_ds_fields && node_ds_fields.length > 0">
+            <br/>
+            <br/>
+
+            <b-list-group v-if="node_ds_fields && node_ds_fields.length > 0">
+              <ds-anno-selectable-field
+                v-for="(ds_field, index) in node_ds_fields"
+                @on_click="select_node_field($event)"
+                v-bind:ds_field="ds_field"
+                v-bind:v_style="'info'"
+                v-bind:role="'attribute_group_field'"
+                v-bind:is_disabled="selected.length == 0"
+                :key="ds_field.uuid"
+                ></ds-anno-selectable-field>
+            </b-list-group>
+
+          </div>
+
         </b-col>
         
         <b-col cols="1">
@@ -211,6 +230,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               alert_timer_duration: 2, // length of time the alerts stay up.
               alert_timer_state: 0,
               selected_subj_field: null,
+              selected_node_field: null,
               described_by_examples: [],
               ds_annotations: [],
               ds_fields: [],
@@ -226,6 +246,18 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               for(let ds_field of this.ds_fields){
                 const t_index = DESCRIBED_BY_LINK_OK_ITEM_TYPES.indexOf(ds_field.item_type);
                 if(t_index >= 0){
+                  result.push(ds_field);
+                }
+              }
+              return result;
+            },
+            node_ds_fields: function() {
+              let result = [];
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                if(ds_field.item_type in NODE_ITEM_TYPES_BY_KEY_LABEL){
                   result.push(ds_field);
                 }
               }
@@ -345,10 +377,30 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               let new_annos = [];
               for(let obj_field of this.selected){
                 let anno = {
-                  'subject_field_id': this.selected_subj_field.uuid,
                   'predicate_id': PREDICATE_OC_ETL_DESCRIBED_BY.uuid,
                   'object_field_id': obj_field.uuid,
                 };
+                if(this.selected_subj_field){
+                  anno.subject_field_id = this.selected_subj_field.uuid;
+                }
+                if(this.selected_node_field){
+                  if(this.selected_node_field.item_type == 'observations'){
+                    anno.observation_id = null;
+                    anno.observation_field_id = this.selected_node_field.uuid;
+                  }
+                  if(this.selected_node_field.item_type == 'events'){
+                    anno.event_id = null;
+                    anno.event_field_id = this.selected_node_field.uuid;
+                  }
+                  if(this.selected_node_field.item_type == 'attribute-groups'){
+                    anno.attribute_group_id = null;
+                    anno.attribute_group_field_id = this.selected_node_field.uuid;
+                  }
+                  if(this.selected_node_field.item_type == 'languages'){
+                    anno.language_group_id = null;
+                    anno.language_field_id = this.selected_node_field.uuid;
+                  }
+                }
                 this.add_alert_update_uuid(obj_field.uuid);
                 new_annos.push(anno);
               }
@@ -425,6 +477,12 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               // NOTE! In this context, this is for selecting the subject of
               // the description field.
               this.selected_subj_field = args.ds_field;
+              this.add_annotations();
+            },
+            select_node_field(args) {
+              // NOTE! In this context, this is for selecting the subject of
+              // the description field.
+              this.selected_node_field = args.ds_field;
               this.add_annotations();
             },
             add_alert_update_uuid(uuid) {

@@ -59,10 +59,10 @@
 
 
 <!-- General template for views of Open Context items -->
-<div id="main">
+<div id="main" class="container-fluid">
 
-    <div id="item-app" class="container-fluid">
-
+    <div id="item-app">
+        
         {% include '../item/parts/contexts.html' %}
 
         {% if full_media %}
@@ -359,7 +359,7 @@
 
         },
       },
-    ).$mount('#app');
+    ).$mount('#item-app');
     
 </script>
 
