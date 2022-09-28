@@ -472,6 +472,7 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
 def migrate_legacy_link_annotations(
     project_uuid='0', 
     more_filters_dict={'subject_type': 'uri'},
+    after_date=None,
     use_cache=False
 ):
     """Migrates legacy link annotations (limited to entities already in the manifest)"""
@@ -497,6 +498,8 @@ def migrate_legacy_link_annotations(
     if more_filters_dict:
         # Add some additional filters to this query set.
         la_qs = la_qs.filter(**more_filters_dict)
+    if after_date:
+        la_qs = la_qs.filter(updated__gte=after_date)
 
     for la in la_qs:
         subj_obj = get_man_obj_from_la(la.subject, use_cache=use_cache)
