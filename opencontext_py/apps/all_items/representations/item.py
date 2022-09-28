@@ -171,6 +171,12 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
     qs = AllAssertion.objects.filter(
         subject_id=subject_id,
         visible=True,
+    ).exclude(
+        # NOTE: Keep this for debugging. Sometimes vue won't render a
+        # string with bad characters. We had trouble with 
+        # <http://blah.org> (not valid HTML) in the string.
+        # predicate__data_type__in=['xsd:string',]
+        # predicate__slug__in=['40-bibliography-references-cited-and-others'],
     ).select_related(
         'subject'
     ).select_related(
