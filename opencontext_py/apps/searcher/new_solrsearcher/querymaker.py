@@ -9,6 +9,8 @@ from opencontext_py.apps.indexer.solrdocumentnew import (
     SolrDocumentNew as SolrDocument,
 )
 
+from opencontext_py.apps.indexer.solr_utils import replace_slug_in_solr_field
+
 
 from opencontext_py.apps.all_items.configs import (
     URI_ITEM_TYPES,
@@ -611,6 +613,11 @@ def get_general_hierarchic_path_query_dict(
     # are stored in the database.
     attribute_item_obj = None
 
+    # NOTE: An attribute group acts as the root parent of all the
+    # entities that maybe indexes within a given attribute group
+    attribute_group_obj = None
+    attribute_group_obj_slug = None
+
     # Default to no solr related prefix
     use_solr_rel_prefix = ''
     
@@ -660,6 +667,10 @@ def get_general_hierarchic_path_query_dict(
             # a literal of an attribute field. So return None.
             return None
         
+        if not attribute_group_obj and item_obj.item_type == 'attribute-groups':
+            attribute_group_obj = item_obj
+            attribute_group_obj_slug = attribute_group_obj.slug
+
         pref_meta_json_facet_field = True
         item_parent_obj = db_entities.get_man_obj_parent(item_obj)
         if (
@@ -672,7 +683,6 @@ def get_general_hierarchic_path_query_dict(
             # filtering more complicated.
             pref_meta_json_facet_field = False
             item_parent_obj = None
-
         
         if item_parent_obj:
             # The item has a parent item, and that parent item will
@@ -693,7 +703,6 @@ def get_general_hierarchic_path_query_dict(
                     + attribute_field_part
                     + field_suffix  
                 )
-
         
         # If the item is a linked data entity, and we have a 
         # root field field defined for project specific predicates.
@@ -738,6 +747,16 @@ def get_general_hierarchic_path_query_dict(
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
         
+        if attribute_group_obj_slug:
+            # Make sure we replace the general all-attribute slug
+            # that make in the pref-meta-json facet field to use the
+            # specific attribute group slug
+            field_fq = replace_slug_in_solr_field(
+                solr_field=field_fq, 
+                old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                new_slug=attribute_group_obj_slug,
+            )
+
         # Make the query for the item and the solr field associated
         # with the item's immediate parent (or root, if it has no
         # parents).
@@ -751,12 +770,21 @@ def get_general_hierarchic_path_query_dict(
         # associated with all items in the whole hierarchy for this
         # type of solr dynamic field. 
         if obj_all_field_fq:
+            if attribute_group_obj_slug:
+                # Make sure we replace the general all-attribute slug
+                # that make in the pref-meta-json facet field to use the
+                # specific attribute group slug
+                obj_all_field_fq = replace_slug_in_solr_field(
+                    solr_field=obj_all_field_fq, 
+                    old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                    new_slug=attribute_group_obj_slug,
+                )
             query_dict['fq'].append(f'{obj_all_field_fq}:{fq_item_slug}')
 
         if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
             # We're preferencing the solr_field_name stored in the meta_json.
             facet_field = item_obj.meta_json.get('solr_field')
-            print(f'Use preferred facet_field {facet_field}')  
+            print(f'Use preferred facet_field {facet_field}')
         else:
             # Use the current item as the basis for the next solr_field
             # that will be used to query child items in the next iteration
@@ -772,6 +800,16 @@ def get_general_hierarchic_path_query_dict(
             facet_field, 
             prefix=use_solr_rel_prefix
         )
+
+        if attribute_group_obj_slug:
+            # Make sure we replace the general all-attribute slug
+            # that make in the pref-meta-json facet field to use the
+            # specific attribute group slug
+            facet_field = replace_slug_in_solr_field(
+                solr_field=facet_field, 
+                old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                new_slug=attribute_group_obj_slug,
+            )
 
         field_fq = facet_field
         if not field_fq.endswith(fq_solr_field_suffix):
@@ -841,6 +879,15 @@ def get_general_hierarchic_path_query_dict(
 
                 if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
                     facet_field = item_obj.meta_json.get('solr_field')
+                    if attribute_group_obj_slug:
+                        # Make sure we replace the general all-attribute slug
+                        # that make in the pref-meta-json facet field to use the
+                        # specific attribute group slug
+                        facet_field = replace_slug_in_solr_field(
+                            solr_field=facet_field, 
+                            old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                            new_slug=attribute_group_obj_slug,
+                        )
                     field_fq = item_obj.meta_json.get('solr_field')
                 else:
                     # Format the field_fq appropriately for this specific
@@ -854,6 +901,7 @@ def get_general_hierarchic_path_query_dict(
                             + field_suffix
                         )  
                     )
+                    facet_field = field_fq
 
                 # The attribute item is for a literal type field.
                 # Gather numeric and date fields that need a 
@@ -904,6 +952,15 @@ def get_general_hierarchic_path_query_dict(
                         + attribute_field_part
                         + field_suffix
                         + fq_solr_field_suffix 
+                    )
+                if attribute_group_obj_slug:
+                    # Make sure we replace the general all-attribute slug
+                    # that make in the pref-meta-json facet field to use the
+                    # specific attribute group slug
+                    obj_all_field_fq = replace_slug_in_solr_field(
+                        solr_field=obj_all_field_fq, 
+                        old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                        new_slug=attribute_group_obj_slug,
                     )
                 obj_all_field_fq = add_rel_prefix_if_needed(
                     obj_all_field_fq, 

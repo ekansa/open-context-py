@@ -149,6 +149,9 @@ ITEM_TYPE_INTEREST_SCORES = {
 }
 
 
+ALL_ATTRIBUTE_GROUPS_SLUG = 'oc-gen-attribute-groups'
+
+
 def clear_caches():
     """Clears caches in case we're making DB updates on
        manifest objects used as predicates.
@@ -918,18 +921,22 @@ class SolrDocumentNS:
         expected_meta_json, 
         item_obj,
         expect_key_only_check=True, 
-        clear_caches_on_update=True
+        clear_caches_on_update=True,
+        attrib_group_man_obj=None
     ):
         """Updates a Manifest object meta_json with a solr_field_name if 
         it does not already exist.
         
         :param dict expected_meta_json: Meta_json keys and values expected
-            to be present in the predicate item's AllManitest instance.
+            to be present in the predicate item's AllManifest instance.
         :param (dict or AllManifest) item_obj: The AllManifest instance or 
             a dict of an AllManifest instance that's used as a predicate.
         :param bool expect_key_only_check: Only check that the expected key
             exists, don't update key values if it does.
         :param bool clear_caches_on_update: Clear the caches on update.
+        :param (dict or AllManifest) attrib_group_man_obj: The AllManifest instance or 
+            a dict of an AllManifest instance that's used as the root attribute group 
+            object.
         """
         # Make sure we save the solr_field_name in the Manifest meta_json
         # if this doesn't yet exist.
@@ -963,12 +970,20 @@ class SolrDocumentNS:
         if is_ok or not item_man_obj_to_update:
             # We don't need ot update the meta-json
             return None
-        
+
         update_str = ''
         for expected_key, expected_str in expected_meta_json.items():
             if expected_str.startswith(RELATED_SOLR_DOC_PREFIX):
                 # Strip away any 'REL' prefix, to keep things consistent.
                 expected_str = expected_str[len(RELATED_SOLR_DOC_PREFIX):]
+            if attrib_group_man_obj:
+                # Convert the slug for a specific attribute group into the general
+                # attribute slug.
+                expected_str = solr_utils.replace_slug_in_solr_field(
+                    solr_field = expected_str, 
+                    old_slug=attrib_group_man_obj.slug, 
+                    new_slug=ALL_ATTRIBUTE_GROUPS_SLUG,
+                )
             update_str += f'{expected_key}:{expected_str}, '
             item_man_obj_to_update.meta_json[expected_key] = expected_str
 
@@ -1176,7 +1191,7 @@ class SolrDocumentNS:
                 ):
                     # Save the solr_field_name for items in the
                     # middle of a hierarchy.
-                    # We do this only for the last of the heirarchy paths.
+                    # We do this only for the last of the hierarchy paths.
                     # So as to limit hits to the DB.
                     expected_meta_json = {
                         'solr_field': solr_utils.convert_slug_to_solr(
@@ -1194,7 +1209,8 @@ class SolrDocumentNS:
                     self._update_pred_obj_meta_json(
                         expected_meta_json=expected_meta_json, 
                         item_obj=copy.deepcopy(item_obj),
-                        expect_key_only_check=(index_hierarchy_paths != last_index_hierarchy_paths)
+                        expect_key_only_check=(index_hierarchy_paths != last_index_hierarchy_paths),
+                        attrib_group_man_obj=attrib_group_man_obj,
                     )
                 
                 if index != last_item_index:
@@ -1224,7 +1240,8 @@ class SolrDocumentNS:
                     self._update_pred_obj_meta_json(
                         expected_meta_json=expected_meta_json, 
                         item_obj=copy.deepcopy(item_obj),
-                        expect_key_only_check=False
+                        expect_key_only_check=False,
+                        attrib_group_man_obj=attrib_group_man_obj,
                     )
                 # Now finally, add a prefix if this is a related item.
                 solr_field_name = self._prefix_solr_field(solr_field_name)

@@ -128,6 +128,24 @@ def string_clean_for_solr(str_for_solr_val):
     return str_for_solr_val.strip('_')
 
 
+def replace_slug_in_solr_field(solr_field, old_slug=None, new_slug=None):
+    """Replaces a slug value in a solr field"""
+    if not isinstance(solr_field, str):
+        return solr_field
+    if not old_slug or not new_slug:
+        return solr_field
+    if not SOLR_VALUE_DELIM in solr_field:
+        return solr_field
+    old_slug = convert_slug_to_solr(old_slug)
+    new_slug = convert_slug_to_solr(new_slug)
+    clean_parts = []
+    for part in solr_field.split(SOLR_VALUE_DELIM):
+        if part == old_slug:
+            part = new_slug
+        clean_parts.append(part)
+    return SOLR_VALUE_DELIM.join(clean_parts)
+
+
 def make_solr_entity_str(
     slug,
     data_type,

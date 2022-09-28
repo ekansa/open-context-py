@@ -456,6 +456,7 @@ SORT_OPTIONS_FRONTEND = {
     'project': 'project',
 }
 
+ALL_ATTRIBUTE_GROUPS_SLUG = SolrDoc.ALL_ATTRIBUTE_GROUPS_SLUG
 
 # ---------------------------------------------------------------------
 # Configs for making solr queries
@@ -505,7 +506,7 @@ ITEM_TYPE_MAPPINGS = {
     'attribute-groups': {
         'rdfs:isDefinedBy': 'oc-gen:attribute-groups',
         'label': 'Attribute groups',
-        'slug': 'oc-gen-attribute-groups',
+        'slug': ALL_ATTRIBUTE_GROUPS_SLUG,
     },
 }
 
