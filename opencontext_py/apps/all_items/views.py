@@ -100,8 +100,13 @@ def test_json(request, uuid):
     )
 
 
-def make_solr_doc_in_html(request, ok_uuid):
+def make_solr_doc_in_html(request, uuid):
     """Make a Solr Doc JSON in HTML for debugging"""
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404 
+    if do_redirect:
+        return make_redirect_url(request, 'all-items-solr', ok_uuid)
     man_obj, rep_dict = item.make_representation_dict(
         subject_id=ok_uuid,
         for_solr=True,
