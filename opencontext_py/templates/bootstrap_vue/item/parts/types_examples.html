@@ -23,6 +23,16 @@
           class="human_remains_thumb_blur" 
           :alt="'Image related to ' + field_item.label">
       </b-img-lazy>
+      <b-img-lazy 
+        v-else-if="field_item.icon" 
+        :src="field_item.icon"
+        thumbnail
+        fluid
+        rounded
+        center
+        class="result_icon"
+        :alt="'Icon related to ' + field_item.label">
+    </b-img-lazy>
       <b-img v-else
           v-bind="blank_props"
           blank-color="#cccccc"
@@ -244,6 +254,10 @@ var vs_record_thumbnail = Vue.component(
             if('item category' in props){
               item_class = props['item category'];
             }
+            let icon = null;
+              if('icon' in props){
+                  icon = props['icon'];
+              }
             let early = null;
             let late = null;
             let dates = null;
@@ -284,6 +298,7 @@ var vs_record_thumbnail = Vue.component(
               url: url,
               href: href,
               item_class: item_class,
+              icon: icon,
               context: context,
               context_url: context_url,
               project: props['project label'],
