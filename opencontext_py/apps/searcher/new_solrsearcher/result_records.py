@@ -14,6 +14,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.all_items.models import (
     AllAssertion,
 )
+from opencontext_py.apps.all_items.icons import configs as icon_configs
 
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
@@ -365,6 +366,7 @@ class ResultRecord():
         self.context_uri = None  # link to parent context cannonical uri
         self.context_label = None
         self.category = None
+        self.icon = None
         self.latitude = None
         self.longitude = None
         self.geo_feature_type = 'Point'  # Default to point.
@@ -409,6 +411,7 @@ class ResultRecord():
         # Populate some initial metadata on creation
         self.set_record_basic_metadata(solr_doc)
         self.set_record_category(solr_doc)
+        self.set_record_icon(solr_doc)
         self.set_record_contexts(solr_doc)
         self.set_record_projects(solr_doc)
         self.set_geo_point_attributes(solr_doc)
@@ -460,7 +463,44 @@ class ResultRecord():
         if 'Default (null)' in self.category:
             self.category = self.item_type.title()
 
-    
+
+    def set_record_icon(self, solr_doc):
+        if not self.item_type or not self.category:
+            # Make sure we have the item_type and the category set
+            self.set_record_category(solr_doc)
+        item_type_icon = icon_configs.DEFAULT_ITEM_TYPE_ICONS.get(self.item_type)
+        if not item_type_icon:
+            # We can't do this, so skip out.
+            return None
+        class_dict = {}
+        solr_class_items = solr_doc.get('obj_all___oc_gen_category___pred_id')
+        if solr_class_items:
+            solr_class_item = solr_class_items[-1]
+            class_dict = utilities.parse_solr_encoded_entity_str(
+                solr_class_item,
+                solr_slug_format=False,
+            )
+        class_icon = None
+        for class_conf in icon_configs.ITEM_TYPE_CLASS_ICONS_DICT.get(self.item_type, []):
+            if not class_conf.get('icon'):
+                # No icon configured for this class, so skip
+                continue
+            class_label = class_conf.get('item_class__label')
+            class_slug = class_conf.get('item_class__slug')
+            if not class_slug and not class_label:
+                continue
+            if class_slug == class_dict.get('slug') or class_label == self.category:
+                class_icon = class_conf.get('icon')
+            if class_icon is not None:
+                break
+        if class_icon:
+            self.icon = class_icon
+        else:
+            self.icon = item_type_icon
+        if self.icon and self.base_url:
+            self.icon = self.icon.replace('../..', self.base_url)
+
+
     def set_record_contexts(self, solr_doc):
         """Sets the records spatial contexts list"""
         self.contexts = get_simple_hierarchy_items(
@@ -834,6 +874,8 @@ class ResultRecord():
         properties['late bce/ce'] = self.late_date
         if self.category is not None:
             properties['item category'] = self.category
+        if self.icon is not None:
+            properties['icon'] = self.icon
         if self.snippet:
             properties['snippet'] = self.snippet
         if self.thumbnail_scr:

@@ -481,6 +481,9 @@ FROM: https://github.com/consbio/Leaflet.ZoomBox
 	font-style: normal;
 	font-weight: bold;
 }
+.result_icon {
+	max-width: 75%;
+}
 /* IDs and Classes for search data export */
 #download-attribs-save-opts-row {
 	margin-top: 36px;
