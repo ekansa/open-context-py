@@ -845,7 +845,15 @@ class AllSpaceTime(models.Model):
         # Projects, subjects, and types (for periods) can have time space information.
         models_utils.validate_related_manifest_item_type(
             man_obj=self.item,
-            allowed_types= ['projects', 'subjects', 'media', 'types', 'uri', 'class'],
+            allowed_types= [
+                'projects',
+                'subjects',
+                'documents',
+                'media', 
+                'types', 
+                'uri', 
+                'class'
+            ],
             obj_role='item',
         )
 

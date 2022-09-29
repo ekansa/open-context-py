@@ -450,6 +450,23 @@ def make_new_meta_json_from_old_man_obj(old_man_obj):
     return new_meta_json
 
 
+def check_update_manifest_slug(old_man_obj, new_uuid, man_dict):
+    """Resets an AllManifest slug that already exists"""
+    m_with_slug = AllManifest.objects.filter(
+        slug=old_man_obj.slug,
+    ).exclude(
+        uuid=new_uuid
+    ).first()
+    if not m_with_slug:
+        return man_dict
+    print(f'Fix duplicate slug: {old_man_obj.slug} for {old_man_obj.label}: {old_man_obj.item_type}')
+    man_dict['slug'] = None
+    if not 'meta_json' in man_dict:
+        man_dict['meta_json'] = {}
+    man_dict['meta_json']['legacy_slug'] = old_man_obj.slug
+    return man_dict
+
+
 def check_manage_manifest_duplicate(old_man_obj, man_dict):
     """Manages duplicate manifest entities, preserves old ids"""
     hash_id = AllManifest().make_hash_id(
@@ -460,6 +477,16 @@ def check_manage_manifest_duplicate(old_man_obj, man_dict):
         context_id=man_dict['context'].uuid,
     )
     exist_m = AllManifest.objects.filter(hash_id=hash_id).first()
+    if not exist_m:
+        # check we don't have a duplicate in everything but a slug
+        exist_m = AllManifest.objects.filter(
+            item_type=man_dict['item_type'], 
+            data_type=man_dict['data_type'], 
+            label=man_dict['label'],
+            project_id=man_dict['project'].uuid, 
+            context_id=man_dict['context'].uuid,
+            slug=man_dict['slug'],
+        ).first()
     if not exist_m:
         # Not a duplicate item.
         return None
@@ -547,6 +574,7 @@ def migrate_legacy_predicate(old_man_obj):
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
+        man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uuid=new_uuid,
             defaults=man_dict
@@ -629,6 +657,7 @@ def migrate_legacy_type(old_man_obj):
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
+        man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uuid=new_uuid,
             defaults=man_dict
@@ -716,6 +745,7 @@ def migrate_legacy_person(old_man_obj):
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
+        man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uuid=new_uuid,
             defaults=man_dict
@@ -763,6 +793,7 @@ def migrate_legacy_document(old_man_obj):
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
+        man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uuid=new_uuid,
             defaults=man_dict
@@ -988,6 +1019,7 @@ def migrate_legacy_media(old_man_obj):
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
+        man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uuid=new_uuid,
             defaults=man_dict
@@ -1070,6 +1102,7 @@ def migrate_legacy_subject(old_man_obj, parent_new_id=None):
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
+        man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
         new_man_obj, _ = AllManifest.objects.get_or_create(
             uuid=new_uuid,
             defaults=man_dict
@@ -1505,11 +1538,34 @@ def migrate_legacy_id(old_id_obj, use_cache=True):
             'legacy_hash_id': old_id_obj.hash_id,
         }
     }
+    scheme_id_obj = AllIdentifier.objects.filter(
+        scheme=id_dict['scheme'],
+        id=id_dict['id'],
+    ).first()
+    if scheme_id_obj:
+        # We already have this ID in use with another item.
+        # Add the current item in the meta_json
+        if not 'other_manifest_uuids' in scheme_id_obj.meta_json:
+            scheme_id_obj.meta_json['other_manifest_uuids'] = []
+        scheme_id_obj.meta_json['other_manifest_uuids'].append(
+           str(man_obj.uuid)
+        )
+        scheme_id_obj.save()
+        return scheme_id_obj
+    # We don't have this ID yet.
+    exist_id_qs = AllIdentifier.objects.filter(
+        item=man_obj,
+        scheme=id_dict['scheme'],
+    )
+    exist_id_count = exist_id_qs.count()
+    id_dict['rank'] = exist_id_count
     new_id_obj, _ = AllIdentifier.objects.get_or_create(
         # Make the new assertion object with a deterministically
         # generated uuid primary key.
         uuid=AllIdentifier().primary_key_create(
-            item_id=man_obj.uuid, scheme=id_dict['scheme'],
+            item_id=man_obj.uuid, 
+            scheme=id_dict['scheme'],
+            rank=exist_id_count,
         ),
         defaults=id_dict
     )
@@ -1705,7 +1761,7 @@ def migrate_legacy_spacetime_for_item(new_man_obj, old_id):
         if o_geo:
             if o_geo.meta_type == 'oc-gen:geo-coverage':
                 # This is a non-default event type.
-                sp_tm_dict['event_class_id'] =  configs.OC_EVENT_TYPE_COVERAGE_UUID
+                sp_tm_dict['event_id'] =  configs.DEFAULT_EVENT_COVERAGE_UUID
 
             sp_tm_dict['geometry_type'] =  o_geo.ftype
             sp_tm_dict['geo_specificity'] =  o_geo.specificity
