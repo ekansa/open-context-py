@@ -597,22 +597,39 @@ class ResultRecord():
             prefix = prefix[nb_pos:]
         # Now trim the suffix at a nice place to break
         # after the term mark post tag.
+        len_suffix = len(suffix)
         pos_term_mark_post = suffix.find(temp_mark_post)
+        pos_last_check = pos_term_mark_post + 150
+        if pos_last_check >= len_suffix:
+            pos_last_check = len_suffix -1
+        # Find any next post term markers within a limited range
+        # later in the suffix
+        next_pos_term_mark_post = suffix.find(
+            temp_mark_post, 
+            (pos_term_mark_post + 1),
+            pos_last_check
+        )
+        if (next_pos_term_mark_post > pos_term_mark_post):
+            pos_term_mark_post = next_pos_term_mark_post
         last_suffix_pos = None
-        find_start = pos_term_mark_post
-        suffix_checks = 0
-        while last_suffix_pos is None and suffix_checks <= 10:
+        find_start = pos_term_mark_post + 1
+        find_end = find_start + 75
+        while last_suffix_pos is None and find_start < len_suffix and find_end < len_suffix:
             if last_suffix_pos and last_suffix_pos > pos_term_mark_post:
                 break
             for nb in nice_breaks:
-                nb_suffix_pos = suffix.find(nb, find_start)
-                if nb_suffix_pos >= (pos_term_mark_post + 50):
-                    # We have a nice break 50 characters or more
+                nb_suffix_pos = suffix.find(nb, find_start, find_end)
+                print(f'nb_suffix_pos: {nb_suffix_pos}, find_start {find_start}')
+                if nb_suffix_pos < (pos_term_mark_post + 9):
+                    continue
+                if nb_suffix_pos > find_start:
+                    # We have a nice break 75 characters or more
                     # after the search term post tag.
                     last_suffix_pos = nb_suffix_pos
                     break
-                find_start = nb_suffix_pos
-            suffix_checks += 1
+            find_start += 10
+            find_end = find_start + 75
+        print(f'pos_term_mark_post: {pos_term_mark_post}, last_suffix_pos {last_suffix_pos}')
         if last_suffix_pos and last_suffix_pos > pos_term_mark_post:
             suffix = suffix[:last_suffix_pos]
         snippet = prefix + suffix
