@@ -566,7 +566,13 @@ class ResultRecord():
         self.iiif_json_uri = solr_doc.get('iiif_json_uri')
     
 
-    def make_snippet_resonable_size(self, snippet, temp_mark_pre, large_limit=480):
+    def make_snippet_resonable_size(
+        self, 
+        snippet, 
+        temp_mark_pre,
+        temp_mark_post, 
+        large_limit=480,
+    ):
         """Makes the snippet a resonable size, with some smart trimming"""
         if len(snippet) < large_limit:
             return snippet
@@ -589,7 +595,30 @@ class ResultRecord():
                 break
         if nb_pos > 0:
             prefix = prefix[nb_pos:]
-        return prefix + suffix
+        # Now trim the suffix at a nice place to break
+        # after the term mark post tag.
+        pos_term_mark_post = suffix.find(temp_mark_post)
+        last_suffix_pos = None
+        find_start = pos_term_mark_post
+        suffix_checks = 0
+        while last_suffix_pos is None and suffix_checks <= 10:
+            if last_suffix_pos and last_suffix_pos > pos_term_mark_post:
+                break
+            for nb in nice_breaks:
+                nb_suffix_pos = suffix.find(nb, find_start)
+                if nb_suffix_pos >= (pos_term_mark_post + 50):
+                    # We have a nice break 50 characters or more
+                    # after the search term post tag.
+                    last_suffix_pos = nb_suffix_pos
+                    break
+                find_start = nb_suffix_pos
+            suffix_checks += 1
+        if last_suffix_pos and last_suffix_pos > pos_term_mark_post:
+            suffix = suffix[:last_suffix_pos]
+        snippet = prefix + suffix
+        # Remove the line breaks.
+        snippet = snippet.replace('/n', ' ')
+        return snippet
 
 
     def add_snippet_content(self, highlight_dict):
@@ -624,6 +653,7 @@ class ResultRecord():
         snippet = self.make_snippet_resonable_size(
             snippet=snippet, 
             temp_mark_pre=temp_mark_pre,
+            temp_mark_post=temp_mark_post,
         )
 
         self.snippet = snippet.replace(
