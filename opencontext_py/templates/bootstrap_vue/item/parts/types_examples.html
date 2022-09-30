@@ -2,6 +2,7 @@
 
 
 <template id='record-thumbnail-template'>
+  <b-container>
   <figure class="figure text-center" v-if="field_item">
     <a :href="field_item.url" target="_bank">
       <b-img-lazy 
@@ -11,6 +12,7 @@
           fluid
           rounded
           center
+          class="figure-img img-fluid"
           :alt="'Image related to ' + field_item.label">
       </b-img-lazy>
       <b-img-lazy 
@@ -20,7 +22,7 @@
           fluid
           rounded
           center
-          class="human_remains_thumb_blur" 
+          class="figure-img img-fluid human_remains_thumb_blur" 
           :alt="'Image related to ' + field_item.label">
       </b-img-lazy>
       <b-img-lazy 
@@ -30,13 +32,15 @@
         fluid
         rounded
         center
-        class="result_icon"
+        width="75%"
+        class="figure-img img-fluid"
         :alt="'Icon related to ' + field_item.label">
     </b-img-lazy>
       <b-img v-else
           v-bind="blank_props"
           blank-color="#cccccc"
           center
+          class="figure-img img-fluid"
           :alt="'No image related to ' + field_item.label">
       </b-img>
     </a>
@@ -49,6 +53,7 @@
       </span>
     </div>
   </figure>
+  </b-container>
 </template>
 
 
@@ -88,12 +93,17 @@
             </b-col>
           </b-row>
 
-          <div v-if="chunked_items">
+          <div v-if="chunked_items" class="bv-example-row mb-3">
             <b-row v-for="(items, r_i) in chunked_items"
-              align-v="center"
+              align-v="start"
+              align-h="center"
+              align-content="start"
+              cols-md="6"
+              cols-sm="3"
+              cols="2"
             >
               <b-col v-for="(item, i_i) in items"
-                cols="2"
+                class="text-center"
                 >
                 <record-thumbnail
                   v-bind:field_item="item">
