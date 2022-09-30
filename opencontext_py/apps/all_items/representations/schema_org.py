@@ -20,9 +20,7 @@ MAINTAINER_PUBLISHER_DICT = {
     'url': f'https://{configs.OC_URI_ROOT}',
     '@type': 'Organization',
     'name': configs.OPEN_CONTEXT_PROJ_LABEL,
-    'logo': {
-        'url': 'https://opencontext.org/static/oc/images/nav/oc-nav-dai-inst-logo.png',
-    },
+    'logo': 'https://opencontext.org/static/oc/images/nav/oc-nav-dai-inst-logo.png',
     'nonprofitStatus': 'Nonprofit501c3',
     'ethicsPolicy': 'https://opencontext.org/about/terms',
     'brand': [
