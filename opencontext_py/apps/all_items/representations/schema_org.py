@@ -76,22 +76,28 @@ def make_schema_org_json_ld(rep_dict):
         f"{configs.OPEN_CONTEXT_PROJ_LABEL}. "
     )
     for scheme_key, id_val in citation_dict.get('ids', {}).items():
-        citation_txt += f"{scheme_key}: {id_val}"
+        citation_txt += f" {scheme_key}: {id_val}"
 
     # Add a description about the object.
     description = (
         f'An Open Context "{item_type}" dataset item. '
     )
+    item_class_label = rep_dict.get('item_class__label', 'Default')
+    item_class_des = 'This record'
+    if 'Default' not in item_class_label:
+        item_class_des = f'This "{item_class_label}" record'
+
     if item_type not in ['projects', 'tables']:
         description += (
-            'Open Context publishes data as granular, URL '
-            'identified Web resources. This item is part of the '
+            'Open Context publishes structured data as granular, URL '
+            f'identified Web resources. {item_class_des} is part of the '
             f'"{citation_dict.get("part_of_label", "")}" data publication.'
         )
 
     for des_dict in rep_dict.get('dc-terms:description', [])[:1]:
-        for _, v in des_dict.items():
-            description = v
+        des_txt = des_dict.get('@en')
+        if des_txt:
+            description += f' Described with: "{des_txt}".'
 
 
     schema = {
