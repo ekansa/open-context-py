@@ -44,16 +44,8 @@ def make_schema_org_org_person_dict(oc_dict):
     return schema_dict
 
 
-def make_image_schema_org_json_ld(
-    rep_dict,
-    description,
-    creators,
-    citation_dict,
-    citation_txt,
-):
-    # The about link is the most specific thing (last) in the linked contexts
-    about_link = rep_dict.get('oc-gen:has-linked-contexts', [{}])[-1].get('id')
-
+def make_keyword_list(rep_dict):
+    """Makes a list of keywords"""
     # Gather keywords from various metadata associated with this item
     keywords = []
     context_keyword = rep_dict.get('oc-gen:has-linked-contexts', [{}])[-1].get('item_class__label')
@@ -74,7 +66,21 @@ def make_image_schema_org_json_ld(
             if keyword in keywords:
                 continue
             keywords.append(keyword)
-    print(f'keywords {keywords}')
+    return keywords
+
+
+def make_image_schema_org_json_ld(
+    rep_dict,
+    description,
+    creators,
+    citation_dict,
+    citation_txt,
+):
+    # The about link is the most specific thing (last) in the linked contexts
+    about_link = rep_dict.get('oc-gen:has-linked-contexts', [{}])[-1].get('id')
+
+    # Gather keywords from various metadata associated with this item
+    keywords = make_keyword_list(rep_dict)
 
     # Extract the main (full) file representation.
     full_link = rep_dict.get('media_download')
@@ -176,10 +182,19 @@ def make_schema_org_json_ld(rep_dict):
             citation_dict=citation_dict,
             citation_txt=citation_txt,
         )
+    
+    keywords = None
+    schema_type = 'Dataset'
+    if item_type == 'projects':
+        keywords = make_keyword_list(rep_dict)
+        schema_type = [
+            'Dataset',
+            'ScholarlyArticle',
+        ]
 
     schema = {
         '@context': 'http://schema.org/',
-        '@type': 'Dataset',
+        '@type':  schema_type,
         '@id': '#schema-org',
         'name': rep_dict.get('dc-terms:title'),
         'description': description,
@@ -197,4 +212,6 @@ def make_schema_org_json_ld(rep_dict):
         'isPartOf': citation_dict.get('part_of_uri'),
         'citation': citation_txt,
     }
+    if keywords:
+        schema['keywords'] = keywords
     return schema
