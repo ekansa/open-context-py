@@ -44,6 +44,17 @@ def make_schema_org_org_person_dict(oc_dict):
     return schema_dict
 
 
+def get_hero_image_url(rep_dict):
+    """Gets the project hero image url if it exists"""
+    for key in ['oc-gen:has-files', 'oc_gen__has_files']:
+        for item_dict in rep_dict.get(key, []):
+            if not item_dict.get('id'):
+                continue
+            if item_dict.get('type') == 'oc-gen:hero':
+                return item_dict.get('id')
+    return None
+
+
 def make_keyword_list(rep_dict):
     """Makes a list of keywords"""
     # Gather keywords from various metadata associated with this item
@@ -183,7 +194,9 @@ def make_schema_org_json_ld(rep_dict):
             citation_txt=citation_txt,
         )
     
+    authors = None
     keywords = None
+    hero_image = None
     schema_type = 'Dataset'
     if item_type == 'projects':
         keywords = make_keyword_list(rep_dict)
@@ -191,6 +204,8 @@ def make_schema_org_json_ld(rep_dict):
             'Dataset',
             'ScholarlyArticle',
         ]
+        authors = creators
+        hero_image = get_hero_image_url(rep_dict)
 
     schema = {
         '@context': 'http://schema.org/',
@@ -214,4 +229,8 @@ def make_schema_org_json_ld(rep_dict):
     }
     if keywords:
         schema['keywords'] = keywords
+    if authors:
+        schema['author'] = authors
+    if hero_image:
+        schema['image'] = hero_image
     return schema
