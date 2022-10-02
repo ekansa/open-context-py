@@ -44,6 +44,75 @@ def make_schema_org_org_person_dict(oc_dict):
     return schema_dict
 
 
+def make_image_schema_org_json_ld(
+    rep_dict,
+    description,
+    creators,
+    citation_dict,
+    citation_txt,
+):
+    # The about link is the most specific thing (last) in the linked contexts
+    about_link = rep_dict.get('oc-gen:has-linked-contexts', [{}])[-1].get('id')
+
+    # Gather keywords from various metadata associated with this item
+    keywords = []
+    context_keyword = rep_dict.get('oc-gen:has-linked-contexts', [{}])[-1].get('item_class__label')
+    if context_keyword:
+        keywords.append(context_keyword)
+    for context_item in rep_dict.get('oc-gen:has-linked-contexts', []):
+        keyword = context_item.get('label')
+        if not keyword:
+            continue
+        if keyword in keywords:
+            continue
+        keywords.append(keyword)
+    for key in ['dc-terms:subject', 'dc-terms:coverage', 'dc-terms:temporal', 'dc-terms:spatial']:
+        for item_dict in rep_dict.get(key, []):
+            keyword = item_dict.get('label')
+            if not keyword:
+                continue
+            if keyword in keywords:
+                continue
+            keywords.append(keyword)
+    print(f'keywords {keywords}')
+
+    # Extract the main (full) file representation.
+    full_link = rep_dict.get('media_download')
+    if not full_link:
+        for file_dict in rep_dict.get('oc_gen__has_files', []):
+            if file_dict.get('type') != 'oc-gen:fullfile':
+                continue
+            full_link = file_dict.get('id')
+
+    schema = {
+        '@context': 'http://schema.org/',
+        '@type': 'ImageObject',
+        '@id': '#schema-org',
+        'name': rep_dict.get('dc-terms:title'),
+        'caption': description,
+        'representativeOfPage': True,
+        'creator': creators,
+        'datePublished': rep_dict.get('dc-terms:issued'),
+        'dateModified': rep_dict.get('dc-terms:modified'),
+        'license': rep_dict.get(
+            'dc-terms:license', 
+            [CC_DEFAULT_LICENSE_CC_BY_SCHEMA_DICT]
+        )[0].get('id'),
+        'isAccessibleForFree': True,
+        'maintainer': MAINTAINER_PUBLISHER_DICT.copy(),
+        'publisher': MAINTAINER_PUBLISHER_DICT.copy(),
+        'isPartOf': citation_dict.get('part_of_uri'),
+        'creditText': citation_txt,
+    }
+    if about_link:
+        schema['about'] = about_link
+    if full_link:
+        schema['contentUrl'] = full_link
+    if keywords:
+        schema['keywords'] = keywords
+    return schema
+
+
 def make_schema_org_json_ld(rep_dict):
     """Makes Schema.org JSON-LD from an Open Context rep_dict
     
@@ -99,6 +168,14 @@ def make_schema_org_json_ld(rep_dict):
         if des_txt:
             description += f' Described with: "{des_txt}".'
 
+    if rep_dict.get('item_class__slug') == 'oc-gen-image':
+        return make_image_schema_org_json_ld(
+            rep_dict=rep_dict,
+            description=description,
+            creators=creators,
+            citation_dict=citation_dict,
+            citation_txt=citation_txt,
+        )
 
     schema = {
         '@context': 'http://schema.org/',
