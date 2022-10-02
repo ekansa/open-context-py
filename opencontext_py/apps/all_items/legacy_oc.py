@@ -217,6 +217,7 @@ LEGACY_ROOT_SUBJECTS = [
 
 LEGACY_DATA_DATA_TYPES = {
     '3C110D75-C090-441C-BE21-BD681E1F9EE5': 'xsd:string',
+    'B68641CD-CAA6-4A50-151E-5E8BA1C2C3C8': 'id',
 }
 
 LEGACY_MANIFEST_MAPPINGS = {
@@ -499,6 +500,29 @@ def check_manage_manifest_duplicate(old_man_obj, man_dict):
     return exist_m
 
 
+def fix_old_predicate_strings_to_types(old_predicate_id):
+    """Fix """
+    b_qs = OldAssertion.objects.filter(
+        predicate_uuid=old_predicate_id, 
+        object_type='xsd:string'
+    )
+    bad_strings = [b.object_uuid for b in b_qs]
+    t_qs = OCtype.objects.filter(
+        predicate_uuid=old_predicate_id, 
+        content_uuid__in=bad_strings
+    )
+    b_t_dict = {t.content_uuid:t.uuid for t in t_qs}
+    for string_uuid, t_uuid in b_t_dict.items():
+        n = OldAssertion.objects.filter(
+            predicate_uuid=old_predicate_id,
+            object_uuid=string_uuid,
+        ).update(
+            object_uuid=t_uuid,
+            object_type='types',
+        )
+        print(f'Updated string {string_uuid} to type {t_uuid}')
+
+
 def migrate_legacy_predicate(old_man_obj):
     """Migrates a legacy predicate item, where old_man_obj is a predicate"""
     new_man_obj, new_project = migrated_item_proj_check(old_man_obj, 'predicates')
@@ -536,6 +560,20 @@ def migrate_legacy_predicate(old_man_obj):
             if len(ent_pred_dtypes) and not len(literal_pred_dtypes):
                 # A happy case of all named entity data types.
                 data_type = 'id'
+            elif 'types' in ent_pred_dtypes and 'xsd:string' in literal_pred_dtypes:
+                # We have a mixture of xsd:string and types data, so try
+                # to update the old assertions to types.
+                fix_old_predicate_strings_to_types(old_id)
+                print('-'*50)
+                print(
+                    f'Literal data types: {str(literal_pred_dtypes)} '
+                    f'Named entity data types: {str(ent_pred_dtypes)} '
+                )
+                print(
+                    f'Fixed string to types in legacy pred: {old_man_obj.uuid}, {old_man_obj.label} '
+                    'has too many data types: '
+                )
+                data_type = 'id'
             else:
                 # We have some sort of combination of bad data types.
                 print('-'*50)
@@ -557,6 +595,13 @@ def migrate_legacy_predicate(old_man_obj):
         'link': configs.CLASS_OC_LINKS_UUID,
         'links': configs.CLASS_OC_LINKS_UUID,
     }
+    
+    if not data_type in configs.DATA_TYPES:
+        print('-'*50)
+        print(f'WARNING {old_man_obj.label} ({old_pred.uuid}) has unknown data_typ {data_type}')
+        if data_type in configs.OC_ITEM_TYPES:
+            data_type = 'id'
+        print(f'Updated to {data_type}')
 
     man_dict = {
         'publisher': new_project.publisher,
@@ -606,6 +651,10 @@ def migrate_legacy_type(old_man_obj):
         old_pred_uuid = old_type.predicate_uuid
         type_rank = old_type.rank
         old_man_pred = OldManifest.objects.filter(uuid=old_pred_uuid).first()
+    else:
+        # Cannot find the old type!
+        return None
+
     if not old_man_pred:
         # Infer by use in Assertions
         old_ass = OldAssertion.objects.filter(object_uuid=old_id).first()
