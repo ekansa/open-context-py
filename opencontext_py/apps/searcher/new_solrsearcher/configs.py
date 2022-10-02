@@ -53,6 +53,7 @@ DEFAULT_FACET_FIELDS = [
     'human_remains',
 ]
 
+SITEMAP_FACET_FIELD = 'obj_all___project_id'
 
 PROJECT_FACET_FIELDS = [
     # SolrDoc.ROOT_LINK_DATA_SOLR
@@ -812,6 +813,15 @@ FACETS_STANDARD = [
         'Project',
     ),
 ]
+
+SITE_MAP_FACETS_DICT = {
+    SITEMAP_FACET_FIELD: {
+        'type': 'oc-api:sitemap-facet-project',
+        'label': 'Sitemap Project Facets',
+        'rdfs:isDefinedBy': 'oc-api:sitemap-facet-project',
+        'slug': 'oc-api-sitemap-facet-project',
+    }
+}
 
 # Facet metadata for standard root fields.
 FACET_STANDARD_ROOT_FIELDS = {

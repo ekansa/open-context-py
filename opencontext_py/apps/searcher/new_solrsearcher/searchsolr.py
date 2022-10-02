@@ -573,6 +573,23 @@ class SearchSolr():
         )
         return query
     
+    def compose_sitemap_query(self):
+        """Makes a query specialized knowing what projects can be
+        included in a site map
+        """
+        query = {}
+        query['facet'] = 'true'
+        query['facet.mincount'] = 1
+        query['rows'] = self.rows
+        query['start'] = self.start
+        query['fq'] = []
+        query['q'] = '*:*'  # default search for all
+        # Starts with an initial facet field list
+        query['facet.field'] = [
+            configs.SITEMAP_FACET_FIELD
+        ]
+        return query
+    
 
     def _set_solr_field_facet_limits(self, query):
         """ Sets facet limits on configured facet fields"""
@@ -609,3 +626,4 @@ class SearchSolr():
                 f'{str(error)} => Query: {query}'
             )
         return self.solr_response
+        

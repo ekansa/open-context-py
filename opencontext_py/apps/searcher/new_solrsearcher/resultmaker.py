@@ -63,6 +63,7 @@ class ResultMaker():
         self.rows = None
         self.min_date = None
         self.max_date = None
+        self.sitemap_facets = False
     
 
     def _set_client_response_types(self):
@@ -624,6 +625,10 @@ class ResultMaker():
         facets = facets_standard.get_facets_and_options(
             solr_json
         )
+        if self.sitemap_facets:
+            facets += facets_standard.get_sitemap_facets_and_options(
+                solr_json
+            )
         if not len(facets):
             # Skip out, we found no facets.
             return None

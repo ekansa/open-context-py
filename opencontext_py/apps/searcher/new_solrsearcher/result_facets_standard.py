@@ -473,6 +473,54 @@ class ResultFacetsStandard():
         return preconfig_facets + normal_facets
     
 
+    
+    def get_sitemap_facets_and_options(self, solr_json):
+        """Gets property facets and options from solr response json"""
+        normal_facets = []
+        solr_facet_fields_dict = utilities.get_dict_path_value(
+            configs.FACETS_SOLR_ROOT_PATH_KEYS,
+            solr_json
+        )
+        facet = configs.SITE_MAP_FACETS_DICT.get(
+            configs.SITEMAP_FACET_FIELD, 
+        )
+        if not facet :
+            return normal_facets
+
+        for (
+            solr_facet_field_key, 
+            solr_facet_value_count_list,
+            ) in solr_facet_fields_dict.items():
+            
+            if solr_facet_field_key != configs.SITEMAP_FACET_FIELD:
+                # We're only interested in the sitemap facet field
+                continue
+
+            # Make  list of the tuples for this solr facet field.
+            options_tuples = utilities.get_facet_value_count_tuples(
+                solr_facet_value_count_list
+            )
+
+            if not len(options_tuples):
+                # Skip, because we don't have any facet options
+                continue
+
+            # Add options lists for different data-types present in
+            # the options tuples list.
+            facet = self.add_options_lists_to_facet(
+                copy.deepcopy(facet), 
+                solr_facet_field_key, 
+                param_key='proj', 
+                delim='---', 
+                options_tuples=options_tuples
+            )
+            normal_facets.append(facet)
+
+        # Make the preconfig facet the first facet.
+        return normal_facets
+
+
+
     def add_range_options_list(
         self, 
         param_key,
