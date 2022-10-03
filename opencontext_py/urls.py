@@ -48,6 +48,11 @@ from opencontext_py.apps.etl.importer.setup import views as etlSetupViews
 from opencontext_py.apps.etl.importer.transforms import views as etlTransformsViews
 
 
+# Site map related
+from opencontext_py.apps.all_items.sitemaps import views as oc_sitemap_views
+from django.views.decorators.cache import cache_page
+
+
 urlpatterns = [
     # Examples:
     # url(r'^$', 'opencontext_py.views.home', name='home'),
@@ -608,6 +613,20 @@ urlpatterns = [
     re_path(r'^utilities/quadtree-to-lat-lon', UtilitiesViews.quadtree_to_lat_lon, name='quadtree_to_lat_lon'),
     re_path(r'^utilities/reproject', UtilitiesViews.reproject, name='utilities_reproject'),
     re_path(r'^utilities/human-remains-ok', UtilitiesViews.human_remains_ok, name='human_remains_ok'),
+    
+    #----------------------------
+    # BELOW ARE SITEMAP REQUESTS
+    #----------------------------
+    re_path(
+        r'^sitemap\.xml$', 
+        oc_sitemap_views.sitemap_index,
+        name='sitemapindex'
+    ),
+    re_path(
+        r'^sitemap-(?P<section>.+)\.xml$', 
+        oc_sitemap_views.project_section_sitemap,
+        name='project_section_sitemap'
+    ),
     #----------------------------
     # BELOW ARE INDEX REQUESTS
     #----------------------------

@@ -236,7 +236,14 @@ INSTALLED_APPS = (
     # New for editorial interfaces to make export tables.
     'django_rq',
     'django_extensions',
+
+    # Sitemaps for search engines
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
 )
+
+# For site maps
+SITE_ID = 1
 
 # For graphing ORM relations.
 GRAPH_MODELS = {
@@ -340,7 +347,7 @@ if DEBUG:
             'LOCATION': 'oc_cache_table',
             'TIMEOUT': 1,
             'OPTIONS': {
-                'MAX_ENTRIES': 5
+                'MAX_ENTRIES': 5000
             }
         },
         'redis': {
@@ -373,7 +380,7 @@ else:
             'LOCATION': 'oc_cache_table',
             'TIMEOUT': (1.5 * 24 * 60 * 60),  # 1.5 days for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 25000
+                'MAX_ENTRIES': 50000
             }
         },
         'redis': {
