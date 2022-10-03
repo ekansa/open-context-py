@@ -346,10 +346,10 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
         )
         if len(rep_man_objs) > 1:
             return rep_man_objs
-    job_id = f'rq-sitemap-indx-{proj_obj.slug}'
     job_done = False
     dt_obj = datetime.datetime.now()
     index_id = dt_obj.strftime('%Y-%m-%d')
+    job_id = proj_obj.meta_json.get('sitemap_job_ids', {}).get(index_id)
     try:
         job_id, job_done, rep_man_objs = wrap_func_for_rq(
             func=db_get_project_representative_sample,
@@ -362,6 +362,11 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
     except Exception as e:
         print(f'Sitemap {proj_obj.slug} queue problem: {str(e)}')
         rep_man_objs = []
+    if job_id:
+        proj_obj.meta_json['sitemap_job_ids'] = {
+            index_id: job_id,
+        }
+        proj_obj.save()
     if not job_done:
         return []
     if not rep_man_objs:
