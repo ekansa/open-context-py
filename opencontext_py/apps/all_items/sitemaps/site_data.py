@@ -349,7 +349,9 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
     job_done = False
     dt_obj = datetime.datetime.now()
     index_id = dt_obj.strftime('%Y-%m-%d')
-    job_id = proj_obj.meta_json.get('sitemap_job_ids', {}).get(index_id)
+    job_id = None
+    if proj_obj.meta_json.get('sitemap_job_ids'):
+        job_id = proj_obj.meta_json.get('sitemap_job_ids').get(index_id)
     try:
         job_id, job_done, rep_man_objs = wrap_func_for_rq(
             func=db_get_project_representative_sample,
@@ -362,10 +364,14 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
     except Exception as e:
         print(f'Sitemap {proj_obj.slug} queue problem: {str(e)}')
         rep_man_objs = []
-    if job_id:
+    if job_id and not job_done:
         proj_obj.meta_json['sitemap_job_ids'] = {
             index_id: job_id,
         }
+        proj_obj.save()
+    if job_done:
+        # Remove the worker job id, since it is done.
+        proj_obj.meta_json['sitemap_job_ids'] = {}
         proj_obj.save()
     if not job_done:
         return []
