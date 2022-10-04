@@ -290,7 +290,7 @@ def db_get_proj_items_verbose_text(proj_obj):
     return rep_man_objs
 
 
-def db_get_project_representative_sample(proj_obj, index_id=None):
+def db_get_project_representative_sample(proj_obj):
     """Gets a unique representative sample of resources from a project
     
     :param AllManifest proj_obj: An AllManifest instance of the project
@@ -325,12 +325,6 @@ def db_get_project_representative_sample(proj_obj, index_id=None):
     )
     rep_len = len(rep_man_objs)
     print(f'{print_prefix}; all representative items: {rep_len}, or {round(((rep_len/proj_count) * 100), 2)} %')
-    if index_id:
-        proj_obj.meta_json['sitemap_index_id'] = index_id
-        proj_obj.save()
-        for man_obj in rep_man_objs:
-            man_obj.meta_json['sitemap_index_id'] = index_id
-            man_obj.save()
     return rep_man_objs
 
 
@@ -357,7 +351,6 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
             func=db_get_project_representative_sample,
             kwargs={
                 'proj_obj': proj_obj,
-                'index_id': index_id,
             },
             job_id=job_id,
         )
@@ -369,9 +362,14 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
             index_id: job_id,
         }
         proj_obj.save()
-    if job_done:
+    if rep_man_objs and job_done:
+        print(f'Marking {len(rep_man_objs)} representative items of {proj_obj.slug} with sitemap index id {index_id}')
+        for man_obj in rep_man_objs:
+            man_obj.meta_json['sitemap_index_id'] = index_id
+            man_obj.save()
         # Remove the worker job id, since it is done.
         proj_obj.meta_json['sitemap_job_ids'] = {}
+        proj_obj.meta_json['sitemap_index_id'] = index_id
         proj_obj.save()
     if not job_done:
         return []
