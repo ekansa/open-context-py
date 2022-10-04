@@ -346,17 +346,15 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
     job_id = None
     if proj_obj.meta_json.get('sitemap_job_ids'):
         job_id = proj_obj.meta_json.get('sitemap_job_ids').get(index_id)
-    try:
-        job_id, job_done, rep_man_objs = wrap_func_for_rq(
-            func=db_get_project_representative_sample,
-            kwargs={
-                'proj_obj': proj_obj,
-            },
-            job_id=job_id,
-        )
-    except Exception as e:
-        print(f'Sitemap {proj_obj.slug} queue problem: {str(e)}')
-        rep_man_objs = []
+    
+    job_id, job_done, rep_man_objs = wrap_func_for_rq(
+        func=db_get_project_representative_sample,
+        kwargs={
+            'proj_obj': proj_obj,
+        },
+        job_id=job_id,
+    )
+    
     if job_id and not job_done:
         proj_obj.meta_json['sitemap_job_ids'] = {
             index_id: job_id,
