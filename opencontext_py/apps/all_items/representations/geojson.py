@@ -2,7 +2,9 @@
 
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.libs.isoyears import ISOyears
+
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
@@ -178,7 +180,13 @@ def get_meta_json_value_from_item_hierarchy(item_man_obj, meta_json_key='geo_not
     return key_val
 
 
-def add_precision_properties(properties, item_man_obj, spacetime_obj, for_solr=False):
+def add_precision_properties(
+    properties, 
+    item_man_obj, 
+    spacetime_obj, 
+    for_solr=False,
+    item_precision_specificity=None,
+):
     """Adds geospatial precision notes
 
     :param dict properties: A GeoJSON properties dictionary.
@@ -188,15 +196,20 @@ def add_precision_properties(properties, item_man_obj, spacetime_obj, for_solr=F
         precision information
     :param bool for_solr: A boolean flag to add additional metadata because
         the dict will be used for solr indexing.
+    :param int item_precision_specificity: An integer value that indicates
+        the specificity of the item's spatial data. A negative value indicates
+        intentionally obscuring spatial data to some global mercator zoom
+        value
     """
 
     # First, attempt to get a geospatial precision note from the item
     # itself, or the project for this item, or this item's project__project!
-    item_precision_specificity = get_meta_json_value_from_item_hierarchy(
-        item_man_obj, 
-        meta_json_key='geo_specificity', 
-        default=0
-    )
+    if item_precision_specificity is None:
+        item_precision_specificity = get_meta_json_value_from_item_hierarchy(
+            item_man_obj, 
+            meta_json_key='geo_specificity', 
+            default=0
+        )
     item_precision_note = get_meta_json_value_from_item_hierarchy(
         item_man_obj, 
         meta_json_key='geo_note', 
@@ -263,6 +276,58 @@ def add_precision_properties(properties, item_man_obj, spacetime_obj, for_solr=F
     return properties
 
 
+def alter_geometry_by_precision_specificity(
+    geometry, 
+    item_man_obj, 
+    spacetime_obj,
+    item_precision_specificity=None,
+    ):
+    """Changes a Point geometry into a polygon region if the coordinates are
+    intentionally obscured
+
+    :param dict properties: A GeoJSON properties dictionary.
+    :param AllManifest item_man_obj: An instance of the AllManifest model
+        that is getting geospatial data.
+    :param AllSpaceTime spacetime_obj: A spacetime object with location
+        precision information
+    :param bool for_solr: A boolean flag to add additional metadata because
+        the dict will be used for solr indexing.
+    :param int item_precision_specificity: An integer value that indicates
+        the specificity of the item's spatial data. A negative value indicates
+        intentionally obscuring spatial data to some global mercator zoom
+        value
+    
+    return dict (geometry)
+    """
+    if item_precision_specificity is None:
+        item_precision_specificity = get_meta_json_value_from_item_hierarchy(
+            item_man_obj, 
+            meta_json_key='geo_specificity', 
+            default=0
+        )
+    if item_precision_specificity >= 0 or geometry.get('type') != 'Point':
+        # Our work is done! This is not an intentionally obscured location.
+        # Or this is already a non point geometry, which is presumably OK to
+        # represent.
+        return geometry
+    if not spacetime_obj or not spacetime_obj.latitude or not spacetime_obj.longitude:
+        return geometry
+    # OK! We're now going to alter the geometry to make it a polygon that's
+    # at a scale determined by the item_precision_specificity
+    tile_specificity = abs(item_precision_specificity)
+    gm = GlobalMercator()
+    tile = gm.lat_lon_to_quadtree(
+        float(spacetime_obj.latitude),
+        float(spacetime_obj.longitude),
+        tile_specificity
+    )
+    if len(tile) > tile_specificity:
+        tile = tile[:tile_specificity]
+    geometry['type'] = 'Polygon'
+    geometry['coordinates'] = gm.quadtree_to_geojson_poly_coords(tile)
+    return geometry
+
+
 def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None, for_solr=False):
     """Adds GeoJSON feature (with when object) to the act_dict
     
@@ -319,14 +384,30 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
             # GeoJSON representation.
             properties["reference_type"] = "specified"
             # Add the location precision note.
+            item_precision_specificity = get_meta_json_value_from_item_hierarchy(
+                item_man_obj, 
+                meta_json_key='geo_specificity', 
+                default=0
+            )
             properties = add_precision_properties(
                 properties, 
                 item_man_obj, 
                 spacetime_obj,
                 for_solr=for_solr,
+                item_precision_specificity=item_precision_specificity,
             )
             feature["geometry"] = spacetime_obj.geometry.copy()
             feature["geometry"]["id"] = f"#feature-geom-{spacetime_obj.uuid}"
+
+            # Alter the geometry to be a polygon region if we're obscuring 
+            # location data.
+            feature["geometry"] = alter_geometry_by_precision_specificity(
+                geometry=feature["geometry"], 
+                item_man_obj=item_man_obj, 
+                spacetime_obj=spacetime_obj,
+                item_precision_specificity=item_precision_specificity,
+            )
+
             if for_solr:
                 properties["reference_uri"] = f"https://{spacetime_obj.item.uri}"
                 properties["reference_label"] = spacetime_obj.item.label
@@ -357,21 +438,35 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
                 properties["contained_in_region"] = False
             
             # Add the location precision note.
+            item_precision_specificity = get_meta_json_value_from_item_hierarchy(
+                item_man_obj, 
+                meta_json_key='geo_specificity', 
+                default=0
+            )
             properties = add_precision_properties(
                 properties, 
                 item_man_obj, 
                 ref_spacetime_obj,
                 for_solr=for_solr,
+                item_precision_specificity=item_precision_specificity,
             )
 
-            geomtry = LastUpdatedOrderedDict()
-            geomtry["id"] = f"#geo-geom-{ref_spacetime_obj.uuid}"
-            geomtry["type"] = "Point"
-            geomtry["coordinates"] = [
+            geometry = LastUpdatedOrderedDict()
+            geometry["id"] = f"#geo-geom-{ref_spacetime_obj.uuid}"
+            geometry["type"] = "Point"
+            geometry["coordinates"] = [
                 float(ref_spacetime_obj.longitude),
                 float(ref_spacetime_obj.latitude),
             ]
-            feature["geometry"] = geomtry
+            # Alter the geometry to be a polygon region if we're obscuring 
+            # location data.
+            geometry = alter_geometry_by_precision_specificity(
+                geometry=geometry, 
+                item_man_obj=item_man_obj, 
+                spacetime_obj=ref_spacetime_obj,
+                item_precision_specificity=item_precision_specificity,
+            )
+            feature["geometry"] = geometry
 
         feature["properties"] = properties
 
