@@ -8,6 +8,8 @@ import pandas as pd
 from django.core.cache import caches
 from django.utils import timezone
 
+from django.db.models import Count
+
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
@@ -188,7 +190,7 @@ LEGACY_ROOT_SUBJECTS = [
     # ('18EA072A-726B-4019-4378-305257EB3AAB', 'Special Project  84', ),
     ('2572daff-7242-474a-9b5c-f34943a684b4', 'Sudan', configs.DEFAULT_SUBJECTS_AFRICA_UUID),
     ('73738647-5987-40ac-ac13-12f11e58c60f', 'Sumatra', configs.DEFAULT_SUBJECTS_ASIA_UUID),
-    ('b8151439-71c0-41ee-87e7-1fcb155c0cf6', 'Surinam', configs.DEFAULT_SUBJECTS_ASIA_UUID),
+    ('b8151439-71c0-41ee-87e7-1fcb155c0cf6', 'Surinam', configs.DEFAULT_SUBJECTS_AMERICAS_UUID),
     ('2bf133ba-d0cb-411f-8e39-cd728e5bd72b', 'Sweden', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('2230cb43-fd24-4d14-bfac-dced6cbe3f23', 'Switzerland', configs.DEFAULT_SUBJECTS_EUROPE_UUID),
     ('d73cdb54-a47a-48a7-bc40-52a36e4ac0c8', 'Syria', configs.DEFAULT_SUBJECTS_ASIA_UUID),
@@ -523,6 +525,42 @@ def fix_old_predicate_strings_to_types(old_predicate_id):
         print(f'Updated string {string_uuid} to type {t_uuid}')
 
 
+def label_deduplicate(old_man_obj, man_dict):
+    if man_dict['item_type'] in ['subjects']:
+        # Don't do this for subjects items.
+        return man_dict
+    # Kenan tepe has duplicate labels.
+    filter_args = {
+        'project': man_dict['project'],
+        'context': man_dict['context'],
+        'item_type': man_dict['item_type'],
+    }
+    label_count = AllManifest.objects.filter(
+        **filter_args
+    ).filter(
+        label=old_man_obj.label,
+    ).count()
+    i = 0
+    while label_count > 0:
+        i += 1
+        if man_dict['item_type'] == 'documents':
+            man_dict['label'] = f'{old_man_obj.label}-{i}'
+        else:
+            man_dict['label'] = f'{old_man_obj.label} [{i}]'
+        label_count = AllManifest.objects.filter(
+            **filter_args
+        ).filter(
+            label=man_dict['label'],
+        ).count()
+        print(f'Legacy item {old_man_obj.uuid} ({old_man_obj.item_type}) now has label {man_dict["label"]}')
+        if not 'meta_json' in man_dict:
+            man_dict['meta_json'] = {}
+        man_dict['meta_json']['legacy_label'] = old_man_obj.label
+        if label_count < 1:
+            break
+    return man_dict
+
+
 def migrate_legacy_predicate(old_man_obj):
     """Migrates a legacy predicate item, where old_man_obj is a predicate"""
     new_man_obj, new_project = migrated_item_proj_check(old_man_obj, 'predicates')
@@ -534,6 +572,11 @@ def migrate_legacy_predicate(old_man_obj):
         return None
 
     old_id, new_uuid = update_old_id(old_man_obj.uuid)
+
+    print(
+        f'Begin migration of {old_man_obj.item_type} {old_man_obj.label} -> new id {new_uuid}'
+    )
+
     old_pred = Predicate.objects.filter(uuid=old_id).first()
     if not old_pred:
         print(f'Legacy pred missing "{old_man_obj.uuid}" {old_man_obj.label}')
@@ -617,6 +660,7 @@ def migrate_legacy_predicate(old_man_obj):
         'meta_json': new_meta_json,
     }
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
+    man_dict = label_deduplicate(old_man_obj, man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
         man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
@@ -643,6 +687,10 @@ def migrate_legacy_type(old_man_obj):
         return None
 
     old_id, new_uuid = update_old_id(old_man_obj.uuid)
+
+    print(
+        f'Begin migration of {old_man_obj.item_type} {old_man_obj.label} -> new id {new_uuid}'
+    )
 
     old_type = OCtype.objects.filter(uuid=old_id).first()
     type_rank = 0
@@ -704,6 +752,7 @@ def migrate_legacy_type(old_man_obj):
         'meta_json': new_meta_json,
     }
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
+    man_dict = label_deduplicate(old_man_obj, man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
         man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
@@ -819,6 +868,9 @@ def migrate_legacy_document(old_man_obj):
 
     old_id, new_uuid = update_old_id(old_man_obj.uuid)
 
+    print(
+        f'Begin migration of {old_man_obj.item_type} {old_man_obj.label} -> new id {new_uuid}'
+    )
     old_doc = OCdocument.objects.filter(uuid=old_id).first()
     if not old_doc:
         # Missing a critically needed record.
@@ -840,6 +892,7 @@ def migrate_legacy_document(old_man_obj):
         'meta_json': new_meta_json,
     }
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
+    man_dict = label_deduplicate(old_man_obj, man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
         man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
@@ -853,6 +906,7 @@ def migrate_legacy_document(old_man_obj):
         )
     save_legacy_id_object(new_man_obj, old_id)
 
+    print(f'Add document content for {new_man_obj.label} ({str(new_man_obj.uuid)}) legacy id {old_man_obj.uuid}')
     # Add the document contents.
     utilities.add_string_assertion_simple(
         subject_obj=new_man_obj,
@@ -862,6 +916,7 @@ def migrate_legacy_document(old_man_obj):
         project_id=new_man_obj.project.uuid,
         source_id=SOURCE_ID,
     )
+    print(f'Finished with document {new_man_obj.label} ({str(new_man_obj.uuid)})')
     return new_man_obj
 
 
@@ -988,6 +1043,9 @@ def migrate_legacy_media(old_man_obj):
     new_man_obj, new_project = migrated_item_proj_check(old_man_obj, 'media')
 
     old_id, new_uuid = update_old_id(old_man_obj.uuid)
+    print(
+        f'Begin migration of {old_man_obj.item_type} {old_man_obj.label} -> new id {new_uuid}'
+    )
     # Get the queryset for the old manifest files associated with this old
     # media manifest object.
     old_media_files = Mediafile.objects.filter(uuid=old_id)
@@ -1066,6 +1124,7 @@ def migrate_legacy_media(old_man_obj):
         'meta_json': new_meta_json,
     }
     man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
+    man_dict = label_deduplicate(old_man_obj, man_dict)
     new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
     if not new_man_obj:
         man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
@@ -1631,6 +1690,57 @@ def migrate_legacy_identifiers_for_project(project_uuid='0'):
         new_id_obj = migrate_legacy_id(old_id_obj)
 
 
+def ensure_legacy_assertion_refs(old_asserts_qs, old_assert_count):
+    """Makes sure that the legacy named entities actually exist"""
+    print(f'Pre-cache named entities for {old_assert_count} old assertions')
+    uuids = []
+    if False:
+        sub_uuid_qs = old_asserts_qs.distinct(
+            'uuid'
+        ).order_by(
+            'uuid'
+        ).values_list(
+            'uuid',
+            flat=True,
+        )
+        uuids += [uuid for uuid in sub_uuid_qs]
+    pred_uuid_qs = old_asserts_qs.distinct(
+        'predicate_uuid'
+    ).order_by(
+        'predicate_uuid'
+    ).values_list(
+        'predicate_uuid',
+        flat=True,
+    )
+    uuids += [uuid for uuid in pred_uuid_qs]
+    # Precache the 2000 most commonly used object uuids.
+    obj_uuid_qs = old_asserts_qs.values(
+        'object_uuid'
+    ).filter(
+        object_type__in=['projects', 'subjects', 'media', 'documents', 'types', 'predicates', 'persons']
+    ).annotate(
+        uuid_count=Count('uuid')
+    ).order_by(
+        '-uuid_count',
+        'object_uuid'
+    ).values_list(
+        'object_uuid',
+        'uuid_count'
+    )[:2000]
+    uuids += [d['object_uuid'] for d in obj_uuid_qs]
+    uuids = list(set(uuids))
+    uuid_len = len(uuids)
+    print(f'Found {uuid_len} distinct named entities in the old assertions, cache them in memory')
+    for i, uuid in enumerate(uuids[:3000]):
+        # Now make sure these are in our cache.
+        print(f'Cache legacy uuid: {uuid} [{i} of {uuid_len}]')
+        _ = get_cache_new_manifest_obj_from_old_id(
+            uuid, 
+            use_cache=True
+        )
+    print(f'Cached {len(uuids)} distinct named entities in memory for use in assertion creation')
+
+
 def migrate_legacy_assertions_for_project(project_uuid, use_cache=True):
     """Migrates the assertions for a project"""
     errors = []
@@ -1655,7 +1765,9 @@ def migrate_legacy_assertions_for_project(project_uuid, use_cache=True):
         'uuid', 
         'obs_num', 
         'sort'
-    ).iterator()
+    )
+    ensure_legacy_assertion_refs(old_asserts_qs, old_assert_count)
+    old_asserts_qs = old_asserts_qs.iterator()
     i = 0
     for old_assert in old_asserts_qs:
         i += 1
