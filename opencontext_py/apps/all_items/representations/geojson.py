@@ -305,6 +305,9 @@ def alter_geometry_by_precision_specificity(
             meta_json_key='geo_specificity', 
             default=0
         )
+    if item_precision_specificity is None:
+        # We don't have anything set, so skip out.
+        return geometry
     if item_precision_specificity >= 0 or geometry.get('type') != 'Point':
         # Our work is done! This is not an intentionally obscured location.
         # Or this is already a non point geometry, which is presumably OK to
