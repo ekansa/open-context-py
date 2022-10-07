@@ -321,3 +321,18 @@ function use_all_items_href(href, base_url, use_all_items_href){
     href_ex = href.split('/');
     return base_url + '/all-items/' + href_ex[(href_ex.length - 1)];
 }
+
+
+function use_local_subjects_href(href, base_url){
+    if(!href){
+        return null;
+    }
+    let ok_local = false;
+    let req_part = 'opencontext.org/subjects/'
+    if(href.indexOf(req_part) < 0){
+        // We're not a subjects item, jusr return the url without change
+        return href;
+    }
+    href_ex = href.split('/');
+    return base_url + '/subjects/' + href_ex[(href_ex.length - 1)];
+}

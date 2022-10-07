@@ -1507,12 +1507,58 @@ var vc_common_map = Vue.component(
             if(!this.item_json){
                 return '';
             }
-            return (
+            let popup = (
                 `<dl class="row">
-                <dt class="col">Item</dt>
-                <dd class="col">${this.item_json.label}</dd>
+                <dt class="col-4">Item</dt>
+                <dd class="col-8">${this.item_json.label}</dd>
                 </dl>`
             );
+            if(!feature.hasOwnProperty('properties')){
+                return popup;
+            }
+            if(feature.properties.length < 1){
+                return popup;
+            }
+            let ref_url = null;
+            let ref_label = null;
+            let ref_type = null;
+            if(feature.properties.hasOwnProperty('reference_uri')){
+                ref_url = use_local_subjects_href(feature.properties.reference_uri, BASE_URL);
+            }
+            if(feature.properties.hasOwnProperty('reference_uri')){
+                ref_label = feature.properties.reference_label;
+            }
+            if(feature.properties.hasOwnProperty('reference_type')){
+                if(feature.properties.reference_type == 'specified'){
+                    popup += (
+                        `<dl class="row">
+                        <dt class="col-4">Location info source</dt>
+                        <dd class="col-8">Location information specified for this item</dd>
+                        </dl>`
+                    )
+                }
+                else if(ref_url && ref_label && feature.properties.reference_type == 'inferred'){
+                    popup += (
+                        `<dl class="row">
+                        <dt class="col-4">Location info source</dt>
+                        <dd class="col-8">Inferred from: <a target="_blank" href="${ref_url}">${ref_label}</a></dd>
+                        </dl>`
+                    )
+                }
+                else {
+
+                }
+            }
+            if(feature.properties.hasOwnProperty('location_region_note')){
+                let r_note = feature.properties.location_region_note;
+                popup += (
+                        `<dl class="row">
+                        <dt class="col-4">Location Note</dt>
+                        <dd class="col-8">${r_note}</dd>
+                        </dl>`
+                    )
+            }
+            return popup;
         },
         make_feature_popup(feature){
             if(this.map_type == 'generic' || !this.item_json){
