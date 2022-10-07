@@ -103,7 +103,7 @@
                 <div class="card-body">
                     <vc-predicates
                         :base_search_url="'/query'"
-                        v-bind:predicate_label="'{{ man_obj.label|safe }}'"
+                        v-bind:predicate_label="'{{ man_obj.label }}'"
                         v-bind:predicate_slug="'{{ man_obj.slug|safe }}'"
                         v-bind:predicate_class_slug="'{{ man_obj.item_class.slug|safe }}'"
                         v-bind:data_type="'{{ man_obj.data_type|safe }}'"
@@ -122,9 +122,9 @@
             <div class="card-body">
                 <types-examples
                     :base_search_url="'/query'"
-                    v-bind:predicate_label="'{{ man_obj.context.label|safe }}'"
+                    v-bind:predicate_label="'{{ man_obj.context.label }}'"
                     v-bind:predicate_slug="'{{ man_obj.context.slug|safe }}'"
-                    v-bind:type_label="'{{ man_obj.label|safe }}'"
+                    v-bind:type_label="'{{ man_obj.label}}'"
                     v-bind:type_slug="'{{ man_obj.slug|safe }}'"
                     v-bind:attribute_group_slugs="attribute_group_slugs"
                 ></types-examples>
@@ -163,11 +163,11 @@
 
         <vc-persons
             :base_search_url="'/query'"
-            v-bind:person_label="'{{ man_obj.label|safe }}'"
-            v-bind:person_slug="'{{ man_obj.slug|safe }}'"
-            v-bind:project_label="'{{ man_obj.project.label|safe }}'"
-            v-bind:project_slug="'{{ man_obj.project.slug|safe }}'"
-            v-bind:person_class_label="'{{ man_obj.item_class.label|safe }}'"
+            :person_label="'{{ man_obj.label }}'"
+            :person_slug="'{{ man_obj.slug|safe }}'"
+            :project_label="'{{ man_obj.project.label }}'"
+            :project_slug="'{{ man_obj.project.slug|safe }}'"
+           :person_class_label="'{{ man_obj.item_class.label }}'"
         ></vc-persons>
         {%endif%}
 
@@ -192,7 +192,7 @@
 
                     <vc-projects
                         :base_search_url="'/query'"
-                        v-bind:project_label="'{{ man_obj.label|safe }}'"
+                        v-bind:project_label="'{{ man_obj.label }}'"
                         v-bind:project_slug="'{{ man_obj.slug|safe }}'"
                     ></vc-projects>
 
@@ -282,6 +282,7 @@
         el: '#item-app',
         data: {
             uuid: ITEM_UUID,
+            item_obj: item_ison,
             human_remains_flagged: HUMAN_REMAINS_FLAGGED,
             human_remains_ok: HUMAN_REMAINS_OK,
             media_iiif_info: MEDIA_IIIF_INFO,
