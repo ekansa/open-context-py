@@ -357,7 +357,15 @@ div.subject-list-text {
 	max-height: 300px;
 	overflow-y: scroll;
 }
-
+.geo_f_item_row {
+	margin-bottom: 4px;
+}
+.geo_f_item_dt {
+	padding-right: 4px;
+}
+.geo_f_item_dd {
+	margin-left: 4px;
+}
 
 /*
 ---------------------------------------------------------

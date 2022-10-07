@@ -1507,17 +1507,19 @@ var vc_common_map = Vue.component(
             if(!this.item_json){
                 return '';
             }
+            let dt_class = 'geo_f_item_dt col-4';
+            let dd_class = 'geo_f_item_dd col';
             let popup = (
-                `<dl class="row">
-                <dt class="col-4">Item</dt>
-                <dd class="col-8">${this.item_json.label}</dd>
+                `<dl class="geo_f_item_row row">
+                <dt class="${dt_class}">Item</dt>
+                <dd class="${dd_class}">${this.item_json.label}</dd>
                 </dl>`
             );
             if(!feature.hasOwnProperty('properties')){
-                return popup;
+                return `<div class="container-fluid">${popup}</div>`;
             }
             if(feature.properties.length < 1){
-                return popup;
+                return `<div class="container-fluid">${popup}</div>`;
             }
             let ref_url = null;
             let ref_label = null;
@@ -1531,17 +1533,17 @@ var vc_common_map = Vue.component(
             if(feature.properties.hasOwnProperty('reference_type')){
                 if(feature.properties.reference_type == 'specified'){
                     popup += (
-                        `<dl class="row">
-                        <dt class="col-4">Location info source</dt>
-                        <dd class="col-8">Location information specified for this item</dd>
+                        `<dl class="geo_f_item_row row">
+                        <dt class="${dt_class}">Location info source</dt>
+                        <dd class="${dd_class}">Location information specified for this item</dd>
                         </dl>`
                     )
                 }
                 else if(ref_url && ref_label && feature.properties.reference_type == 'inferred'){
                     popup += (
-                        `<dl class="row">
-                        <dt class="col-4">Location info source</dt>
-                        <dd class="col-8">Inferred from: <a target="_blank" href="${ref_url}">${ref_label}</a></dd>
+                        `<dl class="geo_f_item_row row">
+                        <dt class="${dt_class}">Location info source</dt>
+                        <dd class="${dd_class}">Inferred from: <a target="_blank" href="${ref_url}">${ref_label}</a></dd>
                         </dl>`
                     )
                 }
@@ -1552,13 +1554,13 @@ var vc_common_map = Vue.component(
             if(feature.properties.hasOwnProperty('location_region_note')){
                 let r_note = feature.properties.location_region_note;
                 popup += (
-                        `<dl class="row">
-                        <dt class="col-4">Location Note</dt>
-                        <dd class="col-8">${r_note}</dd>
+                        `<dl class="geo_f_item_row row">
+                        <dt class="${dt_class}">Location note</dt>
+                        <dd class="${dd_class}">${r_note}</dd>
                         </dl>`
                     )
             }
-            return popup;
+            return `<div class="container-fluid">${popup}</div>`;
         },
         make_feature_popup(feature){
             if(this.map_type == 'generic' || !this.item_json){
