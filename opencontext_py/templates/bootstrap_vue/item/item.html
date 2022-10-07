@@ -103,9 +103,9 @@
                 <div class="card-body">
                     <vc-predicates
                         :base_search_url="'/query'"
-                        v-bind:predicate_label="'{{ man_obj.label }}'"
-                        v-bind:predicate_slug="'{{ man_obj.slug|safe }}'"
-                        v-bind:predicate_class_slug="'{{ man_obj.item_class.slug|safe }}'"
+                        v-bind:predicate_label="item_obj.label"
+                        v-bind:predicate_slug="item_obj.slug"
+                        v-bind:predicate_class_slug="item_obj.item_class__slug"
                         v-bind:data_type="'{{ man_obj.data_type|safe }}'"
                         v-bind:attribute_group_slugs="attribute_group_slugs"
                     ></vc-predicates>
@@ -124,8 +124,8 @@
                     :base_search_url="'/query'"
                     v-bind:predicate_label="'{{ man_obj.context.label }}'"
                     v-bind:predicate_slug="'{{ man_obj.context.slug|safe }}'"
-                    v-bind:type_label="'{{ man_obj.label}}'"
-                    v-bind:type_slug="'{{ man_obj.slug|safe }}'"
+                    v-bind:type_label="item_obj.label"
+                    v-bind:type_slug="item_obj.slug"
                     v-bind:attribute_group_slugs="attribute_group_slugs"
                 ></types-examples>
             </div>
@@ -163,11 +163,11 @@
 
         <vc-persons
             :base_search_url="'/query'"
-            :person_label="'{{ man_obj.label }}'"
-            :person_slug="'{{ man_obj.slug|safe }}'"
+            v-bind:person_label="item_obj.label"
+            v-bind:person_slug="item_obj.slug"
             :project_label="'{{ man_obj.project.label }}'"
             :project_slug="'{{ man_obj.project.slug|safe }}'"
-           :person_class_label="'{{ man_obj.item_class.label }}'"
+            v-bind:person_class_label="item_obj.item_class__label"
         ></vc-persons>
         {%endif%}
 
@@ -282,7 +282,7 @@
         el: '#item-app',
         data: {
             uuid: ITEM_UUID,
-            item_obj: item_ison,
+            item_obj: item_json,
             human_remains_flagged: HUMAN_REMAINS_FLAGGED,
             human_remains_ok: HUMAN_REMAINS_OK,
             media_iiif_info: MEDIA_IIIF_INFO,
