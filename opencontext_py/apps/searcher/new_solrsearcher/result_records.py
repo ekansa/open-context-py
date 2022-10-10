@@ -659,7 +659,7 @@ class ResultRecord():
                 break
             for nb in nice_breaks:
                 nb_suffix_pos = suffix.find(nb, find_start, find_end)
-                print(f'nb_suffix_pos: {nb_suffix_pos}, find_start {find_start}')
+                # print(f'nb_suffix_pos: {nb_suffix_pos}, find_start {find_start}')
                 if nb_suffix_pos < (pos_term_mark_post + 9):
                     continue
                 if nb_suffix_pos > find_start:
@@ -669,7 +669,7 @@ class ResultRecord():
                     break
             find_start += 10
             find_end = find_start + 75
-        print(f'pos_term_mark_post: {pos_term_mark_post}, last_suffix_pos {last_suffix_pos}')
+        # print(f'pos_term_mark_post: {pos_term_mark_post}, last_suffix_pos {last_suffix_pos}')
         if last_suffix_pos and last_suffix_pos > pos_term_mark_post:
             suffix = suffix[:last_suffix_pos]
         snippet = prefix + suffix
