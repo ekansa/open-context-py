@@ -111,13 +111,14 @@
         </b-tab>
 
         <b-tab 
-          title="Item Records"
           :id="tab_ids[3]"
           :key="tab_ids[3]"
           :disabled="!(result_count > 0)"
           @click="tab_clicked"
           >
-
+          <template #title>
+            <b-icon-table></b-icon-table> Item Records
+          </template>
           <div class="jumbotron jumbotron-fluid" v-if="loading">
             <div class="container-fluid text-muted text-center">
               <h1 class="display-4">Preparing data...</h1>
