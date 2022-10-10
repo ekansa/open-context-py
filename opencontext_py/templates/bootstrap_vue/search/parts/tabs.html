@@ -59,14 +59,22 @@
           :disabled="!chrono_facets"
           @click="tab_clicked"
           >
-          <b-card-text v-if="chrono_facets && tab == 1">
+          <div class="jumbotron jumbotron-fluid" v-if="loading">
+            <div class="container-fluid text-muted text-center">
+              <h1 class="display-4">Preparing data...</h1>
+              <b-spinner class="m-5" label="Busy"></b-spinner>
+            </div>
+          </div>
+          <b-card-text v-if="!loading && chrono_facets && tab == 1">
 
             <chronotiles
               :key="'chrono-tiles-component-' + route_key_index"
               v-bind:result_id="result.id"
+              v-bind:result_count="result_count"
               v-bind:chrono_facets="chrono_facets"></chronotiles>
 
           </b-card-text>
+          
         </b-tab>
 
 
@@ -78,7 +86,15 @@
           :disabled="disable_charts_tab"
           @click="tab_clicked"
           >
-          <b-card-text v-if="facets_numeric_groups_opts && tab == 2">
+
+          <div class="jumbotron jumbotron-fluid" v-if="loading">
+            <div class="container-fluid text-muted text-center">
+              <h1 class="display-4">Preparing data...</h1>
+              <b-spinner class="m-5" label="Busy"></b-spinner>
+            </div>
+          </div>
+
+          <b-card-text v-if="!loading && facets_numeric_groups_opts && tab == 2">
 
             <all-numeric-facets
               v-bind:route_key_index="route_key_index"
@@ -101,7 +117,15 @@
           :disabled="!(result_count > 0)"
           @click="tab_clicked"
           >
-          <b-card-text v-if="result_count > 0 && tab == 3">
+
+          <div class="jumbotron jumbotron-fluid" v-if="loading">
+            <div class="container-fluid text-muted text-center">
+              <h1 class="display-4">Preparing data...</h1>
+              <b-spinner class="m-5" label="Busy"></b-spinner>
+            </div>
+          </div>
+
+          <b-card-text v-if="!loading && result_count > 0 && tab == 3">
             <records-tab
               v-bind:frontend_state_obj="frontend_state_obj"
               v-bind:route_key_index="route_key_index"
@@ -143,6 +167,7 @@ var vc_all_search_tabs = Vue.component(
         'tab',
         'human_remains_ok',
         'geojson_record_layers',
+        'loading',
       ],
       template: '#all-search-tabs-temp',
       data() {
@@ -151,6 +176,7 @@ var vc_all_search_tabs = Vue.component(
           tabs_ref: 'search-tabs',
           result: null,
           emit_update_fetch_done: false,
+          loading: false,
           route_key_index: 0,
           tab: null,
           frontend_state_obj: {},

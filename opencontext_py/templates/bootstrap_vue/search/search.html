@@ -37,6 +37,7 @@
                         v-bind:frontend_state_obj="frontend_state_obj"
                         v-bind:human_remains_ok="human_remains_ok"
                         v-bind:geojson_record_layers="geojson_record_layers"
+                        v-bind:loading="loading"
                         @set_frontend_state_obj="set_frontend_state_obj($event)"
                     >
                     </all-search-tabs>
@@ -184,11 +185,12 @@
                         }
                     }
                 )
-                .then(this.loading = false)
+                .then(this.loading = true)
                 .then(response => response.json())
                 .then(json => {
                     this.result = json;
                     this.route_key_index += 1;
+                    this.loading = false;
                     if(this.result.hasOwnProperty('totalResults')){
                         if(this.result.totalResults > 0){
                             this.exporter_ok = true;

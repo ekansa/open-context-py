@@ -38,6 +38,7 @@
     <div class="card-header"> 
         <h5 class="filter_heading_labels">
             Time Ranges (Years BCE/CE)
+            <span v-if="result_count"> for [[ human_result_count ]] Records</span>
         </h5>
     </div>
         
@@ -257,10 +258,11 @@ var vc_chronotiles = Vue.component(
     'chronotiles',
     {
         delimiters: ['[[', ']]'],
-        props: ['result_id', 'chrono_facets', 'frontend_state_obj',],
+        props: ['result_id', 'result_count', 'chrono_facets', 'frontend_state_obj',],
         data() {
             return {
                 result_id: null,
+                result_count: null,
                 chrono_facets: null,
                 frontend_state_obj: null,
                 selected_gradient_key: CHRONO_DEFAULT_COLOR_GRADIENT_KEY,
@@ -433,6 +435,12 @@ var vc_chronotiles = Vue.component(
             this.make_all_data_series();
         },
         computed: {
+            human_result_count(){
+                if(!this.result_count){
+                    return 'No results';
+                }
+                return this.result_count.toLocaleString();
+            },
             options() {
                 if(!this.data_series || this.data_series.length < 1){
                     return this.default_options;
