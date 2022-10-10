@@ -36,14 +36,60 @@
                     <i alt="Search Icon" class="bi-search"></i>
                 </b-button>
             </template>
-
         </vue-bootstrap-typeahead>
+        <oc-search-modal
+            v-if="top_nav"
+            v-bind:query="query"
+        ></oc-search-modal>
     </form>
 </template>
 
 
+<template id="oc_search_modal">
+    <b-modal
+        size="md"
+        ref="oc-main-fulltext-modal"
+        id="oc-main-fulltext-modal"
+        hide-header="true"
+        hide-footer="true"
+        @shown="on_shown"
+        @close="on_close"
+    >
+        <b-alert show variant="info">
+            <b-row align-v="center">
+                <b-col>Searching Open Context for:<br/><em>[[ query ]]</em></b-col>
+                <b-col cols="3"><b-spinner style="width: 3rem; height: 3rem;" label="Large Spinner"></b-spinner></b-col>
+            </b-row>
+        </b-alert>
+    </b-modal>
+</template>
+
 <script type="text/javascript">
 
+
+var vc_oc_seach_modal = Vue.component(
+    'oc-search-modal',
+    {
+        delimiters: ['[[', ']]'],
+        template: '#oc_search_modal',
+        props: [
+            'query',
+        ],
+        data() {
+            return {
+                query: '',
+            };
+        },
+        methods: {
+            on_shown: function() {
+                return null;
+            },
+            on_close: function() {
+                return null;
+            },
+        },
+    }
+);
 
 var vc_typeahead = Vue.component('vue-bootstrap-typeahead', VueBootstrapTypeahead);
 var vc_oc_seach_typeahead = Vue.component(
@@ -168,6 +214,7 @@ var vc_oc_seach_typeahead = Vue.component(
                     router.push(url);
                 }
                 else{
+                    this.$bvModal.show('oc-main-fulltext-modal');
                     console.log('search no router: ' + url);
                     window.open(url, '_self');
                 }
@@ -220,6 +267,7 @@ var vc_oc_seach_typeahead = Vue.component(
         },
         components: {
             VueBootstrapTypeahead,
+            'oc-search-modal': vc_oc_seach_modal,
         },
     }
 );
