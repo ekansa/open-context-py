@@ -114,8 +114,15 @@ class ResultFacetsStandard():
         # Put the last label in parentheses.
         labels[-1] = '({})'.format(labels[-1])
         facet['label'] = ' '.join(labels)
-        facet['rdfs:isDefinedBy'] = rep_utils.make_web_url(items[0])
-        facet['slug'] = items[0].slug
+        if range_data_type is None:
+            facet['rdfs:isDefinedBy'] = rep_utils.make_web_url(items[0])
+            facet['slug'] = items[0].slug
+        else:
+            # The final item is the one we want for a definition range facets, because
+            # this item defines the most specific attribute that we're getting 
+            # ranges for.
+            facet['rdfs:isDefinedBy'] = rep_utils.make_web_url(items[-1])
+            facet['slug'] = items[-1].slug
         facet['type'] = facet_type
         if range_data_type:
             facet['data-type'] = range_data_type
