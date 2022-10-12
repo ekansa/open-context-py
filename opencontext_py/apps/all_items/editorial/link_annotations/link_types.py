@@ -14,6 +14,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.editorial.item import updater_assertions
 from opencontext_py.apps.all_items.editorial.link_annotations import utilities
 
+from opencontext_py.apps.all_items.representations import rep_utils
 
 """
 Example use.
@@ -411,3 +412,96 @@ def make_new_types_ld_assertions_from_csv(csv_path, source_id=DEFAULT_SOURCE_ID)
     assert_rows = df[ok_indx].to_dict('records')
     added, errors = make_new_types_ld_assertions(assert_rows, source_id=source_id)
     return added, errors
+
+
+def get_vocab_concepts_equiv_types(vocab_man_obj):
+    """Gets concepts in a vocabulary and any equivalent project types
+    
+    :param AllManifest vocab_man_obj: An AllManifest object instance
+        of a vocabulary where we want to list concepts used in Open 
+        Context and equivalent types for different projects.
+    
+    return list (rows)
+    """
+    vocab_man_qs = AllManifest.objects.filter(
+        context=vocab_man_obj,
+    ).order_by(
+        'label'
+    )
+    rows = []
+    for class_man_obj in vocab_man_qs:
+        row_start = {
+            'concept_label': class_man_obj.label,
+            'concept_uuid': str(class_man_obj.uuid),
+            'concept_uri': rep_utils.make_web_url(class_man_obj),
+        }
+        equiv_qs = AllManifest.objects.filter(
+            Q(
+                uuid__in=AllAssertion.objects.filter(
+                    object__item_type='types',
+                    predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+                    subject=class_man_obj,
+                ).values_list(
+                    'object_id', 
+                    flat=True
+                )
+            )|Q(
+                uuid__in=AllAssertion.objects.filter(
+                    subject__item_type='types',
+                    predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+                    object=class_man_obj,
+                ).values_list(
+                    'subject_id', 
+                    flat=True
+                )
+            )
+        ).select_related(
+            'project'
+        ).order_by(
+            'label',
+            'project__label',
+        )
+        if equiv_qs.count() < 1:
+            rows.append(row_start)
+            continue
+        for equiv_obj in equiv_qs:
+            row = copy.deepcopy(row_start)
+            row['equiv_type_label'] = equiv_obj.label
+            row['equiv_type_uuid'] = str(equiv_obj.uuid)
+            row['equiv_type_project'] = equiv_obj.project.label
+            row['equiv_type_project_slug'] = equiv_obj.project.slug
+            rows.append(row)
+    return rows
+
+
+def make_csv_suggest_linked_data_equiv_for_predicate_types(
+    csv_path,
+    vocab_man_obj=None,
+    vocab_uuid=None,
+    vocab_uri=None,
+):
+    """Suggests lists of linked data AllManifest object equivalent to AllManifest
+    item_type='types' used with a predicate_obj based on existing data.
+    
+    :param str csv_path: A directory path to save a CSV of the suggested equivalents
+    :param AllManifest vocab_man_obj: An AllManifest object instance
+        of a vocabulary where we want to list concepts used in Open 
+        Context and equivalent types for different projects.
+    :param str(uuid) vocab_uuid: A uuid to identify the vocab_man_obj if a
+       vocab_man_obj is not passed.
+    :param str vocab_uri: A uri to identify the vocab_man_obj if a
+       vocab_man_obj is not passed.
+
+    returns DataFrame
+    """
+    if not vocab_man_obj:
+        vocab_man_obj = utilities.get_manifest_object_by_uuid_or_uri(
+            uuid=vocab_uuid,
+            uri=vocab_uri,
+        )
+    if not vocab_man_obj:
+        raise ValueError('Must have a vocab_man_obj')
+    rows = get_vocab_concepts_equiv_types(vocab_man_obj)
+    df = pd.DataFrame(data=rows)
+    df.to_csv(csv_path, index=False)
+    return df
