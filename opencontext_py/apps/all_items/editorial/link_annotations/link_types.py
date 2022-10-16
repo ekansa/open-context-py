@@ -16,6 +16,8 @@ from opencontext_py.apps.all_items.editorial.link_annotations import utilities
 
 from opencontext_py.apps.all_items.representations import rep_utils
 
+from opencontext_py.apps.linkdata.getty_aat import data as aat_data
+
 """
 Example use.
 
@@ -54,24 +56,24 @@ def most_frequent(act_list):
 
 
 def get_existing_equiv_concepts(
-    concept_man_obj, 
+    concept_man_obj,
     equiv_item_type='predicates',
     equiv_item_contexts=None,
     skip_equiv_obj=None
 ):
-    """Makes a list of Manifest objects that are equivalent to the 
+    """Makes a list of Manifest objects that are equivalent to the
     concept_man_obj
-    
+
     :param AllManifest concept_man_obj: An AllManifest object instance
-        for which we want to query for a list of semantically equivalent 
+        for which we want to query for a list of semantically equivalent
         (or nearly equivalent) AllManifest objects
-    :param str equiv_item_type: Limit the AllManifest item_type for 
+    :param str equiv_item_type: Limit the AllManifest item_type for
         equivalent AllManifest objects
-    :param list equiv_item_contexts: A list of AllManifest contexts for 
+    :param list equiv_item_contexts: A list of AllManifest contexts for
         equivalent AllManifest objects
     param AllManifest skip_equiv_obj: Do NOT include this AllManifest
         object in the equivalent list.
-    
+
     return list (of AllManifest objects)
     """
     equiv_subj_qs = AllAssertion.objects.filter(
@@ -105,12 +107,12 @@ def get_existing_equiv_concepts(
 
 def get_ld_equiv_objs_for_types_in_pred_list_context(
     match_label,
-    pred_list_context, 
+    pred_list_context,
     types_equiv_vocab_objs=None,
 ):
     """Makes a list of linked data AllManifest object equivalent to AllManifest
     item_type='types' that match a match_label
-    
+
     :param str match_label: A label to match (case-insensitive) against
         other AllManifest item_type='types' or labels for linked data
         AllManifest items.
@@ -118,7 +120,7 @@ def get_ld_equiv_objs_for_types_in_pred_list_context(
         contexts to search for item_type='types' records with matching labels
     :param list types_equiv_vocab_objs:  A list of AllManifest item_type='vocabularies'
         that limit what equivalent linked data objects this will return
-    
+
     returns list (of AllManifest objects)
     """
     equiv_ld_objs = {}
@@ -151,6 +153,9 @@ def get_ld_equiv_objs_for_types_in_pred_list_context(
     ).select_related(
         'object'
     )
+    if '::' in match_label:
+        m_ex = match_label.split('::')
+        match_label = m_ex[-1]
     equiv_qs = equiv_qs.filter(
         Q(subject__label__iexact=match_label)|Q(object__label__iexact=match_label)
     )
@@ -171,19 +176,19 @@ def suggest_linked_data_equiv_for_predicate_types(
 ):
     """Suggests lists of linked data AllManifest object equivalent to AllManifest
     item_type='types' used with a predicate_obj based on existing data.
-    
+
     :param AllManifest predicate_obj: An AllManifest item_type='predicates' instance
         that is the context for item_type='types' records that we want to associate
         with suggested linked data equivalents.
     :param AllManifest concept_man_obj: An AllManifest object instance
-        for which we want to query for a list of semantically equivalent 
+        for which we want to query for a list of semantically equivalent
         (or nearly equivalent) AllManifest objects
     :param list types_equiv_vocab_objs:  A list of AllManifest item_type='vocabularies'
         that limit what equivalent linked data objects this will return
     :param AllManifest default_equiv_pred_obj:  An AllManifest item_type='property'
         to be used as a predicate linking AllManifest item_type='types' instances with
         linked data entities
-    
+
     returns list (of dicts conforming to updater_assertions expectations)
 
     """
@@ -191,13 +196,13 @@ def suggest_linked_data_equiv_for_predicate_types(
         # Default to the SKOS close match predicate for an equivalence relation.
         default_equiv_pred_obj = AllManifest.objects.get(uuid=configs.PREDICATE_SKOS_CLOSE_MATCH_UUID)
     preds_equiv_to_concept = get_existing_equiv_concepts(
-        concept_man_obj=concept_man_obj, 
+        concept_man_obj=concept_man_obj,
         equiv_item_type='predicates',
         equiv_item_contexts=None,
         skip_equiv_obj=predicate_obj,
     )
     pred_types = AllManifest.objects.filter(
-        context=predicate_obj, 
+        context=predicate_obj,
         item_type='types',
     ).order_by(
         'sort'
@@ -206,7 +211,7 @@ def suggest_linked_data_equiv_for_predicate_types(
     for type_obj in pred_types:
         equiv_ld_objs = get_ld_equiv_objs_for_types_in_pred_list_context(
             match_label=type_obj.label,
-            pred_list_context=preds_equiv_to_concept, 
+            pred_list_context=preds_equiv_to_concept,
             types_equiv_vocab_objs=types_equiv_vocab_objs,
         )
         print(f'Type: {type_obj.label} ({str(type_obj.uuid)}) has {len(equiv_ld_objs)} equivalent concepts')
@@ -230,13 +235,15 @@ def suggest_linked_data_equiv_for_predicate_types(
 def is_valid_and_new_types_ld_assertion_row(row):
     """Checks if an assertion relating an AllManifest item_type='types' object
     to a linked data object would be both valid and new.
-    
+
     :param dict row: A row with assertion information to associate a subject of
         AllManifest.item_type = 'types' with an object that is an AllManifest
         linked data instance
-    
+
     returns row (if valid and new)
     """
+    for col in ['subject_id', 'predicate_id', 'object_id']:
+        row[col] = row[col].strip()
     type_obj = utilities.get_manifest_object_by_uuid_or_uri(
         uuid=row.get('subject_id'),
         uri=row.get('subject_uri'),
@@ -287,17 +294,17 @@ def is_valid_and_new_types_ld_assertion_row(row):
     row['object_id'] = str(ld_obj.uuid)
     # This assertion would be valid and new
     return row
-    
+
 
 def make_new_types_ld_assertions(assert_rows, source_id=DEFAULT_SOURCE_ID):
     """Makes new assertions to associate AllManifest types items with Linked Data entities
 
-    :param list assert_rows: A list of dicts that meet the expectations of the 
-        updater_assertions.add_assertions and are valid for 
+    :param list assert_rows: A list of dicts that meet the expectations of the
+        updater_assertions.add_assertions and are valid for
         AllManifest types items with Linked Data entities associations.
     :param str source_id: A source_id for tracking the source of AllAssertions that may
         be created
-    
+
     returns added, errors
     """
     ok_new_rows = []
@@ -330,7 +337,7 @@ def make_csv_suggest_linked_data_equiv_for_predicate_types(
 ):
     """Suggests lists of linked data AllManifest object equivalent to AllManifest
     item_type='types' used with a predicate_obj based on existing data.
-    
+
     :param str csv_path: A directory path to save a CSV of the suggested equivalents
     :param AllManifest predicate_obj: An AllManifest item_type='predicates' instance
         that is the context for item_type='types' records that we want to associate
@@ -338,7 +345,7 @@ def make_csv_suggest_linked_data_equiv_for_predicate_types(
     :param str(uuid) predicate_uuid: A uuid to identifier the predicate_obj if a
         predicate_obj is not passed.
     :param AllManifest concept_man_obj: An AllManifest object instance
-        for which we want to query for a list of semantically equivalent 
+        for which we want to query for a list of semantically equivalent
         (or nearly equivalent) AllManifest objects
     :param str(uuid) concept_uuid: A uuid to identifier the concept_man_obj if a
         concept_man_obj is not passed.
@@ -346,7 +353,7 @@ def make_csv_suggest_linked_data_equiv_for_predicate_types(
         concept_man_obj is not passed.
     :param list types_equiv_vocab_objs:  A list of AllManifest item_type='vocabularies'
         that limit what equivalent linked data objects this will return
-    :param list types_equiv_vocab_uris:  A list of uris to identify 
+    :param list types_equiv_vocab_uris:  A list of uris to identify
         types_equiv_vocab_objs if types_equiv_vocab_objs is not passed.
     :param AllManifest default_equiv_pred_obj:  An AllManifest item_type='property'
         to be used as a predicate linking AllManifest item_type='types' instances with
@@ -393,6 +400,32 @@ def make_csv_suggest_linked_data_equiv_for_predicate_types(
     return df
 
 
+def add_missing_getty_aat_entities_from_df(
+    df,
+    object_id_col='object_id',
+    object_uri_col='object_uri'
+):
+    if not set([object_id_col, object_uri_col]).issubset(set(df.columns.tolist())):
+        # We don't have the required columns to update
+        return df
+    missing_getty_idx = (
+        (df[object_id_col].isnull()|(df[object_id_col]==''))
+        & df[object_uri_col].str.contains('vocab.getty.edu/aat/')
+    )
+    if df[missing_getty_idx].empty:
+        return df
+    for _, row in df[missing_getty_idx].iterrows():
+        aat_uri = AllManifest().clean_uri(row[object_uri_col])
+        aat_obj = aat_data.add_get_aat_manifest_obj_and_hierarchy(aat_uri)
+        if not aat_obj:
+            print(f'FAILED to get or make {aat_uri}')
+            continue
+        act_index = df[object_uri_col] == row[object_uri_col]
+        df.loc[act_index, object_id_col] = str(aat_obj.uuid)
+        print(f'Added ID for {aat_obj.label} ({str(aat_obj.uuid)}): {aat_uri}')
+    return df
+
+
 def make_new_types_ld_assertions_from_csv(csv_path, source_id=DEFAULT_SOURCE_ID):
     """Makes new assertions to associate AllManifest types items with Linked Data entities
     from data in a CSV file
@@ -400,10 +433,11 @@ def make_new_types_ld_assertions_from_csv(csv_path, source_id=DEFAULT_SOURCE_ID)
     :param str csv_path: A directory path to load CSV data of the suggested equivalents
     :param str source_id: A source_id for tracking the source of AllAssertions that may
         be created
-    
+
     returns added, errors
     """
     df = pd.read_csv(csv_path)
+    df = add_missing_getty_aat_entities_from_df(df)
     ok_indx = (
         ~df['subject_id'].isnull()
         & ~df['predicate_id'].isnull()
@@ -416,11 +450,11 @@ def make_new_types_ld_assertions_from_csv(csv_path, source_id=DEFAULT_SOURCE_ID)
 
 def get_vocab_concepts_equiv_types(vocab_man_obj):
     """Gets concepts in a vocabulary and any equivalent project types
-    
+
     :param AllManifest vocab_man_obj: An AllManifest object instance
-        of a vocabulary where we want to list concepts used in Open 
+        of a vocabulary where we want to list concepts used in Open
         Context and equivalent types for different projects.
-    
+
     return list (rows)
     """
     vocab_man_qs = AllManifest.objects.filter(
@@ -430,10 +464,25 @@ def get_vocab_concepts_equiv_types(vocab_man_obj):
     )
     rows = []
     for class_man_obj in vocab_man_qs:
+        parent_label = None
+        parent_uuid = None
+        parent_uri = None
+        parent_assert_obj = AllAssertion.objects.filter(
+            subject=class_man_obj,
+            predicate_id=configs.PREDICATE_SKOS_BROADER_UUID,
+            visible=1,
+        ).first()
+        if parent_assert_obj:
+            parent_label = parent_assert_obj.object.label
+            parent_uuid = str(parent_assert_obj.object.uuid)
+            parent_uri = rep_utils.make_web_url(parent_assert_obj.object)
         row_start = {
             'concept_label': class_man_obj.label,
-            'concept_uuid': str(class_man_obj.uuid),
+            'concept_id': str(class_man_obj.uuid),
             'concept_uri': rep_utils.make_web_url(class_man_obj),
+            'parent_concept_label': parent_label,
+            'parent_concept_id': parent_uuid,
+            'parent_concept_uri': parent_uri,
         }
         equiv_qs = AllManifest.objects.filter(
             Q(
@@ -442,7 +491,7 @@ def get_vocab_concepts_equiv_types(vocab_man_obj):
                     predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
                     subject=class_man_obj,
                 ).values_list(
-                    'object_id', 
+                    'object_id',
                     flat=True
                 )
             )|Q(
@@ -451,7 +500,7 @@ def get_vocab_concepts_equiv_types(vocab_man_obj):
                     predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
                     object=class_man_obj,
                 ).values_list(
-                    'subject_id', 
+                    'subject_id',
                     flat=True
                 )
             )
@@ -467,14 +516,14 @@ def get_vocab_concepts_equiv_types(vocab_man_obj):
         for equiv_obj in equiv_qs:
             row = copy.deepcopy(row_start)
             row['equiv_type_label'] = equiv_obj.label
-            row['equiv_type_uuid'] = str(equiv_obj.uuid)
+            row['equiv_type_id'] = str(equiv_obj.uuid)
             row['equiv_type_project'] = equiv_obj.project.label
             row['equiv_type_project_slug'] = equiv_obj.project.slug
             rows.append(row)
     return rows
 
 
-def make_csv_suggest_linked_data_equiv_for_predicate_types(
+def make_csv_vocab_and_equiv_types(
     csv_path,
     vocab_man_obj=None,
     vocab_uuid=None,
@@ -482,10 +531,10 @@ def make_csv_suggest_linked_data_equiv_for_predicate_types(
 ):
     """Suggests lists of linked data AllManifest object equivalent to AllManifest
     item_type='types' used with a predicate_obj based on existing data.
-    
+
     :param str csv_path: A directory path to save a CSV of the suggested equivalents
     :param AllManifest vocab_man_obj: An AllManifest object instance
-        of a vocabulary where we want to list concepts used in Open 
+        of a vocabulary where we want to list concepts used in Open
         Context and equivalent types for different projects.
     :param str(uuid) vocab_uuid: A uuid to identify the vocab_man_obj if a
        vocab_man_obj is not passed.
