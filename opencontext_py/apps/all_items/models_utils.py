@@ -25,9 +25,9 @@ DEFAULT_LABEL_SORT_LEN = 9
 # Generally used validation functions
 # ---------------------------------------------------------------------
 def validate_related_manifest_item_type(
-    man_obj, 
-    allowed_types, 
-    obj_role, 
+    man_obj,
+    allowed_types,
+    obj_role,
     raise_on_fail=True
 ):
     if not isinstance(allowed_types, list):
@@ -44,8 +44,8 @@ def validate_related_manifest_item_type(
 
 def validate_related_project(project_obj, raise_on_fail=True):
     return validate_related_manifest_item_type(
-        man_obj=project_obj, 
-        allowed_types=['projects'], 
+        man_obj=project_obj,
+        allowed_types=['projects'],
         obj_role='project',
         raise_on_fail=raise_on_fail
     )
@@ -64,7 +64,7 @@ def web_protocol_check(uri):
         try:
             r = requests.head(check_uri)
             if (
-                (r.status_code == requests.codes.ok) 
+                (r.status_code == requests.codes.ok)
                 or
                 (r.status_code >= 300 and r.status_code <= 310)
             ):
@@ -180,7 +180,7 @@ def make_label_sort_val(raw_label):
         # Now bring together the part_sort_parts
         part_sort = ''.join(part_sort_parts)
         sorts.append(part_sort)
-    # Now do the final  
+    # Now do the final
     final_sort = []
     for sort_part in sorts:
         sort_part = str(sort_part)
@@ -188,7 +188,7 @@ def make_label_sort_val(raw_label):
             sort_part = sort_part[:DEFAULT_LABEL_SORT_LEN]
         elif len(sort_part) < DEFAULT_LABEL_SORT_LEN:
             sort_part = prepend_zeros(
-                sort_part, 
+                sort_part,
                 DEFAULT_LABEL_SORT_LEN
             )
         final_sort.append(sort_part)
@@ -214,7 +214,7 @@ def get_project_short_id(project_id, not_found_default=0):
 
 def suggest_project_short_id():
     """Suggests a project short id, not already in use"""
-    
+
     # Import here to avoid circular imports.
     from opencontext_py.apps.all_items.models import AllManifest
 
@@ -238,15 +238,15 @@ def suggest_project_short_id():
 
 
 def make_sort_label(
-    label, 
-    item_type, 
-    project_id, 
-    item_type_list, 
+    label,
+    item_type,
+    project_id,
+    item_type_list,
     short_id=None
 ):
     """Makes a sort value for a record as a numeric string"""
     sort_parts = []
-    if item_type not in item_type_list: 
+    if item_type not in item_type_list:
         item_type_num = len(item_type_list)
     else:
         item_type_num = item_type_list.index(item_type)
@@ -291,7 +291,7 @@ def make_slug_from_uri(uri):
         if not uri.startswith(bad_prefix):
             continue
         uri = uri[len(bad_prefix):]
-    
+
     # Now look for uri_roots to convert to a slug prefix based on
     # configuration.
     for uri_root, slug_prefix in configs.LINKED_DATA_URI_PREFIX_TO_SLUGS.items():
@@ -300,7 +300,7 @@ def make_slug_from_uri(uri):
         # Replace the uri_root with the slug prefix.
         uri = slug_prefix + uri[len(uri_root):]
         break
-    
+
     replaces = [
         ('/', '-',),
         ('.', '-',),
@@ -329,10 +329,10 @@ def make_uri_for_oc_item_types(uuid, item_type):
 
 
 def make_manifest_slug(
-    label, 
-    item_type, 
-    uri, 
-    project_id, 
+    label,
+    item_type,
+    uri,
+    project_id,
     short_id=None
 ):
     """Makes a sort value for a record as a numeric string"""
@@ -350,7 +350,7 @@ def make_manifest_slug(
         # for open context item types or item types for
         # 'nodes' in assertions.
         raw_slug = make_slug_from_label(
-            label, 
+            label,
             project_id,
             short_id=short_id
         )
@@ -366,7 +366,7 @@ def make_manifest_slug(
         else:
             keep_trimming = False
             break
-    
+
     if raw_slug == '-' or not len(raw_slug):
         # Slugs are not a dash or are empty
         raw_slug = 'x'
@@ -411,14 +411,14 @@ def get_immediate_concept_parent_objs_db(child_obj):
     from opencontext_py.apps.all_items.models import AllAssertion
 
     subj_super_qs = AllAssertion.objects.filter(
-        object=child_obj,
+        object_id=child_obj.uuid,
         predicate_id__in=(
             configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
             + configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
         ),
     )
     subj_subord_qs = AllAssertion.objects.filter(
-        subject=child_obj,
+        subject_id=child_obj.uuid,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
     )
     all_parents = [a.subject for a in subj_super_qs]
@@ -452,7 +452,7 @@ def get_immediate_context_parent_obj_db(child_obj):
     """Get the immediate (spatial) context parent of a child_obj"""
     # Import here to avoid circular imports.
     from opencontext_py.apps.all_items.models import AllAssertion
-    
+
     p_assert = AllAssertion.objects.filter(
         predicate_id=configs.PREDICATE_CONTAINS_UUID,
         object=child_obj
@@ -469,7 +469,7 @@ def get_immediate_context_children_objs_db(parent_obj):
     from opencontext_py.apps.all_items.models import AllAssertion
 
     return [
-        a.object 
+        a.object
         for a in AllAssertion.objects.filter(
             subject=parent_obj,
             predicate_id=configs.PREDICATE_CONTAINS_UUID,
@@ -554,9 +554,9 @@ def get_immediate_context_children_obs(parent_obj, use_cache=True):
 
 
 def check_if_obj_is_concept_parent(
-    is_a_parent_obj, 
-    of_obj, 
-    use_cache=True, 
+    is_a_parent_obj,
+    of_obj,
+    use_cache=True,
     max_depth=configs.MAX_HIERARCHY_DEPTH
 ):
     """Checks if is_a_parent_obj is a parent of the of_obj"""
@@ -568,15 +568,15 @@ def check_if_obj_is_concept_parent(
         for check_obj in check_objs:
             # Add to the list of all the parents.
             parent_objs += get_immediate_concept_parent_objs(
-                child_obj=check_obj, 
+                child_obj=check_obj,
                 use_cache=use_cache
             )
         # Consolidate so to parent objs are unique.
-        check_objs = list(set(parent_objs)) 
+        check_objs = list(set(parent_objs))
         for check_obj in check_objs:
             if check_obj == is_a_parent_obj:
                return True
-    
+
     if i > max_depth:
         raise ValueError(
             f'Object {child_obj.uuid} too deep in hierarchy'
@@ -604,7 +604,7 @@ def validate_context_subject_objects(subject_obj, object_obj):
 
 
 def validate_context_assertion(
-    subject_obj, 
+    subject_obj,
     object_obj,
     max_depth=configs.MAX_HIERARCHY_DEPTH
 ):
@@ -612,7 +612,7 @@ def validate_context_assertion(
     validate_context_subject_objects(subject_obj, object_obj)
 
     obj_parent = get_immediate_context_parent_obj(
-        child_obj=object_obj, 
+        child_obj=object_obj,
         use_cache=False
     )
     if obj_parent and obj_parent != subject_obj:
@@ -627,7 +627,7 @@ def validate_context_assertion(
     while i <= max_depth and subj_parent is not None:
         i += 1
         subj_parent = get_immediate_context_parent_obj(
-            child_obj=subj_parent, 
+            child_obj=subj_parent,
             use_cache=False
         )
         if subj_parent == object_obj:
@@ -649,8 +649,8 @@ def validate_context_assertion(
 
 
 def validate_hierarchy_assertion(
-    subject_obj, 
-    predicate_obj, 
+    subject_obj,
+    predicate_obj,
     object_obj,
     max_depth=configs.MAX_HIERARCHY_DEPTH,
     use_cache=False,
@@ -675,15 +675,15 @@ def validate_hierarchy_assertion(
     if predicate_uuid in configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ:
         # Spatial context relations only allowed between item_type 'subjects'
         validate_context_subject_objects(subject_obj, object_obj)
-    
+
     if predicate_uuid == configs.PREDICATE_CONTAINS_UUID:
         # Do a special spatial context check.
         return validate_context_assertion(
-            subject_obj, 
+            subject_obj,
             object_obj,
             max_depth=max_depth
         )
-    
+
     # Everything below is to validate concept hierarchies.
     if predicate_uuid in configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ:
         # The subject item is subordinate to the object (parent) item.
@@ -695,17 +695,17 @@ def validate_hierarchy_assertion(
         # secondary spatial context PREDICATE_ALSO_CONTAINS_UUID
         parent_obj = subject_obj
         child_obj = object_obj
-    
+
     # Check to see if this would be a circular hierarchy. A circular
-    # hierarchy would happen if the child_obj happens to be a 
+    # hierarchy would happen if the child_obj happens to be a
     # parent concept of the parent_obj.
     is_circular = check_if_obj_is_concept_parent(
-        is_a_parent_obj=child_obj, 
-        of_obj=parent_obj, 
-        use_cache=use_cache, 
+        is_a_parent_obj=child_obj,
+        of_obj=parent_obj,
+        use_cache=use_cache,
         max_depth= max_depth
     )
-    if is_circular: 
+    if is_circular:
         raise ValueError(
             'Circular hierarchy error. '
             f'(Child) object {child_obj.uuid}: {child_obj.label} is a '
@@ -753,14 +753,14 @@ def get_media_type_obj(uri, raw_media_type):
 
     # Import here to avoid circular imports.
     from opencontext_py.apps.all_items.models import AllManifest
-    
+
     media_type_qs = AllManifest.objects.filter(
         item_type='media-types'
     )
     if raw_media_type:
         media_type_obj = media_type_qs.filter(
                 Q(meta_json__template=raw_media_type)
-                | 
+                |
                 Q(item_key=f'media-type:{raw_media_type}')
             ).first()
         return media_type_obj
@@ -797,7 +797,7 @@ def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='htt
         uri = protocol + uri
         r = requests.head(uri)
         if (
-            (r.status_code == requests.codes.ok) 
+            (r.status_code == requests.codes.ok)
             or
             (redirect_ok and r.status_code >= 300 and r.status_code <= 310)
         ):
@@ -810,7 +810,7 @@ def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='htt
             output['mediatype'] = get_media_type_obj(uri, raw_media_type)
     except:
         pass
-    
+
     if retry and not output.get('filesize'):
         output = get_web_resource_head_info(
             uri,

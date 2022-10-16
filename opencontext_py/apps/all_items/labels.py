@@ -25,12 +25,12 @@ def get_other_label_assertions_db(man_obj, use_cache=True, filters=None):
     """Gets Assertions about alternative labels via a database query
     """
     a_qs = AllAssertion.objects.filter(
-        subject=man_obj,
+        subject_id=man_obj.uuid,
         predicate_id__in=LABEL_PREDICATE_IDS
     ).order_by(
         # This basically makes the alt-label the last of all the alternate
         # labels to be returned.
-        '-predicate__slug', 
+        '-predicate__slug',
         'sort'
     )
     if filters:
