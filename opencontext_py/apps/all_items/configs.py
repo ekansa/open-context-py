@@ -16,7 +16,7 @@ OC_URI_ROOT = 'opencontext.org'
 # These are the types of data records that Open Context publishes and
 # indexes for search and querying.
 OC_ITEM_TYPES = [
-    'projects', 
+    'projects',
     'tables',
     'subjects',
     'media',
@@ -40,7 +40,7 @@ URI_CONTEXT_PREFIX_ITEM_TYPES = [
 ]
 
 URI_ITEM_TYPES = (
-    ['publishers', 'vocabularies'] 
+    ['publishers', 'vocabularies']
     + URI_CONTEXT_PREFIX_ITEM_TYPES
 )
 
@@ -101,7 +101,7 @@ MANIFEST_META_JSON_KEYS = {
     ('media', 'view_group_id', int,),
     ('media', 'edit_group_id', int,),
     ('media', 'flag_human_remains', bool,),
-    
+
     ('documents', 'edit_status', int,),
     ('documents', 'view_group_id', int,),
     ('documents', 'edit_group_id', int,),
@@ -119,7 +119,7 @@ MANIFEST_META_JSON_KEYS = {
     ('class', 'flag_human_remains', bool,),
     ('property', 'flag_human_remains', bool,),
     ('uri', 'flag_human_remains', bool,),
-    
+
     # Persons related metadata keys.
     ('persons', 'combined_name', str,),
     ('persons', 'surname', str,),
@@ -171,7 +171,7 @@ CLASS_LIST_OC_PREDICATES = [
 # Item types that can objects of a linking predicate (with
 # CLASS_OC_LINKS_UUID) assertions
 OC_PRED_LINK_OK_ITEM_TYPES = [
-    'projects', 
+    'projects',
     'tables',
     'subjects',
     'media',
@@ -261,7 +261,7 @@ OC_RESOURCE_TYPES_UUIDS = [
 
 # OC-General default event type. This is essentially a vague
 # defined location of discovery/deposition, combined with
-# a vaguely specified time span for then something was 
+# a vaguely specified time span for then something was
 # formed, used, or was alive. More specific even types can be
 # modeled, but this default is necessarily unspecific and vague.
 OC_EVENT_TYPE_GENERAL_UUID = '00000000-6e24-336d-3531-54f40f2dcce0'
@@ -513,7 +513,6 @@ DEFAULT_ATTRIBUTE_GROUP_DICT = {
 }
 
 
-
 DEFAULT_NULL_OBJECT_UUID = '00000000-0000-0000-0000-000000000006'
 DEFAULT_NULL_STRING_UUID = '00000000-cdd8-bc9b-1985-c3babee8ea6c'
 
@@ -571,7 +570,7 @@ CLASS_LIST_OC_MEDIA = [
 ]
 
 # --------------------------------------------------------------------
-# 
+#
 # BELOW MORE Identifiers to core linked data vocabularies.
 #
 # --------------------------------------------------------------------
@@ -821,8 +820,30 @@ LANG_ZH_UUID = '00000000-75e9-6824-9448-fee92cff43b9'  # Chinese
 # Default language to be English, overwrite this to change.
 DEFAULT_LANG_UUID = LANG_EN_UUID
 
+DEFAULT_LANGUAGE_DICT = {
+    'uuid': LANG_EN_UUID,
+    'publisher_id': WIKIPEDIA_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'languages',
+    'data_type': 'id',
+    'slug': 'lang-english',
+    'label': 'English',
+    'uri': 'https://www.wikidata.org/wiki/Q1860',
+    'item_key': 'en',
+    'context_id': WIKIDATA_VOCAB_UUID,
+    'meta_json': {
+        'label_localized': 'English',
+        'script_code': 'la',
+        'iso_639_3_code': 'eng',
+    }
+}
+
+
+
 # Units of Measurement (Use Wikidata for URIs for Units of Measurement)
-# NOTE - Expand on these as needed. 
+# NOTE - Expand on these as needed.
 UNITS_CENTIMETER_UUID = '00000000-75e9-092a-9afa-b9d6227ea8ea'
 UNITS_COUNTING_MEASURE_UUID = '00000000-75e9-0f41-d9ef-29a517f44b06'
 UNITS_DEGREE_UUID = '00000000-75e9-a86f-981d-73f03c797b21'
