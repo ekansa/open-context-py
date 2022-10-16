@@ -63,18 +63,25 @@ def migrate_single_project(old_project_uuid, error_path=''):
         use_cache=False,
     )
     legacy_oc.migrate_legacy_project_hero_media(old_project_uuid, new_proj_man_obj=project)
+
+    print(f'**** Migrate manifest records for {old_project_uuid} {project.label} ({str(project.uuid)})')
     legacy_oc.migrate_legacy_manifest_for_project(project_uuid=old_project_uuid)
 
+    print(f'**** Migrate spacetime records for {old_project_uuid} {project.label} ({str(project.uuid)})')
     legacy_oc.migrate_legacy_spacetime_for_project(project_uuid=old_project_uuid)
+
+    print(f'**** Migrate assertion records for {old_project_uuid} {project.label} ({str(project.uuid)})')
     orig_assert_migrate_errors = legacy_oc.migrate_legacy_assertions_for_project(old_project_uuid)
     if orig_assert_migrate_errors:
         # Save the migration errors.
         file_name = f'assert-m-errors-{project.slug[:20]}.csv'
         file_path = os.path.join(error_path, file_name)
         legacy_oc.save_old_assertions_to_csv(file_path, orig_assert_migrate_errors)
-    # Now migrate legacy identifers
+    # Now migrate legacy identifiers
+    print(f'**** Migrate identifier records for {old_project_uuid} {project.label} ({str(project.uuid)})')
     legacy_oc.migrate_legacy_identifiers_for_project(project_uuid=old_project_uuid)
     # Now add the link data annotations specific to this project
+    print(f'**** Migrate linked annotations for {old_project_uuid} {project.label} ({str(project.uuid)})')
     legacy_ld.migrate_legacy_link_annotations(
         project_uuid=old_project_uuid,
         more_filters_dict=None,
