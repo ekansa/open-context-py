@@ -21,16 +21,16 @@ from opencontext_py.apps.all_items.representations import rep_utils
 
 
 def add_select_related_contexts_to_qs(
-    qs, 
-    context_prefix='', 
-    depth=7, 
+    qs,
+    context_prefix='',
+    depth=7,
     more_related_objs=['item_class']
 ):
     """Adds select_related contexts to a queryset
-    
+
     :param QuerySet qs: The queryset that we will modify by adding
         select_related to AllManifest objects.
-    :param str context_prefix: A prefix to identify which of the 
+    :param str context_prefix: A prefix to identify which of the
         queryset manifest objects we want use for select_related
     :param int depth: The depth of how many steps of select_related
         contexts we want to de-reference. We default to 7 which is
@@ -39,9 +39,9 @@ def add_select_related_contexts_to_qs(
         AllManifest objects related to the context objects that
         we want to dereference.
     """
-    # NOTE: This is all about reducing the number of queries we send to the 
+    # NOTE: This is all about reducing the number of queries we send to the
     # database. This most important use case for this is to look up parent
-    # context paths of manifest "subjects" item_types. 
+    # context paths of manifest "subjects" item_types.
     act_path = context_prefix
     next_context = 'context'
     for _ in range(depth):
@@ -55,7 +55,7 @@ def add_select_related_contexts_to_qs(
 
 def make_grouped_by_dict_from_queryset(qs, index_list):
     """Makes a dictionary, grouped by attributes of query set objects
-    
+
     :param list index_list: List of attributes in objects of the
        query set we want to use as group-by criteria.
     """
@@ -67,8 +67,8 @@ def make_grouped_by_dict_from_queryset(qs, index_list):
 
 
 def get_dict_path_value(path_keys_list, dict_obj, default=None):
-    """Get a value from a dictionary object by a list of keys 
-    
+    """Get a value from a dictionary object by a list of keys
+
     :param list path_keys_list: A list of hierarchically organized
        keys to select within the tree of a dict_obj
     :param dict dict_obj: A dictionary object that is the source
@@ -173,7 +173,7 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         visible=True,
     ).exclude(
         # NOTE: Keep this for debugging. Sometimes vue won't render a
-        # string with bad characters. We had trouble with 
+        # string with bad characters. We had trouble with
         # <http://blah.org> (not valid HTML) in the string.
         # predicate__data_type__in=['xsd:string',]
         # predicate__slug__in=['40-bibliography-references-cited-and-others'],
@@ -183,7 +183,7 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         'observation'
     ).select_related(
         'event'
-    ).select_related( 
+    ).select_related(
         'attribute_group'
     ).select_related(
         'predicate'
@@ -193,11 +193,11 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         'predicate__context'
     ).select_related(
         'language'
-    ).select_related( 
+    ).select_related(
         'object'
-    ).select_related( 
+    ).select_related(
         'object__item_class'
-    ).select_related( 
+    ).select_related(
         'object__context'
     ).order_by(
         'obs_sort',
@@ -224,7 +224,7 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
         # Get the context hierarchy for related objects. We typically
         # only do this for media and documents.
         qs =  add_select_related_contexts_to_qs(
-            qs, 
+            qs,
             context_prefix='object__'
         )
     return qs
@@ -232,7 +232,7 @@ def get_item_assertions(subject_id, select_related_object_contexts=False):
 
 def get_related_subjects_item_from_object_id(object_id):
     """Gets a Query Set of subjects items related to an assertion object_id"""
-    # NOTE: Some media and documents items are only related to 
+    # NOTE: Some media and documents items are only related to
     # an item_type subject via an assertion where the media and
     # documents items is the object of a assertion relationship.
     # Since an item_type = 'subjects' is needed to establish the
@@ -252,7 +252,7 @@ def get_related_subjects_item_from_object_id(object_id):
         'subject__context'
     )
     rel_subj_item_assetion_qs = add_select_related_contexts_to_qs(
-        rel_subj_item_assetion_qs, 
+        rel_subj_item_assetion_qs,
         context_prefix='subject__'
     )
     return rel_subj_item_assetion_qs.first()
@@ -262,11 +262,11 @@ def get_related_subjects_item_assertion(item_man_obj, assert_qs):
     """Gets the related subject item for a media or documents subject item"""
     if item_man_obj.item_type not in ['media', 'documents']:
         return None
-    
+
     for assert_obj in assert_qs:
         if assert_obj.object.item_type == 'subjects':
             return assert_obj.object
-    
+
     # An manifest item_type='subjects' is not the object of any of
     # the assert_qs assertions, so we need to do another database pull
     # to check for manifest item_type 'subjects' items that are the
@@ -281,18 +281,18 @@ def get_related_subjects_item_assertion(item_man_obj, assert_qs):
 
 def get_observations_attributes_from_assertion_qs(
     assert_qs,
-    for_edit=False, 
+    for_edit=False,
     for_solr_or_html=False
 ):
     """Gets observations and attributes in observations
-    
+
     :param QuerySet assert_qs: A query set of assertions made on the item
     :param bool for_edit: Do we want an output with additional identifiers
         useful for editing.
     """
     grp_index_attribs = ['observation', 'event', 'attribute_group', 'predicate']
     grouped_asserts = make_tree_dict_from_grouped_qs(
-        qs=assert_qs, 
+        qs=assert_qs,
         index_list=grp_index_attribs
     )
     observations = []
@@ -305,7 +305,7 @@ def get_observations_attributes_from_assertion_qs(
             act_obs['default'] = (str(observation.uuid) == configs.DEFAULT_OBS_UUID)
         # NOTE: we've added act_obs to the observations list, but
         # we are continuing to modify it, even though it is part this
-        # observations list already. 
+        # observations list already.
         observations.append(act_obs)
         for event, attrib_groups in events.items():
             if not for_solr_or_html and str(event.uuid) == configs.DEFAULT_EVENT_UUID:
@@ -334,7 +334,7 @@ def get_observations_attributes_from_assertion_qs(
                     # NOTE: no attribute group node is specified here, so all
                     # the predicates will be added to the act_event dictionary.
                     #
-                    # How? The beauty of mutable dicts! Again, the act_attrib_grp 
+                    # How? The beauty of mutable dicts! Again, the act_attrib_grp
                     # will be the same object as the act_event.
                     act_attrib_grp = act_event
                 else:
@@ -352,7 +352,7 @@ def get_observations_attributes_from_assertion_qs(
                 # Now add the predicate keys and their assertion objects to
                 # the act_attrib_grp
                 act_attrib_grp = rep_utils.add_predicates_assertions_to_dict(
-                    pred_keyed_assert_objs=preds, 
+                    pred_keyed_assert_objs=preds,
                     act_dict=act_attrib_grp,
                     for_edit=for_edit,
                     for_solr_or_html=for_solr_or_html,
@@ -419,10 +419,10 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
         item_dict['item_class_id'] = str(manifest_obj.item_class.uuid)
         item_dict['item_class__label'] = manifest_obj.item_class.label
     context_list.append(item_dict)
-    if (manifest_obj.context.item_type == 'subjects' 
+    if (manifest_obj.context.item_type == 'subjects'
        and str(manifest_obj.context.uuid) != configs.DEFAULT_SUBJECTS_ROOT_UUID):
         context_list = add_to_parent_context_list(
-            manifest_obj.context, 
+            manifest_obj.context,
             context_list=context_list,
             for_solr_or_html=for_solr_or_html,
         )
@@ -505,7 +505,7 @@ def get_annotate_item_manifest_obj(subject_id):
     ).annotate(
         orcid=Subquery(orcid_qs)
     )
-    
+
     item_man_obj_qs = add_select_related_contexts_to_qs(
         item_man_obj_qs
     )
@@ -516,14 +516,14 @@ def get_annotate_item_manifest_obj(subject_id):
 
 def add_persistent_identifiers(item_man_obj, rep_dict):
     """Adds persistent identifiers to a rep_dict
-    
-    :param AllManifest item_man_obj: The item's manifest object, 
+
+    :param AllManifest item_man_obj: The item's manifest object,
         annotated with ark, doi, and orcid attributes (all of
         which may be None if no persistent id's exist for this
         item)
     """
-    if (not item_man_obj.ark 
-        and not item_man_obj.doi 
+    if (not item_man_obj.ark
+        and not item_man_obj.doi
         and not item_man_obj.orcid):
         return rep_dict
     if not 'dc-terms:identifier' in rep_dict:
@@ -547,7 +547,7 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
     """Makes a representation dict for a subject id"""
     # This will most likely get all the context hierarchy in 1 query, thereby
     # limiting the number of times we hit the database.
-    
+
     if for_solr:
         for_solr_or_html = True
 
@@ -566,7 +566,7 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         # object contexts to get the spatial hierarchy of related
         # item_type subjects.
         select_related_object_contexts = True
-    
+
     # Get the assertion query set for this item
     assert_qs = get_item_assertions(
         subject_id=item_man_obj.uuid,
@@ -575,15 +575,15 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
     # Get the related subjects item (for media and documents)
     # NOTE: rel_subjects_man_obj will be None for all other item types.
     rel_subjects_man_obj = get_related_subjects_item_assertion(
-        item_man_obj, 
+        item_man_obj,
         assert_qs
     )
 
     # Adds geojson features. This will involve a database query to fetch
     # spacetime objects.
     rep_dict = geojson.add_geojson_features(
-        item_man_obj, 
-        rel_subjects_man_obj=rel_subjects_man_obj, 
+        item_man_obj,
+        rel_subjects_man_obj=rel_subjects_man_obj,
         act_dict=rep_dict,
         for_solr=for_solr,
     )
@@ -614,7 +614,7 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
             rep_dict['oc-gen:has-linked-contexts'] = parent_list
 
     if item_man_obj.item_type in ['subjects', 'media', 'documents', 'persons', 'projects']:
-        # These types of items have nested nodes of observations, 
+        # These types of items have nested nodes of observations,
         # events, and attribute-groups
         obs_assert_qs = [ass for ass in assert_qs if ass.predicate.item_type == 'predicates']
 
@@ -623,15 +623,23 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         # that have attributes just like normal assertion objects. This
         # commonality allows common processing.
         equiv_assertions = equivalent_ld.make_ld_equivalent_assertions(
-            item_man_obj, 
+            item_man_obj,
             obs_assert_qs,
+            for_solr=for_solr,
+        )
+        if not equiv_assertions:
+            equiv_assertions = []
+        # Add default equivalent assertions if needed.
+        equiv_assertions = equivalent_ld.add_default_ld_equivalent_assertions(
+            item_man_obj,
+            equiv_assertions,
             for_solr=for_solr,
         )
         if equiv_assertions:
             obs_assert_qs += equiv_assertions
 
         observations = get_observations_attributes_from_assertion_qs(
-            obs_assert_qs, 
+            obs_assert_qs,
             for_solr_or_html=for_solr_or_html
         )
         rep_dict['oc-gen:has-obs'] = observations
@@ -640,11 +648,11 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         # nested nodes.
         ld_assert_qs = [ass for ass in assert_qs if ass.predicate.item_type != 'predicates']
         pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
-            qs=ld_assert_qs, 
+            qs=ld_assert_qs,
             index_list=['predicate']
         )
         rep_dict = rep_utils.add_predicates_assertions_to_dict(
-            pred_keyed_assert_objs, 
+            pred_keyed_assert_objs,
             act_dict=rep_dict,
             for_edit=for_solr_or_html
         )
@@ -655,27 +663,27 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         # The following is for other types of items that don't have lots
         # of nested observation, event, and attribute nodes.
         pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
-            qs=assert_qs, 
+            qs=assert_qs,
             index_list=['predicate']
         )
         rep_dict = rep_utils.add_predicates_assertions_to_dict(
-            pred_keyed_assert_objs, 
+            pred_keyed_assert_objs,
             act_dict=rep_dict,
             for_edit=for_solr_or_html
         )
         if for_solr:
             # Make sure the assertion objects are easily available for solr.
             rep_dict['for_solr_assert_objs'] = assert_qs
-    
+
     # NOTE: This adds Dublin Core metadata
     rep_dict = metadata.add_dublin_core_literal_metadata(
-        item_man_obj, 
-        rel_subjects_man_obj=rel_subjects_man_obj, 
+        item_man_obj,
+        rel_subjects_man_obj=rel_subjects_man_obj,
         act_dict=rep_dict
     )
     # First add item-specific Dublin Core creators, contributors.
     rep_dict = metadata.add_dc_creator_contributor_equiv_metadata(
-        assert_qs, 
+        assert_qs,
         act_dict=rep_dict,
         for_solr_or_html=for_solr_or_html
     )
@@ -684,13 +692,13 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         project=item_man_obj.project
     )
     pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
-        qs=proj_metadata_qs, 
+        qs=proj_metadata_qs,
         index_list=['predicate']
     )
     # Add project metadata, but only for those predicates that
     # don't already have item-specific object values.
     rep_dict = rep_utils.add_predicates_assertions_to_dict(
-        pred_keyed_assert_objs, 
+        pred_keyed_assert_objs,
         act_dict=rep_dict,
         add_objs_to_existing_pred=False,
         for_edit=for_solr_or_html,
@@ -703,7 +711,7 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
 
     # Adds the default license if a license is still missing.
     rep_dict = metadata.check_add_default_license(
-        rep_dict, 
+        rep_dict,
         for_solr=for_solr
     )
 
