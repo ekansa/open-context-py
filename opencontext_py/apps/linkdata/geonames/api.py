@@ -12,7 +12,7 @@ from opencontext_py.apps.all_items.models import (
 
 
 SEARCH_BASE_URL = 'http://api.geonames.org/searchJSON'
-JSON_BASE_URL = 'http://www.geonames.org/getJSON?id='
+JSON_BASE_URL = 'http://www.geonames.org/getJSON?username=ekansa&id='
 SLEEP_TIME = 0.5
 
 
@@ -25,13 +25,13 @@ class GeonamesAPI():
         self.json_base_url = JSON_BASE_URL
         self.search_base_url = SEARCH_BASE_URL
         self.delay_before_request = SLEEP_TIME
-    
+
 
     def http_get_json_for_geonames_uri(self, geonames_uri):
         """Make a Web request to get json data from a geonames_uri"""
         # Strip off any cruft in the URI
         geonames_uri = AllManifest().clean_uri(geonames_uri)
-        
+
         geo_ex = geonames_uri.split('/')
         geonames_id = int(geo_ex[-1])
         url = self.json_base_url + str(geonames_id)
@@ -51,7 +51,7 @@ class GeonamesAPI():
         except:
             json_r = None
         return json_r
-    
+
 
     def get_json_for_geonames_uri(self, geonames_uri, use_cache=True):
         """Get json data from a geonames_uri, from cache or Web."""
@@ -103,7 +103,7 @@ class GeonamesAPI():
             'username': username,
             'maxRows': 1,
         }
-        if (isinstance(lat, float) and isinstance(lon, float) 
+        if (isinstance(lat, float) and isinstance(lon, float)
             and isinstance(degree_dif, float)):
             all_params['east'] = lon - degree_dif
             all_params['west'] = lon + degree_dif
@@ -142,5 +142,3 @@ class GeonamesAPI():
                 return json_r
         # We found nothing.
         return None
-
-

@@ -34,7 +34,7 @@ GEONAMES_PLACE_ITEM_TYPE = 'uri'
 def get_geonames_vocabulary_obj():
     """Get the Manifest object for the vocabulary object"""
     m = AllManifest.objects.filter(
-        uri=AllManifest().clean_uri(GEONAMES_VOCAB_URI), 
+        uri=AllManifest().clean_uri(GEONAMES_VOCAB_URI),
         item_type='vocabularies'
     ).first()
     return m
@@ -92,10 +92,10 @@ def add_geonames_alt_label(geonames_obj, skip_if_exists=True, alt_label=None):
         # The alternate label either can't be retrieved or is
         # the same as the existing geonames_obj.label
         return None
-    
+
     # Add the vernacular name as a SKOS_ALTLABEL_UUID.
     utilities.add_string_assertion_simple(
-        subject_obj=geonames_obj, 
+        subject_obj=geonames_obj,
         predicate_id=configs.PREDICATE_SKOS_ALTLABEL_UUID,
         source_id=ENTITY_SOURCE,
         str_content=alt_label,
@@ -113,7 +113,7 @@ def add_get_geonames_manifest_entity(raw_url):
 
     # Get the Geonames item for this place URI.
     geonames_obj = AllManifest.objects.filter(
-        uri=AllManifest().clean_uri(uri), 
+        uri=AllManifest().clean_uri(uri),
         context=vocab_obj,
     ).first()
     if geonames_obj:
@@ -125,6 +125,8 @@ def add_get_geonames_manifest_entity(raw_url):
     # name for the place via the Geonames API.
     api = GeonamesAPI()
     label, alt_label = api.get_labels_for_uri(uri)
+    if not label:
+        return None
 
     # Make a new manifest dictionary object.
     man_dict = {
@@ -147,23 +149,26 @@ def add_get_geonames_manifest_entity(raw_url):
     return geonames_obj
 
 
-def save_spacetime_obj_for_geonames_obj(geonames_obj):
+def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False):
     """Saves a spacetime object for a geonames object"""
-    spacetime_obj = AllSpaceTime.objects.filter(
+    spacetime_qs = AllSpaceTime.objects.filter(
         item=geonames_obj
-    ).exclude(geometry_type=None).first()
+    ).exclude(geometry_type=None)
+    if fetch_if_point:
+        spacetime_qs = spacetime_qs.exclude(geometry_type='Point')
+    spacetime_obj = spacetime_qs.first()
     if spacetime_obj:
         # We already have a spacetime object (with spatial data)
         # for this geonames object.
         return spacetime_obj
-    
+
     api = GeonamesAPI()
     json_data = api.get_json_for_geonames_uri(geonames_obj.uri)
     if not json_data:
         # The request to get JSON data for this geonames object
         # failed.
         return None
-    
+
     geometry_type = None
     lat = None
     lon = None
@@ -198,13 +203,24 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj):
         else:
             # Missing data, we can't make a spacetime obj.
             geometry_type = None
-    
-    
+
     if not geometry_type:
         # We couldn't put together enough
         # valid data.
         return None
-    
+
+    point_f_1_obj = None
+    if fetch_if_point:
+        point_f_1_obj = AllSpaceTime.objects.filter(
+            item=geonames_obj,
+            geometry_type='Point',
+            feature_id=1,
+        ).first()
+
+    if point_f_1_obj and geometry_type == 'Point':
+        # We already have a point geometry for this item, so skip out.
+        return None
+
     sp_tm_dict = {
         'item_id': geonames_obj.uuid,
         'earliest': None,
@@ -222,10 +238,17 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj):
     )
     sp_tm_dict['geometry_type'] = geometry_type
     # Figure out the feature ID.
-    sp_tm_dict['feature_id'] = AllSpaceTime().determine_feature_id(
+    feature_id = AllSpaceTime().determine_feature_id(
         geonames_obj.uuid,
         exclude_uuid=spacetime_uuid,
     )
+    if point_f_1_obj and geometry_type != 'Point':
+        # Make the old point the new feature id
+        point_f_1_obj.feature_id = feature_id
+        point_f_1_obj.save()
+        # Make our new spacetime object feature 1
+        feature_id = 1
+    sp_tm_dict['feature_id'] = feature_id
     sp_tm_dict['source_id'] = ENTITY_SOURCE,
     spacetime_obj, _ = AllSpaceTime.objects.get_or_create(
         uuid=spacetime_uuid,
@@ -234,7 +257,7 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj):
     return spacetime_obj
 
 
-def add_get_geonames_manifest_obj_and_spacetime_obj(raw_url):
+def add_get_geonames_manifest_obj_and_spacetime_obj(raw_url, fetch_if_point=False):
     """Adds geonames entity and spacetime object"""
     geonames_obj = add_get_geonames_manifest_entity(raw_url)
     if not geonames_obj:
@@ -243,5 +266,8 @@ def add_get_geonames_manifest_obj_and_spacetime_obj(raw_url):
         return None, None
     # We found a geonames manifest object, now get a spacetime object
     # for it.
-    spacetime_obj = save_spacetime_obj_for_geonames_obj(geonames_obj)
+    spacetime_obj = save_spacetime_obj_for_geonames_obj(
+        geonames_obj,
+        fetch_if_point=fetch_if_point
+    )
     return geonames_obj, spacetime_obj
