@@ -1,5 +1,7 @@
-
+import datetime
+from datetime import timezone
 import logging
+from re import U
 import time
 
 from itertools import islice
@@ -25,6 +27,7 @@ from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
 )
+from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
@@ -76,7 +79,7 @@ a_uuids = AllAssertion.objects.filter(
 ).order_by(
     'subject_id'
 ).values_list(
-    'subject_id', 
+    'subject_id',
     flat=True
 )
 uuids += [str(u) for u in a_uuids if not str(u) in uuids]
@@ -120,7 +123,7 @@ def clear_caches():
 def chunk_list(act_list, chunk_size):
     """Break a list into smaller chunks"""
     # looping till length l
-    for i in range(0, len(act_list), chunk_size): 
+    for i in range(0, len(act_list), chunk_size):
         yield act_list[i:i + chunk_size]
 
 
@@ -144,7 +147,7 @@ def make_index_solr_documents(uuids, solr=None):
     solr_docs =  make_solr_documents(uuids)
     try:
         solr.add(
-            solr_docs, 
+            solr_docs,
             commit=False,
             overwrite=True,
         )
@@ -152,7 +155,7 @@ def make_index_solr_documents(uuids, solr=None):
         for solr_doc in solr_docs:
             try:
                 solr.add(
-                    [solr_doc], 
+                    [solr_doc],
                     commit=False,
                     overwrite=True,
                 )
@@ -169,10 +172,11 @@ def make_index_solr_documents(uuids, solr=None):
 
 
 def make_indexed_solr_documents_in_chunks(
-    uuids, 
-    solr=None, 
-    chunk_size=20, 
-    start_clear_caches=True
+    uuids,
+    solr=None,
+    chunk_size=20,
+    start_clear_caches=True,
+    update_index_time=True,
 ):
     """Makes and indexes solr documents in chunks"""
     if not solr:
@@ -181,15 +185,15 @@ def make_indexed_solr_documents_in_chunks(
     total_count = len(uuids)
     logger.info(f'Index {total_count} total items.')
     print(f'Index {total_count} total items.')
-    
+
     if start_clear_caches:
         print('Clearing caches for fresh indexing')
         clear_caches()
-    
+
     all_start = time.time()
     total_indexed = 0
     count_groups, r =  divmod(total_count, chunk_size)
-    if r > 0: 
+    if r > 0:
         count_groups += 1
     for act_uuids in chunk_list(uuids, chunk_size):
         i += 1
@@ -201,6 +205,14 @@ def make_indexed_solr_documents_in_chunks(
         )
         chunk_start = time.time()
         make_index_solr_documents(act_uuids, solr=solr)
+        if update_index_time:
+            now = datetime.datetime.now(timezone.utc)
+            _ = AllManifest.objects.filter(
+                uuid__in=act_uuids,
+            ).update(
+                indexed=now,
+            )
+
         chunk_rate = get_crawl_rate_in_seconds(act_chunk_size, chunk_start)
         total_indexed += act_chunk_size
         print(
@@ -218,7 +230,7 @@ def get_uuids_associated_with_vocab(
 ):
     """Gets UUIDs for Open Context item types that have some sort of
     relationship with entities in a given linked data vocabulary.
-    
+
     :param AllManifest vocab_obj: An AllManifest object instance
         for a vocabulary that's the target for reindexing
     :param str(uuid) vocab_uuid: A uuid to identifier the vocab_obj if a
