@@ -31,6 +31,13 @@ def decimal_to_float(val):
     return float(val)
 
 
+def json_friendly_datatype_input_obj(input_obj):
+    input_obj = uuid_to_string(input_obj)
+    input_obj = datetime_to_string(input_obj)
+    input_obj = decimal_to_float(input_obj)
+    return input_obj
+
+
 def make_javascript_friendly_key(key):
     """Make a key javascript friendly"""
     char_mappings = {
@@ -60,25 +67,21 @@ def make_dict_json_safe(input_obj, javascript_friendly_keys=False):
         new_values = []
         for v in input_obj:
             v = make_dict_json_safe(
-                v, 
+                v,
                 javascript_friendly_keys=javascript_friendly_keys
             )
-            v = uuid_to_string(v)
-            v = datetime_to_string(v)
-            v = decimal_to_float(v)
+            v = json_friendly_datatype_input_obj(v)
             new_values.append(v)
         return new_values
     else:
-        input_obj = uuid_to_string(input_obj)
-        input_obj = datetime_to_string(input_obj)
-        input_obj = decimal_to_float(input_obj)
+        input_obj = json_friendly_datatype_input_obj(input_obj)
         return input_obj
 
 
 def get_attrib_value_from_rel_objects(model_obj, act_attrib):
     """Gets an attribute value from a model_obj's related objects"""
     attrib_path = act_attrib.split('__')
-    last_path_index = len(attrib_path) - 1 
+    last_path_index = len(attrib_path) - 1
     act_model_obj = copy.deepcopy(model_obj)
     for i, attrib_item in enumerate(attrib_path):
         act_attrib_value = getattr(act_model_obj, attrib_item, None)
@@ -92,7 +95,7 @@ def get_attrib_value_from_rel_objects(model_obj, act_attrib):
 
 def make_model_object_json_safe_dict(model_obj, more_attributes=None):
     """Makes a model object a json safe dictionary
-    
+
     :param model.Object model_obj: An instance of a Django model object
     :param list more_attributes: A list of additional model attributes
         to include in the json_safe dict to return.

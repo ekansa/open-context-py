@@ -1,3 +1,4 @@
+import datetime
 import decimal
 import hashlib
 import json
@@ -22,7 +23,8 @@ from opencontext_py.apps.all_items import models_utils
 
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.libs.models import (
-    make_model_object_json_safe_dict
+    make_model_object_json_safe_dict,
+    json_friendly_datatype_input_obj
 )
 
 
@@ -36,7 +38,7 @@ META_JSON_KEY_HTTP_ONLY = 'http_only'
 class AllManifest(models.Model):
 
     OK_FOR_MISSING_REFS = [
-        configs.OPEN_CONTEXT_PROJ_UUID, 
+        configs.OPEN_CONTEXT_PROJ_UUID,
         configs.OPEN_CONTEXT_PUB_UUID,
         configs.OC_GEN_VOCAB_UUID,
         configs.DEFAULT_CLASS_UUID,
@@ -44,26 +46,26 @@ class AllManifest(models.Model):
 
     uuid = models.UUIDField(primary_key=True, editable=True)
     publisher = models.ForeignKey(
-        'self', 
-        db_column='publisher_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        'self',
+        db_column='publisher_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
         null=True,
         default=configs.OPEN_CONTEXT_PUB_UUID,
     )
     project = models.ForeignKey(
-        'self', 
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        'self',
+        db_column='project_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
         null=True,
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     item_class = models.ForeignKey(
         'self',
-        db_column='item_class_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        db_column='item_class_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
         null=True,
         default=configs.DEFAULT_CLASS_UUID,
     )
@@ -88,17 +90,17 @@ class AllManifest(models.Model):
     # especially based on the contents of the context field.
     hash_id = models.TextField(unique=True)
     # Context is needed in entity reconciliation, to help determine if
-    # a labeled entity is unique within the scope of a given context. 
+    # a labeled entity is unique within the scope of a given context.
     # Also for URI identified linked-data entities (typically published
     # by sources outside of Open Context, a context is used to note
     # the vocabulary (name-space) that owns / contains a URI identified
     # entity.
     context = models.ForeignKey(
-        'self', 
-        db_column='context_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
-        blank=True, 
+        'self',
+        db_column='context_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
+        blank=True,
         null=True,
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
@@ -121,7 +123,7 @@ class AllManifest(models.Model):
         if len(label) > 195:
             label = label[:192] + '...'
         return label
-    
+
     def clean_uri(self, uri):
         if not uri:
             return None
@@ -139,13 +141,13 @@ class AllManifest(models.Model):
         return uri
 
     def make_hash_id(
-        self, 
-        item_type, 
-        data_type, 
-        label, 
-        uri=None, 
-        path='', 
-        project_id=configs.OPEN_CONTEXT_PROJ_UUID, 
+        self,
+        item_type,
+        data_type,
+        label,
+        uri=None,
+        path='',
+        project_id=configs.OPEN_CONTEXT_PROJ_UUID,
         context_id=configs.OPEN_CONTEXT_PROJ_UUID,
     ):
         """
@@ -182,7 +184,7 @@ class AllManifest(models.Model):
         concat_string = concat_string.strip()
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
-    
+
     def make_hash_id_for_self(self):
         """Makes a hash-id to ensure context dependent uniqueness of this obj"""
         project_id = configs.OPEN_CONTEXT_PROJ_UUID
@@ -195,7 +197,7 @@ class AllManifest(models.Model):
         if self.path:
             path = self.path
         if self.item_type in configs.NODE_ITEM_TYPES:
-            # Add the sort key from the meta_json 
+            # Add the sort key from the meta_json
             # for node item types. This lets us have
             # the same label for nodes that will
             # may need different sort orders.
@@ -237,7 +239,7 @@ class AllManifest(models.Model):
             # ok_for_missing_refs needs to have references to
             # manifest objects that actually exist.
             return None
-        
+
         # This is a special case for the ok_for_missing_refs
         # list above.
         try:
@@ -256,7 +258,7 @@ class AllManifest(models.Model):
             self.context = self.context
         except ObjectDoesNotExist:
             self.context = None
-    
+
     def add_default_short_id_for_project(self):
         """Makes a short_id attribute to projects meta_json"""
         if not self.item_type == 'projects':
@@ -281,33 +283,33 @@ class AllManifest(models.Model):
         if not self.slug:
             # Generate the item's slug.
             self.slug = models_utils.make_manifest_slug(
-                self.label, 
+                self.label,
                 self.item_type,
-                self.uri, 
+                self.uri,
                 project_id,
                 short_id=short_id,
             )
 
         # Make the item's sorting.
         sort = models_utils.make_sort_label(
-            self.label, 
-            self.item_type, 
-            project_id, 
+            self.label,
+            self.item_type,
+            project_id,
             item_type_list=configs.ITEM_TYPES,
             short_id=short_id,
         )
         self.sort = sort[:100]
-    
+
     def primary_key_create(
         self,
         item_type,
-        project_id=None, 
+        project_id=None,
         context_id=None,
         uri=None,
     ):
         """Make a primary key, sometimes deterministically depending on the item_type"""
 
-        if (item_type in configs.OC_ITEM_TYPES 
+        if (item_type in configs.OC_ITEM_TYPES
             or project_id is None
             or context_id is None):
             # Do not make a deterministic uuid because these are for
@@ -321,7 +323,7 @@ class AllManifest(models.Model):
             # be predictable.
             hash_val = str(GenUUID.uuid4())
         else:
-            # This will make a predictable uuid. 
+            # This will make a predictable uuid.
             hash_val = self.clean_uri(uri)
 
         # NOTE: Everything in this function below is for deterministically
@@ -351,7 +353,7 @@ class AllManifest(models.Model):
             # project-context-uri_parts...
             uuid = '-'.join(
                 [
-                    uuid_prefix, 
+                    uuid_prefix,
                     context_parts[1],
                     new_parts[2],
                     new_parts[3],
@@ -396,11 +398,11 @@ class AllManifest(models.Model):
             return self.uuid
         return self.primary_key_create(
             item_type=self.item_type,
-            project_id=self.project.uuid, 
+            project_id=self.project.uuid,
             context_id=self.context.uuid,
             uri=self.uri,
         )
-        
+
     def make_subjects_path_and_validate(self):
         """Makes a path for subjects items"""
         if self.item_type != 'subjects':
@@ -443,7 +445,7 @@ class AllManifest(models.Model):
             + configs.NODE_ITEM_TYPES
         ):
             self.uri = models_utils.make_uri_for_oc_item_types(
-                self.uuid, 
+                self.uuid,
                 self.item_type
             )
 
@@ -466,7 +468,7 @@ class AllManifest(models.Model):
                 item_class_id = self.item_class.uuid
             # Only do this validation for non-default loads.
             self.validate_item_type_class_item(
-                item_type=self.item_type, 
+                item_type=self.item_type,
                 item_class_id=item_class_id
             )
         # Add a project short_id:
@@ -486,37 +488,37 @@ class AllManifest(models.Model):
 # NOTE: AllSpaceTime keeps geospatial and chronology records.
 # Some records have both geospatial and chronology components,
 # some only have geospatial, and some only have chronology.
-# Each record is linked to an item and an event. An event is 
+# Each record is linked to an item and an event. An event is
 # basically some identified entity in space and/or time that
 # involves the item.
 @reversion.register  # records in this model under version control
 class AllSpaceTime(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     publisher = models.ForeignKey(
-        AllManifest, 
+        AllManifest,
         db_column='publisher_uuid',
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        related_name='+',
+        on_delete=models.PROTECT,
         default=configs.OPEN_CONTEXT_PUB_UUID,
     )
     project = models.ForeignKey(
-        AllManifest, 
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        AllManifest,
+        db_column='project_uuid',
+        related_name='+',
+        on_delete=models.PROTECT,
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     source_id = models.TextField(db_index=True)
     item = models.ForeignKey(
-        AllManifest, 
-        db_column='item_uuid', 
-        related_name='item_uuid', 
+        AllManifest,
+        db_column='item_uuid',
+        related_name='item_uuid',
         on_delete=models.CASCADE
     )
     event = models.ForeignKey(
-        AllManifest,  
-        db_column='event_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='event_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_EVENT_UUID,
     )
@@ -524,7 +526,7 @@ class AllSpaceTime(models.Model):
     # specific item.
     feature_id = models.IntegerField(default=1)
 
-    # Time span information. 
+    # Time span information.
     earliest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
     start = models.DecimalField(max_digits=19, decimal_places=5, null=True)
     stop = models.DecimalField(max_digits=19, decimal_places=5, null=True)
@@ -553,7 +555,7 @@ class AllSpaceTime(models.Model):
     ]
 
     def validate_times(
-        self, 
+        self,
         earliest=None,
         start=None,
         stop=None,
@@ -573,7 +575,7 @@ class AllSpaceTime(models.Model):
             if raw_time is None:
                 continue
             time_list.append(raw_time)
-    
+
         time_list = list(set(time_list))
         if not len(time_list):
             return (
@@ -582,7 +584,7 @@ class AllSpaceTime(models.Model):
                 None,
                 None,
             )
-        
+
         # Sort the list, then fill in any blanks.
         time_list.sort()
         while len(time_list) < 4:
@@ -599,7 +601,7 @@ class AllSpaceTime(models.Model):
             time_list[2],
             max(time_list),
         )
-    
+
     def validate_times_for_self(self):
         """
         makes sure time data is properly validated
@@ -610,9 +612,9 @@ class AllSpaceTime(models.Model):
             self.stop,
             self.latest,
         )
-    
+
     def make_hash_id(
-        self, 
+        self,
         item_id,
         event_id=configs.DEFAULT_EVENT_UUID,
         earliest=None,
@@ -651,7 +653,7 @@ class AllSpaceTime(models.Model):
         return hash_obj.hexdigest()
 
     def primary_key_create(
-        self, 
+        self,
         item_id,
         event_id=configs.DEFAULT_EVENT_UUID,
         earliest=None,
@@ -665,7 +667,7 @@ class AllSpaceTime(models.Model):
         """Makes a primary key using a prefix from the item"""
         item_uuid = str(item_id)
         item_prefix = item_uuid.split('-')[0]
-        
+
         hash_id = self.make_hash_id(
             item_id=item_id,
             event_id=configs.DEFAULT_EVENT_UUID,
@@ -702,7 +704,7 @@ class AllSpaceTime(models.Model):
             longitude=self.longitude,
             geometry=self.geometry,
         )
-    
+
     def determine_feature_id(self, item_id, exclude_uuid=None):
         """Makes a feature if missing"""
         f_id_qs = AllSpaceTime.objects.filter(
@@ -711,7 +713,7 @@ class AllSpaceTime(models.Model):
         if exclude_uuid:
             # exclude a UUID from the query list.
             f_id_qs = f_id_qs.exclude(uuid=exclude_uuid)
-        
+
         # Now make a value_list for the feature id.
         f_id_qs = f_id_qs.order_by(
             'feature_id'
@@ -722,7 +724,7 @@ class AllSpaceTime(models.Model):
         if not len(f_ids):
             return 1
         return max(f_ids) + 1
-    
+
     def determine_feature_id_for_self(self):
         """Makes a feature if missing"""
         if self.feature_id is not None:
@@ -731,12 +733,12 @@ class AllSpaceTime(models.Model):
             item_id=self.item.uuid,
             exclude_uuid=self.uuid,
         )
-    
+
     def validate_longitude(self, lon):
         if not isinstance(lon, float) and not isinstance(lon, decimal.Decimal):
             return False
         return (-180 <= lon <= 180)
-    
+
     def validate_latitude(self, lat):
         if not isinstance(lat, float) and not isinstance(lat, decimal.Decimal):
             return False
@@ -753,7 +755,7 @@ class AllSpaceTime(models.Model):
             self.geometry = {
                 'type': self.geometry_type,
                 'coordinates':  [
-                    float(self.longitude), 
+                    float(self.longitude),
                     float(self.latitude),
                 ],
             }
@@ -780,13 +782,13 @@ class AllSpaceTime(models.Model):
                     f'Geometry dict type { self.geometry.get("type") } must '
                     'have a list of coordinates'
                 )
-        
+
         if self.geometry_type not in self.GEOMETRY_TYPES:
             raise ValueError(
                 f'Geometry type { self.geometry_type } must '
                 f'be of {str(self.GEOMETRY_TYPES)}'
             )
-        
+
         if self.longitude is None or self.latitude is None:
             # We don't have the centroid, so calculate it from the
             # geometry object.
@@ -802,7 +804,7 @@ class AllSpaceTime(models.Model):
                 f'Geometry {self.geometry_type} must '
                 'have latitude and longitude coordinates.'
             )
-        
+
         if isinstance(self.longitude, str):
             try:
                 self.longitude = float(self.longitude)
@@ -824,7 +826,7 @@ class AllSpaceTime(models.Model):
             raise ValueError(
                 f'Longitude must be between -180 and 180'
             )
-        
+
         if not self.validate_latitude(self.latitude):
             raise ValueError(
                 f'Latitude must be between -90 and 90'
@@ -849,9 +851,9 @@ class AllSpaceTime(models.Model):
                 'projects',
                 'subjects',
                 'documents',
-                'media', 
-                'types', 
-                'uri', 
+                'media',
+                'types',
+                'uri',
                 'class'
             ],
             obj_role='item',
@@ -863,7 +865,7 @@ class AllSpaceTime(models.Model):
             allowed_types=['events'],
             obj_role='event',
         )
-        
+
         # Validates the geometry dict, make sure the coordinates are in the
         # correct GeoJSON order.
         self.validate_correct_geometry()
@@ -871,12 +873,12 @@ class AllSpaceTime(models.Model):
         self.primary_key_create_for_self()
         self.feature_id = self.determine_feature_id_for_self()
         super(AllSpaceTime, self).save(*args, **kwargs)
-    
+
     class Meta:
         db_table = 'oc_all_spacetime'
         unique_together = (
             (
-                "item", 
+                "item",
                 "event",
             ),
             (
@@ -893,39 +895,39 @@ class AllSpaceTime(models.Model):
 # AllAssertion stores data about "assertions" made about and using items in the AllManifest
 # model. It's a very schema-free / graph like model for representing relationships and
 # attributes of items from different sources. But it is not a triple store because we
-# have several metadata attributes (publisher, project, observation, event, 
+# have several metadata attributes (publisher, project, observation, event,
 # attribute_group, etc.) that provide additional context to make things hopefully
-# easier to manage. 
+# easier to manage.
 @reversion.register  # records in this model under version control
 class AllAssertion(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     publisher = models.ForeignKey(
-        AllManifest, 
+        AllManifest,
         db_column='publisher_uuid',
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        related_name='+',
+        on_delete=models.PROTECT,
         default=configs.OPEN_CONTEXT_PUB_UUID,
     )
     project = models.ForeignKey(
-        AllManifest, 
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        AllManifest,
+        db_column='project_uuid',
+        related_name='+',
+        on_delete=models.PROTECT,
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     source_id = models.TextField(db_index=True)
     subject = models.ForeignKey(
-        AllManifest, 
-        db_column='subject_uuid', 
-        related_name='subject_uuid', 
+        AllManifest,
+        db_column='subject_uuid',
+        related_name='subject_uuid',
         on_delete=models.CASCADE
     )
     # Observations are nodes for grouping related assertions, perhaps
     # made by different people.
     observation = models.ForeignKey(
-        AllManifest,  
-        db_column='observation_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='observation_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_OBS_UUID,
     )
@@ -933,9 +935,9 @@ class AllAssertion(models.Model):
     # Events are nodes for identifying specific space-time grouped
     # assertions.
     event = models.ForeignKey(
-        AllManifest,  
-        db_column='event_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='event_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_EVENT_UUID,
     )
@@ -945,39 +947,39 @@ class AllAssertion(models.Model):
     # with a numerator and a denominator are 3 grouped assertions that
     # would make sense together in an attribute group.
     attribute_group = models.ForeignKey(
-        AllManifest, 
-        db_column='attribute_group_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='attribute_group_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
     )
     attribute_group_sort = models.IntegerField(default=1)
     predicate = models.ForeignKey(
-        AllManifest, 
+        AllManifest,
         db_column='predicate_uuid',
-        related_name='+', 
+        related_name='+',
         on_delete=models.CASCADE
     )
     sort = models.FloatField(null=True, default=1)
-    # Th attribute 'visible' can be set to False to indicate that an assertion is no longer 
+    # Th attribute 'visible' can be set to False to indicate that an assertion is no longer
     # current. If so, it can be used to maintain a record of changes, especially
     # with metadata about changes stored in meta_json.
     visible = models.BooleanField(default=True)
-    # Estimated probability for an assertion 
+    # Estimated probability for an assertion
     # (with 1 as 100% certain, .001 for very uncertain), null for not determined.
     certainty = models.FloatField(null=True)
     object = models.ForeignKey(
-        AllManifest, 
-        db_column='object_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        AllManifest,
+        db_column='object_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
         default=configs.DEFAULT_NULL_OBJECT_UUID,
     )
     language =  models.ForeignKey(
         AllManifest,
-        db_column='language_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        db_column='language_uuid',
+        related_name='+',
+        on_delete=models.PROTECT,
         default=configs.DEFAULT_LANG_UUID
     )
     # This obj_string_hash is a hash of the obj_string field used to help in unique
@@ -1008,16 +1010,16 @@ class AllAssertion(models.Model):
                 allowed_types=allowed_types,
                 obj_role=obj_role
             )
-    
+
     def validate_predicate(self):
         """Validates predicate is an OK type to be a predicate"""
-        # NOTE: For the purposes of this validation, a 
+        # NOTE: For the purposes of this validation, a
         # an item_type='class' item can act as a predicate (attribute) to make
         # it easier to represent measurements, which are defined as classes
         # in the CIDOC-CRM (see: http://erlangen-crm.org/current/E54_Dimension )
-        # In this case, an assertion using a predicate object that is a 
+        # In this case, an assertion using a predicate object that is a
         # measurement class would be read something like:
-        # 
+        #
         # subject -> has_measurement::dimension::has-value -> 1.1
         #
         # where the has_measurement::dimension::has-value is all implied by
@@ -1027,7 +1029,7 @@ class AllAssertion(models.Model):
             allowed_types= ['predicates', 'property', 'class'],
             obj_role='predicate',
         )
-    
+
     def validate_predicate_objects(self):
         """Validates that predicates have objects of the correct type"""
         object_expectations = [
@@ -1036,7 +1038,7 @@ class AllAssertion(models.Model):
                 (self.predicate.data_type == 'id'),
             ),
             (
-                (self.obj_string is None), 
+                (self.obj_string is None),
                 (self.predicate.data_type == 'xsd:string'),
             ),
             (
@@ -1061,7 +1063,7 @@ class AllAssertion(models.Model):
                 assert not data_type_is_none
             else:
                 assert data_type_is_none
-    
+
     def validate_predicate_class_objects(self):
         """Validates that predicates of item_type predicates have
            objects of the appropriate class"""
@@ -1086,7 +1088,7 @@ class AllAssertion(models.Model):
                     f'a {self.predicate.item_class.label} ({str(self.predicate.item_class.uuid)})'
                     f'must be item_type in {str(configs.OC_PRED_LINK_OK_ITEM_TYPES)}'
                 )
-    
+
     def make_obj_string_hash(self, obj_string):
         """Makes an object string hash value"""
         if obj_string:
@@ -1137,7 +1139,7 @@ class AllAssertion(models.Model):
         )
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
-    
+
     def primary_key_create(
         self,
         subject_id,
@@ -1214,7 +1216,7 @@ class AllAssertion(models.Model):
             language_id=self.language.uuid,
         )
         return self.uuid
-    
+
     def get_display_object(self, add_id=True):
         """Gets the display object for an assertion"""
         if add_id and self.predicate.data_type == 'id':
@@ -1246,7 +1248,7 @@ class AllAssertion(models.Model):
 
         if self.obj_string:
             self.obj_string = self.obj_string.strip()
-        
+
         # This is set with each save to help make sure the text field is actually
         # unique. It's important for long text values.
         self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
@@ -1257,8 +1259,8 @@ class AllAssertion(models.Model):
         self.validate_predicate_objects()
         # Make sure hierarchy assertions are valid, not circular
         models_utils.validate_hierarchy_assertion(
-            subject_obj=self.subject, 
-            predicate_obj=self.predicate, 
+            subject_obj=self.subject,
+            predicate_obj=self.predicate,
             object_obj=self.object,
         )
         # Make sure assertions about units of measure are valid.
@@ -1297,12 +1299,12 @@ class AllAssertion(models.Model):
         db_table = 'oc_all_assertions'
         unique_together = (
             (
-                "subject", 
+                "subject",
                 "observation",
                 "event",
                 "attribute_group",
                 "predicate",
-                "object", 
+                "object",
                 "language",
                 "obj_string_hash",
                 "obj_boolean",
@@ -1322,28 +1324,28 @@ class AllAssertion(models.Model):
 class AllResource(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     item = models.ForeignKey(
-        AllManifest, 
-        db_column='item_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='item_uuid',
+        related_name='+',
         on_delete=models.PROTECT
     )
     project = models.ForeignKey(
-        AllManifest, 
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        AllManifest,
+        db_column='project_uuid',
+        related_name='+',
+        on_delete=models.PROTECT,
     )
     resourcetype = models.ForeignKey(
-        AllManifest, 
-        db_column='resourcetype_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='resourcetype_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
     )
     mediatype = models.ForeignKey(
-        AllManifest, 
-        db_column='mediatype_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        AllManifest,
+        db_column='mediatype_uuid',
+        related_name='+',
+        on_delete=models.PROTECT,
         null=True
     )
     source_id = models.TextField(db_index=True)
@@ -1359,7 +1361,7 @@ class AllResource(models.Model):
     META_JSON_KEY_HTTP_ONLY = META_JSON_KEY_HTTP_ONLY
 
     def make_hash_id(
-        self, 
+        self,
         item_id,
         resourcetype_id,
         rank=0,
@@ -1380,7 +1382,7 @@ class AllResource(models.Model):
         """Makes a primary key using a prefix from the item"""
         item_uuid = str(item_id)
         item_prefix = item_uuid.split('-')[0]
-        
+
         hash_id = self.make_hash_id(
             item_id=item_id,
             resourcetype_id=resourcetype_id,
@@ -1428,7 +1430,7 @@ class AllResource(models.Model):
         models_utils.validate_resourcetype_id(
             resourcetype_id=self.resourcetype.uuid
         )
-        
+
         # Make an HTTP head request to get filesize and/or
         # mediatype if missing.
         head = None
@@ -1456,7 +1458,7 @@ class AllResource(models.Model):
         db_table = 'oc_all_resources'
         unique_together = (
             (
-                "item", 
+                "item",
                 "resourcetype",
                 "rank",
             ),
@@ -1471,9 +1473,9 @@ class AllHistory(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     sha1_hash = models.TextField(unique=True)
     item = models.ForeignKey(
-        AllManifest, 
-        db_column='item_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='item_uuid',
+        related_name='+',
         on_delete=models.CASCADE
     )
     created = models.DateTimeField(auto_now_add=True)
@@ -1517,12 +1519,23 @@ class AllHistory(models.Model):
                 model_dict = make_model_object_json_safe_dict(model_obj)
                 all_model_dicts[model_key].append(model_dict)
         return all_model_dicts
-    
+
     def calculate_sha1_hash_from_all_model_dicts(self, all_model_dicts):
         """Calculates a sha1 hash from all_model_dicts"""
         if not all_model_dicts:
             return None
-        item_json = json.dumps(all_model_dicts, ensure_ascii=False)
+        clean_model_dicts = []
+        i = 0
+        now = datetime.datetime.now()
+        clean_model_dicts = [now.isoformat()]
+        for model_dict in all_model_dicts:
+            if isinstance(model_dict, dict):
+                for key, val in model_dict.items():
+                    model_dict[key] = json_friendly_datatype_input_obj(val)
+            clean_model_dicts.append(model_dict)
+            clean_model_dicts.append(i)
+            i += 1
+        item_json = json.dumps(clean_model_dicts, ensure_ascii=False)
         encoded_str = item_json.encode()
         # create a sha1 hash object initialized with the encoded string
         hash_obj = hashlib.sha1(encoded_str)
@@ -1536,7 +1549,7 @@ class AllHistory(models.Model):
         if use_time:
             all_model_dicts['updated'] = timezone.now().isoformat()
         return self.calculate_sha1_hash_from_all_model_dicts(all_model_dicts)
-    
+
     def calculate_sha1_hash_for_self(self, use_time=False):
         """Make sha1 hash for self"""
         if not self.item:
@@ -1547,7 +1560,7 @@ class AllHistory(models.Model):
         """Makes a primary key using a prefix from the item"""
         item_uuid = str(item_id)
         item_prefix = item_uuid.split('-')[0]
-        
+
         uuid_from_hash_id = str(
             GenUUID.UUID(hex=sha1_hash[:32])
         )
@@ -1562,7 +1575,7 @@ class AllHistory(models.Model):
         if self.uuid:
             return self.uuid
         return self.primary_key_create(
-            item_id=self.item.uuid, 
+            item_id=self.item.uuid,
             sha1_hash=self.sha1_hash,
         )
 
@@ -1597,9 +1610,9 @@ class AllHistory(models.Model):
 class AllIdentifier(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     item = models.ForeignKey(
-        AllManifest, 
-        db_column='item_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='item_uuid',
+        related_name='+',
         on_delete=models.CASCADE
     )
     scheme = models.TextField()
@@ -1611,16 +1624,16 @@ class AllIdentifier(models.Model):
 
     SCHEME_CONFIGS = {
         'doi': {
-            'url_root': 'doi.org/', 
+            'url_root': 'doi.org/',
             'limit_item_types': None
         },
         'ark': {
-            'url_root': 'n2t.net/ark:/', 
+            'url_root': 'n2t.net/ark:/',
             'limit_item_types': None
         },
         'orcid': {
-            'url_root': 'orcid.org/', 
-            'limit_item_types': 
+            'url_root': 'orcid.org/',
+            'limit_item_types':
             ['persons'],
         },
     }
@@ -1628,7 +1641,7 @@ class AllIdentifier(models.Model):
 
     def make_id_url(self, scheme, id, protocol_prefix=''):
         """Makes a URL from a scheme and id"""
-        # NOTE: this can be invoked without a 
+        # NOTE: this can be invoked without a
         # model object
         conf = self.SCHEME_CONFIGS.get(scheme, {})
         url_root = conf.get('url_root')
@@ -1659,7 +1672,7 @@ class AllIdentifier(models.Model):
         """Makes a primary key using a prefix from the item"""
         item_uuid = str(item_id)
         item_prefix = item_uuid.split('-')[0]
-        
+
         hash_id = self.make_hash_id(
             item_id=item_id,
             scheme=scheme,
@@ -1717,7 +1730,7 @@ class AllIdentifier(models.Model):
         db_table = 'oc_all_identifiers'
         unique_together = (
             (
-                "item", 
+                "item",
                 "scheme",
                 "rank",
             ),
