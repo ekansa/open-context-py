@@ -37,6 +37,18 @@ from opencontext_py.apps.all_items.sitemaps import site_data
 importlib.reload(site_data)
 
 site_data.warm_sitemap_representative_items()
+
+
+pqs = AllManifest.objects.filter(item_type='projects')
+for p in pqs:
+    if not p.meta_json.get('sitemap_index_id'):
+        continue
+    p.meta_json['sitemap_index_id'] = None
+    print(f'update: {p.slug}')
+    p.save()
+
+proj_obj = AllManifest.objects.get(uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203')
+r = site_data.get_cache_project_representative_sample(proj_obj)
 """
 
 MAX_SITEMAP_ITEMS = 25000 # It's really 50K, but let's be conservative
@@ -151,7 +163,7 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
     job_id = None
     if proj_obj.meta_json.get('sitemap_job_ids'):
         job_id = proj_obj.meta_json.get('sitemap_job_ids').get(index_id)
-    
+
     # Do a queued request to get all of the representative items for the project
     job_id, job_done, rep_man_objs = wrap_func_for_rq(
         func=db_site_data.db_get_project_representative_sample,
@@ -197,7 +209,7 @@ def compute_sitemap_priority(item_type, proj_count, max_count):
     if max_count < 1:
         return item_type_priority
     priority = (
-        (item_type_priority * 3) 
+        (item_type_priority * 3)
         + (item_type_priority * proj_count/max_count)
     ) / 4
     if priority < 0:
@@ -223,15 +235,15 @@ def get_sitemap_items_dict_for_proj_slug(
     all_items = {k:[] for k,_ in SITEMAP_ITEM_TYPES_AND_PRIORITY}
     # Use a get to fail loudly here!
     proj_obj = AllManifest.objects.filter(
-        slug=proj_slug, 
+        slug=proj_slug,
         item_type='projects'
     ).first()
     if not proj_obj:
         return all_items
     # Add the sitemap priority to the project item.
     proj_obj.sitemap_priority = compute_sitemap_priority(
-        item_type=proj_obj.item_type, 
-        proj_count=proj_count, 
+        item_type=proj_obj.item_type,
+        proj_count=proj_count,
         max_count=max_count,
     )
     proj_obj.url = compute_sitemap_url(proj_obj)
@@ -242,8 +254,8 @@ def get_sitemap_items_dict_for_proj_slug(
     )
     for man_obj in rep_man_objs:
         man_obj.sitemap_priority = compute_sitemap_priority(
-            item_type=man_obj.item_type, 
-            proj_count=proj_count, 
+            item_type=man_obj.item_type,
+            proj_count=proj_count,
             max_count=max_count,
         )
         man_obj.url = compute_sitemap_url(man_obj)
@@ -268,15 +280,15 @@ def get_index_sitemap_item_for_proj_slug(
 ):
 
     proj_obj = AllManifest.objects.filter(
-        slug=proj_slug, 
+        slug=proj_slug,
         item_type='projects'
     ).first()
     if not proj_obj:
         return None
     # Add the sitemap priority to the project item.
     proj_obj.sitemap_priority = compute_sitemap_priority(
-        item_type=proj_obj.item_type, 
-        proj_count=proj_count, 
+        item_type=proj_obj.item_type,
+        proj_count=proj_count,
         max_count=max_count,
     )
     proj_obj.url = compute_sitemap_url(proj_obj)
