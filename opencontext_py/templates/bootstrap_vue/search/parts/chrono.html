@@ -11,7 +11,7 @@
         @shown="on_shown"
     >
         <p><small>Select a color gradient option to use in the time range data visualization. Different
-            color options may be more effective than others depending underlying patterns in the data, 
+            color options may be more effective than others depending underlying patterns in the data,
             your sensitivity to various colors, and aesthetic preferences.
         </small></p>
 
@@ -35,18 +35,18 @@
 <template id="chronotiles-template">
 
 <div class="card bg-light" id="all-chrono-card">
-    <div class="card-header"> 
+    <div class="card-header">
         <h5 class="filter_heading_labels">
             Time Ranges (Years BCE/CE)
             <span v-if="result_count"> for [[ human_result_count ]] Records</span>
         </h5>
     </div>
-        
+
     <div class="card-body small">
         <b-container fluid v-if="data_series.length" id="all-chrono-chart">
             <apexchart
                 id="chrono-chart"
-                width="100%" 
+                width="100%"
                 type="area"
                 :key="'chrono-chart-apex-' + apex_key"
                 :options="options"
@@ -60,9 +60,9 @@
             </div>
             <b-row class="text-center" align-v="center">
                 <b-col lg="1">
-                    <b-button 
-                        title="Change visualization colors" 
-                        variant="outline-secondary" 
+                    <b-button
+                        title="Change visualization colors"
+                        variant="outline-secondary"
                         size="sm"
                         :pressed="color_gradient_select_modal_pressed"
                         @click="show_color_ui"><span class="material-icons-two-tone">palette</span></b-button>
@@ -88,7 +88,7 @@
                             <b-icon-calendar2-check-fill></b-icon-calendar2-check-fill>
                         </b-button>
                     </div>
-                    
+
                 </b-col>
             </b-row>
         </b-container>
@@ -98,11 +98,11 @@
         </div>
     </div>
 
-    <chrono-color-ui 
+    <chrono-color-ui
         v-bind:selected_gradient_key="selected_gradient_key"
         @set_selected_gradient_key="set_selected_gradient_key($event)"
     ></chrono-color-ui>
-        
+
 </div>
 
 </template>
@@ -370,7 +370,7 @@ var vc_chronotiles = Vue.component(
                             inverseColors: false,
                             opacityFrom: 1,
                             opacityTo: 1,
-                            
+
                         },
                     },
                     markers: {
@@ -599,6 +599,18 @@ var vc_chronotiles = Vue.component(
                     this.t_span_min = this.t_span_default_min;
                 }
             },
+            recalc_curve_steps(){
+                // Makes sure we have more curve steps for smoother
+                // plots when the data are sparse
+                if(this.chrono_max_count >= 200){
+                    return this.curve_steps;
+                }
+                let curve_steps = [];
+                for(let i = 0.5; i >= 0;  (i = i - 0.00625)){
+                    curve_steps.push(i);
+                }
+                return curve_steps;
+            },
             add_chart_year_x_to_chrono(chrono){
                 chrono.t_span = parseFloat(chrono.stop) - parseFloat(chrono.start);
                 if(chrono.t_span < this.t_span_min){
@@ -623,7 +635,8 @@ var vc_chronotiles = Vue.component(
                         + span_max_year
                     ) / 4)
                 );
-                for(let act_step of this.curve_steps){
+                let curve_steps = this.recalc_curve_steps();
+                for(let act_step of curve_steps){
                     let act_x_minus = Math.round((chrono.median_year - (chrono.t_span * act_step)));
                     let act_x_plus = Math.round((chrono.median_year + (chrono.t_span * act_step)));
                     if(act_x_plus > this.chart_max_year){
@@ -673,11 +686,11 @@ var vc_chronotiles = Vue.component(
                     chrono_id_t_spans[chrono.id] = chrono.t_span;
                     chrono_id_objs[chrono.id] = chrono;
                 }
-                
+
                 if(this.chrono_total_count < 1){
                     return null;
                 }
-            
+
                 this.chrono_all_years.sort(function(a, b){return a-b});
 
                 this.chrono_max_count = Math.max.apply(Math, chrono_counts);
@@ -701,13 +714,13 @@ var vc_chronotiles = Vue.component(
                     }
                 );
                 id_keys_sorted.reverse();
-                
+
                 for(let id_key of id_keys_sorted){
                     let chrono = chrono_id_objs[id_key];
                     let chrono_series = this.make_span_data_series(chrono);
                     this.data_series.push(chrono_series);
                     let chrono_color = make_hex_color_in_gradient(
-                        (chrono.count / this.chrono_max_count), 
+                        (chrono.count / this.chrono_max_count),
                         COLOR_GRADIENTS[this.selected_gradient_key]
                     );
                     this.data_series_colors.push(chrono_color);
@@ -738,7 +751,7 @@ var vc_chronotiles = Vue.component(
 
 
 function make_broaden_link_with_last_hash(raw_filter){
-    
+
 }
 
 
