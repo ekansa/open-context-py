@@ -59,7 +59,7 @@ def get_simple_metadata_query_dict(raw_value, solr_field):
             terms, operator='OR'
         )
     )
-    return query_dict 
+    return query_dict
 
 
 # -------------------------------------------------------------
@@ -82,14 +82,14 @@ def get_identifier_query_dict(raw_identifier):
         if not value:
             continue
         id_list += utilities.make_uri_equivalence_list(value)
-    
+
     for act_id in id_list:
         # The act_id maybe a persistent URI, escape it and
         # query the persistent_uri string.
         escape_id = utilities.escape_solr_arg(act_id)
         fq_terms.append('persistent_uri:{}'.format(escape_id))
         if ':' in act_id:
-            # Skip below, because the act_id has a 
+            # Skip below, because the act_id has a
             # character that's not in uuids or slugs.
             continue
         # The act_id maybe a UUID.
@@ -100,7 +100,7 @@ def get_identifier_query_dict(raw_identifier):
                 utilities.fq_slug_value_format(act_id)
             )
         )
-    
+
     # Now make URIs in case we have a naked identifier
     prefix_removes = [
         'doi:',
@@ -117,7 +117,7 @@ def get_identifier_query_dict(raw_identifier):
             # strip ID prefixes, case insensitive
             re_gone = re.compile(re.escape(prefix), re.IGNORECASE)
             identifier = re_gone.sub('', value)
-            if (identifier.startswith('http://') 
+            if (identifier.startswith('http://')
                 or identifier.startswith('https://')):
                 continue
 
@@ -172,7 +172,7 @@ def get_object_uri_query_dict(raw_object_uri):
         if not value:
             continue
         id_list += utilities.make_uri_equivalence_list(value)
-    
+
     for act_id in id_list:
         # Allow any unique ID for the search, but solr only indexes
         # URIs. So we first hit the database to get the manifest object
@@ -182,14 +182,14 @@ def get_object_uri_query_dict(raw_object_uri):
         if not man_obj:
             continue
         # The act_id maybe a persistent URI, escape it and
-        # query the persistent_uri string. 
+        # query the persistent_uri string.
         escape_id = utilities.escape_solr_arg(man_obj.uri)
         fq_term = f'((object_uri:{man_obj.uri}) OR (object_uri:{escape_id}))'
         if fq_term in fq_terms:
             # We already have this, so skip
             continue
         fq_terms.append(fq_term)
-    
+
     # Join the various object_uri queries as OR terms.
     query_dict['fq'].append(
         utilities.join_solr_query_terms(
@@ -260,7 +260,7 @@ def get_item_type_query_dict(raw_item_type):
         # facets for class_uris for the current item type.
         query_dict['facet.field'].append(configs.ROOT_OC_CATEGORY_SOLR)
     # NOTE: Multiple item_type terms are the result of an "OR" (||) operator
-    # in the client's request. 
+    # in the client's request.
     query_dict['fq'].append(
         utilities.join_solr_query_terms(
             path_terms, operator='OR'
@@ -329,8 +329,8 @@ def get_discovery_geotile_query_dict(raw_disc_geo, low_res=True):
     if not low_res:
         solr_field = f'{configs.ROOT_EVENT_CLASS}___geo_tile'
     return make_tile_query_dict(
-        raw_tile_path=raw_disc_geo, 
-        solr_field=solr_field, 
+        raw_tile_path=raw_disc_geo,
+        solr_field=solr_field,
         max_path_length=SolrDocument.MAX_GEOTILE_ZOOM,
     )
 
@@ -341,14 +341,14 @@ def get_form_use_life_chronotile_query_dict(raw_chrono_tile, low_res=True):
     if not low_res:
         solr_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
     return make_tile_query_dict(
-        raw_tile_path=raw_chrono_tile, 
-        solr_field=solr_field, 
+        raw_tile_path=raw_chrono_tile,
+        solr_field=solr_field,
         max_path_length=ChronoTile().MAX_TILE_DEPTH,
     )
 
 
 def get_all_event_chrono_span_query_dict(all_start=None, all_stop=None):
-    """Makes a filter query for formation-use-life chrono based on 
+    """Makes a filter query for formation-use-life chrono based on
     start and/or stop times
     """
     if all_start is None and all_stop is None:
@@ -372,8 +372,8 @@ def add_url_fixes_to_paths_list(paths_list):
 
     :param list paths_list: List of spatial context path
         strings.
-    
-    :return list 
+
+    :return list
     """
     paths_list = list(paths_list)
     url_fixes = []
@@ -394,7 +394,7 @@ def add_url_fixes_to_paths_list(paths_list):
 
 def get_spatial_context_query_dict(spatial_context=None):
     '''Returns a query_dict object for a spatial_context path.
-    
+
     :param str spatial_context: Raw spatial context path requested by
         the client.
     '''
@@ -443,7 +443,7 @@ def get_spatial_context_query_dict(spatial_context=None):
         )
 
     # NOTE: Multiple path terms are the result of an "OR" (||) operator
-    # in the client's request. 
+    # in the client's request.
     query_dict['fq'].append(
         utilities.join_solr_query_terms(
             path_terms, operator='OR'
@@ -459,50 +459,50 @@ def get_spatial_context_query_dict(spatial_context=None):
 def get_range_stats_fields(attribute_item_obj, field_fq, attribute_group_obj_slug=None):
     """Prepares facet request for value range (numeric, date) fields"""
     # Strip the '_id' end of the field_fq (for the filter query).
-    # The field_fq needs to be updated to have the suffix of the 
+    # The field_fq needs to be updated to have the suffix of the
     # right type of literal that we're going t query.
 
     # NOTE: 'xsd:boolean' is excluded from range facets
     # print(f'attribute_item_obj {attribute_item_obj.slug} has data_type {attribute_item_obj.data_type}')
     if not attribute_item_obj.data_type in [
-        'xsd:integer', 
-        'xsd:double',  
+        'xsd:integer',
+        'xsd:double',
         'xsd:date'
     ]:
         # Not an attribute that has value ranges to facet.
         return None
     field_fq = utilities.rename_solr_field_for_data_type(
-        attribute_item_obj.data_type, 
+        attribute_item_obj.data_type,
         field_fq
     )
     if attribute_group_obj_slug:
-        # We're working in the context of an attribute group, so make sure the range 
+        # We're working in the context of an attribute group, so make sure the range
         # query is about that attribute group.
         field_fq = replace_slug_in_solr_field(
-            solr_field=field_fq, 
-            old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+            solr_field=field_fq,
+            old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG,
             new_slug=attribute_group_obj_slug,
         )
     query_dict = {'prequery-stats': []}
     query_dict['prequery-stats'].append(
         field_fq
-    )  
+    )
     return query_dict
 
 
 def compose_filter_query_on_literal(raw_literal, attribute_item_obj, field_fq):
     """Composes a solr filter query on literal values."""
-    
-    # The field_fq needs to be updated to have the suffix of the 
-    # right type of literal that we're going to query.  
+
+    # The field_fq needs to be updated to have the suffix of the
+    # right type of literal that we're going to query.
     field_fq = utilities.rename_solr_field_for_data_type(
-        attribute_item_obj.data_type, 
+        attribute_item_obj.data_type,
         field_fq
     )
 
     query_dict = {'fq': []}
     if attribute_item_obj.data_type == 'xsd:string':
-        # Case for querying string literals. This is the most 
+        # Case for querying string literals. This is the most
         # complicated type of literal to query.
         query_dict['hl-queries'] = []
         string_terms = utilities.prep_string_search_term_list(
@@ -521,7 +521,7 @@ def compose_filter_query_on_literal(raw_literal, attribute_item_obj, field_fq):
                 )
             )
     elif attribute_item_obj.data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-        # Case for querying numeric or boolean literals. This is a 
+        # Case for querying numeric or boolean literals. This is a
         # simple type of literal to query. We pass the literal on without
         # modification as the filter field query value.
         query_dict['fq'].append('{field_fq}:{field_val}'.format(
@@ -564,7 +564,7 @@ def get_general_hierarchic_path_query_dict(
 ):
     """Gets a solr query dict for a general hierarchic list of
     path item identifiers (usually slugs).
-    
+
     :param list path_list: List of string identifiers (usually slugs)
         for entities, and possibly literals that the client provides to
         search solr.
@@ -612,7 +612,7 @@ def get_general_hierarchic_path_query_dict(
     # Now start composing fq's for the parent item field with the
     # child as a value of the parent item field.
     facet_field = root_field
-    
+
     # NOTE: The attribute_field_part is a part of a solr-field
     # for cases where the attribute is an entity in the database.
     # It starts with the default value of '' because we start
@@ -628,14 +628,14 @@ def get_general_hierarchic_path_query_dict(
 
     # Default to no solr related prefix
     use_solr_rel_prefix = ''
-    
-    last_path_index = len(path_list) -1 
+
+    last_path_index = len(path_list) -1
     for path_index, item_id in enumerate(path_list):
 
-        if (attribute_item_obj is not None 
+        if (attribute_item_obj is not None
             and attribute_item_obj.data_type in configs.LITERAL_DATA_TYPES):
             # Process literals in requests, because some requests will filter according to
-            # numeric, date, or string criteria. 
+            # numeric, date, or string criteria.
             literal_query_dict = compose_filter_query_on_literal(
                 raw_literal=item_id,
                 attribute_item_obj=attribute_item_obj,
@@ -659,22 +659,22 @@ def get_general_hierarchic_path_query_dict(
 
         use_solr_rel_prefix = ''
         if item_id.startswith(configs.RELATED_ENTITY_ID_PREFIX):
-            # Strip off the prefix. 
+            # Strip off the prefix.
             item_id = item_id[len(configs.RELATED_ENTITY_ID_PREFIX):]
             use_solr_rel_prefix = SolrDocument.RELATED_SOLR_DOC_PREFIX
-        
+
         # Add the solr-rel prefix if needed.
         obj_all_field_fq = add_rel_prefix_if_needed(
-            obj_all_field_fq, 
+            obj_all_field_fq,
             prefix=use_solr_rel_prefix
         )
-        
+
         item_obj = db_entities.get_cache_man_obj_by_any_id(item_id)
         if not item_obj:
             # We don't recognize the first item, and it is not
             # a literal of an attribute field. So return None.
             return None
-        
+
         if not attribute_group_obj and item_obj.item_type == 'attribute-groups':
             attribute_group_obj = item_obj
             attribute_group_obj_slug = attribute_group_obj.slug
@@ -683,7 +683,7 @@ def get_general_hierarchic_path_query_dict(
         item_parent_obj = db_entities.get_man_obj_parent(item_obj)
         if (
             item_parent_obj
-            and field_suffix == configs.ROOT_OC_CATEGORY_SOLR 
+            and field_suffix == configs.ROOT_OC_CATEGORY_SOLR
             and item_parent_obj.slug in configs.ITEM_TYPE_SLUGS
         ):
             # We don't want to use item_type item parents as parents
@@ -691,14 +691,21 @@ def get_general_hierarchic_path_query_dict(
             # filtering more complicated.
             pref_meta_json_facet_field = False
             item_parent_obj = None
-        
+
+        if False:
+            if item_parent_obj is None:
+                print(f'NO parent {item_obj.slug} pref_meta_json_facet_field: {pref_meta_json_facet_field}')
+            else:
+                print(f'{item_parent_obj.slug} parent of {item_obj.slug} pref_meta_json_facet_field: {pref_meta_json_facet_field}')
+            print(f'NO parent {item_obj.slug} pref_meta_json_facet_field: {pref_meta_json_facet_field}')
+
         if item_parent_obj:
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
             parent_slug_part = item_parent_obj.slug.replace('-', '_')
             if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
                 facet_field = item_obj.meta_json.get('solr_field')
-                print(f'Use meta_json facet_field {facet_field}')
+                print(f'Use parent {item_parent_obj.slug} meta_json facet_field {facet_field}')
             elif not attribute_field_part.startswith(parent_slug_part):
                 facet_field = (
                     # Use the most immediate parent item of the item entity
@@ -709,22 +716,22 @@ def get_general_hierarchic_path_query_dict(
                     parent_slug_part
                     + SolrDocument.SOLR_VALUE_DELIM
                     + attribute_field_part
-                    + field_suffix  
+                    + field_suffix
                 )
-        
-        # If the item is a linked data entity, and we have a 
+
+        # If the item is a linked data entity, and we have a
         # root field field defined for project specific predicates.
         # So, change the root solr field to be the linked data root.
-        if (item_obj.item_type in URI_ITEM_TYPES 
+        if (item_obj.item_type in URI_ITEM_TYPES
            and facet_field == SolrDocument.ROOT_PREDICATE_SOLR):
             facet_field = SolrDocument.ROOT_LINK_DATA_SOLR
 
 
-        # Add the solr related prefix for related entity searches 
+        # Add the solr related prefix for related entity searches
         # and it not already used as a prefix.
         # Add the solr-rel prefix if needed.
         facet_field = add_rel_prefix_if_needed(
-            facet_field, 
+            facet_field,
             prefix=use_solr_rel_prefix
         )
 
@@ -733,19 +740,19 @@ def get_general_hierarchic_path_query_dict(
             # Use the obj_all_solr_field associated with this item, because
             # it is more forgiving about where in a hierarchy we are.
             field_fq = add_rel_prefix_if_needed(
-                item_obj.meta_json.get('obj_all_solr_field'), 
+                item_obj.meta_json.get('obj_all_solr_field'),
                 prefix=use_solr_rel_prefix
             )
         else:
             # This is the default behavior without the DB specifying
             # an object all field.
             field_fq = facet_field
-        
+
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
-        # 
-        # NOTE ON DO_LEGACY_FQ:  
+        #
+        # NOTE ON DO_LEGACY_FQ:
         # Add the _fq suffix to make the field_fq which is what we use
         # to as the solr field to query for the current item. Note! The
         # field_fq is different from the facet_field because when we
@@ -754,21 +761,21 @@ def get_general_hierarchic_path_query_dict(
         # making facets (counts of metadata values in different documents).
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
-        
+
         if attribute_group_obj_slug:
             # Make sure we replace the general all-attribute slug
             # that make in the pref-meta-json facet field to use the
             # specific attribute group slug
             field_fq = replace_slug_in_solr_field(
-                solr_field=field_fq, 
-                old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                solr_field=field_fq,
+                old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG,
                 new_slug=attribute_group_obj_slug,
             )
 
         # Make the query for the item and the solr field associated
         # with the item's immediate parent (or root, if it has no
         # parents).
-        fq_item_slug = add_rel_prefix_if_needed( 
+        fq_item_slug = add_rel_prefix_if_needed(
             utilities.fq_slug_value_format(item_obj.slug),
             prefix=use_solr_rel_prefix
         )
@@ -776,15 +783,15 @@ def get_general_hierarchic_path_query_dict(
         query_dict['fq'].append(f'{field_fq}:{fq_item_slug}')
         # Now make the query for the item and the solr field
         # associated with all items in the whole hierarchy for this
-        # type of solr dynamic field. 
+        # type of solr dynamic field.
         if obj_all_field_fq:
             if attribute_group_obj_slug:
                 # Make sure we replace the general all-attribute slug
                 # that make in the pref-meta-json facet field to use the
                 # specific attribute group slug
                 obj_all_field_fq = replace_slug_in_solr_field(
-                    solr_field=obj_all_field_fq, 
-                    old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                    solr_field=obj_all_field_fq,
+                    old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG,
                     new_slug=attribute_group_obj_slug,
                 )
             query_dict['fq'].append(f'{obj_all_field_fq}:{fq_item_slug}')
@@ -792,7 +799,7 @@ def get_general_hierarchic_path_query_dict(
         if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
             # We're preferencing the solr_field_name stored in the meta_json.
             facet_field = item_obj.meta_json.get('solr_field')
-            print(f'Use preferred facet_field {facet_field}')
+            # print(f'Use preferred {item_obj.slug} facet_field {facet_field}')
         else:
             # Use the current item as the basis for the next solr_field
             # that will be used to query child items in the next iteration
@@ -801,30 +808,32 @@ def get_general_hierarchic_path_query_dict(
                 item_obj.slug.replace('-', '_')
                 + SolrDocument.SOLR_VALUE_DELIM
                 + attribute_field_part
-                + field_suffix  
+                + field_suffix
             )
 
         facet_field = add_rel_prefix_if_needed(
-            facet_field, 
+            facet_field,
             prefix=use_solr_rel_prefix
         )
+
+        # print(f'Now {item_obj.slug} facet_field {facet_field}')
 
         if attribute_group_obj_slug:
             # Make sure we replace the general all-attribute slug
             # that make in the pref-meta-json facet field to use the
             # specific attribute group slug
             facet_field = replace_slug_in_solr_field(
-                solr_field=facet_field, 
-                old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                solr_field=facet_field,
+                old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG,
                 new_slug=attribute_group_obj_slug,
             )
 
         field_fq = facet_field
         if not field_fq.endswith(fq_solr_field_suffix):
             field_fq += fq_solr_field_suffix
-        
-        
-        if (item_obj.item_type in ['predicates', 'property'] 
+
+
+        if (item_obj.item_type in ['predicates', 'property']
             or item_obj.data_type in configs.LITERAL_DATA_TYPES):
             # The current item entity is a "predicates" or a "property"
             # type of item. That means the item is a kind of attribute
@@ -833,7 +842,7 @@ def get_general_hierarchic_path_query_dict(
             # used in solr fields. These will be used in all of the
             # queries of child items as we iterate through this
             # path_list.
-            
+
             # The current item is an attribute item, so copy it for
             # use as we continue to iterate through this path_list.
             attribute_item_obj = item_obj
@@ -841,23 +850,23 @@ def get_general_hierarchic_path_query_dict(
                 # Keep for debugging but turn it off
                 print('attribute item {} is a {}, {}'.format(
                         attribute_item_obj.label,
-                        attribute_item_obj.item_type, 
+                        attribute_item_obj.item_type,
                         attribute_item_obj.data_type
                     )
                 )
 
             if attribute_item_obj.data_type in configs.LITERAL_DATA_TYPES:
                 # This attribute_item_obj has a data type for literal
-                # values. 
+                # values.
 
                 children = db_entities.get_man_obj_children_list(attribute_item_obj)
                 if len(children):
-                    # The (supposedly) literal attribute item 
-                    # has children so force it to have a data_type of 
+                    # The (supposedly) literal attribute item
+                    # has children so force it to have a data_type of
                     # 'id'.
                     attribute_item_obj.data_type = 'id'
-                
-                # NOTE: Generally, we don't make facets on literal 
+
+                # NOTE: Generally, we don't make facets on literal
                 # attributes. However, some literal attributes are
                 # actually parents of other literal atttributes, so
                 # we should make facets for them.
@@ -876,12 +885,12 @@ def get_general_hierarchic_path_query_dict(
                             + item.slug.replace('-', '_')
                             + SolrDocument.SOLR_VALUE_DELIM
                             + field_suffix
-                        )  
+                        )
                     )
                 elif attribute_item_obj.data_type != 'id':
                     # The attribute item data type has not been reset
-                    # to be 'id', b/c there are no children items to 
-                    # this literal attribute item. Thus, there is no 
+                    # to be 'id', b/c there are no children items to
+                    # this literal attribute item. Thus, there is no
                     # need to make a facet field for it.
                     facet_field = None
 
@@ -892,8 +901,8 @@ def get_general_hierarchic_path_query_dict(
                         # that make in the pref-meta-json facet field to use the
                         # specific attribute group slug
                         facet_field = replace_slug_in_solr_field(
-                            solr_field=facet_field, 
-                            old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                            solr_field=facet_field,
+                            old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG,
                             new_slug=attribute_group_obj_slug,
                         )
                     field_fq = item_obj.meta_json.get('solr_field')
@@ -907,12 +916,12 @@ def get_general_hierarchic_path_query_dict(
                             + item_obj.slug.replace('-', '_')
                             + SolrDocument.SOLR_VALUE_DELIM
                             + field_suffix
-                        )  
+                        )
                     )
                     facet_field = field_fq
 
                 # The attribute item is for a literal type field.
-                # Gather numeric and date fields that need a 
+                # Gather numeric and date fields that need a
                 range_query_dict = get_range_stats_fields(
                     attribute_item_obj,
                     field_fq,
@@ -925,8 +934,8 @@ def get_general_hierarchic_path_query_dict(
                     main_query_dict=query_dict,
                 )
             elif (
-                    not attribute_field_part 
-                    or attribute_item_obj.item_type == 'predicates' 
+                    not attribute_field_part
+                    or attribute_item_obj.item_type == 'predicates'
                 ):
                 # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
@@ -935,16 +944,28 @@ def get_general_hierarchic_path_query_dict(
                     print(
                         f'Pred attribute: {attribute_item_obj.item_type}'
                     )
-                attribute_field_part = (
-                    attribute_item_obj.slug.replace('-', '_')
-                    + SolrDocument.SOLR_VALUE_DELIM
-                )
+                if not attribute_item_obj.meta_json.get('solr_field'):
+                    attribute_field_part = (
+                        attribute_item_obj.slug.replace('-', '_')
+                        + SolrDocument.SOLR_VALUE_DELIM
+                    )
+                else:
+                    # the attribute item has a preferred solr_field configured, so use that as a basis
+                    # for the attribute field part. This is all kinda insane, but it seems to work
+                    # for now until we can figure out a simplified approach that is less insane, maybe by
+                    # doing a better job of storing solr fields that we want to query in the database.
+                    solr_parts = attribute_item_obj.meta_json.get('solr_field').split(SolrDocument.SOLR_VALUE_DELIM)
+                    use_parts = SolrDocument.SOLR_VALUE_DELIM.join(solr_parts[:-1])
+                    attribute_field_part = (
+                        use_parts
+                        + SolrDocument.SOLR_VALUE_DELIM
+                    )
 
                 attribute_field_part = add_rel_prefix_if_needed(
-                    attribute_field_part, 
+                    attribute_field_part,
                     prefix=use_solr_rel_prefix
                 )
-                
+
                 if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
                     # This is the preferred way to get the obj_all field fq, because
                     # the solr_field_name is explicitly in the DB for us to use.
@@ -960,29 +981,29 @@ def get_general_hierarchic_path_query_dict(
                         + SolrDocument.SOLR_VALUE_DELIM
                         + attribute_field_part
                         + field_suffix
-                        + fq_solr_field_suffix 
+                        + fq_solr_field_suffix
                     )
                 if attribute_group_obj_slug:
                     # Make sure we replace the general all-attribute slug
                     # that make in the pref-meta-json facet field to use the
                     # specific attribute group slug
                     obj_all_field_fq = replace_slug_in_solr_field(
-                        solr_field=obj_all_field_fq, 
-                        old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG, 
+                        solr_field=obj_all_field_fq,
+                        old_slug=configs.ALL_ATTRIBUTE_GROUPS_SLUG,
                         new_slug=attribute_group_obj_slug,
                     )
                 obj_all_field_fq = add_rel_prefix_if_needed(
-                    obj_all_field_fq, 
+                    obj_all_field_fq,
                     prefix=use_solr_rel_prefix
                 )
-            
+
 
 
     # Make the facet field so solr will return any possible
     # facet values for children of the LAST item in this path_list.
     if facet_field:
         query_dict['facet.field'].append(facet_field)
-    return query_dict 
+    return query_dict
 
 
 def get_general_hierarchic_paths_query_dict(
@@ -1034,7 +1055,7 @@ def get_general_hierarchic_paths_query_dict(
             main_query_dict=query_dict,
             skip_keys=['fq'],
         )
-    
+
     if not path_terms:
         return None
     # The different paths iterated above are all "OR" options (union)
