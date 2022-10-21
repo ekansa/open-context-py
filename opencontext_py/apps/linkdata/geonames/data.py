@@ -149,6 +149,21 @@ def add_get_geonames_manifest_entity(raw_url):
     return geonames_obj
 
 
+def make_ewns_coordinates_list(east, west, north, south):
+    """Makes GeoJSON coordinates list for east, west, north, south
+    coordinate values
+    """
+    coordinates = []
+    cood_inner = []
+    cood_inner.append([east, south])
+    cood_inner.append([east, north])
+    cood_inner.append([west, north])
+    cood_inner.append([west, south])
+    cood_inner.append([east, south])
+    coordinates.append(cood_inner)
+    return coordinates
+
+
 def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False):
     """Saves a spacetime object for a geonames object"""
     spacetime_qs = AllSpaceTime.objects.filter(
@@ -177,15 +192,34 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False):
         south = json_data['bbox']['south']
         west = json_data['bbox']['west']
         north = json_data['bbox']['north']
-        coordinates = []
-        cood_inner = []
-        cood_inner.append([east, south])
-        cood_inner.append([east, north])
-        cood_inner.append([west, north])
-        cood_inner.append([west, south])
-        cood_inner.append([east, south])
-        coordinates.append(cood_inner)
-        geometry_type = 'Polygon'
+
+        if (
+            (east >= -90 and east <= 0 and west >= 160) # US
+           or
+            (east < 160 and west > 0) # Russia
+        ):
+            # We need a multipolygon here, because we're spanning
+            # hemispheres.
+            lat = float(json_data['lat'])
+            lon = float(json_data['lng'])
+            if (east >= -90 and east <= 0 and west >= 160):
+                east_a = east
+                west_a = -179.99999
+                east_b = west
+                west_b = 179.999999
+            if (east < 160 and west > 0):
+                east_a = west
+                west_a = 179.999999
+                east_b = -179.99999
+                west_b = east
+            coords_a = make_ewns_coordinates_list(east_a, west_a, north, south)
+            coords_b = make_ewns_coordinates_list(east_b, west_b, north, south)
+            coordinates = [coords_a, coords_b]
+            geometry_type = 'MultiPolygon'
+        else:
+            coordinates = make_ewns_coordinates_list(east, west, north, south)
+            geometry_type = 'Polygon'
+
         geometry = {
             'type': geometry_type,
             'coordinates': coordinates,
