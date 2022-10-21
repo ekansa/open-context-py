@@ -704,8 +704,8 @@ def get_general_hierarchic_path_query_dict(
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
             parent_slug_part = item_parent_obj.slug.replace('-', '_')
-            if pref_meta_json_facet_field and item_obj.meta_json.get('solr_field'):
-                facet_field = item_obj.meta_json.get('solr_field')
+            if pref_meta_json_facet_field and item_parent_obj.meta_json.get('solr_field'):
+                facet_field = item_parent_obj.meta_json.get('solr_field')
                 print(f'Use parent {item_parent_obj.slug} meta_json facet_field {facet_field}')
             elif not attribute_field_part.startswith(parent_slug_part):
                 facet_field = (
