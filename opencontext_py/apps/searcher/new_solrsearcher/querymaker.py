@@ -679,6 +679,7 @@ def get_general_hierarchic_path_query_dict(
             attribute_group_obj = item_obj
             attribute_group_obj_slug = attribute_group_obj.slug
 
+        # Default to prefer the facet_field information stored in meta_json
         pref_meta_json_facet_field = True
         item_parent_obj = db_entities.get_man_obj_parent(item_obj)
         if (
@@ -718,6 +719,7 @@ def get_general_hierarchic_path_query_dict(
                     + attribute_field_part
                     + field_suffix
                 )
+                print(f'Facet field {facet_field}, from parent_slug_part {parent_slug_part}, and attribute_field_part {attribute_field_part}')
 
         # If the item is a linked data entity, and we have a
         # root field field defined for project specific predicates.
@@ -743,10 +745,12 @@ def get_general_hierarchic_path_query_dict(
                 item_obj.meta_json.get('obj_all_solr_field'),
                 prefix=use_solr_rel_prefix
             )
+            print(f'field_fq: {field_fq}, from {item_obj.slug} meta json obj_all_solr_field')
         else:
             # This is the default behavior without the DB specifying
             # an object all field.
             field_fq = facet_field
+            print(f'field_fq: {field_fq}, from facet_field')
 
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
@@ -935,7 +939,7 @@ def get_general_hierarchic_path_query_dict(
                 )
             elif (
                     not attribute_field_part
-                    or attribute_item_obj.item_type == 'predicates'
+                    or attribute_item_obj.item_type in ['predicates', 'property']
                 ):
                 # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
@@ -974,6 +978,7 @@ def get_general_hierarchic_path_query_dict(
                         + SolrDocument.SOLR_VALUE_DELIM
                         + item_obj.meta_json.get('solr_field')
                     )
+                    print(f'{item_obj.slug} meta_json solr_field is source of obj_all_field_fq {obj_all_field_fq}')
                 else:
                     # Fall back to complex logic to guess the obj_all_field_fq
                     obj_all_field_fq = (
@@ -983,6 +988,7 @@ def get_general_hierarchic_path_query_dict(
                         + field_suffix
                         + fq_solr_field_suffix
                     )
+                    print(f'{obj_all_field_fq} derived from {attribute_field_part}')
                 if attribute_group_obj_slug:
                     # Make sure we replace the general all-attribute slug
                     # that make in the pref-meta-json facet field to use the
