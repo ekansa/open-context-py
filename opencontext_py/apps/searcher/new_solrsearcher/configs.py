@@ -19,14 +19,14 @@ REQUEST_SORT_DIR_DELIM = '--'
 REQUEST_URL_FORMAT_EXTENTIONS = [
     ('html', None),
     ('json', '.json'),
-    # '.atom', skip for now 
+    # '.atom', skip for now
 ]
 
 
 # Geospace and chronology related facets are in a hierarchy of
 # event classes. For now, we'll only use the root of the hierarchy, but
 # in the future we may want to implement features to allow queries and
-# visualizations of different types of geospatial and chronological 
+# visualizations of different types of geospatial and chronological
 # events.
 ROOT_EVENT_CLASS = SolrDoc.ALL_EVENTS_SOLR
 
@@ -156,27 +156,29 @@ REL_CAT_FACET_FIELDS = [
 ZOOARCH_FACET_FIELDS_PATH_SOLR_TUPS = [
     ('cidoc-crm-p2-has-type', 'cidoc_crm_p2_has_type___pred_id'),
     ('cidoc-crm-e54-dimension---oc-zoo-anatomical-meas', 'oc_zoo_anatomical_meas___cidoc_crm_e54_dimension___pred_id'),
+    ('oc-zoo-has-fusion-char---obo-pato-0000051', 'obo_pato_0000051___oc_zoo_has_fusion_char___cidoc_crm_p2_has_type___pred_id'),
 ]
 
 # This configures what solr facet fields get grouped into a zooarch preconfig'd set
 # of facets. The dict is keyed by the solr_facet_field_key. If all options from
 # that solr_facet_field_key need to be added to the preconfiged facet, then
-# the value for the key will be "ALL" to include all the options. If only certain 
+# the value for the key will be "ALL" to include all the options. If only certain
 # slug identified options are to be included, those will be expressed in a list.
 ZOOARCH_SOLR_FACET_FIELD_KEYS_AND_OPTIONS_SLUGS = {
     'cidoc_crm_p2_has_type___pred_id': [
-        'oc-zoo-has-anat-id', 
-        'oc-zoo-has-fusion-char', 
+        'oc-zoo-has-anat-id',
+        #'oc-zoo-has-fusion-char',
         'oc-zoo-has-phys-sex-det',
     ],
     'oc_zoo_anatomical_meas___cidoc_crm_e54_dimension___pred_id': 'ALL',
+    'obo_pato_0000051___oc_zoo_has_fusion_char___cidoc_crm_p2_has_type___pred_id': 'ALL',
     'ld___pred_id': ['obo-foodon-00001303'],
 }
 
 
 PRECONFIG_FACET_FIELDS_BACKEND = [
     (
-        'oc-gen-cat-bio-subj-ecofact', 
+        'oc-gen-cat-bio-subj-ecofact',
         {
             'id': '#facet-fgoup-oc-gen-cat-bio-subj-ecofact',
             'rdfs:isDefinedBy': None,
@@ -187,7 +189,7 @@ PRECONFIG_FACET_FIELDS_BACKEND = [
         },
     ),
     (
-        'oc-gen-cat-animal-bone', 
+        'oc-gen-cat-animal-bone',
         {
             'id': '#facet-fgoup-oc-gen-cat-animal-bone',
             'rdfs:isDefinedBy': None,
@@ -222,8 +224,8 @@ MEDIA_STATS_FIELDS = [
 ]
 
 ALL_TYPES_STATS_FIELDS = (
-    GENERAL_STATS_FIELDS 
-    + CHRONO_STATS_FIELDS 
+    GENERAL_STATS_FIELDS
+    + CHRONO_STATS_FIELDS
     + MEDIA_STATS_FIELDS
 )
 
@@ -236,17 +238,17 @@ ITEM_TYPE_STATS_FIELDS = {
         GENERAL_STATS_FIELDS + CHRONO_STATS_FIELDS
     ),
     'media': (
-        GENERAL_STATS_FIELDS 
-        + CHRONO_STATS_FIELDS 
+        GENERAL_STATS_FIELDS
+        + CHRONO_STATS_FIELDS
         + MEDIA_STATS_FIELDS
     ),
 }
 
 LITERAL_DATA_TYPES = [
-    'xsd:integer', 
-    'xsd:double', 
-    'xsd:date', 
-    'xsd:boolean', 
+    'xsd:integer',
+    'xsd:double',
+    'xsd:date',
+    'xsd:boolean',
     'xsd:string',
 ]
 
@@ -279,7 +281,7 @@ RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</mark>'
 # 2nd element: field to remove from the Solr facet.field list
 #              (usually None).
 # 3rd element: dictionary of key-word arguments to supply to
-#              querymaker.get_general_hierarchic_paths_query_dict 
+#              querymaker.get_general_hierarchic_paths_query_dict
 # ---------------------------------------------------------------------
 HIERARCHY_PARAM_TO_SOLR = [
     (
@@ -512,17 +514,17 @@ ITEM_TYPE_MAPPINGS = {
 }
 
 ITEM_TYPE_SLUG_MAPPINGS = {
-    key: t_dict['slug'] 
+    key: t_dict['slug']
     for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
 ITEM_TYPE_URI_MAPPINGS = {
-    key: t_dict['rdfs:isDefinedBy'] 
+    key: t_dict['rdfs:isDefinedBy']
     for key, t_dict in ITEM_TYPE_MAPPINGS.items()
 }
 
 ITEM_TYPE_SLUGS = [
-    t_dict['slug'] 
+    t_dict['slug']
     for _, t_dict in ITEM_TYPE_MAPPINGS.items()
 ]
 
@@ -622,7 +624,7 @@ FILTER_PARAM_CONFIGS = {
     },
     'q': {
         'oc-api:filter': FILTER_TEXT_SEARCH_TITLE,
-        'label-template': 'Search Term(s): \'{act_val}\'',  
+        'label-template': 'Search Term(s): \'{act_val}\'',
     },
     'id': {
         'oc-api:filter': 'Identifier Lookup',
@@ -645,23 +647,23 @@ FILTER_PARAM_CONFIGS = {
     },
     'images': {
         'oc-api:filter': 'Has related media',
-        'label': 'Linked to images', 
+        'label': 'Linked to images',
     },
     'other-media': {
         'oc-api:filter': 'Has related media',
-        'label': 'Linked to media (other than images)', 
+        'label': 'Linked to media (other than images)',
     },
     'documents': {
         'oc-api:filter': 'Has related media',
-        'label': 'Linked to documents', 
+        'label': 'Linked to documents',
     },
     'gis-media': {
         'oc-api:filter': 'Has related GIS media',
-        'label': 'Linked to GIS media', 
+        'label': 'Linked to GIS media',
     },
     '3d-media': {
         'oc-api:filter': 'Has related 3D media',
-        'label': 'Linked to 3D media', 
+        'label': 'Linked to 3D media',
     },
 }
 
@@ -670,7 +672,7 @@ FILTER_PARAM_CONFIGS = {
 # Configs for the search/query response JSON
 # ---------------------------------------------------------------------
 
-# The response to a search can include different types of search 
+# The response to a search can include different types of search
 # results. Below lists the default types included unless otherwise
 # specified.
 RESPONSE_DEFAULT_TYPES = [
@@ -706,14 +708,14 @@ QUERY_NEW_URL_IGNORE_PARAMS = SORT_NEW_URL_IGNORE_PARAMS + ['sort']
 # ---------------------------------------------------------------------
 STATS_FIELDS_PATH_KEYS = ['stats', 'stats_fields',]
 
-# This lists the keys for finding facets in the JSON solr response 
-# dict. 
+# This lists the keys for finding facets in the JSON solr response
+# dict.
 FACETS_SOLR_ROOT_PATH_KEYS = [
     'facet_counts',
     'facet_fields',
 ]
 
-# This lists the keys for finding range facets in the JSON solr 
+# This lists the keys for finding range facets in the JSON solr
 # response.
 FACETS_RANGE_SOLR_ROOT_PATH_KEYS = [
     'facet_counts',
@@ -785,30 +787,30 @@ FACETS_PROJ_SUFFIX = (
 #
 FACETS_STANDARD = [
     (
-        FACETS_CAT_SUFFIX, 
-        'cat', 
-        REQUEST_PROP_HIERARCHY_DELIM,  
+        FACETS_CAT_SUFFIX,
+        'cat',
+        REQUEST_PROP_HIERARCHY_DELIM,
         'oc-api:facet-category',
         'Category',
     ),
     (
-        FACETS_CONTEXT_SUFFIX, 
-        'path', 
-        REQUEST_CONTEXT_HIERARCHY_DELIM, 
+        FACETS_CONTEXT_SUFFIX,
+        'path',
+        REQUEST_CONTEXT_HIERARCHY_DELIM,
         'oc-api:facet-context',
         'Context',
     ),
     (
-        FACETS_PROP_SUFFIX, 
-        'prop', 
-        REQUEST_PROP_HIERARCHY_DELIM, 
+        FACETS_PROP_SUFFIX,
+        'prop',
+        REQUEST_PROP_HIERARCHY_DELIM,
         'oc-api:facet-prop',
         'Description',
     ),
     (
-        FACETS_PROJ_SUFFIX, 
-        'proj', 
-        REQUEST_PROP_HIERARCHY_DELIM, 
+        FACETS_PROJ_SUFFIX,
+        'proj',
+        REQUEST_PROP_HIERARCHY_DELIM,
         'oc-api:facet-project',
         'Project',
     ),
@@ -856,7 +858,7 @@ FACET_STANDARD_ROOT_FIELDS = {
         "type": "oc-api:facet-project",
     },
     (
-        SolrDoc.RELATED_SOLR_DOC_PREFIX 
+        SolrDoc.RELATED_SOLR_DOC_PREFIX
         + SolrDoc.ROOT_PREDICATE_SOLR
     ): {
         "id": "#facet-rel-prop-var",
@@ -866,7 +868,7 @@ FACET_STANDARD_ROOT_FIELDS = {
         "oc-api:related-property": True,
     },
     (
-        SolrDoc.RELATED_SOLR_DOC_PREFIX 
+        SolrDoc.RELATED_SOLR_DOC_PREFIX
         + SolrDoc.ROOT_LINK_DATA_SOLR
     ): {
         "id": "#facet-rel-prop-ld",
@@ -879,7 +881,7 @@ FACET_STANDARD_ROOT_FIELDS = {
 
 
 # Mappings between Solr field data types and facet options lists
-FACETS_DATA_TYPE_OPTIONS_LISTS = { 
+FACETS_DATA_TYPE_OPTIONS_LISTS = {
     'id': 'oc-api:has-id-options',
     'bool': 'oc-api:has-boolean-options',
     'int': 'oc-api:has-integer-options',
@@ -941,23 +943,23 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
             'opencontext.org/vocabularies/dinaa/',
             'staging.opencontext.org/vocabularies/dinaa/',
             'http://127.0.0.1:8000/vocabularies/dinaa/',
-        ], 
+        ],
         'N. American Site (DINAA)',
     ),
     (
-        ['purl.obolibrary.org/obo/FOODON_00001303',], 
+        ['purl.obolibrary.org/obo/FOODON_00001303',],
         'Standard Biological',
     ),
     (
         [
-            'opencontext.org/vocabularies/open-context-zooarch/', 
+            'opencontext.org/vocabularies/open-context-zooarch/',
             'staging.opencontext.org/vocabularies/open-context-zooarch/',
             'http://127.0.0.1:8000/vocabularies/open-context-zooarch/',
         ],
         'Standard Zooarchaeological',
     ),
     (
-        ['erlangen-crm.org/'], 
+        ['erlangen-crm.org/'],
         'Standard Cultural (CIDOC-CRM)',
     ),
     (
@@ -972,23 +974,23 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
         'Library of Congress (LoC)',
     ),
     (
-        ['vocab.getty.edu/aat/'], 
+        ['vocab.getty.edu/aat/'],
         'Getty Art and Architecture Thesaurus',
     ),
-    (   
+    (
         ['collection.britishmuseum.org'],
         '(Deprecated) British Museum Terms',
     ),
-    (   
-        ['geonames.org/'], 
+    (
+        ['geonames.org/'],
         'Geonames (Gazetteer)',
     ),
-    (   
-        ['pleiades.stoa.org/'], 
+    (
+        ['pleiades.stoa.org/'],
         'Pleiades (Ancient Places Gazetteer)',
     ),
     (
-        ['levantineceramics.org/wares/', 'www.levantineceramics.org/wares/',], 
+        ['levantineceramics.org/wares/', 'www.levantineceramics.org/wares/',],
         'Levantine Ceramics Wares',
     ),
     (
@@ -1003,7 +1005,7 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
         ['wikipedia.org/', 'en.wikipedia.org/wiki/',],
         'Wikipedia Topics',
     ),
-    (   
+    (
         ['purl.org/NET/biol/ns#term_hasTaxonomy'],
         '(Deprecated) Biological',
     ),
@@ -1013,7 +1015,7 @@ FACET_OPT_ORDERED_SUB_HEADINGS = [
 # This is the above list, but as dicts not tuples for easier use
 # in javascript.
 FACET_OPT_ORDERED_SUB_HEADINGS_DICTS = [
-    {'uris':uri_list, 'label': label} 
+    {'uris':uri_list, 'label': label}
     for uri_list, label in FACET_OPT_ORDERED_SUB_HEADINGS
 ]
 
@@ -1028,9 +1030,9 @@ FACET_DATA_TYPE_FRONT_END_LABEL_PREFIXES = {
 }
 
 FACETS_OPTIONS_LISTS_AND_DATA_TYPES = [
-    {'data_type': k, 'list_key': v, 'label_prefix': FACET_DATA_TYPE_FRONT_END_LABEL_PREFIXES.get(k)} 
+    {'data_type': k, 'list_key': v, 'label_prefix': FACET_DATA_TYPE_FRONT_END_LABEL_PREFIXES.get(k)}
     for k,v in FACETS_DATA_TYPE_OPTIONS_LISTS.items()
-] 
+]
 
 
 FACET_OPT_SUB_HEADING_URI_MAPS = {
@@ -1051,7 +1053,7 @@ FACET_OPT_HIDE_URI_MAPS = [
 ]
 
 FACET_OPT_HIDE_URI_PREFIX_MAPS = [
-            
+
 ]
 
 
@@ -1059,7 +1061,7 @@ FACET_OPT_HIDE_URI_PREFIX_MAPS = [
 MIN_GEOTILE_ZOOM = SolrDoc.MIN_GEOTILE_ZOOM
 MAX_GEOTILE_ZOOM = SolrDoc.MAX_GEOTILE_ZOOM
 
-# Maximum number of project facets to allow for 
+# Maximum number of project facets to allow for
 # querying for image overlays
 MAX_PROJECTS_FOR_OVERLAYS = 5
 GEO_OVERLAY_OPACITY_DEFAULT = 0.9
