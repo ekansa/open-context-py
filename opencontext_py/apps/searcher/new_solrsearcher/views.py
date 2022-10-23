@@ -10,6 +10,7 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
 from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
+from opencontext_py.apps.searcher.new_solrsearcher import project_index_summary
 from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
@@ -20,9 +21,9 @@ from django.utils.cache import patch_vary_headers
 def process_solr_query(request_dict):
     """Processes a request dict to formulate a solr query and process a
        response from solr
-    
+
     :param dict request_dict: Dictionary derived from a solr
-        request object with client GET request parmaters.
+        request object with client GET request parameters.
     """
     search_solr = SearchSolr()
     search_solr.add_initial_facet_fields(request_dict)
@@ -73,15 +74,15 @@ def make_json_response(request, req_neg, response_dict):
 @cache_control(no_cache=True)
 def query_json(request, spatial_context=None):
     """ API for searching Open Context """
-    
+
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
     response_dict = process_solr_query(request_dict)
-    
+
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = ['application/ld+json']
-    
+
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
 
@@ -98,25 +99,25 @@ def query_json(request, spatial_context=None):
         )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
-    
+
     return make_json_response(request, req_neg, response_dict)
 
 
 @cache_control(no_cache=True)
 def query_html(request, spatial_context=None):
     """HTML representation for searching Open Context """
-    
+
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
     response_dict = process_solr_query(request_dict.copy())
-    
+
     req_neg = RequestNegotiation('text/html')
     req_neg.supported_types = [
         'application/json',
         'application/ld+json',
     ]
-    
+
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
 
@@ -133,7 +134,7 @@ def query_html(request, spatial_context=None):
         )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
-    
+
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
 
@@ -161,13 +162,13 @@ def query_html(request, spatial_context=None):
 @cache_control(no_cache=True)
 def suggest_json(request):
     """ API for getting search term suggestions from Open Context """
-    
+
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = ['application/json']
-    
+
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
-    
+
     if not request.GET.get('q'):
         response = HttpResponse(
             'Must have a "q" search parameter',
@@ -193,3 +194,23 @@ def suggest_json(request):
         highlight=('hl' in request.GET)
     )
     return make_json_response(request, req_neg, response_dict)
+
+
+def projects_geojson(request):
+    """Makes a geojson response for mapping all projects"""
+    request_dict = {'path': None}
+    result_json = process_solr_query(request_dict)
+    proj_geojson = project_index_summary.make_map_project_geojson(result_json)
+    req_neg = RequestNegotiation('application/json')
+    req_neg.supported_types = ['application/json']
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # Client wanted a mimetype we don't support
+        response = HttpResponse(
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+    return make_json_response(request, req_neg, proj_geojson)
