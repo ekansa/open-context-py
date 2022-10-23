@@ -482,7 +482,7 @@ class AllManifest(models.Model):
 
     class Meta:
         db_table = 'oc_all_manifest'
-
+        default_related_name = 'manifests'
 
 
 # NOTE: AllSpaceTime keeps geospatial and chronology records.
@@ -887,6 +887,7 @@ class AllSpaceTime(models.Model):
             ),
         )
         ordering = ["item", "feature_id",]
+        default_related_name = 'spacetimes'
 
 
 
@@ -1314,7 +1315,7 @@ class AllAssertion(models.Model):
             ),
         )
         ordering = ["subject", "obs_sort", "event_sort", "attribute_group_sort", "sort"]
-
+        default_related_name = 'assertions'
 
 
 
@@ -1464,7 +1465,7 @@ class AllResource(models.Model):
             ),
         )
         ordering = ["item", "rank", "resourcetype",]
-
+        default_related_name = 'resources'
 
 
 # Records a hash history of an item for use in version control.
@@ -1601,7 +1602,7 @@ class AllHistory(models.Model):
     class Meta:
         db_table = 'oc_all_history'
         ordering = ["item", "updated",]
-
+        default_related_name = 'histories'
 
 
 
@@ -1740,3 +1741,4 @@ class AllIdentifier(models.Model):
             ),
         )
         ordering = ["item", "rank", "scheme",]
+        default_related_name = 'identifiers'
