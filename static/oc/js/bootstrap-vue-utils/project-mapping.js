@@ -95,7 +95,7 @@ function project_map(map_dom_id, json_url) {
 			"</dd>",
 			"<dt>Records</dt>",
 			"<dd>",
-			"<a href='" + feature.properties.search + "'>" + f_count + "(Click to Browse)</a>",
+			"<a href='" + feature.properties.query_link + "'>" + f_count + "(Click to Browse)</a>",
 			"</dd>",
 			"</dl>",
 			"</div>"].join("\n");
