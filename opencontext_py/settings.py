@@ -95,13 +95,13 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 # for some reason, I can't get the following to work
-                # 'opencontext_py.templates.context_processors.piwik_settings',  
+                # 'opencontext_py.templates.context_processors.piwik_settings',
             ],
             'debug': DEBUG,
             # 'DEBUG': DEBUG,
             # 'TEMPLATE_DEBUG': DEBUG
         },
-    
+
     },
 ]
 
@@ -196,12 +196,12 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
-    
+
     # Save this for later. This is for experimental
     # work refactoring the postgres schema
     'opencontext_py.apps.all_items',
     'opencontext_py.apps.etl.importer',
-    
+
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.events',
     'opencontext_py.apps.ocitems.geospace',
@@ -227,8 +227,6 @@ INSTALLED_APPS = (
     'opencontext_py.apps.exports.expfields',
     'opencontext_py.apps.exports.exprecords',
     'opencontext_py.apps.exports.exptables',
-    'opencontext_py.apps.indexer',
-    'opencontext_py.apps.searcher.search',
     'django.contrib.staticfiles',
     'debug_toolbar',
     'django_user_agents',
@@ -462,7 +460,7 @@ IMPORT_BATCH_SIZE = 500  # number of records to import in 1 batch
 # Use the normal dict get method, because we don't need to throw
 # an error if this secret does not exist.
 REFINE_URL = secrets.get(
-    'REFINE_URL', 
+    'REFINE_URL',
     'http://127.0.0.1:3333', # The default.
 )
 
@@ -553,7 +551,7 @@ if DEBUG is False:
         # site id for PIWIK tracking
         PIWIK_SITE_ID = get_secret('PIWIK_SITE_ID')
     if 'PIWIK_DOMAIN_PATH' in secrets:
-        PIWIK_DOMAIN_PATH = get_secret('PIWIK_DOMAIN_PATH')        
+        PIWIK_DOMAIN_PATH = get_secret('PIWIK_DOMAIN_PATH')
 
 
 # Cloud Storage (S3, Google, etc.) Credentials
@@ -576,7 +574,7 @@ if 'INTERNET_ARCHIVE_SECRET_KEY' in secrets:
     # password for the internet archive
     INTERNET_ARCHIVE_SECRET_KEY = get_secret('INTERNET_ARCHIVE_SECRET_KEY')
 else:
-    INTERNET_ARCHIVE_SECRET_KEY = None  
+    INTERNET_ARCHIVE_SECRET_KEY = None
 
 if 'ZENODO_ACCESS_TOKEN' in secrets:
     # API access / credential / authorization token for Zendo requests
@@ -589,7 +587,7 @@ if 'ZENODO_SANDBOX_TOKEN' in secrets:
     ZENODO_SANDBOX_TOKEN = get_secret('ZENODO_SANDBOX_TOKEN')
 else:
     ZENODO_SANDBOX_TOKEN = None
-    
+
 if 'ORCID_CLIENT_ID' in secrets:
     # ORCID service client ID.
     ORCID_CLIENT_ID = get_secret('ORCID_CLIENT_ID')
@@ -607,9 +605,9 @@ if 'CORS_OK_DOMAINS' in secrets:
     # password for the internet archive
     CORS_OK_DOMAINS = get_secret('CORS_OK_DOMAINS')
 else:
-    CORS_OK_DOMAINS = [] 
+    CORS_OK_DOMAINS = []
 
-# Added to fix 
+# Added to fix
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         DEPLOYED_HOST,
@@ -693,7 +691,7 @@ NAV_ITEMS = [
                 'display': 'People',
                 'link': '/about/people',
             },
-            {   
+            {
                 'display': 'Support + Sponsors',
                 'link': '/about/sponsors',
             },
