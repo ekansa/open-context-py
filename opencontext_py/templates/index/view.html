@@ -1,7 +1,7 @@
 {% extends 'index/outer-page.html' %}
 
 {% block pagecontent %}
-    
+
     <div class="april-12 homepage container">
         <div class="main-map" id="home-map">
         </div>
@@ -13,8 +13,8 @@
           {% if 'opencontext.dainst.org' in base_url %}
             <div class="row" style="padding-top:10px;">
                 <div class="col-sm-2">
-                
-                </div>    
+
+                </div>
                 <div class="col-sm-8">
                     <div class="media">
                         <div class="media-left media-top">
@@ -28,12 +28,12 @@
                     </div>
                 </div>
                 <div class="col-sm-2">
-                    
+
                 </div>
             </div>
             {%endif%}
         </section>
-        
+
         <section class="publish">
           <img class="section-header-image" src="../../static/oc/images/noun-icons-small/publish-noun-26676.png" alt="Publish Icon">
           <h2>Publish</h2>
@@ -124,7 +124,7 @@
             <div class="showcase--text">
               <h2>Why Open Context</h2>
               <p>
-                Your research data reflect your expertise and intellectual interests. Treating data only as files to archive can limit the impact of your ideas. Open Context goes beyond the archive by richly integrating the totality of your analyses, maps, media, and journals together so they can support your interpretations. This unlocks and highlights meaningful information and relationships in your data and links your data to the wider world. 
+                Your research data reflect your expertise and intellectual interests. Treating data only as files to archive can limit the impact of your ideas. Open Context goes beyond the archive by richly integrating the totality of your analyses, maps, media, and journals together so they can support your interpretations. This unlocks and highlights meaningful information and relationships in your data and links your data to the wider world.
               </p>
                 <div style="margin-top:10px;">
                     <p>
@@ -263,7 +263,7 @@
         <script type="text/javascript">
         <!--
             var base_url = "{{ base_url }}";
-            var project_map = new project_map("home-map", "{{ json_url|safe }}" + "/subjects-search/.json");
+            var project_map = new project_map("home-map", "{{ json_url|safe }}" + "/map-projects.json");
             project_map.map.color_list = ['#0088CC',
                                           '#6E5FCC',
                                           '#002A66'];
@@ -278,4 +278,4 @@
         </div>
       </div>
       -->
-{% endblock %} 
+{% endblock %}
