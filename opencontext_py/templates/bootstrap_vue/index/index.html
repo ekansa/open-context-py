@@ -21,29 +21,10 @@
             <h1>Welcome to Open Context</h1>
             <h3 class="slogan">Publishing research data on the Web</h3>
             <p><small>Because data are for discovery and inspiration, not just management</small></p>
-            <a href="{{ base_url }}/about/" class="btn btn-info video-link"><i class="fa fa-video-camera" aria-hidden="true"></i> <strong>Learn More</strong></a>
-            {% if 'opencontext.dainst.org' in base_url %}
-                <div class="row" style="padding-top:10px;">
-                    <div class="col-sm-2">
+            <a href="{{ BASE_URL }}/about/" class="btn btn-info video-link ">
+                <span class="material-icons">videocam</span>
+                 <strong>Learn More</strong></a>
 
-                    </div>
-                    <div class="col-sm-8">
-                        <div class="media">
-                            <div class="media-left media-top">
-                                <a href="http://dainst.org/">
-                                    <img class="media-object" style="height: 90px; margin-top: 2px; margin-left: 8px;" src="{{ base_url }}/static/oc/images/index/dai-logo-small.png" alt="DAI Logo" />
-                                </a>
-                            </div>
-                            <div class="media-body dai">
-                                <p>We gratefully thank the <a href="http://dainst.org/">German Archaeological Institute</a> (DAI) for hosting and mirroring this instance of Open Context.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-2">
-
-                    </div>
-                </div>
-                {%endif%}
             </section>
 
             <section class="publish">
@@ -140,7 +121,7 @@
                 </p>
                     <div style="margin-top:10px;">
                         <p>
-                            <a href="{{ base_url }}/about/" class="btn btn-info video-link"><i class="fa fa-video-camera" aria-hidden="true"></i> <strong>Learn More</strong></a>
+                            <a href="{{ BASE_URL }}/about/" class="btn btn-info video-link"><i class="fa fa-video-camera" aria-hidden="true"></i> <strong>Learn More</strong></a>
                         </p>
                     </div>
                 </div>
@@ -279,7 +260,6 @@
 
 <script type="text/javascript">
 <!--
-    let base_url = "{{ BASE_URL }}";
     let home_project_map = new project_map("home-map", "{{ json_url|safe }}" + "/map-projects.json");
     home_project_map.map.color_list = [
         {v: 0, color: '#0088cc'},

@@ -95,3 +95,7 @@ ul.icon-list li{
 a.video-link {
     background-color: #0088CC;
 }
+a.video-link span.material-icons {
+    vertical-align: middle;
+    padding-bottom: 4px;
+}
