@@ -26,11 +26,26 @@ import logging
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
+    AllIdentifier,
 )
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
+
+
+# index things that aren't indexed or have new ids
+ids_qs = AllIdentifier.objects.filter(
+    item__item_type__in=['projects', 'subjects', 'media', 'documents'],
+).select_related(
+    'item'
+).order_by(
+    'item__project_id', 'item__sort'
+)
+
+uuids = [str(i.item.uuid) for i in ids_qs if not i.item.indexed or i.item.indexed < i.updated]
+
+
 
 # Reindex Getty AAT related items
 all_uuids = new_ind.get_uuids_associated_with_vocab(vocab_uri='vocab.getty.edu/aat')
