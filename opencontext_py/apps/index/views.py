@@ -23,14 +23,16 @@ def index(request):
         'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
         'video': False
     }
-    template = loader.get_template('index/view.html')
+    # template = loader.get_template('index/view.html')
+    template = loader.get_template('bootstrap_vue/index/index.html')
     context = {
-        'base_url': base_url,
+        'BASE_URL': base_url,
+        'load_index_static': True,
         'old_view': old_view,
-        'page_title': 'Open Context: Publisher of Research Data',
+        'PAGE_TITLE': 'Open Context: Publisher of Research Data',
         'og': open_graph,
         'act_nav': 'home',
-        'nav_items': settings.NAV_ITEMS
+        'NAV_ITEMS': settings.NAV_ITEMS,
     }
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])

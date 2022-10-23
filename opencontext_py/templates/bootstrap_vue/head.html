@@ -21,7 +21,7 @@
     <script src="//unpkg.com/vue@2.6.12/dist/vue.min.js"></script>
     <script src="//unpkg.com/vue-cookies@latest/vue-cookies.js"></script>
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
-    
+
     <!-- Autocomplete, search typeahead -->
     <link href="//unpkg.com/vue-bootstrap-typeahead/dist/VueBootstrapTypeahead.css" rel="stylesheet">
     <script src="//unpkg.com/vue-bootstrap-typeahead@0.2.6/dist/VueBootstrapTypeahead.umd.min.js"></script>
@@ -44,7 +44,7 @@
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
     <script src="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
     <script src="//raw.githubusercontent.com/oliverheilig/leaflet-marker-booster/master/leaflet-marker-booster.js"></script>
-    
+
     <script src="{{ BASE_URL }}/static/oc/js/mapping-rev/GoogleMutant.js"></script>
 
     <!-- Load Vue-apexcharts.js -->
@@ -54,14 +54,18 @@
     <script src="//unpkg.com/@turf/turf"></script>
 
     <!-- IIIF viewers-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/openseadragon.min.js" 
-        integrity="sha512-qvQYH6mPuE46uFcWLI8BdGaJpB5taX4lltbSIw5GF4iODh2xIgyz5ii1WpuzPFUknHCps0mi4mFGR44bjdZlZg==" 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.2/openseadragon.min.js"
+        integrity="sha512-qvQYH6mPuE46uFcWLI8BdGaJpB5taX4lltbSIw5GF4iODh2xIgyz5ii1WpuzPFUknHCps0mi4mFGR44bjdZlZg=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    
+
     <!-- Load Open Context specific resources -->
     <link rel="stylesheet" href="{{ BASE_URL }}/static/oc/css/oc-general-v2.css" />
+    {% if load_index_static %}
+    <link rel="stylesheet" href="{{ BASE_URL }}/static/oc/css/index/apr-12.css" />
+    <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/project-mapping.js"></script>
+    {%endif%}
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/url-utilities.js"></script>
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/general-utilities.js"></script>
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/color-scales.js"></script>
