@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 PRED_ID_FIELD_SUFFIX = (
-    SolrDoc.SOLR_VALUE_DELIM 
+    SolrDoc.SOLR_VALUE_DELIM
     + SolrDoc.FIELD_SUFFIX_PREDICATE
 )
 
@@ -44,7 +44,7 @@ def get_record_uuids_from_solr(solr_json):
 
 
 def make_url_from_partial_url(
-    partial_url, 
+    partial_url,
     base_url=settings.CANONICAL_HOST
 ):
     for prefix in ['http://', 'https://']:
@@ -80,7 +80,7 @@ def get_simple_hierarchy_items(solr_doc, all_obj_field, solr_slug_format=False):
     """Gets and parses simple (single path) solr entities from an
     'all-objects-field'
 
-    :param dict solr_doc: Solr document dictionary, which is keyed by 
+    :param dict solr_doc: Solr document dictionary, which is keyed by
         solr fields and has lists of values for the fields.
     :param str all_obj_field: Solr field that will list solr entity
         strings in order from most general to most specific. This
@@ -100,7 +100,7 @@ def get_simple_hierarchy_items(solr_doc, all_obj_field, solr_slug_format=False):
         if not hierarchy_item:
             logger.warn(
                 'Cannot parse {} from field {}'.format(
-                    solr_ent_str, 
+                    solr_ent_str,
                     all_obj_field
                 )
             )
@@ -110,26 +110,29 @@ def get_simple_hierarchy_items(solr_doc, all_obj_field, solr_slug_format=False):
 
 
 def get_specific_attribute_values(
-    solr_doc, 
-    parent_dict, 
-    specific_predicate_dict
+    solr_doc,
+    parent_dict,
+    specific_predicate_dict,
+    depth=0
 ):
     """Gets a list of the most specific attributes and values tuples
     starting from a parent_dict.
-    
-    :param dict solr_doc: Solr document dictionary, which is keyed by 
+
+    :param dict solr_doc: Solr document dictionary, which is keyed by
         solr fields and has lists of values for the fields.
     :param dict parent_dict: A dictionary derived from parsing a solr
         entity string. The slug of the dict will be the solr field
         prefix for the the next level down in the hierarchy.
     :param dict specific_predicate_dict: This dict is derived from
-        parsing a solr entity string. It is the most specific 
+        parsing a solr entity string. It is the most specific
         property / predicate in the hierarchy that we're going down.
         Because it is the most specific property / predicate in this
-        hierarchy, it is the "attribute" that will have one or more 
+        hierarchy, it is the "attribute" that will have one or more
         values returned to the client.
     """
     outputs = []
+    if depth >= 10:
+        return outputs
     slug_prefix = parent_dict['slug'] + SolrDoc.SOLR_VALUE_DELIM
     specific_pred_field_part = (
         SolrDoc.SOLR_VALUE_DELIM
@@ -138,8 +141,8 @@ def get_specific_attribute_values(
     )
 
     # A solr document (solr_doc) is a dict keyed by solr fields
-    # for a list of values. The values (solr_vals) can either be 
-    # literals or solr entity strings. If solr entity strings, these 
+    # for a list of values. The values (solr_vals) can either be
+    # literals or solr entity strings. If solr entity strings, these
     # entities may themselves have children deeper in the hierarchy.
     # This recursively gets children entities until there are no more
     # deeper (more specific) children.
@@ -149,7 +152,7 @@ def get_specific_attribute_values(
             continue
 
         if specific_pred_field_part not in key:
-            # The current solr field key does not have the 
+            # The current solr field key does not have the
             # specific pred field part in it, so we're going
             # to make an update so that the new specific
             # predicate dict is the parent dict.
@@ -161,7 +164,7 @@ def get_specific_attribute_values(
             # attribute.
             outputs += [(specific_predicate_dict, solr_vals,)]
             continue
-    
+
         val_dicts = []
         for solr_val in solr_vals:
             val_dict = utilities.parse_solr_encoded_entity_str(
@@ -175,12 +178,13 @@ def get_specific_attribute_values(
             # entities. Check to see it it does, and add these to the
             # list of outputs.
             deeper_outputs = get_specific_attribute_values(
-                solr_doc=solr_doc, 
-                parent_dict=val_dict, 
+                solr_doc=solr_doc,
+                parent_dict=val_dict,
                 specific_predicate_dict=specific_predicate_dict,
+                depth=(depth + 1),
             )
             if len(deeper_outputs):
-                # We found deeper child attributes, values so 
+                # We found deeper child attributes, values so
                 # add these to the list of outputs.
                 outputs += deeper_outputs
                 continue
@@ -202,14 +206,14 @@ def get_uuid_from_entity_dict(
 ):
     """Gets a uuid from an entity dict meeting optional criteria
 
-    :param dict entity_dict: A dictionary of an entity item derived 
-        from parsing a solr entity string. 
+    :param dict entity_dict: A dictionary of an entity item derived
+        from parsing a solr entity string.
     """
-    if (data_type_limit 
+    if (data_type_limit
         and entity_dict.get('data_type') != data_type_limit):
         return None
     uri = entity_dict.get('uri', '')
-    if (item_type_limit and 
+    if (item_type_limit and
         not uri.startswith('/{}/'.format(item_type_limit))):
         # No uuid for this item, so don't try
         return None
@@ -268,12 +272,12 @@ def get_attribute_tuples_string_pred_uuids(attribute_values_tuples):
 
 
 def get_predicate_attributes(
-    solr_doc, 
+    solr_doc,
     root_key=SolrDoc.ROOT_PREDICATE_SOLR
 ):
     """Gets nonstandard predicate attributes from a solr doc
-    
-    :param dict solr_doc: Solr document dictionary, which is keyed by 
+
+    :param dict solr_doc: Solr document dictionary, which is keyed by
         solr fields and has lists of values for the fields.
     :param str root_key: The dictionary key for the solr field with
         solr entity string values at the start / root of the hierarchy
@@ -290,8 +294,8 @@ def get_predicate_attributes(
             solr_slug_format=True,
         )
         attribute_values_tuples += get_specific_attribute_values(
-            solr_doc, 
-            parent_dict=pred_dict.copy(), 
+            solr_doc,
+            parent_dict=pred_dict.copy(),
             specific_predicate_dict=pred_dict.copy(),
         )
     return attribute_values_tuples
@@ -299,12 +303,12 @@ def get_predicate_attributes(
 
 def get_linked_data_attributes(solr_doc):
     """Gets linked data attributes from a solr doc
-    
-    :param dict solr_doc: Solr document dictionary, which is keyed by 
+
+    :param dict solr_doc: Solr document dictionary, which is keyed by
         solr fields and has lists of values for the fields.
     """
     return get_predicate_attributes(
-        solr_doc, 
+        solr_doc,
         root_key=SolrDoc.ROOT_LINK_DATA_SOLR
     )
 
@@ -312,9 +316,9 @@ def get_linked_data_attributes(solr_doc):
 def get_geo_all_event_source_uuid(solr_doc):
     """Gets the uuid for a geo source for un-typed, all_events"""
 
-    # NOTE: An 'all-events geo source' is the item with non-point 
+    # NOTE: An 'all-events geo source' is the item with non-point
     # geo spatial feature data. A give record may have its own
-    # geo spatial feature data, or it may be contained within 
+    # geo spatial feature data, or it may be contained within
     # another item that has such data. This method gets the
     # UUID for non-point geospatial feature data that associated
     # with this item or other items that may contain it.
@@ -322,14 +326,14 @@ def get_geo_all_event_source_uuid(solr_doc):
     all_event_source_str = solr_doc.get('all_events___geo_source')
     if not all_event_source_str:
         return None
-    
+
     all_event_source_dict = utilities.parse_solr_encoded_entity_str(
         all_event_source_str,
         solr_slug_format=False,
     )
     if not all_event_source_dict:
         return None
-    
+
     uuid = get_uuid_from_entity_dict(
         all_event_source_dict,
         data_type_limit='id',
@@ -342,8 +346,8 @@ class ResultRecord():
 
     """ Methods to prepare an individual result record """
 
-    def __init__(self, 
-        solr_doc=None, 
+    def __init__(self,
+        solr_doc=None,
     ):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
@@ -361,7 +365,7 @@ class ResultRecord():
         self.published = None
         self.project_href = None  # link to the project in deployment
         self.project_uri = None  # cannonical uri for the project
-        self.project_label = None 
+        self.project_label = None
         self.context_href = None  # link to parent context in deployment
         self.context_uri = None  # link to parent context cannonical uri
         self.context_label = None
@@ -430,12 +434,12 @@ class ResultRecord():
             return None
         # Add the item local url for this deployment
         self.href = make_url_from_partial_url(
-            item_dict.get('uri', ''), 
+            item_dict.get('uri', ''),
             base_url=self.base_url,
         )
         # Add the item "cannonical" uri
         self.uri = make_url_from_partial_url(
-            item_dict.get('uri', ''), 
+            item_dict.get('uri', ''),
             base_url=settings.CANONICAL_HOST
         )
         item_type_output = URImanagement.get_uuid_from_oc_uri(self.uri, True)
@@ -446,8 +450,8 @@ class ResultRecord():
         self.published = solr_doc.get('published')
         self.updated = solr_doc.get('updated')
         self.human_remains_flagged = solr_doc.get('human_remains', False)
-    
-    
+
+
     def set_record_category(self, solr_doc):
         """Sets the record category"""
         if not self.item_type:
@@ -456,7 +460,7 @@ class ResultRecord():
                 logger.warn('Cannot find an item type for this record')
                 return None
             self.item_type = item_type_list[0]
-        
+
         if solr_doc.get('item_class'):
             # The simple case of a category.
             self.category = solr_doc.get('item_class')
@@ -509,17 +513,17 @@ class ResultRecord():
         )
         if not self.contexts:
             return None
-        
+
         # Set the local link to the last item in the
         # contexts list
         self.context_href = make_url_from_partial_url(
-            self.contexts[-1].get('uri', ''), 
+            self.contexts[-1].get('uri', ''),
             base_url=self.base_url,
         )
         # Set the cannonical link to the last item in the
         # contexts list
         self.context_uri = make_url_from_partial_url(
-            self.contexts[-1].get('uri', ''), 
+            self.contexts[-1].get('uri', ''),
             base_url=settings.CANONICAL_HOST,
         )
         if solr_doc.get('context_path'):
@@ -532,7 +536,7 @@ class ResultRecord():
                 c['label'] for c in self.contexts if c.get('label')
             ]
             self.context_label = '/'.join(context_labels)
-    
+
     def set_record_projects(self, solr_doc):
         """Sets the records projects list"""
         self.projects = get_simple_hierarchy_items(
@@ -541,20 +545,20 @@ class ResultRecord():
         )
         if not self.projects:
             return None
-        
+
         # Set the local link to the last item in the
         # projects list
         self.project_href = make_url_from_partial_url(
-            self.projects[-1].get('uri', ''), 
+            self.projects[-1].get('uri', ''),
             base_url=self.base_url,
         )
         # Set the cannonical link to the last item in the
         # projects list
         self.project_uri = make_url_from_partial_url(
-            self.projects[-1].get('uri', ''), 
+            self.projects[-1].get('uri', ''),
             base_url=settings.CANONICAL_HOST,
         )
-        # Set the context label from the last item in 
+        # Set the context label from the last item in
         # the projects list.
         self.project_label = self.projects[-1].get('label', '')
 
@@ -568,7 +572,7 @@ class ResultRecord():
             # No point found or it is not valid
             self.geo_feature_type = None
             return None
-        
+
         # The default geospatial feature type
         self.geo_feature_type = 'Point'
         lat_lon = disc_geo.split(',')
@@ -588,7 +592,7 @@ class ResultRecord():
         dates = []
         for i in [0, 1]:
             date_solr = solr_doc.get(
-                f'{configs.ROOT_EVENT_CLASS}___chrono_point_{i}___pdouble', 
+                f'{configs.ROOT_EVENT_CLASS}___chrono_point_{i}___pdouble',
             )
             if date_solr is None:
                 continue
@@ -598,19 +602,19 @@ class ResultRecord():
             return None
         self.early_date = min(dates)
         self.late_date = max(dates)
-    
+
 
     def set_media(self, solr_doc):
         """Sets media urls for the record"""
         self.thumbnail_scr = solr_doc.get('thumbnail_uri')
         self.iiif_json_uri = solr_doc.get('iiif_json_uri')
-    
+
 
     def make_snippet_resonable_size(
-        self, 
-        snippet, 
+        self,
+        snippet,
         temp_mark_pre,
-        temp_mark_post, 
+        temp_mark_post,
         large_limit=480,
     ):
         """Makes the snippet a resonable size, with some smart trimming"""
@@ -645,7 +649,7 @@ class ResultRecord():
         # Find any next post term markers within a limited range
         # later in the suffix
         next_pos_term_mark_post = suffix.find(
-            temp_mark_post, 
+            temp_mark_post,
             (pos_term_mark_post + 1),
             pos_last_check
         )
@@ -683,7 +687,7 @@ class ResultRecord():
         record_hl_dict = highlight_dict.get(self.uuid)
         if not record_hl_dict:
             return None
-        
+
         text_list = record_hl_dict.get('text')
         if not text_list:
             return None
@@ -693,11 +697,11 @@ class ResultRecord():
         snippet = ' '.join(text_list)
         snippet = snippet.strip()
         snippet = snippet.replace(
-            configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE, 
+            configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE,
             temp_mark_pre
         )
         snippet = snippet.replace(
-            configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST, 
+            configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST,
             temp_mark_post,
         )
         try:
@@ -706,22 +710,22 @@ class ResultRecord():
             snippet = strip_tags(snippet)
         except:
             snippet = strip_tags(snippet)
-        
+
         snippet = self.make_snippet_resonable_size(
-            snippet=snippet, 
+            snippet=snippet,
             temp_mark_pre=temp_mark_pre,
             temp_mark_post=temp_mark_post,
         )
 
         self.snippet = snippet.replace(
             temp_mark_pre,
-            configs.RECORD_SNIPPET_HIGHLIGHT_TAG_PRE, 
+            configs.RECORD_SNIPPET_HIGHLIGHT_TAG_PRE,
         )
         self.snippet = self.snippet.replace(
             temp_mark_post,
-            configs.RECORD_SNIPPET_HIGHLIGHT_TAG_POST, 
+            configs.RECORD_SNIPPET_HIGHLIGHT_TAG_POST,
         )
-        
+
 
     def add_string_content(self, uuid_pred_str_dict):
         """Adds string content to the pred_attributes"""
@@ -729,7 +733,7 @@ class ResultRecord():
             # This record has no predicate attributes,
             # meaning it has no project defined attributes.
             return None
-        
+
         item_preds_vals = uuid_pred_str_dict.get(self.uuid)
         if not item_preds_vals:
             # This record doesn't have any string predicates
@@ -767,16 +771,16 @@ class ResultRecord():
 
         if not geo_obj.geometry:
             return None
-        
+
         self.geo_feature_type = geo_obj.geometry_type
         self.geometry_coords = geo_obj.geometry.get('coordinates')
-    
+
 
     def _make_client_attribute_vals(
-        self, 
-        properties, 
-        pred_key, 
-        raw_vals, 
+        self,
+        properties,
+        pred_key,
+        raw_vals,
         add_uris=False
         ):
         """Makes attribute values for a client"""
@@ -806,7 +810,7 @@ class ResultRecord():
             else:
                 # Not a dict, just a simple value.
                 vals.append(val)
-        
+
         if not self.flatten_attributes:
             # Simple case, return the vals as a list of vals.
             properties[pred_key] = vals
@@ -816,8 +820,8 @@ class ResultRecord():
             # We're done, skip everything in this function
             # below.
             return properties
-        
-        # This is for flattening multiple values for 
+
+        # This is for flattening multiple values for
         # record attributes.
         if len(vals) == 1:
             # Only 1 value, so just use it.
@@ -828,7 +832,7 @@ class ResultRecord():
             # We're done, skip everything in this function
             # below.
             return properties
-        
+
         # Multiple values, be sure to cast as string before
         # concatenating.
         properties[pred_key] = configs.MULTIVALUE_ATTRIB_RESP_DELIM.join(
@@ -843,13 +847,13 @@ class ResultRecord():
 
 
     def make_client_properties_dict(
-        self, 
-        id_value=None, 
+        self,
+        id_value=None,
         feature_type=None,
         add_lat_lon=False,
         ):
         """Makes a properties dict to return to a client
-        
+
         :param str id_value: A string value for an id
             key. This is mainly useful for JSON-LD outputs
             where nodes should have identifiers.
@@ -882,7 +886,7 @@ class ResultRecord():
             properties['thumbnail'] = f'https://{self.thumbnail_scr}'
         properties['published'] = self.published
         properties['updated'] = self.updated
-        
+
 
         # Add linked data (standards) attributes if they exist.
         for pred_dict, raw_vals in self.ld_attributes:
@@ -899,9 +903,9 @@ class ResultRecord():
                     pred_dict.get('slug')
                 )
             properties = self._make_client_attribute_vals(
-                properties, 
-                pred_key, 
-                raw_vals, 
+                properties,
+                pred_key,
+                raw_vals,
                 add_uris=self.add_ld_attrib_values_uris,
             )
 
@@ -920,12 +924,12 @@ class ResultRecord():
                     pred_dict.get('slug')
                 )
             properties = self._make_client_attribute_vals(
-                properties, 
-                pred_key, 
-                raw_vals, 
+                properties,
+                pred_key,
+                raw_vals,
                 add_uris=self.add_proj_attrib_values_uris,
             )
-        
+
         return properties
 
 
@@ -946,7 +950,7 @@ class ResultRecord():
         geometry['coordinates'] = self.geometry_coords
         geo_json['geometry'] = geometry
 
-        if (self.early_date is not None 
+        if (self.early_date is not None
             and self.late_date is not None):
             # If we have dates, add them.
             when = LastUpdatedOrderedDict()
@@ -983,11 +987,11 @@ class ResultRecords():
         self.base_url = rp.get_baseurl()
         self.total_found = total_found
         self.start = start
-        
+
         # Flatten attributes into single value strings?
         self.flatten_attributes = False
         rec_flatten_attributes = utilities.get_request_param_value(
-            self.request_dict, 
+            self.request_dict,
             param='flatten-attributes',
             default=False,
             as_list=False,
@@ -996,7 +1000,7 @@ class ResultRecords():
         if rec_flatten_attributes:
             self.flatten_attributes = True
         self.multivalue_attrib_resp_delim = configs.MULTIVALUE_ATTRIB_RESP_DELIM
-    
+
 
     def _gather_requested_attrib_slugs(self):
         """Make a list of requested attribute slugs"""
@@ -1005,7 +1009,7 @@ class ResultRecords():
         # Get all of the prop parameter values requested
         # by the client from the self.request_dict.
         raw_props_paths = utilities.get_request_param_value(
-            self.request_dict, 
+            self.request_dict,
             param='prop',
             default=[],
             as_list=True,
@@ -1031,12 +1035,12 @@ class ResultRecords():
                 # matter. It's OK to have some noise in the
                 # requested_attrib_slugs.
                 requested_attrib_slugs += path_list
-        
+
         # De-duplicate the slugs in the requested_attrib_slugs.
         requested_attrib_slugs = list(set(requested_attrib_slugs))
         # print(f'Props in filter: {requested_attrib_slugs}')
         raw_attributes = utilities.get_request_param_value(
-            self.request_dict, 
+            self.request_dict,
             param='attributes',
             default=None,
             as_list=False,
@@ -1045,7 +1049,7 @@ class ResultRecords():
         if not raw_attributes:
             # The client did not request additional attributes.
             return requested_attrib_slugs
-        
+
         if configs.MULTIVALUE_ATTRIB_CLIENT_DELIM not in raw_attributes:
             attrib_list = [raw_attributes]
         else:
@@ -1060,8 +1064,8 @@ class ResultRecords():
 
 
     def _limit_attributes_by_request(
-        self, 
-        record_attributes, 
+        self,
+        record_attributes,
         requested_attrib_slugs,
         all_attribute_val=configs.REQUEST_ALL_ATTRIBUTES,
         ):
@@ -1071,7 +1075,7 @@ class ResultRecords():
             # The client specified that all of the record attributes
             # should be returned.
             return record_attributes
-        
+
         filtered_record_attributes = []
         for pred_dict, vals in record_attributes:
             if pred_dict.get('slug') not in requested_attrib_slugs:
@@ -1102,9 +1106,9 @@ class ResultRecords():
         # NOTE: We need to query the database to get the string content
         # associated with string attribute predicates, because we do
         # not store this in solr.
-        
-        # This queryset will be in a SubQuery to effectively make a 
-        # join between Assertions and OC strings via the 
+
+        # This queryset will be in a SubQuery to effectively make a
+        # join between Assertions and OC strings via the
         # assertion.object_uuid and ocstring.uuid keys.
         ass_qs = AllAssertion.objects.filter(
             subject_id__in=uuids,
@@ -1114,8 +1118,8 @@ class ResultRecords():
         ).exclude(
             visibility__lt=1
         ).order_by(
-            'subject_id', 
-            'predicate_id', 
+            'subject_id',
+            'predicate_id',
             'sort'
         )
         output = {}
@@ -1142,7 +1146,7 @@ class ResultRecords():
         )
         if not len(doc_list):
             return records
-        
+
         # Gather the slugs for additional descriptive attributes
         # that we will add to the result records.
         requested_attrib_slugs = self._gather_requested_attrib_slugs()
@@ -1160,7 +1164,7 @@ class ResultRecords():
                 # This shouldn't happen...
                 logger.warn('Solr doc without a uuid. How?')
                 continue
-            
+
             # Create a result record object by processing the
             # solr_doc for the result item.
             rr = ResultRecord(solr_doc)
@@ -1186,7 +1190,7 @@ class ResultRecords():
             # Only add those linked data (standards) attributes
             # that meet our limiting criteria.
             rr.ld_attributes = self._limit_attributes_by_request(
-                desolr_attribute_tuples_slugs(rec_ld_attributes), 
+                desolr_attribute_tuples_slugs(rec_ld_attributes),
                 requested_attrib_slugs,
                 all_attribute_val=configs.REQUEST_ALL_LD_ATTRIBUTES
             )
@@ -1200,7 +1204,7 @@ class ResultRecords():
             # to the result record object that meet our limiting
             # criteria.
             rr.pred_attributes = self._limit_attributes_by_request(
-                desolr_attribute_tuples_slugs(rec_pred_attributes), 
+                desolr_attribute_tuples_slugs(rec_pred_attributes),
                 requested_attrib_slugs,
                 all_attribute_val=configs.REQUEST_ALL_PROJ_ATTRIBUTES
             )
@@ -1216,11 +1220,11 @@ class ResultRecords():
 
         # Remove the duplicates.
         string_pred_uuids = list(set(string_pred_uuids))
-        
+
         # Make a query to get a dict associating record uuids, string
-        # predicate uuids, and their string content. 
+        # predicate uuids, and their string content.
         uuid_pred_str_dict = self._get_string_attribute_values(
-            uuids, 
+            uuids,
             string_pred_uuids
         )
 
@@ -1231,14 +1235,14 @@ class ResultRecords():
         for rr in records:
             rr.add_string_content(uuid_pred_str_dict)
             rr.add_non_point_geojson_coordinates(uuid_geo_dict)
-        
+
         return records
-    
+
 
     def make_uri_meta_records_from_solr(self, solr_json):
         """Makes uri + metadata records from a solr result"""
         # NOTE: This is basically the properties object of a GeoJSON
-        # record, but pulled out of the GeoJSON. It helps get 
+        # record, but pulled out of the GeoJSON. It helps get
         records = self.make_records_from_solr(solr_json)
         meta_result_records = []
         for i, rr in enumerate(records, 1):
@@ -1255,7 +1259,7 @@ class ResultRecords():
         features = []
         for i, rr in enumerate(records, 1):
             geojson = rr.make_geojson(
-                record_index= i + self.start, 
+                record_index= i + self.start,
                 total_found=self.total_found
             )
             if not geojson.get('geometry', {}).get('type'):

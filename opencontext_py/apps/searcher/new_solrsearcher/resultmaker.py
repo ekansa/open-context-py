@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 class ResultMaker():
 
     def __init__(
-        self, 
-        request_dict=None, 
+        self,
+        request_dict=None,
         facet_fields_to_client_request={},
         slugs_for_config_facets=[],
         base_search_url='/search/'
@@ -64,12 +64,12 @@ class ResultMaker():
         self.min_date = None
         self.max_date = None
         self.sitemap_facets = False
-    
+
 
     def _set_client_response_types(self):
         """Sets the response type if specified by the client"""
         raw_client_responses = utilities.get_request_param_value(
-            self.request_dict, 
+            self.request_dict,
             param='response',
             default=None,
             as_list=False,
@@ -79,7 +79,7 @@ class ResultMaker():
             # The client did not specify the response types. So
             # don't change the default setting.
             return None
-        
+
         # The client specified some response types, which can be
         # comma seperated for multiple responses. We don't validate
         # these because if we don't recognize a client specified
@@ -88,9 +88,9 @@ class ResultMaker():
             self.act_responses = raw_client_responses.split(',')
         else:
             self.act_responses = [raw_client_responses]
-        
 
-    
+
+
     def _set_current_filters_url(self):
         """Make a URL for the current filters, removed of all paging
         and other irrelevant parameters.
@@ -103,13 +103,13 @@ class ResultMaker():
         #
         # NOTE: Since we generate search urls programatically via the
         # SearchLinks class, we have a predictable order of parameters
-        # and values. This makes it possible to match url strings. 
+        # and values. This makes it possible to match url strings.
         sl = SearchLinks(
             request_dict=copy.deepcopy(self.request_dict),
             base_search_url=self.base_search_url
         )
         # Remove non search related params.
-        sl.remove_non_query_params() 
+        sl.remove_non_query_params()
         urls = sl.make_urls_from_request_dict()
         self.current_filters_url = urls['html']
         return self.current_filters_url
@@ -135,7 +135,7 @@ class ResultMaker():
 
     def add_publishing_datetime_metadata(self, solr_json, default_to_current=True):
         """Adds publishing modified and created metadata to the response JSON-LD"""
-        # NOTE: Solr already defaults to representing time in 
+        # NOTE: Solr already defaults to representing time in
         # ISO 8601, so we're just pulling the appropriate time
         # info from the solr_json to metadata fields in our response
         # JSON-LD.
@@ -168,23 +168,23 @@ class ResultMaker():
         ]
         for json_ld_key, path_keys_list in meta_configs:
             act_time = utilities.get_dict_path_value(
-                path_keys_list, 
+                path_keys_list,
                 solr_json
             )
             if not act_time:
                 # We could not find the time object.
                 if not default_to_current:
-                    # Skip, since we're not to default to 
+                    # Skip, since we're not to default to
                     # the current time.
                     continue
                 # Add ISO 8601 current time for the missing value.
                 act_time = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-            self.result[json_ld_key] = act_time 
+            self.result[json_ld_key] = act_time
 
 
     def add_human_remains_flag(self, solr_json,):
         """Adds flagging to indicate human remains in results JSON-LD"""
-        # NOTE: Solr already defaults to representing time in 
+        # NOTE: Solr already defaults to representing time in
         # ISO 8601, so we're just pulling the appropriate time
         # info from the solr_json to metadata fields in our response
         # JSON-LD.
@@ -197,7 +197,7 @@ class ResultMaker():
         ]
         for json_ld_key, path_keys_list in meta_configs:
             flags_counts_list = utilities.get_dict_path_value(
-                path_keys_list, 
+                path_keys_list,
                 solr_json
             )
             if not flags_counts_list:
@@ -206,7 +206,7 @@ class ResultMaker():
             for bool_str, count in flag_tups:
                 if bool_str != 'true' or count < 1:
                     continue
-                self.result[json_ld_key] = True  
+                self.result[json_ld_key] = True
 
 
     def add_all_events_date_range(self, solr_json, iso_year_format=True):
@@ -236,7 +236,7 @@ class ResultMaker():
         all_dates = []
         for json_ld_key, path_keys_list in meta_configs:
             act_date = utilities.get_dict_path_value(
-                path_keys_list, 
+                path_keys_list,
                 solr_json
             )
             if act_date is None:
@@ -301,7 +301,7 @@ class ResultMaker():
         return None
 
     # -----------------------------------------------------------------
-    # Methods to make links for paging + sorting navigation 
+    # Methods to make links for paging + sorting navigation
     # -----------------------------------------------------------------
     def set_total_start_rows_attributes(self, solr_json):
         """Sets the total_found, start, rows_attributes"""
@@ -331,7 +331,7 @@ class ResultMaker():
             or start is None
             or rows is None):
             return None
-        
+
         # Add number found, start index, paging
         # information about this search result.
         self.total_found = int(float(total_found))
@@ -362,7 +362,7 @@ class ResultMaker():
 
     def add_paging_json(self, solr_json):
         """ Adds JSON for paging through results """
-        
+
         self.set_total_start_rows_attributes(solr_json)
 
         if (self.total_found is None
@@ -422,7 +422,7 @@ class ResultMaker():
         )
         self.result['last'] = links['html']
         self.result['last-json'] = links['json']
-    
+
 
     def add_sorting_json(self):
         """Adds JSON to describe result sorting """
@@ -437,9 +437,9 @@ class ResultMaker():
         # Add objects describing other sort options available.
         self.result['oc-api:has-sorting'] = sort_links
 
-    
+
     # -----------------------------------------------------------------
-    # Methods to make active filters with links to remove or broaden 
+    # Methods to make active filters with links to remove or broaden
     # -----------------------------------------------------------------
     def add_filters_json(self):
         """Adds JSON describing currently used query filters"""
@@ -464,7 +464,7 @@ class ResultMaker():
         # Remove non search related params.
         sl.remove_non_query_params()
         raw_fulltext_search = utilities.get_request_param_value(
-            act_request_dict, 
+            act_request_dict,
             param='q',
             default=None,
             as_list=False,
@@ -478,7 +478,7 @@ class ResultMaker():
             # No keyword search found in request, so
             # make a template for keyword searches.
             sl.add_param_value(
-                'q', 
+                'q',
                 configs.URL_TEXT_QUERY_TEMPLATE
             )
             urls = sl.make_urls_from_request_dict()
@@ -504,7 +504,7 @@ class ResultMaker():
         # Add the text fields if they exist.
         if len(text_fields):
             self.result['oc-api:has-text-search'] = text_fields
-        return text_fields 
+        return text_fields
 
 
     # -----------------------------------------------------------------
@@ -533,7 +533,7 @@ class ResultMaker():
             current_filters_url=self.current_filters_url,
             facet_fields_to_client_request=self.facet_fields_to_client_request,
             base_search_url=self.base_search_url,
-        ) 
+        )
         facet_ranges = facets_standard.get_facet_ranges_and_options(
             solr_json
         )
@@ -552,7 +552,7 @@ class ResultMaker():
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
             base_search_url=self.base_search_url,
-        ) 
+        )
         chrono_options = facets_chrono.make_chronology_facet_options(
             solr_json
         )
@@ -560,7 +560,7 @@ class ResultMaker():
             # Skip out, we found no chronological options
             return None
         self.result["oc-api:has-event-time-ranges"] = chrono_options
-    
+
 
     def _add_geojson_features_to_result(self, geo_features_list):
         """Adds geojson features to the result """
@@ -581,7 +581,7 @@ class ResultMaker():
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
             base_search_url=self.base_search_url,
-        ) 
+        )
         facets_geo.min_date = self.min_date
         facets_geo.max_date = self.max_date
 
@@ -592,7 +592,7 @@ class ResultMaker():
         self._add_geojson_features_to_result(
             geo_options
         )
-    
+
 
     def add_geo_contained_in_facets(self, solr_json):
         """Adds facets for geo features that contain query results"""
@@ -600,7 +600,7 @@ class ResultMaker():
             request_dict=self.request_dict,
             current_filters_url=self.current_filters_url,
             base_search_url=self.base_search_url,
-        ) 
+        )
         facets_geo.min_date = self.min_date
         facets_geo.max_date = self.max_date
 
@@ -621,7 +621,7 @@ class ResultMaker():
             facet_fields_to_client_request=copy.deepcopy(self.facet_fields_to_client_request),
             slugs_for_config_facets=copy.deepcopy(self.slugs_for_config_facets),
             base_search_url=self.base_search_url,
-        ) 
+        )
         facets = facets_standard.get_facets_and_options(
             solr_json
         )
@@ -695,7 +695,7 @@ class ResultMaker():
         if not 'oc-api:has-results' in self.result:
             self.result['oc-api:has-results'] = []
         self.result['oc-api:has-results'] += uri_list
-    
+
 
     def add_uri_meta_records(self, solr_json):
         """Adds result record attribute metadata dicts to the result"""
@@ -711,7 +711,7 @@ class ResultMaker():
             total_found=self.total_found,
             start=self.start,
         )
-        
+
         # Make metadata dict objects for each individual search result
         # record in the solr_json response.
         meta_result_records = r_recs.make_uri_meta_records_from_solr(
@@ -741,7 +741,7 @@ class ResultMaker():
             total_found=self.total_found,
             start=self.start,
         )
-        
+
         # Make geojson features for each individual search result
         # record in the solr_json response.
         geo_result_records = r_recs.make_geojson_records_from_solr(
@@ -763,11 +763,11 @@ class ResultMaker():
 
 
     # -----------------------------------------------------------------
-    # The main method to make the client response result from a 
+    # The main method to make the client response result from a
     # solr response json dict.
     # -----------------------------------------------------------------
     def create_result(self, solr_json):
-        """Creates a search result for a client based on a solr_json 
+        """Creates a search result for a client based on a solr_json
         response.
         """
         if not solr_json:
@@ -791,13 +791,13 @@ class ResultMaker():
             self.add_human_remains_flag(solr_json)
             self.add_all_events_date_range(solr_json)
             self.add_geo_chrono_counts(solr_json)
-            # The paging function below provides the count of 
+            # The paging function below provides the count of
             # search results
             self.add_paging_json(solr_json)
             self.add_sorting_json()
             self.add_filters_json()
             self.add_text_fields()
-        
+
         if 'chrono-facet' in self.act_responses:
             # Add facet options for chronology tiles (time spans)
             self.add_chronology_facets(solr_json)
@@ -810,16 +810,16 @@ class ResultMaker():
             # Add the "standard" facets (for entities, often in hierarchies)
             self.add_standard_facets(solr_json)
             # Add the item-type facets
-            self.add_item_type_facets(solr_json) 
+            self.add_item_type_facets(solr_json)
             # Add related media facet options
             self.add_rel_media_facets(solr_json)
             # Adds overlay images, associated with project facet options.
             self.add_project_image_overlays()
-        
+
         if 'geo-facet' in self.act_responses:
             # Add the geographic tile facets.
             self.add_geotile_facets(solr_json)
-        
+
         if 'geo-feature' in self.act_responses:
             # Add the geographic tile facets.
             self.add_geo_contained_in_facets(solr_json)
@@ -827,21 +827,21 @@ class ResultMaker():
         if 'uuid' in self.act_responses:
             # Adds a simple list of uuids to the result.
             self.add_uuid_records(solr_json)
-        
+
         if 'uri' in self.act_responses:
             # Adds a simple list of uuids to the result.
             self.add_uri_records(solr_json)
-        
+
         if 'uri-meta' in self.act_responses:
             # Adds uri-meta dictionary objects that provide
             # record uri together with attribute metadata.
             self.add_uri_meta_records(solr_json)
-        
+
         if 'geo-record' in self.act_responses:
-            # Adds geo-json expressed features for individual 
+            # Adds geo-json expressed features for individual
             # result records
             self.add_geo_records(solr_json)
-    
+
         if 'solr' in self.act_responses:
             # Adds the raw solr response to the result.
             if len(self.act_responses) == 1:
