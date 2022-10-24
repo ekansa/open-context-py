@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -30,7 +30,7 @@
                         <div class="media-body">
                             <div style="padding-left: 4%;">
                                 <p>Why do we use a "publishing" model? In our view, simply archiving research data, while necessary, is often not sufficient to promote understanding. Data can need many steps of cleanup, review, documentation and revision to be used by different communities. Open Context provides such services, and through collaborative co-production, we work with data authors to publish and archive data ready for broader reuse and understanding.</p>
-                                
+
                             </div>
                         </div>
                     </div>
@@ -38,9 +38,9 @@
             </div>
         </div>
     </div>
-    
+
     <div class="container-fluid">
-        
+
 		<style type="text/css">
 			img.pub-icon {
 				height: 100px;
@@ -53,18 +53,18 @@
 				margin-top: 40px;
 			}
 		</style>
-		
-		
+
+
         <div class="row">
             <div class="col-sm-12">
                 <h2>Who Publishes with Open Context? What do they Publish?</h2>
-                <p>Anyone can publish their research with Open Context &mdash; from individuals to teams, and from junior to senior scholars.  Open Context focuses on structured data, meaning the records of spreadsheets or relational databases, together with related media files (such as images and maps). Essentially, we provide publication services for the vast bulk of media that typically cannot fit into a conventional book or article publication. In general, Open Context does not publish or archive PDFs of published or unpublished manuscripts, unless these help document structured datasets. Browse Open Context's <a href="{{ base_url }}/projects-search/">projects</a> for examples of the kinds of content we publish. 
+                <p>Anyone can publish their research with Open Context &mdash; from individuals to teams, and from junior to senior scholars.  Open Context focuses on structured data, meaning the records of spreadsheets or relational databases, together with related media files (such as images and maps). Essentially, we provide publication services for the vast bulk of media that typically cannot fit into a conventional book or article publication. In general, Open Context does not publish or archive PDFs of published or unpublished manuscripts, unless these help document structured datasets. Browse Open Context's <a href="{{ base_url }}/projects-search/">projects</a> for examples of the kinds of content we publish.
                 </p>
-				
+
 				<p class="lead" style="margin-top:60px; margin-bottom: 20px;">READY TO PUBLISH? Here are the Steps Below:</p>
 			</div>
 		</div>
-		
+
 		<div class="row pub-rows">
             <div class="col-sm-1">
             </div>
@@ -75,15 +75,15 @@
                 <h3>
                     1: Contact our Editorial Team
                 </h3>
-                <p>The first step is to contact the Open Context <a href="mailto:publish@opencontext.org?Subject=Publication+Inquiry">editorial team</a> (<a href="mailto:publish@opencontext.org?Subject=Publication+Inquiry">publish@opencontext.org</a>). Because data publishing is a process of co-production, we think it's important to start with a personal contact rather than an impersonal "upload" button. 
+                <p>The first step is to contact the Open Context <a href="mailto:publish@opencontext.org?Subject=Publication+Inquiry">editorial team</a> (<a href="mailto:publish@opencontext.org?Subject=Publication+Inquiry">publish@opencontext.org</a>). Because data publishing is a process of co-production, we think it's important to start with a personal contact rather than an impersonal "upload" button.
                 </p>
-                        
+
 			</div>
             <div class="col-sm-1">
             </div>
         </div>
-		
-        
+
+
 		<div class="row pub-rows">
             <div class="col-sm-1">
             </div>
@@ -95,31 +95,31 @@
                     2: Review and Accept the Author Agreement
                 </h3>
                 <p>Authors who publish with Open Context agree to the following terms:</p>
-				
+
 				<ul>
 					<li>
 						<p>Authors retain copyright and grant Open Context right to publish the work simultaneously licensed under under a <a href="https://creativecommons.org/licenses/by/4.0/" title="CC-BY License Description" target="_blank">Creative Commons Attribution License</a> that allows others to share, build upon, and adapt, the work with an acknowledgement of the work's authorship and publication in Open Context. Alternatively, authors may choose to release their work into the <a href="https://creativecommons.org/publicdomain/zero/1.0/" title="Public Domain Dedication" target="_blank">Public Domain</a>, which would legally require no such acknowledgement (though research professionalism and social norms strongly encourages proper citation even of public domain materials).</p>
-					
+
 						<p><strong>Please Note!</strong> While open licensing of research data can have great benefits for research, instruction, and other applications by diverse publics, we emphasize that open licensing is <em>not universally</em> appropriate. In some circumstances, other ethical needs should override open licensing. We ask contributors to be aware of the ethical context of their work so that open licensing is used properly. To learn more, read more about our <a href="{{ base_url }}/about/intellectual-property">Intellectual Property policies</a>.</p>
 					</li>
-				
+
 					<li>Authors are able to enter into separate, additional contractual arrangements for the non-exclusive distribution of the Open Context's published version of the work (e.g., post it to an institutional repository or publish it in a book), with an acknowledgement of its publication in Open Context.</li>
-					
+
 					<li>Authors are permitted and encouraged to post their work online (e.g., in institutional repositories or on their website) prior to and during the submission process, as it can lead to productive exchanges, as well as earlier and greater citation of published work (<a href="http://opcit.eprints.org/oacitation-biblio.html" target="_blank">See The Effect of Open Access</a>).
 					</li>
-					
-					<li>Once content is published with Open Context, the Open Context team will take reasonable steps to continue working with data authors to implement additional edits, fix errors, and make other enhancements suggested by authors. 
+
+					<li>Once content is published with Open Context, the Open Context team will take reasonable steps to continue working with data authors to implement additional edits, fix errors, and make other enhancements suggested by authors.
 					</li>
-					
+
 					<li>Please <a href="mailto:publish@opencontext.org">email</a> the editor to confirm you agree to the authoring terms above.</li>
-					
+
 				</ul>
 			</div>
             <div class="col-sm-1">
             </div>
         </div>
-		
-		
+
+
 		<div class="row pub-rows">
             <div class="col-sm-1">
             </div>
@@ -133,28 +133,28 @@
                 <p>Once a data publication has been accepted by the editorial team and authors accept the Author Agreement, the publishing workflow begins. This workflow involves:</p>
 				<ul>
 					<li>
-						<strong>Data Preparation by Author</strong>: Authors review the "<a href="{{ base_url }}/static/oc/documents/guidelines-data-authors-overview-2019-05.pdf" target="_blank" title="Author Guidelines, May 2019 Version">Guidelines for Authors</a>," which provide steps for preparing a dataset for publication with Open Context. Authors should also review the full "<a href="{{ base_url }}/static/oc/documents/opencontext-edpols-authorguides-full-2016-12.pdf" target="_blank" title="Editorial Policies, December 2016 Version">Open Context Editorial Policies &amp; Author Guidelines</a>", for more specific information about editorial policies and guidance for different types of specialist data. 
+						<strong>Data Preparation by Author</strong>: Authors review the "<a href="{{ base_url }}/static/oc/documents/guidelines-data-authors-overview-2019-05.pdf" target="_blank" title="Author Guidelines, May 2019 Version">Guidelines for Authors</a>," which provide steps for preparing a dataset for publication with Open Context. Authors should also review the full "<a href="{{ base_url }}/static/oc/documents/opencontext-edpols-authorguides-full-2016-12.pdf" target="_blank" title="Editorial Policies, December 2016 Version">Open Context Editorial Policies &amp; Author Guidelines</a>", for more specific information about editorial policies and guidance for different types of specialist data.
 					</li>
 					<li><strong>Data Transfer</strong>: Data tables, images, and other digital assets may be sent to the editors by email, Dropbox, FTP, or other agreed-upon method.
 					</li>
 					<li><strong>Data Cleaning and Annotation</strong>: Open Context editors check all datasets for consistency, integrity of identifiers, and other other issues (see: <a href="{{ base_url }}/about/#service-overview">Overview of editorial services</a>).</li>
-					
+
 					<li><strong>Communications</strong>: To identify and resolve issues, this step typicaly requires some back-and-forth communication between data authors and editors. We usually conduct this communication over email, but sometimes also use video conferencing and Web-based bug tracking and project managment tools.</li>
-					
+
 					<li><strong>Timing</strong>: The length of time required to edit and annotate data can vary widely, depending on both the quality and complexity of the data and the amount of effort require to annotate data to appropriate standards. Sometimes it is hard to anticipate how much time will be required, as unexpected needs sometimes arise.</li>
-					
+
 					<li><strong>Peer Review</strong>: Open Context editors provide baseline vetting for all content prior to publication. They check to make sure the content is appropriate for a scholarly publishing venue. Authors can also ask Open Context editors to manage a post-publication peer-review process. Open Context editors ask outside reviewers to comment on the potential of a given dataset to support research reuse with confidence. Reviewers are asked to comment on the quality of data documentation and the intelligibility of the dataset. Our peer-review system does not result in binary "accept" / "reject" determinations, nor does this evaluate the significance of a dataset. Rather, we intend peer-review to provide feedback to improve data and data documentation quality.</li>
-					
-				</ul>  
+
+				</ul>
 			</div>
             <div class="col-sm-1">
             </div>
         </div>
-		
-		
-		
-        
-        
+
+
+
+
+
         <h5 style="margin-top: 120px;">Icon Credits</h5>
 		<div class="row">
             <div class="col-sm-12">
@@ -171,8 +171,8 @@
                 <small>Route / Path icon by <a target="_blank" href="https://thenounproject.com/term/route/212109/">Magicon</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
             </div>
         </div>
-        
-        
+
+
     </div>
-    
-{% endblock %} 
+
+{% endblock %}

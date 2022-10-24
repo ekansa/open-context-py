@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -37,21 +37,21 @@
             </div>
         </div>
     </div>
-    
+
     <div class="container-fluid">
         <h2>Publications about Open Context</h2>
         <div class="row">
             <div class="col-sm-1">
-                
+
             </div>
             <div class="col-sm-10">
-                
+
                 <div resource="http://opencontext.org/" >
                     <div id="references" >
-                        
+
                         <ul id="pub-list" class="list-unstyled ref-list">
-                            
-                            
+
+
                             <li id="pub-2018-2" rel="dcterms:isReferencedBy">
                                   <a style="display:none;" href="#pub-2018-2" ></a>
                                   <span typeof="dcterms:BibliographicResource bibo:Article" resource="#pub-2018-2">
@@ -366,37 +366,37 @@
                                         </span>
                                   </span>
                             </li>
-                             
+
                         </ul>
-                    
+
                     </div>
                </div>
 
-                
-                
-                
-                
+
+
+
+
             </div> <!-- end  col-sm-12 -->
         </div>
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
         <h5 style="margin-top: 120px;">Icon Credits</h5>
         <div class="row">
             <div class="col-sm-12">
                 <small>Quote icon by <a target="_blank" href="https://thenounproject.com/term/quote/23118/">Irene Hoffman</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
             </div>
         </div>
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
     </div>
-    
-{% endblock %} 
+
+{% endblock %}

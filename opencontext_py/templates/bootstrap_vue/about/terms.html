@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -30,7 +30,7 @@
                         <div class="media-body">
                             <div style="padding-left: 4%;">
                                 <p>Open Context publishes open research data for different public communities to access and use. We require civil and respectful use of Open Context and the content it publishes according to the terms and conditions of service specified below.</p>
-                                
+
 								<p>In addition, Open Context data collection policies try to reduce user privacy risks. As <a href="#privacy">discussed below</a>, we use Matomo to collect and retain only information of low-risk to the confidentiality and identity of specific users.</p>
                             </div>
                         </div>
@@ -39,9 +39,9 @@
             </div>
         </div>
     </div>
-    
+
     <div class="container-fluid">
-        
+
 		<style type="text/css">
 			img.uses-icon {
 				height: 100px;
@@ -54,9 +54,9 @@
 				margin-top: 40px;
 			}
 		</style>
-		
+
 		<div id="terms-and-conditions"></div>
-		
+
 		<div class="row uses-rows">
             <div class="col-sm-1">
             </div>
@@ -67,27 +67,27 @@
                 <h3>Terms and Conditions of Use</h3>
 				<p>Open Context publishes open access, open licensed research data on the Web. It is free of charge for users. Most of these data document archaeological research from projects and collections across the world. To use Open Context and the content it publishes, you must agree to the following Terms and Conditions of Service:</p>
 				<ul>
-					<li><strong>Respect Applicable Laws and Communities</strong>: Open Context publishes research materials relevant to many different public communities all with different histories, cultures, and expectations. We expect Open Context users to act civilly and lawfully. We also require that Open Context users treat different publics with dignity, decency, and respect in their use of Open Context published content. 
+					<li><strong>Respect Applicable Laws and Communities</strong>: Open Context publishes research materials relevant to many different public communities all with different histories, cultures, and expectations. We expect Open Context users to act civilly and lawfully. We also require that Open Context users treat different publics with dignity, decency, and respect in their use of Open Context published content.
 					</li>
-					<li><strong>Cite Contributors</strong>: The data and other documentation published by Open Context required dedication, expertise, and professionalism, and sometimes extraordinary effort in difficult circumstances. Users of Open Context must respect these contributors by clearly and properly citing and attributing data creators and contributors. Citations need to include appropriate Web identifiers (URIs) in order to help maintain the intellectual integrity of these works. 
+					<li><strong>Cite Contributors</strong>: The data and other documentation published by Open Context required dedication, expertise, and professionalism, and sometimes extraordinary effort in difficult circumstances. Users of Open Context must respect these contributors by clearly and properly citing and attributing data creators and contributors. Citations need to include appropriate Web identifiers (URIs) in order to help maintain the intellectual integrity of these works.
 					</li>
-					<li><strong>Adhere to Archaeological Ethics</strong>: Most of the content published by Open Context documents archaeological research. Members of the public wishing to access and use this documentation must use these materials responsibly in accordance with ethical principles advocated by archaeology's professional societies, especially the <a href="http://www.saa.org/AbouttheSociety/PrinciplesofArchaeologicalEthics/tabid/203/Default.aspx">Society for American Archaeology's Principles of Archaeological Ethics</a> and the <a href="http://worldarch.org/code-of-ethics/">World Archaeological Congress</a>. 
+					<li><strong>Adhere to Archaeological Ethics</strong>: Most of the content published by Open Context documents archaeological research. Members of the public wishing to access and use this documentation must use these materials responsibly in accordance with ethical principles advocated by archaeology's professional societies, especially the <a href="http://www.saa.org/AbouttheSociety/PrinciplesofArchaeologicalEthics/tabid/203/Default.aspx">Society for American Archaeology's Principles of Archaeological Ethics</a> and the <a href="http://worldarch.org/code-of-ethics/">World Archaeological Congress</a>.
 					</li>
 					<li><strong>Respect Human Remains Documentation</strong>: Open Context requires that researchers understand and respect the ethical context of their research environment as noted in the <a href="http://worldarch.org/code-of-ethics/">Tamaki Makau-rau Accord</a> endorsed by the World Archaeological Congress. In some cases, especially contexts with histories of colonialism, this may preclude publication of human remains or other sensitive content on an open access venue like this. In other cases, Open Context does publish documentation about human remains. Users working with human remains documentation need to treat these materials with care and respect.
 					</li>
 					<li><strong>Act as a "Good Citizen" in Using our Services</strong>: Open Context provides multiple human and machine interfaces (APIs, web services) for accessing and querying the content it publishes. Be reasonable in your use Open Context and its APIs so that your use does not adversely impact the accessibility of Open Context for others. We require all users, including their software agents, to use reasonable limits in making requests. This includes limiting the rate of requests (including API calls) to no more than 3 requests / second and <a href="mailto:publishing@opencontext.org">contacting us</a> to make arrangements for more extensive and continual use of our APIs.
 					</li>
-					<li><strong>Ethically Participate in Openness</strong>:  Open Context advocates ethically appropriate forms of open access and open data publishing. Open Context only publishes public domain content and content under Creative Commons licenses (especially the <a href="https://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution</a> license, more rarely other licenses). Obviously, not all content is suitable for open dissemination under these conditions. To use this venue appropriately, contributors and users must work within Open Context's <a href="{{ base_url }}/about/intellectual-property">Intellectual Property</a> policies. 
+					<li><strong>Ethically Participate in Openness</strong>:  Open Context advocates ethically appropriate forms of open access and open data publishing. Open Context only publishes public domain content and content under Creative Commons licenses (especially the <a href="https://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution</a> license, more rarely other licenses). Obviously, not all content is suitable for open dissemination under these conditions. To use this venue appropriately, contributors and users must work within Open Context's <a href="{{ base_url }}/about/intellectual-property">Intellectual Property</a> policies.
 					</li>
 					<li><strong>Respect Copyright</strong>: Open Context respects your intellectual property and the intellectual property of others, and we require that our users do as well. If you believe another person has copied your work and has made it accessible on this site in a way that constitutes copyright infringement, or has violated your intellectual property rights in some other way, please <a href="mailto:publishing@opencontext.org">contact us</a>.</li>
 					<li><strong>Note Changes</strong>: Open Context reserves the right to change these terms of service at any time without prior notice, but only if such changes are consistent with applicable laws and principles of ethics endorsed by archaeology's professional societies and the American Library Association (ALA).
 					</li>
-				</ul>    
+				</ul>
 			</div>
             <div class="col-sm-1">
             </div>
         </div>
-		
+
 		<div id="privacy"></div>
 
 		<div class="row uses-rows">
@@ -103,7 +103,7 @@
 				<p>Open Context uses websites hosted by other institutions to archive, store, and serve data (especially images). When you use Open Context, you will often make requests to these other institutions to obtain data originally published by Open Context but now stored and archived at other websites. The websites of these other institutions will have their own privacy policies and terms of service. For this reason, Open Context only works with not-for-profit institutional repositories with broadly compatible privacy policies and terms of service. Currently, Open Context stores data in the following services managed by other institutions:
 				<a href="https://merritt.cdlib.org/">Merritt Repository (California Digital Library)</a>; <a href="https://archive.org/">Internet Archive</a>; <a href="https://zenodo.org/">Zenodo Repository (CERN Laboratory)</a>; mirror hosting with the <a href="https://www.dainst.org">German Archaeological Institute (DAI)</a>.
 				</p>
-				
+
 				<br/>
 				<br/>
 				<h4>Cookies</h4>
@@ -116,24 +116,24 @@
 					<li>Open Context uses analysis software called Matomo (formerly "Piwik", see below). If you have set your browser to allow Matomo data collection, Matomo will issue cookies to store on your computer. The cookies are valid for two years if you do not delete them first.</li>
 				</ul>
 				<p>Websites managed by other organizations storing data used by Open Context will also typically issue cookies to your computer. Unless you block cookies with appropriate browser settings, using Open Context may mean your computer will store cookies from: <a href="https://merritt.cdlib.org/">Merritt Repository (California Digital Library)</a>, <a href="https://archive.org/">Internet Archive</a>, <a href="https://zenodo.org/">Zenodo Repository (CERN Laboratory)</a>.</p>
-				
+
 				<br/>
 				<br/>
 				<h4>User Data Collection</h4>
 				<p>Open Context collects very little data about individual users. Open Context only keeps minimal user data for contributing authors on a temporary basis while a dataset is in development for publication. Following publication, Open Context editors delete accounts of contributing data authors. All other uses of Open Context are anonymous and involve no user accounts.</p>
-				
+
 				{% if 'opencontext.dainst.org' in base_url %}
 				<p>This mirror instance of Open Context is generously hosted by the <a href="https://www.dainst.org">German Archaeological Institute (DAI)</a>. As such, instance is also governed by <a href="https://www.dainst.org/datenschutz">DAI policies and European Union data privacy protection laws</a>. As described below, this instance of Open Context protects privacy by limiting data collection on individual users:</p>
 				{% else %}
 				<p>Open Context works towards "best practices" in protecting user privacy by limiting data collection on individual users. User privacy policies are:</p>
 				{%endif%}
-				
-				
+
+
 				<ul>
 					<li><strong>Anonymous Open Access</strong>: To protect user privacy and maximize accessibility, Open Context does not require a login to access published content. Only content in preparation prior to publication and some content subject to outside review lies behind a user login barrier.</li>
-					
+
 					<li><strong>Daily Rotation of Access Logs</strong>: Open Context limits retention of access logs (HTTP requests). Server logs record anonymized IP addresses (as described below). To further safeguard against accidental or malicious data breaches, Open Context rotates (deletes) server access logs on a daily basis.</li>
-					
+
 					<li><p><strong>Matomo (formerly "Piwik") User-Tracking and Privacy Protections</strong>: Open Context collects use statistics using an instance of <a href="https://matomo.org/">Matomo</a>, an open-source Web analytics application. We use Matomo to limit the amount of user data collected by third-parties, as would be the case with Google Analytics (<a href="https://matomo.org/privacy/">see more</a>). We also use the recommended <a href="https://matomo.org/docs/privacy/">privacy default</a> settings for Matomo to limit the specificity of data collected about users. Limiting the specificity of data collection reduces confidentiality risks to individuals in the event of an accidental or malicious breach of user data. These protections also facilitate compliance with <a href="https://matomo.org/gdpr/">European Union data privacy protections (especially GDPR)</a>.</p>
 						<p>The user data we collect and record include:</p>
 						<ul>
@@ -157,22 +157,22 @@
 					<li><p><strong>Uses of Web Analytics Data</strong>: Our goal is to limit risks associated with data collection and will only collect and retain the low-sensitivity data described above. These data will be used to help guide improvements to Open Context, and may be made available, on a limited basis, to qualified researchers conducting not-for-profit Institutional Review Board (IRB) approved studies.</p>
 					</li>
 					<li><p><strong>Opting Out of Tracking</strong>: Open Context respects <em>Do Not Track Directives</em>. If you do not want to be tracked in the manner described above, please select an applicable "Do Not Track" option on your Web browser.</p>
-					
+
 					<p>Alternatively, you can stop Open Context tracking by unchecking the "opt-in" option below:</p>
 					<div class="well well-sm">
 						<iframe style="border: none; height: auto; width: 100%; " src="https://piwik.alexandriaarchive.org/index.php?module=CoreAdminHome&action=optOut&language=en&backgroundColor=&fontColor=&fontSize=&fontFamily=Verdana">
 						</iframe>
 					</div>
-					
+
 					</li>
 					<li><strong>Changes</strong>: Open Context reserves the right to change privacy policies and user tracking policies at any time without notice, but only if such changes comply with the
 					<a href="http://www.ala.org/">American Library Association's recommendations for patron privacy</a> protections and applicable laws.
 					{% if 'opencontext.dainst.org' in base_url %}
-					This mirrored instance of Open Context may also change privacy policies to comply with European Union, German, and German Archaeological Institute requirements. 
+					This mirrored instance of Open Context may also change privacy policies to comply with European Union, German, and German Archaeological Institute requirements.
 					{%endif%}
 					</li>
 				</ul>
-				
+
 				<br/>
 				<br/>
 				<h4>Contact</h4>
@@ -181,8 +181,8 @@
             <div class="col-sm-1">
             </div>
         </div>
-		
-        
+
+
         <h5 style="margin-top: 120px;">Icon Credits</h5>
 		<div class="row">
             <div class="col-sm-12">
@@ -199,7 +199,7 @@
                 <small>Tracking icon by <a target="_blank" href="https://thenounproject.com/term/tracking/408583/">Mark S Waterhouse</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
             </div>
         </div>
-        
+
     </div>
-    
-{% endblock %} 
+
+{% endblock %}

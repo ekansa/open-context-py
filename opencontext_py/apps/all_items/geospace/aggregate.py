@@ -43,15 +43,15 @@ importlib.reload(geo_agg)
 
 data = {
     'longitude': (
-        [(random.randint(30, 50) + random.random()) for _ in range(50) ] 
+        [(random.randint(30, 50) + random.random()) for _ in range(50) ]
         + [(random.randint(55, 65) + random.random()) for _ in range(20)]
         + [(random.randint(20, 25) + random.random()) for _ in range(50)]
     ),
     'latitude': (
-        [(random.randint(30, 50) + random.random()) for _ in range(50)] 
+        [(random.randint(30, 50) + random.random()) for _ in range(50)]
         + [(random.randint(20, 25) + random.random()) for _ in range(20)]
         + [(random.randint(20, 25) + random.random()) for _ in range(50)]
-    ), 
+    ),
 }
 df = pd.DataFrame(data=data)
 r_l = geo_agg.cluster_geo_centroids(df)
@@ -65,8 +65,8 @@ MIN_CLUSTER_SIZE_KM = 5  # diagonal length in KM between min(lat/lon) and max(la
 
 DEFAULT_CLUSTER_METHOD = 'KMeans'
 CLUSTER_METHODS = [
-    DEFAULT_CLUSTER_METHOD, 
-    'AffinityPropagation', 
+    DEFAULT_CLUSTER_METHOD,
+    'AffinityPropagation',
     'SpectralClustering',
 ]
 
@@ -76,7 +76,7 @@ DEFAULT_SOURCE_ID = 'geospace-aggregate'
 def make_min_size_region(region_dict, min_distance=MIN_CLUSTER_SIZE_KM):
     """ Widens a coordinate pair based on maximum distance
         between points
-        
+
         this makes a square (on a mercator projection) bounding box
         region. it will have different real-world distances in the
         east west direction between the northern and southern sides
@@ -154,7 +154,7 @@ def check_region_overlaps(region_dicts):
             if region_dict['min_lat'] > comp_dict['max_lat']:
                 continue
             region_overlap_ids += [
-                region_dict.get('id'), 
+                region_dict.get('id'),
                 comp_dict.get('id')
             ]
         if not region_overlap_ids:
@@ -171,7 +171,7 @@ def check_cluster_contains_enough(region_dict, lone_point_check_uuid=None):
 
     :param dict region_dict: A region dict generated from clustering
         an array of lon lan points
-    :param UUID lone_point_check_uuid: A UUID or string UUID that 
+    :param UUID lone_point_check_uuid: A UUID or string UUID that
         needs to be checked to see if this point is representative
         of enough items to be its own cluster.
     """
@@ -189,7 +189,7 @@ def check_cluster_contains_enough(region_dict, lone_point_check_uuid=None):
     if not man_obj:
         # We can't find anything to check!
         return False
-    
+
     item_project_uuids = []
     if man_obj.item_type == 'projects':
         # This item itself is a project, which means that we want
@@ -209,7 +209,7 @@ def check_cluster_contains_enough(region_dict, lone_point_check_uuid=None):
         if not at_root_proj:
             # Now go up a level in the item hierarchy
             item_project = item_project.project
-    
+
     spt_qs = AllSpaceTime.objects.filter(
         Q(project_id__in=item_project_uuids)
         |Q(item__project_id__in=item_project_uuids)
@@ -236,7 +236,7 @@ def check_cluster_contains_enough(region_dict, lone_point_check_uuid=None):
 
 
 def cluster_geo_centroids(
-    df, 
+    df,
     max_clusters=MAX_CLUSTERS,
     min_cluster_size_km=MIN_CLUSTER_SIZE_KM,
     cluster_method=DEFAULT_CLUSTER_METHOD,
@@ -248,24 +248,24 @@ def cluster_geo_centroids(
         latitude columns and values.
     :param int max_clusters: The maximum number of clusters
         to return
-    :param float min_cluster_size_km: The minimum diagonal 
+    :param float min_cluster_size_km: The minimum diagonal
         length in KM between min(lat/lon) and max(lat/lon)
     :param str cluster_method: A string that names the sklearn
         clustering method to use on these data.
-    :param UUID lone_point_check_uuid: A UUID or string UUID that 
+    :param UUID lone_point_check_uuid: A UUID or string UUID that
         needs to be checked to see if this point is representative
         of enough items to be its own cluster.
     """
     if cluster_method not in CLUSTER_METHODS:
         raise ValueError(f'Unsupported cluster method {cluster_method}')
 
-    if df.empty: 
+    if df.empty:
         return None
-    
+
     if not set(['longitude', 'latitude']).issubset(set(df.columns)):
         # We're missing the required columns
         return None
-    
+
     # Remove null values, including "null island"
     ok_index = (
         ~df['longitude'].isnull()
@@ -275,7 +275,7 @@ def cluster_geo_centroids(
     if df[ok_index].empty:
         # We don't have any coordinates, despite having the columns
         return None
-    
+
     # Throw out everything missing coordinates.
     df = df[ok_index].copy()
 
@@ -288,7 +288,7 @@ def cluster_geo_centroids(
     )
     if min_cluster_size_km > max_dataset_distance * 0.05:
         min_cluster_size_km = max_dataset_distance * 0.05
-    
+
     region_dicts = []
     reasonable_clusters = False
     act_cluster_count = max_clusters
@@ -302,7 +302,7 @@ def cluster_geo_centroids(
         elif cluster_method == 'SpectralClustering':
             # NOTE: This may be more error prone and weird.
             spectral = SpectralClustering(
-                n_clusters=act_cluster_count, 
+                n_clusters=act_cluster_count,
                 random_state=None
             )
             cluster_ids = spectral.fit_predict(df[['longitude', 'latitude']])
@@ -310,7 +310,7 @@ def cluster_geo_centroids(
             kmeans = KMeans(n_clusters=act_cluster_count)
             cluster_ids = kmeans.fit_predict(df[['longitude', 'latitude']])
         df['geo_cluster'] = cluster_ids
-        
+
         # Assume we made reasonable clusters.
         reasonable_clusters = True
 
@@ -326,7 +326,7 @@ def cluster_geo_centroids(
             region_dict['min_lat'] = df[cluster_index]['latitude'].min()
             # ensure a minimum sized region
             region_dict = make_min_size_region(
-                region_dict, 
+                region_dict,
                 min_distance=min_cluster_size_km
             )
             region_dict['coordinates'] = geo_utils.make_geojson_coord_box(
@@ -339,7 +339,7 @@ def cluster_geo_centroids(
                 geo_utils.get_centroid_of_coord_box(region_dict['coordinates'])
             )
             contains_enough = check_cluster_contains_enough(
-                region_dict, 
+                region_dict,
                 lone_point_check_uuid=lone_point_check_uuid
             )
             if not contains_enough:
@@ -358,7 +358,7 @@ def cluster_geo_centroids(
             reasonable_clusters = True
         if cluster_method == 'AffinityPropagation':
             reasonable_clusters = True
-    
+
     return region_dicts
 
 
@@ -370,14 +370,14 @@ def make_geo_json_geometry_from_region_dicts(region_dicts):
     """
     if not region_dicts:
         return None
-    
+
     if len(region_dicts) == 1:
         geometry = {
             'type': 'Polygon',
             'coordinates': region_dicts[0].get('coordinates'),
         }
         return geometry
-    
+
     geometry = {
         'type': 'MultiPolygon',
         'coordinates': [r.get('coordinates') for r in region_dicts],
@@ -387,10 +387,10 @@ def make_geo_json_geometry_from_region_dicts(region_dicts):
 
 def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
     """Make a latidue, longitude dataframe a spacetime query string
-    
+
     :param queryset space_time_qs: The query set of
         space-time instances that we want to cluster
-    
+
     return DataFrame
     """
     space_time_qs = space_time_qs.values(*cols)
@@ -402,18 +402,34 @@ def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
 
 def make_project_space_time_qs(man_obj):
     """Make a project space_time_qs
-    
-   :param AllManifest man_obj: The AllManifest object project 
-        instance for which we will generate aggregate spatial 
+
+   :param AllManifest man_obj: The AllManifest object project
+        instance for which we will generate aggregate spatial
         regions
-    
+
     return space_time_qs
     """
+    # First check to see if we have geo data for this
+    # project
+    space_time_qs = AllSpaceTime.objects.filter(
+        Q(project=man_obj)
+        |Q(item__project=man_obj)
+    ).filter(
+        latitude__isnull=False,
+        longitude__isnull=False
+    )
+    if space_time_qs.count() > 0:
+        # The very best and happiest scenario,
+        return space_time_qs
+    # Do this to look for geo data up a context hierarchy.
+    # NOTE: this may mean looking outside the project if context
+    # records are associated with another project
     done = False
     subj_uuids = AllManifest.objects.filter(
         item_type='subjects',
         project=man_obj
     ).values_list('uuid', flat=True)
+    print(f'Initial subjects count {subj_uuids.count()} for {man_obj.slug}')
     i = 0
     while not done:
         i += 1
@@ -422,7 +438,7 @@ def make_project_space_time_qs(man_obj):
             |Q(item__project=man_obj)
             |Q(item_id__in=subj_uuids)
         ).filter(
-            latitude__isnull=False, 
+            latitude__isnull=False,
             longitude__isnull=False
         )
         if space_time_qs.count() > 0:
@@ -456,12 +472,12 @@ def make_geo_json_of_regions_for_man_obj(
         for which we will generate aggregate spatial regions
     :param int max_clusters: The maximum number of clusters
         to return
-    :param float min_cluster_size_km: The minimum diagonal 
+    :param float min_cluster_size_km: The minimum diagonal
         length in KM between min(lat/lon) and max(lat/lon)
     :param str cluster_method: A string that names the sklearn
         clustering method to use on these data.
     """
-    
+
     if man_obj.item_type == 'projects':
         space_time_qs = make_project_space_time_qs(man_obj)
     elif man_obj.item_type == 'subjects':
@@ -483,8 +499,8 @@ def make_geo_json_of_regions_for_man_obj(
         )
     elif man_obj.item_type in [
             'types',
-            'media', 
-            'documents', 
+            'media',
+            'documents',
             'persons',
         ]:
         assert_qs = AllAssertion.objects.filter(
@@ -501,13 +517,13 @@ def make_geo_json_of_regions_for_man_obj(
         )
     else:
         return None, None
-    
+
     # Now make a longitude, latitude dataframe.
     df = make_df_from_space_time_qs(space_time_qs)
 
     # Do the fancy math of clustering.
     region_dicts = cluster_geo_centroids(
-        df, 
+        df,
         max_clusters=max_clusters,
         min_cluster_size_km=min_cluster_size_km,
         cluster_method=cluster_method,
@@ -515,7 +531,7 @@ def make_geo_json_of_regions_for_man_obj(
     )
     if region_dicts is None:
         return None, None
-    
+
     # OK Process all of these different regions into a
     # single GeoJSON geometry (Polygon or MultiPolygon)
     geometry = make_geo_json_geometry_from_region_dicts(
@@ -527,7 +543,7 @@ def make_geo_json_of_regions_for_man_obj(
 def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_ID):
     """Add AllSpaceTime and from a client request JSON"""
     errors = []
-    
+
     if not isinstance(request_list, list):
         errors.append('Request json must be a list of dictionaries to update')
         return [], errors
@@ -545,8 +561,8 @@ def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_
             continue
 
         _, ok_edit = permissions.get_request_user_permissions(
-            request, 
-            man_obj, 
+            request,
+            man_obj,
             null_request_ok=True
         )
         if not ok_edit:
@@ -572,7 +588,7 @@ def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_
         if not min_cluster_size_km:
             errors.append(f'Min cluster size must be a number, not {min_cluster_size_km}')
             continue
-        
+
         geometry, count_points = make_geo_json_of_regions_for_man_obj(
             man_obj,
             max_clusters=max_clusters,
@@ -582,7 +598,7 @@ def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_
         if geometry is None:
             errors.append(f'Could not make aggregate geometry for manifest object {man_obj}')
             continue
-        
+
         item_add['geometry_type'] = geometry.get('type')
         item_add['geometry'] = geometry
         item_add['meta_json'] = {
@@ -593,7 +609,7 @@ def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_
             'count_points': count_points,
         }
         add_list.append(item_add)
-    
+
     # Now add all of these results to the database!
     added, new_errors = updater_spacetime.add_spacetime_objs(
         add_list,

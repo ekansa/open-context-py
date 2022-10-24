@@ -32,13 +32,13 @@ def index_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': 'https://opencontext.wistia.com/medias/s0g0fsyqkz'
         }
-        template = loader.get_template('about/index.html')
+        template = loader.get_template('bootstrap_vue/about/index.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About',
             'act_nav': 'about',
             'og': open_graph,
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -58,7 +58,7 @@ def uses_view(request):
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        template = loader.get_template('about/uses.html')
+        template = loader.get_template('bootstrap_vue/about/uses.html')
         open_graph = {
             'twitter_site': settings.TWITTER_SITE,
             'type': 'website',
@@ -71,11 +71,11 @@ def uses_view(request):
             'video': False
         }
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Uses',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Uses',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -106,13 +106,13 @@ def pub_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/publishing.html')
+        template = loader.get_template('bootstrap_vue/about/publishing.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Publishing',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Publishing',
             'act_nav': 'about',
             'og': open_graph,
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -144,13 +144,13 @@ def people_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/people.html')
+        template = loader.get_template('bootstrap_vue/about/people.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - People',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - People',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -182,13 +182,13 @@ def estimate_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/estimate.html')
+        template = loader.get_template('bootstrap_vue/about/estimate.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Cost Estimate',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Cost Estimate',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -231,12 +231,12 @@ def concepts_view(request):
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        template = loader.get_template('about/temp.html')
+        template = loader.get_template('bootstrap_vue/about/temp.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Concepts',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Concepts',
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context))
     else:
@@ -267,13 +267,13 @@ def tech_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/technology.html')
+        template = loader.get_template('bootstrap_vue/about/technology.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Technology',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Technology',
             'act_nav': 'about',
             'og': open_graph,
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -303,13 +303,13 @@ def services_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/services.html')
+        template = loader.get_template('bootstrap_vue/about/services.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Web Services and APIs',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Web Services and APIs',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context))
     else:
@@ -339,13 +339,13 @@ def recipes_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/recipes.html')
+        template = loader.get_template('bootstrap_vue/about/recipes.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - API Cookbook',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - API Cookbook',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context))
     else:
@@ -377,13 +377,13 @@ def bibliography_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/bibliography.html')
+        template = loader.get_template('bootstrap_vue/about/bibliography.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Bibliography',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Bibliography',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -414,13 +414,13 @@ def ip_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/intellectual-property.html')
+        template = loader.get_template('bootstrap_vue/about/intellectual-property.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Intellectual Property',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Intellectual Property',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context))
     else:
@@ -452,13 +452,13 @@ def sponsors_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/sponsors.html')
+        template = loader.get_template('bootstrap_vue/about/sponsors.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Intellectual Property',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Intellectual Property',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -489,13 +489,13 @@ def terms_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        template = loader.get_template('about/terms.html')
+        template = loader.get_template('bootstrap_vue/about/terms.html')
         context = {
-            'base_url': base_url,
-            'page_title': 'Open Context: About - Terms of Use and Privacy Policies',
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Terms of Use and Privacy Policies',
             'og': open_graph,
             'act_nav': 'about',
-            'nav_items': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS
         }
         return HttpResponse(template.render(context))
     else:

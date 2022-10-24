@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -25,8 +25,8 @@
                     <img style="height: 260px;" src="{{ base_url }}/static/oc/images/about/recipe-icon-noun-82540.svg" alt="Recipe Icon" />
                 </div>
                 <div class="col-sm-1">
-                
-                </div>    
+
+                </div>
                 <div class="col-sm-8">
                     <h2>Temporary Holding Page</h2>
                     <p>We are still working on this part of Open Context's upgrade.</p>
@@ -34,11 +34,11 @@
             </div>
         </div>
     </div>
-    
-    <div class="container-fluid">        
+
+    <div class="container-fluid">
         <div class="row">
             <div class="col-sm-12" style="min-height: 800px;">
-                
+
             </div>
         </div>
         <div class="row">
@@ -47,5 +47,5 @@
             </div>
         </div>
     </div>
-    
-{% endblock %} 
+
+{% endblock %}

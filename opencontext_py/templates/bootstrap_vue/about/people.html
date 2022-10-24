@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -36,7 +36,7 @@
 									</li>
 									<li>Optionally, organize peer-review of data;</li>
 									<li>Preserve data with the <a href="http://www.cdlib.org/">California Digital Library.</a>
-									</li> 
+									</li>
 								</ul>
                             </div>
                         </div>
@@ -45,25 +45,25 @@
             </div>
         </div>
     </div>
-    
+
     <div class="container-fluid">
-		
+
 		<style type="text/css">
 			div.img-link {
 				padding-top: 4px;
 			}
 			div.img-link img {
-				
+
 			}
 			div.sp-cap {
-				
+
 			}
 		</style>
-		
-		
+
+
 		<h3 id="contact-editors">Editors in Chief</h3>
         <div class="row">
-            
+
             <div class="col-sm-6">
 				<div class="thumbnail">
 					<div class="img-link">
@@ -82,7 +82,7 @@
 					</div>
 				</div>
 			</div>
-				
+
 			<div class="col-sm-6">
 				<div class="thumbnail">
 					<div class="img-link">
@@ -101,15 +101,15 @@
 				</div>
 			</div>
 		</div>
-		
-		
-		
-		
+
+
+
+
 		<h3>Editorial Board</h3>
 
         <div class="row">
             <div class="col-sm-1">
-				
+
 			</div>
 			<div class="col-sm-10">
 				<ul class="sep-list">
@@ -117,7 +117,7 @@
 						<span typeof="bibo:editor" resource="http://viaf.org/viaf/231886265">
 							<a rel="foaf:homepage" href="https://www.unlv.edu/people/levent-atici">Levent Atici</a>, Department of Anthropology, University of Nevada, Las Vegas
 						</span>
-					</li>		    
+					</li>
 					<li rel="foaf:member">
 						<span typeof="bibo:editor" resource="http://viaf.org/viaf/48492235">
 							<a rel="foaf:homepage" href="http://csanet.org/pers/nevita.html">Harrison Eiteljorg, II</a>, Center for the Study of Architecture, Bryn Mawr College
@@ -186,21 +186,21 @@
 				   <li rel="foaf:member">
 						<span typeof="bibo:editor" resource="http://archaeology.as.utk.edu/people/yerka.html">
 							 <a rel="foaf:homepage" href="http://archaeology.as.utk.edu/people/yerka.html">Stephen Yerka</a>,
-							 Tribal Historic Preservation Office, Eastern Band of the Cherokee Indian 
+							 Tribal Historic Preservation Office, Eastern Band of the Cherokee Indian
 							 and Archaeological Research Laboratory (ARL), University of Tennessee, Knoxville
 						</span>
 				   </li>
 				</ul>
 			</div>
 		</div> <!-- end row for editorial board -->
-        
-		
-		
+
+
+
         <h3>Software and Design Team</h3>
-		
+
         <div class="row">
             <div class="col-sm-1">
-				
+
 			</div>
 			<div class="col-sm-10">
 				<ul class="sep-list">
@@ -227,13 +227,13 @@
 				</ul>
 			</div>
 		</div> <!-- end row for technical -->
-		
-		
+
+
 		<h3>Open Context Alumni</h3>
-		
+
 		<div class="row">
             <div class="col-sm-1">
-				
+
 			</div>
 			<div class="col-sm-10">
 				<ul class="sep-list">
@@ -252,17 +252,17 @@
 				</ul>
 			</div>
 		</div>
-		
-		
-		
-		
+
+
+
+
 		<h5 style="margin-top: 120px;">Icon Credits</h5>
 		<div class="row">
             <div class="col-sm-12">
                 <small>Team icon by <a target="_blank" href="https://thenounproject.com/term/team/8283/">Colin Lawrence</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
             </div>
         </div>
-        
+
     </div>
 
 <script type="text/javascript">
@@ -271,9 +271,9 @@
 	$( window ).resize(function() {
 	  div_size();
 	});
-	
+
 	function match_heights(lead_id, follow_id, buffer){
-		
+
 		if (document.getElementById(lead_id)) {
 			var lead_dom = document.getElementById(lead_id);
 			var lead_h = $(lead_dom).height();
@@ -286,16 +286,16 @@
 			}
 		}
 	}
-	
+
     function div_size(){
         // sets elements to have the same height
-		match_heights('swk-cap', 'eck-cap', 18); 
+		match_heights('swk-cap', 'eck-cap', 18);
     }
-    
+
     -->
 </script>
 
 
 
 
-{% endblock %} 
+{% endblock %}

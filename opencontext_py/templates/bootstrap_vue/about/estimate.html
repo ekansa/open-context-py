@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -20,7 +20,7 @@
             margin-top: 8px;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -50,8 +50,8 @@
             </div>
         </div>
     </div>
-    
-    <div class="container-fluid">        
+
+    <div class="container-fluid">
         <div class="row">
             <div class="col-sm-12">
                 <h3>Data Management Plan Cost Estimates for Publishing and Archiving</h3>
@@ -74,7 +74,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="input-email" class="col-sm-3 control-label">Email</label>
-                                <div class="col-sm-8">                          
+                                <div class="col-sm-8">
                                     <div class="input-group">
                                     <span class="input-group-addon">@</span>
                                     <input name="user_email"
@@ -133,7 +133,7 @@
                                 </div>
                             </div>
                         </div>
-                    
+
                         <!-- General project complexity -->
                         <h5><strong>Project Database Size and Complexity</strong></h5>
                         <div class="well well-sm" style="padding-top: 3%;">
@@ -149,7 +149,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="input-spec-datasets" class="col-sm-4 control-label">Number of specialist datasets</label>
-                                <div class="col-sm-2">    
+                                <div class="col-sm-2">
                                     <input name="count_spec_datasets"
                                            type="text"
                                            class="form-control"
@@ -166,7 +166,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="input-count-tables" class="col-sm-4 control-label">Number of tables</label>
-                                <div class="col-sm-2">    
+                                <div class="col-sm-2">
                                     <input name="count_tables"
                                            type="text"
                                            class="form-control"
@@ -232,7 +232,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
                                     <label>Number of Documents (<em>HTML, text, PDF</em>)</label>
@@ -280,7 +280,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
                                     <label>Number of GIS "Layers" (<em>Point, line, polygon feature types and rasters</em>)</label>
@@ -328,7 +328,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
                                     <label>Number of Other Media Files (<em>Videos, 3D models, VR, CAD, etc.</em>)</label>
@@ -377,7 +377,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Comments and Submit -->
                         <!--
                         <h5><strong>Comment and Copyright Licensing</strong></h5>
@@ -394,7 +394,7 @@
                                         rows="4"></textarea>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-sm-3" style="text-align: right; padding-top: 10px;">
                                     <label>Copyright License</label>
@@ -417,7 +417,7 @@
                                             <span id="input-license-0-help" class="help-block">If I choose to publish with Open Context, I plan to waive all copyright and other intellectual property rights on my content and dedicate my content to the public domain by using the Creative Commons-Zero (public domain) declaration. Legal experts believe that this choice maximizes scientific interoperability and potential for reuse. While not legally required, citation is expected through norms of professional conduct.</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="row">
                                         <div class="col-sm-2">
                                             <div class="radio">
@@ -445,7 +445,7 @@
                                             for digital archives to preserve content.</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="row">
                                         <div class="col-sm-2">
                                             <div class="radio">
@@ -476,15 +476,15 @@
                                                 placeholder="Brief explanation of areas where additional restrictions may be required"
                                                 rows="4"></textarea>
                                         </div>
-                                        
+
                                     </div>
-                                    
+
                                 </div>
                             </div>
-                            
-                           --> 
+
+                           -->
                         </div>
-                    
+
                         <div class="row">
                             <div class="col-sm-3">
                                 <button
@@ -493,25 +493,25 @@
                                  class="btn btn-primary btn-lg btn-block">Submit</button>
                             </div>
                             <div class="col-sm-6">
-                                
+
                             </div>
                             <div class="col-sm-3">
-                                
+
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-sm-12" id="estimation-results">
-                                
+
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        
-        
-        
+
+
+
         <h5 style="margin-top: 120px;">Icon Credits</h5>
         <div class="row">
             <div class="col-sm-12">
@@ -519,7 +519,7 @@
             </div>
         </div>
     </div>
-    
+
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
         var base_url = '{{ base_url }}';
@@ -531,7 +531,7 @@
                 estimator = new estimation();
             }
             -->
-    </script> 
+    </script>
     <script src="{{ base_url }}/static/oc/js/about/estimation.js" onload="start_estimator();"></script>
-    
-{% endblock %} 
+
+{% endblock %}

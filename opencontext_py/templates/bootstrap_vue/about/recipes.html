@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -29,7 +29,7 @@
                         </div>
                         <div class="media-body">
                             <p>This page provides a growing list of examples for how to use Open Context data and APIs in specific tasks and workflows.</p>
-                            
+
                             <p>For a more detailed technical discussion of the Open Context API, please review Open Context's <a href="{{ base_url }}/about/services">Web Services (APIs)</a> documentation.</p>
                         </div>
                     </div>
@@ -37,36 +37,42 @@
             </div>
         </div>
     </div>
-    
-    <div class="container-fluid">        
+
+    <div class="container-fluid">
         <div class="row">
             <div class="col-sm-12">
                 <!-- page tabs -->
                 <ul class="nav nav-tabs" id="about-tabs" data-tabs="tabs">
-                    <li class="active"><a data-toggle="tab" href="#gis">Download GIS or CSV Tables</a></li>
-                    <li><a data-toggle="tab" href="#dinaa">Linking to DINAA Sites</a></li>
-                    <li><a data-toggle="tab" href="#geo-utilities">Geo Utilities</a></li>
+                    <li class="nav-item active">
+                        <a class="nav-link active" data-toggle="tab" id="tab-gis" role="tab" data-target="#gis" href="#gis" >Download GIS or CSV Tables</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" id="tab-dinaa" role="tab" data-target="#dinaa" href="#dinaa">Linking to DINAA Sites</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" id="tab-geo-utilities" role="tab" data-target="#geo-utilities" href="#geo-utilities">Geo Utilities</a>
+                    </li>
                 </ul>
                 <div class="tab-content about-tab-all">
-                    <div id="gis" class="tab-pane fade in active">
-                        {% include 'about/recipes-gis.html' %}
+                    <div id="gis" class="tab-pane fade show active" role="tabpanel" aria-labelledby="tab-gis">
+                        {% include './recipes-gis.html' %}
                     </div>
-                    <div id="dinaa" class="tab-pane fade">
-                        {% include 'about/recipes-dinaa.html' %}
+                    <div id="dinaa" class="tab-pane fade" role="tabpanel" aria-labelledby="tab-dinaa">
+                        {% include './recipes-dinaa.html' %}
                     </div>
-                    <div id="geo-utilities" class="tab-pane fade">
-                        {% include 'about/recipes-geo.html' %}
+                    <div id="geo-utilities" class="tab-pane fade" role="tabpanel" aria-labelledby="tab-geo-utilities">
+                        {% include './recipes-geo.html' %}
                     </div>
                 </div>
                 <!-- end of tab content -->
             </div>
         </div>
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
         <h5 style="margin-top: 120px;">Icon Credits</h5>
         <div class="row">
             <div class="col-sm-12">
@@ -74,5 +80,5 @@
             </div>
         </div>
     </div>
-    
-{% endblock %} 
+
+{% endblock %}

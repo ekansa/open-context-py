@@ -1,6 +1,6 @@
-{% extends 'about/outer-page.html' %}
+{% extends '../page.html' %}
 
-{% block pagecontent %}
+{% block content %}
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -12,7 +12,7 @@
             list-style-type: none;
         }
     </style>
-    
+
     <div class="jumbotron" id="overview">
         <div class="container-fluid">
             <div class="row">
@@ -46,9 +46,9 @@
             </div>
         </div>
     </div>
-    
+
     <div class="container-fluid">
-        
+
 		<style type="text/css">
 			img.uses-icon {
 				height: 100px;
@@ -61,8 +61,8 @@
 				margin-top: 40px;
 			}
 		</style>
-		
-		
+
+
 		<div class="row uses-rows">
             <div class="col-sm-1">
             </div>
@@ -72,13 +72,13 @@
             <div class="col-sm-8 step-text">
                 <h3>Data Organization</h3>
 				<p>Internally, Open Context has a highly abstracted and generalized global schema for representing data. This general approach takes its inspiration from the data structure developed by the <a href="https://ochre.uchicago.edu/" title="OCHRE data service" target="_blank">OCHRE</a> project (originally called "ArchaeoML"). However, to reduce development and maintenance costs, we opted to implement simplified versions of these generalized models in common and easily deployed relational database systems (in our case PostgreSQL).</p>
-				
-				<p>Over the years, Open Context has evolved from ArchaeoML and moved toward Linked Open Data approaches to data organization. In essense, the current internal data model of Open Context largely looks like a graph-database structure commonly used for RDF triple-stores. However, we do not actually use a triple-store. Our experience managing data from many sources over the past 10 years has shown us that we often need additional attributes describing data provenance, context, etc. We decided that our day-to-day reliance on these additional attributes would make RDF-only triple-stores a bit awkward and cumbersome for our typical information management needs. Thus, Open Context mainly emphasizes RDF and Linked Open Data to relate the data it publishes with the data curated by external sources.</p>    
+
+				<p>Over the years, Open Context has evolved from ArchaeoML and moved toward Linked Open Data approaches to data organization. In essense, the current internal data model of Open Context largely looks like a graph-database structure commonly used for RDF triple-stores. However, we do not actually use a triple-store. Our experience managing data from many sources over the past 10 years has shown us that we often need additional attributes describing data provenance, context, etc. We decided that our day-to-day reliance on these additional attributes would make RDF-only triple-stores a bit awkward and cumbersome for our typical information management needs. Thus, Open Context mainly emphasizes RDF and Linked Open Data to relate the data it publishes with the data curated by external sources.</p>
 			</div>
             <div class="col-sm-1">
             </div>
         </div>
-		
+
 		<div class="row uses-rows">
             <div class="col-sm-1">
             </div>
@@ -99,8 +99,8 @@
             <div class="col-sm-1">
             </div>
         </div>
-		
-        
+
+
         <h5 style="margin-top: 120px;">Icon Credits</h5>
 		<div class="row">
             <div class="col-sm-12">
@@ -122,7 +122,7 @@
                 <small>Pull-request icon by <a target="_blank" href="https://thenounproject.com/term/git/368568/">Nick Bluth</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
             </div>
         </div>
-        
+
     </div>
-    
-{% endblock %} 
+
+{% endblock %}
