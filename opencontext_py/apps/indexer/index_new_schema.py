@@ -14,6 +14,7 @@ from opencontext_py.apps.all_items.models import AllAssertion, AllManifest
 
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
+from opencontext_py.apps.indexer import index_site_pages as isp
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs as solr_search_configs
 
@@ -34,6 +35,8 @@ from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
 
 
+new_ind.make_index_site_page_solr_documents()
+
 # index things that aren't indexed or have new ids
 ids_qs = AllIdentifier.objects.filter(
     item__item_type__in=['projects', 'subjects', 'media', 'documents'],
@@ -45,7 +48,20 @@ ids_qs = AllIdentifier.objects.filter(
 
 uuids = [str(i.item.uuid) for i in ids_qs if not i.item.indexed or i.item.indexed < i.updated]
 
-
+class_slugs = [
+    'oc-gen-cat-bio-subj-ecofact',
+    'oc-gen-cat-plant-remains',
+    'oc-gen-cat-animal-bone',
+    'oc-gen-cat-shell',
+    'oc-gen-cat-human-bone',
+    'oc-gen-cat-non-diag-bone',
+    'oc-gen-cat-human-subj'
+]
+m_qs = AllManifest.objects.filter(
+    item_class__slug__in=class_slugs
+).exclude(
+    indexed__gte='2022-10-25'
+).order_by('project_id', 'sort')
 
 # Reindex Getty AAT related items
 all_uuids = new_ind.get_uuids_associated_with_vocab(vocab_uri='vocab.getty.edu/aat')
@@ -153,6 +169,38 @@ def make_solr_documents(uuids):
             print(f'Problem making solr doc for {str(uuid)}')
         solr_docs.append(solrdoc.fields)
     return solr_docs
+
+
+def make_index_site_page_solr_documents(solr=None):
+    if not solr:
+        solr = get_solr_connection()
+    solr_docs = isp.make_site_pages_solr_docs()
+    try:
+        solr.add(
+            solr_docs,
+            commit=False,
+            overwrite=True,
+        )
+    except:
+        for solr_doc in solr_docs:
+            try:
+                solr.add(
+                    [solr_doc],
+                    commit=False,
+                    overwrite=True,
+                )
+            except:
+                logger.warn(
+                    f'Problem committing {solr_doc.get("uuid")}'
+                )
+                print(
+                    f'Problem committing {solr_doc.get("uuid")}'
+                )
+    solr.commit()
+    logger.info(f'Indexed committing site pages: {len(solr_docs)}')
+    print(f'Indexed committing site pages: {len(solr_docs)}')
+    summary = [(solr_doc.get('uuid'), solr_doc.get('slug_type_uri_label'),) for solr_doc in solr_docs]
+    print(summary)
 
 
 def make_index_solr_documents(uuids, solr=None):

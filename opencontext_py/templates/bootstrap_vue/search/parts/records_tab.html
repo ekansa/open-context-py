@@ -19,8 +19,8 @@
 
 <template id='records-tab-field-descriptiveness'>
     <div class="clearfix record-thumb-outer">
-    <b-img-lazy 
-        v-if="field_item.media && (!field_item.human_remains_flag || human_remains_ok)" 
+    <b-img-lazy
+        v-if="field_item.media && (!field_item.human_remains_flag || human_remains_ok)"
         :src="field_item.media"
         thumbnail
         fluid
@@ -28,18 +28,18 @@
         center
         :alt="'Image related to ' + field_item.label">
     </b-img-lazy>
-    <b-img-lazy 
-        v-else-if="field_item.media && field_item.human_remains_flag" 
+    <b-img-lazy
+        v-else-if="field_item.media && field_item.human_remains_flag"
         :src="field_item.media"
         thumbnail
         fluid
         rounded
         center
-        class="human_remains_thumb_blur" 
+        class="human_remains_thumb_blur"
         :alt="'Image related to ' + field_item.label">
     </b-img-lazy>
-    <b-img-lazy 
-        v-else-if="field_item.icon" 
+    <b-img-lazy
+        v-else-if="field_item.icon"
         :src="field_item.icon"
         thumbnail
         fluid
@@ -84,13 +84,13 @@
             </h5>
         </b-col>
         <b-col cols="1">
-            <b-button 
-                pill 
-                variant="outline-primary" 
+            <b-button
+                pill
+                variant="outline-primary"
                 size="sm"
-                v-if="result_page_first_link" 
-                :to="result_page_first_link" 
-                :id="hr_role + '-first-page-link-' + route_key_index" 
+                v-if="result_page_first_link"
+                :to="result_page_first_link"
+                :id="hr_role + '-first-page-link-' + route_key_index"
                 :title="'First page of results'"
             >
                 <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
@@ -100,13 +100,13 @@
             </b-button>
         </b-col>
         <b-col cols="1">
-            <b-button 
-                pill 
-                variant="outline-primary" 
+            <b-button
+                pill
+                variant="outline-primary"
                 size="sm"
-                v-if="result_page_previous_link" 
-                :to="result_page_previous_link" 
-                :id="hr_role + '-previous-page-link-' + route_key_index" 
+                v-if="result_page_previous_link"
+                :to="result_page_previous_link"
+                :id="hr_role + '-previous-page-link-' + route_key_index"
                 :title="'Previous page of results'"
             >
                 <b-icon-chevron-left></b-icon-chevron-left>
@@ -116,13 +116,13 @@
             </b-button>
         </b-col>
         <b-col cols="1">
-            <b-button 
-                pill 
-                variant="outline-primary" 
+            <b-button
+                pill
+                variant="outline-primary"
                 size="sm"
-                v-if="result_page_next_link" 
-                :to="result_page_next_link" 
-                :id="hr_role + '-next-page-link-' + route_key_index" 
+                v-if="result_page_next_link"
+                :to="result_page_next_link"
+                :id="hr_role + '-next-page-link-' + route_key_index"
                 :title="'Next page of results'"
             >
                 <b-icon-chevron-right></b-icon-chevron-right>
@@ -132,13 +132,13 @@
             </b-button>
         </b-col>
         <b-col cols="1">
-            <b-button 
-                pill 
-                variant="outline-primary" 
+            <b-button
+                pill
+                variant="outline-primary"
                 size="sm"
-                v-if="result_page_last_link" 
-                :to="result_page_last_link" 
-                :id="hr_role + '-last-page-link-' + route_key_index" 
+                v-if="result_page_last_link"
+                :to="result_page_last_link"
+                :id="hr_role + '-last-page-link-' + route_key_index"
                 :title="'Last page of results'"
             >
                 <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
@@ -166,7 +166,7 @@
             v-bind:result_page_last_link="result_page_last_link"
         ></records-tab-header-footer>
 
-        <b-table 
+        <b-table
             v-if="result_raw_features"
             :items="items"
             :fields="fields"
@@ -245,6 +245,7 @@
 
 
 const SORT_OPTIONS_FRONTEND = JSON.parse('{{ SORT_OPTIONS_FRONTEND|escapejs }}');
+const CLASS_OC_SITE_DOCUMENTATION_LABEL = '{{ configs.CLASS_OC_SITE_DOCUMENTATION_LABEL }}';
 
 
 var vs_records_tab_field_label = Vue.component(
@@ -259,7 +260,7 @@ var vs_records_tab_field_label = Vue.component(
       },
       template: '#records-tab-field-label',
       methods: {
-        
+
       }
     },
 );
@@ -277,7 +278,7 @@ var vs_records_tab_field_context = Vue.component(
       },
       template: '#records-tab-field-context',
       methods: {
-        
+
       }
     },
 );
@@ -292,9 +293,9 @@ var vs_records_tab_field_descriptiveness = Vue.component(
         return {
             field_item: null,
             blank_props: {
-                blank: true, 
-                width: 75, 
-                height: 75, 
+                blank: true,
+                width: 75,
+                height: 75,
                 class: 'm1',
             },
             human_remains_ok: HUMAN_REMAINS_OK,
@@ -302,7 +303,7 @@ var vs_records_tab_field_descriptiveness = Vue.component(
       },
       template: '#records-tab-field-descriptiveness',
       methods: {
-        
+
       }
     },
 );
@@ -420,7 +421,7 @@ var vc_records_tab = Vue.component(
         },
         template: '#records-tab-template',
         mounted() {
-            
+
         },
         computed: {
             items: function () {
@@ -435,7 +436,7 @@ var vc_records_tab = Vue.component(
                     if(!('properties' in feature)){
                         continue;
                     }
-                    
+
                     let props = feature['properties'];
                     let url = feature['rdfs:isDefinedBy'];
                     url = abs_to_rel_url(url, BASE_URL);
@@ -466,6 +467,9 @@ var vc_records_tab = Vue.component(
                     let item_class = '(Uncateorized)';
                     if('item category' in props){
                         item_class = props['item category'];
+                    }
+                    if(item_class == CLASS_OC_SITE_DOCUMENTATION_LABEL && 'href' in props){
+                        href = use_all_items_href(props['href'], BASE_URL, false);
                     }
                     let icon = null;
                     if('icon' in props){
@@ -521,8 +525,8 @@ var vc_records_tab = Vue.component(
                         ),
                         chronology: dates,
                         descriptiveness: this.interest_level(
-                            feature['oc-api:descriptiveness'], 
-                            this.descriptiveness_min, 
+                            feature['oc-api:descriptiveness'],
+                            this.descriptiveness_min,
                             this.descriptiveness_max,
                         ),
                         updated: updated,

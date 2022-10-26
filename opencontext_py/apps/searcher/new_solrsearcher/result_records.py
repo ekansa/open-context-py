@@ -432,6 +432,7 @@ class ResultRecord():
         )
         if not item_dict:
             return None
+
         # Add the item local url for this deployment
         self.href = make_url_from_partial_url(
             item_dict.get('uri', ''),
@@ -442,8 +443,8 @@ class ResultRecord():
             item_dict.get('uri', ''),
             base_url=settings.CANONICAL_HOST
         )
-        item_type_output = URImanagement.get_uuid_from_oc_uri(self.uri, True)
-        self.item_type = item_type_output['item_type']
+
+        self.item_type = solr_doc['item_type']
         self.label = item_dict.get('label')
         self.slug = item_dict.get('slug')
         self.descriptiveness = solr_doc.get('interest_score')
@@ -536,6 +537,12 @@ class ResultRecord():
                 c['label'] for c in self.contexts if c.get('label')
             ]
             self.context_label = '/'.join(context_labels)
+        if (
+            (self.category == configs.CLASS_OC_SITE_DOCUMENTATION_LABEL)
+            or (solr_doc.get('item_class') == configs.CLASS_OC_SITE_DOCUMENTATION_LABEL)
+        ):
+            self.context_label = '(Open Context Website)'
+
 
     def set_record_projects(self, solr_doc):
         """Sets the records projects list"""
