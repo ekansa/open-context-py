@@ -334,7 +334,21 @@ def make_site_pages_solr_docs():
         label =  url_dict.get('display', 'Open Context Webpage')
         link = url_dict.get('link', '/')
         url = base_url + link
-        root = html.parse(url).getroot()
+        root = None
+        try:
+            root = html.parse(url).getroot()
+        except:
+            root = None
+        if root is None:
+            try:
+                # For some reason, we need to do this on a deployed
+                # server.
+                r = requests.get(url)
+                root = html.document_fromstring(str(r.content))
+            except:
+                root = None
+        if not root:
+            continue
         title_node = root.find(".//title")
         if not len(title_node):
             title = label
