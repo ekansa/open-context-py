@@ -2,6 +2,14 @@
 <head>
     <title>{{ PAGE_TITLE }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {% if PAGE_MODIFIED %}
+    <meta id="page_dc_terms_modified" name="dcterms.modified" content="{{ PAGE_MODIFIED }}" />
+    <meta name="DCTERMS.modified" content="{{ PAGE_MODIFIED }}" />
+    <meta http-equiv="last-modified" content="{{ PAGE_MODIFIED }}" />
+    <meta http-equiv="Last-Modified" content="{{ PAGE_MODIFIED }}" />
+    {%endif%}
+
     <link rel="shortcut icon" href="{{ BASE_URL }}/static/oc/images/oc-favicon.ico" />
 
     <!-- Load jquery and bootstrap -->

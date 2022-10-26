@@ -4,6 +4,8 @@ from django.http import HttpResponse
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
+from opencontext_py.libs.utilities.git_history import get_template_file_git_updated_datetime_str
+
 from opencontext_py.apps.about.estimator import CostEstimator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
@@ -38,7 +40,10 @@ def index_view(request):
             'PAGE_TITLE': 'Open Context: About',
             'act_nav': 'about',
             'og': open_graph,
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/index.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -75,7 +80,10 @@ def uses_view(request):
             'PAGE_TITLE': 'Open Context: About - Uses',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/uses.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -112,7 +120,10 @@ def pub_view(request):
             'PAGE_TITLE': 'Open Context: About - Publishing',
             'act_nav': 'about',
             'og': open_graph,
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/publishing.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -150,7 +161,10 @@ def people_view(request):
             'PAGE_TITLE': 'Open Context: About - People',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/people.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -188,7 +202,10 @@ def estimate_view(request):
             'PAGE_TITLE': 'Open Context: About - Cost Estimate',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/estimate.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -236,7 +253,8 @@ def concepts_view(request):
             'BASE_URL': base_url,
             'PAGE_TITLE': 'Open Context: About - Concepts',
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+
         }
         return HttpResponse(template.render(context))
     else:
@@ -273,7 +291,10 @@ def tech_view(request):
             'PAGE_TITLE': 'Open Context: About - Technology',
             'act_nav': 'about',
             'og': open_graph,
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/technology.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -309,7 +330,10 @@ def services_view(request):
             'PAGE_TITLE': 'Open Context: About - Web Services and APIs',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/services.html'
+            ),
         }
         return HttpResponse(template.render(context))
     else:
@@ -345,7 +369,10 @@ def recipes_view(request):
             'PAGE_TITLE': 'Open Context: About - API Cookbook',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/recipes.html'
+            ),
         }
         return HttpResponse(template.render(context))
     else:
@@ -383,7 +410,10 @@ def bibliography_view(request):
             'PAGE_TITLE': 'Open Context: About - Bibliography',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/bibliography.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -420,7 +450,10 @@ def ip_view(request):
             'PAGE_TITLE': 'Open Context: About - Intellectual Property',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/intellectual-property.html'
+            ),
         }
         return HttpResponse(template.render(context))
     else:
@@ -455,10 +488,13 @@ def sponsors_view(request):
         template = loader.get_template('bootstrap_vue/about/sponsors.html')
         context = {
             'BASE_URL': base_url,
-            'PAGE_TITLE': 'Open Context: About - Intellectual Property',
+            'PAGE_TITLE': 'Open Context: About - Sponsors and Support',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/sponsors.html'
+            ),
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -495,7 +531,10 @@ def terms_view(request):
             'PAGE_TITLE': 'Open Context: About - Terms of Use and Privacy Policies',
             'og': open_graph,
             'act_nav': 'about',
-            'NAV_ITEMS': settings.NAV_ITEMS
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/terms.html'
+            ),
         }
         return HttpResponse(template.render(context))
     else:
