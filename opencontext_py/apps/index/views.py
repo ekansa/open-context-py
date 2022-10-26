@@ -3,7 +3,7 @@ from django.conf import settings
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
-
+from opencontext_py.libs.utilities.git_history import get_template_file_git_updated_datetime_str
 
 def index(request):
     """ Get home page """
@@ -33,6 +33,9 @@ def index(request):
         'og': open_graph,
         'act_nav': 'home',
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+            'bootstrap_vue/index/index.html'
+        ),
     }
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
