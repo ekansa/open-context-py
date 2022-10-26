@@ -344,7 +344,7 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
         },
         {
             "item_class__uuid": "00000000-6e24-7c9f-b487-e9973c6da06d",
-            "item_class__label": "Biological subject, Ecofact",
+            "item_class__label": "Biological Record",
             "item_class__item_key": "oc-gen:cat-bio-subj-ecofact",
             "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-bio-subj-ecofact",
             "item_class__slug": "oc-gen-cat-bio-subj-ecofact",
