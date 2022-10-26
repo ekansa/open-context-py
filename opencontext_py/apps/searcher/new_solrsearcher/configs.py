@@ -1,4 +1,4 @@
-
+from opencontext_py.apps.all_items import configs as gen_configs
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 # ---------------------------------------------------------------------
@@ -1070,3 +1070,7 @@ GEO_OVERLAY_OPACITY_DEFAULT = 0.9
 HTTP_ONLY_URL_PARTS = [
     'purl.obolibrary.org'
 ]
+
+# Site documentation pages need some special handling on the front end
+# view options
+CLASS_OC_SITE_DOCUMENTATION_LABEL = gen_configs.CLASS_OC_SITE_DOCUMENTATION_LABEL

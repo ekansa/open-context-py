@@ -767,6 +767,21 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/gis-vector-file',
         'context_id': OC_GEN_VOCAB_UUID,
     },
+    # Documents, especially incuding Open Context site page content
+    {
+        'uuid': CLASS_OC_SITE_DOCUMENTATION,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-site-documentation',
+        'label': CLASS_OC_SITE_DOCUMENTATION_LABEL,
+        'item_key': 'oc-gen:site-documentation',
+        'uri': 'opencontext.org/vocabularies/oc-general/site-documentation',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
     # Event types.
     {
         'uuid': OC_EVENT_TYPE_GENERAL_UUID,
@@ -2497,7 +2512,7 @@ DEFAULT_MANIFESTS = [
         'uri': 'https://schema.org/CreativeWork',
         'context_id': SCHEMA_ORG_VOCAB_UUID,
     },
-    # NOTE: this property is useful for expressing the content 
+    # NOTE: this property is useful for expressing the content
     # of Open Context's documents items.
     {
         'uuid': PREDICATE_SCHEMA_ORG_TEXT_UUID,
@@ -3276,7 +3291,7 @@ def verify_manifest_uuids(dict_list=DEFAULT_MANIFESTS):
         uuid = man_dict['uuid']
         uri = man_dict.get('uri')
         if man_dict['item_type'] not in check_types:
-            # Not an item type that has a 
+            # Not an item type that has a
             # deterministic uuid
             continue
         ex_uuid = AllManifest().primary_key_create(
@@ -3301,9 +3316,9 @@ def load_default_entities(
     ):
     """Loads default, required by Open Context """
     fk_fields = [
-        'publisher_id', 
-        'project_id', 
-        'item_class_id', 
+        'publisher_id',
+        'project_id',
+        'item_class_id',
         'context_id'
     ]
     for man_dict in man_dict_list:
@@ -3315,7 +3330,7 @@ def load_default_entities(
             defaults=man_dict
         )
         print(f'Item {m.uuid}, {m.label} created.')
-    
+
     for man_dict in man_dict_list:
         uuid = man_dict['uuid']
         m = AllManifest.objects.get(uuid=uuid)
@@ -3328,7 +3343,7 @@ def load_default_entities(
 
         print(f'Updating related for {m.label}')
         m.save()
-    
+
     for id_dict in id_dict_list:
         uuid = AllIdentifier().primary_key_create(
             item_id=id_dict['item_id'],
@@ -3343,7 +3358,7 @@ def load_default_entities(
             f'{id_obj.item.label} ({id_obj.item.uuid}) -> '
             f'{id_obj.id} ({id_obj.scheme}) created '
         )
-    
+
     for assert_dict in assert_dict_list:
         ass_obj, _ = AllAssertion.objects.get_or_create(
             uuid=AllAssertion().primary_key_create(

@@ -569,6 +569,10 @@ CLASS_LIST_OC_MEDIA = [
     CLASS_OC_VECTOR_GIS_MEDIA,
 ]
 
+# A class ID for Open Context's site pages (used with documents)
+CLASS_OC_SITE_DOCUMENTATION = '00000000-6e24-a678-4f6d-28e07fae4771'
+CLASS_OC_SITE_DOCUMENTATION_LABEL = 'Open Context Website Documentation'
+
 # --------------------------------------------------------------------
 #
 # BELOW MORE Identifiers to core linked data vocabularies.
