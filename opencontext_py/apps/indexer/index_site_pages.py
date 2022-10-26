@@ -347,7 +347,7 @@ def make_site_pages_solr_docs():
                 root = html.document_fromstring(str(r.content))
             except:
                 root = None
-        if not root:
+        if root is None:
             continue
         title_node = root.find(".//title")
         if not len(title_node):
