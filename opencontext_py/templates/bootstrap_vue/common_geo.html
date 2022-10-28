@@ -31,11 +31,11 @@
           </template>
     </b-modal>
 </template>
-    
+
 
 
 <template id="map_legends">
-    <b-card v-if="legends" 
+    <b-card v-if="legends"
         border-variant="secondary"
         header-border-variant="secondary"
         header="Map Data Visualization Legend"
@@ -47,8 +47,8 @@
                     <b-col cols="3">
                         <small>
                             <b-avatar
-                            v-if="legend.icon" 
-                            :aria-label="'Icon for ' + legend.label" 
+                            v-if="legend.icon"
+                            :aria-label="'Icon for ' + legend.label"
                             rounded="sm"
                             variant="light"
                             v-html="legend.icon">
@@ -58,11 +58,11 @@
                                 <b-button size="sm" :id="'popover-target-' + legend.ov_id" variant="light"><b-icon-pencil-square></b-icon-pencil-square></b-button>
                                 <b-popover :target="'popover-target-' + legend.ov_id" triggers="hover" placement="topright">
                                     <template #title>Edit downloaded layer label</template>
-                                    
+
                                     <b-form-input
                                         debounce="100"
                                         @change="update_layer_label(legend)"
-                                        type="text" 
+                                        type="text"
                                         v-model="edit_label"
                                         :value="legend.label"></b-form-input>
                                 </b-popover>
@@ -131,7 +131,7 @@
                                 </b-col>
                             </b-row>
                         </div>
-                        
+
                     </b-col>
                 </b-row>
                 <b-row v-if="legend.circle_list">
@@ -167,16 +167,16 @@
             @ready="ready_map_setup"
             :class="map_class"
             :style="'min-height: ' + min_height + 'px;'"
-            :ref="'map-' + ref_suffix" 
+            :ref="'map-' + ref_suffix"
             :zoom="11"
-            :load-tiles-while-animating="true" 
+            :load-tiles-while-animating="true"
             :load-tiles-while-interacting="true">
             <l-control-layers
                 :ref="'map-l-controls-' + ref_suffix"
                 position="topright"></l-control-layers>
             <l-tile-layer
                 v-for="tp in tileProviders"
-                :ref="'map-tile-' + ref_suffix + '-' + tp.name" 
+                :ref="'map-tile-' + ref_suffix + '-' + tp.name"
                 :key="tp.name"
                 :name="tp.name"
                 :visible="tp.visible"
@@ -222,7 +222,7 @@
             </b-alert>
         </div>
         <div v-if="map_type == 'search'">
-            <map-color-ui 
+            <map-color-ui
                 v-bind:selected_gradient_key="selected_gradient_key"
                 @set_selected_gradient_key="set_selected_gradient_key"
             ></map-color-ui>
@@ -241,36 +241,36 @@
   const SEARCH_MAP_DEFAULT_OVERLAY_KEY = 'sqr';
   const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
   const l_tile_layer = Vue.component(
-    'l-tile-layer', 
+    'l-tile-layer',
     window.Vue2Leaflet.LTileLayer,
   );
   const l_img_overlay = Vue.component(
-    'l-img-overlay', 
+    'l-img-overlay',
     window.Vue2Leaflet.LImageOverlay,
   );
   const l_geo_json = Vue.component(
-    'l-geo-json', 
+    'l-geo-json',
     window.Vue2Leaflet.LGeoJson,
   );
   const l_control_layers = Vue.component(
-    'l-control-layers', 
+    'l-control-layers',
     window.Vue2Leaflet.LControlLayers,
   );
   const l_marker = Vue.component(
-    'l-marker', 
+    'l-marker',
     window.Vue2Leaflet.LMarker,
   );
   const l_map = Vue.component(
-    'l-map', 
+    'l-map',
     window.Vue2Leaflet.LMap,
   );
 
   const MAX_ZOOM_TILES = 24;
   const MAX_ZOOM = 30;
-  
+
   const GOOGLE_API_KEY = 'AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo';
   const MAPBOX_PUBLIC_ACCESS_TOKEN = '{{ MAPBOX_PUBLIC_ACCESS_TOKEN|escapejs }}';
-  
+
   const GOOGLE_TILE_CONFIGS = [
     {
       maxZoom: MAX_ZOOM_TILES,
@@ -339,7 +339,7 @@
       visible: false,
       id: 'mapbox-light',
       url: (
-        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
+        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token='
         + MAPBOX_PUBLIC_ACCESS_TOKEN
       ),
       attribution: 'Map data: © <a target="_blank" href="https://MapBox.com">MapBox.com</a>',
@@ -368,23 +368,23 @@
         return ('onhashchange' in window) &&
             (doc_mode === undefined || doc_mode > 7);
     })();
-    
+
     L.Hash = function(map) {
         this.tile_zoom = false;
         this.onHashChange = L.Util.bind(this.onHashChange, this);
-    
+
         if (map) {
             this.init(map);
         }
     };
-    
+
     L.Hash.prototype = {
         map: null,
         lastHash: null,
         frontend_state_obj: null,
         update_map_frontend_state_obj: null,
         update_base_layer: null,
-    
+
         contains: function(a, obj) {
             var i = a.length;
             while (i--) {
@@ -420,7 +420,7 @@
             let frag_obj = parse_search_frag_dict(hash);
             return this.prep_geo_from_state_obj(frag_obj);
         },
-    
+
         compose_new_frontend_state: function(map){
             let frag_obj = this.frontend_state_obj;
             // console.log('composing new map frontend state');
@@ -453,7 +453,7 @@
             let frag_str = encode_frag_obj(frag_obj);
             return '#' + frag_str;
         },
-    
+
         init: function(map) {
             this.map = map;
             this.map.on("moveend", this.onMapMove, this);
@@ -464,7 +464,7 @@
                 this.startListening();
             }
         },
-    
+
         remove: function() {
             this.map = null;
             if (this.isListening) {
@@ -488,7 +488,7 @@
             }
             return false;
         },
-        
+
         forceHashChange: function(map) {
             // change the hash, in response to changes
             // in base layers
@@ -498,11 +498,11 @@
             let frag_obj = this.compose_new_frontend_state(map);
             this.update_new_fontend_state(frag_obj);
         },
-        
+
         onMapMove: function(map) {
             // bail if we're moving the map (updating from a hash),
             // or if the map has no zoom set
-            
+
             if (this.movingMap || this.map.getZoom() === 0) {
                 return false;
             }
@@ -512,21 +512,21 @@
             let frag_obj = this.compose_new_frontend_state(map);
             this.update_new_fontend_state(frag_obj);
         },
-    
+
         movingMap: false,
         update: function() {
             let parsed = this.prep_geo_from_state_obj(this.frontend_state_obj);
             if (parsed != null && parsed.center != null) {
                 // console.log("parsed:", parsed.zoom, parsed.center.toString());
                 this.movingMap = true;
-                this.map.setView(parsed.center, parsed.zoom);  
+                this.map.setView(parsed.center, parsed.zoom);
                 this.movingMap = false;
             } else {
                 // console.warn("parse error; resetting:", this.map.getCenter(), this.map.getZoom());
                 this.onMapMove(this.map);
             }
         },
-    
+
         // defer hash change updates every 100ms
         changeDefer: 100,
         changeTimeout: null,
@@ -541,7 +541,7 @@
                 }, this.changeDefer);
             }
         },
-    
+
         isListening: false,
         hashChangeInterval: null,
         startListening: function() {
@@ -553,7 +553,7 @@
             }
             this.isListening = true;
         },
-    
+
         stopListening: function() {
             if (HAS_HASHCHANGE) {
                 L.DomEvent.removeListener(window, "hashchange", this.onHashChange);
@@ -631,14 +631,14 @@ var vc_map_legends = Vue.component(
             }
         },
         components: {
-            
+
         }
     }
 );
 
 
 var vc_common_map = Vue.component(
-  'common_map', 
+  'common_map',
   {
     props: [
         'uuid',
@@ -667,7 +667,7 @@ var vc_common_map = Vue.component(
             legend_key: this.map_key + '-legend',
             zoom_def: 13,
             base_layers: {},
-            selectedTileSet: TILE_PROVIDERS[0], 
+            selectedTileSet: TILE_PROVIDERS[0],
             tileProviders: TILE_PROVIDERS,
             google_tile_configs: GOOGLE_TILE_CONFIGS,
             map_scale: null,
@@ -812,7 +812,7 @@ var vc_common_map = Vue.component(
                     layer.bindPopup(popup_content);
                 }
                 layer.bindTooltip(
-                    tooltip_content, 
+                    tooltip_content,
                     { permanent: false, sticky: true }
                 );
             };
@@ -899,7 +899,7 @@ var vc_common_map = Vue.component(
         get_current_geo_json_id: function(){
             if(this.geo_json){
                 if(this.geo_json.hasOwnProperty('id')){
-                    return this.geo_json.id; 
+                    return this.geo_json.id;
                 }
             }
             return null;
@@ -910,7 +910,7 @@ var vc_common_map = Vue.component(
                 arr.pop();
             }
             return arr.reduce(function (x,y) {
-                return [x[0] + y[0]/arr.length, x[1] + y[1]/arr.length] 
+                return [x[0] + y[0]/arr.length, x[1] + y[1]/arr.length]
             }, [0,0]);
         },
         update_map_frontend_state_obj(frontend_state_obj) {
@@ -972,7 +972,7 @@ var vc_common_map = Vue.component(
             return heat_gradient;
         },
         delayed_update_map_legends: function() {
-            setTimeout(() => {  
+            setTimeout(() => {
                 this.update_map_legends();
             }, 250);
         },
@@ -992,8 +992,8 @@ var vc_common_map = Vue.component(
                 }
             }
             let state_key = (
-                this.$route.fullPath 
-                + '#' 
+                this.$route.fullPath
+                + '#'
                 + encode_frag_obj(act_legend_state)
             );
             return state_key;
@@ -1046,7 +1046,7 @@ var vc_common_map = Vue.component(
                 if(this.map.visible_overlay_ids.indexOf(ov_id) < 0){
                     continue;
                 }
-                if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){ 
+                if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){
                     continue;
                 }
                 let act_layer = this.map.overlay_layers_by_id[ov_id];
@@ -1175,7 +1175,7 @@ var vc_common_map = Vue.component(
                     'Heat-map visualization',
                 );
                 let color_control = L.easyButton(
-                    '<span class="material-icons-two-tone">palette</span>', 
+                    '<span class="material-icons-two-tone">palette</span>',
                     function (){
                         map.show_map_color_ui();
                     },
@@ -1229,7 +1229,7 @@ var vc_common_map = Vue.component(
                 console.log('Update map view from frontend state');
                 this.map.auto_fit = false;
                 this.map.setView(frag_obj.center, frag_obj.zoom);
-                return true;  
+                return true;
             }
             return false;
         },
@@ -1265,7 +1265,7 @@ var vc_common_map = Vue.component(
                     console.log('No legend, no state recording');
                     return null;
                 }
-                
+
                 if(this.visible_overlay_ids.indexOf(e.layer.ov_id) < 0){
                     this.visible_overlay_ids.push(e.layer.ov_id);
                 }
@@ -1598,7 +1598,7 @@ var vc_common_map = Vue.component(
                     act_prop_val = {k: prop, v:feature.properties[prop]};
                     break;
                 }
-            }   
+            }
             if(!act_prop_val){
                 return '';
             }
@@ -1682,7 +1682,7 @@ var vc_common_map = Vue.component(
                 act_gradient = COLOR_GRADIENTS[gradient_key];
             }
             let hex_color = make_hex_color_in_gradient(
-                (act_count / max_count), 
+                (act_count / max_count),
                 act_gradient
             );
             let fill_opacity = (
@@ -1787,7 +1787,7 @@ var vc_common_map = Vue.component(
                 return null;
             }
             let example_values = this.make_legend_example_values(
-                act_layer.min_count, 
+                act_layer.min_count,
                 act_layer.max_count
             );
             let legend = JSON.parse(JSON.stringify(this.legend_config));
@@ -1797,7 +1797,7 @@ var vc_common_map = Vue.component(
             legend.label_edit_ok = false;
             legend.type = 'count-summary';
             legend.geo_json_id = this.get_current_geo_json_id();
-            
+
             if(this.overlay_icons.hasOwnProperty(act_layer.ov_id)){
                 legend.icon = this.overlay_icons[act_layer.ov_id];
             }
@@ -1809,8 +1809,8 @@ var vc_common_map = Vue.component(
             }
             for(let act_count of example_values){
                 let opts = this.circle_count_style(
-                    this.selected_gradient_key, 
-                    act_count, 
+                    this.selected_gradient_key,
+                    act_count,
                     act_layer.max_count
                 );
                 opts.fillOpacity = 0.95;
@@ -2021,7 +2021,7 @@ var vc_common_map = Vue.component(
                     let act_layer = this.map.overlay_layers_by_id[ov_id];
                     act_layer.removeFrom(this.map);
                     this.$refs[this.l_controls_ref].mapObject.removeLayer(
-                        act_layer, 
+                        act_layer,
                     );
                     delete this.map.overlay_layers_by_id[ov_id];
                 }
@@ -2046,7 +2046,7 @@ var vc_common_map = Vue.component(
             act_layer.ov_id = 'overlay-' + act_layer.id;
             act_layer.addTo(this.map, act_layer.label);
             this.$refs[this.l_controls_ref].mapObject.addOverlay(
-                act_layer, 
+                act_layer,
                 act_layer.label
             );
             act_layer.bringToFront();
@@ -2092,15 +2092,15 @@ var vc_common_map = Vue.component(
 
             // prevent mutation of the result.
             this.geo_tile_facets = this.cat_limit_feature_data(
-                'oc-api:geo-facet', 
+                'oc-api:geo-facet',
                 JSON.parse(JSON.stringify(this.geo_tile_facets_default))
             );
             this.geo_region_facets = this.cat_limit_feature_data(
-                'oc-api:geo-contained-in-feature', 
+                'oc-api:geo-contained-in-feature',
                 JSON.parse(JSON.stringify(this.geo_region_facets_default))
             );
             this.geo_page_records = this.cat_limit_feature_data(
-                'oc-api:geo-record', 
+                'oc-api:geo-record',
                 JSON.parse(JSON.stringify(this.geo_page_records_default))
             );
 
@@ -2180,7 +2180,7 @@ var vc_common_map = Vue.component(
                 // Now add it again fresh.
                 act_layer.addTo(this.map, act_geojson.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
-                    act_layer, 
+                    act_layer,
                     act_geojson.label
                 );
                 act_layer.bringToFront();
@@ -2208,7 +2208,7 @@ var vc_common_map = Vue.component(
                 if(heatmap_data == null || circle_geojson == null){
                     continue;
                 }
-                
+
                 // Extract the current geodeep property. This is needed to give a starting
                 // value for increasing or decreasing the tile resolution controls.
                 this.get_map_geodeep_from_geojson(act_geojson);
@@ -2229,7 +2229,7 @@ var vc_common_map = Vue.component(
                 circle_layer.legend = this.make_layer_legend(circle_layer, 'circle_list');
                 circle_layer.addTo(this.map, circle_layer.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
-                    circle_layer, 
+                    circle_layer,
                     circle_layer.label
                 );
                 circle_layer.bringToFront();
@@ -2239,6 +2239,31 @@ var vc_common_map = Vue.component(
                 //Make and add the heatmap layer.
                 // First, set up the color gradient for the heatmap.
                 let act_heatmap_config = JSON.parse(JSON.stringify(this.heatmap_config));
+                if(false && this.geo_tile_facets.features.length > 100 && this.map.geodeep && this.frontend_state_obj.zm && this.frontend_state_obj.zm < (this.map.geodeep - 4) ){
+                    let zm_factor = Math.round((5 * (this.map.geodeep - this.frontend_state_obj.zm)), 0);
+                    if(zm_factor > 30){
+                        zm_factor = 30;
+                    }
+                    console.log('tile features: ' + this.geo_tile_facets.features.length);
+                    console.log('zm_factor is: ' + zm_factor);
+                    act_heatmap_config.radius = act_heatmap_config.radius - zm_factor;
+                }
+                let feature_cnt = this.geo_tile_facets.features.length;
+                if(feature_cnt >= 100){
+                    let act_radius = act_heatmap_config.radius - Math.round(
+                        (act_heatmap_config.radius * ((feature_cnt - 100) / 2000)),
+                        0
+                    );
+                    if(act_radius > act_heatmap_config.radius){
+                        act_radius = act_heatmap_config.radius;
+                    }
+                    if(act_radius < 8){
+                        act_radius = 8;
+                    }
+                    console.log('tile features: ' + this.geo_tile_facets.features.length);
+                    console.log('act_radius is: ' + act_radius);
+                    act_heatmap_config.radius = act_radius;
+                }
                 act_heatmap_config.gradient = this.make_heatmap_gradient_config(
                     this.selected_gradient_key
                 );
@@ -2252,7 +2277,7 @@ var vc_common_map = Vue.component(
                 heatmap_layer.legend = this.make_layer_legend(heatmap_layer, 'heat_style');
                 heatmap_layer.addTo(this.map, heatmap_layer.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
-                    heatmap_layer, 
+                    heatmap_layer,
                     heatmap_layer.label
                 );
                 heatmap_layer.zIndex = 100;
@@ -2331,7 +2356,7 @@ var vc_common_map = Vue.component(
             if(!this.map.hasOwnProperty('overlay_layers_by_id')){
                 // No overlay layers by ID added to the map.
                 return null;
-            }  
+            }
             if(!this.frontend_state_obj.hasOwnProperty('ov')){
                 // No overlays passed from frontend state object.
                 return null;
@@ -2512,7 +2537,7 @@ var vc_common_map = Vue.component(
                     },
                 };
             fetch(
-                (this.geo_json_url), 
+                (this.geo_json_url),
                 requestOptions,
             )
             .then(this.loading = false)
@@ -2525,10 +2550,10 @@ var vc_common_map = Vue.component(
         },
         reset_overlay_layer_control: function(act_layer){
             this.$refs[this.l_controls_ref].mapObject.removeLayer(
-                act_layer, 
+                act_layer,
             );
             this.$refs[this.l_controls_ref].mapObject.addOverlay(
-                act_layer, 
+                act_layer,
                 act_layer.label
             );
         },
