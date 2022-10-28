@@ -35,6 +35,33 @@ from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
 
 
+d_slugs = [
+    '52-georgia-archaeological-site-file-gasf',
+    '52-florida-site-files',
+    '52-south-carolina-shpo',
+    '52-missouri-site-files',
+    '52-indiana-site-files',
+    '52-kentucky-site-files',
+    '52-illinois-site-files',
+    '52-iowa-site-files',
+    '52-digital-index-of-north-american-archaeology-dinaa',
+    '52-alabama-site-files',
+    '52-virginia-site-files',
+    '52-louisiana-site-files',
+    '52-maryland-site-files',
+    '52-pennsylvania-site-files',
+    '52-ohio-site-files',
+    '52-north-carolina-site-files',
+    '52-tennessee-site-files',
+    '52-digital-index-of-north-american-archaeology-linking-si',
+    '52-dinaa-sites-from-aggregate-totals',
+]
+m_qs = AllManifest.objects.filter(
+    project__slug__in=d_slugs,
+    item_type__in=['projects', 'subjects', 'media', 'documents'],
+).order_by('project_id', 'sort')
+
+
 new_ind.make_index_site_page_solr_documents()
 
 # index things that aren't indexed or have new ids
