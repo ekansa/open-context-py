@@ -16,6 +16,22 @@
 </template>
 
 
+<template id='records-tab-field-proj-label'>
+    <div>
+        [[ field_item.project ]]
+        <a v-if="field_item.project_url"
+            :href="field_item.project_url"
+            :title="'Link to ' + field_item.project"
+            target="_blank">
+            <b-icon-info-circle-fill></b-icon-info-circle-fill>
+        </a>
+        <span v-else>
+            (Loading...)
+        </span>
+    </div>
+</template>
+
+
 
 <template id='records-tab-field-descriptiveness'>
     <div class="clearfix record-thumb-outer">
@@ -198,6 +214,12 @@
                 </records-tab-field-label>
             </template>
 
+            <template #cell(project)="data">
+                <records-tab-field-proj-label
+                v-bind:field_item="data.item">
+                </records-tab-field-proj-label>
+            </template>
+
             <template #cell(context)="data">
                 <records-tab-field-context
                 v-bind:field_item="data.item">
@@ -259,6 +281,24 @@ var vs_records_tab_field_label = Vue.component(
         };
       },
       template: '#records-tab-field-label',
+      methods: {
+
+      }
+    },
+);
+
+
+var vs_records_tab_field_proj_label = Vue.component(
+    'records-tab-field-proj-label',
+    {
+      delimiters: ['[[', ']]'],
+      props: ['field_item', ],
+      data() {
+        return {
+            field_item: null,
+        };
+      },
+      template: '#records-tab-field-proj-label',
       methods: {
 
       }
@@ -587,6 +627,7 @@ var vc_records_tab = Vue.component(
         components: {
             'records-tab-header-footer': vs_records_tab_header_footer,
             'records-tab-field-label': vs_records_tab_field_label,
+            'records-tab-field-proj-label': vs_records_tab_field_proj_label,
             'records-tab-field-context': vs_records_tab_field_context,
             'records-tab-field-descriptiveness': vs_records_tab_field_descriptiveness,
         },
