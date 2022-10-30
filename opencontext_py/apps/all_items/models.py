@@ -1700,11 +1700,58 @@ class AllIdentifier(models.Model):
         )
 
 
+    def normalize_validate_id_in_scheme(self, id, scheme=None):
+        """Normalizes and validates an identifier"""
+        id = id.strip()
+        for scheme_key, config in self.SCHEME_CONFIGS.items():
+            url_root = config.get('url_root')
+            if not url_root:
+                continue
+            if not url_root in id:
+                continue
+            # Everything below happens if the id has the URL root
+            # in it. This means we can check it its a DOI, ARK or ORCID
+            # and it means we should remove the url_root from the ID
+            # so as to keep nicely consistent data where we don't have
+            # the url_roots saved.
+            if id.startswith('http://') or id.startswith('https://'):
+                # We're getting a Web URI as an identifier
+                id = AllManifest().object_uri(id)
+            if not scheme:
+                scheme = scheme_key
+            elif scheme and scheme != scheme_key:
+                raise ValueError(
+                    f'ID {id} not valid for scheme {scheme}. '
+                    f'It should be {scheme_key} because it contains {url_root}'
+                )
+            id_ex = id.split(url_root)
+            if len(id_ex) <= 1:
+                raise ValueError(
+                    f'ID {id} not valid for scheme {scheme}. String invalid, too small with {url_root}'
+                )
+            id = id_ex[-1].strip()
+        if not scheme:
+            raise ValueError(
+                f'ID {id} not valid because no scheme indicated'
+            )
+        if not id:
+            raise ValueError(
+                f'ID is empty'
+            )
+        return id, scheme
+
+
     def save(self, *args, **kwargs):
         """
         Makes the primary key sorted for the first part
         of the subject uuid
         """
+
+        # Make sure we have identifiers that meet expectations for their scheme
+        id, scheme = self.normalize_validate_id_in_scheme(self.id, scheme=self.scheme)
+        self.id = id
+        self.scheme = scheme
+
         self.uuid = self.primary_key_create_for_self()
         if self.scheme not in configs.IDENTIFIER_SCHEMES:
             raise ValueError(
