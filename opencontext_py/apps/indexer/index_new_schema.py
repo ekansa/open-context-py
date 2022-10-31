@@ -170,12 +170,13 @@ def get_solr_connection():
 
 def clear_caches():
     """Clears caches to make sure reidexing uses fresh data. """
-    cache = caches['redis']
-    cache.clear()
-    cache = caches['default']
-    cache.clear()
-    cache = caches['memory']
-    cache.clear()
+    cache_names = ['redis', 'default', 'memory']
+    for cache_name in cache_names:
+        try:
+            cache = caches[cache_name]
+            cache.clear()
+        except Exception as e:
+            print(str(e))
 
 
 def chunk_list(act_list, chunk_size):
