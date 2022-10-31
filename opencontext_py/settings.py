@@ -489,6 +489,8 @@ else:
     STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
     STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
 
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
 import socket
 
 #get the local host server name
