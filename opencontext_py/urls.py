@@ -475,8 +475,9 @@ urlpatterns = [
     # Index, home-page route
     re_path(r'^$', HomeViews.index, name='home_index'),
     # Admin route
-    re_path('oc-admin/', admin.site.urls),
-    re_path(r'^admin/', admin.site.urls)]
+    # re_path('oc-admin/', admin.site.urls),
+    re_path(r'^admin/', admin.site.urls),
+]
 
 # how do we fix this?
 # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
