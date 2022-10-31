@@ -106,12 +106,14 @@ TEMPLATES = [
 ]
 
 INTERNAL_IPS =[
-    '127.0.0.1'
+    '127.0.0.1',
+    '0.0.0.0',
 ]
 
 ALLOWED_HOSTS = [
     '.opencontext.org',
-    '127.0.0.1'
+    '127.0.0.1',
+    '0.0.0.0',
 ]
 
 # saves configuration problems
