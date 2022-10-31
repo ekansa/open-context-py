@@ -72,6 +72,9 @@ if get_secret('DEBUG') == 1:
 else:
     DEBUG = False
     # TEMPLATE_DEBUG = False
+    if str(os.getenv('DEBUG', 0)) == '1':
+        # allow environment variable to determine if debug
+        DEBUG = True
 
 
 TEMPLATES = [
