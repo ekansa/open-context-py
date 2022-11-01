@@ -1,6 +1,8 @@
 import copy
 import json
+
 from django.conf import settings
+from django.core.cache import caches
 from django.http import HttpResponse
 
 from django.template import loader
@@ -14,11 +16,14 @@ from opencontext_py.apps.searcher.new_solrsearcher import project_index_summary
 from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
+from opencontext_py.libs.queue_utilities import make_hash_id_from_args
+
+
 from django.views.decorators.cache import cache_control
 from django.utils.cache import patch_vary_headers
 
 
-def process_solr_query(request_dict):
+def process_solr_query_via_solr_and_db(request_dict):
     """Processes a request dict to formulate a solr query and process a
        response from solr
 
@@ -48,6 +53,38 @@ def process_solr_query(request_dict):
         solr_response['response'].pop('docs')
         result_maker.result = solr_response
     return result_maker.result
+
+
+def process_solr_query(request_dict):
+    """Processes a request dict to formulate a solr query and process a
+       response from solr
+
+    :param dict request_dict: Dictionary derived from a solr
+        request object with client GET request parameters.
+    """
+    reset_cache = False
+    if request_dict.get('reset_cache'):
+        reset_cache = True
+        request_dict.pop('reset_cache')
+        print(f'Resetting cache for {request_dict}')
+    cache = caches['redis']
+    cache_key = make_hash_id_from_args(
+        args=request_dict
+    )
+    result = None
+    if not reset_cache:
+        result = cache.get(cache_key)
+    if result:
+        # We have a result from the cache, so return it.
+        print(f'Solr query result from cache {cache_key}')
+        return result
+    # Do the hard work of computing the result from scratch
+    result = process_solr_query_via_solr_and_db(request_dict)
+    try:
+        cache.set(cache_key, result)
+    except:
+        pass
+    return result
 
 
 def make_json_response(request, req_neg, response_dict):
