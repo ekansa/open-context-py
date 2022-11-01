@@ -164,7 +164,7 @@ def make_ewns_coordinates_list(east, west, north, south):
     return coordinates
 
 
-def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False):
+def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False, do_multi=False):
     """Saves a spacetime object for a geonames object"""
     spacetime_qs = AllSpaceTime.objects.filter(
         item=geonames_obj
@@ -193,10 +193,12 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False):
         west = json_data['bbox']['west']
         north = json_data['bbox']['north']
 
-        if (
-            (east >= -90 and east <= 0 and west >= 160) # US
-           or
-            (east < 160 and west > 0) # Russia
+        if (do_multi
+            and(
+                (east >= -90 and east <= 0 and west >= 160) # US
+            or
+                (east < 160 and west > 0) # Russia
+            )
         ):
             # We need a multipolygon here, because we're spanning
             # hemispheres.
