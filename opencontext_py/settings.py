@@ -370,8 +370,10 @@ if DEBUG:
             }
         },
         'memory': {
-            'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-            'LOCATION': '127.0.0.1:11211',
+            # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+            # 'LOCATION': '127.0.0.1:11211',
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
         }
     }
 else:
@@ -404,8 +406,10 @@ else:
             }
         },
         'memory': {
-            'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-            'LOCATION': '127.0.0.1:11211',
+            # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+            # 'LOCATION': '127.0.0.1:11211',
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
         },
         'local_memory': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
