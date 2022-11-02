@@ -177,6 +177,9 @@ def get_meta_json_value_from_item_hierarchy(item_man_obj, meta_json_key='geo_not
             meta_json_key,
             default,
         )
+    if key_val and meta_json_key == 'geo_specificity':
+        if isinstance(key_val, str):
+            key_val = int(float(key_val))
     return key_val
 
 
