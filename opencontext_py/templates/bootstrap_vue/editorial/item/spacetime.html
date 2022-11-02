@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to edit an item's space-time (event) object.
 -->
 
@@ -12,13 +12,13 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
 </style>
 
 <template id='act-map'>
-  <div v-if="spacetime.feature && spacetime.geometry_type != null && spacetime.geometry_type != 'None'">          
+  <div v-if="spacetime.feature && spacetime.geometry_type != null && spacetime.geometry_type != 'None'">
     <l-map
       style="min-height: 300px;"
-      :ref="'map-' + spacetime.uuid" 
+      :ref="'map-' + spacetime.uuid"
       :zoom="spacetime.map_config.zoom"
       :center="spacetime.map_config.center"
-      :load-tiles-while-animating="true" 
+      :load-tiles-while-animating="true"
       :load-tiles-while-interacting="true">
       <l-control-layers position="topright"></l-control-layers>
       <l-tile-layer
@@ -70,7 +70,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         ></b-form-input>
       </b-col>
     </b-row>
-  
+
     <b-row>
       <b-col>
         <label :for="'geotype-' + spacetime.uuid">Geometry Type</label>
@@ -86,7 +86,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
     </b-row>
 
     <div v-if="add_new && spacetime.geometry_type == 'aggregate'">
-      
+
       <b-row>
         <b-col>
           <label :for="'geo-cluster-method-' + spacetime.uuid">Cluster Method</label>
@@ -97,9 +97,9 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
             :options="geo_agg_options"
             :value="spacetime.cluster_method"
           ></b-form-select>
-          <small class="text-muted">The Python <code>sklearn</code> library powers the 
-          automated clustering of geo-spatial points into clusters of regions that 
-          would summarize the spatial extent or coverage of this item. 
+          <small class="text-muted">The Python <code>sklearn</code> library powers the
+          automated clustering of geo-spatial points into clusters of regions that
+          would summarize the spatial extent or coverage of this item.
           <a href="https://sklearn.org/modules/clustering.html" target="_blank">
             Click here <b-icon-info-circle-fill></b-icon-info-circle-fill>
           </a> to learn more about the clustering methods available.
@@ -136,7 +136,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           ></b-form-input>
           <small class="text-muted">
             If set, this sets a lower limit for the minimum size, calculated by the distance,
-            (kilometers) between the south-western most and north-eastern most point of a 
+            (kilometers) between the south-western most and north-eastern most point of a
             given region.
           </small>
         </b-col>
@@ -145,7 +145,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
     </div>
     <div v-else>
       <b-row>
-        <b-col v-if="spacetime.geometry_type == 'Point'">
+        <b-col v-if="spacetime.geometry_type != null && spacetime.geometry_type != 'None'">
           <label :for="'lat-' + spacetime.uuid">Latitude</label>
           <b-form-input
             v-model="spacetime.latitude"
@@ -158,7 +158,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
       </b-row>
 
       <b-row>
-        <b-col v-if="spacetime.geometry_type == 'Point'">
+        <b-col v-if="spacetime.geometry_type != null && spacetime.geometry_type != 'None'">
           <label :for="'lon-' + spacetime.uuid">Longitude</label>
           <b-form-input
             v-model="spacetime.longitude"
@@ -218,7 +218,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           variant="info">Add <b-icon-cloud-check-fill></b-icon-cloud-check-fill>
         </b-button>
         <p v-if="making_agg">
-          Region clustering process started at <strong>[[ agg_started_display ]]</strong> 
+          Region clustering process started at <strong>[[ agg_started_display ]]</strong>
           on ongoing after <strong>[[ agg_elapsed_time_display ]]</strong>.
         </p>
       </b-col>
@@ -253,7 +253,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         <b-overlay :show="show_delete_confirm" no-wrap @hidden="on_delete_confirm_hide">
           <template #overlay>
             <b-spinner v-if="updating" label="Deleting..."></b-spinner>
-            <b-card 
+            <b-card
               v-else
               ref="dialog"
               bg-variant="light"
@@ -306,7 +306,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
       size="lg"
       scrollable
       ref="add-spacetime-modal"
-      id="add-spacetime-modal" 
+      id="add-spacetime-modal"
       title="Add Location and Chronology Data"
       @shown="on_shown"
     >
@@ -381,26 +381,26 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
 
 <script type="text/javascript">
 
-  // Import Vue2Leaflet components. 
+  // Import Vue2Leaflet components.
   const l_popup = Vue.component('l-popup', window.Vue2Leaflet.LPopup);
   const l_tile_layer = Vue.component(
-    'l-tile-layer', 
+    'l-tile-layer',
     window.Vue2Leaflet.LTileLayer,
   );
   const l_geo_json = Vue.component(
-    'l-geo-json', 
+    'l-geo-json',
     window.Vue2Leaflet.LGeoJson,
   );
   const l_control_layers = Vue.component(
-    'l-control-layers', 
+    'l-control-layers',
     window.Vue2Leaflet.LControlLayers,
   );
   const l_marker = Vue.component(
-    'l-marker', 
+    'l-marker',
     window.Vue2Leaflet.LMarker,
   );
   const l_map = Vue.component(
-    'l-map', 
+    'l-map',
     window.Vue2Leaflet.LMap,
   );
   // Set up some base map tile sources.
@@ -427,7 +427,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
       visible: false,
       id: 'mapbox-light',
       url: (
-        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=' 
+        'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token='
         + MAPBOX_PUBLIC_ACCESS_TOKEN
       ),
       attribution: 'Map data: © <a href="https://MapBox.com">MapBox.com</a>',
@@ -457,7 +457,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
 
   // Now make a Vue component of for a leaflet map.
   var vc_map = Vue.component(
-    'act-map', 
+    'act-map',
     {
       props: ['spacetime', 'map_key'],
       data() {
@@ -466,7 +466,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
             map_key: 0,
             zoom_def: 13,
             layers: [],
-            selectedTileSet: TILE_PROVIDERS[0], 
+            selectedTileSet: TILE_PROVIDERS[0],
             tileProviders: TILE_PROVIDERS,
             minZoom_def: 1,
             maxZoom_def: 30,
@@ -593,7 +593,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
             last_time = this.agg_progress_time;
             console.log('progress time');
           }
-          
+
           let time_diff = last_time - this.agg_start_time;
           time_diff /= 1000;
           let min_time_diff = Math.floor(time_diff / 60);
@@ -716,7 +716,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
           this.add_aggregate = false;
           for (let key in this.spacetime) {
             if (this.spacetime.hasOwnProperty(key) && this.spacetime[key] != null) {
-              add_obj[key] = this.spacetime[key]; 
+              add_obj[key] = this.spacetime[key];
               if(key == 'geometry_type' && this.spacetime[key] == 'aggregate'){
                 this.add_aggregate = true;
               }
@@ -821,7 +821,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         'lookup-list': vs_look_up_list,
       },
     }
-  ); 
+  );
 
 
   var vc_spacetime_obj = Vue.component(
@@ -844,7 +844,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         this.compute_feature();
       },
       computed: {
-        
+
       },
       methods: {
         set_original_spacetime: function (){
@@ -978,7 +978,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
       },
       template: '#add-spacetime-ui',
       computed: {
-        
+
       },
       methods: {
         on_shown: function() {
@@ -1029,7 +1029,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         'act-map': vc_map,
       },
     }
-  ); 
+  );
 
 
   var vc_edit_spacetime = Vue.component(
@@ -1075,7 +1075,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         toggle_add_new_spacetime() {
           console.log('here');
           console.log(this.$bvModal);
-          this.$bvModal.show('add-spacetime-modal');  
+          this.$bvModal.show('add-spacetime-modal');
         },
         spacetime_update_done(v){
           this.emit_edit_done = true;
@@ -1087,6 +1087,6 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         'add-spacetime-ui': vc_add_spacetime_ui,
       },
     }
-  ); 
-  
+  );
+
   </script>

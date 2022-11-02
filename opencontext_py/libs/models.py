@@ -24,6 +24,8 @@ def datetime_to_string(val):
 
 def decimal_to_float(val):
     """Changes a decimal value to a float"""
+    if val == 0 and isinstance(val,  decimal.Decimal):
+        return float(val)
     if not val:
         return val
     if not isinstance(val,  decimal.Decimal):
@@ -32,9 +34,9 @@ def decimal_to_float(val):
 
 
 def json_friendly_datatype_input_obj(input_obj):
+    input_obj = decimal_to_float(input_obj)
     input_obj = uuid_to_string(input_obj)
     input_obj = datetime_to_string(input_obj)
-    input_obj = decimal_to_float(input_obj)
     return input_obj
 
 
@@ -54,7 +56,7 @@ def make_javascript_friendly_key(key):
 def make_dict_json_safe(input_obj, javascript_friendly_keys=False):
     """Makes a dictionary object json safe, recursively"""
     if not input_obj:
-        return input_obj
+        return json_friendly_datatype_input_obj(input_obj)
     if  isinstance(input_obj, dict):
         output_dict = {}
         for key, value in input_obj.items():

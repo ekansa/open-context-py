@@ -34,7 +34,7 @@ DEFAULT_LOCATION_SECURITY_NOTE = 'Location data approximated as a security preca
 
 def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     """Gets space time objects for a manifest_obj and parent contexts
-    
+
     :param AllManifest rel_subjects_man_obj: The related manifest item
         that will hopefully have associated (either directly or through
         contexts) geospatial and chronology data.
@@ -54,7 +54,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         # Only do this for items that are not media or documents.
         act_man_obj = rel_subjects_man_obj
         while (act_man_obj.context.item_type in GEO_OK_ITEM_TYPES
-        and str(act_man_obj.context.uuid) 
+        and str(act_man_obj.context.uuid)
         not in configs.DEFAULT_SUBJECTS_ROOTS):
             print(f'check spacetime for {act_man_obj.label}')
             if act_man_obj.context in context_objs:
@@ -63,7 +63,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
                 break
             context_objs.append(act_man_obj.context)
             act_man_obj = act_man_obj.context
-    
+
     # Now use these context objects to query for space time objects
     spacetime_qs = AllSpaceTime.objects.filter(
         item__in=context_objs,
@@ -73,7 +73,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         'item__project'
     ).select_related(
         'event'
-    ).select_related( 
+    ).select_related(
         'event__item_class'
     )
     if not len(spacetime_qs):
@@ -82,7 +82,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         return None
 
     act_spacetime_features = [] # List of features with both geometries and chronology.
-    act_geos = [] # List of spacetime objects with only geometry 
+    act_geos = [] # List of spacetime objects with only geometry
     act_chronos = [] # List of spacetime objects with only chronology
 
     # Integrate through the list of context_objs. These are ordered from most
@@ -96,10 +96,10 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
                 continue
             if (
                 context_obj == rel_subjects_man_obj
-                and spacetime_obj.geometry_type 
+                and spacetime_obj.geometry_type
                 and spacetime_obj.start is not None and spacetime_obj.stop is not None
             ):
-                # We have both geometry and chronology for the specific 
+                # We have both geometry and chronology for the specific
                 # item specified in rel_subjects_man_obj
                 act_spacetime_features.append(spacetime_obj)
             if spacetime_obj.geometry_type:
@@ -119,7 +119,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         if len(act_geos) and len(act_chronos):
             # We have everything we need to end this looping.
             break
-    
+
     if require_geo and not len(act_geos):
         # We found no geometries, so return None
         return None
@@ -127,13 +127,13 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         # We found some chronology data, so return the chronology
         # absent the geospatial.
         return act_chronos
-    
+
     inherit_chrono = None
     if len(act_chronos):
         # This is the spacetime object that we use for
         # inherited time spans
         inherit_chrono = act_chronos[0]
-    
+
     if len(act_geos) > len(act_chronos):
         # We have multiple geometries, which means we need
         # to inherit a timespan (which may be None)
@@ -148,7 +148,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
             spacetime_obj.inherit_geometry = act_geos[0]
             act_spacetime_features.append(spacetime_obj)
         return  act_spacetime_features
-    
+
     # A case where there's only 1 geometry and we need
     # to add an inherited chronology spacetime object.
     spacetime_obj = act_geos[0]
@@ -181,9 +181,9 @@ def get_meta_json_value_from_item_hierarchy(item_man_obj, meta_json_key='geo_not
 
 
 def add_precision_properties(
-    properties, 
-    item_man_obj, 
-    spacetime_obj, 
+    properties,
+    item_man_obj,
+    spacetime_obj,
     for_solr=False,
     item_precision_specificity=None,
 ):
@@ -206,13 +206,13 @@ def add_precision_properties(
     # itself, or the project for this item, or this item's project__project!
     if item_precision_specificity is None:
         item_precision_specificity = get_meta_json_value_from_item_hierarchy(
-            item_man_obj, 
-            meta_json_key='geo_specificity', 
+            item_man_obj,
+            meta_json_key='geo_specificity',
             default=0
         )
     item_precision_note = get_meta_json_value_from_item_hierarchy(
-        item_man_obj, 
-        meta_json_key='geo_note', 
+        item_man_obj,
+        meta_json_key='geo_note',
         default=None
     )
 
@@ -228,14 +228,19 @@ def add_precision_properties(
     if not item_precision_note:
         item_precision_note = None
 
-    
+
     if spacetime_obj.geo_specificity and spacetime_obj.geo_specificity != 0:
         # Use the geo specificity actually from the geo data.
         item_precision_specificity = spacetime_obj.geo_specificity
 
     if not item_precision_specificity:
         item_precision_specificity = 0
-    
+
+    try:
+        item_precision_specificity = int(float(item_precision_specificity))
+    except:
+        item_precision_specificity = 0
+
     if item_precision_specificity == 0:
         # Case of no known attempt to obscure location data, no statement
         # about any uncertainty.
@@ -277,8 +282,8 @@ def add_precision_properties(
 
 
 def alter_geometry_by_precision_specificity(
-    geometry, 
-    item_man_obj, 
+    geometry,
+    item_man_obj,
     spacetime_obj,
     item_precision_specificity=None,
     ):
@@ -296,18 +301,22 @@ def alter_geometry_by_precision_specificity(
         the specificity of the item's spatial data. A negative value indicates
         intentionally obscuring spatial data to some global mercator zoom
         value
-    
+
     return dict (geometry)
     """
     if item_precision_specificity is None:
         item_precision_specificity = get_meta_json_value_from_item_hierarchy(
-            item_man_obj, 
-            meta_json_key='geo_specificity', 
+            item_man_obj,
+            meta_json_key='geo_specificity',
             default=0
         )
     if item_precision_specificity is None:
         # We don't have anything set, so skip out.
         return geometry
+    try:
+        item_precision_specificity = int(float(item_precision_specificity))
+    except:
+        item_precision_specificity = 0
     if item_precision_specificity >= 0 or geometry.get('type') != 'Point':
         # Our work is done! This is not an intentionally obscured location.
         # Or this is already a non point geometry, which is presumably OK to
@@ -333,7 +342,7 @@ def alter_geometry_by_precision_specificity(
 
 def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None, for_solr=False):
     """Adds GeoJSON feature (with when object) to the act_dict
-    
+
     :param AllManifest item_man_obj: The manifest object getting a
         GeoJSON representation
     :param AllManifest rel_subjects_man_obj: A manifest object with item_type
@@ -344,23 +353,23 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
     """
     if not act_dict:
         act_dict = LastUpdatedOrderedDict()
-    
+
     act_spacetime_features = None
     if item_man_obj.item_type in GEO_OK_ITEM_TYPES:
-        # We're describing a subjects item, or another item that can 
+        # We're describing a subjects item, or another item that can
         # have it's own GeoJSON
         # so the rel_subjects_man_obj is the same manifest object.
         act_spacetime_features = get_spacetime_geo_and_chronos(item_man_obj)
     elif item_man_obj.item_type == "uri" and item_man_obj.context.uri in GAZETTEER_VOCAB_URIS:
         # We're describing a geonames place item.
         act_spacetime_features = get_spacetime_geo_and_chronos(item_man_obj)
-    
+
     if rel_subjects_man_obj and not act_spacetime_features:
         # Get the spacetime features for this rel_subjects_man_obj.
         act_spacetime_features = get_spacetime_geo_and_chronos(rel_subjects_man_obj)
-    
+
     if not act_spacetime_features:
-        # No geomtries found in the whole context hierarchy, so 
+        # No geomtries found in the whole context hierarchy, so
         # no geojson to add.
         return act_dict
     # We have features to add.
@@ -388,13 +397,13 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
             properties["reference_type"] = "specified"
             # Add the location precision note.
             item_precision_specificity = get_meta_json_value_from_item_hierarchy(
-                item_man_obj, 
-                meta_json_key='geo_specificity', 
+                item_man_obj,
+                meta_json_key='geo_specificity',
                 default=0
             )
             properties = add_precision_properties(
-                properties, 
-                item_man_obj, 
+                properties,
+                item_man_obj,
                 spacetime_obj,
                 for_solr=for_solr,
                 item_precision_specificity=item_precision_specificity,
@@ -402,11 +411,11 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
             feature["geometry"] = spacetime_obj.geometry.copy()
             feature["geometry"]["id"] = f"#feature-geom-{spacetime_obj.uuid}"
 
-            # Alter the geometry to be a polygon region if we're obscuring 
+            # Alter the geometry to be a polygon region if we're obscuring
             # location data.
             feature["geometry"] = alter_geometry_by_precision_specificity(
-                geometry=feature["geometry"], 
-                item_man_obj=item_man_obj, 
+                geometry=feature["geometry"],
+                item_man_obj=item_man_obj,
                 spacetime_obj=spacetime_obj,
                 item_precision_specificity=item_precision_specificity,
             )
@@ -419,7 +428,7 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
             # We need to do some inferencing to add geospatial data.
             ref_spacetime_obj = spacetime_obj
             if not spacetime_obj.geometry_type:
-                # We need to use a spacetime object related via inheritance. 
+                # We need to use a spacetime object related via inheritance.
                 ref_spacetime_obj = getattr(spacetime_obj, 'inherit_geometry', None)
                 print('we are here')
                 print(spacetime_obj.__dict__)
@@ -439,16 +448,16 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
                 properties["location_region_note"] = "This point represents the center of the region containing this item."
             else:
                 properties["contained_in_region"] = False
-            
+
             # Add the location precision note.
             item_precision_specificity = get_meta_json_value_from_item_hierarchy(
-                item_man_obj, 
-                meta_json_key='geo_specificity', 
+                item_man_obj,
+                meta_json_key='geo_specificity',
                 default=0
             )
             properties = add_precision_properties(
-                properties, 
-                item_man_obj, 
+                properties,
+                item_man_obj,
                 ref_spacetime_obj,
                 for_solr=for_solr,
                 item_precision_specificity=item_precision_specificity,
@@ -461,11 +470,11 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
                 float(ref_spacetime_obj.longitude),
                 float(ref_spacetime_obj.latitude),
             ]
-            # Alter the geometry to be a polygon region if we're obscuring 
+            # Alter the geometry to be a polygon region if we're obscuring
             # location data.
             geometry = alter_geometry_by_precision_specificity(
-                geometry=geometry, 
-                item_man_obj=item_man_obj, 
+                geometry=geometry,
+                item_man_obj=item_man_obj,
                 spacetime_obj=ref_spacetime_obj,
                 item_precision_specificity=item_precision_specificity,
             )
@@ -484,7 +493,7 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
             # We don't have any chronology to add, so skip that part
             features.append(feature)
             continue
-    
+
         # Add the chronology object.
         when = LastUpdatedOrderedDict()
         when["id"] = f"#feature-when-{chrono_spacetime_obj.uuid}"
@@ -507,10 +516,10 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
             when["latest"] = float(chrono_spacetime_obj.latest)
             when["reference_uri"] = f"https://{chrono_spacetime_obj.item.uri}"
             when["reference_label"] = chrono_spacetime_obj.item.label
-            when["reference_slug"] = chrono_spacetime_obj.item.slug 
+            when["reference_slug"] = chrono_spacetime_obj.item.slug
 
         feature["when"] = when
         features.append(feature)
-    
+
     act_dict["features"] = features
     return act_dict

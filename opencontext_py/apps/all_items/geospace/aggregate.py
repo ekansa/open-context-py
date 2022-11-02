@@ -307,8 +307,11 @@ def cluster_geo_centroids(
             )
             cluster_ids = spectral.fit_predict(df[['longitude', 'latitude']])
         else:
-            kmeans = KMeans(n_clusters=act_cluster_count)
-            cluster_ids = kmeans.fit_predict(df[['longitude', 'latitude']])
+            if len(df.index) >= act_cluster_count:
+                kmeans = KMeans(n_clusters=act_cluster_count)
+                cluster_ids = kmeans.fit_predict(df[['longitude', 'latitude']])
+            else:
+                cluster_ids = 0
         df['geo_cluster'] = cluster_ids
 
         # Assume we made reasonable clusters.
