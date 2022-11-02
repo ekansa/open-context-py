@@ -12,7 +12,7 @@ function project_map(map_dom_id, json_url) {
 	this.json_url = json_url; // base url for geo-json requests
 	this.json_url = this.json_url.replace('&amp;', '&');
 
-	map = L.map(map_dom_id).setView([25, 0], 2); //map the map
+	map = L.map(map_dom_id).setView([20, 0], 2); //map the map
 	// remove the geodeep parameter
 	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	map.json_url = this.json_url
