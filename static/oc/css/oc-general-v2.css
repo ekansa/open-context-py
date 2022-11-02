@@ -30,7 +30,7 @@ TOP NAVIGATION
 
 /*
 ---------------------------------------------------------
-FOOTER 
+FOOTER
 ---------------------------------------------------------
 */
 #footer-upper {
@@ -119,7 +119,7 @@ Item Context
 	padding-top: 0.8%;
 }
 #rel_item_in_context::before {
-    content: "\2194"; 
+    content: "\2194";
 }
 
 /*
@@ -369,7 +369,7 @@ div.subject-list-text {
 
 /*
 ---------------------------------------------------------
-Search 
+Search
 ---------------------------------------------------------
 */
 #app {
@@ -423,15 +423,15 @@ Search
 }
 .leaflet-zoom-box-icon {
 	background: transparent no-repeat center center;
-	/* 
+	/*
 	See: https://fonts.google.com/icons?selected=Material+Icons&icon.query=crop&icon.style=Two+tone
 	dont forget to escape the fill '#' with a '%23'
 	*/
 	background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="%23000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M5 17c0 1.1.9 2 2 2h10v4h2v-4h4v-2H7V1H5v4H1v2h4v10zm14-2V7c0-1.1-.9-2-2-2H9v2h8v8h2z"/></svg>');
 }
-/* 
+/*
 
-FROM: https://github.com/consbio/Leaflet.ZoomBox 
+FROM: https://github.com/consbio/Leaflet.ZoomBox
 
 */
 .leaflet-zoom-box-control {
@@ -523,4 +523,39 @@ FROM: https://github.com/consbio/Leaflet.ZoomBox
 	padding-top: 1px;
 	padding-bottom: 1px;
 	font-family: var(--bs-font-monospace);
+}
+
+/* Bibliographic styles */
+p.authors {
+	margin-bottom: 5px;
+}
+.pub-date {
+	margin-right:1%;
+	min-width:7%;
+	float:left;
+}
+.ref-title-pub {
+	margin-right:1%;
+	float:left;
+	width:85%;
+}
+.collection-title {
+	font-style: italic;
+}
+.ref-end{
+	clear:both;
+	width:90%;
+}
+.biblio-item {
+	margin-bottom: 5%;
+}
+div.ref-links {
+	padding-left:14%;
+	text-align:left;
+	display: block;
+	width:100%;
+}
+ul.ref-list li {
+	margin-top: 12px;
+	margin-bottom: 12px;
 }
