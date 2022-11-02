@@ -1,4 +1,5 @@
 import copy
+from curses import noecho
 import datetime
 from datetime import timezone
 import logging
@@ -372,9 +373,13 @@ def make_site_pages_solr_docs():
         except:
             print(f'failed to get modified time from {link}')
             pass
-        content_tree = root.get_element_by_id('page')
-        content = content_tree.text_content()
-        content = str(content).strip()
+        content = ''
+        try:
+            content_tree = root.get_element_by_id('page')
+            content = content_tree.text_content()
+            content = str(content).strip()
+        except:
+            content = ''
         content_ex = [s for s in content.split('\n') if len(s.strip())]
         content = '\n'.join(content_ex)
         # print(f'Got content for {label}, {url}, title: {title}')
