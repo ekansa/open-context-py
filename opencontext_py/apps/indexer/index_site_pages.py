@@ -350,6 +350,7 @@ def make_site_pages_solr_docs():
                 root = None
         if root is None:
             continue
+        print(f'Got and parsed HTML for {url}')
         title_node = root.find(".//title")
         if not len(title_node):
             title = label
