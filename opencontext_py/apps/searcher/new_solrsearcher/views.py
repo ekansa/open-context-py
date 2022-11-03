@@ -23,6 +23,12 @@ from django.views.decorators.cache import cache_control
 from django.utils.cache import patch_vary_headers
 
 
+if settings.DEBUG:
+    SEARCH_CACHE_TIMEOUT = 60 # 1 minute
+else:
+    SEARCH_CACHE_TIMEOUT = 60 * 60 * 24 * 7 # 1 week
+
+
 def process_solr_query_via_solr_and_db(request_dict):
     """Processes a request dict to formulate a solr query and process a
        response from solr
@@ -81,7 +87,7 @@ def process_solr_query(request_dict):
     # Do the hard work of computing the result from scratch
     result = process_solr_query_via_solr_and_db(request_dict)
     try:
-        cache.set(cache_key, result)
+        cache.set(cache_key, result, timeout=SEARCH_CACHE_TIMEOUT)
     except:
         pass
     return result
