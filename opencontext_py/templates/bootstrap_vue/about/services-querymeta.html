@@ -1,6 +1,6 @@
 <h3>Query API: Response Options, Metadata, and Paging</h3>
 
-<p>By default the Open Context API returns a wide variety information in response to a query request. The responses include, metadata, a variety of search facets, geo-spatial data (in the form of regional facets and result records) and some non-geospatial results. You can limit the types of responses you get from Open Context searches by adding the <samp>response</samp> parameter and a comma separated list of response types to a request URL. For example, the <samp><a target="_blank" title="Metadata request" href="{{ base_url }}/subjects-search/United+States.json?response=metadata">{{ base_url }}/subjects-search/United+States.json?response=metadata</a></samp> request only gets metadata about a search result, while <samp><a target="_blank" title="Metadata and URI request" href="{{ base_url }}/subjects-search/United+States.json?response=metadata,uri">{{ base_url }}/subjects-search/United+States.json?response=metadata,uri</a></samp> gets metadata and URIs of result records. Allowed response types are:</p>
+<p>By default the Open Context API returns a wide variety information in response to a query request. The responses include, metadata, a variety of search facets, geo-spatial data (in the form of regional facets and result records) and some non-geospatial results. You can limit the types of responses you get from Open Context searches by adding the <samp>response</samp> parameter and a comma separated list of response types to a request URL. For example, the <samp><a target="_blank" title="Metadata request" href="{{ BASE_URL }}/query/Americas/United+States.json?response=metadata">{{ BASE_URL }}/query/Americas/United+States.json?response=metadata</a></samp> request only gets metadata about a search result, while <samp><a target="_blank" title="Metadata and URI request" href="{{ BASE_URL }}/query/Americas/United+States.json?response=metadata,uri">{{ BASE_URL }}/query/Americas/United+States.json?response=metadata,uri</a></samp> gets metadata and URIs of result records. Allowed response types are:</p>
 
 <ul>
     <li><samp>metadata</samp>: metadata about a search, includes paging information, number of records found, etc.</li>
@@ -10,6 +10,7 @@
     <li><samp>geo-record</samp>: result records as GeoJSON features (see the GeoJSON discussion)</li>
     <li><samp>uri-meta</samp>: result records as a simple list of URIs and some attributes</li>
     <li><samp>uri</samp>: result records as a simple list of URIs</li>
+    <li><samp>uuid</samp>: result records as a simple list of UUIDs</li>
     <li><samp>solr</samp>: raw and unprocessed Solr query response (these will be very difficult to process given the high-level of abstraction in Open Context's Solr schema)</li>
 </ul>
 

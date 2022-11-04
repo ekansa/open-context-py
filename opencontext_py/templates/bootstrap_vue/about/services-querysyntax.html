@@ -7,23 +7,23 @@
 <p>In the Open Context search API, the main pattern to composing queries works as follows:</p>
 
 <ol>
-    <li><p>A descriptive property predicate by itself filters for all records that have that descriptive property. In the example below, the search returns all records described by the predicate "Has biological taxonomy" (with that predicate identified by a slug):</p>
-        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy">prop=biol-term-hastaxonomy</a></samp></p>
+    <li><p>A descriptive property predicate by itself filters for all records that have that descriptive property. In the example below, the search returns all records described by the predicate "Has taxonomic identifier" (with that predicate identified by a slug):</p>
+        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ BASE_URL }}/query/?prop=obo-foodon-00001303">prop=obo-foodon-00001303</a></samp></p>
     </li>
-    <li><p>Instead of using slugs you can also use URL-escaped URIs to identify concepts to use in a query. The query API provides URIs that identify concepts with the <samp>rdfs:isDefinedBy</samp> key (<em>Caveat: concepts in the oc-api and oc-gen namespaces won't resolve yet, so don't reference them in this way for the time being</em>). Here is the same query as above using a URI rather than a slug to identify the predicate "Has biological taxonomy". </p>
-        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ base_url }}/subjects-search/?prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy">prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy</a></samp></p>
+    <li><p>Instead of using slugs you can also use URL-escaped URIs to identify concepts to use in a query. The query API provides URIs that identify concepts with the <samp>rdfs:isDefinedBy</samp> key (<em>Caveat: concepts in the oc-api and oc-gen namespaces won't resolve yet, so don't reference them in this way for the time being</em>). Here is the same query as above using a URI rather than a slug to identify the predicate "Has taxonomic identifier". </p>
+        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ BASE_URL }}/query/?prop=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FFOODON_00001303">prop=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FFOODON_00001303</a></samp></p>
     </li>
-    <li><p>To search for a specific value used with a given descriptive property, append a <samp>---</samp> delimiter after the slug for the descriptive property and follow with the slug (or URI) identifier for that value. In the example below, the search returns all records described by the predicate "Has biological taxonomy" and values identified with <samp>eol-p-1642</samp> for "Mammalia":</p>
-        <p><samp><a title="Query for records described as Mammals" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-1642">prop=biol-term-hastaxonomy---eol-p-1642</a></samp></p>
+    <li><p>To search for a specific value used with a given descriptive property, append a <samp>---</samp> delimiter after the slug for the descriptive property and follow with the slug (or URI) identifier for that value. In the example below, the search returns all records described by the predicate "Has taxonomic identifier" and values identified with <samp>gbif-359</samp> for "Mammalia":</p>
+        <p><samp><a title="Query for records described as Mammals" target="_blank" href="{{ BASE_URL }}/query/?prop=obo-foodon-00001303---gbif-359">prop=obo-foodon-00001303---gbif-359</a></samp></p>
     </li>
-    <li><p>In the example above, Open Context has the object value <samp>eol-p-1642</samp> for "Mammalia" in a hierarchy of classifications. It automatically returns results that include mammals and all subordinate (more specific) taxa. You can further restrict the scope of your query to more specific taxa by appending a <samp>---</samp> delimiter after the <samp>eol-p-1642</samp> and then adding a slug for a more specific type of mammal. In the example below, the search returns all records described by the predicate "Has biological taxonomy" and values identified with <samp>eol-p-1642</samp> for "Mammalia" and "Carnivora" (<samp>eol-p-7662</samp>):</p>
-        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662</a></samp></p>
+    <li><p>In the example above, Open Context has the object value <samp>gbif-359</samp> for "Mammalia" in a hierarchy of classifications. It automatically returns results that include mammals and all subordinate (more specific) taxa. You can further restrict the scope of your query to more specific taxa by appending a <samp>---</samp> delimiter after the <samp>gbif-359</samp> and then adding a slug for a more specific type of mammal. In the example below, the search returns all records described by the predicate "Has taxonomic identifier" and values identified with <samp>gbif-359</samp> for "Mammalia" and "Carnivora" (<samp>gbif-732</samp>):</p>
+        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ BASE_URL }}/query/?prop=obo-foodon-00001303---gbif-359---gbif-732">prop=obo-foodon-00001303---gbif-359---gbif-732</a></samp></p>
     </li>
     <li><p>You don't need to know the position of a concept in a hierarchy in order to search for it. The following query returns identical results for Carnivores as the one above, but omits reference to Mammalia:</p>
-        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-7662</a></samp></p>
+        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ BASE_URL }}/query/?prop=obo-foodon-00001303---gbif-732">prop=obo-foodon-00001303---gbif-732</a></samp></p>
     </li>
-    <li><p>Open Context uses double pipe characters ("<samp>||</samp>") for Boolean "OR" terms. The following example returns results described as either carnivore <samp>eol-p-7662</samp> or lagomorph (rabbits, hares) <samp>eol-p-7662</samp>:</p>
-        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-1686||eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1686||eol-p-7662</a></samp></p>
+    <li><p>Open Context uses double pipe characters ("<samp>||</samp>") for Boolean "OR" terms. The following example returns results described as either carnivore <samp>gbif-732</samp> or lagomorph (rabbits, hares) <samp>gbif-785</samp>:</p>
+        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ BASE_URL }}/query/?prop=obo-foodon-00001303---gbif-732%7C%7Cgbif-785">prop=obo-foodon-00001303---gbif-732||gbif-785</a></samp></p>
     </li>
 </ol>
 
@@ -44,7 +44,7 @@
             </th>
             <td>
                 <p>Adding this query parameter with a URL encoded search term requests a full-text search. This works similarly to familiar text searches elsewhere on the Web, and can be combined
-                with other search parameters. Here is an example text search for the term "<a href="{{ base_url }}/subjects-search/?q=bucchero" title="Request a full-text search for the term 'bucchero'">bucchero</a>".</p>
+                with other search parameters. Here is an example text search for the term "<a href="{{ BASE_URL }}/query/?q=bucchero" title="Request a full-text search for the term 'bucchero'">bucchero</a>".</p>
             </td>
         </tr>
         <tr>
@@ -53,7 +53,7 @@
             </th>
             <td>
                 <p>Adding this query parameter with a URL encoded URI requests records that link (via any attribute or relation predicate) to a URI-indentified entity defined by a data source, vocabulary or ontology outside of Open Context.</p>
-                <p>For example, this search, <a href="{{ base_url }}/subjects-search/?obj=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FUBERON_0000979" target="_blank" title="Find records related to UBERON tibia">{{ base_url }}/subjects-search/?obj=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FUBERON_0000979</a>, finds all records associated with the UBERON concept for the bone element tibia, identified by this URI: <a href="http://purl.obolibrary.org/obo/UBERON_0000979" target="_blank" title="UBERON tibia concept">http://purl.obolibrary.org/obo/UBERON_0000979</a>. This example works similarly to a SPARQL query formulated like:</p>
+                <p>For example, this search, <a href="{{ BASE_URL }}/query/?obj=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FUBERON_0000979" target="_blank" title="Find records related to UBERON tibia">{{ BASE_URL }}/query/?obj=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FUBERON_0000979</a>, finds all records associated with the UBERON concept for the bone element tibia, identified by this URI: <a href="http://purl.obolibrary.org/obo/UBERON_0000979" target="_blank" title="UBERON tibia concept">http://purl.obolibrary.org/obo/UBERON_0000979</a>. This example works similarly to a SPARQL query formulated like:</p>
                 <samp>
                     SELECT ?s <br/>
                     { <br/>
@@ -64,39 +64,39 @@
         </tr>
         <tr>
             <th>
-                <samp>disc-bbox</samp>
+                <samp>bbox</samp>
             </th>
             <td>
                 <p>This query parameter requests a filter defined by a geospatial bounding box for the location of discovery or description. The bounding box is expressed as comma sperated values of coordinates using the WGS84 (typical for Web mapping) decimal degrees. The order of coordinates follows the GeoJSON pattern of (x,y) (Longitude, Latitude). The first pair of coordinates defines the lower-left (south-west) corner of the bounding box, with the second pair of coordinates defines the top-right (north-east) corner. An invalid bounding box will be ignored as a search filter but will return a notice in the <samp>oc-api:active-filters</samp> of the JSON-LD response.</p>
                 <p>Bounding Box search examples include:</p>
                 <ol>
                     <li>
-                        Filtering for a region in the south-east of the United States: <samp><a title="Search a bounding box" target="_blank" href="{{ base_url }}/subjects-search/?geodeep=11&disc-bbox=-87.19%2C21.29%2C-73.48%2C34.60">-87.19 Longitude, 21.29 Latitude (south-west corner) to -73.48 Longitude, 34.60 Latidude (north-east corner)</a></samp>
+                        Filtering for a region in the south-east of the United States: <samp><a title="Search a bounding box" target="_blank" href="{{ BASE_URL }}/query/?geodeep=11&bbox=-87.19%2C21.29%2C-73.48%2C34.60">-87.19 Longitude, 21.29 Latitude (south-west corner) to -73.48 Longitude, 34.60 Latidude (north-east corner)</a></samp>
                     </li>
                     <li>
-                        You can use the double pipe characters ("<samp>||</samp>") for Boolean "OR" searches of multiple regions, as in this example: <samp><a title="Search multiple bounding boxes" target="_blank" href="{{ base_url }}/subjects-search/?geodeep=12&disc-bbox=31.37%2C34.31%2C35.42%2C35.96||31.86%2C35.89%2C34.53%2C36.97">31.37,C34.31,35.42,C35.96 (roughly Cyprus) OR 31.86,35.89,34.53,36.97 (roughly Cilicia in Turkey)</a></samp>
+                        You can use the double pipe characters ("<samp>||</samp>") for Boolean "OR" searches of multiple regions, as in this example: <samp><a title="Search multiple bounding boxes" target="_blank" href="{{ BASE_URL }}/query/?geodeep=12&bbox=31.37%2C34.31%2C35.42%2C35.96||31.86%2C35.89%2C34.53%2C36.97">31.37,C34.31,35.42,C35.96 (roughly Cyprus) OR 31.86,35.89,34.53,36.97 (roughly Cilicia in Turkey)</a></samp>
                     </li>
                 </ol>
             </td>
         </tr>
         <tr>
             <th>
-                <samp>form-start={Integer year BCE/CE}</samp>
+                <samp>allevent-start={Integer year BCE/CE}</samp>
                 <br/>
-                <samp>form-stop={Integer year BCE/CE}</samp>
+                <samp>allevent-stop={Integer year BCE/CE}</samp>
             </th>
             <td>
-                <p>These parameters filter a request by the general date ranges of the formation, use, and/or life of items described in the search results. The <samp>form-start</samp> parameter defines the ealiest date to include in search results, while the <samp>form-stop</samp> defines the latest date to include in search results. With these parameters, use integer dates (negative values for dates BCE) and positive values for dates CE.</p>
-                
-                <p>Some items, such as archaeological sites, may have multiple date ranges (a site may have multiple episodes of occupation and use). In these cases, Open Context's query results will include records that have date ranges falling within the <samp>form-start</samp> and <samp>form-stop</samp> limits, even if the records also have date ranges that fall outside of these limits.</p>
-                
+                <p>These parameters filter a request by the general date ranges of the formation, use, and/or life of items described in the search results. The <samp>allevent-start</samp> parameter defines the earliest date to include in search results, while the <samp>allevent-stop</samp> defines the latest date to include in search results. With these parameters, use integer dates (negative values for dates BCE) and positive values for dates CE.</p>
+
+                <p>Some items, such as archaeological sites, may have multiple date ranges (a site may have multiple episodes of occupation and use). In these cases, Open Context's query results will include records that have date ranges falling within the <samp>allevent-start</samp> and <samp>allevent-stop</samp> limits, even if the records also have date ranges that fall outside of these limits.</p>
+
                 <p>Date range search examples include:</p>
                 <ol>
                     <li>
-                        Filtering for sites in the United States that have occupation / use components that date before 7500 BCE: <samp><a title="Date filter looking for records older than 7500 BCE" target="_blank" href="{{ base_url }}/subjects-search/United+States?prop=oc-gen-cat-loc-or-context---oc-gen-cat-site&prop=dinaa-00001&proj=52-digital-index-of-north-american-archaeology-dinaa&form-stop=-7500">form-stop=-7500</a></samp>
+                        Filtering for sites in the United States that have occupation / use components that date before 7500 BCE: <samp><a title="Date filter looking for records older than 7500 BCE" target="_blank" href="{{ BASE_URL }}/query/Americas/United+States?cat=oc-gen-cat-loc-or-context---oc-gen-cat-site&proj=52-digital-index-of-north-american-archaeology-dinaa&type=subjects&allevent-start=-7500">allevent-start=-7500</a></samp>
                     </li>
                     <li>
-                        Filtering for cattle bones dating between 15000 BCE and 4000 BCE: <samp><a title="Query for records that fall within a date range" target="_blank" href="{{ base_url }}/subjects-search/?prop=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&prop=biol-term-hastaxonomy---eol-p-34548&form-start=-12000&form-stop=-4000">form-start=-12000&form-stop=-4000</a></samp>
+                        Filtering for cattle bones dating between 15000 BCE and 4000 BCE: <samp><a title="Query for records that fall within a date range" target="_blank" href="{{ BASE_URL }}/query/?cat=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&prop=obo-foodon-00001303---gbif-2441017&type=subjects&allevent-start=-12000&allevent-stop=-4000">allevent-start=-12000&allevent-stop=-4000</a></samp>
                     </li>
                 </ol>
             </td>
@@ -106,7 +106,7 @@
                 <samp>linked=dinaa-cross-ref</samp>
             </th>
             <td>
-                <p>Adding this query parameter and value adds a special filter for interacting with data in the Digital Index of North American Archaeology (DINAA) project. The query filters for DINAA records cross-referenced with URI identified resources curated by other online collections. <a href="{{ base_url }}/subjects-search/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&linked=dinaa-cross-ref" title="Filter for DINAA records cross-referenced with Linked Data">Click here</a> to view cross-referenced records in DINAA.</p>
+                <p>Adding this query parameter and value adds a special filter for interacting with data in the Digital Index of North American Archaeology (DINAA) project. The query filters for DINAA records cross-referenced with URI identified resources curated by other online collections. <a href="{{ BASE_URL }}/query/Americas/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&linked=dinaa-cross-ref" title="Filter for DINAA records cross-referenced with Linked Data">Click here</a> to view cross-referenced records in DINAA.</p>
             </td>
         </tr>
         <tr>
@@ -116,11 +116,11 @@
             <td>
                 <p>Adding this query parameter and value filters records for different types of identifiers, including <a href="https://en.wikipedia.org/wiki/Digital_object_identifier" target="_blank">DOIs</a>, <a href="https://en.wikipedia.org/wiki/Archival_Resource_Key" target="_blank">ARKs</a>, <a href="https://en.wikipedia.org/wiki/ORCID" target="_blank">ORCIDs</a>, and Open Context URIs and UUIDs. Open Context will evaluate query with different variants of expressing an identifer. For example, the identifier "doi:10.6078/M77P8W98" can be expressed as:</p>
                 <ul>
-                    <li><a href="{{ base_url }}/search/?id=doi%3A10.6078%2FM77P8W98">doi:10.6078/M77P8W98</a></li>
-                    <li><a href="{{ base_url }}/search/?id=https%3A%2F%2Fdoi.org%2F10.6078%2FM77P8W98">https://doi.org/10.6078/M77P8W98</a>, the current preferred URL expression for a DOI.</li>
-                    <li><a href="{{ base_url }}/search/?id=http%3A%2F%2Fdoi.org%2F10.6078%2FM77P8W98">http://doi.org/10.6078/M77P8W98</a>, not secured (not preferred) URL expression for a DOI.</li>
-                    <li><a href="{{ base_url }}/search/?id=https%3A%2F%2Fdx.doi.org%2F10.6078%2FM77P8W98">https://dx.doi.org/10.6078/M77P8W98</a>, an older URL expression for a DOI.</li>
-                    <li><a href="{{ base_url }}/search/?id=http%3A%2F%2Fdx.doi.org%2F10.6078%2FM77P8W98">http://dx.doi.org/10.6078/M77P8W98</a>, an older URL expression for a DOI, without an encrypted request.</li>
+                    <li><a href="{{ BASE_URL }}/query/?id=doi%3A10.6078%2FM77P8W98">doi:10.6078/M77P8W98</a></li>
+                    <li><a href="{{ BASE_URL }}/query/?id=https%3A%2F%2Fdoi.org%2F10.6078%2FM77P8W98">https://doi.org/10.6078/M77P8W98</a>, the current preferred URL expression for a DOI.</li>
+                    <li><a href="{{ BASE_URL }}/query/?id=http%3A%2F%2Fdoi.org%2F10.6078%2FM77P8W98">http://doi.org/10.6078/M77P8W98</a>, not secured (not preferred) URL expression for a DOI.</li>
+                    <li><a href="{{ BASE_URL }}/query/?id=https%3A%2F%2Fdx.doi.org%2F10.6078%2FM77P8W98">https://dx.doi.org/10.6078/M77P8W98</a>, an older URL expression for a DOI.</li>
+                    <li><a href="{{ BASE_URL }}/query/?id=http%3A%2F%2Fdx.doi.org%2F10.6078%2FM77P8W98">http://dx.doi.org/10.6078/M77P8W98</a>, an older URL expression for a DOI, without an encrypted request.</li>
                 </ul>
                 <p>A search for any one of the above ID varients will retrieve the same record.</p>
             </td>

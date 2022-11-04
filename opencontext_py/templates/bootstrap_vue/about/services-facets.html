@@ -1,5 +1,5 @@
 <h3>Query API: Facets</h3>
-                                
+
 <p>Facets represent one of the most important and useful types of information provided by the Query API. Open Context's query API provides different kinds of facets as follows:</p>
 
 <ul>
@@ -19,17 +19,17 @@
     <tbody>
         <tr>
             <th>
-                <samp>oc-api:has-form-use-life-ranges</samp>
+                <samp>oc-api:has-event-time-ranges</samp>
             </th>
             <td>
-                <p>These are hierarchically organized time-spans for dates in the past. Since the algorithm (<a target="_blank" href="http://www.slideshare.net/dinaa_proj/kansa-saa2014poster">described here</a>) used to compute these facets needs a fixed reference point, the latest possible date in these time-spans is 1950. The <samp>start</samp> and <samp>stop</samp> attribute keys describe dates in years BCE / CE, with BCE dates as negative values. In way that's similar to the geo-region facets described above, you can control the level of chronological aggregation to your requests by adding the <samp>chronodeep</samp> query parameter to request URLs.</p>
+                <p>These are hierarchically organized time-spans for dates in the past. Since the algorithm (<a target="_blank" href="http://www.slideshare.net/dinaa_proj/kansa-saa2014poster">described here</a>) used to compute these facets needs a fixed reference point, the latest possible date in these time-spans is the year 2000 (CE). The <samp>start</samp> and <samp>stop</samp> attribute keys describe dates in years BCE / CE, with BCE dates as negative values. In way that's similar to the geo-region facets described above, you can control the level of chronological aggregation to your requests by adding the <samp>chronodeep</samp> query parameter to request URLs.</p>
                 <ol>
-                    <li>More aggregated (coarse) chronology data at <samp>chronodeep=16</samp>, the default level, as <a target="_blank" title="Level 16 aggregation" href="{{ base_url }}/subjects-search/.json?chronodeep=16">JSON-LD</a></li>
-                    <li>Less aggregated (fine-grain) chronology data at <samp>chronodeep=32</samp>, the maximum precision, as <a target="_blank" title="Level 32 aggregation" href="{{ base_url }}/subjects-search/.json?chronodeep=32">JSON-LD</a></li>
+                    <li>More aggregated (coarse) chronology data at <samp>chronodeep=16</samp>, the default level, as <a target="_blank" title="Level 16 aggregation" href="{{ BASE_URL }}/query/.json?chronodeep=16">JSON-LD</a></li>
+                    <li>Less aggregated (fine-grain) chronology data at <samp>chronodeep=32</samp>, the maximum precision, as <a target="_blank" title="Level 32 aggregation" href="{{ BASE_URL }}/query/.json?chronodeep=32">JSON-LD</a></li>
                 </ol>
-                
+
                 <p>Usually, the facet count will be the same as the number of records returned if you execute the search option, but that is not always the case for chronological facets. Items in Open Context (especially archaeological sites) can have multiple time spans of use. A chronological facet count reflects the number of times a particular time-span bucket is filled. A single record of an archaeological site can fill multiple time-span buckets. This sometimes makes facet counts for time-spans a close approximation rather than an exact match of filtering by a particular time-span.</p>
-                
+
             </td>
         </tr>
         <tr>
@@ -39,8 +39,10 @@
             <td>
                 <p>These are hierarchically organized descriptive predicates and controlled vocabulary concepts that Open Context exposes to guide searches. Diferent metadata facets have some descriptive information and come with lists of options that can be used to further filter the search. There are four types of option lists for faceted searching:</p>
                 <ol>
-                    <li><samp>oc-api:has-id-options</samp>: options in this list are concepts identified by URIs. The <samp>rdfs:isDefinedBy</samp> predicate indicates the URI for the concept defining the particular search filter.</li>
-                    <li><samp>oc-api:has-numeric-options</samp>: these options describe records numerically. Selecting one of these options will request numeric range data associated with the option.</li>
+                    <li><samp>oc-api:has-id-options</samp>: options in this list are concepts or other named entities  identified by URIs. The <samp>rdfs:isDefinedBy</samp> predicate indicates the URI for the concept defining the particular search filter.</li>
+                    <li><samp>oc-api:has-boolean-options</samp>: these options describe boolean attributes.</li>
+                    <li><samp>oc-api:has-integer-options</samp>: these options describe integer attributes for records. Selecting one of these options will request integer numeric range data associated with the option.</li>
+                    <li><samp>oc-api:has-float-options</samp>: these options describe floating point (decimal) attributes for records. Selecting one of these options will request numeric range data associated with the option.</li>
                     <li><samp>oc-api:has-date-options</samp>: these options describe records with (recent) calendric date information. Selecting one of these options will request calendric range data associated with the option.</li>
                     <li><samp>oc-api:has-text-options</samp>: these options include fields that describe records with unstructured text (not controlled vocabularies). Selecting one of these options will request a full-text search template for this field.</li>
                 </ol>
@@ -52,7 +54,7 @@
             </th>
             <td>
                 <p>These facets summarize the current set of search results according to a given numeric property. The minimum value (<samp>oc-api:min</samp>) and the maximum value (<samp>oc-api:max</samp>) give the total range of values for the records defined by the current search filters. In addition, the <samp>oc-api:has-range-options</samp> list quantifies the number of records in different numeric ranges. These can be visualized to make histograms of summarizing all of the records for a search according to this numeric property. The example below describes two numeric range options:</p>
-                
+
                 <ul class="code-samp">
                     <li><samp>"oc-api:has-range-options": [</samp></li>
                     <li>
@@ -60,8 +62,8 @@
                             <li><samp>{</samp></li>
                             <li>
                                 <ul class="code-samp">
-                                    <li><samp>"id": "<a href="{{ base_url }}/subjects-search/?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo" target="_blank">{{ base_url }}/subjects-search/?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo</a>",</samp></li>
-                                    <li><samp>"json": "<a href="{{ base_url }}/subjects-search/.json?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo" target="_blank">{{ base_url }}/subjects-search/.json?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo</a>",</samp></li>
+                                    <li><samp>"id": "<a href="{{ BASE_URL }}/query/?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo" target="_blank">{{ BASE_URL }}/query/?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo</a>",</samp></li>
+                                    <li><samp>"json": "<a href="{{ BASE_URL }}/query/.json?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo" target="_blank">{{ BASE_URL }}/query/.json?prop=24-bd---%5B3.79+TO+10.850999999999999+%5D&proj=24-murlo</a>",</samp></li>
                                     <li><samp>"label": "3.79",</samp></li>
                                     <li><samp>"count": 68,</samp></li>
                                     <li><samp>"oc-api:min": 3.79,</samp></li>
@@ -74,8 +76,8 @@
                             <li><samp>{</samp></li>
                             <li>
                                 <ul class="code-samp">
-                                    <li><samp>"id": "<a href="{{ base_url }}/subjects-search/?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo" target="_blank">{{ base_url }}/subjects-search/?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo</a>",</samp></li>
-                                    <li><samp>"json": "<a href="{{ base_url }}/subjects-search/.json?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo" target="_blank">{{ base_url }}/subjects-search/.json?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo</a>",</samp></li>
+                                    <li><samp>"id": "<a href="{{ BASE_URL }}/query/?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo" target="_blank">{{ BASE_URL }}/query/?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo</a>",</samp></li>
+                                    <li><samp>"json": "<a href="{{ BASE_URL }}/query/.json?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo" target="_blank">{{ BASE_URL }}/query/.json?prop=24-bd---%5B10.850999999999999+TO+17.912+%5D&proj=24-murlo</a>",</samp></li>
                                     <li><samp>"label": "10.851",</samp></li>
                                     <li><samp>"count": 124,</samp></li>
                                     <li><samp>"oc-api:min": 10.850999999999999,</samp></li>
