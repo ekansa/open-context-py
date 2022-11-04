@@ -16,6 +16,7 @@ from opencontext_py.apps.all_items.configs import (
     URI_ITEM_TYPES,
     DEFAULT_SUBJECTS_ROOTS
 )
+from opencontext_py.apps.all_items.models import AllManifest
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
@@ -128,9 +129,9 @@ def get_identifier_query_dict(raw_identifier):
             else:
                 uri_templates = configs.PERSISTENT_URI_TEMPLATES
             for uri_template in uri_templates:
-                escaped_uri = utilities.escape_solr_arg(
-                    uri_template.format(id=identifier)
-                )
+                temp_uri = uri_template.format(id=identifier)
+                temp_uri = AllManifest().clean_uri(temp_uri)
+                escaped_uri = utilities.escape_solr_arg(temp_uri)
                 fq_term = 'persistent_uri:{}'.format(escaped_uri)
                 if fq_term in fq_terms:
                     # We already have this, so skip.
