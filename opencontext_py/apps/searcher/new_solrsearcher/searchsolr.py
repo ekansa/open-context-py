@@ -41,7 +41,7 @@ class SearchSolr():
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = {}
-    
+
     def solr_connect(self):
         """ Connects to solr """
         if self.solr is not None:
@@ -54,7 +54,7 @@ class SearchSolr():
         else:
             # Connect to the default solr server
             self.solr = SolrClient().solr
-    
+
     def add_initial_facet_fields(self, request_dict):
         """Adds to initial facet field list based on request_dict"""
         if 'proj' in request_dict:
@@ -63,13 +63,13 @@ class SearchSolr():
             )
 
     def _associate_facet_field_with_client_request(
-        self, 
-        param, 
-        raw_path, 
+        self,
+        param,
+        raw_path,
         query_dict
     ):
         """Associates a facet field with a client request."""
-        
+
         # NOTE: Because there's some complex logic in how we determine
         # facet fields from a client request, it is useful to store
         # the associations for later use. The main later use will
@@ -78,7 +78,7 @@ class SearchSolr():
         # give to a client. This function stores the associations
         # between solr facet fields and the URL parameters and values
         # made by the requesting client.
-        
+
         if not query_dict:
             return None
         for key in ['prequery-stats', 'facet.field']:
@@ -105,7 +105,7 @@ class SearchSolr():
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
-        
+
         :param dict request_dict: The dictionary of keyed by client
         request parameters and their request parameter values.
         """
@@ -124,7 +124,7 @@ class SearchSolr():
         query['stats'] = self.solr_stats_query
         # Starts with an initial stats field list
         query['stats.field'] = self.init_stats_fields
-        
+
         # -------------------------------------------------------------
         # SORTING
         # Set solr sorting, either to a default or by translating the
@@ -135,14 +135,14 @@ class SearchSolr():
         query['sort'] = sort_opts.make_solr_sort_param_from_request_dict(
             request_dict
         )
-        
+
         # -------------------------------------------------------------
         # FULLTEXT (Keyword)
         # Set solr full text query and highlighting
         # -------------------------------------------------------------
         query['q'] = '*:*'  # default search for all
         raw_fulltext_search = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='q',
             default=None,
             as_list=False,
@@ -166,14 +166,14 @@ class SearchSolr():
             query['hl.simple.pre'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_PRE
             query['hl.simple.post'] = configs.QUERY_SNIPPET_HIGHLIGHT_TAG_POST
             # query['hl.q'] = f'text: {solr_fulltext}'
-        
+
         # -------------------------------------------------------------
         # START and ROWS (Paging through results)
         # Set the pointer to a position in the solr result list, and
         # the number of rows to return from a solr search.
         # -------------------------------------------------------------
         start_pos = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='start',
             default=None,
             as_list=False,
@@ -186,9 +186,9 @@ class SearchSolr():
             if start_pos < 0:
                 start_pos = 0
             query['start'] = start_pos
-        
+
         rows = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='rows',
             default=None,
             as_list=False,
@@ -203,7 +203,7 @@ class SearchSolr():
             elif rows < 0:
                 rows = 0
             query['rows'] = rows
-        
+
 
         # -------------------------------------------------------------
         # SIMPLE, GENERAL METADATA RELATED FUNCTIONS
@@ -218,11 +218,11 @@ class SearchSolr():
                 part_query_dict={'fq': [filter_query]},
                 main_query_dict=query,
             )
-        
+
         # Params: uuid, updated published processed here.
         for url_param, solr_field in configs.SIMPLE_METADATA:
             raw_value = utilities.get_request_param_value(
-                request_dict, 
+                request_dict,
                 param=url_param,
                 default=None,
                 as_list=False,
@@ -233,7 +233,7 @@ class SearchSolr():
                 # url_param.
                 continue
             query_dict = querymaker.get_simple_metadata_query_dict(
-                raw_value, 
+                raw_value,
                 solr_field
             )
             # Now add this simple metadata to the over-all query.
@@ -241,13 +241,13 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
-        
+
 
         # -------------------------------------------------------------
         # ID RELATED Solr Search Params
         # -------------------------------------------------------------
         raw_identifier = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='id',
             default=None,
             as_list=False,
@@ -260,9 +260,9 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
-        
+
         raw_object_uri = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='obj',
             default=None,
             as_list=False,
@@ -277,7 +277,7 @@ class SearchSolr():
             )
 
         raw_person_id = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='pers',
             default=None,
             as_list=False,
@@ -296,7 +296,7 @@ class SearchSolr():
         # Item Type
         # -------------------------------------------------------------
         raw_item_type = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='type',
             default=None,
             as_list=False,
@@ -309,21 +309,21 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
-        
+
 
         do_lr_geotile_facet = True
         # -------------------------------------------------------------
         # GEO-SPACE AND TIME
         # -------------------------------------------------------------
         raw_disc_bbox = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='bbox',
             default=None,
             as_list=False,
             solr_escape=False,
         )
         if raw_disc_bbox:
-            do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile 
+            do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile
             query_dict = querymaker.get_discovery_bbox_query_dict(
                 raw_disc_bbox
             )
@@ -332,16 +332,16 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
-        
+
         raw_disc_geo = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='allevent-geotile',
             default=None,
             as_list=False,
             solr_escape=False,
         )
         if raw_disc_geo:
-            do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile 
+            do_lr_geotile_facet = False  # Spatial constraint, so do high res geotile
             # Do the actual query using the high resolution parameter.
             query_dict = querymaker.get_discovery_geotile_query_dict(
                 raw_disc_geo, low_res=False
@@ -353,7 +353,7 @@ class SearchSolr():
             )
 
         raw_chrono_tile = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='allevent-chronotile',
             default=None,
             as_list=False,
@@ -363,25 +363,25 @@ class SearchSolr():
             query_dict = querymaker.get_form_use_life_chronotile_query_dict(
                 raw_chrono_tile
             )
-            # Now add results of this form_use_life_chronotile 
+            # Now add results of this form_use_life_chronotile
             # to the over-all query.
             query = utilities.combine_query_dict_lists(
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
 
-        # One or both of the form use life date limits can be None. 
+        # One or both of the form use life date limits can be None.
         query_dict = querymaker.get_all_event_chrono_span_query_dict(
             all_start=utilities.get_request_param_value(
-                request_dict, 
+                request_dict,
                 param='allevent-start',
                 default=None,
                 as_list=False,
                 solr_escape=False,
                 require_float=True,
-            ), 
+            ),
             all_stop=utilities.get_request_param_value(
-                request_dict, 
+                request_dict,
                 param='allevent-stop',
                 default=None,
                 as_list=False,
@@ -394,7 +394,7 @@ class SearchSolr():
             part_query_dict=query_dict,
             main_query_dict=query,
         )
-            
+
 
         # -------------------------------------------------------------
         # Spatial Context
@@ -414,8 +414,8 @@ class SearchSolr():
                 # Associate the facet fields with the client request param
                 # and param value.
                 self._associate_facet_field_with_client_request(
-                    param='path', 
-                    raw_path=request_dict['path'], 
+                    param='path',
+                    raw_path=request_dict['path'],
                     query_dict=query_dict
                 )
                 # Remove the default Root Solr facet field if it is there.
@@ -427,7 +427,7 @@ class SearchSolr():
                     part_query_dict=query_dict,
                     main_query_dict=query,
                 )
-        
+
 
         # -------------------------------------------------------------
         # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
@@ -442,7 +442,7 @@ class SearchSolr():
         # -------------------------------------------------------------
         for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
             raw_paths = utilities.get_request_param_value(
-                request_dict, 
+                request_dict,
                 param=param,
                 default=None,
                 as_list=True,
@@ -468,8 +468,8 @@ class SearchSolr():
                 # Associate the facet fields with the client request param
                 # and param value.
                 self._associate_facet_field_with_client_request(
-                    param=param, 
-                    raw_path=raw_path, 
+                    param=param,
+                    raw_path=raw_path,
                     query_dict=query_dict
                 )
                 if remove_field:
@@ -478,7 +478,7 @@ class SearchSolr():
                         remove_field,
                         query['facet.field'].copy()
                     )
-                
+
                 if param == 'cat':
                     for cat_slug_key, cat_facet_fields_tups in configs.ITEM_CAT_FACET_FIELDS_SOLR.items():
                         if cat_slug_key not in raw_path:
@@ -495,21 +495,21 @@ class SearchSolr():
                                 continue
                             query['facet.field'].append(cat_facet_field)
 
-                
+
                 # Now add results of this raw_path to the over-all query.
                 query = utilities.combine_query_dict_lists(
                     part_query_dict=query_dict,
                     main_query_dict=query,
                 )
-        
 
-        
+
+
         # -------------------------------------------------------------
         # GEOSPACE and Chronology tiles.
         # -------------------------------------------------------------
         # Add the geo-tile facet field.
         geodeep = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='geodeep',
             default=0,
             as_list=False,
@@ -524,7 +524,7 @@ class SearchSolr():
 
         # Add the chrono-tile facet field.
         chronodeep = utilities.get_request_param_value(
-            request_dict, 
+            request_dict,
             param='chronodeep',
             default=0,
             as_list=False,
@@ -537,12 +537,33 @@ class SearchSolr():
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
         query['facet.field'].append(chrono_tile_facet_field)
 
+
+        # -------------------------------------------------------------
+        # Special purpose queries
+        # -------------------------------------------------------------
         if request_dict.get('proj-summary'):
             # we're making a project summary query.
             query = self._add_project_summary_query_terms(query)
 
+        dinaa_linked = utilities.get_request_param_value(
+            request_dict,
+            param='linked',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if 'dinaa' in dinaa_linked:
+            # We're querying for DINAA record with cross references with other
+            # resources outside Open Context
+            query_dict = querymaker.get_linked_dinaa_query_dict()
+            # Now combine the DINAA query to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
         return query
-    
+
 
     def update_query_with_stats_prequery(self, query):
         """Updates the main query dict if stats fields
@@ -550,7 +571,7 @@ class SearchSolr():
            initial pre-query to solr.
         """
         # NOTE: This needs to happen at the end, after
-        # we have already defined a bunch of solr 
+        # we have already defined a bunch of solr
         if not 'prequery-stats' in query:
             return query
         prestats_fields = query.get('prequery-stats', [])
@@ -559,12 +580,12 @@ class SearchSolr():
             return query
         self.solr_connect()
         stats_query = ranges.compose_stats_query(
-            fq_list=query['fq'], 
-            stats_fields_list=prestats_fields, 
+            fq_list=query['fq'],
+            stats_fields_list=prestats_fields,
             q=query['q']
         )
         stats_q_dict = ranges.stats_ranges_query_dict_via_solr(
-            stats_query=stats_query, 
+            stats_query=stats_query,
             solr=self.solr
         )
         query = utilities.combine_query_dict_lists(
@@ -572,7 +593,7 @@ class SearchSolr():
             main_query_dict=query,
         )
         return query
-    
+
     def compose_sitemap_query(self):
         """Makes a query specialized knowing what projects can be
         included in a site map
@@ -589,7 +610,7 @@ class SearchSolr():
             configs.SITEMAP_FACET_FIELD
         ]
         return query
-    
+
 
     def _set_solr_field_facet_limits(self, query):
         """ Sets facet limits on configured facet fields"""
@@ -610,7 +631,7 @@ class SearchSolr():
         query = self._set_solr_field_facet_limits(query)
         query['wt'] = 'json'
         return query
-    
+
 
     def query_solr(self, query):
         """ Connects to solr and runs a query"""
@@ -626,4 +647,3 @@ class SearchSolr():
                 f'{str(error)} => Query: {query}'
             )
         return self.solr_response
-        

@@ -5,12 +5,8 @@ from opencontext_py.libs.chronotiles import ChronoTile
 
 from opencontext_py.apps.entities.uri.models import URImanagement
 
-from opencontext_py.apps.indexer.solrdocumentnew import (
-    SolrDocumentNew as SolrDocument,
-)
-
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 from opencontext_py.apps.indexer.solr_utils import replace_slug_in_solr_field
-
 
 from opencontext_py.apps.all_items.configs import (
     URI_ITEM_TYPES,
@@ -332,7 +328,7 @@ def get_discovery_geotile_query_dict(raw_disc_geo, low_res=True):
     return make_tile_query_dict(
         raw_tile_path=raw_disc_geo,
         solr_field=solr_field,
-        max_path_length=SolrDocument.MAX_GEOTILE_ZOOM,
+        max_path_length=SolrDoc.MAX_GEOTILE_ZOOM,
     )
 
 
@@ -402,7 +398,7 @@ def get_spatial_context_query_dict(spatial_context=None):
     query_dict = {'fq': [], 'facet.field': []}
     if not spatial_context:
         query_dict['fq'] = []
-        query_dict['facet.field'] = [SolrDocument.ROOT_CONTEXT_SOLR]
+        query_dict['facet.field'] = [SolrDoc.ROOT_CONTEXT_SOLR]
         return query_dict
 
     # Get a list of spatial context paths in the client request.
@@ -430,7 +426,7 @@ def get_spatial_context_query_dict(spatial_context=None):
         # Make the query term for the path
         path_term = utilities.make_solr_term_via_slugs(
             field_slug=parent_slug,
-            solr_dyn_field=SolrDocument.FIELD_SUFFIX_CONTEXT,
+            solr_dyn_field=SolrDoc.FIELD_SUFFIX_CONTEXT,
             value_slug=man_obj.slug,
         )
         path_terms.append(path_term)
@@ -439,8 +435,8 @@ def get_spatial_context_query_dict(spatial_context=None):
         # the context identified by the slug "slug".
         query_dict['facet.field'].append(
             man_obj.slug.replace('-', '_')
-            + SolrDocument.SOLR_VALUE_DELIM
-            + SolrDocument.FIELD_SUFFIX_CONTEXT
+            + SolrDoc.SOLR_VALUE_DELIM
+            + SolrDoc.FIELD_SUFFIX_CONTEXT
         )
 
     # NOTE: Multiple path terms are the result of an "OR" (||) operator
@@ -590,18 +586,13 @@ def get_general_hierarchic_path_query_dict(
         # query all levels of the hierarchy in solr.
         obj_all_slug = (
             obj_all_slug.replace('-', '_')
-            + SolrDocument.SOLR_VALUE_DELIM
+            + SolrDoc.SOLR_VALUE_DELIM
         )
-
-    if SolrDocument.DO_LEGACY_FQ:
-        # Doing the legacy filter query method, so add a
-        # suffix of _fq to the solr field.
-        fq_solr_field_suffix = '_fq'
 
     if field_suffix != 'pred_id':
         obj_all_field_fq = (
             'obj_all'
-            + SolrDocument.SOLR_VALUE_DELIM
+            + SolrDoc.SOLR_VALUE_DELIM
             + obj_all_slug
             + field_suffix
             + fq_solr_field_suffix
@@ -662,7 +653,7 @@ def get_general_hierarchic_path_query_dict(
         if item_id.startswith(configs.RELATED_ENTITY_ID_PREFIX):
             # Strip off the prefix.
             item_id = item_id[len(configs.RELATED_ENTITY_ID_PREFIX):]
-            use_solr_rel_prefix = SolrDocument.RELATED_SOLR_DOC_PREFIX
+            use_solr_rel_prefix = SolrDoc.RELATED_SOLR_DOC_PREFIX
 
         # Add the solr-rel prefix if needed.
         obj_all_field_fq = add_rel_prefix_if_needed(
@@ -716,7 +707,7 @@ def get_general_hierarchic_path_query_dict(
                     # item entity itself is not included in this list, as
                     # specified by the add_original=False arg).
                     parent_slug_part
-                    + SolrDocument.SOLR_VALUE_DELIM
+                    + SolrDoc.SOLR_VALUE_DELIM
                     + attribute_field_part
                     + field_suffix
                 )
@@ -726,8 +717,8 @@ def get_general_hierarchic_path_query_dict(
         # root field field defined for project specific predicates.
         # So, change the root solr field to be the linked data root.
         if (item_obj.item_type in URI_ITEM_TYPES
-           and facet_field == SolrDocument.ROOT_PREDICATE_SOLR):
-            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR
+           and facet_field == SolrDoc.ROOT_PREDICATE_SOLR):
+            facet_field = SolrDoc.ROOT_LINK_DATA_SOLR
 
 
         # Add the solr related prefix for related entity searches
@@ -753,7 +744,7 @@ def get_general_hierarchic_path_query_dict(
             field_fq = facet_field
             print(f'field_fq: {field_fq}, from facet_field')
 
-        # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
+        # NOTE: If SolrDoc.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
         #
@@ -811,7 +802,7 @@ def get_general_hierarchic_path_query_dict(
             # of this loop.
             facet_field = (
                 item_obj.slug.replace('-', '_')
-                + SolrDocument.SOLR_VALUE_DELIM
+                + SolrDoc.SOLR_VALUE_DELIM
                 + attribute_field_part
                 + field_suffix
             )
@@ -888,7 +879,7 @@ def get_general_hierarchic_path_query_dict(
                         (
                             use_solr_rel_prefix
                             + item.slug.replace('-', '_')
-                            + SolrDocument.SOLR_VALUE_DELIM
+                            + SolrDoc.SOLR_VALUE_DELIM
                             + field_suffix
                         )
                     )
@@ -919,7 +910,7 @@ def get_general_hierarchic_path_query_dict(
                         (
                             use_solr_rel_prefix
                             + item_obj.slug.replace('-', '_')
-                            + SolrDocument.SOLR_VALUE_DELIM
+                            + SolrDoc.SOLR_VALUE_DELIM
                             + field_suffix
                         )
                     )
@@ -952,18 +943,18 @@ def get_general_hierarchic_path_query_dict(
                 if not attribute_item_obj.meta_json.get('solr_field'):
                     attribute_field_part = (
                         attribute_item_obj.slug.replace('-', '_')
-                        + SolrDocument.SOLR_VALUE_DELIM
+                        + SolrDoc.SOLR_VALUE_DELIM
                     )
                 else:
                     # the attribute item has a preferred solr_field configured, so use that as a basis
                     # for the attribute field part. This is all kinda insane, but it seems to work
                     # for now until we can figure out a simplified approach that is less insane, maybe by
                     # doing a better job of storing solr fields that we want to query in the database.
-                    solr_parts = attribute_item_obj.meta_json.get('solr_field').split(SolrDocument.SOLR_VALUE_DELIM)
-                    use_parts = SolrDocument.SOLR_VALUE_DELIM.join(solr_parts[:-1])
+                    solr_parts = attribute_item_obj.meta_json.get('solr_field').split(SolrDoc.SOLR_VALUE_DELIM)
+                    use_parts = SolrDoc.SOLR_VALUE_DELIM.join(solr_parts[:-1])
                     attribute_field_part = (
                         use_parts
-                        + SolrDocument.SOLR_VALUE_DELIM
+                        + SolrDoc.SOLR_VALUE_DELIM
                     )
 
                 attribute_field_part = add_rel_prefix_if_needed(
@@ -976,7 +967,7 @@ def get_general_hierarchic_path_query_dict(
                     # the solr_field_name is explicitly in the DB for us to use.
                     obj_all_field_fq = (
                         'obj_all'
-                        + SolrDocument.SOLR_VALUE_DELIM
+                        + SolrDoc.SOLR_VALUE_DELIM
                         + item_obj.meta_json.get('solr_field')
                     )
                     print(f'{item_obj.slug} meta_json solr_field is source of obj_all_field_fq {obj_all_field_fq}')
@@ -984,7 +975,7 @@ def get_general_hierarchic_path_query_dict(
                     # Fall back to complex logic to guess the obj_all_field_fq
                     obj_all_field_fq = (
                         'obj_all'
-                        + SolrDocument.SOLR_VALUE_DELIM
+                        + SolrDoc.SOLR_VALUE_DELIM
                         + attribute_field_part
                         + field_suffix
                         + fq_solr_field_suffix
@@ -1073,4 +1064,22 @@ def get_general_hierarchic_paths_query_dict(
     )
     query_dict['fq'] = [all_paths_term]
     # print(f'query_dict: {query_dict}')
+    return query_dict
+
+
+def get_linked_dinaa_query_dict():
+    """Get a query dict for records that in some way cross reference with DINAA records"""
+    query_dict = {'fq': [], 'facet.field': []}
+    # Find all reference to tDAR related resources
+    dc_terms = [f'({pred}:tdar*)' for pred in configs.PROJECT_FACET_FIELDS]
+    # Find all records that have an isreferencedby predicate
+    dc_terms.append('(dc_terms_isreferencedby___pred_id:*)')
+    or_dc_terms = ' OR '.join(dc_terms)
+    query_dict['fq'].append(f'({or_dc_terms})')
+    query_dict['fq'].append(f'{SolrDoc.ROOT_PROJECT_SOLR}:52_digital_index_of_north_american_archaeology_dinaa___*')
+    query_dict['fq'].append('item_type:subjects')
+    # Now add a field to the facet.field list so solr calculates
+    # facets for class_uris for the current item type.
+    query_dict['facet.field'].append(configs.ROOT_OC_CATEGORY_SOLR)
+    query_dict['facet.field'].append('dc_terms_isreferencedby___pred_id')
     return query_dict
