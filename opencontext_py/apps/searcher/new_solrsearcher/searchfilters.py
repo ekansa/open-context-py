@@ -30,9 +30,9 @@ def make_geotile_filter_label(raw_geotile):
             label = '[Ignored invalid geospatial tile]'
         else:
             round_level = utilities.estimate_good_coordinate_rounding(
-                lon_a=coordinates[0], 
-                lat_a=coordinates[1], 
-                lon_b=coordinates[2], 
+                lon_a=coordinates[0],
+                lat_a=coordinates[1],
+                lon_b=coordinates[2],
                 lat_b=coordinates[3],
             )
             label = 'In the region bounded by: {}, {} (SW) and {}, {} (NE)'.format(
@@ -53,7 +53,7 @@ def make_bbox_filter_label(raw_disc_bbox):
         bbox_list = raw_disc_bbox.split(configs.REQUEST_OR_OPERATOR)
     else:
         bbox_list = [raw_disc_bbox]
-    
+
     output_list = []
     for bbox_str in bbox_list:
         bbox_coors = utilities.return_validated_bbox_coords(
@@ -63,9 +63,9 @@ def make_bbox_filter_label(raw_disc_bbox):
             output_list.append('[Ignored invalid bounding-box]')
             continue
         round_level = utilities.estimate_good_coordinate_rounding(
-            lon_a=bbox_coors[0], 
-            lat_a=bbox_coors[1], 
-            lon_b=bbox_coors[2], 
+            lon_a=bbox_coors[0],
+            lat_a=bbox_coors[1],
+            lon_b=bbox_coors[2],
             lat_b=bbox_coors[3],
         )
         label = 'In the bounding-box of: Latitude {}, Longitude {} (SW)'.format(
@@ -85,9 +85,9 @@ def make_bbox_filter_label(raw_disc_bbox):
 class SearchFilters():
 
     def __init__(
-        self, 
-        request_dict=None, 
-        current_filters_url=None, 
+        self,
+        request_dict=None,
+        current_filters_url=None,
         base_search_url='/search/'
     ):
         rp = RootPath()
@@ -100,10 +100,10 @@ class SearchFilters():
 
     def add_links_to_act_filter(
         self,
-        param_key, 
+        param_key,
         match_old_value,
         new_value,
-        act_filter, 
+        act_filter,
         request_dict,
         make_text_template=False,
     ):
@@ -117,12 +117,12 @@ class SearchFilters():
 
         # Remove non search related params.
         sl.remove_non_query_params()
-        
+
         sl.replace_param_value(
             param_key,
             match_old_value=match_old_value,
             new_value=new_value,
-        ) 
+        )
         urls = sl.make_urls_from_request_dict()
         if make_text_template:
             # Make template for a text search
@@ -151,31 +151,35 @@ class SearchFilters():
         param_key,
         act_val,
         act_filter,
-        param_config, 
+        param_config,
         request_dict,
     ):
         """Adds JSON for non-hierarchy filters.
-        
+
         :param str param_key: Client request query parameter
-        :param str act_val: URL unquoted client request 
+        :param str act_val: URL unquoted client request
             search value
         :param dict act_filter: Dictionary describing the
-            search filter associated with the param_key 
+            search filter associated with the param_key
             and act_val.
-        :param dict param_config: Configuration dictionary 
+        :param dict param_config: Configuration dictionary
             for translating the param_key and act_val into
             an act_filter.
         :param dict request_dict: Dictionary object of the GET
-            request from the client. 
+            request from the client.
         """
-
         if param_config.get('label'):
             act_filter['label'] = param_config['label']
         elif param_config.get('label-template'):
             act_filter['label'] = param_config['label-template'].format(
-                act_val=act_val    
+                act_val=act_val
             )
-        
+        if param_config.get('key_in_val_labels'):
+            for key, label in param_config.get('key_in_val_labels').items():
+                if not key in act_val:
+                    continue
+                act_filter['label'] = label
+
         if param_key in ['allevent-start', 'allevent-stop']:
             # Case for filters on years.
             act_date = utilities.string_to_int(act_val)
@@ -184,8 +188,8 @@ class SearchFilters():
             elif act_date < 0:
                 act_filter['label'] = '{} BCE'.format(act_date)
             else:
-                act_filter['label'] = '{} CE'.format(act_date) 
-       
+                act_filter['label'] = '{} CE'.format(act_date)
+
         elif param_key == 'allevent-chronotile':
             chrono = ChronoTile()
             dates = chrono.decode_path_dates(act_val)
@@ -201,7 +205,7 @@ class SearchFilters():
             act_filter['label'] = make_geotile_filter_label(
                 act_val
             )
-        
+
         elif param_key in ['allevent-bbox', 'bbox']:
             act_filter['label'] = make_bbox_filter_label(
                 act_val
@@ -209,26 +213,26 @@ class SearchFilters():
 
         # Add the removal links.
         act_filter = self.add_links_to_act_filter(
-            param_key, 
+            param_key,
             match_old_value=None,
             new_value=None,
-            act_filter=act_filter, 
+            act_filter=act_filter,
             request_dict=request_dict,
         )
         return act_filter
 
 
     def add_entity_item_to_act_filter(
-            self, 
-            lookup_val, 
-            act_filter, 
+            self,
+            lookup_val,
+            act_filter,
             is_spatial_context=False,
             look_up_mapping_dict=None,
         ):
         """Looks up a entity item to add to an act_filter"""
         lookup_val = str(lookup_val)
         print(f'Lookup val is: {lookup_val}')
-    
+
         if lookup_val.startswith(configs.RELATED_ENTITY_ID_PREFIX):
             # Strip off the related property prefix. Note that this
             # is a related property.
@@ -238,7 +242,7 @@ class SearchFilters():
         # Map the lookup_val to a mapping dict
         if look_up_mapping_dict:
             lookup_val = look_up_mapping_dict.get(
-                lookup_val, 
+                lookup_val,
                 lookup_val
             )
 
@@ -263,15 +267,15 @@ class SearchFilters():
             if not item:
                 continue
             items.append(item)
-        
+
         if not len(items):
             # We didn't find any item entities, so return
             # the lookup list as the label.
             act_filter['label'] = ' OR '.join(lookup_list)
             return act_filter, None
-        
+
         # Use all the item labels to make a label.
-        item_labels = [item.label for item in items]   
+        item_labels = [item.label for item in items]
         act_filter['label'] = ' OR '.join(item_labels)
 
         if len(items) == 1:
@@ -279,13 +283,13 @@ class SearchFilters():
             # URI and slug.
             act_filter['rdfs:isDefinedBy'] = items[0].uri
             act_filter['oc-api:filter-slug'] = items[0].slug
-        
+
         return act_filter, item
 
-    
+
     def add_filters_json(self, request_dict):
         """Adds JSON describing active search filters.
-        
+
         :param dict request_dict: Dictionary object of the GET
             request from the client.
         """
@@ -305,7 +309,7 @@ class SearchFilters():
                 continue
             if param_key in configs.FILTER_IGNORE_PARAMS:
                 continue
-            
+
             # Normalize the values of this parameter into a
             # list to make processing easier
             if not isinstance(param_vals, list):
@@ -320,12 +324,12 @@ class SearchFilters():
                 # No configuration for this request parameter
                 continue
 
-            # Get the hierarchy delimiter configured 
+            # Get the hierarchy delimiter configured
             # for values used by this param_key.
             hierarchy_delim = param_config.get('hierarchy_delim')
-            
+
             for param_val in param_vals:
-                
+
                 if (hierarchy_delim and hierarchy_delim in param_val):
                     # NOTE: Sometimes we may get a param_val that
                     # has a trailing hierarchy delim. This will result in weird
@@ -336,9 +340,9 @@ class SearchFilters():
                     hierarchy_vals = splitting_param_val.split(hierarchy_delim)
                 else:
                     hierarchy_vals = [param_val]
-                
+
                 parent_path_vals = []
-                
+
                 # This gets set in the event that we have a
                 # property with a string data type. It is used to make
                 # a search template for that string.
@@ -353,15 +357,15 @@ class SearchFilters():
                         )
                     else:
                         act_full_path = act_val
-                    
-                    # Count the existing filters to make the 
+
+                    # Count the existing filters to make the
                     # index of the next one.
                     i = len(filters) + 1
 
                     act_filter = LastUpdatedOrderedDict()
                     act_filter['id'] = '#filter-{}'.format(i)
                     act_filter['oc-api:filter'] = param_config['oc-api:filter']
-                    
+
                     if hierarchy_delim is None:
                         # Do one of the many special case non-hierarchic
                         # filter parameters.
@@ -369,7 +373,7 @@ class SearchFilters():
                             param_key,
                             act_val,
                             act_filter,
-                            param_config, 
+                            param_config,
                             request_dict,
                         )
                         filters.append(act_filter)
@@ -382,7 +386,7 @@ class SearchFilters():
                     # The filter-group helps to group together all of the
                     # levels of the hierarchy_vals.
                     act_filter['oc-api:filter-group'] = param_val
-                    
+
                     if param_key == "path":
                         # Look up item entity for spatial context
                         # path items by the current path, which will
@@ -392,7 +396,7 @@ class SearchFilters():
                         # Look up the item entity simply by using
                         # the current act_val.
                         item_lookup_val = act_val
-                    
+
                     if text_template_value is None:
                         # Do not do this for the string value of a string
                         # type property
@@ -400,7 +404,7 @@ class SearchFilters():
                             item_lookup_val,
                             act_filter,
                             is_spatial_context=param_config.get(
-                                'is_spatial_context', 
+                                'is_spatial_context',
                                 False
                             ),
                             look_up_mapping_dict=param_config.get(
@@ -410,8 +414,8 @@ class SearchFilters():
                         if item and getattr(item, 'data_type') == 'xsd:string':
                             act_search_term = None
                             text_template_value = (
-                                act_full_path 
-                                + hierarchy_delim 
+                                act_full_path
+                                + hierarchy_delim
                                 + configs.URL_TEXT_QUERY_TEMPLATE
                             )
                     else:
@@ -431,20 +435,20 @@ class SearchFilters():
                         # searches.
                         act_filter["oc-api:search-term"] = act_search_term
                         act_filter = self.add_links_to_act_filter(
-                            param_key, 
+                            param_key,
                             match_old_value=param_val,
                             new_value=text_template_value,
-                            act_filter=act_filter, 
+                            act_filter=act_filter,
                             request_dict=request_dict,
                             make_text_template=True,
                         )
 
                     # Add the totally remove filter links
                     act_filter = self.add_links_to_act_filter(
-                        param_key, 
+                        param_key,
                         match_old_value=param_val,
                         new_value=None,
-                        act_filter=act_filter, 
+                        act_filter=act_filter,
                         request_dict=request_dict,
                     )
 
@@ -452,13 +456,13 @@ class SearchFilters():
                         # We can add links to broaden this current
                         # filter to a higher level in the hierarchy.
                         act_filter = self.add_links_to_act_filter(
-                            param_key, 
+                            param_key,
                             match_old_value=param_val,
                             new_value=act_full_path,
-                            act_filter=act_filter, 
+                            act_filter=act_filter,
                             request_dict=request_dict,
                         )
 
                     filters.append(act_filter)
-                    
+
         return filters

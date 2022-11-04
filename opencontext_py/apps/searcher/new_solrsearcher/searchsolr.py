@@ -552,9 +552,13 @@ class SearchSolr():
             as_list=False,
             solr_escape=False,
         )
-        if 'dinaa' in dinaa_linked:
+        if dinaa_linked and 'dinaa' in dinaa_linked:
             # We're querying for DINAA record with cross references with other
             # resources outside Open Context
+            # First, remove this filter if present. It will conflict with
+            # query terms we have set up for DINAA.
+            if 'ld___pred_id:dc_terms_is_referenced_by___*' in query['fq']:
+                query['fq'].remove('ld___pred_id:dc_terms_is_referenced_by___*')
             query_dict = querymaker.get_linked_dinaa_query_dict()
             # Now combine the DINAA query to the over-all query.
             query = utilities.combine_query_dict_lists(

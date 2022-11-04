@@ -23,6 +23,17 @@ REQUEST_URL_FORMAT_EXTENTIONS = [
 ]
 
 
+# These are used to add additional request parameters and values to the request_dict.
+# For example if 'linked' and 'dinaa' are in the request dict, we need to make sure
+# we also have type=subjects, proj=52-digital-index.., and prop=dc-terms-is-ref..
+PARAM_KEY_VAL_EXPANSIONS = [
+    ('linked', 'dinaa', 'type', 'subjects',),
+    ('linked', 'dinaa', 'proj', '52-digital-index-of-north-american-archaeology-dinaa',),
+    ('linked', 'dinaa', 'prop', 'dc-terms-is-referenced-by',),
+]
+
+
+
 # Geospace and chronology related facets are in a hierarchy of
 # event classes. For now, we'll only use the root of the hierarchy, but
 # in the future we may want to implement features to allow queries and
@@ -348,8 +359,8 @@ HIERARCHY_PARAM_TO_SOLR = [
     (
         'dc-isReferencedBy', None,
         {
-            'root_field': 'dc_terms_isreferencedby___pred_id',
-            'obj_all_slug': 'dc-terms-isreferencedby',
+            'root_field': 'dc_terms_is_referenced_by___pred_id',
+            'obj_all_slug': 'dc-terms-is-referenced-by',
             'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
         },
     ),
@@ -606,19 +617,22 @@ FILTER_PARAM_CONFIGS = {
         'oc-api:filter': 'Links (in some manner) to object',
         # False to not split on hierarchy but do check
         # for entities
-        'hierarchy_delim': False,
+        'hierarchy_delim': '',
         'is_spatial_context': False,
     },
     'linked': {
         'oc-api:filter': 'Has cross references',
         # False to not split on hierarchy but do check
         # for entities
-        'hierarchy_delim': False,
+        'hierarchy_delim': None,
         'is_spatial_context': False,
+        'key_in_val_labels': {
+            'dinaa': 'Links to, or with, DINAA curated site records'
+        },
     },
     'type': {
         'oc-api:filter': 'Open Context Type',
-        'hierarchy_delim': False,
+        'hierarchy_delim': '',
         'is_spatial_context': False,
         'look_up_mapping_dict': ITEM_TYPE_SLUG_MAPPINGS,
     },

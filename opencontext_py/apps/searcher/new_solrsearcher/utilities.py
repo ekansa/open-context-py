@@ -39,7 +39,7 @@ def make_alternative_prefix_list(raw_term, alt_prefixes=('http://', 'https://',)
     """Makes list where a string does and does not end with a suffix"""
     if not isinstance(raw_term, str):
         return None
-    if (not raw_term.startswith('http://') 
+    if (not raw_term.startswith('http://')
         and not raw_term.startswith('https://')
         and ':' in raw_term):
         full_uri = URImanagement.convert_prefix_to_full_uri(raw_term)
@@ -61,7 +61,7 @@ def make_uri_equivalence_list(raw_term, alt_suffix="/"):
     # entities. Open Context considers http:// and https:// URLs to be
     # equivalent. This function takes a raw term and makes http://
     # https:// variants. It also makes a prefixed URL if a namespace
-    # is recognized in URImanagement. Finally, it will by default, 
+    # is recognized in URImanagement. Finally, it will by default,
     # make variants that have and do not have a trailing "/".
 
     output_list = []
@@ -82,7 +82,7 @@ def make_uri_equivalence_list(raw_term, alt_suffix="/"):
 
     for term in url_terms:
         http_alts = make_alternative_prefix_list(
-            term, 
+            term,
             alt_prefixes=('http://', 'https://',)
         )
         if not http_alts:
@@ -113,13 +113,13 @@ def get_item_type_dict(raw_type_key):
     type_keys = make_uri_equivalence_list(raw_type_key)
     look_up_types = {
         # Add to the lookup keyed by slug
-        type_dict['slug']: type_dict 
+        type_dict['slug']: type_dict
         for key, type_dict in configs.ITEM_TYPE_MAPPINGS.items()
     }
     for _, type_dict in configs.ITEM_TYPE_MAPPINGS.items():
         # Now add to the lookup keyed by the isDefinedBy value
         look_up_types[type_dict['rdfs:isDefinedBy']] = type_dict
-    
+
     for type_key in make_uri_equivalence_list(raw_type_key):
         type_dict = look_up_types.get(type_key)
         if type_dict is not None:
@@ -167,7 +167,7 @@ def infer_multiple_or_hierarchy_paths(
         path_lists = [raw_path.split(or_delim)]
     # Create a list of the various permutations
     path_tuple_list = list(itertools.product(*path_lists))
-    
+
     # Make sure that we return unique paths. Make string
     # paths and paths-as-lists.
     paths_as_strs = []
@@ -182,7 +182,7 @@ def infer_multiple_or_hierarchy_paths(
             continue
         paths_as_strs.append(new_path)
         paths_as_lists.append(path_parts)
-    
+
     # Return paths as either strings or as lists
     if get_paths_as_lists:
         return paths_as_lists
@@ -192,7 +192,7 @@ def infer_multiple_or_hierarchy_paths(
 
 def get_path_depth(path, delimiter='/'):
     """Gets the depth of a (number of items) if split by a delimiter
-    
+
     :param str path: A hierarchic path, with levels separated by a
         delimiter
     :param str delimiter: A string delimiter between different levels
@@ -213,7 +213,7 @@ def rename_solr_field_for_data_type(data_type, solr_field):
     """
     if not SolrDoc.SOLR_VALUE_DELIM in solr_field:
         # No change, this is not solr field formatted in a
-        # way we'd expect data_type specific variants. 
+        # way we'd expect data_type specific variants.
         return solr_field
     parts = solr_field.split(SolrDoc.SOLR_VALUE_DELIM)
     general_part = parts[-1]
@@ -221,7 +221,7 @@ def rename_solr_field_for_data_type(data_type, solr_field):
     if '_' in general_part:
         general_part = general_part.split('_')[0]
     new_ending = solr_utils.get_solr_data_type_from_data_type(
-        data_type, 
+        data_type,
         prefix=(general_part + '_')
     )
     return first_part + SolrDoc.SOLR_VALUE_DELIM + new_ending
@@ -288,7 +288,7 @@ def make_solr_term_via_slugs(
     solr_field_suffix='',
 ):
     """Makes a solr query term from slugs
-    
+
     :param str field_slug: Slug for the field name, which is sometimes
         the slug for the value_slug parent.
     :param str field_parent_slug: Slug for a parent entity that is the
@@ -304,7 +304,7 @@ def make_solr_term_via_slugs(
     :param str value_slug: A string for the slug value that we want
         to query.
     """
-    
+
     # Format the value slug for the filter query.
     value_slug = fq_slug_value_format(value_slug)
 
@@ -316,7 +316,7 @@ def make_solr_term_via_slugs(
             SolrDoc.SOLR_VALUE_DELIM
             + field_parent_slug.replace('-', '_')
         )
-    
+
     return (
         solr_parent_prefix
         + SolrDoc.SOLR_VALUE_DELIM
@@ -365,7 +365,7 @@ def escape_solr_arg(arg):
 
 def string_to_float(str_val, invalid_output=None):
     """Convert a string value to a float, if valid
-    
+
     :param str str_val: String value we want to convert to float
     """
     try:
@@ -377,7 +377,7 @@ def string_to_float(str_val, invalid_output=None):
 
 def string_to_int(str_val, invalid_output=None):
     """Convert a string value to a integer, if valid
-    
+
     :param str str_val: String value we want to convert to int
     """
     float_val = string_to_float(str_val, invalid_output)
@@ -388,7 +388,7 @@ def string_to_int(str_val, invalid_output=None):
     except:
         return invalid_output
     return output
-    
+
 
 def get_request_param_value(
     request_dict,
@@ -401,7 +401,7 @@ def get_request_param_value(
 ):
     """ Return a list, str, float, or int (depending on args) from a
         request dict:
-    
+
     :param dict request_dict: The dictionary of keyed by client
         request parameters and their request parameter values.
     :param str param: The URL query parameter used as a key for to
@@ -417,7 +417,7 @@ def get_request_param_value(
     """
     if not isinstance(request_dict, dict):
         return None
-    
+
     raw_vals = request_dict.get(param, default)
     if not isinstance(raw_vals, list):
         raw_vals = [raw_vals]
@@ -433,35 +433,35 @@ def get_request_param_value(
         elif require_int:
             raw_val = string_to_int(raw_val, invalid_output=default)
         outputs.append(raw_val)
-    
+
     if not as_list:
         # We don't want the output returned as a list, so just return
-        # the first element of the list as the output 
+        # the first element of the list as the output
         return outputs[0]
     return outputs
 
 
 def prep_string_search_term_list(raw_fulltext_search):
     """ Prepares a list of quoted, solr escaped search terms.
-    
+
     :param str raw_term: The raw search term requested by the client.
     """
     # Make a temporary list of search terms.
     act_terms = []
     # Extract quoted parts of the raw search term
     act_terms += re.findall(r'"([^"]*)"', raw_fulltext_search)
-    
+
     # Remove the quoted parts to get unquoted parts.
     not_quoted_part = raw_fulltext_search
     for quoted_part in act_terms:
         not_quoted_part = not_quoted_part.replace(
             '"{}"'.format(quoted_part), ''
         ).strip()
-    
+
     # Use the space character to split the non-quoted parts into
     # different token/works
     act_terms += not_quoted_part.split(' ')
-    
+
     # Now we can make the final list of quoted, escaped search
     # terms.
     terms = []
@@ -478,6 +478,37 @@ def prep_string_search_term_list(raw_fulltext_search):
 # ---------------------------------------------------------------------
 # DICTIONARY RELATED FUNCTIONS
 # ---------------------------------------------------------------------
+def add_pre_config_request_params(request_dict):
+    """Adds expanded request parameters and values based on configurations"""
+    # NOTE: We have a special query parameter and value 'linked=dinaa-cross-ref'
+    # that needs to be expanded to include other parameter to work well. Add
+    # these other parameters if they are not already present.
+    for exp_param, exp_val, param, param_val in configs.PARAM_KEY_VAL_EXPANSIONS:
+        act_exp_val = get_request_param_value(
+            request_dict,
+            param=exp_param,
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if not act_exp_val:
+            continue
+        if not exp_val in act_exp_val:
+            continue
+        if not request_dict.get(param):
+            request_dict[param] = [param_val]
+            continue
+        if not isinstance(request_dict[param], list):
+            continue
+        need_add_val = True
+        for act_param_val in request_dict[param]:
+            if param_val == act_param_val or act_param_val.startswith(param_val):
+                need_add_val = False
+        if not need_add_val:
+            continue
+        request_dict[param].append(param_val)
+    return request_dict
+
 
 def make_request_obj_dict(request, spatial_context=None):
     """Extracts GET parameters and values from a Django
@@ -489,6 +520,7 @@ def make_request_obj_dict(request, spatial_context=None):
         # "for key in request.GET" works too.
         for key, _ in request.GET.items():
             request_dict[key] = copy.deepcopy(request.GET.getlist(key))
+    request_dict = add_pre_config_request_params(request_dict)
     return request_dict
 
 
@@ -500,8 +532,8 @@ def safe_remove_item_from_list(item, item_list):
 
 
 def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=None):
-    """Combines lists from the part_query_dict into the 
-    
+    """Combines lists from the part_query_dict into the
+
     :param dict part_query_dict: The smaller query dict that will get
         merged into the main_query_dict.
     :param dict main_query_dict: The main query dict that we're adding
@@ -526,7 +558,7 @@ def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=None):
         elif (isinstance(main_query_dict[key], list)
             and isinstance(values, list)):
             main_query_dict[key] += values
-    
+
     return main_query_dict
 
 
@@ -565,39 +597,39 @@ def make_https_or_http_url(no_protocol_url):
             no_protocol_url = no_protocol_url[len(proto):]
     if is_http_only_url(no_protocol_url):
         return f'http://{no_protocol_url}'
-    return f'https://{no_protocol_url}' 
+    return f'https://{no_protocol_url}'
 
 
 def parse_solr_encoded_entity_str(
     entity_str,
-    base_url='', 
+    base_url='',
     solr_value_delim=SolrDoc.SOLR_VALUE_DELIM,
     solr_slug_format=False
 ):
     """Parses an entity string encoded for solr"""
-    
+
     # NOTE: This is reverse of the function:
     # solr_utils.make_entity_string_for_solr
     if not solr_value_delim in entity_str:
         return None
-    
+
     parts = entity_str.split(solr_value_delim)
     if len(parts) < 4:
         # Not a valid encoding so skip.
         return None
-    
+
     if len(parts) == 5 and parts[3] != parts[4]:
         alt_label = parts[4]
     else:
         alt_label = None
-    
+
     # This makes it easier to link to a local deployment of
     # opencontext.
     if parts[2].startswith(settings.CANONICAL_BASE_URL):
         uri = base_url + parts[2].split(settings.CANONICAL_BASE_URL)[-1]
     else:
         uri = make_https_or_http_url(parts[2])
-    
+
     # Return a dictionary of the parsed entity.
     if not solr_slug_format:
         slug = parts[0].replace('_', '-')
@@ -650,8 +682,8 @@ def get_facet_value_count_tuples(solr_facet_value_count_list, no_zeros=True):
 
 
 def get_path_facet_value_count_tuples(
-    path_keys_list, 
-    solr_response_dict, 
+    path_keys_list,
+    solr_response_dict,
     default=[]
 ):
     """Gets a list of facet value, count tuples form a solr response
@@ -662,8 +694,8 @@ def get_path_facet_value_count_tuples(
         JSON response
     """
     solr_facet_value_count_list = get_dict_path_value(
-        path_keys_list, 
-        solr_response_dict, 
+        path_keys_list,
+        solr_response_dict,
         default=None
     )
     if not isinstance(solr_facet_value_count_list, list):
@@ -763,7 +795,7 @@ def add_solr_gap_to_date(date_val, solr_gap):
 # ---------------------------------------------------------------------
 # GEOSPATIAL AND TIME FUNCTIONS
 # ---------------------------------------------------------------------
-def get_aggregation_depth_to_group_paths( 
+def get_aggregation_depth_to_group_paths(
     max_groups,
     paths,
     max_depth=None
@@ -790,7 +822,7 @@ def get_aggregation_depth_to_group_paths(
 
     if len(paths) <= max_groups:
         return max_depth
-    
+
     keep_looping = True
     agg_depth = max_depth
     while keep_looping and agg_depth > 0:
@@ -812,11 +844,11 @@ def validate_geo_coordinate(coordinate, coord_type):
         except ValueError:
             return False
     if 'lat' in coord_type:
-        if (fl_coord <= 90 
+        if (fl_coord <= 90
             and fl_coord >= -90):
             return True
     elif 'lon' in coord_type:
-        if (fl_coord <= 180 
+        if (fl_coord <= 180
             and fl_coord >= -180):
             return True
     return False
@@ -849,7 +881,7 @@ def validate_bbox_coordinates(bbox_coors):
         print(f'lower left valid {lower_left_valid}; top right valid {top_right_valid}')
         return False
 
-    if ((bbox_coors[0] < bbox_coors[2]) 
+    if ((bbox_coors[0] < bbox_coors[2])
         and (bbox_coors[1] < bbox_coors[3])):
         return True
     else:
@@ -876,11 +908,11 @@ def return_validated_bbox_coords(bbox_str):
     return bbox_coors
 
 def estimate_good_coordinate_rounding(
-    lon_a, 
-    lat_a, 
-    lon_b, 
-    lat_b, 
-    min_round=2, 
+    lon_a,
+    lat_a,
+    lon_b,
+    lat_b,
+    min_round=2,
     max_round=20,
 ):
     """Estimates a good rounding precision for display"""
@@ -895,8 +927,8 @@ def estimate_good_coordinate_rounding(
         trunc_dist = math.trunc(dist * pow(10, round_level))
         print(
             f'{dist} has round: {round_dist}, trunc {trunc_dist} at round_level {round_level}'
-        ) 
-        if ((round_dist > 0.0 and trunc_dist >= 5) 
+        )
+        if ((round_dist > 0.0 and trunc_dist >= 5)
             or round_level >= max_round):
             round_more = False
         else:

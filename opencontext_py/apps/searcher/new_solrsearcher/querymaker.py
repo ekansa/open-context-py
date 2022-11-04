@@ -1073,7 +1073,7 @@ def get_linked_dinaa_query_dict():
     # Find all reference to tDAR related resources
     dc_terms = [f'({pred}:tdar*)' for pred in configs.PROJECT_FACET_FIELDS]
     # Find all records that have an isreferencedby predicate
-    dc_terms.append('(dc_terms_isreferencedby___pred_id:*)')
+    dc_terms.append('(ld___pred_id:dc_terms_is_referenced_by___*)')
     or_dc_terms = ' OR '.join(dc_terms)
     query_dict['fq'].append(f'({or_dc_terms})')
     query_dict['fq'].append(f'{SolrDoc.ROOT_PROJECT_SOLR}:52_digital_index_of_north_american_archaeology_dinaa___*')
@@ -1081,5 +1081,5 @@ def get_linked_dinaa_query_dict():
     # Now add a field to the facet.field list so solr calculates
     # facets for class_uris for the current item type.
     query_dict['facet.field'].append(configs.ROOT_OC_CATEGORY_SOLR)
-    query_dict['facet.field'].append('dc_terms_isreferencedby___pred_id')
+    query_dict['facet.field'].append('dc_terms_is_referenced_by___pred_id')
     return query_dict
