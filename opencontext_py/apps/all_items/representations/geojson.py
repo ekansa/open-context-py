@@ -500,6 +500,10 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
         # Add the chronology object.
         when = LastUpdatedOrderedDict()
         when["id"] = f"#feature-when-{chrono_spacetime_obj.uuid}"
+        if chrono_spacetime_obj.earliest == chrono_spacetime_obj.latest:
+            when['type'] = 'Instant'
+        else:
+            when['type'] = 'Interval'
         when["start"] = ISOyears().make_iso_from_float(
             float(chrono_spacetime_obj.earliest)
         )

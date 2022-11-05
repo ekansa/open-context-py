@@ -962,14 +962,19 @@ class ResultRecord():
             # If we have dates, add them.
             when = LastUpdatedOrderedDict()
             when['id'] = f'#record-event-{record_index}-of-{total_found}'
-            when['type'] = 'oc-gen:general-time-space'
+            when['event_type'] = 'oc-gen:general-time-space'
+            if self.early_date == self.late_date:
+                when['type'] = 'Instant'
+            else:
+                when['type'] = 'Interval'
             # convert numeric to GeoJSON-LD ISO 8601
             when['start'] = ISOyears().make_iso_from_float(
                 self.early_date
             )
-            when['stop'] = ISOyears().make_iso_from_float(
-                self.late_date
-            )
+            if self.late_date != self.early_date:
+                when['stop'] = ISOyears().make_iso_from_float(
+                    self.late_date
+                )
             geo_json['when'] = when
 
         # Now add the properties dict to the GeoJSON
