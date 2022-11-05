@@ -27,7 +27,7 @@
                 Modifying Item Record URLs
             </th>
             <td>
-                <p>For individual record items, you can get JSON data by simply adding a "<strong>.json</strong>" to the end of a record's URL. For example, you can get the JSON for this object: <samp><a title="Example pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC</a></samp>, with this URL: <samp><a title="JSON for the pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC.json">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC<strong>.json</strong></a></samp>.</p>
+                <p>For individual record items, you can get JSON data by simply adding a "<strong>.json</strong>" to the end of a record's URL. For example, you can get the JSON for this object: <samp><a title="Example documenting a mosque" target="_blank" href="{{ BASE_URL }}/subjects/c4f88b9c-aee0-430a-baad-083f5dfda8fd">{{ BASE_URL}}/subjects/c4f88b9c-aee0-430a-baad-083f5dfda8fd</a></samp>, with this URL: <samp><a title="JSON for the mosque record" target="_blank" href="{{ BASE_URL}}/subjects/c4f88b9c-aee0-430a-baad-083f5dfda8fd.json">{{ BASE_URL}}/subjects/c4f88b9c-aee0-430a-baad-083f5dfda8fd<strong>.json</strong></a></samp>.</p>
                 <p>Because JSON-LD has some constraints that make it unsuitable to express complex geospatial features (see note below), Open Context allows you to specifically request strict JSON-LD either through content negotiation or by appending <samp>.jsonld</samp> to item URLs.</p>
             </td>
         </tr>
@@ -40,12 +40,12 @@
                 <ol>
                     <li>
                         <h5><em>Query without a "?" in the URL</em></h5>
-                        <p>The search URL <samp><a title="Query for Kenan Tepe" target="_blank" href="{{ base_url}}/subjects-search/Turkey/Kenan+Tepe">{{ base_url}}/subjects-search/Turkey/Kenan+Tepe</a></samp> becomes <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json">{{ base_url}}/subjects-search/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> for a JSON request.
+                        <p>The search URL <samp><a title="Query for Kenan Tepe" target="_blank" href="{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe">{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe</a></samp> becomes <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe.json">{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> for a JSON request.
                         </p>
                     </li>
                     <li>
                         <h5><em>Query with a "?" in the URL</em></h5>
-                        <p>The search URL <samp><a title="Query for Murlo project" target="_blank" href="{{ base_url}}/subjects-search/?proj=24-murlo">{{ base_url}}/subjects-search/?proj=24-murlo</a></samp> becomes <samp><a title="JSON query for Murlo project" target="_blank" href="{{ base_url}}/subjects-search/.json?proj=24-murlo">{{ base_url}}/subjects-search/<strong>.json</strong>?proj=24-murlo</a></samp> for a JSON request.
+                        <p>The search URL <samp><a title="Query for Murlo project" target="_blank" href="{{ BASE_URL}}/query/?proj=24-murlo">{{ BASE_URL}}/query/?proj=24-murlo</a></samp> becomes <samp><a title="JSON query for Murlo project" target="_blank" href="{{ BASE_URL}}/query/.json?proj=24-murlo">{{ BASE_URL}}/query/<strong>.json</strong>?proj=24-murlo</a></samp> for a JSON request.
                         </p>
                     </li>
                 </ol>
@@ -60,12 +60,12 @@
                 <ol>
                     <li>
                         <h5><em>Example (Search/Query Request):</em></h5>
-                        <p>The plain JSON(-LD) request URL <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json">{{ base_url}}/subjects-search/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> can be made as a JSONP request like: <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json?callback=myFunction">{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json?<strong>callback=myFunction</strong></a></samp>
+                        <p>The plain JSON(-LD) request URL <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe.json">{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> can be made as a JSONP request like: <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe.json?callback=myFunction">{{ BASE_URL}}/query/Asia/Turkey/Kenan+Tepe.json?<strong>callback=myFunction</strong></a></samp>
                         </p>
                     </li>
                     <li>
                         <h5><em>Example (Item Request):</em></h5>
-                        <p>The plain JSON(-LD) request URL <samp><a title="JSON for the Kenan Tepe project" target="_blank" href="{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E.json">{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E<strong>.json</strong></a></samp> can be made as a JSONP request like: <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E.json?callback=oneDoesNotSimply">{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E.json?<strong>callback=oneDoesNotSimply</strong></a></samp>
+                        <p>The plain JSON(-LD) request URL <samp><a title="JSON for the Gabii project" target="_blank" href="{{ BASE_URL}}/projects/3585b372-8d2d-436c-9a4c-b5c10fce3ccd.json">{{ BASE_URL}}/projects/3585b372-8d2d-436c-9a4c-b5c10fce3ccd<strong>.json</strong></a></samp> can be made as a JSONP request like: <samp><a title="JSON query for Gabii" target="_blank" href="{{ BASE_URL}}/projects/3585b372-8d2d-436c-9a4c-b5c10fce3ccd.json?callback=oneDoesNotSimply">{{ BASE_URL}}/projects/3585b372-8d2d-436c-9a4c-b5c10fce3ccd.json?<strong>callback=oneDoesNotSimply</strong></a></samp>
                         </p>
                     </li>
                 </ol>
@@ -77,13 +77,13 @@
 
 <div id="json-ld-caveat" style="margin-top:20px;">
     <h4>Notes about GeoJSON, JSON, and JSON-LD</h4>
-    
+
     <p>In general, the GeoJSON, JSON, and JSON-LD responses from Open Context are all exactly the same. However, the JSON-LD standard currently has some constraints that make it unsuitable for expressing deeply nested lists of coordinates as required for representing non-point geospatial features. If you specify a JSON-LD response (as opposed to a plain JSON or GeoJSON response), only point geospatial features will be returned by Open Context. This will help keep the JSON-LD response valid, but it will not express richer geospatial data for polygon, multipolygon or line features.</p>
 </div>
 
 <div id="json-ld-caveat" style="margin-top:20px;">
     <h4>Other Linked Data Representations</h4>
-    
+
     <p>Open Context provides preliminary / experimental support for other RDF (linked data) representations via content negotiation or by appending extensions to the URLs of item records. These now include:</p>
     <ul class="list-unstyled">
         <li><samp>Accept: application/n-triples</samp>, or extension: <samp>.nt</samp></li>
@@ -91,4 +91,3 @@
         <li><samp>Accept: text/turtle</samp>, or extension: <samp>.ttl</samp></li>
     </ul>
 </div>
-

@@ -19,16 +19,16 @@
 <p>Open Context has a variety of query services for different types of content. These all use the same query syntax and, if desired, will return JSON using the same schema. The different query services are as follows:</p>
 <ul class="sep-list">
     <li><strong>Data Records ('subjects')</strong>: For searching the subjects of observation and recording (the main 'data' in Open Context, start search requests with the following URL:<br/>
-        <samp><a href="{{ base_url}}/subjects-search/" target="_blank">{{ base_url}}/subjects-search/</a></samp>
+        <samp><a href="{{ BASE_URL}}/query/?type=subjects" target="_blank">{{ BASE_URL}}/query/?type=subjects</a></samp>
     </li>
     <li><strong>Media Resources</strong>: For searching metadata about media (images, videos, and other binary media formats) in Open Context, start search requests with the following URL:<br/>
-        <samp><a href="{{ base_url}}/media-search/" target="_blank">{{ base_url}}/media-search/</a></samp>
+        <samp><a href="{{ BASE_URL}}/query/?type=media" target="_blank">{{ BASE_URL}}/query/?type=media</a></samp>
     </li>
     <li><strong>Projects</strong>: For searching project metadata and abstracts in Open Context, start search requests with the following URL:<br/>
-        <samp><a href="{{ base_url}}/projects-search/" target="_blank">{{ base_url}}/projects-search/</a></samp>
+        <samp><a href="{{ BASE_URL}}/query/?type=projects" target="_blank">{{ BASE_URL}}/query/?type=projects</a></samp>
     </li>
     <li><strong>Everything</strong>: For all inclusive searches of all content types in Open Context, start search requests with the following URL:<br/>
-        <samp><a href="{{ base_url}}/search/" target="_blank">{{ base_url}}/search/</a></samp>
+        <samp><a href="{{ BASE_URL}}/query/" target="_blank">{{ BASE_URL}}/query/</a></samp>
     </li>
 </ul>
 
@@ -40,7 +40,7 @@
             <div class="col-sm-10">
                 <div class="media">
                     <div class="media-left media-top">
-                        <img style="" src="{{ base_url }}/static/oc/images/about/open-archives-logo.gif" alt="Open Archives Initiative Logo" />
+                        <img style="" src="{{ BASE_URL }}/static/oc/images/about/open-archives-logo.gif" alt="Open Archives Initiative Logo" />
                     </div>
                     <div class="media-body">
                         <p>Open Context provides an Open Archives Initiative Protocol for Metadata Harvesting
@@ -48,7 +48,7 @@
                            of scholarly content support this type of service.
                         </p>
                         <p>Open Context's OAI-PMH service endpoint is located here:
-                            <samp><a href="{{ base_url }}/oai/" target="_blank">{{ base_url }}/oai/</a></samp>
+                            <samp><a href="{{ BASE_URL }}/oai/" target="_blank">{{ BASE_URL }}/oai/</a></samp>
                         </p>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
             <div class="col-sm-10">
                 <div class="media">
                     <div class="media-left media-top">
-                        <img style="width: 100px;" src="{{ base_url }}/static/oc/images/about/feed-noun-89519.png" alt="Feed Icon" />
+                        <img style="width: 100px;" src="{{ BASE_URL }}/static/oc/images/about/feed-noun-89519.png" alt="Feed Icon" />
                     </div>
                     <div class="media-body">
                         <p>Open Context provides a feed using the <a href="https://tools.ietf.org/html/rfc4287" target="_blank">Atom Syndication Format</a>.
@@ -72,8 +72,8 @@
                            Digital libraries and other systems can crawl this
                            feed to accession content from Open Context.
                         </p>
-                        <p>Open Context's manifest feed is located here:
-                            <samp><a href="{{ base_url }}/manifest/.atom" target="_blank">{{ base_url }}/manifest/.atom</a></samp>
+                        <p>Open Context's manifest feed <b>WILL BE</b> located here:
+                            <samp><a href="{{ BASE_URL }}/manifest/.atom" target="_blank">{{ BASE_URL }}/manifest/.atom</a></samp>
                         </p>
                     </div>
                 </div>
@@ -82,12 +82,12 @@
     </div>
 </div>
 
-{% if base_url != 'http://opencontext.org' %}
+{% if BASE_URL != 'http://opencontext.org' %}
 
 <br/>
 <h4>Caveats</h4>
 <p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. Also, you are currently using mirror instance of Open Context. The JSON data will contain URIs to content at <samp>http://opencontext.org/</samp>, where the cannonical version of Open Context is running. In order to derefernce these
-identifiers using this current host, substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ base_url }}/</samp>.
+identifiers using this current host, substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ BASE_URL }}/</samp>.
 {% else %}
 
 <br/>
