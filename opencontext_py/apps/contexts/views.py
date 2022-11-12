@@ -9,6 +9,8 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
+
+from opencontext_py.apps.contexts.project_context import  make_project_context_json_ld
 from django.views.decorators.cache import cache_control
 from django.utils.cache import patch_vary_headers
 
@@ -62,7 +64,7 @@ def search_view(request):
 def projects_json(request, uuid):
     """ provides a JSON-LD context for
         the predicates used in a project.
-        
+
         DEPRECATE THIS!
     """
     proj_context = ProjectContext(uuid, request)
@@ -95,8 +97,72 @@ def projects_json(request, uuid):
         raise Http404
 
 
-
 def project_vocabs(request, uuid, return_media=None):
+    """ Provides a RDF serialization, defaulting to a
+        JSON-LD context for
+        the data in a project. This will include
+        a graph object that has annotations
+        annotations of predicates and types
+    """
+
+    req_neg = RequestNegotiation('application/json')
+    req_neg.supported_types = ['application/ld+json']
+    req_neg.supported_types += RDF_SERIALIZATIONS
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    if return_media:
+        req_neg.check_request_support(return_media)
+        req_neg.use_response_type = return_media
+    # Associate the request media type with the request so we can
+    # make sure that different representations of this resource get different
+    # cache responses.
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # client wanted a mimetype we don't support
+        response = HttpResponse(req_neg.error_message,
+                                content_type=req_neg.use_response_type + "; charset=utf8",
+                                status=415)
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+
+    # Make the project vocabulary JSON-LD
+    json_ld, _ = make_project_context_json_ld(project_id=uuid)
+    graph_output = graph_serialize(
+        req_neg.use_response_type,
+        json_ld
+    )
+    if graph_output:
+        # Return with some sort of graph output
+        response = HttpResponse(
+            graph_output,
+            content_type=req_neg.use_response_type + "; charset=utf8"
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+    # We're outputing JSON
+    json_output = json.dumps(
+        json_ld,
+        indent=4,
+        ensure_ascii=False
+    )
+    if 'callback' in request.GET:
+        funct = request.GET['callback']
+        response = HttpResponse(
+            funct + '(' + json_output + ');',
+            content_type='application/javascript' + "; charset=utf8"
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+    else:
+        response = HttpResponse(
+            json_output,
+            content_type=req_neg.use_response_type + "; charset=utf8"
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+
+
+def project_vocabs_old(request, uuid, return_media=None):
     """ Provides a RDF serialization, defaulting to a
         JSON-LD context for
         the data in a project. This will include
@@ -122,19 +188,25 @@ def project_vocabs(request, uuid, return_media=None):
     request.content_type = req_neg.use_response_type
     if not req_neg.supported:
         # client wanted a mimetype we don't support
-        response = HttpResponse(req_neg.error_message,
-                                content_type=req_neg.use_response_type + "; charset=utf8",
-                                status=415)
+        response = HttpResponse(
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
+        )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
     json_ld = proj_context.make_context_and_vocab_json_ld()
     # Check first if the output is requested to be an RDF format
-    graph_output = graph_serialize(req_neg.use_response_type,
-                                   json_ld)
+    graph_output = graph_serialize(
+        req_neg.use_response_type,
+        json_ld
+    )
     if graph_output:
         # Return with some sort of graph output
-        response = HttpResponse(graph_output,
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+        response = HttpResponse(
+            graph_output,
+            content_type=req_neg.use_response_type + "; charset=utf8"
+        )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
     # We're outputing JSON
@@ -143,13 +215,17 @@ def project_vocabs(request, uuid, return_media=None):
                              ensure_ascii=False)
     if 'callback' in request.GET:
         funct = request.GET['callback']
-        response = HttpResponse(funct + '(' + json_output + ');',
-                                content_type='application/javascript' + "; charset=utf8")
+        response = HttpResponse(
+            funct + '(' + json_output + ');',
+            content_type='application/javascript' + "; charset=utf8"
+        )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
     else:
-        response = HttpResponse(json_output,
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+        response = HttpResponse(
+            json_output,
+            content_type=req_neg.use_response_type + "; charset=utf8"
+        )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
 
