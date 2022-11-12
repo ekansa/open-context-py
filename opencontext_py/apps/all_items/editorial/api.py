@@ -13,6 +13,7 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
+    AllIdentifier,
 )
 from opencontext_py.apps.all_items import models_utils
 
@@ -105,11 +106,11 @@ KEYWORD_SEARCH_MANIFEST_FILTERS = [
 # for the front end.
 LOOKUP_GENERAL_DISTINCT_GROUPED_ATTRIBUTES = [
     (
-        'item_type', 
+        'item_type',
         ['item_type'],
     ),
     (
-        'project', 
+        'project',
         [
             'project_id',
             'project__slug',
@@ -117,7 +118,7 @@ LOOKUP_GENERAL_DISTINCT_GROUPED_ATTRIBUTES = [
         ],
     ),
     (
-        'item_class', 
+        'item_class',
         [
             'item_class_id',
             'item_class__slug',
@@ -125,7 +126,7 @@ LOOKUP_GENERAL_DISTINCT_GROUPED_ATTRIBUTES = [
         ],
     ),
     (
-        'context', 
+        'context',
         [
             'context_id',
             'context__item_type',
@@ -139,7 +140,7 @@ LOOKUP_GENERAL_DISTINCT_GROUPED_ATTRIBUTES = [
 # Attributes on which to select distinct when returning general metadata on
 # manifest lookups
 LOOKUP_GENERAL_DISTINCT_ATTRIBUTES = [
-    a for _, attrib_list in LOOKUP_GENERAL_DISTINCT_GROUPED_ATTRIBUTES 
+    a for _, attrib_list in LOOKUP_GENERAL_DISTINCT_GROUPED_ATTRIBUTES
     for a in attrib_list
 ]
 
@@ -213,7 +214,11 @@ def dict_uuids_to_string(dict_obj):
     return dict_obj
 
 
-def manifest_obj_to_json_safe_dict(manifest_obj, do_minimal=False, for_edit=False):
+def manifest_obj_to_json_safe_dict(
+    manifest_obj,
+    do_minimal=False,
+    for_edit=False,
+):
     """Makes a dict safe for JSON expression from a manifest object"""
     if not manifest_obj:
         return None
@@ -283,7 +288,7 @@ def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
     if not manifest_obj:
         return None
     return manifest_obj_to_json_safe_dict(
-        manifest_obj, 
+        manifest_obj,
         do_minimal=do_minimal
     )
 
@@ -291,7 +296,7 @@ def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
 def get_man_obj_by_any_id(identifier):
     """Gets a manifest object by an type of unique identifier"""
     _, new_uuid = update_old_id(identifier)
-    
+
     man_obj = AllManifest.objects.filter(
         Q(uuid=new_uuid)
         |Q(slug=identifier)
@@ -307,7 +312,7 @@ def get_man_obj_by_any_id(identifier):
 
 def get_item_children(identifier, man_obj=None, output_child_objs=False):
     """Gets a dict for an object and a list of its children"""
-    
+
     if identifier and not man_obj:
         man_obj = get_man_obj_by_any_id(identifier)
     if not man_obj:
@@ -332,7 +337,7 @@ def get_item_children(identifier, man_obj=None, output_child_objs=False):
         children_objs = models_utils.get_immediate_concept_children_objs_db(
             man_obj
         )
-    
+
     if not len(children_objs) and man_obj.item_type == 'predicates' and man_obj.data_type == 'id':
         # We've got a predicate that may have types that is convenient to consider as
         # children.
@@ -340,7 +345,7 @@ def get_item_children(identifier, man_obj=None, output_child_objs=False):
             item_type='types',
             context=man_obj,
         ).order_by('label')
-    
+
 
     if output_child_objs:
         # Return the child manifest objects, not JSON safe
@@ -352,7 +357,7 @@ def get_item_children(identifier, man_obj=None, output_child_objs=False):
     for child_obj in children_objs:
         child_dict = manifest_obj_to_json_safe_dict(child_obj)
         output['children'].append(child_dict)
-    
+
     return output
 
 
@@ -407,7 +412,7 @@ def make_keyword_search_filter_to_qs(qs, q_term):
             assert_query = act_q
             continue
         assert_query = assert_query | act_q
-    
+
     # Select the distinct subjects of assertions that match this query criterion.
     assert_qs = assert_qs.filter(
         assert_query
@@ -422,7 +427,7 @@ def make_keyword_search_filter_to_qs(qs, q_term):
     )
 
     assert_uuids = set([d['subject_id'] for d in assert_qs_vals])
-    # Now add the list of subjects with alternate label 
+    # Now add the list of subjects with alternate label
     query = query | Q(uuid__in=assert_uuids)
     qs = qs.filter(query)
     return qs, assert_qs
@@ -444,7 +449,7 @@ def add_filter_or_exclude_term(qs, attribute, raw_value, attribute_prefix='', va
 
     if has_no_delim_ending or not isinstance(raw_value, str):
         # The attribute has an ending for a partial string matching, so we're not going to
-        # try to separate the raw_value into a list. OR the raw_value is not a string, 
+        # try to separate the raw_value into a list. OR the raw_value is not a string,
         # so it can't be seperated by a delim.
         q_attribute = f'{attribute_prefix}{attribute}'
         query_dict = {q_attribute: raw_value}
@@ -454,7 +459,7 @@ def add_filter_or_exclude_term(qs, attribute, raw_value, attribute_prefix='', va
         else:
             qs = qs.filter(**query_dict)
         return qs
-    
+
     values = [v.strip() for v in raw_value.split(value_delim)]
 
 
@@ -490,7 +495,7 @@ def make_lookup_qs(request_dict, value_delim=MULTI_VALUE_DELIM):
     assert_qs = None
     if q_term:
         qs, assert_qs = make_keyword_search_filter_to_qs(qs, q_term)
-    
+
     for attribute in REQUEST_PARAMS_TO_MANIFEST_ATTRIBUTES:
         filter_raw_value = request_dict.get(attribute)
         exclude_raw_value = request_dict.get(f'ex__{attribute}')
@@ -498,16 +503,16 @@ def make_lookup_qs(request_dict, value_delim=MULTI_VALUE_DELIM):
             continue
         if filter_raw_value:
             qs = add_filter_or_exclude_term(
-                qs, 
-                attribute, 
-                filter_raw_value, 
+                qs,
+                attribute,
+                filter_raw_value,
                 value_delim=value_delim,
             )
         if exclude_raw_value:
             qs = add_filter_or_exclude_term(
-                qs, 
-                attribute, 
-                exclude_raw_value, 
+                qs,
+                attribute,
+                exclude_raw_value,
                 value_delim=value_delim,
                 as_exclude=True,
             )
@@ -517,7 +522,7 @@ def make_lookup_qs(request_dict, value_delim=MULTI_VALUE_DELIM):
 
 def lookup_manifest_objs(request_dict, value_delim=MULTI_VALUE_DELIM, default_rows=MANIFEST_LOOKUP_DEFAULT_ROWS):
     """Returns a list of manifest item objects that meet wide ranging search criteria"""
-    
+
     start = make_integer_or_default(
         raw_value=request_dict.get('start', 0),
         default_value=0
@@ -567,13 +572,24 @@ def lookup_manifest_objs(request_dict, value_delim=MULTI_VALUE_DELIM, default_ro
 def lookup_manifest_dicts(request_dict, value_delim=MULTI_VALUE_DELIM, default_rows=MANIFEST_LOOKUP_DEFAULT_ROWS):
     """Returns a list of manifest item dictionary objects that meet wide ranging search criteria"""
     manifest_objs, total_count = lookup_manifest_objs(
-        request_dict=request_dict, 
-        value_delim=value_delim, 
+        request_dict=request_dict,
+        value_delim=value_delim,
         default_rows=default_rows
     )
     manifest_dicts = [
         manifest_obj_to_json_safe_dict(m) for m in manifest_objs
     ]
+    if request_dict.get('pids'):
+        for m_dict in manifest_dicts:
+            id_qs = AllIdentifier.objects.filter(
+                item=m_dict.get('uuid'),
+            ).order_by('scheme', 'rank')
+            if not id_qs:
+                continue
+            m_dict['persistent_ids'] = []
+            for id_obj in id_qs:
+                id_dict = {'id': id_obj.id, 'scheme': id_obj.scheme, 'url': id_obj.url}
+                m_dict['persistent_ids'].append(id_dict)
     return manifest_dicts, total_count
 
 
@@ -608,7 +624,7 @@ def lookup_up_general_distinct_metadata(request_dict, value_delim=MULTI_VALUE_DE
             act_q_dict = dict_uuids_to_string(act_q_dict)
             output.append(act_q_dict)
         return output
-    
+
     if not man_qs:
         # We also don't have any manifest queryset results.
         return []
@@ -641,4 +657,3 @@ def lookup_up_and_group_general_distinct_metadata(request_dict, value_delim=MULT
                 continue
             meta_dict[dict_key].append(group_dict)
     return meta_dict
-
