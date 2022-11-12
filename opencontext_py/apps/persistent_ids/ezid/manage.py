@@ -1,14 +1,55 @@
 import datetime
-from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.ocitems.identifiers.ezid.ezid import EZID
-from opencontext_py.apps.ocitems.identifiers.ezid.metaark import metaARK
-from opencontext_py.apps.ocitems.identifiers.ezid.metadoi import metaDOI
+
+from opencontext_py.apps.persistent_ids.ezid.ezid import EZID
+from opencontext_py.apps.persistent_ids.ezid.metaark import metaARK
+from opencontext_py.apps.persistent_ids.ezid.metadoi import metaDOI
 
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllIdentifier,
 )
 from opencontext_py.apps.all_items.representations import item
+
+"""
+Example.
+
+
+import importlib
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllIdentifier,
+)
+from opencontext_py.apps.persistent_ids.ezid import manage
+importlib.reload(manage)
+
+ezid_m = manage.EZIDmanage(do_test=True)
+meta = ezid_m.make_ark_metadata_by_uuid(uuid='d2bfa1e0-f3f7-4376-8193-869c8b71210f')
+
+ezid_m = manage.EZIDmanage(do_test=True)
+ezid_m.uri_replace = ('opencontext.org', 'staging.opencontext.org')
+meta = ezid_m.make_ark_metadata_by_uuid(uuid='d2bfa1e0-f3f7-4376-8193-869c8b71210f')
+
+
+
+# this actually uses the EZID API
+ezid_m = manage.EZIDmanage(do_test=True)
+ezid_m.uri_replace = ('opencontext.org', 'staging.opencontext.org')
+meta = ezid_m.make_save_ark_by_uuid(uuid='d2bfa1e0-f3f7-4376-8193-869c8b71210f')
+
+
+# The real deal now.
+m_qs = AllManifest.objects.filter(
+    project_id='0404c6dc-a467-421e-47b8-d68f7090fbcc',
+    item_type__in=['subjects', 'media', 'documents', 'predicates', 'types']
+)
+id_objs = []
+for m_obj in m_qs:
+    ezid_m = manage.EZIDmanage(do_test=False)
+    ezid_m.uri_replace = ('opencontext.org', 'staging.opencontext.org')
+    id_obj = ezid_m.make_save_ark_by_uuid(uuid=m_obj.uuid)
+    id_objs.append(id_obj)
+
+"""
 
 
 class EZIDmanage():
@@ -20,6 +61,10 @@ class EZIDmanage():
     def __init__(self, do_test=False):
         self.ezid = EZID()
         self.do_test = do_test
+        # URI replace is useful for when you want to substitute a
+        # cannonical Open Context URI for another URI, like the staging
+        # URI.
+        self.uri_replace = None
         if self.do_test:
             self.ezid.ark_shoulder = EZID.ARK_TEST_SHOULDER
             self.ezid.doi_shoulder = EZID.DOI_TEST_SHOULDER
@@ -65,6 +110,8 @@ class EZIDmanage():
         meta_ark.make_who_list(who_list)
         metadata = meta_ark.make_metadata_dict()
         metadata['_target'] = rep_dict['id']
+        if self.uri_replace and not self.uri_replace[1] in metadata['_target']:
+            metadata['_target'] = metadata['_target'].replace(self.uri_replace[0], self.uri_replace[1])
         return metadata
 
 
@@ -97,6 +144,8 @@ class EZIDmanage():
         meta_doi.make_creator_list(who_list)
         metadata = meta_doi.make_metadata_dict()
         metadata['_target'] = rep_dict['id']
+        if self.uri_replace and not self.uri_replace[1] in metadata['_target']:
+            metadata['_target'] = metadata['_target'].replace(self.uri_replace[0], self.uri_replace[1])
         return metadata
 
 
@@ -136,7 +185,7 @@ class EZIDmanage():
             f'{id_obj.item.label} ({id_obj.item.uuid}) -> '
             f'{id_obj.id} ({id_obj.scheme}) created {str(c)}'
         )
-        return True
+        return id_obj
 
 
     def make_save_ark_by_uuid(self, uuid, metadata=None):
@@ -163,18 +212,21 @@ class EZIDmanage():
         else:
             oc_uri = f'https://{man_obj.uri}'
 
-        print(f'Make ARK id for: { oc_uri}')
+        if self.uri_replace and not self.uri_replace[1] in oc_uri:
+            oc_uri = oc_uri.replace(self.uri_replace[0], self.uri_replace[1])
+
+        print(f'Make ARK id for: {oc_uri}')
         ark_id = self.ezid.mint_identifier(oc_uri, metadata, 'ark')
         if not ark_id:
             print(f'EZID failed to mint ARK id for: {oc_uri}')
             return False
         stable_id = ark_id.replace('ark:/', '')
-        ok = self.save_man_obj_stable_id(
+        id_obj = self.save_man_obj_stable_id(
             man_obj=man_obj,
             stable_id=stable_id,
             scheme='ark'
         )
-        return ok
+        return id_obj
 
 
     def make_save_doi_by_uuid(self, uuid, metadata=None):
@@ -197,6 +249,9 @@ class EZIDmanage():
             oc_uri = metadata['_target']
         else:
             oc_uri = f'https://{man_obj.uri}'
+
+        if self.uri_replace and not self.uri_replace[1] in oc_uri:
+            oc_uri = oc_uri.replace(self.uri_replace[0], self.uri_replace[1])
         print(f'Make DOI id for: {oc_uri}')
         ezid_response = self.ezid.mint_identifier(oc_uri, metadata, 'doi')
         if self.do_test:
@@ -219,9 +274,9 @@ class EZIDmanage():
         if not stable_id:
             print(f'Could not get DOI from EZID response {ezid_response} when minting a DOI for {man_obj.label} ({str(man_obj.uuid)})')
             return False
-        ok = self.save_man_obj_stable_id(
+        id_obj = self.save_man_obj_stable_id(
             man_obj=man_obj,
             stable_id=stable_id,
             scheme='doi'
         )
-        return ok
+        return id_obj
