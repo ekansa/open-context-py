@@ -42,21 +42,19 @@ RDF_SERIALIZATIONS = [
 
 def make_graph_from_json_ld(json_ld, id=None):
     """Returns a graph made from JSON-LD."""
-    if isinstance(json_ld, dict):
-        if not id and 'id' in json_ld:
-            # ID for graph is in the JSON-LD
-            id = json_ld['id']
-        elif not id and '@id' in json_ld:
-            # ID for graph is in the JSON-LD
-            id = json_ld['@id']
-        json_ld = json.dumps(json_ld, ensure_ascii=False)
-    if isinstance(id, str):
-        id = URIRef(id)
+    if not isinstance(json_ld, dict):
+        return None
+    id = json_ld.get('id', json_ld.get('@id'))
+    if not id:
+        return None
+    json_ld = json.dumps(json_ld, ensure_ascii=False)
+    id = URIRef(id)
     try:
         g = ConjunctiveGraph().parse(
             data=json_ld,
             publicID=id,
-            format='json-ld')
+            format='json-ld'
+        )
     except:
         return None
     return g
@@ -69,11 +67,6 @@ def graph_serialize(graph_media_type, json_ld, id=None):
     if graph is None:
         return None
     return graph.serialize(format=graph_media_type)
-    try:
-        output = graph.serialize(format=graph_media_type)
-    except:
-        return None
-    return output
 
 def make_point_feature_list(old_features):
     """Makes a new list of point-only features."""
