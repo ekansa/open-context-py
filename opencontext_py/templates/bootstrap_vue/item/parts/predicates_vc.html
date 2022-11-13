@@ -16,7 +16,7 @@
       v-bind:data_type="data_type"
       v-bind:attribute_group_slugs="attribute_group_slugs"
     > </id-predicates>
-    <div 
+    <div
       v-else-if="data_type == 'xsd:string'">
       <string-predicates
         v-bind:base_search_url="base_search_url"
@@ -28,7 +28,7 @@
       >
       </string-predicates>
     </div>
-    <range-predicates 
+    <range-predicates
       v-else
       v-bind:base_search_url="base_search_url"
       v-bind:predicate_label="predicate_label"
@@ -67,10 +67,10 @@ var vc_predicates = Vue.component(
       };
     },
     computed: {
-      
+
     },
     methods: {
-      
+
     },
     components: {
       'id-predicates': vc_id_predicates,
@@ -79,7 +79,7 @@ var vc_predicates = Vue.component(
     }
   }
 );
-  
+
 </script>
 
 {% endblock %}

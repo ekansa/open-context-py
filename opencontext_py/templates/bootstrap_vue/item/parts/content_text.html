@@ -1,5 +1,21 @@
 {% block content_text %}
 
+{% if item.skos__note %}
+{% for text_obj in item.skos__note %}
+<div class="card documents_text">
+  <div class="card-header">
+    <h5>Documentation Note</h5>
+  </div>
+  <div class="card-body">
+    {% autoescape off %}
+      {{ text_obj.obj_string }}
+    {% endautoescape %}
+  </div>
+</div>
+{% endfor %}
+{%endif%}
+
+
 {% if man_obj.item_type == 'documents' %}
 
 {% for text_obj in item.schema__text %}

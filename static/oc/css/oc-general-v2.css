@@ -121,6 +121,9 @@ Item Context
 #rel_item_in_context::before {
     content: "\2194";
 }
+.card_w_chart {
+	margin-bottom: 24px;
+}
 
 /*
 ---------------------------------------------------------

@@ -92,7 +92,7 @@
 
         {% if man_obj.item_type == 'predicates' %}
             <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
-            <div class="card">
+            <div class="card card_w_chart">
                 <div class="card-header">
                 {% if man_obj.item_class.slug == 'oc-gen-variables' %}
                 <h5><b>{{ man_obj.label }}</b> (Descriptive Attribute)</h5>
@@ -115,7 +115,7 @@
 
         {% if man_obj.item_type == 'types' %}
         <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
-        <div class="card">
+        <div class="card card_w_chart">
             <div class="card-header">
                 <h5><b>{{ man_obj.label }}</b> (Classification Category or Type)</h5>
             </div>
@@ -133,7 +133,7 @@
         {%endif%}
 
         {% if man_obj.item_type == 'persons' %}
-        <div class="card">
+        <div class="card card_w_chart">
             <div class="card-header">
                 <h5><b>{{ man_obj.label }}</b> ({{ man_obj.item_class.label }})</h5>
             </div>
