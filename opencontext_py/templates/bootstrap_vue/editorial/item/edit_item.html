@@ -39,10 +39,19 @@
             ></router-view>
         </b-col>
         <b-col cols="3">
+
             <b-card
                 header="Editing Options"
             >
-            <b-card-text>
+                <b-card-text>
+                    <b-button
+                    style="margin-bottom: 12px;"
+                    block
+                    variant="info"
+                    :href="public_url"
+                    target="_blank"><b-icon-globe-2></b-icon-globe-2> Public View
+                </b-button>
+
                 <add-item
                     v-bind:project_ids="ITEM_PROJECT_UUIDS">
                 </add-item>
@@ -82,7 +91,7 @@
     var body = document.body;
     var html = document.documentElement;
     var page_height = Math.max(
-        body.scrollHeight, body.offsetHeight, 
+        body.scrollHeight, body.offsetHeight,
         html.clientHeight, html.scrollHeight, html.offsetHeight
     );
     var TABLE_HEIGHT = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;
@@ -166,6 +175,9 @@
                 act_route: function () {
                     return this.$route;
                 },
+                public_url: function() {
+                    return '../../all-items/' + this.uuid;
+                }
             },
             watch: {
                 $route(to, from) {
