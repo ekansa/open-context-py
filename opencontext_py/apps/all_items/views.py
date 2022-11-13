@@ -89,7 +89,7 @@ def test_json(request, uuid):
         rep_dict = solrdoc.fields
     else:
         # default, simple JSON-LD
-        _, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
+        man_obj, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
 
     allow_view, allow_edit = get_request_user_permissions(request, man_obj)
     if not allow_view:
