@@ -54,7 +54,7 @@ new_assert_mirgrate_errors = migrate_legacy_assertions_from_csv(
     file_path='/home/ekansa/migration-errors/very-bad-murlo-assertions.csv'
 )
 save_old_assertions_to_csv(
-    '/home/ekansa/migration-errors/very-very-bad-murlo-assertions.csv', 
+    '/home/ekansa/migration-errors/very-very-bad-murlo-assertions.csv',
     new_assert_mirgrate_errors
 )
 # DT migration
@@ -63,7 +63,7 @@ new_assert_mirgrate_errors = migrate_legacy_assertions_from_csv(
     file_path='/home/ekansa/migration-errors/assert-m-errors-1-domuztepe-excavati.csv'
 )
 save_old_assertions_to_csv(
-    '/home/ekansa/migration-errors/assert-m-errors-worse-1-domuztepe-excavati.csv', 
+    '/home/ekansa/migration-errors/assert-m-errors-worse-1-domuztepe-excavati.csv',
     new_assert_mirgrate_errors
 )
 """
@@ -225,6 +225,7 @@ LEGACY_DATA_DATA_TYPES = {
 LEGACY_MANIFEST_MAPPINGS = {
     'oc-gen:has-note': configs.PREDICATE_NOTE_UUID,
     'oc-gen:has-geo-overlay': configs.PREDICATE_GEO_OVERLAY_UUID,
+    'skos:note': configs.PREDICATE_SKOS_NOTE_UUID,
 }
 
 # Data types for literal values.
@@ -235,7 +236,7 @@ LITERAL_DATA_TYPES = ['xsd:double', 'xsd:integer', 'xsd:boolean', 'xsd:date', 'x
 def legacy_to_new_item_class(legacy_class_id):
     """Looks up a new manifest object for a legacy_class_id"""
     uri = (
-        'opencontext.org/vocabularies/oc-general/' 
+        'opencontext.org/vocabularies/oc-general/'
         + legacy_class_id.split(':')[-1]
     )
     man_obj = AllManifest.objects.filter(
@@ -254,7 +255,7 @@ s_class_qs = OldManifest.objects.filter(
 ).distinct(
     'class_uri'
 ).values_list(
-    'class_uri', 
+    'class_uri',
     flat=True,
 )
 for old_class_id in s_class_qs:
@@ -267,9 +268,9 @@ for old_class_id in s_class_qs:
 
 
 def copy_attributes(
-    old_man_obj, 
-    new_dict={}, 
-    attributes=MANIFEST_COPY_ATTRIBUTES, 
+    old_man_obj,
+    new_dict={},
+    attributes=MANIFEST_COPY_ATTRIBUTES,
     time_attributes=TIME_ATTRIBUTES
 ):
     """Copies attributes from the old_man_obj to a new_man dict"""
@@ -314,7 +315,7 @@ def migrate_old_project(old_proj):
     """Migrates an old project item to the new manifest"""
     if old_proj.uuid == '0':
         return AllManifest.objects.get(uuid=configs.OPEN_CONTEXT_PROJ_UUID)
-    
+
     if isinstance(old_proj, OldManifest):
         # We passed an old manifest object to this function, but we need
         # a legacy project object.
@@ -332,7 +333,7 @@ def migrate_old_project(old_proj):
         new_parent_proj = AllManifest.objects.get(uuid=configs.OPEN_CONTEXT_PROJ_UUID)
 
     old_proj_man_obj = OldManifest.objects.get(uuid=old_proj_id)
-    
+
     # Compose the meta_json object for this new project
     new_meta_json = {
         'short_id': old_proj.short_id,
@@ -381,7 +382,7 @@ def migrate_old_project(old_proj):
     # Add the short description for the project.
     utilities.add_string_assertion_simple(
         subject_obj=new_man_obj,
-        predicate_id=configs.PREDICATE_DCTERMS_DESCRIPTION_UUID, 
+        predicate_id=configs.PREDICATE_DCTERMS_DESCRIPTION_UUID,
         str_content=old_proj.short_des,
         publisher_id=new_man_obj.publisher.uuid,
         project_id=new_man_obj.uuid,
@@ -401,7 +402,7 @@ def migrate_old_project(old_proj):
 
 def migrated_item_proj_check(old_man_obj, item_type):
     """Checks to see if an old manifest object is ok to migrate
-    
+
     returns a tuple:
 
     new_manifest_object, new_manifest_project_obj
@@ -473,20 +474,20 @@ def check_update_manifest_slug(old_man_obj, new_uuid, man_dict):
 def check_manage_manifest_duplicate(old_man_obj, man_dict):
     """Manages duplicate manifest entities, preserves old ids"""
     hash_id = AllManifest().make_hash_id(
-        item_type=man_dict['item_type'], 
-        data_type=man_dict['data_type'], 
+        item_type=man_dict['item_type'],
+        data_type=man_dict['data_type'],
         label=man_dict['label'],
-        project_id=man_dict['project'].uuid, 
+        project_id=man_dict['project'].uuid,
         context_id=man_dict['context'].uuid,
     )
     exist_m = AllManifest.objects.filter(hash_id=hash_id).first()
     if not exist_m:
         # check we don't have a duplicate in everything but a slug
         exist_m = AllManifest.objects.filter(
-            item_type=man_dict['item_type'], 
-            data_type=man_dict['data_type'], 
+            item_type=man_dict['item_type'],
+            data_type=man_dict['data_type'],
             label=man_dict['label'],
-            project_id=man_dict['project'].uuid, 
+            project_id=man_dict['project'].uuid,
             context_id=man_dict['context'].uuid,
             slug=man_dict['slug'],
         ).first()
@@ -505,12 +506,12 @@ def check_manage_manifest_duplicate(old_man_obj, man_dict):
 def fix_old_predicate_strings_to_types(old_predicate_id):
     """Fix """
     b_qs = OldAssertion.objects.filter(
-        predicate_uuid=old_predicate_id, 
+        predicate_uuid=old_predicate_id,
         object_type='xsd:string'
     )
     bad_strings = [b.object_uuid for b in b_qs]
     t_qs = OCtype.objects.filter(
-        predicate_uuid=old_predicate_id, 
+        predicate_uuid=old_predicate_id,
         content_uuid__in=bad_strings
     )
     b_t_dict = {t.content_uuid:t.uuid for t in t_qs}
@@ -586,10 +587,10 @@ def migrate_legacy_predicate(old_man_obj):
     if old_id in LEGACY_DATA_DATA_TYPES:
         data_type = LEGACY_DATA_DATA_TYPES[old_id]
     elif data_type != 'xsd:string':
-        # Some of the very oldest dat in Open Context mixes data-types, 
+        # Some of the very oldest dat in Open Context mixes data-types,
         # These mixed type predicates usually have xsd:strings data-types
         # so only check for mixed types if the old_pred.data_type is
-        # NOT a xsd:string. 
+        # NOT a xsd:string.
         p_dtypes = OldAssertion.objects.filter(
             predicate_uuid=old_id
         ).order_by(
@@ -638,7 +639,7 @@ def migrate_legacy_predicate(old_man_obj):
         'link': configs.CLASS_OC_LINKS_UUID,
         'links': configs.CLASS_OC_LINKS_UUID,
     }
-    
+
     if not data_type in configs.DATA_TYPES:
         print('-'*50)
         print(f'WARNING {old_man_obj.label} ({old_pred.uuid}) has unknown data_typ {data_type}')
@@ -716,14 +717,14 @@ def migrate_legacy_type(old_man_obj):
         print(
             f'Found legacy pred {old_pred_uuid} used with legacy subject {old_ass.uuid}.'
         )
-    
+
     if not old_man_pred:
         print(
             f'Old predicate {old_pred_uuid} for type {old_id} {old_man_obj.label} '
             'not found.'
         )
         return None
-    
+
     skos_note = None
     old_string = OCstring.objects.filter(uuid=old_type.content_uuid).first()
     if old_string and old_string.content != old_man_obj.label:
@@ -813,9 +814,9 @@ def migrate_legacy_person(old_man_obj):
         'mid_init',
     ]
     new_meta_json = copy_attributes(
-        old_man_obj=old_pers, 
-        new_dict=new_meta_json, 
-        attributes=person_attributes, 
+        old_man_obj=old_pers,
+        new_dict=new_meta_json,
+        attributes=person_attributes,
         time_attributes=[]
     )
 
@@ -831,7 +832,7 @@ def migrate_legacy_person(old_man_obj):
         'publisher': new_project.publisher,
         'project': new_project,
         'item_class_id': foaf_classes.get(
-            old_man_obj.class_uri, 
+            old_man_obj.class_uri,
             configs.CLASS_FOAF_PERSON_UUID
         ),
         'source_id': SOURCE_ID,
@@ -927,7 +928,7 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
         meta_json = old_mediafile_obj.sup_json.copy()
     else:
         meta_json = {}
-    
+
     meta_json['legacy_file_type'] = old_mediafile_obj.file_type
     meta_json['legacy_source_id'] = old_mediafile_obj.source_id
 
@@ -956,7 +957,7 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
 
     if not res_type_mappings.get(old_mediafile_obj.file_type):
         raise ValueError(f'Cannot find resource type mapping for {old_mediafile_obj.file_type}')
-        
+
     resourcetype_id, rank =  res_type_mappings.get(old_mediafile_obj.file_type)
     rank += old_mediafile_obj.highlight
 
@@ -974,7 +975,7 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
     if resourcetype_id == configs.OC_RESOURCE_IIIF_UUID:
         media_file_dict['filesize'] = 1
         media_file_dict['mediatype_id'] = configs.MEDIA_TYPE_JSON_LD_UUID
-    
+
     if old_mediafile_obj.filesize > 0:
         media_file_dict['filesize'] = old_mediafile_obj.filesize
 
@@ -1029,7 +1030,7 @@ def migrate_legacy_media_file(new_man_obj, old_mediafile_obj, skip_deference=Tru
 def migrate_legacy_project_hero_media(old_project_uuid, new_proj_man_obj):
     """Migrates legacy project hero media to a new media resource."""
     old_heros_qs = Mediafile.objects.filter(
-        uuid=old_project_uuid, 
+        uuid=old_project_uuid,
         file_type='oc-gen:hero'
     )
     for old_mediafile_obj in old_heros_qs:
@@ -1096,7 +1097,7 @@ def migrate_legacy_media(old_man_obj):
         ('oc-gen:x3dom-model', 'x3d+xml', configs.CLASS_OC_3D_MEDIA,),
         ('oc-gen:preview', 'vnd.geo+json', configs.CLASS_OC_VECTOR_GIS_MEDIA,),
     ]
-    
+
     media_class_id = media_class_mappings.get(old_man_obj.class_uri)
     if not media_class_id:
         for old_f in old_media_files:
@@ -1164,7 +1165,7 @@ def migrate_legacy_subject(old_man_obj, parent_new_id=None):
     parent_old_id = None
     if not parent_new_id:
         p_ass = OldAssertion.objects.filter(
-            object_uuid=old_id, 
+            object_uuid=old_id,
             predicate_uuid=OldAssertion.PREDICATES_CONTAINS
         ).exclude(
             uuid=old_id
@@ -1186,7 +1187,7 @@ def migrate_legacy_subject(old_man_obj, parent_new_id=None):
         new_parent_obj = migrate_legacy_subject(parent_old_man_obj)
     else:
         new_parent_obj = AllManifest.objects.filter(uuid=parent_new_id).first()
-    
+
     if not new_parent_obj:
         print(
             f'Cannot find new manifest item new_id: {parent_new_id}, '
@@ -1306,7 +1307,7 @@ def migrate_obs_metadata_db(project_uuid, source_id, obs_num):
     if not obs_meta:
         # Return the default observation.
         return AllManifest.objects.get(uuid=configs.DEFAULT_OBS_UUID)
-    
+
     # Make a more unique ID for an observation so as to make it easier
     # to make a deterministically generated true uuid for the new
     # observation manifest object.
@@ -1403,7 +1404,7 @@ def get_cache_migrated_obs_metadata(project_uuid, source_id, obs_num, use_cache=
 def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=None, use_cache=True):
     """Migrates a legacy assertion object"""
     subject_obj = get_cache_new_manifest_obj_from_old_id(
-        old_assert.uuid, 
+        old_assert.uuid,
         use_cache=use_cache
     )
     predicate_obj = get_cache_new_manifest_obj_from_old_id(
@@ -1413,12 +1414,15 @@ def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=N
     if not subject_obj or not predicate_obj:
         # Missing needed data.
         return None
-    
+
+    if not project:
+        project = subject_obj.project
+
     # Get or migrate to a new observation manifest object.
     observation_obj = get_cache_migrated_obs_metadata(
         old_assert.project_uuid,
-        old_assert.source_id, 
-        old_assert.obs_num, 
+        old_assert.source_id,
+        old_assert.obs_num,
         use_cache=use_cache,
     )
 
@@ -1431,7 +1435,7 @@ def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=N
     # id if it wasn't specifically a literal object type.
     if old_assert.object_type not in ['xsd:double', 'xsd:integer', 'xsd:boolean', 'xsd:date', 'xsd:string']:
         old_assert.object_type = 'id'
-    
+
     # Make a dictionary for the new assertion object.
     assert_dict = {
         'project_id': project.uuid,
@@ -1470,7 +1474,7 @@ def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=N
         meta_json['legacy_object_uuid'] = old_man_obj.uuid
         old_assert.object_type = 'xsd:string'
     elif (
-            predicate_obj.data_type == 'xsd:string' 
+            predicate_obj.data_type == 'xsd:string'
             and old_assert.object_type in ['xsd:double', 'xsd:integer', 'xsd:boolean', 'xsd:date',]
          ):
         # We have a string predicate a different kind of literal.
@@ -1504,7 +1508,7 @@ def migrate_legacy_assertion(old_assert, project=None, index=None, total_count=N
             f'Assertion {old_assert.hash_id} has object_type {old_assert.object_type} '
             f'but should be {predicate_obj.data_type}'
         )
-    
+
     # This list specifies keys for parts of the assert_dict that will be used
     # to generate the new assertion's uuid deterministically
     uuid_dict_keys = [
@@ -1632,7 +1636,7 @@ def migrate_legacy_subjects_for_project(project_uuid='0'):
 def migrate_legacy_id(old_id_obj, use_cache=True):
     """Migrates a legacy StableIdentifier object"""
     man_obj = get_cache_new_manifest_obj_from_old_id(
-        old_id_obj.uuid, 
+        old_id_obj.uuid,
         use_cache=use_cache
     )
     if not man_obj:
@@ -1671,7 +1675,7 @@ def migrate_legacy_id(old_id_obj, use_cache=True):
         # Make the new assertion object with a deterministically
         # generated uuid primary key.
         uuid=AllIdentifier().primary_key_create(
-            item_id=man_obj.uuid, 
+            item_id=man_obj.uuid,
             scheme=id_dict['scheme'],
             rank=exist_id_count,
         ),
@@ -1735,7 +1739,7 @@ def ensure_legacy_assertion_refs(old_asserts_qs, old_assert_count):
         # Now make sure these are in our cache.
         print(f'Cache legacy uuid: {uuid} [{i} of {uuid_len}]')
         _ = get_cache_new_manifest_obj_from_old_id(
-            uuid, 
+            uuid,
             use_cache=True
         )
     print(f'Cached {len(uuids)} distinct named entities in memory for use in assertion creation')
@@ -1745,7 +1749,7 @@ def migrate_legacy_assertions_for_project(project_uuid, use_cache=True):
     """Migrates the assertions for a project"""
     errors = []
     project = get_cache_new_manifest_obj_from_old_id(
-        project_uuid, 
+        project_uuid,
         use_cache=use_cache
     )
     if not project:
@@ -1762,8 +1766,8 @@ def migrate_legacy_assertions_for_project(project_uuid, use_cache=True):
     ).exclude(
         predicate_uuid=OldAssertion.PREDICATES_CONTAINS
     ).order_by(
-        'uuid', 
-        'obs_num', 
+        'uuid',
+        'obs_num',
         'sort'
     )
     ensure_legacy_assertion_refs(old_asserts_qs, old_assert_count)
@@ -1788,7 +1792,7 @@ def migrate_legacy_assertions_from_csv(project_uuid, file_path=None, df=None, us
     """Migrates legacy assertions from a csv file"""
     errors = []
     project = get_cache_new_manifest_obj_from_old_id(
-        project_uuid, 
+        project_uuid,
         use_cache=use_cache
     )
     if df is None and file_path:
@@ -1905,7 +1909,7 @@ def migrate_legacy_spacetime_for_item(new_man_obj, old_id):
             sp_tm_dict['start'] = o_event.start
             sp_tm_dict['stop'] = o_event.stop
             sp_tm_dict['latest'] = o_event.latest
-        
+
         # Make the spacetime uuid using the sp_tm_dict for
         # kwargs
         spacetime_uuid = AllSpaceTime().primary_key_create(
@@ -1966,7 +1970,7 @@ def migrate_legacy_spacetime_for_project(project_uuid='0'):
     ).distinct(
         'uuid'
     ).values_list(
-        'uuid', 
+        'uuid',
         flat=True
     )
     old_event_ids = OldEvent.objects.filter(
@@ -1976,7 +1980,7 @@ def migrate_legacy_spacetime_for_project(project_uuid='0'):
     ).distinct(
         'uuid'
     ).values_list(
-        'uuid', 
+        'uuid',
         flat=True
     )
     old_ids = list(set(list(old_geo_ids) + list(old_event_ids)))
