@@ -39,20 +39,20 @@
 
 <div id="project_hero_banner">
     {% if man_obj.hero %}
-        <img class="img-fluid mx-auto d-block" 
-             alt="project banner image" 
+        <img class="img-fluid mx-auto d-block"
+             alt="project banner image"
              src="https://{{ man_obj.hero }}" />
     {% elif man_obj.proj_hero %}
-        <img class="img-fluid mx-auto d-block" 
-            alt="project banner image" 
+        <img class="img-fluid mx-auto d-block"
+            alt="project banner image"
             src="https://{{ man_obj.proj_hero }}" />
     {% elif man_obj.proj_proj_hero %}
-        <img class="img-fluid mx-auto d-block" 
-            alt="project banner image" 
+        <img class="img-fluid mx-auto d-block"
+            alt="project banner image"
             src="https://{{ man_obj.proj_proj_hero }}" />
     {% else %}
-        <img class="img-fluid mx-auto d-block" 
-            alt="default project banner image" 
+        <img class="img-fluid mx-auto d-block"
+            alt="default project banner image"
             src="https://opencontext.org/static/oc/images/projects/project-default-hero.png" />
     {%endif%}
 </div>
@@ -62,11 +62,11 @@
 <div id="main" class="container-fluid">
 
     <div id="item-app">
-        
+
         {% include '../item/parts/contexts.html' %}
 
         {% if full_media %}
-        
+
             {% include '../item/parts/preview_iiif.html' %}
             {% include '../item/parts/preview_nexus.html' %}
             {% include '../item/parts/preview_x3dom.html' %}
@@ -74,7 +74,7 @@
             {% include '../item/parts/preview_geojson.html' %}
 
         {%endif%}
-        
+
         <div class="row">
             <div class="col-lg-8 col-md-12">
 
@@ -131,7 +131,7 @@
             </div>
         </div>
         {%endif%}
-        
+
         {% if man_obj.item_type == 'persons' %}
         <div class="card">
             <div class="card-header">
@@ -171,6 +171,15 @@
         ></vc-persons>
         {%endif%}
 
+            {% if allow_view == False %}
+
+            <div class="alert alert-warning" role="alert">
+                This record is currently in preparation. It is not yet available open access and
+                authorized users must first login to view.
+            </div>
+
+
+            {%endif%}
 
             {% include '../item/parts/content_text.html' %}
             {% include '../item/parts/observations.html' %}
@@ -224,7 +233,7 @@
 
 <script type="text/javascript">
 
-  // Import Vue2Leaflet components. 
+  // Import Vue2Leaflet components.
   {% if GEO_JSON %}
   const GEO_JSON = JSON.parse('{{ GEO_JSON|escapejs }}');
   {% else %}
@@ -274,7 +283,7 @@
   const ATTRIBUTE_GROUP = null;
   {% endif %}
 
-    
+
     var vm = new Vue(
       {
         delimiters: ['[[', ']]'],
@@ -313,7 +322,7 @@
             },
         },
         created() {
-            
+
         },
         mounted() {
             this.start_iiif_viewer();
@@ -362,7 +371,7 @@
 
             'human-remains-results-alert': vc_human_remains_results_alert,
             'human-remains-image': vc_human_remains_image,
-            
+
             {% if man_obj.item_type == 'predicates' %}
             'vc-predicates': vc_predicates,
             {%endif%}
@@ -379,7 +388,7 @@
         },
       },
     ).$mount('#item-app');
-    
+
 </script>
 
 

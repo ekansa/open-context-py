@@ -1,5 +1,6 @@
 import copy
 
+from django.contrib.auth.models import User, Group
 from opencontext_py.apps.all_items import configs
 
 from opencontext_py.apps.all_items.models import (
@@ -31,8 +32,8 @@ DATA_TYPE_OPTIONS = [
 # ways of triggering this flag, but main way to remove the flag will be through
 # a manual interface.
 FLAG_HUMAN_REMAINS = {
-    'key': 'flag_human_remains', 
-    'label': 'Flag Human Remains', 
+    'key': 'flag_human_remains',
+    'label': 'Flag Human Remains',
     'data_type': 'xsd:boolean',
     'note': 'Flag to warn users of human remains related content.',
     'options': [
@@ -43,18 +44,36 @@ FLAG_HUMAN_REMAINS = {
 }
 
 
+view_groups = Group.objects.filter(name__icontains='can view')
+
+# A commonly used attribute to add to meta_json. If this attribute is
+# present and is True, then one will need a login to view items. This
+# can be applied to single manifest items or whole projects.
+LOGIN_TO_VIEW = {
+    'key': 'view_group_id',
+    'label': 'Login view group',
+    'data_type': 'xsd:integer',
+    'note': 'Optional group membership required for logged in users to view items.',
+    'options': [
+        {'value': None, 'text': 'Not set',},
+    ] + [
+        {'value': g.id, 'text': g.name,} for g in view_groups
+    ],
+}
+
+
 ITEM_TYPE_META_JSON_CONFIGS = {
     'projects': [
         {
-            'key': 'short_id', 
-            'label': 'Short, Integer ID', 
+            'key': 'short_id',
+            'label': 'Short, Integer ID',
             'data_type': 'xsd:integer',
             'note': 'An integer value to help identify this project.',
             'options': None,
         },
         {
-            'key': 'edit_status', 
-            'label': 'Editorial Status', 
+            'key': 'edit_status',
+            'label': 'Editorial Status',
             'data_type': 'xsd:integer',
             'note': 'An integer value indicating level of editorial review.',
             'options': [
@@ -68,8 +87,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ],
         },
         {
-            'key': 'geo_specificity', 
-            'label': 'Level of Geospatial data specificity', 
+            'key': 'geo_specificity',
+            'label': 'Level of Geospatial data specificity',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating the zoom level of geospatial precision. '
@@ -80,8 +99,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options': None,
         },
         {
-            'key': 'geo_note', 
-            'label': 'Project geospatial data note', 
+            'key': 'geo_note',
+            'label': 'Project geospatial data note',
             'data_type': 'xsd:string',
             'note': (
                 'A note visible to users that helps explain and document '
@@ -90,11 +109,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options': None,
         },
         FLAG_HUMAN_REMAINS.copy(),
+        LOGIN_TO_VIEW.copy(),
     ],
     'subjects': [
         {
-            'key': 'edit_status', 
-            'label': 'Editorial Status', 
+            'key': 'edit_status',
+            'label': 'Editorial Status',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
@@ -111,8 +131,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ],
         },
         {
-            'key': 'geo_specificity', 
-            'label': 'Level of Geospatial data specificity', 
+            'key': 'geo_specificity',
+            'label': 'Level of Geospatial data specificity',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating the zoom level of geospatial precision. '
@@ -123,8 +143,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options': None,
         },
         {
-            'key': 'geo_note', 
-            'label': 'Item geospatial data note', 
+            'key': 'geo_note',
+            'label': 'Item geospatial data note',
             'data_type': 'xsd:string',
             'note': (
                 'A note visible to users that helps explain and document '
@@ -133,11 +153,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options': None,
         },
         FLAG_HUMAN_REMAINS.copy(),
+        LOGIN_TO_VIEW.copy(),
     ],
     'media': [
         {
-            'key': 'edit_status', 
-            'label': 'Editorial Status', 
+            'key': 'edit_status',
+            'label': 'Editorial Status',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
@@ -154,11 +175,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ],
         },
         FLAG_HUMAN_REMAINS.copy(),
+        LOGIN_TO_VIEW.copy(),
     ],
     'documents': [
         {
-            'key': 'edit_status', 
-            'label': 'Editorial Status', 
+            'key': 'edit_status',
+            'label': 'Editorial Status',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
@@ -175,11 +197,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ],
         },
         FLAG_HUMAN_REMAINS.copy(),
+        LOGIN_TO_VIEW.copy(),
     ],
     'tables': [
         {
-            'key': 'edit_status', 
-            'label': 'Editorial Status', 
+            'key': 'edit_status',
+            'label': 'Editorial Status',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating level of editorial review. '
@@ -196,11 +219,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ],
         },
         FLAG_HUMAN_REMAINS.copy(),
+        LOGIN_TO_VIEW.copy(),
     ],
     'predicates': [
         {
-            'key': 'sort', 
-            'label': 'Sort Order', 
+            'key': 'sort',
+            'label': 'Sort Order',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating suggested sort order for this predicate '
@@ -209,11 +233,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         FLAG_HUMAN_REMAINS.copy(),
+        LOGIN_TO_VIEW.copy(),
     ],
     'observations': [
         {
-            'key': 'sort', 
-            'label': 'Sort Order', 
+            'key': 'sort',
+            'label': 'Sort Order',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating suggested sort order for this observation.'
@@ -223,8 +248,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'events': [
         {
-            'key': 'sort', 
-            'label': 'Sort Order', 
+            'key': 'sort',
+            'label': 'Sort Order',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating suggested sort order for this event.'
@@ -234,8 +259,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'attribute-groups': [
         {
-            'key': 'sort', 
-            'label': 'Sort Order', 
+            'key': 'sort',
+            'label': 'Sort Order',
             'data_type': 'xsd:integer',
             'note': (
                 'An integer value indicating suggested sort order for this attribute-group.'
@@ -245,8 +270,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'persons': [
         {
-            'key': 'combined_name', 
-            'label': 'Full name (give with family)', 
+            'key': 'combined_name',
+            'label': 'Full name (give with family)',
             'data_type': 'xsd:string',
             'note': (
                 'A full name for a person or organization.'
@@ -254,8 +279,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         {
-            'key': 'given_name', 
-            'label': 'Given name', 
+            'key': 'given_name',
+            'label': 'Given name',
             'data_type': 'xsd:string',
             'note': (
                 'A given name ("first name" in European conventions).'
@@ -263,8 +288,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         {
-            'key': 'mid_init', 
-            'label': 'Middle Initials', 
+            'key': 'mid_init',
+            'label': 'Middle Initials',
             'data_type': 'xsd:string',
             'note': (
                 'Initials for middle names if present.'
@@ -272,8 +297,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         {
-            'key': 'surname', 
-            'label': 'Family / surname', 
+            'key': 'surname',
+            'label': 'Family / surname',
             'data_type': 'xsd:string',
             'note': (
                 'A family or surname for a person.'
@@ -281,8 +306,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         {
-            'key': 'initials', 
-            'label': 'Initials', 
+            'key': 'initials',
+            'label': 'Initials',
             'data_type': 'xsd:string',
             'note': (
                 'Initials (or acronym) that are identifying (within the scope of a project).'
@@ -293,8 +318,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'languages': [
         {
-            'key': 'label_localized', 
-            'label': 'Label Localized', 
+            'key': 'label_localized',
+            'label': 'Label Localized',
             'data_type': 'xsd:string',
             'note': (
                 'The preferred name / label for a language localized to that language and script.'
@@ -302,8 +327,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         {
-            'key': 'iso_639_3_code', 
-            'label': 'ISO 639-3 code', 
+            'key': 'iso_639_3_code',
+            'label': 'ISO 639-3 code',
             'data_type': 'xsd:string',
             'note': (
                 'Identifier for a language defined in ISO 639-3. '
@@ -312,8 +337,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         {
-            'key': 'script_code', 
-            'label': 'Script Code', 
+            'key': 'script_code',
+            'label': 'Script Code',
             'data_type': 'xsd:string',
             'note': (
                 'The 4-letter ISO 15924 code for the main script used to express the language. '
@@ -324,8 +349,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'units': [
         {
-            'key': 'data_type', 
-            'label': 'Data Type', 
+            'key': 'data_type',
+            'label': 'Data Type',
             'data_type': 'xsd:string',
             'note': (
                 'The data-type allowed for a unit of measure.'
@@ -333,8 +358,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options': LITERAL_DATA_TYPE_OPTIONS,
         },
         {
-            'key': 'symbol', 
-            'label': 'Symbol', 
+            'key': 'symbol',
+            'label': 'Symbol',
             'data_type': 'xsd:string',
             'note': (
                 'A symbol or short abbreviation used to indicate this unit of measurement. '
@@ -345,8 +370,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'class': [
         {
-            'key': 'deprecated', 
-            'label': 'Deprecated', 
+            'key': 'deprecated',
+            'label': 'Deprecated',
             'data_type': 'xsd:boolean',
             'note': (
                 'Is this item is deprecated, and while it is stored, it is not suitable for current use.'
@@ -361,8 +386,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'property': [
         {
-            'key': 'deprecated', 
-            'label': 'Deprecated', 
+            'key': 'deprecated',
+            'label': 'Deprecated',
             'data_type': 'xsd:boolean',
             'note': (
                 'Is this item is deprecated, and while it is stored, it is not suitable for current use.'
@@ -377,8 +402,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'uri': [
         {
-            'key': 'deprecated', 
-            'label': 'Deprecated', 
+            'key': 'deprecated',
+            'label': 'Deprecated',
             'data_type': 'xsd:boolean',
             'note': (
                 'Is this item is deprecated, and while it is stored, it is not suitable for current use.'
@@ -393,8 +418,8 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'vocabularies': [
         {
-            'key': 'deprecated', 
-            'label': 'Deprecated', 
+            'key': 'deprecated',
+            'label': 'Deprecated',
             'data_type': 'xsd:boolean',
             'note': (
                 'Items in this vocabulary are deprecated, and while it is stored, this is not suitable for current use.'
@@ -413,7 +438,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
 # first need to be generated by the export table process rather than by a
 # a normal manifest add process.
 TABLES_ADD_EDIT_CONFIG = {
-    'item_type': 'tables', 
+    'item_type': 'tables',
     'item_type_note': 'A tabular data export of a subset of records from one or more projects',
     'edit_uuid': True,
     'edit_slug': True,
@@ -451,7 +476,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
         'group': 'Open Context Items',
         'item_types': [
             {
-                'item_type': 'projects', 
+                'item_type': 'projects',
                 'item_type_note': 'A publication project (collection) or sub-project',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -485,7 +510,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'subjects', 
+                'item_type': 'subjects',
                 'item_type_note': 'A location or object. The main subject of description and observational data in Open Context',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -527,7 +552,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'media', 
+                'item_type': 'media',
                 'item_type_note': 'A media item of binary files (images, 3D)',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -563,7 +588,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'documents', 
+                'item_type': 'documents',
                 'item_type_note': 'An HTML or plain text document',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -594,7 +619,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'persons', 
+                'item_type': 'persons',
                 'item_type_note': 'A person or organization',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -625,7 +650,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'predicates', 
+                'item_type': 'predicates',
                 'item_type_note': 'A project-defined descriptive attribute or relationship',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -659,7 +684,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'types', 
+                'item_type': 'types',
                 'item_type_note': 'A project-defined controlled vocabulary term used with a descriptive attribute',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -704,7 +729,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
         'group': 'Descriptive Groupings',
         'item_types': [
             {
-                'item_type': 'observations', 
+                'item_type': 'observations',
                 'item_type_note': 'An episode of description',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -735,7 +760,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'events', 
+                'item_type': 'events',
                 'item_type_note': 'A distinct spatial and/or chronological description',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -766,7 +791,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'attribute-groups', 
+                'item_type': 'attribute-groups',
                 'item_type_note': 'A meaningful sub-group of descriptive attributes',
                 'edit_uuid': True,
                 'edit_slug': True,
@@ -804,7 +829,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
         'group': 'Linked Data Concepts / Items',
         'item_types': [
             {
-                'item_type': 'languages', 
+                'item_type': 'languages',
                 'item_type_note': 'A human language',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
@@ -829,7 +854,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'class', 
+                'item_type': 'class',
                 'item_type_note': 'A Linked Data concept used in classification',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
@@ -861,7 +886,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'property', 
+                'item_type': 'property',
                 'item_type_note': 'A Linked Data defined descriptive attribute or relationship',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
@@ -894,7 +919,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'uri', 
+                'item_type': 'uri',
                 'item_type_note': (
                     'A specific Linked Data identified item or instance, '
                     'such as a specific place in a gazetteer, an article in a '
@@ -930,7 +955,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'units', 
+                'item_type': 'units',
                 'item_type_note': 'A Linked Data identified unit of measure',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
@@ -962,7 +987,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'media-types', 
+                'item_type': 'media-types',
                 'item_type_note': 'A Linked Data identified digital media type',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
@@ -1000,7 +1025,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
         'group': 'Linked Data Vocabularies, Ontologies, and Publishers',
         'item_types': [
             {
-                'item_type': 'vocabularies', 
+                'item_type': 'vocabularies',
                 'item_type_note': (
                     'An ontology, controlled vocabulary, or data source '
                     'that is NOT part of an Open Context project. Examples include: '
@@ -1030,7 +1055,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
             },
             {
-                'item_type': 'publishers', 
+                'item_type': 'publishers',
                 'item_type_note': 'A person or organization publishing vocabularies or other Linked Data',
                 'edit_uuid': False, # Deterministic from vocabulary and URI
                 'edit_slug': True,
@@ -1062,7 +1087,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
 
 def api_single_item_type_config_response(item_type_config):
     """Makes a configuration dict for the API response
-    
+
     :param dict item_type_config: A dict that configures adding of a
         single item-type
     """
@@ -1081,7 +1106,7 @@ def api_single_item_type_config_response(item_type_config):
             continue
         man_obj_qs = AllManifest.objects.filter(uuid__in=expected_ids)
         for man_obj in man_obj_qs:
-            # NOTE: this works because of the splendor that is 
+            # NOTE: this works because of the splendor that is
             # mutable lists and dicts.
             item_type_config[expected_obj_list].append(
                 make_model_object_json_safe_dict(

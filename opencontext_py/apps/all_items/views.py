@@ -6,6 +6,8 @@ from django.shortcuts import redirect
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
+
+from opencontext_py.apps.all_items.permissions import get_request_user_permissions
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
     prepare_for_item_dict_solr_and_html_template,
@@ -52,7 +54,7 @@ def test_json(request, uuid):
     """ API for searching Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'all-items', ok_uuid, extension='.json')
     if request.GET.get('solr') == 'prep':
@@ -62,7 +64,7 @@ def test_json(request, uuid):
             for_solr=True,
         )
         rep_dict = prepare_for_item_dict_solr_and_html_template(
-            man_obj, 
+            man_obj,
             rep_dict
         )
         rep_dict['for_solr_assert_objs'] = len(
@@ -75,7 +77,7 @@ def test_json(request, uuid):
             for_solr=True,
         )
         rep_dict = prepare_for_item_dict_solr_and_html_template(
-            man_obj, 
+            man_obj,
             rep_dict
         )
         solrdoc = SolrDocumentNS(
@@ -88,7 +90,14 @@ def test_json(request, uuid):
     else:
         # default, simple JSON-LD
         _, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
-    
+
+    allow_view, allow_edit = get_request_user_permissions(request, man_obj)
+    if not allow_view:
+        for rem_key in ['oc-gen:has-obs', 'oc-gen:has-files']:
+            if not rem_key in rep_dict:
+                continue
+            rep_dict.pop(rem_key)
+
     json_output = json.dumps(
         rep_dict,
         indent=4,
@@ -104,7 +113,7 @@ def make_solr_doc_in_html(request, uuid):
     """Make a Solr Doc JSON in HTML for debugging"""
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'all-items-solr', ok_uuid)
     man_obj, rep_dict = item.make_representation_dict(
@@ -112,7 +121,7 @@ def make_solr_doc_in_html(request, uuid):
         for_solr=True,
     )
     rep_dict = prepare_for_item_dict_solr_and_html_template(
-        man_obj, 
+        man_obj,
         rep_dict
     )
     solrdoc = SolrDocumentNS(
@@ -143,7 +152,7 @@ def test_html(request, uuid, full_media=False):
     """HTML representation for searching Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'all-items', ok_uuid, extension='')
     if request.GET.get('solr') == 'solr':
@@ -154,6 +163,12 @@ def test_html(request, uuid, full_media=False):
         subject_id=ok_uuid,
         for_solr_or_html=True,
     )
+    allow_view, allow_edit = get_request_user_permissions(request, man_obj)
+    if not allow_view:
+        for rem_key in ['oc-gen:has-obs', 'oc-gen:has-files']:
+            if not rem_key in rep_dict:
+                continue
+            rep_dict.pop(rem_key)
     item_dict = prepare_for_item_dict_html_template(man_obj, rep_dict)
     json_output = json.dumps(
         item_dict,
@@ -191,11 +206,11 @@ def test_html(request, uuid, full_media=False):
         'GEO_JSON': geo_json,
         # Expected order of related item_types
         'order_of_related_item_types': [
-            'subjects', 
-            'media', 
-            'documents', 
-            'tables', 
-            'persons', 
+            'subjects',
+            'media',
+            'documents',
+            'tables',
+            'persons',
             'subjects_children'
         ],
         'citation':citation.make_citation_dict(rep_dict),
@@ -209,6 +224,7 @@ def test_html(request, uuid, full_media=False):
         'show_json': request.GET.get('json', False),
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),
+        'allow_view': allow_view,
     }
     template = loader.get_template('bootstrap_vue/item/item.html')
     response = HttpResponse(template.render(context, request))
@@ -219,7 +235,7 @@ def test_html(request, uuid, full_media=False):
 @never_cache
 def test_html_full(request, uuid):
     """HTML Media Full representation for searching Open Context """
-    # NOTE: There is NO templating here, this is strictly so we can 
+    # NOTE: There is NO templating here, this is strictly so we can
     # use the Django debugger to optimize queries
     return test_html(request, uuid, full_media=True)
 
@@ -228,7 +244,7 @@ def subjects_html(request, uuid):
     """HTML Subjects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'subjects', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -237,7 +253,7 @@ def subjects_json(request, uuid):
     """JSON Subjects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'subjects', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
@@ -248,7 +264,7 @@ def media_html(request, uuid):
     """HTML Media Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'media', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -257,13 +273,13 @@ def media_full_html(request, uuid):
     """HTML Media full Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         ok_uuid = str(ok_uuid)
         return make_redirect_url(
-            request, 
-            'media', 
-            f'{ok_uuid}/full', 
+            request,
+            'media',
+            f'{ok_uuid}/full',
             extension=''
         )
     return test_html(request, ok_uuid, full_media=True)
@@ -272,7 +288,7 @@ def media_json(request, uuid):
     """JSON Media Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'media', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
@@ -283,7 +299,7 @@ def documents_html(request, uuid):
     """HTML Documents Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'documents', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -292,7 +308,7 @@ def documents_json(request, uuid):
     """JSON Media Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'documents', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
@@ -302,7 +318,7 @@ def projects_html(request, uuid):
     """HTML Projects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -311,7 +327,7 @@ def projects_json(request, uuid):
     """JSON Projects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
@@ -321,7 +337,7 @@ def persons_html(request, uuid):
     """HTML Persons Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'persons', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -330,7 +346,7 @@ def persons_json(request, uuid):
     """JSON Persons Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'persons', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
@@ -340,7 +356,7 @@ def predicates_html(request, uuid):
     """HTML Predicates Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'predicates', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -349,7 +365,7 @@ def predicates_json(request, uuid):
     """JSON Predicates Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'predicates', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
@@ -359,7 +375,7 @@ def types_html(request, uuid):
     """HTML Types Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'types', ok_uuid, extension='')
     return test_html(request, ok_uuid)
@@ -368,7 +384,7 @@ def types_json(request, uuid):
     """JSON Types Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        raise Http404 
+        raise Http404
     if do_redirect:
         return make_redirect_url(request, 'types', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
