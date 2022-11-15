@@ -27,9 +27,9 @@ class ResultFacetsStandard():
 
     """ Methods to prepare context, property, project facets """
 
-    def __init__(self, 
-        request_dict=None, 
-        current_filters_url=None, 
+    def __init__(self,
+        request_dict=None,
+        current_filters_url=None,
         facet_fields_to_client_request={},
         slugs_for_config_facets=[],
         base_search_url='/search/'
@@ -47,10 +47,10 @@ class ResultFacetsStandard():
         self.facet_fields_to_client_request = copy.deepcopy(facet_fields_to_client_request)
         # Keep track of the slugs that have pre-defined facets configs.
         self.slugs_for_config_facets = copy.deepcopy(slugs_for_config_facets)
-    
+
 
     def make_facet_dict_from_solr_field(
-        self, 
+        self,
         solr_facet_field_key,
         facet_type,
         facet_labeling,
@@ -90,10 +90,10 @@ class ResultFacetsStandard():
             # Add an "is_related" attribute
             item_obj.is_related = is_related
             items.append(item_obj)
-        
+
         if not len(items):
             return None
-        
+
         slugs_id = configs.REQUEST_PROP_HIERARCHY_DELIM.join(
             [item.slug for item in items]
          )
@@ -119,7 +119,7 @@ class ResultFacetsStandard():
             facet['slug'] = items[0].slug
         else:
             # The final item is the one we want for a definition range facets, because
-            # this item defines the most specific attribute that we're getting 
+            # this item defines the most specific attribute that we're getting
             # ranges for.
             facet['rdfs:isDefinedBy'] = rep_utils.make_web_url(items[-1])
             facet['slug'] = items[-1].slug
@@ -132,15 +132,15 @@ class ResultFacetsStandard():
 
 
     def add_options_list_for_data_type(
-        self, 
+        self,
         param_key,
-        match_old_value, 
-        delim, 
-        data_type, 
+        match_old_value,
+        delim,
+        data_type,
         options_tuples
     ):
         """Adds option dict object to a list based on data-type.
-        
+
         :param str param_key: The request parameter key value.
         :param str match_old_value: If not None, this is for iterating
             through lists of values for a given request parameter so we
@@ -167,8 +167,12 @@ class ResultFacetsStandard():
                 continue
             if parsed_val.get('data_type') != data_type:
                 # The data type for this value does not match the
-                # data type for the options list that we are 
+                # data type for the options list that we are
                 # building.
+                continue
+            if parsed_val.get('slug') in configs.NOT_INCLUDE_FACET_OPTION_SLUGS:
+                # This slug is configured to be not included as a
+                # facet option.
                 continue
 
             # The new_value is generally the slug part of the parsed_val
@@ -178,7 +182,7 @@ class ResultFacetsStandard():
                 new_value = parsed_val['label']
             else:
                 new_value = parsed_val['slug']
-            
+
             if match_old_value is not None:
                 # We have an old value to match. So the new_value
                 # will be the match_old_value + delim + the new_value.
@@ -196,7 +200,7 @@ class ResultFacetsStandard():
 
             if param_key == 'prop':
                 # Prop can be a list. If the match_old_value is None
-                # then we add to new_value to the existing list of 
+                # then we add to new_value to the existing list of
                 # all prop parameter values.
                 add_to_param_list = True
             else:
@@ -210,7 +214,7 @@ class ResultFacetsStandard():
                 match_old_value=match_old_value,
                 new_value=new_value,
                 add_to_param_list=add_to_param_list,
-            )  
+            )
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
                 # The new URL matches our current filter
@@ -232,16 +236,16 @@ class ResultFacetsStandard():
 
 
     def add_options_lists_to_facet(
-        self, 
-        facet, 
-        solr_facet_field_key, 
-        param_key, 
-        delim, 
+        self,
+        facet,
+        solr_facet_field_key,
+        param_key,
+        delim,
         options_tuples,
         add_to_existing_opts=False
     ):
         """Adds options lists for different data types to a facet"""
-        # Look up the client's request parameter and reqest 
+        # Look up the client's request parameter and reqest
         param_key, match_old_value = self.facet_fields_to_client_request.get(
             solr_facet_field_key,
             (param_key, None,) # default parameter key with no matching value.
@@ -249,9 +253,9 @@ class ResultFacetsStandard():
         for data_type, options_list_key in configs.FACETS_DATA_TYPE_OPTIONS_LISTS.items():
             options = self.add_options_list_for_data_type(
                 param_key,
-                match_old_value, 
-                delim, 
-                data_type, 
+                match_old_value,
+                delim,
+                data_type,
                 options_tuples
             )
             if not len(options):
@@ -266,8 +270,8 @@ class ResultFacetsStandard():
                 )
                 # Second sort the options by count.
                 facet[options_list_key] = sorted(
-                    all_options, 
-                    key=itemgetter('count'), 
+                    all_options,
+                    key=itemgetter('count'),
                     reverse=True
                 )
 
@@ -277,18 +281,18 @@ class ResultFacetsStandard():
 
 
     def prep_preconfig_facet(
-        self, 
-        param_key, 
+        self,
+        param_key,
     ):
         """Prepare a preconfigured facet if applicable
-        
+
         :param str param_key: The request parameter key value.
 
         return preconfig_facet
         """
         if param_key != 'prop' or not len(self.slugs_for_config_facets):
             return None
-        
+
         # Iterate through the list of configs.ITEM_CAT_FACET_FIELDS_BACKEND.
         # This will go from more general to more specific. The most specific
         # matched configuration will be the one we use.
@@ -301,57 +305,57 @@ class ResultFacetsStandard():
 
 
     def prep_preconfig_facet_options(
-        self, 
+        self,
         preconfig_facet,
         solr_facet_field_key,
-        param_key, 
-        delim, 
+        param_key,
+        delim,
         options_tuples
     ):
         """Prepare a preconfigured facet if applicable
-        
+
         :param dict preconfig_facet: A dictionary for a pre-configured
             facet field.
-        :param str solr_facet_field_key: A solr facet field key that's 
+        :param str solr_facet_field_key: A solr facet field key that's
             checked to see if it matches expectations in the pre_config
             facet.
         :param str param_key: The request parameter key value.
         :param str delim: A hierarchy path delimiter
-        :param list options_tuples: List of (facet_value, count) tuples 
+        :param list options_tuples: List of (facet_value, count) tuples
 
         return preconfig_facet, remaining_options_tuples
         """
         if not preconfig_facet or not options_tuples or not len(options_tuples):
             return preconfig_facet, options_tuples
-        
+
         solr_fact_field_config = preconfig_facet.get(
-            'solr_facet_field_keys_opts_slugs', 
+            'solr_facet_field_keys_opts_slugs',
             {}
         ).get(solr_facet_field_key)
 
         if not solr_fact_field_config:
-            # The current solr_facet_field_key is not in the dict of 
+            # The current solr_facet_field_key is not in the dict of
             # solr_facet_field_keys relevant to this pre-configured facet
             return preconfig_facet, options_tuples
-        
+
         if solr_fact_field_config == 'ALL':
             # Add ALL of the options_tuples for current solr_facet_field_key to the preconfig_facet
             preconfig_facet = self.add_options_lists_to_facet(
-                preconfig_facet, 
-                solr_facet_field_key, 
-                param_key, 
-                delim, 
+                preconfig_facet,
+                solr_facet_field_key,
+                param_key,
+                delim,
                 options_tuples,
                 add_to_existing_opts=True,
             )
             # Return the preconfig_facet and an empty list of options tuples
             # because we used all of these options_tuples and none remain.
             return  preconfig_facet, []
-        
+
         if not isinstance(solr_fact_field_config, list):
             # We have a bad config. Raise an error.
             raise ValueError(f'Bad config in {preconfig_facet}, check {solr_facet_field_key}')
-        
+
         preconfig_options_tuples = []
         remaining_options_tuples = []
         for facet_value, count in options_tuples:
@@ -373,17 +377,17 @@ class ResultFacetsStandard():
                 preconfig_options_tuples.append((facet_value, count,))
             else:
                 remaining_options_tuples.append((facet_value, count,))
-        
+
         if not len(preconfig_options_tuples):
             # We didn't actually find any matching option_tuples in
             # current solr_facet_field_key
             return preconfig_facet, options_tuples
 
         preconfig_facet = self.add_options_lists_to_facet(
-            preconfig_facet, 
-            solr_facet_field_key, 
-            param_key, 
-            delim, 
+            preconfig_facet,
+            solr_facet_field_key,
+            param_key,
+            delim,
             preconfig_options_tuples,
             add_to_existing_opts=True,
         )
@@ -406,24 +410,24 @@ class ResultFacetsStandard():
             return []
 
         for (
-                suffix, 
-                param_key, 
-                delim, 
-                facet_type, 
+                suffix,
+                param_key,
+                delim,
+                facet_type,
                 facet_labeling,
             ) in configs.FACETS_STANDARD:
 
             preconfig_facet = self.prep_preconfig_facet(param_key)
             for (
-                    solr_facet_field_key, 
+                    solr_facet_field_key,
                     solr_facet_value_count_list,
                 ) in solr_facet_fields_dict.items():
-                
+
                 if not solr_facet_field_key.endswith(suffix):
                     # the type for field for the current suffix.
                     continue
                 if (
-                    suffix == configs.FACETS_PROP_SUFFIX 
+                    suffix == configs.FACETS_PROP_SUFFIX
                     and solr_facet_field_key.endswith(configs.FACETS_CAT_SUFFIX)
                 ):
                     # We don't want to double count categories, because
@@ -441,8 +445,8 @@ class ResultFacetsStandard():
                 preconfig_facet, options_tuples = self.prep_preconfig_facet_options(
                     copy.deepcopy(preconfig_facet),
                     solr_facet_field_key,
-                    param_key, 
-                    delim, 
+                    param_key,
+                    delim,
                     options_tuples
                 )
 
@@ -464,23 +468,23 @@ class ResultFacetsStandard():
                 # Add options lists for different data-types present in
                 # the options tuples list.
                 facet = self.add_options_lists_to_facet(
-                    copy.deepcopy(facet), 
-                    solr_facet_field_key, 
-                    param_key, 
-                    delim, 
+                    copy.deepcopy(facet),
+                    solr_facet_field_key,
+                    param_key,
+                    delim,
                     options_tuples
                 )
                 normal_facets.append(facet)
-            
+
             if preconfig_facet:
                 preconfig_facet.pop('solr_facet_field_keys_opts_slugs')
                 preconfig_facets.append(preconfig_facet)
-        
+
         # Make the preconfig facet the first facet.
         return preconfig_facets + normal_facets
-    
 
-    
+
+
     def get_sitemap_facets_and_options(self, solr_json):
         """Gets property facets and options from solr response json"""
         normal_facets = []
@@ -489,16 +493,16 @@ class ResultFacetsStandard():
             solr_json
         )
         facet = configs.SITE_MAP_FACETS_DICT.get(
-            configs.SITEMAP_FACET_FIELD, 
+            configs.SITEMAP_FACET_FIELD,
         )
         if not facet :
             return normal_facets
 
         for (
-            solr_facet_field_key, 
+            solr_facet_field_key,
             solr_facet_value_count_list,
             ) in solr_facet_fields_dict.items():
-            
+
             if solr_facet_field_key != configs.SITEMAP_FACET_FIELD:
                 # We're only interested in the sitemap facet field
                 continue
@@ -515,10 +519,10 @@ class ResultFacetsStandard():
             # Add options lists for different data-types present in
             # the options tuples list.
             facet = self.add_options_lists_to_facet(
-                copy.deepcopy(facet), 
-                solr_facet_field_key, 
-                param_key='proj', 
-                delim='---', 
+                copy.deepcopy(facet),
+                solr_facet_field_key,
+                param_key='proj',
+                delim='---',
                 options_tuples=options_tuples
             )
             normal_facets.append(facet)
@@ -529,7 +533,7 @@ class ResultFacetsStandard():
 
 
     def add_range_options_list(
-        self, 
+        self,
         param_key,
         match_old_value,
         data_type,
@@ -538,7 +542,7 @@ class ResultFacetsStandard():
         round_digits=None
     ):
         """Adds option dict object to a list based on data-type.
-        
+
         :param str data_type: Solr data-type to match for inclusion
             in the output options list.
         :param list options_tuples: List of (facet_value, count) tuples
@@ -567,7 +571,7 @@ class ResultFacetsStandard():
                 # max_value. We don't want to include
                 # values for the next facet.
                 range_query_end = '}'
-            
+
             label = facet_value
             if round_digits is not None:
                 label = str(round(float(facet_value), round_digits))
@@ -586,18 +590,18 @@ class ResultFacetsStandard():
             else:
                 # How van we even be here with the wrong data-type?
                 continue
-            
+
 
             # Except for the last range query option, a
             # range query is greater than or equal to the min_value
             # and less than the max_value.
-            # 
+            #
             # For the last range query option, the range query
             # is greater than or equal to the min_value and less than
             # or equal to the maximum value (thus, we include the
-            # max_value for the last, greatest facet option). 
+            # max_value for the last, greatest facet option).
             range_query = '[{min_val} TO {max_val}{q_end}'.format(
-                min_val=min_value, 
+                min_val=min_value,
                 max_val=max_value,
                 q_end=range_query_end,
             )
@@ -615,7 +619,7 @@ class ResultFacetsStandard():
                 # The first part of the old_parts has the
                 # old range removed.
                 new_value = old_parts[0] + delim + range_query
-            
+
             if new_value is None:
                 # No old range query to replace.
                 if match_old_value.endswith(delim):
@@ -635,7 +639,7 @@ class ResultFacetsStandard():
                 param_key,
                 match_old_value=match_old_value,
                 new_value=new_value,
-            )  
+            )
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
                 # The new URL matches our current filter
@@ -655,7 +659,7 @@ class ResultFacetsStandard():
 
     def get_facet_ranges_and_options(self, solr_json):
         """Gets property range facets and options from solr response json"""
-        
+
         facet_ranges = []
         solr_facet_ranges_dict = utilities.get_dict_path_value(
             configs.FACETS_RANGE_SOLR_ROOT_PATH_KEYS,
@@ -664,7 +668,7 @@ class ResultFacetsStandard():
         if not solr_facet_ranges_dict:
             # No facets ranges active, so skip out
             return facet_ranges
-        
+
         # Now get the related stats fields.
         solr_stats_dict = utilities.get_dict_path_value(
             configs.STATS_FIELDS_PATH_KEYS,
@@ -673,15 +677,15 @@ class ResultFacetsStandard():
         if not solr_stats_dict:
             # No solr stats. So skip out.
             return None
-        
+
         for (
-                solr_field_key, 
+                solr_field_key,
                 range_dict,
             ) in solr_facet_ranges_dict.items():
 
-            # Look up the client's request parameter and reqest 
+            # Look up the client's request parameter and reqest
             (
-                param_key, 
+                param_key,
                 match_old_value,
             ) = self.facet_fields_to_client_request.get(
                 solr_field_key,
@@ -697,8 +701,8 @@ class ResultFacetsStandard():
                 solr_field_key
             )
             if data_type not in [
-                    'xsd:integer', 
-                    'xsd:double', 
+                    'xsd:integer',
+                    'xsd:double',
                     'xsd:date',
                 ]:
                 # The data type for solr field is missing or
@@ -721,7 +725,7 @@ class ResultFacetsStandard():
             if not len(options_tuples):
                 # Skip, because we don't have any facet range options
                 continue
-            
+
             facet_range = self.make_facet_dict_from_solr_field(
                 solr_field_key,
                 'oc-api:range-facet',
@@ -749,7 +753,7 @@ class ResultFacetsStandard():
                 param_key,
                 match_old_value,
                 data_type,
-                stats_dict['max'],  
+                stats_dict['max'],
                 options_tuples,
                 round_digits=round_digits,
             )
@@ -757,7 +761,3 @@ class ResultFacetsStandard():
             facet_ranges.append(facet_range)
 
         return facet_ranges
-            
-
-        
-            

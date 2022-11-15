@@ -909,6 +909,14 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
     'media': 'oc-api:has-rel-media-options',
 }
 
+
+# Slugs to identify facet options to ignore / skip
+# in the facet results
+NOT_INCLUDE_FACET_OPTION_SLUGS = [
+    'oc-world-root',
+    'open-context',
+]
+
 # Default time-space event category for API
 DEFAULT_API_EVENT_ID = 'oc-gen:general-time-space'
 
