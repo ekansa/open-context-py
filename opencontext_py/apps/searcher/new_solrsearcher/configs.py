@@ -698,6 +698,7 @@ RESPONSE_DEFAULT_TYPES = [
     'geo-facet',
     'geo-feature',
     'geo-record',
+    'no-geo-record',
 ]
 
 # These response types get JSON-LD context objects
@@ -708,6 +709,7 @@ RESPONSE_TYPES_JSON_LD_CONTEXT = [
     'geo-feature',
     'geo-project',
     'geo-record',
+    'no-geo-record',
 ]
 
 # Parameters to ignore / remove for generating new search

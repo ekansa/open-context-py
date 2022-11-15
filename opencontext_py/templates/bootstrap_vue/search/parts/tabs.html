@@ -4,7 +4,7 @@
   <div>
     <b-card no-body>
       <b-tabs card v-model="tab" @input="input_int_tab_clicked" :ref="'search-tabs'">
-        <b-tab title="Mapped Results" 
+        <b-tab title="Mapped Results"
           :id="tab_ids[0]"
           :key="tab_ids[0]"
           @click="tab_clicked"
@@ -48,11 +48,11 @@
                   <b-spinner class="m-5" label="Busy"></b-spinner>
                 </div>
             </div>
-            
+
           </b-card-text>
         </b-tab>
 
-        <b-tab 
+        <b-tab
           title="Time Ranges"
           :id="tab_ids[1]"
           :key="tab_ids[1]"
@@ -74,12 +74,12 @@
               v-bind:chrono_facets="chrono_facets"></chronotiles>
 
           </b-card-text>
-          
+
         </b-tab>
 
 
 
-        <b-tab 
+        <b-tab
           title="Value Ranges"
           :id="tab_ids[2]"
           :key="tab_ids[2]"
@@ -110,7 +110,7 @@
           </b-card-text>
         </b-tab>
 
-        <b-tab 
+        <b-tab
           :id="tab_ids[3]"
           :key="tab_ids[3]"
           :disabled="!(result_count > 0)"
@@ -142,6 +142,7 @@
               v-bind:descriptiveness_min="descriptiveness_min"
               v-bind:descriptiveness_max="descriptiveness_max"
               v-bind:result_raw_features="result_raw_features"
+              v-bind:result_no_geo_records="result_no_geo_records"
             ></records-tab>
 
           </b-card-text>
@@ -242,7 +243,7 @@ var vc_all_search_tabs = Vue.component(
         },
         project_image_overlays: function() {
           let raw_overlays = safe_get_nested_object_by_str_key(
-            this.result, 
+            this.result,
             'oc-api:oc-gen-has-geo-overlays'
           );
           if(!raw_overlays){
@@ -262,6 +263,13 @@ var vc_all_search_tabs = Vue.component(
         },
         result_raw_features: function() {
           return safe_get_nested_object_by_str_key(this.result, 'features');
+        },
+        result_no_geo_records: function() {
+          let result_no_geo_records = safe_get_nested_object_by_str_key(this.result, 'oc-api:has-no-geo-results');
+          if(result_no_geo_records){
+            console.log('We have nongeo records: ' +  result_no_geo_records.length);
+          }
+          return result_no_geo_records;
         },
         numeric_fields_id: function () {
           let frag_obj = get_search_current_frag_obj();
@@ -296,7 +304,7 @@ var vc_all_search_tabs = Vue.component(
             return false;
           }
           return true;
-        },  
+        },
         facets_int_groups_opts: function() {
             // Group facet fields and options
             // returned from the API
@@ -362,7 +370,7 @@ var vc_all_search_tabs = Vue.component(
           let initial_tab = parseInt(this.frontend_state_obj.tab);
           console.log('Activate initial tab: ' + initial_tab);
           this.tab = initial_tab;
-          setTimeout(() => {  
+          setTimeout(() => {
             this.input_int_tab_clicked(initial_tab);
             this.tab = initial_tab;
           }, 200);
@@ -415,7 +423,7 @@ var vc_all_search_tabs = Vue.component(
           let act_frontend_state = JSON.parse(JSON.stringify(this.frontend_state_obj));
           act_frontend_state.tab = found_tab;
           this.set_frontend_state_obj(act_frontend_state);
-          setTimeout(() => {  
+          setTimeout(() => {
             this.input_int_tab_clicked(found_tab);
             this.tab = found_tab;
           }, 200);

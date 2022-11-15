@@ -1265,17 +1265,37 @@ class ResultRecords():
         return meta_result_records
 
 
+    def update_no_geo_record_dict(self, no_geo_dict):
+        """Updates a dictionary that looks like a GeoJSON
+        result dict to change into a result record that
+        is not geospatial
+        """
+        remove_keys = [
+            'geometry',
+            'type',
+        ]
+        for rem_key in remove_keys:
+            if no_geo_dict.get(rem_key):
+                no_geo_dict.pop(rem_key)
+        no_geo_dict['category'] = 'oc-api:no-geo-record'
+        return no_geo_dict
+
+
     def make_geojson_records_from_solr(self, solr_json):
         """Makes geojson records from a solr result"""
         records = self.make_records_from_solr(solr_json)
         features = []
+        non_geo_records = []
         for i, rr in enumerate(records, 1):
             geojson = rr.make_geojson(
                 record_index= i + self.start,
                 total_found=self.total_found
             )
             if not geojson.get('geometry', {}).get('type'):
-                # Missing geometry data, don't add.
+                # Missing geometry data, so add to the
+                # list of non-geojson records.
+                no_geo_dict = self.update_no_geo_record_dict(geojson)
+                non_geo_records.append(no_geo_dict)
                 continue
             features.append(geojson)
-        return features
+        return features, non_geo_records

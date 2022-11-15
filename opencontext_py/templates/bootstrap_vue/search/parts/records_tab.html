@@ -183,7 +183,7 @@
         ></records-tab-header-footer>
 
         <b-table
-            v-if="result_raw_features"
+            v-if="all_raw_records"
             :items="items"
             :fields="fields"
             :striped="striped"
@@ -423,6 +423,7 @@ var vc_records_tab = Vue.component(
             'descriptiveness_min',
             'descriptiveness_max',
             'result_raw_features',
+            'result_no_geo_records',
         ],
         data() {
             return {
@@ -445,6 +446,7 @@ var vc_records_tab = Vue.component(
                 descriptiveness_max: 0,
                 interest_levels: 5,
                 result_raw_features: null,
+                result_no_geo_records: null,
                 sortBy: 'descriptiveness',
                 sortDesc: true,
                 fields: [
@@ -464,13 +466,40 @@ var vc_records_tab = Vue.component(
 
         },
         computed: {
+            all_raw_records: function() {
+                let raw_feature_records = [];
+                if(this.result_raw_features){
+                    for(let feature of this.result_raw_features){
+                        raw_feature_records.push(feature);
+                    }
+                }
+                if(this.result_no_geo_records){
+                    for(let rec of this.result_no_geo_records){
+                        raw_feature_records.push(rec);
+                    }
+                }
+                return raw_feature_records;
+            },
             items: function () {
-                if(!this.result_raw_features){
+                if(!this.result_raw_features && !this.result_no_geo_records){
+                    console.log('absolutely no results, yet');
                     return null;
                 }
+                let raw_feature_records = [];
+                if(this.result_raw_features){
+                    for(let feature of this.result_raw_features){
+                        raw_feature_records.push(feature);
+                    }
+                }
+                if(this.result_no_geo_records){
+                    for(let rec of this.result_no_geo_records){
+                        raw_feature_records.push(rec);
+                    }
+                }
                 let items = [];
-                for(let feature of this.result_raw_features){
-                    if(feature['category'] != 'oc-api:geo-record'){
+                for(let feature of this.all_raw_records){
+                    if((feature['category'] != 'oc-api:geo-record')
+                       && (feature['category'] != 'oc-api:no-geo-record')){
                         continue;
                     }
                     if(!('properties' in feature)){

@@ -744,12 +744,17 @@ class ResultMaker():
 
         # Make geojson features for each individual search result
         # record in the solr_json response.
-        geo_result_records = r_recs.make_geojson_records_from_solr(
+        geo_result_records, non_geo_records = r_recs.make_geojson_records_from_solr(
             solr_json
         )
-        self._add_geojson_features_to_result(
-            geo_result_records
-        )
+        if geo_result_records and 'geo-record' in self.act_responses:
+            self._add_geojson_features_to_result(
+                geo_result_records
+            )
+        if non_geo_records and 'no-geo-record' in self.act_responses:
+            if not 'oc-api:has-no-geo-results' in self.result:
+                self.result['oc-api:has-no-geo-results'] = []
+            self.result['oc-api:has-no-geo-results'] += non_geo_records
 
 
     def add_project_image_overlays(self):
@@ -837,7 +842,7 @@ class ResultMaker():
             # record uri together with attribute metadata.
             self.add_uri_meta_records(solr_json)
 
-        if 'geo-record' in self.act_responses:
+        if 'geo-record' in self.act_responses or 'no-geo-record'in self.act_responses:
             # Adds geo-json expressed features for individual
             # result records
             self.add_geo_records(solr_json)
