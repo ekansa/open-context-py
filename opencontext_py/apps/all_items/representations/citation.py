@@ -24,32 +24,37 @@ def format_citation_person_dict(oc_obj_dict):
     # The combined / full name is in the meta_json, but if not,
     # we fall back to the item label.
     combined_name = oc_obj_dict.get(
-        'object__meta_json', 
+        'object__meta_json',
         {}
     ).get(
-        'combined_name', 
+        'combined_name',
         oc_obj_dict.get('label')
     )
 
+    if not combined_name:
+        # We don't have a full name in the meta_json, so
+        # use the label instead.
+        combined_name = oc_obj_dict.get('label')
+
     surname = oc_obj_dict.get(
-        'object__meta_json', 
+        'object__meta_json',
         {}
     ).get(
-        'surname', 
+        'surname',
     )
 
     given_name = oc_obj_dict.get(
-        'object__meta_json', 
+        'object__meta_json',
         {}
     ).get(
-        'given_name', 
+        'given_name',
     )
 
     mid_init = oc_obj_dict.get(
-        'object__meta_json', 
+        'object__meta_json',
         {}
     ).get(
-        'mid_init', 
+        'mid_init',
     )
 
     if surname and given_name:
@@ -79,7 +84,7 @@ def format_citation_person_dict(oc_obj_dict):
 
 def make_citation_dict(rep_dict):
     """Makes a citation dict from an Open Context rep_dict
-    
+
     :param dict rep_dict: An Open Context representation dict
         that still lacks JSON-LD
     """
@@ -132,7 +137,7 @@ def make_citation_dict(rep_dict):
             act_names.append(p_dict.get('combined_name'))
             citation_dict[cite_key].append(p_dict)
 
-    if (not citation_dict.get('contributor') 
+    if (not citation_dict.get('contributor')
         and not citation_dict.get('creator')):
         citation_dict['creator'] = [
             {
@@ -145,14 +150,13 @@ def make_citation_dict(rep_dict):
         citation_dict['contributor'] = citation_dict.get('creator').copy()
 
     citation_dict['authors'] = [
-        p.get('combined_name') 
+        p.get('combined_name')
         for p in citation_dict.get('contributor', [{}])
     ]
     citation_dict['editors'] = [
-        p.get('combined_name') 
+        p.get('combined_name')
         for p in citation_dict.get('creator', [{}])
     ]
-
     # Add persistent IDs to the citation dict.
     for scheme_key, scheme_conf in AllIdentifier.SCHEME_CONFIGS.items():
         citation_dict[scheme_key] = None
@@ -164,4 +168,3 @@ def make_citation_dict(rep_dict):
                 citation_dict[scheme_key] = act_id
                 citation_dict['ids'][scheme_key.upper()] = act_id
     return citation_dict
-
