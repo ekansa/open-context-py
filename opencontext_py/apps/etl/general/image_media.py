@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from unidecode import unidecode
 
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageFilter
 
 
 from django.template.defaultfilters import slugify
@@ -22,10 +22,10 @@ importlib.reload(imm)
 
 imm.OK_HUGE_IMAGES = True
 df = imm.inventory_make_oc_files(
-    media_files_path='/home/ekansa/github/open-context-py/static/imports/micromorph-thinsection-images',
-    media_inventory_csv_path='/home/ekansa/github/open-context-py/static/imports/micromorph-thinsection-images.csv',
-    oc_media_root_dir='/home/ekansa/github/open-context-py/static/imports/mallol-micomorphology',
-    media_base_url='https://artiraq.org/static/opencontext/mallol-micomorphology/',
+    orig_media_dir_path='/home/ekansa/github/open-context-py/static/imports/kahramanmaras-survey-raw',
+    media_inventory_csv_path='/home/ekansa/github/open-context-py/static/imports/kahramanmaras-survey.csv',
+    oc_media_root_dir='/home/ekansa/github/open-context-py/static/imports/kahramanmaras-survey',
+    media_base_url='https://artiraq.org/static/opencontext/kahramanmaras-survey/',
 )
 
 """
@@ -65,6 +65,8 @@ OPENCONTEXT_URL_COLS = [(f'URL_{d_type}', d_type,) for d_type in OPENCONTEXT_MED
 MAX_PREVIEW_WIDTH = 650
 MAX_THUMBNAIL_WIDTH = 150
 
+# If we need to blur non gaussian images
+GAUSSIAN_BLUR_RADIUS = 2
 
 
 def make_oc_filename(filename):
@@ -82,10 +84,10 @@ def make_oc_filename(filename):
     return filename + ext
 
 
-def make_directory_files_df(media_files_path):
+def make_directory_files_df(orig_media_dir_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
     file_data = []
-    for dirpath, _, filenames in os.walk(media_files_path):
+    for dirpath, _, filenames in os.walk(orig_media_dir_path):
         for filename in filenames:
             if filename.endswith(':Zone.Identifier'):
                 # A convenience hack for Windows subsystem for linux
@@ -102,7 +104,7 @@ def make_directory_files_df(media_files_path):
 
 
 def set_check_directory(root_dir, act_dir):
-    """ Prepares a directory to find import GeoJSON files """
+    """ Prepares a directory to store files """
     output = None
     full_dir_path = os.path.join(root_dir, act_dir)
     if not os.path.exists(full_dir_path):
@@ -206,17 +208,50 @@ def make_new_size_file(src_file, new_file, new_width):
             png = False
             raise RuntimeWarning(f'Problem with PNG changes from {src_file} to {new_file}')
     else:
+        if im.mode != "RGB":
+            print(f'Converting and blurring image mode: {im.mode}')
+            im_rgba = im.convert("RGB")
+            im = None
+            blurred_image = im_rgba.filter(
+                ImageFilter.GaussianBlur(radius=GAUSSIAN_BLUR_RADIUS)
+            )
+            im = blurred_image
+            blurred_image = None
         im.thumbnail(size, Image.ANTIALIAS)
         try:
             im.save(new_file, "JPEG", quality=100)
             output = new_file
         except:
-            raise RuntimeWarning(f'Problem with saving changes rom {src_file} to {new_file}')
+            raise RuntimeWarning(f'Problem with saving changes from {src_file} to {new_file}')
     im.close()
     return output
 
 
+def make_oc_media_path_in_sub_dirs(orig_media_dir_path, src_file, oc_dir, new_file_name):
+    if orig_media_dir_path.endswith('/'):
+        orig_media_dir_path = orig_media_dir_path[:-1]
+    new_sub_dirs = []
+    at_root = False
+    act_orig_path = os.path.dirname(src_file)
+    while not at_root:
+        if act_orig_path == orig_media_dir_path:
+            at_root = True
+            break
+        orig_sub_dir = os.path.basename(act_orig_path)
+        new_sub_dir = make_oc_filename(orig_sub_dir)
+        new_sub_dirs.append(new_sub_dir)
+        act_orig_path = os.path.dirname(act_orig_path)
+    if new_sub_dirs:
+        # Reverse the list of new sub dirs, because we're going from specific to general
+        # and we need to create new sub dirs in the opposite order.
+        new_sub_dirs.reverse()
+        for sub_dir in new_sub_dirs:
+            oc_dir = set_check_directory(oc_dir, sub_dir)
+    return os.path.join(oc_dir, new_file_name)
+
+
 def make_image_versions_src_and_new_file(
+    orig_media_dir_path,
     dirs,
     src_file,
     new_file_name,
@@ -229,7 +264,12 @@ def make_image_versions_src_and_new_file(
         return None
     if not os.path.exists(src_file):
         raise RuntimeError('Cannot find {}'.format(src_file))
-    full_file = os.path.join(dirs['full'], new_file_name)
+    full_file = make_oc_media_path_in_sub_dirs(
+        orig_media_dir_path,
+        src_file,
+        oc_dir=dirs['full'],
+        new_file_name=new_file_name,
+    )
     if over_write or not os.path.exists(full_file):
         print('Copy full file {}'.format(new_file_name))
         shutil.copy2(src_file, full_file)
@@ -238,13 +278,23 @@ def make_image_versions_src_and_new_file(
         replace_extension(new_file_name, new_extension='jpg')
     ]
     for mod_new_file in mod_new_possible_files:
-        prev_file = os.path.join(dirs['preview'], mod_new_file)
+        prev_file = make_oc_media_path_in_sub_dirs(
+            orig_media_dir_path,
+            src_file,
+            oc_dir=dirs['preview'],
+            new_file_name=mod_new_file,
+        )
         if over_write or not os.path.exists(prev_file):
             prev_file = make_new_size_file(src_file, prev_file, new_width=preview_width)
             print(f'Made preview {prev_file}')
             break
     for mod_new_file in mod_new_possible_files:
-        thumb_file = os.path.join(dirs['thumbs'], mod_new_file)
+        thumb_file = make_oc_media_path_in_sub_dirs(
+            orig_media_dir_path,
+            src_file,
+            oc_dir=dirs['thumbs'],
+            new_file_name=mod_new_file,
+        )
         if over_write or not os.path.exists(thumb_file):
             thumb_file = make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
             print(f'Made thumbnail {thumb_file}')
@@ -254,6 +304,10 @@ def make_image_versions_src_and_new_file(
 
 def make_media_url(file_path, file_type, media_base_url=''):
     """Makes a media URL for a give file type"""
+    if not file_path:
+        return None
+    if media_base_url.endswith('/'):
+        media_base_url = media_base_url[:-1]
     type_dir = f'/{file_type}/'
     if not type_dir in file_path:
         return None
@@ -262,6 +316,7 @@ def make_media_url(file_path, file_type, media_base_url=''):
 
 
 def make_opencontext_file_versions(
+    orig_media_dir_path,
     media_inventory_csv_path,
     oc_media_root_dir,
     media_base_url='',
@@ -281,6 +336,7 @@ def make_opencontext_file_versions(
     )
     for _, row in df_media[files_indx].iterrows():
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
+            orig_media_dir_path,
             dirs,
             row['path'],
             row['new_filename']
@@ -306,7 +362,7 @@ def make_opencontext_file_versions(
 
 
 def inventory_make_oc_files(
-    media_files_path,
+    orig_media_dir_path,
     media_inventory_csv_path,
     oc_media_root_dir,
     media_base_url='',
@@ -314,7 +370,7 @@ def inventory_make_oc_files(
     """Generates a CSV inventory of media files from a contributor, and makes
     different file versions expected by Open Context.
 
-    :param str media_files_path: The root directory of the contributor's media
+    :param str orig_media_dir_path: The root directory of the contributor's media
         files
     :param str media_inventory_csv_path: The filename and path for the CSV file
         that inventories the media files and their Open Context versions
@@ -323,9 +379,12 @@ def inventory_make_oc_files(
 
     returns DataFrame df_media (a dataframe of the file inventory)
     """
-    df_media = make_directory_files_df(media_files_path)
+    if orig_media_dir_path.endswith('/'):
+        orig_media_dir_path = orig_media_dir_path[:-1]
+    df_media = make_directory_files_df(orig_media_dir_path)
     df_media.to_csv(media_inventory_csv_path, index=False)
     df_media = make_opencontext_file_versions(
+        orig_media_dir_path=orig_media_dir_path,
         media_inventory_csv_path=media_inventory_csv_path,
         oc_media_root_dir=oc_media_root_dir,
         media_base_url=media_base_url,
