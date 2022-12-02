@@ -52,6 +52,8 @@ def validate_transform_data_type_value(raw_str_value, data_type, timezone=settin
         return float_val
     elif data_type == 'xsd:date':
         # Parse a date / datetime string, set to a timezone.
+        if raw_str_value.endswith('Z'):
+            raw_str_value = raw_str_value[0:-1]
         try:
             naive_date_obj = parse(raw_str_value)
             date_obj = pytz.timezone(timezone).localize(naive_date_obj, is_dst=None)
