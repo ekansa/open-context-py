@@ -1,14 +1,35 @@
 import json
 import pyproj
+import uuid as GenUUID
 
 from django.http import HttpResponse
 from opencontext_py.libs.reprojection import ReprojectUtilities
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
+from opencontext_py.apps.all_items.legacy_all import update_old_id
+
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
+
+
+@cache_control(no_cache=True)
+@never_cache
+def uuid(request):
+    """Responds with a plain text UUID, optionally deterministically based
+    on an id parameter
+    """
+    id = request.GET.get('id')
+    if not id:
+        # Make a random new UUID
+        uuid = str(GenUUID.uuid4())
+    else:
+        _, uuid = update_old_id(id)
+    return HttpResponse(
+        uuid,
+        content_type='text/plain; charset=utf8'
+    )
 
 
 @cache_control(no_cache=True)
@@ -63,12 +84,12 @@ def meters_to_lat_lon(request):
     else:
         return HttpResponse('mx and my paramaters must be numbers',
                             status=406)
-    
+
 
 def lat_lon_to_quadtree(request):
     """ Converts WGS-84 lat / lon to a quadtree tile of a given zoom level """
     gm = GlobalMercator()
-    lat = None 
+    lat = None
     lon = None
     rand = None
     lat_ok = False
@@ -151,9 +172,9 @@ def reproject(request):
 http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-proj=poggio-civitate&output-proj=EPSG:4326&x=103.08&y=-60.79
 
 http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-proj=EPSG:3003&output-proj=EPSG:4326&x=169613.07889640043&y=-477999.93973334756
-    """       
-    
-    
+    """
+
+
     """ Converts a quadtree tile to WGS-84 lat / lon coordinates in different formats """
     if not (request.GET.get('input-proj') and request.GET.get('output-proj')):
         return HttpResponse('Need input-proj and output-proj parameters to specify projections.',
@@ -185,7 +206,7 @@ http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-pr
         proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(proj_x_vals,
                                                               proj_y_vals,
                                                               input_proj)
-        # now set the input projection to the correct 
+        # now set the input projection to the correct
         input_proj = ReprojectUtilities.MURLO_PRE_TRANSFORMS[input_proj]
     try:
         reproj.set_in_out_crs(input_proj, request.GET.get('output-proj'))
@@ -198,7 +219,7 @@ http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-pr
     except:
         return HttpResponse('Transformation failure.',
                             content_type='text/plain; charset=utf8',
-                            status=406)    
+                            status=406)
     coords = reproj.package_coordinates(out_x, out_y, request.GET.get('geometry'))
     if (request.GET.get('format') == 'geojson' and
         request.GET.get('geometry')):
