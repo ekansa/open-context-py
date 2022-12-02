@@ -10,7 +10,7 @@ from opencontext_py.apps.linkdata.getty_aat.api import GettyAATapi
 from opencontext_py.apps.linkdata.getty_aat import configs as aat_configs
 
 # ---------------------------------------------------------------------
-# NOTE: These functions are used to load and model Getty AAT 
+# NOTE: These functions are used to load and model Getty AAT
 # (Art and Architecture Thesaurus) entities.
 # ---------------------------------------------------------------------
 
@@ -33,10 +33,18 @@ HIERARCHY_SOURCE = 'getty-aat-api'
 CATEGORY_ITEM_TYPE = 'class'
 
 
+def normalize_aat_uri(raw_uri):
+    """Makes sure an AAT URI is for the linked data resource"""
+    if raw_uri and '/aat/' in raw_uri:
+        uri_ex = raw_uri.split('/aat/')
+        raw_uri = f'https://{aat_configs.GETTY_AAT_BASE_URI}{uri_ex[-1]}'
+    return raw_uri
+
+
 def get_getty_aat_vocabulary_obj():
     """Get the Manifest object for the vocabulary object"""
     m = AllManifest.objects.filter(
-        uri=AllManifest().clean_uri(aat_configs.GETTY_AAT_VOCAB_URI), 
+        uri=AllManifest().clean_uri(aat_configs.GETTY_AAT_VOCAB_URI),
         item_type='vocabularies'
     ).first()
     return m
@@ -44,13 +52,14 @@ def get_getty_aat_vocabulary_obj():
 
 def add_get_getty_aat_manifest_entity(aat_uri):
     """Gets or adds a manifest entity for a Getty AAT URI"""
+    aat_uri = normalize_aat_uri(aat_uri)
     aat_uri = AllManifest().clean_uri(aat_uri)
     if not aat_uri.startswith(aat_configs.GETTY_AAT_BASE_URI):
         return None
     vocab_obj = get_getty_aat_vocabulary_obj()
-    
+
     aat_obj = AllManifest.objects.filter(
-        uri=AllManifest().clean_uri(aat_uri), 
+        uri=AllManifest().clean_uri(aat_uri),
         context=vocab_obj,
     ).first()
     if aat_obj:
@@ -64,7 +73,7 @@ def add_get_getty_aat_manifest_entity(aat_uri):
     obj_data = api.get_aat_json(aat_uri)
     if not obj_data:
         return None
-    
+
     # Make a new manifest dictionary object.
     man_dict = {
         'publisher_id': vocab_obj.publisher.uuid,
@@ -86,11 +95,12 @@ def add_get_getty_aat_manifest_entity(aat_uri):
 
 
 def recursive_aat_parent_fetch(
-    first_child_uri, 
-    act_uri, 
+    first_child_uri,
+    act_uri,
     parent_uris=None,
     lookup_count=0,
 ):
+    act_uri = normalize_aat_uri(act_uri)
     act_uri = AllManifest().clean_uri(act_uri)
     if not parent_uris:
         parent_uris = []
@@ -120,7 +130,7 @@ def recursive_aat_parent_fetch(
     # for the Open Context AAT hierarchy.
     for broader_item in broader_items:
         if isinstance(broader_item, dict):
-            new_act_uri = broader_item.get('id') 
+            new_act_uri = broader_item.get('id')
         elif isinstance(broader_item, str):
             new_act_uri = broader_item
         if not new_act_uri:
@@ -129,7 +139,7 @@ def recursive_aat_parent_fetch(
         # Look up the parent of the broader parent that we just found.
         new_parent_uris = recursive_aat_parent_fetch(
             first_child_uri=first_child_uri,
-            act_uri=new_act_uri, 
+            act_uri=new_act_uri,
             parent_uris=parent_uris,
             lookup_count=lookup_count,
         )
@@ -142,24 +152,24 @@ def recursive_aat_parent_fetch(
 
 def get_add_aat_parent(child_uri, child_obj=None):
     """Checks to add a parent relation to a GBIF entity
-    
+
     Returns a tuple:
     parent_manifest_object, Is_new_relationship
-    
+
     """
     if not child_obj:
-        # We didn't pass child manifest object, so look it 
+        # We didn't pass child manifest object, so look it
         # up or create it from it's URI
         child_obj = add_get_getty_aat_manifest_entity(child_uri)
-    
+
     if not child_obj:
         # We can't find a child manifest object. Is this
         # really a Getty AAT entity?
         return None, False
-    
+
     # Vocabulary Getty AAT manifest object.
     vocab_obj = get_getty_aat_vocabulary_obj()
-    # Check if the child_obj has a broader parent 
+    # Check if the child_obj has a broader parent
     # item in the AAT vocabulary.
     parent_assert_obj = AllAssertion.objects.filter(
         subject=child_obj,
@@ -175,28 +185,28 @@ def get_add_aat_parent(child_uri, child_obj=None):
         return parent_assert_obj.object, False
 
     # -----------------------------------------------------------------
-    # Unlike biological taxa, we're going to limit the depth of the 
+    # Unlike biological taxa, we're going to limit the depth of the
     # Getty AAT hierarchy to two levels (for now!), so we will call
     # parent items until we find a parent URI that's in our list
     # of AAT parents
     # -----------------------------------------------------------------
     parent_uris = recursive_aat_parent_fetch(
         first_child_uri=child_obj.uri,
-        act_uri=child_obj.uri, 
+        act_uri=child_obj.uri,
     )
     pref_parent_uri = None
-    # Iterate through the list of configured preferred parents in their 
+    # Iterate through the list of configured preferred parents in their
     # order of preference. The first configured preferred parent is the
     # one we will select for use in the hierarchy.
     for act_config_uri in aat_configs.AAT_PREFERRED_PARENT_URI_LIST:
         if not pref_parent_uri and act_config_uri in parent_uris:
             pref_parent_uri = act_config_uri
             break
-    
+
     if not pref_parent_uri:
         print(f'COULD NOT FIND a recognized parent for: {child_obj.uri}')
         return None, False
-    
+
     parent_obj = add_get_getty_aat_manifest_entity(pref_parent_uri)
     if not parent_obj:
         print(f'COULD NOT FIND OR ADD DB record for parent: {pref_parent_uri}')
@@ -228,6 +238,7 @@ def get_add_aat_parent(child_uri, child_obj=None):
 
 def add_get_aat_manifest_obj_and_hierarchy(aat_uri):
     """Adds a Getty AAT entity and it's hierarchy to the database if it doesn't exist"""
+    aat_uri = normalize_aat_uri(aat_uri)
     aat_obj = add_get_getty_aat_manifest_entity(aat_uri)
     if not aat_obj:
         return None
