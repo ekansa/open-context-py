@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to edit an item's manifest object.
 -->
 
@@ -27,7 +27,7 @@ NOTE: Templates and view components to edit an item's manifest object.
         :sort-by.sync="sortBy"
         :sort-desc.sync="sortDesc"
         responsive="lg"
-        v-if="person_objs && person_objs.length > 0"
+        v-if="has_persons"
       >
         <template #cell(uuid)="data">
           <b-button variant="secondary" :href="'/editorial/item-edit/' + data.value" target="_blank">
@@ -39,8 +39,8 @@ NOTE: Templates and view components to edit an item's manifest object.
         </template>
         <template #cell(project_id)="data">
           <small>
-            <a 
-              :href="'/editorial/item-edit/' + data.item.project_id" 
+            <a
+              :href="'/editorial/item-edit/' + data.item.project_id"
               target="_blank">[[ data.item.project__label ]] <b-icon-tools></b-icon-tools>
             </a>
           </small>
@@ -92,7 +92,7 @@ NOTE: Templates and view components to edit an item's manifest object.
   <div>
     <b-row>
       <b-col cols="3">
-        <b-button 
+        <b-button
           block
           :disabled="rq_started"
           @click="request_start"
@@ -105,8 +105,8 @@ NOTE: Templates and view components to edit an item's manifest object.
           [[ rq_description ]]
         </p>
         <p v-if="rq_started">
-          [[ rq_name ]] process started at <strong>[[ rq_started_display ]]</strong>; 
-          ongoing after <strong>[[ rq_elapsed_time_display ]]</strong>. 
+          [[ rq_name ]] process started at <strong>[[ rq_started_display ]]</strong>;
+          ongoing after <strong>[[ rq_elapsed_time_display ]]</strong>.
           <br/>
           Updated: <strong>[[ rq_count_updated ]]</strong> [[ rq_batch_name ]], [[ rq_count ]] server requests.
         </p>
@@ -131,7 +131,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 <template id="edit-project">
   <b-container fluid v-if="man_obj">
     <b-row>
-      <b-col cols="12"> 
+      <b-col cols="12">
         <b-alert show>
 
           <b-row>
@@ -150,24 +150,24 @@ NOTE: Templates and view components to edit an item's manifest object.
               </p>
             </b-col>
           </b-row>
-          
+
           <edit-project-method
             v-bind:rq_args="sort_rq_args"
             rq_url="/editorial/item-sort-project-assertions"
             button_label="Sort Items in Project"
-            rq_description="Click the left button to sort all item links in this 
-            project according to their label. This should make listed items appear 
+            rq_description="Click the left button to sort all item links in this
+            project according to their label. This should make listed items appear
             in a reasonable, expected order."
             rq_name="Project Sort"
             rq_batch_name="batches"
           >
           </edit-project-method>
-          
+
           <edit-project-method
             v-bind:rq_args="human_remains_rq_args"
             rq_url="/editorial/flag-project-human-remains"
             button_label="Flag Project Human Remains"
-            rq_description="Click the left button to use associated metadata about items 
+            rq_description="Click the left button to use associated metadata about items
             in this project to flag records as relating to human-remains or burials."
             rq_name="Human Remains Flag"
             rq_batch_name="records"
@@ -184,17 +184,17 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         <b-card no-body>
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'proj_nav_accordion_spatial_tree'" 
+            <b-button
+              block
+              v-b-toggle="'proj_nav_accordion_spatial_tree'"
               variant="outline-info">
               <strong>Locations and Objects in Context</strong>
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="proj_nav_accordion_spatial_tree" 
-            visible="true" 
-            accordion="proj_nav_accordion" 
+          <b-collapse
+            id="proj_nav_accordion_spatial_tree"
+            visible="true"
+            accordion="proj_nav_accordion"
             role="tabpanel">
             <b-card-body>
               <root-item-tree
@@ -213,17 +213,17 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         <b-card no-body>
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'proj_nav_accordion_descriptions_relations'" 
+            <b-button
+              block
+              v-b-toggle="'proj_nav_accordion_descriptions_relations'"
               variant="outline-info">
               <strong>Descriptions and Relations</strong>
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="proj_nav_accordion_descriptions_relations" 
-            visible="false" 
-            accordion="proj_nav_accordion" 
+          <b-collapse
+            id="proj_nav_accordion_descriptions_relations"
+            visible="false"
+            accordion="proj_nav_accordion"
             role="tabpanel">
             <b-card-body>
               <root-item-tree
@@ -243,26 +243,26 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         <b-card no-body>
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'proj_nav_accordion_proj_hierarchy'" 
+            <b-button
+              block
+              v-b-toggle="'proj_nav_accordion_proj_hierarchy'"
               variant="outline-info">
               <strong>Projects and Sub-Projects</strong>
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="proj_nav_accordion_proj_hierarchy" 
-            visible="false" 
-            accordion="proj_nav_accordion" 
+          <b-collapse
+            id="proj_nav_accordion_proj_hierarchy"
+            visible="false"
+            accordion="proj_nav_accordion"
             role="tabpanel">
             <b-card-body>
-              
+
               <div v-if="man_obj.uuid != man_obj.context_id">
                 <p>
                   <strong>This project is contained in:
                   <br/>
-                    <a 
-                      :href="'/editorial/item-edit/' + man_obj.context_id" 
+                    <a
+                      :href="'/editorial/item-edit/' + man_obj.context_id"
                       target="_blank">[[ man_obj.context__label ]] <b-icon-tools></b-icon-tools></a>
                   </strong>
                 </p>
@@ -284,20 +284,20 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         <b-card no-body>
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'proj_nav_project_persons'" 
+            <b-button
+              block
+              v-b-toggle="'proj_nav_project_persons'"
               variant="outline-info">
               <strong>Persons / Organizations</strong>
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="proj_nav_project_persons" 
-            visible="false" 
-            accordion="proj_nav_accordion" 
+          <b-collapse
+            id="proj_nav_project_persons"
+            visible="false"
+            accordion="proj_nav_accordion"
             role="tabpanel">
             <b-card-body>
-              
+
               <project-persons
                 v-bind:man_obj="man_obj"
               ></project-persons>
@@ -308,20 +308,20 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         <b-card no-body>
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'proj_nav_accordion_data_sources'" 
+            <b-button
+              block
+              v-b-toggle="'proj_nav_accordion_data_sources'"
               variant="outline-info">
               <strong>ETL Data Sources</strong>
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="proj_nav_accordion_data_sources" 
-            visible="false" 
-            accordion="proj_nav_accordion" 
+          <b-collapse
+            id="proj_nav_accordion_data_sources"
+            visible="false"
+            accordion="proj_nav_accordion"
             role="tabpanel">
             <b-card-body>
-              
+
               <project-data-sources
                 v-bind:man_obj="man_obj"
               ></project-data-sources>
@@ -333,20 +333,20 @@ NOTE: Templates and view components to edit an item's manifest object.
 
         <b-card no-body>
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'proj_nav_accordion_proj_search'" 
+            <b-button
+              block
+              v-b-toggle="'proj_nav_accordion_proj_search'"
               variant="outline-info">
               <strong>Project Search</strong>
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="proj_nav_accordion_proj_search" 
-            visible="false" 
-            accordion="proj_nav_accordion" 
+          <b-collapse
+            id="proj_nav_accordion_proj_search"
+            visible="false"
+            accordion="proj_nav_accordion"
             role="tabpanel">
             <b-card-body>
-              
+
               <small>Search project items below</small><br/>
               <div v-if="man_obj.uuid != OPEN_CONTEXT_PROJ_UUID">
                 <lookup-list
@@ -419,9 +419,26 @@ var vc_project_persons = Vue.component(
     created() {
       this.fetch_api_project_persons();
     },
+    computed: {
+      has_persons: function(){
+        if(this.loading){
+          return false;
+        }
+        if(!this.person_objs){
+          return false;
+        }
+        if(this.person_objs.length < 1){
+          return false;
+        }
+        return true;
+      },
+    },
     methods: {
       fetch_api_project_persons: function (){
         if(!this.man_obj){
+          return null;
+        }
+        if(this.person_objs && this.person_objs.length > 0){
           return null;
         }
         this.error = null;
@@ -439,6 +456,9 @@ var vc_project_persons = Vue.component(
         .then(json => {
           this.person_objs = [];
           for(let p_obj of json){
+            if(!p_obj.hasOwnProperty('meta_json')){
+              p_obj.meta_json = {};
+            }
             if(!p_obj.meta_json.hasOwnProperty('given_name')){
               p_obj.meta_json.given_name = '';
             }
@@ -527,7 +547,7 @@ var vc_edit_project_method = Vue.component(
       'rq_args',
       'rq_url',
       'button_label',
-      'rq_description', 
+      'rq_description',
       'rq_name',
       'rq_batch_name',
     ],
@@ -577,7 +597,7 @@ var vc_edit_project_method = Vue.component(
           last_time = this.rq_progress_time;
           console.log('progress time');
         }
-        
+
         let time_diff = last_time - this.rq_start_time;
         time_diff /= 1000;
         let min_time_diff = Math.floor(time_diff / 60);
@@ -620,7 +640,7 @@ var vc_edit_project_method = Vue.component(
           console.log(data);
           this.rq_done = data.complete;
           this.rq_progress_time = new Date();
-          
+
           this.rq_count_updated = data.count_updated;
           this.rq_progress = data.progress;
           this.rq_message = data.message;
@@ -663,7 +683,7 @@ var vc_edit_project_method = Vue.component(
       },
     },
     components: {
-      
+
     },
   }
 );
@@ -760,6 +780,6 @@ var vc_edit_project = Vue.component(
       'edit-project-method': vc_edit_project_method,
     },
   }
-); 
+);
 
 </script>
