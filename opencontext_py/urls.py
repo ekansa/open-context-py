@@ -453,7 +453,7 @@ urlpatterns = [
     re_path(r'^utilities/quadtree-to-lat-lon', UtilitiesViews.quadtree_to_lat_lon, name='quadtree_to_lat_lon'),
     re_path(r'^utilities/reproject', UtilitiesViews.reproject, name='utilities_reproject'),
     re_path(r'^utilities/human-remains-ok', UtilitiesViews.human_remains_ok, name='human_remains_ok'),
-
+     re_path(r'^utilities/uuid', UtilitiesViews.uuid, name='utilities_uuid'),
     #----------------------------
     # BELOW ARE SITEMAP REQUESTS
     #----------------------------
