@@ -5,26 +5,10 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.project_contexts.context import get_cache_project_context_df
 
 
-PROJ_NAMESPACES_DICT = {
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "skos": "http://www.w3.org/2004/02/skos/core#",
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "dc-terms": "http://purl.org/dc/terms/",
-    "dcmi": "http://dublincore.org/documents/dcmi-terms/",
-    "bibo": "http://purl.org/ontology/bibo/",
-    "foaf": "http://xmlns.com/foaf/0.1/",
-    "cidoc-crm": "http://erlangen-crm.org/current/",
-    "dcat": "http://www.w3.org/ns/dcat#",
-    "geojson": "https://purl.org/geojson/vocab#",
-    "cc": "http://creativecommons.org/ns#",
-    "nmo": "http://nomisma.org/ontology#",
-    "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
-    "oc-pred": "http://opencontext.org/predicates/",
-}
+from opencontext_py.apps.contexts.base_contexts import GENERAL_NAMESPACES_DICT
 
-PROJ_NAMESPACE_KEYS = [k for k,_ in PROJ_NAMESPACES_DICT.items()]
+
+PROJ_NAMESPACE_KEYS = [k for k,_ in GENERAL_NAMESPACES_DICT.items()]
 
 PROJ_MORE_CONTEXT_DICT = {
     "@language": "en",
@@ -67,7 +51,7 @@ PROJ_MORE_CONTEXT_DICT = {
     },
 }
 
-PROJ_STANDARD_CONTEXT_DICT = {**PROJ_NAMESPACES_DICT, **PROJ_MORE_CONTEXT_DICT}
+PROJ_STANDARD_CONTEXT_DICT = {**GENERAL_NAMESPACES_DICT, **PROJ_MORE_CONTEXT_DICT}
 
 
 def in_known_namspace_prefix(item_key):
