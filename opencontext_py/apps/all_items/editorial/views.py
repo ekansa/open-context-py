@@ -42,7 +42,6 @@ def item_assert_examples_json(request, identifier):
         return HttpResponse(
             json.dumps([]),
             content_type="application/json; charset=utf8",
-            status=404
         )
 
     json_output = json.dumps(
@@ -131,5 +130,3 @@ def html_validate(request):
         json_output,
         content_type="application/json; charset=utf8"
     )
-
-
