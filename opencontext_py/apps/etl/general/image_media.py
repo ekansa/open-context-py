@@ -277,24 +277,30 @@ def make_image_versions_src_and_new_file(
         new_file_name,
         replace_extension(new_file_name, new_extension='jpg')
     ]
+    prev_file = None
     for mod_new_file in mod_new_possible_files:
-        prev_file = make_oc_media_path_in_sub_dirs(
+        act_file = make_oc_media_path_in_sub_dirs(
             orig_media_dir_path,
             src_file,
             oc_dir=dirs['preview'],
             new_file_name=mod_new_file,
         )
+        if act_file and not prev_file:
+            prev_file = act_file
         if over_write or not os.path.exists(prev_file):
             prev_file = make_new_size_file(src_file, prev_file, new_width=preview_width)
             print(f'Made preview {prev_file}')
             break
+    thumb_file = None
     for mod_new_file in mod_new_possible_files:
-        thumb_file = make_oc_media_path_in_sub_dirs(
+        act_file = make_oc_media_path_in_sub_dirs(
             orig_media_dir_path,
             src_file,
             oc_dir=dirs['thumbs'],
             new_file_name=mod_new_file,
         )
+        if act_file and not thumb_file:
+            thumb_file = act_file
         if over_write or not os.path.exists(thumb_file):
             thumb_file = make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
             print(f'Made thumbnail {thumb_file}')
@@ -334,14 +340,14 @@ def make_opencontext_file_versions(
     files_indx = (
         df_media['path'].notnull() & df_media['new_filename'].notnull()
     )
-    for _, row in df_media[files_indx].iterrows():
+    for i, row in df_media[files_indx].iterrows():
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
             orig_media_dir_path,
             dirs,
             row['path'],
             row['new_filename']
         )
-        act_index = (df_media['path'] == row['path'])
+        act_index = files_indx & (df_media['path'] == row['path'])
         df_media.loc[act_index, 'MEDIA_URL_full'] = make_media_url(
             file_path=full_file,
             file_type='full',
