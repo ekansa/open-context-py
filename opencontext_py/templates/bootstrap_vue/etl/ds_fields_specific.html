@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and Vue Components for more specific, detailed editing of data source fields.
 -->
 
@@ -69,7 +69,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
         </template>
 
       </b-table>
-      
+
     </b-col>
     <b-col cols="3">
         <b-card
@@ -87,18 +87,18 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
             v-if="root_item_id"
           >
           <b-card-text>
-            
+
             <div v-if="selected_class_item">
               <b-alert show v-if="!selected_class_item.at_root">
                 <b-row>
                   <b-col>
-                    Click below to classify <strong>[[selected_ds_field_item.label]]</strong> records as 
+                    Click below to classify <strong>[[selected_ds_field_item.label]]</strong> records as
                     <strong>[[ selected_class_item.label ]]</strong>
                   </b-col>
                 </b-row>
                 <b-row>
                   <b-col>
-                    <b-button 
+                    <b-button
                     sm
                     block
                     @click="updateFieldItemClass"
@@ -107,7 +107,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 </b-row>
               </b-alert>
             </div>
-          
+
             <b-row>
               <b-col>
                 <root-item-tree
@@ -118,7 +118,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 ></root-item-tree>
               </b-col>
             </b-row>
-            
+
           </b-card-text>
         </b-card>
 
@@ -128,18 +128,18 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
             v-if="lookup_context_item_types"
           >
           <b-card-text>
-            
+
             <div v-if="selected_context_item">
               <b-alert show>
                 <b-row>
                   <b-col>
-                    Click below to assign <strong>[[selected_ds_field_item.label]]</strong> records to be 
+                    Click below to assign <strong>[[selected_ds_field_item.label]]</strong> records to be
                     within <strong>[[ selected_context_item.label ]]</strong>
                   </b-col>
                 </b-row>
                 <b-row>
                   <b-col>
-                    <b-button 
+                    <b-button
                     sm
                     block
                     @click="updateFieldContext"
@@ -148,8 +148,8 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 </b-row>
               </b-alert>
             </div>
-          
-            
+
+
             <lookup-list
               v-if="lookup_context_item_types"
               v-bind:item_type="lookup_context_item_types"
@@ -157,7 +157,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
               v-bind:show_path_search_box="lookup_context_show_path_search"
               @set_selected_item="set_selected_context_item($event)"
             ></lookup-list>
-            
+
           </b-card-text>
         </b-card>
 
@@ -188,9 +188,9 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 {key: 'item_class__label', label: 'Class', sortable: true},
                 {key: 'context__label', label: 'Context', sortable: true},
                 {
-                  key: 'value_prefix', 
-                  label: 'Example Records (with optional prefix)', 
-                  sortable: false, 
+                  key: 'value_prefix',
+                  label: 'Example Records (with optional prefix)',
+                  sortable: false,
                   class: 'value_prefix_cell'
                 },
               ],
@@ -208,6 +208,7 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 'subjects',
                 'media',
                 'resources',
+                'variables',
                 'persons',
                 'events',
                 'uri',
@@ -233,6 +234,9 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
                 if(vocab_index >= 0){
                   // item types that have vocab contexts don't get class hierarchy lookups.
                   return null;
+                }
+                if(this.selected_ds_field_item.item_type == 'variables'){
+                  return 'oc-gen-predicates';
                 }
                 return 'oc-gen-' + this.selected_ds_field_item.item_type;
               }
@@ -412,6 +416,6 @@ NOTE: Templates and Vue Components for more specific, detailed editing of data s
             'lookup-list': vs_look_up_list,
           },
       }
-  ); 
+  );
 
 </script>

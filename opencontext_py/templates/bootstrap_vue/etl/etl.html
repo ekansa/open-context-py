@@ -47,9 +47,9 @@
             <b-nav-item :to="{ name: 'finalize'}">Finalize</b-nav-item>
         </b-nav>
     </div>
-    
+
     <router-view></router-view>
-    
+
 </b-container>
 
 
@@ -61,7 +61,7 @@
     var body = document.body;
     var html = document.documentElement;
     var page_height = Math.max(
-        body.scrollHeight, body.offsetHeight, 
+        body.scrollHeight, body.offsetHeight,
         html.clientHeight, html.scrollHeight, html.offsetHeight
     );
     var table_height = `${(Math.ceil((page_height * 0.75) / 10) * 10)}px`;

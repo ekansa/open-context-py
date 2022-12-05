@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and Vue Components for general user interface components to manage ds_annotations.
 -->
 
@@ -18,7 +18,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
 
 
 <template id='ds-anno-remove'>
- <b-button 
+ <b-button
     @click="on_click"
     variant="dark"><b-icon-x-circle-fill></b-icon-x-circle-fill>
   </b-button>
@@ -33,7 +33,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
     :variant="v_style">
     [[ ds_field.label ]]
     <div class="text-muted">
-      <small 
+      <small
         v-if="ds_field.item_class_id != DEFAULT_CLASS_UUID"
       >
       [[ ds_field.item_type ]] :: [[ ds_field.item_class__label ]]
@@ -50,11 +50,11 @@ NOTE: Templates and Vue Components for general user interface components to mana
       size="lg"
       scrollable
       ref="ds-anno-pred-item-modal"
-      id="ds-anno-pred-item-modal" 
+      id="ds-anno-pred-item-modal"
       :title="'Link Fields with: ' + predicate_item.label"
       @shown="on_shown"
     >
-      <b-container v-if="predicate_item.uuid" fluid>
+      <b-container v-if="predicate_item.uuid || (ok_rel_fields && ok_rel_fields.length)" fluid>
         <b-row class="justify-content-center text-center">
           <b-col cols="3">
             <b-button
@@ -66,10 +66,12 @@ NOTE: Templates and Vue Components for general user interface components to mana
               <small>Subject</small> <b-icon-patch-question></b-icon-patch-question>
             </span>
           </b-col>
+
           <b-col cols="1">
             <b-icon-arrow-right></b-icon-arrow-right>
           </b-col>
-          <b-col cols="3">
+
+          <b-col v-if="predicate_item.uuid" cols="3">
             <b-button
               v-if="predicate_item.uuid && ok_pred_reset"
               @click="reset_pred"
@@ -77,11 +79,22 @@ NOTE: Templates and Vue Components for general user interface components to mana
             </b-button>
             <span v-else>[[ predicate_item.label ]]</span>
           </b-col>
+
+          <b-col v-if="(ok_rel_fields && ok_rel_fields.length)" cols="3">
+            <b-button
+              v-if="selected_rel_field"
+              @click="reset_field"
+              variant="outline-primary">[[ selected_rel_field.label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
+            </b-button>
+            <span v-else>Select Relationship Field</span>
+          </b-col>
+
+
           <b-col cols="1">
             <b-icon-arrow-right></b-icon-arrow-right>
           </b-col>
           <b-col cols="3">
-            <b-button 
+            <b-button
               v-if="selected_obj_field"
               @click="remove_obj"
               variant="outline-secondary">[[ selected_obj_field.label ]] <b-icon-x-circle-fill></b-icon-bi-x-circle-fill>
@@ -113,7 +126,24 @@ NOTE: Templates and Vue Components for general user interface components to mana
                ></ds-anno-selectable-field>
             </b-list-group>
           </b-col>
-          <b-col cols="3">&nbsp;</b-col>
+
+          <b-col v-if="predicate_item.uuid" cols="3">&nbsp;</b-col>
+
+          <b-col v-if="(ok_rel_fields && ok_rel_fields.length)" cols="4">
+            <p>Select Relations Field</p>
+            <b-list-group v-if="act_rel_fields && act_rel_fields.length > 0">
+              <ds-anno-selectable-field
+                v-for="(ds_field, index) in act_rel_fields"
+                @on_click="select_field($event)"
+                v-bind:ds_field="ds_field"
+                v-bind:v_style="'secondary'"
+                v-bind:role="'rel_field'"
+                :key="ds_field.uuid"
+               ></ds-anno-selectable-field>
+            </b-list-group>
+          </b-col>
+
+
           <b-col cols="4">
             <p>Select Object Field</p>
             <b-list-group v-if="act_obj_fields && act_obj_fields.length > 0">
@@ -127,7 +157,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
                ></ds-anno-selectable-field>
             </b-list-group>
           </b-col>
-          <b-col cols="1">&nbsp;</b-col>
+          <b-col v-if="predicate_item.uuid" cols="1">&nbsp;</b-col>
         </b-row>
       </b-container>
 
@@ -148,6 +178,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
 </template>
 
 
+
 <script type="text/javascript">
 
   const OPEN_CONTEXT_PROJ_UUID = '{{ OPEN_CONTEXT_PROJ_UUID }}';
@@ -155,7 +186,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
   const DESCRIBED_BY_LINK_OK_ITEM_TYPES = JSON.parse('{{ DESCRIBED_BY_LINK_OK_ITEM_TYPES|escapejs }}');
   const DESCRIBED_BY_OK_OBJECT_TYPES = JSON.parse('{{ DESCRIBED_BY_OK_OBJECT_TYPES|escapejs }}');
   const NODE_ITEM_TYPES_BY_KEY_LABEL = JSON.parse('{{ NODE_ITEM_TYPES_BY_KEY_LABEL|escapejs }}');
-  
+
   const PREDICATE_LINK = JSON.parse('{{ PREDICATE_LINK|escapejs }}');
   const PREDICATE_CONTAINS = JSON.parse('{{ PREDICATE_CONTAINS|escapejs }}');
   const PREDICATE_OC_ETL_MEDIA_HAS_FILES = JSON.parse('{{ PREDICATE_OC_ETL_MEDIA_HAS_FILES|escapejs }}');
@@ -232,17 +263,26 @@ NOTE: Templates and Vue Components for general user interface components to mana
     'ds-anno-pred-item-ui',
     {
       delimiters: ['[[', ']]'],
-      props: ['predicate_item', 'ok_subj_fields', 'ok_obj_fields', 'ok_pred_reset', 'project_uuid'],
+      props: [
+        'predicate_item',
+        'ok_subj_fields',
+        'ok_obj_fields',
+        'ok_rel_fields',
+        'ok_pred_reset',
+        'project_uuid',
+    ],
       data() {
         return {
           predicate_item: null,
           ok_pred_reset: false,
           ok_subj_fields: [],
           ok_obj_fields: [],
+          ok_rel_fields: [],
           selected_subj_field: null,
           selected_obj_field: null,
+          selected_rel_field: null,
           lookup_pred_item_types: [
-            'predicates', 
+            'predicates',
             'property',
           ],
           lookup_project_ids: [
@@ -258,8 +298,13 @@ NOTE: Templates and Vue Components for general user interface components to mana
           if(this.ok_subj_fields === undefined){
             return result;
           }
+          let sel_fields = [
+            this.selected_subj_field,
+            this.selected_obj_field,
+            this.selected_rel_field,
+          ];
           for(let ds_field of this.ok_subj_fields){
-            if(ds_field != this.selected_subj_field && ds_field != this.selected_obj_field){
+            if(sel_fields.indexOf(ds_field) < 0){
               result.push(ds_field);
             }
           }
@@ -270,8 +315,30 @@ NOTE: Templates and Vue Components for general user interface components to mana
           if(this.ok_obj_fields === undefined){
             return result;
           }
+          let sel_fields = [
+            this.selected_subj_field,
+            this.selected_obj_field,
+            this.selected_rel_field,
+          ];
           for(let ds_field of this.ok_obj_fields){
-            if(ds_field != this.selected_subj_field && ds_field != this.selected_obj_field){
+            if(sel_fields.indexOf(ds_field) < 0){
+              result.push(ds_field);
+            }
+          }
+          return result;
+        },
+        act_rel_fields: function() {
+          let result = [];
+          if(this.ok_rel_fields === undefined){
+            return result;
+          }
+          let sel_fields = [
+            this.selected_subj_field,
+            this.selected_obj_field,
+            this.selected_rel_field,
+          ];
+          for(let ds_field of this.ok_rel_fields){
+            if(sel_fields.indexOf(ds_field) < 0){
               result.push(ds_field);
             }
           }
@@ -286,9 +353,14 @@ NOTE: Templates and Vue Components for general user interface components to mana
           // use cases.
           let new_anno = {
             'subject_field_id': this.selected_subj_field.uuid,
-            'predicate_id': this.predicate_item.uuid,
             'object_field_id': this.selected_obj_field.uuid,
           };
+          if(this.predicate_item && this.predicate_item.uuid){
+            new_anno.predicate_id = this.predicate_item.uuid;
+          }
+          if(this.selected_rel_field){
+            new_anno.predicate_field_id = this.selected_rel_field.uuid;
+          }
 
           const requestOptions = {
             method: 'POST',
@@ -338,7 +410,10 @@ NOTE: Templates and Vue Components for general user interface components to mana
           if(args.role == 'subject_field'){
             this.selected_subj_field = args.ds_field;
           }
-          else{
+          if(args.role == 'rel_field'){
+            this.selected_rel_field = args.ds_field;
+          }
+          if(args.role == 'object_field'){
             this.selected_obj_field = args.ds_field;
           }
         },
@@ -353,6 +428,9 @@ NOTE: Templates and Vue Components for general user interface components to mana
             uuid: null,
             label: 'Select Other Relationship',
           }
+        },
+        reset_field() {
+          this.selected_rel_field = null;
         },
         set_selected_predicate_item(predicate_item){
           this.predicate_item = predicate_item;

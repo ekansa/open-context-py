@@ -26,17 +26,17 @@ MAX_ANNOTATION_HIERARCHY_DEPTH = 20
 class DataSource(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     publisher = models.ForeignKey(
-        AllManifest, 
+        AllManifest,
         db_column='publisher_uuid',
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        related_name='+',
+        on_delete=models.CASCADE,
         default=configs.OPEN_CONTEXT_PUB_UUID,
     )
     project = models.ForeignKey(
-        AllManifest, 
-        db_column='project_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        AllManifest,
+        db_column='project_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
         default=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     source_id = models.TextField(unique=True)
@@ -54,20 +54,20 @@ class DataSource(models.Model):
         """Converts a source_id into a UUID deterministically"""
         _, uuid = update_old_id(source_id)
         return uuid
-    
+
     def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
             # One is already defined, so skip this step.
             return self.uuid
         return self.primary_key_create(self.source_id)
-    
+
     def save(self, *args, **kwargs):
         # Defaults the primary key uuid to value deterministically
         # generated.
         self.uuid = self.primary_key_create_for_self()
         super(DataSource, self).save(*args, **kwargs)
-    
+
     class Meta:
         db_table = 'etl_sources'
         ordering = ['-updated']
@@ -79,10 +79,10 @@ class DataSource(models.Model):
 class DataSourceField(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     data_source = models.ForeignKey(
-        DataSource, 
-        db_column='source_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        DataSource,
+        db_column='source_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
     )
     field_num = models.IntegerField()
     label = models.TextField()
@@ -91,16 +91,16 @@ class DataSourceField(models.Model):
     item_type = models.TextField(null=True)
     data_type = models.TextField(null=True)
     item_class = models.ForeignKey(
-        AllManifest, 
-        db_column='item_class_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        AllManifest,
+        db_column='item_class_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
         default=configs.DEFAULT_CLASS_UUID,
     )
     context = models.ForeignKey(
-        AllManifest, 
-        db_column='context_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='context_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
@@ -123,7 +123,7 @@ class DataSourceField(models.Model):
         ('persons', 'Persons or Organizations', 'id'),
         ('predicates', 'Single Attribute Descriptions or Relations', None),
         ('types', 'Controlled Vocabulary Descriptions', 'id'),
-        ('variables', 'Multiple Descriptive Attributes', None),
+        ('variables', 'Multiple Attributes or Links', None),
         ('values', 'Values of Multi-Attributes', None),
         ('uuid', 'UUIDs (identifiers)', 'xsd:string'),
     ]
@@ -171,7 +171,7 @@ class DataSourceField(models.Model):
             # Skip out.
             return None
         item_types_to_data_types = {
-            item_type:data_type 
+            item_type:data_type
             for item_type, _, data_type in self.USER_SELECT_ITEM_TYPES
             if data_type is not None
         }
@@ -209,7 +209,7 @@ class DataSourceField(models.Model):
         data_source_id = str(data_source_id)
         source_field = f'{data_source_id }-{field_num}'
         _, uuid_from_field = update_old_id(source_field)
-        
+
         # Now assemble a uuid that has the first part of the
         # data source id and the unique part generated from the
         # data source id and the field num
@@ -219,7 +219,7 @@ class DataSourceField(models.Model):
             ([id_prefix] + new_parts[1:])
         )
         return uuid
-    
+
     def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
@@ -234,7 +234,7 @@ class DataSourceField(models.Model):
         self.validate_item_type_data_types()
         self.uuid = self.primary_key_create_for_self()
         super(DataSourceField, self).save(*args, **kwargs)
-    
+
     def __str__(self):
         out = (
             f'{self.label}: field_num: {self.field_num} [{self.uuid}] '
@@ -270,7 +270,7 @@ def get_immediate_context_parent_obj_db(child_field_obj):
 def get_immediate_context_children_objs_db(parent_field_obj):
     """Get the immediate (spatial) context children of a parent_field_obj"""
     return [
-        a.object_field 
+        a.object_field
         for a in DataSourceAnnotation.objects.filter(
             subject_field=parent_field_obj,
             predicate_id=configs.PREDICATE_CONTAINS_UUID,
@@ -300,7 +300,7 @@ def validate_context_subject_objects(subject_field_obj, object_field_obj, raise_
 
 
 def validate_context_assertion(
-    subject_field_obj, 
+    subject_field_obj,
     object_field_obj,
     max_depth=MAX_ANNOTATION_HIERARCHY_DEPTH
 ):
@@ -344,49 +344,49 @@ class DataSourceAnnotation(models.Model):
 
     uuid = models.UUIDField(primary_key=True, editable=True)
     data_source = models.ForeignKey(
-        DataSource, 
-        db_column='source_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        DataSource,
+        db_column='source_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
     )
     # The data source field that is the subject of this annotation.
     subject_field = models.ForeignKey(
-        DataSourceField, 
-        db_column='subject_field_uuid', 
-        related_name='+', 
+        DataSourceField,
+        db_column='subject_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
     )
     # A predicate (attribute or relation) used in this annotation.
     predicate = models.ForeignKey(
-        AllManifest, 
-        db_column='predicate_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='predicate_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
-    # The data source field who's values provide the predicate 
+    # The data source field who's values provide the predicate
     # (attribute or relation) used in this annotation.
     predicate_field = models.ForeignKey(
         DataSourceField,
-        db_column='predicate_field_uuid', 
-        related_name='+', 
+        db_column='predicate_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
     # A named entity object of the predicate for this annotation.
     object = models.ForeignKey(
-        AllManifest, 
-        db_column='object_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='object_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
-    # The data source field who's values provide the objects 
+    # The data source field who's values provide the objects
     # used in this annotation.
     object_field = models.ForeignKey(
         DataSourceField,
-        db_column='object_field_uuid', 
-        related_name='+', 
+        db_column='object_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
@@ -405,34 +405,34 @@ class DataSourceAnnotation(models.Model):
     obj_datetime = models.DateTimeField(null=True)
     # Observations are nodes for grouping related assertions.
     observation = models.ForeignKey(
-        AllManifest,  
-        db_column='observation_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='observation_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_OBS_UUID,
         null=True,
     )
     observation_field = models.ForeignKey(
         DataSourceField,
-        db_column='observation_field_uuid', 
-        related_name='+', 
+        db_column='observation_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
     # Events are nodes for identifying specific space-time grouped
     # assertions.
     event = models.ForeignKey(
-        AllManifest,  
-        db_column='event_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='event_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_EVENT_UUID,
         null=True,
     )
     event_field = models.ForeignKey(
         DataSourceField,
-        db_column='event_field_uuid', 
-        related_name='+', 
+        db_column='event_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
@@ -441,33 +441,33 @@ class DataSourceAnnotation(models.Model):
     # with a numerator and a denominator are 3 grouped assertions that
     # would make sense together in an attribute group.
     attribute_group = models.ForeignKey(
-        AllManifest, 
-        db_column='attribute_group_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='attribute_group_uuid',
+        related_name='+',
         on_delete=models.PROTECT,
         default=configs.DEFAULT_ATTRIBUTE_GROUP_UUID,
         null=True,
     )
     attribute_group_field = models.ForeignKey(
         DataSourceField,
-        db_column='attribute_group_field_uuid', 
-        related_name='+', 
+        db_column='attribute_group_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
     # Language for text in xsd:string objects.
     language =  models.ForeignKey(
         AllManifest,
-        db_column='language_uuid', 
-        related_name='+', 
-        on_delete=models.PROTECT, 
+        db_column='language_uuid',
+        related_name='+',
+        on_delete=models.PROTECT,
         default=configs.DEFAULT_LANG_UUID,
         null=True,
     )
     language_field =  models.ForeignKey(
         DataSourceField,
-        db_column='language_field_uuid', 
-        related_name='+', 
+        db_column='language_field_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
@@ -490,7 +490,7 @@ class DataSourceAnnotation(models.Model):
 
     # These are OK to be used as subjects of PREDICATE_OC_ETL_DESCRIBED_BY
     DESCRIBED_BY_LINK_OK_ITEM_TYPES = [
-        'projects', 
+        'projects',
         'tables',
         'subjects',
         'media',
@@ -540,16 +540,16 @@ class DataSourceAnnotation(models.Model):
         """Certain groups of attributes should have 1 and only 1 not null value"""
         attribute_groups = [
             (
-                'predicates', 
+                'predicates',
                 [
-                    self.predicate, 
+                    self.predicate,
                     self.predicate_field,
                 ],
             ),
             (
                 'objects',
                 [
-                    self.object, 
+                    self.object,
                     self.object_field,
                     self.obj_string,
                     self.obj_boolean,
@@ -561,7 +561,7 @@ class DataSourceAnnotation(models.Model):
             (
                 'observations',
                 [
-                    self.observation, 
+                    self.observation,
                     self.observation_field,
                 ],
             ),
@@ -600,7 +600,7 @@ class DataSourceAnnotation(models.Model):
                     f'Need 1 not null field in the {group_name} group, '
                     f'but {count_not_null} are not null: {not_null_attribs}.'
                 )
-    
+
 
     def validate_predicate_item_type(self):
         """validate the item type for the predicate, or predicate_field"""
@@ -628,13 +628,13 @@ class DataSourceAnnotation(models.Model):
             )
         if self.predicate_field is not None and self.predicate_field == self.object_field:
             raise ValueError(
-                f'The predicate field {self.predicate_field.label} cannot also be an object_field' 
+                f'The predicate field {self.predicate_field.label} cannot also be an object_field'
             )
         if self.predicate is not None and self.predicate == self.object:
             raise ValueError(
                 f'The predicate {self.predicate.label} cannot also be an object'
             )
-    
+
 
     def validate_media_has_files(self):
         """Validates that has-files annotations have correct field item_types"""
@@ -654,13 +654,13 @@ class DataSourceAnnotation(models.Model):
             raise ValueError(
                 f'The object of a "{self.predicate.label}" annotation must be of type "resources". '
             )
-    
+
 
     def validate_described_by_link_item_types(self):
         """Validates that described-by and link annotations have correct field item_types"""
         if not self.predicate:
             return None
-        if (str(self.predicate.uuid) 
+        if (str(self.predicate.uuid)
             not in [configs.PREDICATE_LINK_UUID, configs.PREDICATE_OC_ETL_DESCRIBED_BY]):
             # We're only checking certain predicates for these relationships
             return None
@@ -669,7 +669,7 @@ class DataSourceAnnotation(models.Model):
                 f'For links, subject field {self.subject_field.label} '
                 f'must be of an item_type {self.DESCRIBED_BY_LINK_OK_ITEM_TYPES} .'
             )
-        
+
         # Object item types are have somewhat different validation criteria for
         # PREDICATE_OC_ETL_DESCRIBED_BY and PREDICATE_LINK_UUID
         if str(self.predicate.uuid) == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
@@ -722,7 +722,7 @@ class DataSourceAnnotation(models.Model):
         attribute_group_id=None,
         attribute_group_field_id=None,
         language_id=None,
-        language_field_id=None, 
+        language_field_id=None,
     ):
         """Deterministically make the primary key based on attribute values"""
         data_source_id = str(data_source_id)
@@ -772,7 +772,7 @@ class DataSourceAnnotation(models.Model):
         if self.uuid:
             # One is already defined, so skip this step.
             return self.uuid
-        
+
         entity_fields = [
             (self.data_source, 'data_source_id',),
             (self.subject_field, 'subject_field_id',),
@@ -802,12 +802,12 @@ class DataSourceAnnotation(models.Model):
                 continue
             kwargs[key] = entity_val.uuid
         return self.primary_key_create(**kwargs)
-    
+
 
     def save(self, *args, **kwargs):
         if self.obj_string:
             self.obj_string = self.obj_string.strip()
-        
+
         self.obj_string_hash = self.make_obj_string_hash(self.obj_string)
         self.validate_fields_data_sources()
         self.validate_attribute_groups()
@@ -836,7 +836,7 @@ class DataSourceAnnotation(models.Model):
         unique_together = (
             "data_source",
             "subject_field",
-            "predicate", 
+            "predicate",
             "predicate_field",
             "object",
             "object_field",
@@ -854,24 +854,24 @@ class DataSourceAnnotation(models.Model):
 class DataSourceRecord(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=True)
     data_source = models.ForeignKey(
-        DataSource, 
-        db_column='source_uuid', 
-        related_name='+', 
-        on_delete=models.CASCADE, 
+        DataSource,
+        db_column='source_uuid',
+        related_name='+',
+        on_delete=models.CASCADE,
     )
     row_num = models.IntegerField()
     field_num = models.IntegerField()
     context = models.ForeignKey(
-        AllManifest, 
-        db_column='context_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='context_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
     item = models.ForeignKey(
-        AllManifest, 
-        db_column='item_uuid', 
-        related_name='+', 
+        AllManifest,
+        db_column='item_uuid',
+        related_name='+',
         on_delete=models.CASCADE,
         null=True,
     )
@@ -884,7 +884,7 @@ class DataSourceRecord(models.Model):
         data_source_id = str(data_source_id)
         source_row_field = f'{data_source_id }-{row_num}-{field_num}'
         _, uuid_from_field = update_old_id(source_row_field)
-        
+
         # Now assemble a uuid that has the first part of the
         # data source id and the unique part generated from the
         # data source id and the field num
@@ -894,18 +894,18 @@ class DataSourceRecord(models.Model):
             ([id_prefix] + new_parts[1:])
         )
         return uuid
-    
+
     def primary_key_create_for_self(self):
         """Makes a primary key using a prefix from the subject"""
         if self.uuid:
             # One is already defined, so skip this step.
             return self.uuid
         return self.primary_key_create(
-            self.data_source.uuid, 
-            self.row_num, 
+            self.data_source.uuid,
+            self.row_num,
             self.field_num
         )
-    
+
     def save(self, *args, **kwargs):
         # Defaults the primary key uuid to value deterministically
         # generated.

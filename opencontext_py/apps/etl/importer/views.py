@@ -174,7 +174,7 @@ def etl_fields(request, source_id):
         'context__label',
         'value_prefix',
         'unique_count',
-        'meta_json', 
+        'meta_json',
     )
     output = [
         editorial_api.dict_uuids_to_string(f) for f in ds_fields_qs
@@ -260,7 +260,7 @@ def etl_field_record_examples(request, field_uuid):
         'item__item_class__label',
         'record',
     )[start:(start + rows)]
-    
+
     output = []
     for r_dict in ds_rec_qs:
         r_dict['ds_field_id'] = str(ds_field.uuid)
@@ -382,7 +382,7 @@ def etl_annotations(request, source_id):
         'observation_field_id',
         'observation_field__field_num',
         'observation_field__label',
-       
+
         'event_id',
         'event__label',
         'event_field_id',
@@ -394,17 +394,17 @@ def etl_annotations(request, source_id):
         'attribute_group_field_id',
         'attribute_group_field__field_num',
         'attribute_group_field__label',
-    
+
         'language_id',
         'language__label',
         'language_field_id',
         'language_field__field_num',
         'language_field__label',
 
-        'meta_json', 
+        'meta_json',
     )
     output = [
-        editorial_api.dict_uuids_to_string(ds_anno) 
+        editorial_api.dict_uuids_to_string(ds_anno)
         for ds_anno in ds_anno_qs
     ]
     json_output = json.dumps(
@@ -493,7 +493,7 @@ def etl_spatial_contained_examples(request, source_id):
             json_output,
             content_type="application/json; charset=utf8"
         )
-    
+
     # Select the containment path index that we want for examples. Defaults
     # to 0, the first tree.
     try:
@@ -511,7 +511,7 @@ def etl_spatial_contained_examples(request, source_id):
             json.dumps({'error': f'No spatial containment tree at index {tree_index}'}),
             content_type="application/json; charset=utf8",
             status=404
-        ) 
+        )
 
     # Get the specific field path for example containment records.
     field_path = all_containment_paths[tree_index]
@@ -552,14 +552,14 @@ def etl_spatial_contained_examples(request, source_id):
             field_rows_qs = field_rows_qs.filter(
                 row_num__in=prior_row_limit
             )
-        
+
         field_rows = field_rows_qs.values_list('row_num', flat=True)
         child_rec_qs = child_rec_qs.filter(row_num__in=field_rows)
         prior_row_limit = field_rows
 
     if not child_field:
         # We have already selected everything and don't have a child
-        # field to find child field items. 
+        # field to find child field items.
         child_rec_qs = []
     else:
         # Use we want records for the child_field, so filter by
@@ -588,7 +588,7 @@ def etl_spatial_contained_examples(request, source_id):
             # Skip, this is already in the list.
             continue
         result['children'].append(child)
-    
+
     json_output = json.dumps(
         result,
         indent=4,
@@ -716,7 +716,7 @@ def etl_link_annotations_examples(request, source_id):
         else:
             # This should not happen.
             df['predicate'] = None
-        
+
         if ds_anno.object_field:
             object_col =  f'{ds_anno.object_field.field_num}_col'
             col_renames[object_col] = 'object'
@@ -790,16 +790,16 @@ def etl_described_by_examples(request, source_id):
             '[]',
             content_type="application/json; charset=utf8"
         )
-    
+
     ds_source = ds_anno_qs[0].data_source
     predicate = ds_anno_qs[0].predicate
-    
+
     subjs_objects = {ds_anno.subject_field:[] for ds_anno in ds_anno_qs}
     for ds_anno in ds_anno_qs:
         subjs_objects[ds_anno.subject_field].append(
             ds_anno.object_field
         )
-    
+
     results = []
     for subject_field, object_field_list in subjs_objects.items():
         # Get records for the subject field. This will be
@@ -821,7 +821,7 @@ def etl_described_by_examples(request, source_id):
             limit_field_num_list=([subject_field.field_num] + object_field_nums),
             limit_row_num_list=row_list,
         )
-        
+
         # Add value prefixes if needed to the subject field.
         if subject_field.value_prefix and subject_field.label in df.columns:
             df[subject_field.label] = subject_field.value_prefix + df[subject_field.label]
@@ -833,7 +833,7 @@ def etl_described_by_examples(request, source_id):
             final_cols = [subject_field.label] + object_cols
         else:
             final_cols = object_cols
-        
+
         result = {
             'subject_field_id': str(subject_field.uuid),
             'subject_field__field_num': subject_field.field_num,

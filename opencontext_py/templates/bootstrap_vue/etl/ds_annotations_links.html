@@ -1,8 +1,9 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and Vue Components for general user interface components to manage ds_annotations.
 -->
+
 
 <template id="ds-annotations-links">
   <b-row v-if="ds_annotations" >
@@ -29,7 +30,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
       <template #cell(subject_field__label)="data">
         [[ data.item.subject_field__label ]]
         <div class="text-muted">
-          <small 
+          <small
             v-if="data.item.subject_field__item_class_id != DEFAULT_CLASS_UUID"
           >
           [[ data.item.subject_field__item_type ]] :: [[ data.item.subject_field__item_class__label ]]
@@ -43,7 +44,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
         </template>
 
       </b-table>
-      
+
     </b-col>
     <b-col cols="4">
 
@@ -60,40 +61,46 @@ NOTE: Templates and Vue Components for general user interface components to mana
       <br/>
       <br/>
 
-      
+
       <b-container fluid>
-        <b-button 
+        <b-button
           v-if="contain_ds_fields.ok_subj.length && contain_ds_fields.ok_obj.length"
           variant="info"
           block
           @click="open_contain_ui"
           >[[ PREDICATE_CONTAINS.label ]]</b-button>
-        <b-button 
+        <b-button
           v-if="link_ds_fields.ok_subj.length && link_ds_fields.ok_obj.length"
           variant="info"
           block
           @click="open_link_ui"
           >[[ PREDICATE_LINK.label ]]</b-button>
-        <b-button 
+        <b-button
           v-if="media_files_ds_fields.ok_subj.length && media_files_ds_fields.ok_obj.length"
           variant="info"
           block
           @click="open_media_has_files_ui"
           >[[ PREDICATE_OC_ETL_MEDIA_HAS_FILES.label ]]</b-button>
-        <b-button 
+        <b-button
           v-if="var_val_ds_fields.ok_subj.length && var_val_ds_fields.ok_obj.length"
           variant="info"
           block
           @click="open_var_val_ui"
           >Variable - Value Links</b-button>
-        <b-button 
+        <b-button
+          v-if="rel_ds_fields.length && gen_ds_fields.ok_subj.length && gen_ds_fields.ok_obj.length"
+          variant="info"
+          block
+          @click="open_field_rel_ui"
+          >Relationships in Field</b-button>
+        <b-button
           v-if="gen_ds_fields.ok_subj.length && gen_ds_fields.ok_obj.length"
           variant="info"
           block
           @click="open_other_rel_ui"
           >Other Relationship</b-button>
       </b-container>
-      
+
       <br/>
       <br/>
 
@@ -102,20 +109,20 @@ NOTE: Templates and Vue Components for general user interface components to mana
         <h5 class="text-center">View Linking Examples</h5>
         <b-card
           v-if="show_contain_tree"
-          no-body 
+          no-body
           class="mb-1">
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'spatial_contain_tree_accordion'" 
+            <b-button
+              block
+              v-b-toggle="'spatial_contain_tree_accordion'"
               variant="outline-info">
               <strong>Spatial Containment</strong> Examples
             </b-button>
           </b-card-header>
-          <b-collapse 
-            id="spatial_contain_tree_accordion" 
-            :visible="false" 
-            accordion="examples-accordion" 
+          <b-collapse
+            id="spatial_contain_tree_accordion"
+            :visible="false"
+            accordion="examples-accordion"
             role="tabpanel">
             <b-card-body>
               <b-card
@@ -129,7 +136,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
                   v-bind:etl_source_id="source_uuid"
                   v-bind:cached_tree_items="cached_tree_items"
                 ></root-item-tree>
-                
+
               </b-card>
             </b-card-body>
           </b-collapse>
@@ -137,27 +144,27 @@ NOTE: Templates and Vue Components for general user interface components to mana
 
         <b-card
           v-for="(anno_examples, index) in linked_examples"
-          no-body 
+          no-body
           class="mb-1">
           <b-card-header header-tag="header" class="p-1" role="tab">
-            <b-button 
-              block 
-              v-b-toggle="'anno-link-examples-' + index" 
+            <b-button
+              block
+              v-b-toggle="'anno-link-examples-' + index"
               variant="outline-info">
               <strong>[[ anno_examples.subject_field__label ]]</strong> Links ([[ (index + 1) ]])
             </b-button>
           </b-card-header>
-          <b-collapse 
-            :id="'anno-link-examples-' + index" 
-            :visible="false" 
-            accordion="examples-accordion" 
+          <b-collapse
+            :id="'anno-link-examples-' + index"
+            :visible="false"
+            accordion="examples-accordion"
             role="tabpanel">
 
             <b-card-body v-if="anno_examples.examples.length > 0">
 
               <b-card
                 border-variant="secondary"
-                class="ds-example-item" 
+                class="ds-example-item"
                 v-for="(keys_vals, exp_i) in anno_examples.examples">
 
                 <div v-for="(value, field_name, kv_i) in keys_vals">
@@ -172,9 +179,9 @@ NOTE: Templates and Vue Components for general user interface components to mana
                     <dd class="col-sm-7">[[ value ]]</dd>
                   </dl>
                 </div>
-                
+
               </b-card>
-              
+
             </b-card-body>
           </b-collapse>
         </b-card>
@@ -191,6 +198,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
       v-bind:predicate_item="selected_predicate_item"
       v-bind:ok_subj_fields="selected_ok_subj_fields"
       v-bind:ok_obj_fields="selected_ok_obj_fields"
+      v-bind:ok_rel_fields="selected_ok_rel_fields"
       v-bind:ok_pred_reset="ok_pred_reset"
       v-bind:project_uuid="project_uuid"
       @refresh_ds_annos="refresh_annotations_examples($event)"
@@ -226,6 +234,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
               ok_pred_reset: false,
               selected_ok_subj_fields: [],
               selected_ok_obj_fields: [],
+              selected_ok_rel_fields: [],
               ds_annotations: [],
               ds_fields: [],
               cached_tree_items: {},
@@ -272,6 +281,18 @@ NOTE: Templates and Vue Components for general user interface components to mana
                 if(t_index >= 0 && ds_field.data_type == 'id'){
                   result.ok_subj.push(ds_field);
                   result.ok_obj.push(ds_field);
+                }
+              }
+              return result;
+            },
+            rel_ds_fields: function () {
+              let result = [];
+              if(this.ds_fields === undefined){
+                return result;
+              }
+              for(let ds_field of this.ds_fields){
+                if(ds_field.data_type == 'id' && ds_field.item_class__label == 'Links'){
+                  result.push(ds_field);
                 }
               }
               return result;
@@ -423,9 +444,16 @@ NOTE: Templates and Vue Components for general user interface components to mana
               .then(json => {
                   let results = [];
                   for(let ds_anno of json){
-                    if(ds_anno.predicate_id != PREDICATE_OC_ETL_DESCRIBED_BY.uuid){
-                      results.push(ds_anno);
+                    if(ds_anno.predicate_id == PREDICATE_OC_ETL_DESCRIBED_BY.uuid){
+                      continue;
                     }
+                    if(!ds_anno.predicate__label && ds_anno.predicate_field__label){
+                      ds_anno.predicate__label = (
+                        ds_anno.predicate_field__label
+                        + ' [Field]'
+                      );
+                    }
+                    results.push(ds_anno);
                   }
                   this.ds_annotations = results;
               })
@@ -469,6 +497,7 @@ NOTE: Templates and Vue Components for general user interface components to mana
               this.selected_predicate_item = null;
               this.selected_ok_subj_fields = [];
               this.selected_ok_obj_fields = [];
+              this.selected_ok_rel_fields = [];
             },
             refresh_annotations_examples: function (){
               this.fetch_api_ds_annotations();
@@ -518,6 +547,14 @@ NOTE: Templates and Vue Components for general user interface components to mana
                 this.var_val_ds_fields.ok_obj,
               );
             },
+            open_field_rel_ui() {
+              this.$bvModal.show('ds-anno-pred-item-modal');
+              this.selected_predicate_item = {uuid:null, label: 'Select Field for Relationship'},
+              this.selected_ok_subj_fields = this.gen_ds_fields.ok_subj;
+              this.selected_ok_obj_fields = this.gen_ds_fields.ok_obj;
+              this.selected_ok_rel_fields = this.rel_ds_fields;
+              this.$bvModal.show('ds-anno-pred-item-modal');
+            },
             open_other_rel_ui(){
               this.ok_pred_reset = true;
               this.open_pred_item_ui(
@@ -534,6 +571,6 @@ NOTE: Templates and Vue Components for general user interface components to mana
             'lookup-list': vs_look_up_list,
           },
       }
-  ); 
+  );
 
 </script>
