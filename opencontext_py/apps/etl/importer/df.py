@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 
 
-
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+)
 from opencontext_py.apps.etl.importer.models import (
     DataSource,
     DataSourceField,
@@ -33,7 +35,7 @@ file_path = '/home/ekansa/github/datasets/naga-ed-deir-csv.csv'
 file_path = '/home/ekansa/github/datasets/pinar-bird-specimen-test.csv'
 df = df_str_cols_load_csv(file_path)
 project = AllManifest.objects.filter(item_type='projects').last()
-ds_source = load_csv_for_etl(project, file_path, source_exists="replace")
+ds_source = load_csv_for_etl(file_path, project=project, source_exists="replace")
 df_etl = db_make_dataframe_from_etl_data_source(ds_source, use_column_labels=True)
 """
 
@@ -48,7 +50,7 @@ def chunk_list(list_name, n=DB_ROW_UPDATE_CHUNK_SIZE):
 
 
 def db_make_dataframe_from_etl_data_source(
-    ds_source, 
+    ds_source,
     include_uuid_cols=False,
     include_error_cols=False,
     use_column_labels=False,
@@ -60,7 +62,7 @@ def db_make_dataframe_from_etl_data_source(
     exclude_row_list=None,
 ):
     """Makes a dataframe from the etl ds_source
-    
+
     :param DataSource ds_source: A DataSource object that provides
         metadata about the data source for an ETL process.
     """
@@ -88,32 +90,32 @@ def db_make_dataframe_from_etl_data_source(
     if limit_field_num_list:
         # We're limiting the query set to a list of field_nums.
         ds_recs_qs = ds_recs_qs.filter(field_num__in=limit_field_num_list)
-    
+
     if limit_row_num_start is not None and limit_row_count is not None:
         # We're limiting the query set a range of rows.
         ds_recs_qs = ds_recs_qs.filter(
             row_num__gte=limit_row_num_start,
             row_num__lt=(limit_row_num_start + limit_row_count),
         )
-    
+
     if limit_row_num_start is not None and limit_row_num_last is not None:
         # We're limiting the query set a range of rows.
         ds_recs_qs = ds_recs_qs.filter(
             row_num__gte=limit_row_num_start,
             row_num__lte=limit_row_num_last,
         )
-    
+
     if limit_row_num_list is not None:
         # We're limiting the query set a list of row numbers.
         ds_recs_qs = ds_recs_qs.filter(
             row_num__in=limit_row_num_list,
         )
-    
+
     if exclude_row_list is not None:
         ds_recs_qs = ds_recs_qs.exclude(
             row_num__in=exclude_row_list,
         )
-    
+
     ds_recs_qs = ds_recs_qs.select_related(
         'context'
     ).select_related(
@@ -191,7 +193,7 @@ def df_str_cols_load_csv(file_path):
 
 def map_cols_to_prior_fields(df, project, limit_prior_data_source=None):
     """Makes a dict mapping dataframe columns to fields in a project's prior data sources
-    
+
     :param DataFrame df: A dataframe that we are currently preparing for ETL,
     :param AllManifest project: A manifest object for the project that we
         want to update via an ETL process.
@@ -206,7 +208,7 @@ def map_cols_to_prior_fields(df, project, limit_prior_data_source=None):
     col_prior_fields = {
         col: autofields.get_matching_project_field_by_labels(
             project=project,
-            label=col, 
+            label=col,
             added_filters=added_filters,
         )
         for col in df.columns
@@ -216,7 +218,7 @@ def map_cols_to_prior_fields(df, project, limit_prior_data_source=None):
 
 def save_data_source_for_df(df, project, source_id, label=None):
     """Create a datasource object from a dataframe for a project
-    
+
     :param DataFrame df: A dataframe that we are currently preparing for ETL,
     :param AllManifest project: The project that is getting updated
         by this ETL process.
@@ -256,7 +258,7 @@ def save_data_source_fields_for_df(df, ds_source, col_prior_fields):
     :param dict col_prior_fields: A dictionary keyed by the df's
         column names with values of None or a DataSourceField that
         has been matched within this project.
-    
+
     returns dict prior_to_new_fields: prior_to_new_fields is keyed
        by prior matching DataSourceFields with corresponding new
        DataSourceFields for this ds_source.
@@ -280,7 +282,7 @@ def save_data_source_fields_for_df(df, ds_source, col_prior_fields):
             continue
         # Copy the mapped prior field attributes to this new field.
         ds_new_field = autofields.copy_prior_project_field_attributes(
-            ds_new_field, 
+            ds_new_field,
             prior_field
         )
         prior_to_new_fields[prior_field] = ds_new_field
@@ -303,7 +305,7 @@ def save_data_source_records_for_df(df, ds_source, chuck_size=50):
         for i, row in df_chunk.iterrows():
             for field_num, col in enumerate(cols, start=1):
                 # We store each cell value as a string in the
-                # DataSourceRecord model. 
+                # DataSourceRecord model.
                 record = str(row[col])
                 if not record:
                     # Skip empty records. We should be able to handle
@@ -325,10 +327,10 @@ def save_data_source_records_for_df(df, ds_source, chuck_size=50):
 
 
 def load_df_for_etl(
-    df, 
-    project, 
-    prelim_source_id, 
-    data_source_label=None, 
+    df,
+    project,
+    prelim_source_id,
+    data_source_label=None,
     source_exists="raise"
 ):
     """Loads a DataFrame into the ETL related database models
@@ -341,7 +343,7 @@ def load_df_for_etl(
         ID already exists in the ETL models.
     :param str source_exists: Handling options if a prelim_source_id
         already exists in the ETL records. If "raise" then throw an
-        exception, if "replace" then replace the prior data source with 
+        exception, if "replace" then replace the prior data source with
         new data (provided the projects are the same between the old and
         new ETL), if "new" then change the prelim_source_id to be a new
         identifier, as the user claims this is a new dataset for ETL.
@@ -367,13 +369,13 @@ def load_df_for_etl(
         # project. This may happen if we discover an error, made some
         # edits to a file, and want to redo an ETL process.
         col_prior_fields = map_cols_to_prior_fields(
-            df, 
-            project, 
+            df,
+            project,
             limit_prior_data_source=ds,
         )
         # Make a mapping from the prior field to the column name in the new dataframe.
         prior_to_new_fields = {
-            prior_field: col 
+            prior_field: col
             for col, prior_field in col_prior_fields.items() if prior_field is not None
         }
         # NOTE: We're only looking these up if we're replacing a source within a project
@@ -390,11 +392,11 @@ def load_df_for_etl(
         source_id = prelim_source_id
 
     elif source_exists == "new" and ds:
-        # The prelim_source_id exists, but we're treating this as 
+        # The prelim_source_id exists, but we're treating this as
         # new data source to load. So make a source id that
         # add an integer value to the prelim_source_id.
         col_prior_fields = map_cols_to_prior_fields(
-            df, 
+            df,
             project,
         )
         ds_check = ds
@@ -416,7 +418,7 @@ def load_df_for_etl(
         # This prelim_source_id is new, so not conflicting with prior
         # ETL data sources.
         col_prior_fields = map_cols_to_prior_fields(
-            df, 
+            df,
             project,
         )
         source_id = prelim_source_id
@@ -425,19 +427,19 @@ def load_df_for_etl(
             'This data source already exists, but source_exists handling '
             f'must be "raise", "replace", or "new" not {source_exists}'
         )
-    
+
     # Now make the new data source object.
     ds_source = save_data_source_for_df(
-        df, 
-        project, 
-        source_id, 
+        df,
+        project,
+        source_id,
         label=data_source_label
     )
     # Save data source fields for this dataframe, and update with any prior
-    # matched fields. 
+    # matched fields.
     prior_to_new_fields = save_data_source_fields_for_df(
-        df, 
-        ds_source, 
+        df,
+        ds_source,
         col_prior_fields
     )
     # Save any field annotations from prior matched fields.
@@ -452,25 +454,26 @@ def load_df_for_etl(
 
 
 def load_csv_for_etl(
-    project, 
-    file_path, 
-    data_source_label=None, 
-    prelim_source_id=None, 
+    file_path,
+    project=None,
+    project_id=None,
+    data_source_label=None,
+    prelim_source_id=None,
     source_exists="raise"
 ):
     """Loads a csv file for an ETL process.
-
-    :param AllManifest project: A manifest object for the project that we
-        want to update via an ETL process.
     :param str file_path: The file path to a CSV file that will be read into
         a dataframe for ingest in an ETL process.
+    :param AllManifest project: A manifest object for the project that we
+        want to update via an ETL process.
+    :param str(UUID) project_id: Project manifest object uuid
     :param str data_source_label: A human readable label for to give this
         datafile a bit of descriptive metadata.
     :param str prelim_source_id: An informal identifier for this specific
         dataset.
     :param str source_exists: Handling options if a prelim_source_id
         already exists in the ETL records. If "raise" then throw an
-        exception, if "replace" then replace the prior data source with 
+        exception, if "replace" then replace the prior data source with
         new data (provided the projects are the same between the old and
         new ETL), if "new" then change the prelim_source_id to be a new
         identifier, as the user claims this is a new dataset for ETL.
@@ -482,10 +485,14 @@ def load_csv_for_etl(
     if not prelim_source_id:
         # No prelim_source_id, so use the filename.
         prelim_source_id = os.path.basename(file_path)
+    if not project and project_id:
+        project = AllManifest.objects.filter(uuid=project_id).first()
+    if not project:
+        raise ValueError('Need a manifest object for a project')
     return load_df_for_etl(
         df=df,
-        project=project, 
-        prelim_source_id= prelim_source_id, 
-        data_source_label=data_source_label, 
+        project=project,
+        prelim_source_id= prelim_source_id,
+        data_source_label=data_source_label,
         source_exists=source_exists
     )
