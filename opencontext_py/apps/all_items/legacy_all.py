@@ -18,19 +18,22 @@ SALT = (
 
 def is_valid_uuid(val):
     try:
-        return GenUUID.UUID(str(val))
+        uuid = GenUUID.UUID(str(val))
+        uuid = str(uuid.urn)[9:]
+        return uuid
     except ValueError:
         return None
 
 
 def update_old_id(old_id):
     """Updates an old ID deterministically so as to be repeatable"""
-    if is_valid_uuid(old_id):
+    val_uuid = is_valid_uuid(old_id)
+    if val_uuid:
         # The old ID is fine and needs no updating.
-        return old_id, old_id.lower()
+        return old_id, val_uuid.lower()
     if old_id == '0':
         # This maps project '0' to the new general open context project
-        return old_id, configs.OPEN_CONTEXT_PROJ_UUID  
+        return old_id, configs.OPEN_CONTEXT_PROJ_UUID
 
     hash_obj = hashlib.sha1()
     # The salt added to our hash adds some randomness so that we're less
