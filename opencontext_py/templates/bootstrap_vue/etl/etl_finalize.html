@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to transform and load a datasource according to
 user defined configuration annotations.
 -->
@@ -23,8 +23,8 @@ user defined configuration annotations.
 
       <b-row v-if="!etl_started & !etl_done" align-v="center">
         <b-col cols="3">
-          <b-button 
-              block 
+          <b-button
+              block
               @click="etl_start"
               variant="primary">
               Transform and Load
@@ -36,13 +36,28 @@ user defined configuration annotations.
         </b-col>
       </b-row>
 
+      <b-row v-if="!etl_started & !etl_done" align-v="center">
+        <b-col cols="3">
+          <b-button
+              block
+              @click="toggle_skip_reset"
+              variant="primary">
+              Toggle skip reset
+            </b-button>
+        </b-col>
+        <b-col cols="9">
+          <b-alert show v-if="skip_reset" variant="warning">Prior import will NOT be reset!</b-alert>
+          <b-alert show v-else variant="info">Prior import will be reset (normal)</b-alert>
+        </b-col>
+      </b-row>
+
       <b-row v-if="etl_started & !etl_done" align-v="center">
         <b-col cols="3" class="text-center">
           <b-spinner label="Loading..."></b-spinner>
         </b-col>
         <b-col cols="9">
-          Transform and load process started at <strong>[[ etl_started_display ]]</strong> 
-          on ongoing after <strong>[[ etl_elapsed_time_display ]]</strong>. 
+          Transform and load process started at <strong>[[ etl_started_display ]]</strong>
+          on ongoing after <strong>[[ etl_elapsed_time_display ]]</strong>.
           <br/>
           Deleted <strong>[[ count_prior_load_deleted ]]</strong> records from this data source's prior load attempt.
         </b-col>
@@ -106,6 +121,7 @@ user defined configuration annotations.
           data() {
               return {
                 count_prior_load_deleted: null,
+                skip_reset: false,
                 etl_started: false,
                 etl_done: false,
                 etl_start_time: null,
@@ -137,7 +153,7 @@ user defined configuration annotations.
                 last_time = this.etl_progress_time;
                 console.log('progress time');
               }
-              
+
               let time_diff = last_time - this.etl_start_time;
               time_diff /= 1000;
               let min_time_diff = Math.floor(time_diff / 60);
@@ -155,6 +171,10 @@ user defined configuration annotations.
               fetch_api_reset_transform_load: function (){
                 this.error = null;
                 this.loading = true;
+                if(this.skip_reset){
+                  this.count_prior_load_deleted = 0;
+                  this.fetch_api_transform_load();
+                }
                 fetch(
                   ('/etl-importer-transforms/reset-transform-load/' + this.source_uuid),
                     {
@@ -236,12 +256,21 @@ user defined configuration annotations.
                 this.etl_started = true;
                 this.etl_start_time = new Date();
                 this.fetch_api_reset_transform_load();
+              },
+              toggle_skip_reset: function() {
+                if(this.skip_reset == true){
+                  this.skip_reset = false;
+                }
+                else{
+                  this.skip_reset = true;
+                }
+                console.log('Skip reset now: ' + this.skip_reset);
               }
           },
           components: {
-            
+
           },
       }
-  ); 
+  );
 
 </script>
