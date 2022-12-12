@@ -37,13 +37,13 @@ def get_media_files_field_num_list(ds_anno_media_qs):
     field_nums = list(
         set(
             [
-                ds_anno.subject_field.field_num 
+                ds_anno.subject_field.field_num
                 for ds_anno in ds_anno_media_qs
             ]
         )
     )
     field_nums += [
-        ds_anno.object_field.field_num 
+        ds_anno.object_field.field_num
         for ds_anno in ds_anno_media_qs
     ]
     return field_nums
@@ -56,7 +56,7 @@ def get_media_files_df(ds_source, limit_field_num_list=None):
         limit_field_num_list = get_media_files_field_num_list(ds_anno_media_qs)
 
     df = etl_df.db_make_dataframe_from_etl_data_source(
-        ds_source, 
+        ds_source,
         include_uuid_cols=True,
         include_error_cols=True,
         limit_field_num_list=limit_field_num_list,
@@ -69,7 +69,7 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
     if media_ds_field.item_type != 'media':
         # This is not a media field, so skip out.
         return df
-    
+
     media_uuid_col = f'{media_ds_field.field_num}_item'
 
     if filter_index is None:
@@ -77,7 +77,7 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
 
     # Reconcile the media entities in the media_ds_field column
     # of the dataframe.
-    # NOTE: This is the only step that does any update to the 
+    # NOTE: This is the only step that does any update to the
     # dataframe and the DataSourceRecords. That's because item_type='media'
     # is stored in the Manifest types, but resources are NOT.
     df = reconcile.df_reconcile_id_field(
@@ -87,7 +87,7 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
         filter_index=filter_index,
     )
 
-    # Now get annotations for the resources (file urls) that we want to 
+    # Now get annotations for the resources (file urls) that we want to
     # create and associate with the Manifest objects of item_type = 'media'
     # that we just reconciled above.
     act_resource_anno_qs = DataSourceAnnotation.objects.filter(
@@ -109,11 +109,11 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
             ).first()
         else:
             resource_type_obj = None
-        
+
         if resource_type_obj is None:
             # We don't have a resource type, so we can't import resources
             continue
-        
+
         if str(resource_type_obj.uuid) not in configs.OC_RESOURCE_TYPES_UUIDS:
             # The resource type is not valid, so we can't import.
             continue
@@ -155,10 +155,10 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
 
             if resource_obj:
                 # We already have this and we don't do anything else, because the resource item
-                # is not a manifest object so we don't update the 
+                # is not a manifest object so we don't update the
                 # DataSourceRecord to store it.
                 continue
-            
+
             # We don't already have this resource, so add it.
             res_dict = {
                 'item_id': media_uuid,
@@ -182,6 +182,7 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
                     f'Error: {str(error)}'
                 )
             continue
+    return df
 
 
 def reconcile_item_type_media_resources(ds_source, df=None, filter_index=None):
@@ -201,21 +202,23 @@ def reconcile_item_type_media_resources(ds_source, df=None, filter_index=None):
         # We have no dataframe of media and resource files
         # to reconcile.
         return None
-    
+
+    print(df.head())
+
     if filter_index is None:
         filter_index = df['row_num'] >= 0
-    
+
     media_fields = list(
         set(
             [ds_anno.subject_field for ds_anno in ds_anno_media_qs]
         )
     )
+    print(media_fields)
     for media_ds_field in media_fields:
         df = reconcile_media_and_resource_files(
-            media_ds_field, 
-            df, 
+            media_ds_field,
+            df,
             filter_index=filter_index
         )
-        
-    return df
 
+    return df
