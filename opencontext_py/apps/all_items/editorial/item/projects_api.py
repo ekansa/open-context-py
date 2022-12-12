@@ -25,7 +25,7 @@ from opencontext_py.apps.all_items.editorial.api import manifest_obj_to_json_saf
 from opencontext_py.apps.all_items.editorial.item import edit_configs
 
 from opencontext_py.libs.models import (
-    make_dict_json_safe, 
+    make_dict_json_safe,
     make_model_object_json_safe_dict
 )
 
@@ -43,7 +43,7 @@ DATA_TYPE_LABELS = {
 
 def make_grouped_by_dict_from_dict_list(list_dicts, index_list):
     """Makes a dictionary, grouped by attributes of query set objects
-    
+
     :param list index_list: List of attributes in objects of the
        query set we want to use as group-by criteria.
     """
@@ -78,13 +78,13 @@ def make_tree_dict_from_grouped_dict_list(list_dicts, index_list):
 
 
 def convert_tree_dict_to_children(
-    parent_id, 
-    tree_dict, 
-    key_label_dict, 
+    parent_id,
+    tree_dict,
+    key_label_dict,
     bottom_uuid_label_tup=('predicate_id', 'predicate__label')
 ):
-    """Conversts a tree dict into nested lists of children
-    
+    """Converts a tree dict into nested lists of children
+
     :param str parent_id: An id, unique in the context of this
         tree that helps make a unique uuid for child nodes in
         this tree. We do this because we cache items and their
@@ -92,7 +92,7 @@ def convert_tree_dict_to_children(
         uuid makes it easier to cache the same item that may
         be in multiple tree contexts.
     :param dict tree_dict: An dictionary of that recursively
-        contains child dictionaries. The bottom level is a 
+        contains child dictionaries. The bottom level is a
         list. The order of keys is significant in these
         dictionaries.
     :param dict key_label_dict: A dict to look up the label
@@ -103,10 +103,10 @@ def convert_tree_dict_to_children(
     """
     level_list = []
     for key, sub_dict in tree_dict.items():
-        _, key_uuid = update_old_id(f'{parent_id}-{key}') 
+        _, key_uuid = update_old_id(f'{parent_id}-{key}')
         if isinstance(sub_dict, list):
             # We have a list, so we're at the bottom of the
-            # tree-hierarchy. 
+            # tree-hierarchy.
             act_children = []
             for item in sub_dict:
                 item['uuid'] = item.get(bottom_uuid_label_tup[0])
@@ -115,8 +115,8 @@ def convert_tree_dict_to_children(
                 act_children.append(item)
         else:
             act_children = convert_tree_dict_to_children(
-                key_uuid, 
-                sub_dict, 
+                key_uuid,
+                sub_dict,
                 key_label_dict=key_label_dict,
             )
         act_item = {
@@ -169,9 +169,9 @@ def project_descriptions_tree(project_id):
     _, proj_root_uuid = update_old_id(f'project_description_tree_{project_id}')
     proj_root['label'] = f"Descriptions: {proj_root['label']}"
     proj_root['uuid'] = proj_root_uuid
-    
+
     key_label_dict = {k:v for k,v in DATA_TYPE_LABELS.items()}
-    
+
     key_label_tups = [
         ('subject__item_class_id', 'subject__item_class__label',),
         ('predicate_id', 'predicate__label',),
@@ -186,13 +186,13 @@ def project_descriptions_tree(project_id):
     key_label_dict[None] = '(Node not labeled)'
 
     index_list = [
-        'subject__item_type', 
-        'subject__item_class_id', 
-        'predicate__data_type', 
+        'subject__item_type',
+        'subject__item_class_id',
+        'predicate__data_type',
     ]
     children_dict = make_tree_dict_from_grouped_dict_list(p_qs, index_list)
     proj_root['children'] = convert_tree_dict_to_children(
-        proj_root_uuid, 
+        proj_root_uuid,
         children_dict,
         key_label_dict=key_label_dict,
     )
@@ -204,7 +204,7 @@ def project_spatial_tree(project_id):
     proj_obj = AllManifest.objects.filter(uuid=project_id).first()
     if not proj_obj:
         return None
-    
+
     if project_id != configs.OPEN_CONTEXT_PROJ_UUID:
         # Normal case, not for the root project.
         m_qs = AllManifest.objects.filter(
@@ -292,7 +292,7 @@ def project_persons(project_id):
         )
 
     output = [
-        make_model_object_json_safe_dict(p, more_attributes=['project__label']) 
+        make_model_object_json_safe_dict(p, more_attributes=['project__label'])
         for p in p_qs
     ]
     return output
