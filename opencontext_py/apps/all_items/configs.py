@@ -512,6 +512,24 @@ DEFAULT_ATTRIBUTE_GROUP_DICT = {
     }
 }
 
+DEFAULT_RESOURCES_UUID = '00000000-0000-0000-0000-000000000050'
+DEFAULT_RESOURCES_DICT = {
+    'uuid': DEFAULT_RESOURCES_UUID,
+    'publisher_id': OPEN_CONTEXT_PUB_UUID,
+    'project_id': OPEN_CONTEXT_PROJ_UUID,
+    'item_class_id': DEFAULT_CLASS_UUID,
+    'source_id': DEFAULT_SOURCE_ID,
+    'item_type': 'class',
+    'data_type': 'id',
+    'slug': 'oc-gen-resources',
+    'label': 'File resources',
+    'uri': 'opencontext.org/vocabularies/oc-general/resources',
+    'context_id': OC_GEN_VOCAB_UUID,
+    'meta_json': {
+        'sort': 1,
+    }
+}
+
 
 DEFAULT_NULL_OBJECT_UUID = '00000000-0000-0000-0000-000000000006'
 DEFAULT_NULL_STRING_UUID = '00000000-cdd8-bc9b-1985-c3babee8ea6c'

@@ -3309,6 +3309,40 @@ def verify_manifest_uuids(dict_list=DEFAULT_MANIFESTS):
         print(f'{uri} should have {ex_uuid}')
 
 
+def load_resource_and_resource_types():
+    res_man_obj, _ = AllManifest.objects.get_or_create(
+        uuid=DEFAULT_RESOURCES_UUID,
+        defaults=DEFAULT_RESOURCES_DICT
+    )
+    for rt_uuid in OC_RESOURCE_TYPES_UUIDS:
+        rt_obj = AllManifest.objects.filter(uuid=rt_uuid).first()
+        if not rt_obj:
+            print(f'Child resource type {rt_uuid} is missing')
+            continue
+        assert_dict = {
+            'project_id': OPEN_CONTEXT_PROJ_UUID,
+            'publisher_id': OPEN_CONTEXT_PUB_UUID,
+            'source_id': DEFAULT_SOURCE_ID,
+            'subject_id': rt_obj.uuid,
+            'predicate_id': PREDICATE_RDFS_SUB_CLASS_OF_UUID,
+            'object_id': res_man_obj.uuid,
+        }
+        ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(
+                subject_id=assert_dict['subject_id'],
+                predicate_id=assert_dict['predicate_id'],
+                object_id=assert_dict['object_id'],
+            ),
+            defaults=assert_dict
+        )
+        print(
+            f'Assertion {ass_obj.uuid}: '
+            f'is {ass_obj.subject.label} [{ass_obj.subject.uuid}]'
+            f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
+            f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
+        )
+
+
 def load_default_entities(
     man_dict_list=DEFAULT_MANIFESTS,
     id_dict_list=DEFAULT_IDENTIFIERS,
@@ -3374,6 +3408,7 @@ def load_default_entities(
             f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
             f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
         )
+    load_resource_and_resource_types()
 
 
 def tabula_rasa():
