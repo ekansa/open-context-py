@@ -586,7 +586,10 @@ class ResultFacetsStandard():
                 max_value = float(max_value)
             elif data_type == 'xsd:date':
                 min_value = facet_value
-
+            elif data_type == 'xsd:boolean':
+                min_value = False
+                max_value = True
+                label = facet_value
             else:
                 # How van we even be here with the wrong data-type?
                 continue
@@ -605,6 +608,8 @@ class ResultFacetsStandard():
                 max_val=max_value,
                 q_end=range_query_end,
             )
+            if data_type == 'xsd:boolean':
+                range_query = facet_value
 
             new_value = None
             old_range_seps = [(delim + '['), (delim + '{')]
@@ -657,6 +662,67 @@ class ResultFacetsStandard():
         return options
 
 
+    def get_facet_boolean_options(self, solr_json):
+        """Gets boolean property range facets and options from solr response json"""
+        facet_ranges = []
+        solr_facet_fields_dict = utilities.get_dict_path_value(
+            configs.FACETS_SOLR_ROOT_PATH_KEYS,
+            solr_json
+        )
+        if not solr_facet_fields_dict:
+            # No facets ranges active, so skip out
+            return facet_ranges
+        for (
+            solr_field_key,
+            solr_facet_value_count_list,
+        ) in solr_facet_fields_dict.items():
+
+            if not solr_field_key.endswith('___pred_bool'):
+                # boolean datatype for field.
+                continue
+            # Make  list of the tuples for this solr facet field.
+            options_tuples = utilities.get_facet_value_count_tuples(
+                solr_facet_value_count_list
+            )
+            if not len(options_tuples):
+                # Skip, because we don't have any facet options
+                continue
+            # Look up the client's request parameter and request
+            (
+                param_key,
+                match_old_value,
+            ) = self.facet_fields_to_client_request.get(
+                solr_field_key,
+                ('prop', None,) # default parameter, matching value.
+            )
+            if not match_old_value:
+                # This should never happen, but we can't associate a
+                # this solr field with a client request param and value
+                continue
+            data_type = utilities.get_data_type_for_solr_field(
+                solr_field_key
+            )
+            facet_range = self.make_facet_dict_from_solr_field(
+                solr_field_key,
+                'oc-api:range-facet',
+                'Ranges',
+                range_data_type=data_type,
+            )
+            facet_range['oc-api:has-range-options'] = self.add_range_options_list(
+                param_key,
+                match_old_value,
+                data_type,
+                True,
+                options_tuples,
+                round_digits=None,
+            )
+
+            facet_ranges.append(facet_range)
+
+        return facet_ranges
+
+
+
     def get_facet_ranges_and_options(self, solr_json):
         """Gets property range facets and options from solr response json"""
 
@@ -683,7 +749,7 @@ class ResultFacetsStandard():
                 range_dict,
             ) in solr_facet_ranges_dict.items():
 
-            # Look up the client's request parameter and reqest
+            # Look up the client's request parameter and request
             (
                 param_key,
                 match_old_value,

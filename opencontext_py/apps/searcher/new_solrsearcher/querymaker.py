@@ -878,7 +878,7 @@ def get_general_hierarchic_path_query_dict(
                         attribute_item_obj.data_type,
                         (
                             use_solr_rel_prefix
-                            + item.slug.replace('-', '_')
+                            + attribute_item_obj.slug.replace('-', '_')
                             + SolrDoc.SOLR_VALUE_DELIM
                             + field_suffix
                         )

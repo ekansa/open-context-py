@@ -537,6 +537,7 @@ class ResultMaker():
         facet_ranges = facets_standard.get_facet_ranges_and_options(
             solr_json
         )
+        facet_ranges += facets_standard.get_facet_boolean_options(solr_json)
         if not len(facet_ranges):
             # Skip out, we found no facets.
             return None
