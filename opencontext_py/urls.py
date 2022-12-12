@@ -13,6 +13,7 @@ from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
 from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 from opencontext_py.apps.utilities import views as UtilitiesViews
+from opencontext_py.apps.entities.entity import views as EntityViews
 
 
 
@@ -453,7 +454,13 @@ urlpatterns = [
     re_path(r'^utilities/quadtree-to-lat-lon', UtilitiesViews.quadtree_to_lat_lon, name='quadtree_to_lat_lon'),
     re_path(r'^utilities/reproject', UtilitiesViews.reproject, name='utilities_reproject'),
     re_path(r'^utilities/human-remains-ok', UtilitiesViews.human_remains_ok, name='human_remains_ok'),
-     re_path(r'^utilities/uuid', UtilitiesViews.uuid, name='utilities_uuid'),
+    re_path(r'^utilities/uuid', UtilitiesViews.uuid, name='utilities_uuid'),
+
+    #----------------------------
+    # ENTITIES PROXY views
+    #----------------------------
+    re_path(r'^entities/proxy/(?P<target_url>\S+)', EntityViews.proxy, name='entities_proxy'),
+    re_path(r'^entities/proxy-header/(?P<target_url>\S+)', EntityViews.proxy_header, name='entities_proxy_header'),
     #----------------------------
     # BELOW ARE SITEMAP REQUESTS
     #----------------------------
