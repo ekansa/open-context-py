@@ -670,7 +670,7 @@ class AllSpaceTime(models.Model):
 
         hash_id = self.make_hash_id(
             item_id=item_id,
-            event_id=configs.DEFAULT_EVENT_UUID,
+            event_id=event_id,
             earliest=None,
             start=None,
             stop=None,
