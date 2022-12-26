@@ -2299,6 +2299,9 @@ var vc_common_map = Vue.component(
             }
             if(this.geo_json.features.length > 1){
                 for(let feat of this.geo_json.features){
+                    if(feat.geometry.type != 'Point'){
+                        continue;
+                    }
                     if(!feat.hasOwnProperty('properties')){
                         continue;
                     }
@@ -2507,7 +2510,7 @@ var vc_common_map = Vue.component(
                 if(feat.properties.hasOwnProperty('location_precision_note')){
                     this.location_precision_note = feat.properties.location_precision_note;
                 }
-                if(feat.properties.hasOwnProperty('geo_zoom')){
+                if(feat.geometry.type == 'Point' && feat.properties.hasOwnProperty('geo_zoom')){
                     this.item_geo_zoom = feat.properties.geo_zoom;
                 }
             }
