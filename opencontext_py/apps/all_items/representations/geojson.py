@@ -177,7 +177,7 @@ def get_meta_json_value_from_item_hierarchy(item_man_obj, meta_json_key='geo_not
             meta_json_key,
             default,
         )
-    if key_val and meta_json_key == 'geo_specificity':
+    if key_val and meta_json_key in ['geo_specificity', 'geo_zoom']:
         if isinstance(key_val, str):
             key_val = int(float(key_val))
     return key_val
@@ -271,6 +271,14 @@ def add_precision_properties(
         properties["location_precision_factor"] = abs(item_precision_specificity)
     else:
         pass
+
+    geo_zoom = get_meta_json_value_from_item_hierarchy(
+        item_man_obj,
+        meta_json_key='geo_zoom',
+        default=None
+    )
+    if isinstance(geo_zoom, int) and geo_zoom > 0 :
+        properties["geo_zoom"] = geo_zoom
 
     if for_solr:
         # Always make sure we have the location precision factor

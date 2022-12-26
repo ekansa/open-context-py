@@ -683,6 +683,7 @@ var vc_common_map = Vue.component(
             geo_overlays: null,
             location_precision_factor: null,
             location_precision_note: null,
+            item_geo_zoom: null,
             item_json: null,
             map_type: 'generic',
             map_class: 'item',
@@ -2297,15 +2298,31 @@ var vc_common_map = Vue.component(
                 return null;
             }
             if(this.geo_json.features.length > 1){
-                return null;
+                for(let feat of this.geo_json.features){
+                    if(!feat.hasOwnProperty('properties')){
+                        continue;
+                    }
+                    if(feat.properties.hasOwnProperty('geo_zoom')){
+                        this.item_geo_zoom = feat.properties.geo_zoom;
+                    }
+                }
+                if(!this.item_geo_zoom){
+                    // None of the features here have zoom level set by the database,
+                    // so just default to no set view.
+                    return null;
+                }
             }
-            if(this.geo_json.features[0].geometry.type != 'Point'){
+            if(!this.item_geo_zoom && this.geo_json.features[0].geometry.type != 'Point'){
                 console.log('Use extent derived zoom for ' + this.geo_json.features[0].geometry.type);
                 return null;
             }
             let zoom = this.default_zoom;
             if(this.map_type in this.map_type_default_zooms){
                 zoom = this.map_type_default_zooms[this.map_type];
+            }
+            if(this.item_geo_zoom){
+                zoom = this.item_geo_zoom;
+                console.log('Item has set zoom view: ' + zoom);
             }
             let center = this.map.getCenter();
             this.map.setView(center, zoom);
@@ -2319,7 +2336,7 @@ var vc_common_map = Vue.component(
             }
             let frag_obj_set_view = this.set_map_view_from_frontend_state_obj();
             if (frag_obj_set_view){
-                console.log('Fontend state object set map bounds.');
+                console.log('Frontend state object set map bounds.');
                 return null;
             }
             // console.log('Use overlay layer to fit bounds.');
@@ -2489,6 +2506,9 @@ var vc_common_map = Vue.component(
                 }
                 if(feat.properties.hasOwnProperty('location_precision_note')){
                     this.location_precision_note = feat.properties.location_precision_note;
+                }
+                if(feat.properties.hasOwnProperty('geo_zoom')){
+                    this.item_geo_zoom = feat.properties.geo_zoom;
                 }
             }
         },

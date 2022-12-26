@@ -43,6 +43,17 @@ FLAG_HUMAN_REMAINS = {
     ],
 }
 
+GEO_ZOOM = {
+    'key': 'geo_zoom',
+    'label': 'Default zoom level for map views',
+    'data_type': 'xsd:integer',
+    'note': (
+        'An integer value indicating the zoom level for map views. '
+        'This is strictly a user interface control, '
+        'and means nothing about data precision, accuracy or obfuscation. '
+    ),
+    'options': None,
+}
 
 view_groups = Group.objects.filter(name__icontains='can view')
 
@@ -108,6 +119,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
+        GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
     ],
@@ -152,6 +164,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
+        GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
     ],
