@@ -48,7 +48,7 @@ NO_NODE_KEYS = TEXT_CONTENT_KEYS + [
     'dc-terms:hasPart',
 ]
 
-# These are keys that should be treated specially, 
+# These are keys that should be treated specially,
 # and lumped into observations.
 SPECIAL_KEYS = [
     'id',
@@ -60,6 +60,8 @@ SPECIAL_KEYS = [
     'item_class__slug',
     'type',
     'features',
+    'table_sample_fields',
+    'table_sample_data',
     'oc-gen:has-obs',
     'oc-gen:has-contexts',
     'oc-gen:has-linked-contexts',
@@ -101,7 +103,7 @@ def get_icon_by_item_type_class(dict_obj, item_type_override=None):
         # Do this for "subjects_children" for item_type "subjects" that are in a
         # spatial containment relationship.
         item_type_icon = icon_configs.DEFAULT_ITEM_TYPE_ICONS.get(item_type_override)
-    else:  
+    else:
         item_type_icon = icon_configs.DEFAULT_ITEM_TYPE_ICONS.get(item_type)
     if not item_type_icon:
         # Can't find an item type icon so skip out.
@@ -169,7 +171,7 @@ def prepare_citation_dict(rep_dict):
 def prepare_item_metadata_obs(
     rep_dict,
     obs_id=ITEM_METADATA_OBS_ID,
-    obs_label=ITEM_METADATA_OBS_LABEL, 
+    obs_label=ITEM_METADATA_OBS_LABEL,
     skip_keys=SPECIAL_KEYS
 ):
     """Prepares an observation dict for metadata directly associated to an item
@@ -194,7 +196,7 @@ def prepare_item_metadata_obs(
         # directly associated with this item. Return None.
         return None
 
-    # Bundle the linked data metadata into nested 
+    # Bundle the linked data metadata into nested
     # attribute group, events to make templating more
     # consistent.
     meta_event_dict = LastUpdatedOrderedDict()
@@ -218,7 +220,7 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
     :param dictold_attrib_grp: An attribute group dict from the item's
         JSON-LD representation dict
     """
-    
+
     # NOTE: To make templating easier, this function groups together
     # assertions by predicate and object item_type. The general structure
     # for the output is like:
@@ -269,20 +271,39 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
         is_relation = (
             str(vals[0].get('predicate__item_class_id')) == configs.CLASS_OC_LINKS_UUID
         )
-        if not is_relation:
+        rel_obj_vals = None
+        if is_relation:
+            rel_obj_vals = vals.copy()
+        else:
             # This predicate (pred_key) is not used for a relation,
-            # so treat this as a description.
-            new_attrib_group['descriptions'][pred_key] = vals
+            # so treat this as a description. But first, check to see if
+            # there are table objects.
+            table_val_objs = []
+            non_table_val_objs = []
+            for act_val in vals:
+                if act_val.get('object__item_type') == 'tables':
+                    table_val_objs.append(act_val)
+                else:
+                    non_table_val_objs.append(act_val)
+            # Make sure that non-table objects for this predicate are treated
+            # as descriptions.
+            if len(non_table_val_objs):
+                new_attrib_group['descriptions'][pred_key] = non_table_val_objs
+            if table_val_objs:
+                rel_obj_vals = table_val_objs
+            else:
+                # No rel object values
+                continue
+        if not rel_obj_vals:
             continue
-        
         # Nest relations by the item_type of the object of the
         # assertion, then by the predicate for the assertion.
-        for act_val in vals:
+        for act_val in rel_obj_vals:
             act_item_type = act_val.get('object__item_type')
             if act_item_type not in configs.OC_PRED_LINK_OK_ITEM_TYPES:
                 continue
             if act_item_type == 'subjects' and pred_key == 'oc-pred:oc-gen-contains':
-                # NOTE: We're treating the (children) subjects of 
+                # NOTE: We're treating the (children) subjects of
                 # spatial containment relations somewhat differently in our
                 # template
                 act_item_type = 'subjects_children'
@@ -290,13 +311,13 @@ def template_reorganize_attribute_group_dict(old_attrib_grp):
                 # The predicate is a default type that does not need to be
                 # displayed in the HTML UI.
                 act_val['no_display_pred'] = True
-            
+
             # Add a default icon to an item type if missing and default exists.
             if act_item_type == 'subjects_children':
                 act_val = get_icon_by_item_type_class(act_val, item_type_override=act_item_type)
             else:
                 act_val = get_icon_by_item_type_class(act_val, item_type_override=None)
-    
+
             new_attrib_group['relations'].setdefault(
                 act_item_type,
                 LastUpdatedOrderedDict()
@@ -323,7 +344,7 @@ def template_reorganize_obs(old_obs_dict):
         if key == 'oc-gen:has-events':
             continue
         new_obs_dict[key] = vals
-    
+
     new_obs_dict['oc-gen:has-events'] = []
     for old_event_dict in old_obs_dict.get('oc-gen:has-events', []):
         new_event_dict = LastUpdatedOrderedDict()
@@ -331,7 +352,7 @@ def template_reorganize_obs(old_obs_dict):
             if key == 'oc-gen:has-attribute-groups':
                 continue
             new_event_dict[key] = vals
-        
+
         new_event_dict['has_descriptions'] = None
         new_event_dict['has_relations'] = None
         new_event_dict['oc-gen:has-attribute-groups'] = []
@@ -347,14 +368,14 @@ def template_reorganize_obs(old_obs_dict):
                 new_attrib_group
             )
 
-        
+
         new_obs_dict['oc-gen:has-events'].append(new_event_dict)
     return new_obs_dict
 
 
 def get_units_from_obs(new_obs_dict, units_of_measurement_dict):
     """Extracts units of measurement from assertions in an observation
-    
+
     :param dict new_obs_dict: An observation assertion dict already
         reorganized for templating
     :parma dict unit_of_measurement_dict: A dictionary of unique
@@ -392,17 +413,17 @@ def template_reorganize_all_obs(rep_dict):
     """
     if not rep_dict.get('oc-gen:has-obs'):
         return rep_dict
-    
+
     units_of_measurement_dict = {}
     all_new_obs = []
     for old_obs_dict in rep_dict.get('oc-gen:has-obs'):
         new_obs_dict = template_reorganize_obs(old_obs_dict)
         units_of_measurement_dict = get_units_from_obs(
-            new_obs_dict, 
+            new_obs_dict,
             units_of_measurement_dict
         )
         all_new_obs.append(new_obs_dict)
-    
+
     rep_dict['oc-gen:has-obs'] = all_new_obs
     if units_of_measurement_dict:
         # Make the units of measurement seen in these observation
@@ -419,7 +440,7 @@ def add_license_icons_public_domain_flag(rep_dict, icon_dict=DEFAULT_LICENSE_ICO
     """
     if not rep_dict.get('dc-terms:license'):
         return rep_dict
-    
+
     for lic_dict in rep_dict.get('dc-terms:license'):
         if '/publicdomain/' in lic_dict.get('id', ''):
             lic_dict['is_publicdomain'] = True
@@ -439,7 +460,7 @@ def add_license_icons_public_domain_flag(rep_dict, icon_dict=DEFAULT_LICENSE_ICO
 
 
 def add_geo_overlay_images(
-    rep_dict, 
+    rep_dict,
     geo_over_key=GEO_OVERLAYS_JSON_LD_KEY,
     template_key=TEMPLATE_GEO_OVERLAY_KEY,
     default_opacity=GEO_OVERLAY_OPACITY_DEFAULT
@@ -457,7 +478,7 @@ def add_geo_overlay_images(
     if not rep_dict.get(geo_over_key):
         # There are no geo-overlay images.
         return rep_dict
-    
+
     required_obj_keys = [
         'object__meta_json',
         'object__geo_overlay',
@@ -485,7 +506,7 @@ def add_geo_overlay_images(
             # We're missing leaflet expected JSON
             continue
         # We'll use the 'leaflet' dict object from the object__meta_json
-        # (which ultimately comes from the Manifest object for the 
+        # (which ultimately comes from the Manifest object for the
         # overlay image item-type 'media' meta_json).
         overlay = copy.deepcopy(
             obj_meta_json['leaflet']
@@ -532,7 +553,7 @@ def check_cors_ok_or_proxy_url(url):
 
 def gather_media_links(man_obj, rep_dict):
     """Gathers all media links for images, 3D models, GIS previews and downloads
-    
+
     :param AllManifest man_obj: A instance of the AllManifest model for the
         the item that is getting a representation.
     :param dict rep_dict: The item's JSON-LD representation dict
@@ -558,7 +579,7 @@ def gather_media_links(man_obj, rep_dict):
                 uri = check_cors_ok_or_proxy_url(uri)
                 rep_dict['media_preview_pdf'] = uri
             elif (
-                'image' in format 
+                'image' in format
                 or str(man_obj.item_class.uuid) == configs.CLASS_OC_IMAGE_MEDIA
             ):
                 if rep_dict.get('media_preview_image'):
@@ -655,9 +676,24 @@ def gather_id_urls_by_scheme(rep_dict):
     return rep_dict
 
 
+def make_table_download_url(man_obj):
+    """Makes a download url for tables items
+
+    :param AllManifest man_obj: A instance of the AllManifest model for the
+        the item that is getting a representation.
+    """
+    if man_obj.item_type != 'tables':
+        return None
+    csv_url = man_obj.meta_json.get(
+        'full_csv_url',
+        f'{settings.CLOUD_BASE_URL}/{settings.CLOUD_CONTAINER_EXPORTS}/{str(man_obj.uuid)}--v1--full.csv'
+    )
+    return csv_url
+
+
 def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     """Prepares a representation dict for Solr indexing and HTML templating
-    
+
     :param AllManifest man_obj: A instance of the AllManifest model for the
         the item that is getting a representation.
     :param dict rep_dict: The item's JSON-LD representation dict
@@ -665,10 +701,10 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
 
     # Consolidate the contexts paths
     rep_dict['contexts'] = (
-        rep_dict.get('oc-gen:has-contexts', []) 
+        rep_dict.get('oc-gen:has-contexts', [])
         + rep_dict.get('oc-gen:has-linked-contexts', [])
     )
-   
+
     # Add any metadata about this item.
     meta_obs_dict = prepare_item_metadata_obs(rep_dict)
     if meta_obs_dict:
@@ -693,7 +729,10 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     rep_dict['flag_human_remains'] = man_obj.meta_json.get('flag_human_remains', False)
     if not rep_dict['flag_human_remains']:
         rep_dict['flag_human_remains'] = find_human_remains_media(rep_dict)
-    
+
+    csv_url = make_table_download_url(man_obj)
+    if csv_url:
+        rep_dict['media_download'] = csv_url
     at_group_key = AllManifest.META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS
     rep_dict[at_group_key] = man_obj.meta_json.get(at_group_key, None)
 
@@ -703,7 +742,7 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
 
 def prepare_for_item_dict_html_template(man_obj, rep_dict):
     """Prepares a representation dict for HTML templating
-    
+
     :param AllManifest man_obj: A instance of the AllManifest model for the
         the item that is getting a representation.
     :param dict rep_dict: The item's JSON-LD representation dict
@@ -717,7 +756,7 @@ def prepare_for_item_dict_html_template(man_obj, rep_dict):
 
     # Do the main reorganization to make convenient for HTML templating
     rep_dict = prepare_for_item_dict_solr_and_html_template(
-        man_obj, 
+        man_obj,
         rep_dict
     )
 

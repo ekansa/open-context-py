@@ -1,0 +1,28 @@
+{% block relations_table %}
+
+<div class="row align-items-center item_rel_obj_val_row">
+  {% for val in vals %}
+      <div class="col">
+        <div class="media">
+          <a href="{% url 'tables_html' val.object_id %}" target="_blank">
+            <img src="../static/oc/images/noun-icons-small/table-noun-4305.png"
+            alt="table icon"
+            class="mr-3 align-self-center"
+            style="width:44px;"/>
+          </a>
+          <div class="media-body">
+            <a class="mt-0" href="{% url 'tables_html' val.object_id %}" target="_blank">{{ val.label }}</a>
+          </div>
+        </div>
+      </div>
+      {% if forloop.counter|divisibleby:max_cols %}
+  </div>
+  <div class="row align-items-center item_rel_obj_val_row">
+      {%endif%}
+  {% endfor %}
+</div>
+
+
+
+
+{% endblock %}

@@ -34,7 +34,7 @@ def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None, for_solr
 
     :param QuerySet assert_qs: An assertion object queryset for assertions
         that describe the item for which we're creating a representation
-    :param dict act_dict: The dictionary object that is being created as 
+    :param dict act_dict: The dictionary object that is being created as
         a representation of an item.
     :param bool for_solr_or_html: Do we want an output with additional attributes
         useful for HTML templating.
@@ -74,15 +74,15 @@ def add_dc_creator_contributor_equiv_metadata(assert_qs, act_dict=None, for_solr
     # Return the act_dict with the Dublin core creator and/or contributors
     # added.
     return rep_utils.add_predicates_assertions_to_dict(
-        equiv_dict, 
-        act_dict=act_dict, 
+        equiv_dict,
+        act_dict=act_dict,
         for_solr_or_html=for_solr_or_html
     )
 
 
 def db_get_project_metadata_qs(project_id):
     """Get Dublin Core project metadata
-    
+
     :param str project_id: UUID or string UUID for a project
         that may have Dublin Core metadata.
     """
@@ -111,13 +111,16 @@ def db_get_project_metadata_qs(project_id):
         # Get dublin core metadate or a project geo-overlay image
         Q(predicate__context_id=configs.DCTERMS_VOCAB_UUID)
         |Q(predicate_id=configs.PREDICATE_GEO_OVERLAY_UUID)
+    ).exclude(
+        # Don't include references to related tables
+        object__item_type='tables',
     ).select_related(
         'subject'
     ).select_related(
         'observation'
     ).select_related(
         'event'
-    ).select_related( 
+    ).select_related(
         'attribute_group'
     ).select_related(
         'predicate'
@@ -127,11 +130,11 @@ def db_get_project_metadata_qs(project_id):
         'predicate__context'
     ).select_related(
         'language'
-    ).select_related( 
+    ).select_related(
         'object'
-    ).select_related( 
+    ).select_related(
         'object__item_class'
-    ).select_related( 
+    ).select_related(
         'object__context'
     ).annotate(
         object_class_icon=Subquery(class_icon_qs)
@@ -195,7 +198,7 @@ def check_add_default_license(act_dict=None, for_solr=False):
         act_dict = LastUpdatedOrderedDict()
     if len(act_dict.get('dc-terms:license', [])) > 0:
         return act_dict
-    
+
     lic_uri = AllManifest().clean_uri(DC_DEFAULT_LICENSE_OBJECT.uri)
     lic_dict = LastUpdatedOrderedDict()
     lic_dict['id'] = f'https://{lic_uri}'
@@ -218,7 +221,7 @@ def check_add_project(project, act_dict=None):
         act_dict = LastUpdatedOrderedDict()
     if len(act_dict.get('dc-terms:isPartOf', [])) > 0:
         return act_dict
-    
+
     proj_dict = LastUpdatedOrderedDict()
     proj_dict['id'] = f'https://{project.uri}'
     proj_dict['slug'] = project.slug

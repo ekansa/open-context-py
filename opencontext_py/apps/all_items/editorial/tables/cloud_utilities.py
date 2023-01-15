@@ -55,8 +55,8 @@ def cloud_store_df_csv(df, object_name):
     )
     with io.BytesIO() as buffer:
         # NOTE: This is a bit convoluted, but it seems to be a good
-        # way to stream upload a Pandas dataframe while respecting 
-        # UTF-8. 
+        # way to stream upload a Pandas dataframe while respecting
+        # UTF-8.
         sb = io.TextIOWrapper(buffer, 'utf-8')
         df.to_csv(sb, index=False, encoding='utf-8')
         sb.flush()
@@ -73,15 +73,16 @@ def cloud_store_df_csv(df, object_name):
 
 
 def cloud_store_csv_from_cached_export(
-    export_id, 
-    uuid=None, 
+    export_id,
+    uuid=None,
     version=1,
     object_name=None,
-    preview_rows=None
+    preview_rows=None,
+    df=None,
 ):
     """Stores a cached dataframe in cloud storage keyed by uuid and version
 
-    :param str export_id: Export ID for the process that made the 
+    :param str export_id: Export ID for the process that made the
         dataframe that we want to put in cloud storage
     :param UUID uuid: A uuid (or uuid string) used to make the
         cloud storage object key
@@ -90,8 +91,12 @@ def cloud_store_csv_from_cached_export(
         we will write to cloud storage.
     :param int preview_rows: An optional limit of rows to save
         in order to make a preview table.
+    :param DataFrame df: An optional dataframe for the CSV file to be stored
+        in cloud storage. This can be use to upload legacy CSV data from
+        previous versions of Open Context, rather than making a new export.
     """
-    df = queue_utilities.get_cached_export_df(export_id)
+    if df is None and export_id is None:
+        df = queue_utilities.get_cached_export_df(export_id)
     if df is None:
         return None, None
     if not uuid:

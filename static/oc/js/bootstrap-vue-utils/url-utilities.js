@@ -54,16 +54,16 @@ function make_url_variants(url, add_missing_prefix=false){
 
 function replaceURLparameter(url, parameter, replace) {
     //prefer to use l.search if you have a location/link object
-    var urlparts= url.split('?');   
+    var urlparts= url.split('?');
     if (urlparts.length>=2) {
 
         var prefix= encodeURIComponent(parameter)+'=';
         var pars= urlparts[1].split(/[&;]/g);
 
         //reverse iteration as may be destructive
-        for (var i= pars.length; i-- > 0;) {    
+        for (var i= pars.length; i-- > 0;) {
             //idiom for string.startsWith
-            if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
+            if (pars[i].lastIndexOf(prefix, 0) !== -1) {
                 pars.splice(i, 1);
             }
         }
@@ -79,16 +79,16 @@ function replaceURLparameter(url, parameter, replace) {
 
 function removeURLParameter(url, parameter) {
     //prefer to use l.search if you have a location/link object
-    var urlparts= url.split('?');   
+    var urlparts= url.split('?');
     if (urlparts.length>=2) {
 
         var prefix= encodeURIComponent(parameter)+'=';
         var pars= urlparts[1].split(/[&;]/g);
 
         //reverse iteration as may be destructive
-        for (var i= pars.length; i-- > 0;) {    
+        for (var i= pars.length; i-- > 0;) {
             //idiom for string.startsWith
-            if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
+            if (pars[i].lastIndexOf(prefix, 0) !== -1) {
                 pars.splice(i, 1);
             }
         }
@@ -103,7 +103,7 @@ function removeURLParameter(url, parameter) {
 function getURLParameter(url, param) {
     //prefer to use l.search if you have a location/link object
     var vars = {};
-	url.replace( 
+	url.replace(
 		/[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
 		function( m, key, value ) { // callback
 			key = key.replace('amp;', '');
@@ -112,7 +112,7 @@ function getURLParameter(url, param) {
 	);
 
 	if ( param ) {
-		return vars[param] ? vars[param] : null;	
+		return vars[param] ? vars[param] : null;
 	}
 	return vars;
 }
@@ -188,8 +188,8 @@ function encode_frag_obj(frag_obj, null_val=null){
     for (let entry of Object.entries(frag_obj)) {
         if(isArray(entry[1])){
             entry[1] = entry[1].join(FRAG_KEY_MULTI_VAL_DEMIM);
-        }  
-        let str_entry = entry.join(FRAG_KEY_VAL_DEMIM); 
+        }
+        let str_entry = entry.join(FRAG_KEY_VAL_DEMIM);
         key_vals.push(str_entry);
     }
     return key_vals.join(FRAG_KEY_DELIM);
@@ -299,6 +299,12 @@ function use_all_items_href(href, base_url, use_all_items_href){
     if(!href){
         return null;
     }
+    if (typeof href === 'string' || href instanceof String){
+        // we do have a string....
+    }
+    else{
+        return href;
+    }
     let do_all_items = false;
     if(href.indexOf('://opencontext.org/') >= 0){
         do_all_items = true;
@@ -319,6 +325,20 @@ function use_all_items_href(href, base_url, use_all_items_href){
         return href;
     }
     href_ex = href.split('/');
+    let supported_item_types = [
+        'subjects',
+        'media',
+        'documents',
+        'predicates',
+        'types',
+        'projects',
+        'persons',
+        'tables',
+    ];
+    let item_type = href_ex[(href_ex.length - 2)];
+    if(supported_item_types.indexOf(item_type) >= 0){
+        return base_url + '/' + item_type+ '/' + href_ex[(href_ex.length - 1)];
+    }
     return base_url + '/all-items/' + href_ex[(href_ex.length - 1)];
 }
 

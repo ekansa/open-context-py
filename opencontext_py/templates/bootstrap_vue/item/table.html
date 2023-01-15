@@ -1,0 +1,263 @@
+{% extends '../page.html' %}
+
+{% block content %}
+
+
+{% include '../item/parts/vue_shared.html' %}
+{% include '../item/parts/vue_images_human_remains.html' %}
+{% include '../color_gradients.html' %}
+{% include '../item/parts/tables_vc.html' %}
+
+{% if GEO_JSON %}
+{% include '../common_geo.html' %}
+{%endif%}
+
+
+
+<div id="project_hero_banner">
+    {% if man_obj.hero %}
+        <img class="img-fluid mx-auto d-block"
+             alt="project banner image"
+             src="https://{{ man_obj.hero }}" />
+    {% elif man_obj.proj_hero %}
+        <img class="img-fluid mx-auto d-block"
+            alt="project banner image"
+            src="https://{{ man_obj.proj_hero }}" />
+    {% elif man_obj.proj_proj_hero %}
+        <img class="img-fluid mx-auto d-block"
+            alt="project banner image"
+            src="https://{{ man_obj.proj_proj_hero }}" />
+    {% else %}
+        <img class="img-fluid mx-auto d-block"
+            alt="default project banner image"
+            src="https://opencontext.org/static/oc/images/projects/project-default-hero.png" />
+    {%endif%}
+</div>
+
+
+<!-- General template for views of Open Context items -->
+<div id="main" class="container-fluid">
+
+    <div id="item-app">
+
+        <div class="row">
+            <div class="col-lg-8 col-md-12">
+
+                <div class="jumbotron">
+                    <div class="media">
+                        <img src="../static/oc/images/noun-icons-small/table-noun-4305.png" alt="table icon" class="mr-3 mt-3" style="width:60px;">
+                        <div class="media-body">
+                            <h1 class="display-6">{{ item.label }}</h1>
+                        </div>
+                    </div>
+                    <br/>
+
+                    <br/>
+
+                    {% if allow_view == False %}
+
+                    <div class="alert alert-warning" role="alert">
+                        This record is currently in preparation. It is not yet available open access and
+                        authorized users must first login to view.
+                    </div>
+
+                    {%else%}
+
+                    <h5><u>Data Table Summary</u></h5>
+                    <dl class="row">
+                        <dt class="col-4">Count of Fields (Columns)</dt>
+                        <dd class="col-8">{{ man_obj.meta_json.count_fields }}</dd>
+                        <dt class="col-4">Count of Rows</dt>
+                        <dd class="col-8">{{ man_obj.meta_json.count_rows }}</dd>
+
+                    {% if item.dc_terms__abstract %}
+                        <dt class="col-4">Description</dt>
+                        <dd class="col-8">
+                            {% with item.dc_terms__abstract|first as tab_abstract %}
+                            {% autoescape off %}
+                            {{ tab_abstract.obj_string }}
+                            {% endautoescape %}
+                            {% endwith %}
+                        </dd>
+                    {%endif%}
+                    {% if item.dc_terms__source %}
+                        <dt class="col-4">Data Sources</dt>
+                        <dd class="col-8">
+                            {% for src in item.dc_terms__source %}
+                            {% if forloop.counter == 1 %}{%else%}, {%endif%}
+                            <a href="{% url 'projects_html' src.slug %}" target="_blank">{{ src.label }}</a>
+                            ({{ src.count }})
+                            {% endfor %}
+                        </dd>
+                    {%endif%}
+                    </dl>
+
+                    {%endif%}
+
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    <strong>Note:</strong> In general, Open Context is a dynamic and frequently updated database. However, this data table is
+                    a static and unchanging externally stored file. Unless otherwise indicated, the content of this data table file will not
+                    change even after updates to the Open Context database.
+                </div>
+
+            </div>
+
+            <div class="col-lg-4 col-md-12">
+
+                <human-remains-results-alert
+                    v-bind:human_remains_flagged="human_remains_flagged"
+                    v-bind:human_remains_ok="human_remains_ok"
+                    :alert_type="'item'"
+                    @toggle_human_remains_ok="toggle_human_remains_ok($event)"
+                ></human-remains-results-alert>
+
+                {% include '../item/parts/media_download.html' %}
+
+                {% include '../item/parts/citation.html' %}
+
+                {% include '../item/parts/project_context.html' %}
+
+                {% include '../item/parts/spacetime.html' %}
+
+                {% include '../item/parts/license.html' %}
+            </div>
+        </div>
+
+
+
+        <div class="row">
+            <div class="col">
+                <vc-tables
+                    :project_label="'{{ man_obj.project.label }}'"
+                    :project_slug="'{{ man_obj.project.slug|safe }}'"
+                    v-bind:table_label="item_obj.label"
+                    v-bind:table_sample_fields="table_sample_fields"
+                    v-bind:table_sample_data="table_sample_data"
+                ></vc-tables>
+            </div>
+        </div>
+
+        {% if show_json %}
+        <div class="row">
+            <div class="col">
+                <label for="item_json" class="form-label">Item JSON</label>
+                <textarea class="form-control form-control-sm" id="item_json" rows="25">{{ item_json|safe }}
+                </textarea>
+            </div>
+        </div>
+        {%endif%}
+
+    </div>
+
+</div>
+
+<script type="text/javascript">
+
+  // Import Vue2Leaflet components.
+  {% if GEO_JSON %}
+  const GEO_JSON = JSON.parse('{{ GEO_JSON|escapejs }}');
+  {% else %}
+  let GEO_JSON = null;
+  {% endif %}
+
+  {% if item.media_preview_geojson %}
+  const GEO_JSON_URL = "{{ item.media_preview_geojson }}";
+  {% else %}
+  const GEO_JSON_URL = null;
+  {% endif %}
+
+
+  const USE_TEST_ALL_ITEMS_HREF = true;
+
+  const item_json = JSON.parse('{{ item_json|escapejs }}');
+  const ITEM_UUID = item_json.uuid;
+
+  {% if item.flag_human_remains %}
+  // Initial state from the request session token.
+  const HUMAN_REMAINS_FLAGGED = true;
+  {% else %}
+  const HUMAN_REMAINS_FLAGGED = false;
+  {% endif %}
+
+
+  const MEDIA_IIIF_INFO = null;
+  const SHOW_FULL_MEDIA = false;
+  const NEXUS_URL = null;
+  const ATTRIBUTE_GROUP = null;
+
+    var vm = new Vue(
+      {
+        delimiters: ['[[', ']]'],
+        ref: 'item_app',
+        el: '#item-app',
+        data: {
+            uuid: ITEM_UUID,
+            item_obj: item_json,
+            human_remains_flagged: HUMAN_REMAINS_FLAGGED,
+            human_remains_ok: HUMAN_REMAINS_OK,
+            media_iiif_info: MEDIA_IIIF_INFO,
+            show_full_media: SHOW_FULL_MEDIA,
+            nexus_url: NEXUS_URL,
+            osd: null,
+            nexus_presenter: null,
+            table_sample_fields: null,
+            table_sample_data: null,
+        },
+        computed: {
+            attribute_group_slugs: function(){
+                if(!item_json){
+                    return null;
+                }
+                if(ATTRIBUTE_GROUP){
+                    return [ATTRIBUTE_GROUP];
+                }
+                if(!item_json.hasOwnProperty('attribute_group_slugs')){
+                    return null;
+                }
+                // We will turn this off for now!
+                return null;
+                //return item_json.attribute_group_slugs;
+            },
+        },
+        created() {
+
+        },
+        mounted() {
+            this.get_table_sample();
+        },
+        methods: {
+            toggle_human_remains_ok: function(human_remains_ok) {
+                this.human_remains_ok = human_remains_ok;
+            },
+            get_table_sample: function(){
+                if(!this.item_obj.hasOwnProperty('table_sample_fields')){
+                    return null;
+                }
+                if(!this.item_obj.hasOwnProperty('table_sample_data')){
+                    return null;
+                }
+                this.table_sample_fields = this.item_obj.table_sample_fields;
+                this.table_sample_data = this.item_obj.table_sample_data;
+            },
+        },
+        components: {
+            {% if GEO_JSON %}
+            'common_map': vc_common_map,
+            {%endif%}
+
+            'human-remains-results-alert': vc_human_remains_results_alert,
+            'human-remains-image': vc_human_remains_image,
+            'vc-tables': vc_tables,
+        },
+      },
+    ).$mount('#item-app');
+
+</script>
+
+
+<script type="application/ld+json">
+    {{ SCHEMA_ORG_JSON_LD|safe }}
+</script>
+{% endblock %}2

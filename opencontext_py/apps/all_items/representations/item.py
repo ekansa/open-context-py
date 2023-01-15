@@ -17,6 +17,7 @@ from opencontext_py.apps.all_items.representations import geojson
 from opencontext_py.apps.all_items.representations import metadata
 from opencontext_py.apps.all_items.representations import equivalent_ld
 from opencontext_py.apps.all_items.representations import rep_utils
+from opencontext_py.apps.all_items.representations import table
 
 
 
@@ -675,6 +676,11 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
             # Make sure the assertion objects are easily available for solr.
             rep_dict['for_solr_assert_objs'] = assert_qs
 
+    # Get table preview data (if a table, and if successful)
+    rep_dict = table.get_preview_csv_data(
+        item_man_obj=item_man_obj,
+        act_dict=rep_dict,
+    )
     # NOTE: This adds Dublin Core metadata
     rep_dict = metadata.add_dublin_core_literal_metadata(
         item_man_obj,

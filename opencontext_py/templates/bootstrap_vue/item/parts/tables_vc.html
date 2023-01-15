@@ -1,0 +1,87 @@
+{% block tables_summary %}
+
+
+<template id="tables-template">
+
+  <div class="container-fluid">
+    <h3>Data Table Preview</h3>
+    <b-table
+      :fields="table_sample_fields"
+      :items="items"
+      sticky-header="600px"
+      table-variant="light"
+      striped
+      outlined
+      responsive="sm"
+      small
+    >
+      <template #cell()="data">
+        <span v-html="data.value"></span>
+      </template>
+    </b-table>
+
+  </div>
+
+</template>
+
+
+
+<script type="text/javascript">
+
+  var vc_tables = Vue.component(
+    'vc-tables',
+    {
+      delimiters: ['[[', ']]'],
+      template: '#tables-template',
+      props: [
+        'project_label',
+        'project_slug',
+        'table_label',
+        'table_sample_fields',
+        'table_sample_data',
+      ],
+      data() {
+        return {
+          project_label: null,
+          project_slug: null,
+          table_label: null,
+          table_sample_fields: [],
+          table_sample_data: [],
+        };
+      },
+      mounted(){
+
+      },
+      computed: {
+        items: function(){
+          if(!this.table_sample_data){
+            return [];
+          }
+          let items = [];
+          for(let rec of this.table_sample_data){
+            let item = {};
+            for(let [field, val] of Object.entries(rec)){
+              let new_val = use_all_items_href(val, BASE_URL, true);
+              if(new_val != val){
+                new_val = `<a href="${new_val}" target="_blank">${val}</a>`;
+              }
+              item[field] = new_val;
+            }
+            items.push(item);
+          }
+          return items;
+        },
+      },
+      methods: {
+
+      },
+      components: {
+
+      }
+    }
+  );
+
+</script>
+
+
+{% endblock %}

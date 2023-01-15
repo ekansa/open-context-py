@@ -22,7 +22,7 @@ ASSERTION_DATA_TYPE_LITERAL_MAPPINGS = {
 # NOTE: These functions are widely use in making item representations.
 # Open Context's primary representation for a database item is a
 # JSON-LD (with GeoJSON for records with geospatial data) document.
-# To insure that the JSON-LD representation is well supported, 
+# To insure that the JSON-LD representation is well supported,
 # all other representations (esp. HTML) will be built from the JSON-LD
 # representation as a starting point.
 # ---------------------------------------------------------------------
@@ -45,7 +45,7 @@ def get_item_key_or_uri_value(manifest_obj):
 
 def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr_or_html=False):
     """Makes a list of assertion objects for a predicate
-    
+
     :param AllManifest predicate: An all manifest object for the
         predicate for which we want a list of assertion objects.
     :param list or QuerySet assert_objs: A list of query set of
@@ -53,10 +53,10 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
         out the objects of the 'predicate' assertions.
     :param bool for_edit: Do we want an output with additional identifiers
         useful for editing.
-    returns list of JSON-LD formated assertion dicts or literals. 
+    returns list of JSON-LD formated assertion dicts or literals.
     """
     # NOTE: Predicates of different data-types will hae different values
-    # for different 
+    # for different
     pred_objects = []
     for assert_obj in assert_objs:
         if predicate.data_type == 'id':
@@ -68,6 +68,10 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
                 obj['type'] = get_item_key_or_uri_value(
                     assert_obj.object.item_class
                 )
+            if assert_obj.meta_json.get('object_count'):
+                # A particular case where there's a count of objects for this assertion,
+                # used especially with table metadata.
+                obj['count'] = assert_obj.meta_json.get('object_count')
             if getattr(assert_obj, 'object_thumbnail', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
             if getattr(assert_obj, 'object_geo_overlay_thumb', None):
@@ -110,7 +114,7 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
                 obj = obj.date().isoformat()
             if for_edit or for_solr_or_html:
                 obj = {act_attrib: obj}
-        
+
         if for_edit or for_solr_or_html:
             # Add lots of extra information about the assertion to make editing easier.
             obj['uuid'] = str(assert_obj.uuid)
@@ -158,14 +162,14 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
 
 
 def add_predicates_assertions_to_dict(
-    pred_keyed_assert_objs, 
-    act_dict=None, 
+    pred_keyed_assert_objs,
+    act_dict=None,
     add_objs_to_existing_pred=True,
     for_edit=False,
     for_solr_or_html=False
 ):
     """Adds predicates with their grouped objects to a dictionary, keyed by each pred
-    
+
     :param dict pred_keyed_assert_objs: A dictionary, keyed by a manifest predicate
         object that has a list of assertion objects related to that represent the
         objects of that predicate's description.
@@ -189,7 +193,7 @@ def add_predicates_assertions_to_dict(
         # Make list of dicts and literal values for the predicate objects.
         pred_objects = make_predicate_objects_list(
             predicate,
-            assert_objs, 
+            assert_objs,
             for_edit=for_edit,
             for_solr_or_html=for_solr_or_html,
         )

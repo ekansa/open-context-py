@@ -11,7 +11,8 @@ from opencontext_py.apps.all_items.permissions import get_request_user_permissio
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
     prepare_for_item_dict_solr_and_html_template,
-    prepare_for_item_dict_html_template
+    prepare_for_item_dict_html_template,
+    make_table_download_url,
 )
 from opencontext_py.apps.all_items.representations.schema_org import (
     make_schema_org_json_ld
@@ -22,6 +23,10 @@ from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
 
 from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
+
+from opencontext_py.apps.all_items.models import (
+    AllManifest
+)
 
 from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers
@@ -148,7 +153,7 @@ def make_solr_doc_in_html(request, uuid):
 
 
 @never_cache
-def test_html(request, uuid, full_media=False):
+def test_html(request, uuid, full_media=False, template_file='item.html'):
     """HTML representation for searching Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
@@ -226,7 +231,7 @@ def test_html(request, uuid, full_media=False):
         'human_remains_ok': request.session.get('human_remains_ok', False),
         'allow_view': allow_view,
     }
-    template = loader.get_template('bootstrap_vue/item/item.html')
+    template = loader.get_template(f'bootstrap_vue/item/{template_file}')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response
@@ -388,3 +393,40 @@ def types_json(request, uuid):
     if do_redirect:
         return make_redirect_url(request, 'types', ok_uuid, extension='.json')
     return test_json(request, ok_uuid)
+
+
+def tables_html(request, uuid):
+    """HTML Tables Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404
+    if do_redirect:
+        return make_redirect_url(request, 'tables', ok_uuid, extension='')
+    return test_html(request, ok_uuid, template_file='table.html')
+
+def tables_json(request, uuid):
+    """JSON Tables Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404
+    if do_redirect:
+        return make_redirect_url(request, 'tables', ok_uuid, extension='.json')
+    return test_json(request, ok_uuid)
+
+def tables_csv(request, uuid):
+    """CSV Tables Item representation Open Context """
+    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if not ok_uuid:
+        raise Http404
+    if do_redirect:
+        return make_redirect_url(request, 'tables', ok_uuid, extension='.csv')
+    man_obj = AllManifest.objects.filter(uuid=ok_uuid).first()
+    if not man_obj:
+        raise Http404
+    allow_view, _ = get_request_user_permissions(request, man_obj)
+    if not allow_view:
+        return 'Not allowed'
+    csv_url = make_table_download_url(man_obj)
+    if not csv_url:
+        raise Http404
+    return redirect(csv_url, permanent=False)

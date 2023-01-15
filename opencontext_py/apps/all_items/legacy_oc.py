@@ -2,6 +2,8 @@ import itertools
 import json
 import pytz
 import hashlib
+import requests
+from time import sleep
 
 import pandas as pd
 
@@ -22,6 +24,7 @@ from opencontext_py.apps.all_items import utilities
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.all_items.legacy_ld import migrate_legacy_link_annotations
 
+from opencontext_py.apps.all_items.editorial.tables import cloud_utilities
 
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -1247,6 +1250,80 @@ def migrate_legacy_subject(old_man_obj, parent_new_id=None):
     return new_man_obj
 
 
+def migrate_legacy_table(old_man_obj, parent_new_id=None):
+    """Migrates a legacy table object """
+    new_man_obj, new_project = migrated_item_proj_check(old_man_obj, 'tables')
+    if new_man_obj:
+        # Congrats, we already migrated this, so skip all the rest.
+        return new_man_obj
+    if not new_project:
+        # Skip out, can't find the related project.
+        return None
+
+    old_id, new_uuid = update_old_id(old_man_obj.uuid)
+
+    # We have what we need, now go forth and migrate to a new object.
+    new_meta_json = make_new_meta_json_from_old_man_obj(old_man_obj)
+
+    man_dict = {
+        'publisher': new_project.publisher,
+        'project': new_project,
+        'item_class_id': configs.DEFAULT_CLASS_UUID,
+        'source_id': SOURCE_ID,
+        'item_type': 'tables',
+        'data_type': 'id',
+        'context': new_project,
+        'meta_json': new_meta_json,
+    }
+    man_dict = copy_attributes(old_man_obj=old_man_obj, new_dict=man_dict)
+    new_man_obj = check_manage_manifest_duplicate(old_man_obj, man_dict)
+    if new_man_obj:
+        print(f'Table: {new_man_obj.label} [{new_man_obj.uuid}] exists')
+        return new_man_obj
+    # Get a copy of the legacy JSON metadata.
+    sleep(0.3)
+    legacy_json = None
+    try:
+        r = requests.get(f'https://opencontext.org/tables/{old_man_obj.uuid}.json')
+        r.raise_for_status()
+        legacy_json = r.json()
+    except:
+        legacy_json = None
+    if not legacy_json:
+        return None
+    man_dict['meta_json']['legacy_json'] = legacy_json
+    # Save the CSV data into our cloud computing storage
+    sleep(0.3)
+    csv_url = f'https://opencontext.org/tables/{old_man_obj.uuid}.csv'
+    df = pd.read_csv(csv_url, low_memory=False)
+    # Save the preview file
+    cloud_utilities.cloud_store_csv_from_cached_export(
+        export_id=None,
+        uuid=new_uuid,
+        preview_rows=100,
+        df=df,
+    )
+    # Save the full file
+    cloud_utilities.cloud_store_csv_from_cached_export(
+        export_id=None,
+        uuid=new_uuid,
+        preview_rows=None,
+        df=df,
+    )
+    man_dict = check_update_manifest_slug(old_man_obj, new_uuid, man_dict)
+    new_man_obj, _ = AllManifest.objects.get_or_create(
+        uuid=new_uuid,
+        defaults=man_dict
+    )
+    print(
+        f'Migrated {new_man_obj.label} ({new_man_obj.uuid}) with: '
+        f'{str(new_man_obj.meta_json)}'
+    )
+    save_legacy_id_object(new_man_obj, old_id)
+
+    return new_man_obj
+
+
 def get_new_manifest_obj_from_old_id_db(old_id):
     """Gets a new manifest obj corresponding to an old id, using the DB"""
     new_mapping_id = LEGACY_MANIFEST_MAPPINGS.get(old_id)
@@ -1265,6 +1342,7 @@ def get_new_manifest_obj_from_old_id_db(old_id):
         'media': migrate_legacy_media,
         'subjects': migrate_legacy_subject,
         'projects': migrate_old_project,
+        'tables': migrate_legacy_table,
     }
     item_type_function = item_type_functions.get(old_man_obj.item_type)
     if not item_type_function:
@@ -1631,6 +1709,17 @@ def migrate_legacy_subjects_for_project(project_uuid='0'):
     )
     for old_man_obj in old_qs:
         new_man_obj = migrate_legacy_subject(old_man_obj)
+
+
+def migrate_legacy_tables():
+    old_qs = OldManifest.objects.filter(
+        item_type='tables',
+    )
+    i = 0
+    for old_man_obj in old_qs:
+        i += 1
+        print(f'[{i}] checking legacy table {old_man_obj.label} [{old_man_obj.uuid}]')
+        new_man_obj = migrate_legacy_table(old_man_obj)
 
 
 def migrate_legacy_id(old_id_obj, use_cache=True):

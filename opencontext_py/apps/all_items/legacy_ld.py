@@ -145,7 +145,7 @@ URI_PREFIXES = {
     'http://purl.org/dc/terms/': 'dc-terms',
 }
 
-# Sorts for equivalence asstions for URIs 
+# Sorts for equivalence asstions for URIs
 SORTS_FOR_EQUIV_URI_PREFIXES = [
     # This is used for EOL mappings, but we want GBIF to be
     # ranked higher and more prominently, so we have a high
@@ -174,9 +174,9 @@ def add_le_alt_label(old_le, new_man_obj):
     if not alt_label or label == alt_label:
         # The alt label is the same so skip out.
         return None
-    
+
     utilities.add_string_assertion_simple(
-        subject_obj=new_man_obj, 
+        subject_obj=new_man_obj,
         predicate_id=configs.PREDICATE_SKOS_ALTLABEL_UUID,
         source_id=SOURCE_ID,
         str_content=alt_label,
@@ -234,7 +234,7 @@ def load_legacy_link_entity(old_le):
             if vocab_uri.startswith(f_uri):
                 vocab_uri = r_uri
         vocab_obj = AllManifest.objects.filter(
-            uri=vocab_uri 
+            uri=vocab_uri
         ).first()
         if not vocab_obj:
             raise ValueError(f'Cannot find vocabulary {vocab_uri}')
@@ -292,7 +292,7 @@ def check_missing_legacy_vocab_uris():
     vocab_uris = LinkEntity.objects.all().distinct(
         'vocab_uri'
         ).values_list(
-        'vocab_uri', 
+        'vocab_uri',
         flat=True
     )
     for vocab_uri in vocab_uris:
@@ -300,7 +300,7 @@ def check_missing_legacy_vocab_uris():
             vocab_uri
         )
         m_vocab = AllManifest.objects.filter(
-            uri=vocab_uri 
+            uri=vocab_uri
         ).first()
         if m_vocab:
             # No problem.
@@ -326,7 +326,7 @@ def is_valid_uuid(val):
 
 
 def add_oc_uuid_uri_variants(la_identifier):
-    """Makes a tuple of lists from a legacy la_identifer for new uuid, uri options""" 
+    """Makes a tuple of lists from a legacy la_identifer for new uuid, uri options"""
     _, new_id = update_old_id(la_identifier)
     uuids = [new_id]
     if is_valid_uuid(la_identifier):
@@ -347,7 +347,7 @@ def add_oc_uuid_uri_variants(la_identifier):
         new_uri = la_identifier.replace(old_oc_id, new_id)
         new_uri = AllManifest().clean_uri(new_uri)
         uris.append(new_uri)
-    
+
     return uuids, uris
 
 
@@ -355,7 +355,7 @@ def db_get_man_obj_from_la(la_identifier):
     """Checks if a legacy link entity URI is in the new manifest"""
     uuids, uris = add_oc_uuid_uri_variants(la_identifier)
     new_man_obj = AllManifest.objects.filter(
-        Q(uri__in=uris) 
+        Q(uri__in=uris)
         | Q(item_key=la_identifier)
         | Q(uuid__in=uuids)
     ).first()
@@ -470,13 +470,14 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
 
 
 def migrate_legacy_link_annotations(
-    project_uuid='0', 
+    project_uuid='0',
     more_filters_dict={'subject_type': 'uri'},
     after_date=None,
-    use_cache=False
+    use_cache=False,
+    check_skip_existing=False,
 ):
     """Migrates legacy link annotations (limited to entities already in the manifest)"""
-    
+
     old_proj_id, new_proj_uuid = update_old_id(project_uuid)
     new_proj_obj = AllManifest.objects.filter(uuid=new_proj_uuid).first()
     if not new_proj_obj:
@@ -486,13 +487,13 @@ def migrate_legacy_link_annotations(
         return None
 
     missing_entities = []
-    
-    la_qs = LinkAnnotation.objects.filter( 
+
+    la_qs = LinkAnnotation.objects.filter(
         project_uuid=old_proj_id
     ).order_by(
-        'subject', 
-        'predicate_uri', 
-        'sort', 
+        'subject',
+        'predicate_uri',
+        'sort',
         'object_uri'
     )
     if more_filters_dict:
@@ -520,6 +521,20 @@ def migrate_legacy_link_annotations(
             sort = la.sort
         else:
             sort = 0
+        if check_skip_existing:
+            ass_obj = AllAssertion.objects.filter(
+                subject=subj_obj,
+                predicate=pred_obj,
+                object=obj_obj,
+            ).first()
+            if ass_obj:
+                print(
+                    f'ALREADY EXISTING Assertion {ass_obj.uuid}: '
+                    f'{ass_obj.subject.label} [{ass_obj.subject.uuid}]'
+                    f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
+                    f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
+                )
+                continue
         ass_obj, _ = AllAssertion.objects.get_or_create(
             uuid=AllAssertion().primary_key_create(
                 subject_id=subj_obj.uuid,
@@ -545,12 +560,12 @@ def migrate_legacy_link_annotations(
             f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
         )
         print('-'*72)
-    
+
     return missing_entities
 
 
 def eol_assertion_fix(
-    project_id=None, 
+    project_id=None,
     ranking_tuples=SORTS_FOR_EQUIV_URI_PREFIXES
 ):
     """Fixes assertions related to the EOL"""
@@ -574,7 +589,7 @@ def eol_assertion_fix(
         eol_vocab.meta_json['deprecated'] = True
         eol_vocab.meta_json['skip_solr_index'] = True
         eol_vocab.save()
-    
+
     # Don't include this predicate for solr indexing
     taxon_id = AllManifest.objects.filter(
         uri='purl.org/NET/biol/ns#term_hasTaxonomy'

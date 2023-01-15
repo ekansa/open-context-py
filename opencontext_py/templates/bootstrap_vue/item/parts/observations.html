@@ -7,24 +7,24 @@
 {% spaceless %}
 {% for act_obs in item.oc_gen__has_obs %}
 
-  {% if forloop.first %}  
+  {% if forloop.first %}
   <li class="nav-item" role="presentation">
-    <a 
-      class="nav-link active" 
-      id="tab-{{ act_obs.id|cut:'#' }}" 
+    <a
+      class="nav-link active"
+      id="tab-{{ act_obs.id|cut:'#' }}"
       data-toggle="tab"
-      href="{{ act_obs.id }}" 
-      aria-controls="{{ act_obs.id|cut:'#' }}" 
+      href="{{ act_obs.id }}"
+      aria-controls="{{ act_obs.id|cut:'#' }}"
       aria-selected="true">{{ act_obs.label }}</a>
   </li>
   {% else %}
   <li class="nav-item" role="presentation">
-    <a 
-      class="nav-link" 
-      id="tab-{{ act_obs.id|cut:'#' }}" 
-      data-toggle="tab" 
-      href="{{ act_obs.id }}" 
-      aria-controls="{{ act_obs.id|cut:'#' }}" 
+    <a
+      class="nav-link"
+      id="tab-{{ act_obs.id|cut:'#' }}"
+      data-toggle="tab"
+      href="{{ act_obs.id }}"
+      aria-controls="{{ act_obs.id|cut:'#' }}"
       aria-selected="false">{{ act_obs.label }}</a>
   </li>
   {% endif %}
@@ -37,17 +37,17 @@
 <div class="tab-content" id="all-observations">
 {% for act_obs in item.oc_gen__has_obs %}
 
-  {% if forloop.first %}  
-  <div 
+  {% if forloop.first %}
+  <div
     class="tab-pane fade show active"
-    id="{{ act_obs.id|cut:'#' }}" 
-    role="tabpanel" 
+    id="{{ act_obs.id|cut:'#' }}"
+    role="tabpanel"
     aria-labelledby="tab-{{ act_obs.id|cut:'#' }}">
   {% else %}
-  <div 
-    class="tab-pane fade" 
-    id="{{ act_obs.id|cut:'#' }}" 
-    role="tabpanel" 
+  <div
+    class="tab-pane fade"
+    id="{{ act_obs.id|cut:'#' }}"
+    role="tabpanel"
     aria-labelledby="tab-{{ act_obs.id|cut:'#' }}">
   {% endif %}
 
@@ -73,7 +73,7 @@
       $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
       scroll(0,0);
   }
-      
+
   // Change hash for page-reload
   $('.nav-tabs a').on('shown', function (e) {
       window.location.hash = e.target.hash;
