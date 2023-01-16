@@ -12,7 +12,6 @@ from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
     prepare_for_item_dict_solr_and_html_template,
     prepare_for_item_dict_html_template,
-    make_table_download_url,
 )
 from opencontext_py.apps.all_items.representations.schema_org import (
     make_schema_org_json_ld
@@ -426,7 +425,7 @@ def tables_csv(request, uuid):
     allow_view, _ = get_request_user_permissions(request, man_obj)
     if not allow_view:
         return 'Not allowed'
-    csv_url = make_table_download_url(man_obj)
+    csv_url = man_obj.table_full_csv_url
     if not csv_url:
         raise Http404
     return redirect(csv_url, permanent=False)

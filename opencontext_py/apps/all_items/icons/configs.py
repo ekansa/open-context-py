@@ -477,6 +477,16 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "icon": "../../static/oc/icons-v2/noun-camel-4109324.svg",
         },
     ],
+    "tables": [
+        {
+            "item_class__uuid": "00000000-0000-0000-0000-000000000002",
+            "item_class__label": "Default (null) class",
+            "item_class__item_key": None,
+            "item_class__uri": "opencontext.org/vocabularies/oc-general/default-class",
+            "item_class__slug": "oc-default-class",
+            "icon": "../../static/oc/icons-v2/noun-table-4305.svg",
+        },
+    ],
     "types": [
         {
             "item_class__uuid": "00000000-0000-0000-0000-000000000002",

@@ -389,7 +389,7 @@ def make_geo_json_geometry_from_region_dicts(region_dicts):
 
 
 def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
-    """Make a latidue, longitude dataframe a spacetime query string
+    """Make a latitude, longitude dataframe a spacetime query string
 
     :param queryset space_time_qs: The query set of
         space-time instances that we want to cluster
@@ -463,6 +463,32 @@ def make_project_space_time_qs(man_obj):
     return space_time_qs
 
 
+def make_table_geo_df(man_obj):
+    """Makes a dataframe with geospatial data from a table
+    :param AllManifest man_obj: An all manifest instance object
+    :param dict act_dict: The acting representation dict for the item
+
+    returns act_dict
+    """
+    csv_url = man_obj.table_full_csv_url
+    if not csv_url:
+        return None
+    try:
+        df = pd.read_csv(csv_url, low_memory=False)
+    except:
+        df = None
+    use_cols = {'Latitude (WGS-84)': 'latitude', 'Longitude (WGS-84)': 'longitude'}
+    cols = [orig_c for orig_c, _ in use_cols.items() if orig_c in df.columns]
+    if len(cols) < len(use_cols):
+        # We're missing the columns we need
+        return None
+    df = df[cols]
+    df.rename(columns=use_cols, inplace=True)
+    df['longitude'] = df['longitude'].astype(float)
+    df['latitude'] = df['latitude'].astype(float)
+    return df
+
+
 def make_geo_json_of_regions_for_man_obj(
     man_obj,
     max_clusters=MAX_CLUSTERS,
@@ -480,13 +506,16 @@ def make_geo_json_of_regions_for_man_obj(
     :param str cluster_method: A string that names the sklearn
         clustering method to use on these data.
     """
-
+    df = None
+    space_time_qs = None
     if man_obj.item_type == 'projects':
         space_time_qs = make_project_space_time_qs(man_obj)
     elif man_obj.item_type == 'subjects':
         space_time_qs = AllSpaceTime.objects.filter(
            item__path__startswith=man_obj.path
         )
+    elif man_obj.item_type == 'tables':
+        df = make_table_geo_df(man_obj)
     elif man_obj.item_type == 'predicates':
         assert_qs = AllAssertion.objects.filter(
             predicate=man_obj,
@@ -522,7 +551,8 @@ def make_geo_json_of_regions_for_man_obj(
         return None, None
 
     # Now make a longitude, latitude dataframe.
-    df = make_df_from_space_time_qs(space_time_qs)
+    if df is None and man_obj.item_type != 'tables':
+        df = make_df_from_space_time_qs(space_time_qs)
 
     # Do the fancy math of clustering.
     region_dicts = cluster_geo_centroids(

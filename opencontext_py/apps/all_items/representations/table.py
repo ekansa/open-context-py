@@ -12,12 +12,9 @@ def get_preview_csv_data(item_man_obj, act_dict):
 
     returns act_dict
     """
-    if item_man_obj.item_type != 'tables':
+    csv_url = item_man_obj.table_preview_csv_url
+    if not csv_url:
         return act_dict
-    csv_url = item_man_obj.meta_json.get(
-        'preview_csv_url',
-        f'{settings.CLOUD_BASE_URL}/{settings.CLOUD_CONTAINER_EXPORTS}/{str(item_man_obj.uuid)}--v1--head100.csv'
-    )
     try:
         df = pd.read_csv(csv_url, low_memory=False)
     except:
@@ -50,6 +47,8 @@ def get_preview_csv_data(item_man_obj, act_dict):
                 continue
             item[field_key] = value
         items.append(item)
+    act_dict['count_fields'] = item_man_obj.meta_json.get('count_fields')
+    act_dict['count_rows'] = item_man_obj.meta_json.get('count_rows')
     act_dict['table_sample_fields'] = fields
     act_dict['table_sample_data'] = items
     return act_dict

@@ -13,7 +13,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.representations import rep_utils
 
 # Item types that may have their own geospatial data
-GEO_OK_ITEM_TYPES = ['subjects', 'projects', 'media']
+GEO_OK_ITEM_TYPES = ['subjects', 'projects', 'media', 'tables',]
 
 # List of URIs for gazetteer vocabularies to help identify
 # non-subjects manifest entities that may have spacetime objects.

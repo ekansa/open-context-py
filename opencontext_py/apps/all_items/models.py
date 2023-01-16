@@ -5,6 +5,8 @@ import json
 import reversion  # version control object
 import uuid as GenUUID
 
+from django.conf import settings
+
 # For geospace manipulations.
 from shapely.geometry import mapping, shape
 
@@ -114,6 +116,30 @@ class AllManifest(models.Model):
 
     META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS = 'attribute_group_slugs'
     META_JSON_KEY_HTTP_ONLY = META_JSON_KEY_HTTP_ONLY
+
+    def make_table_csv_url(self, url_key='full_csv_url', version=1, filename_suffix='full'):
+        """Makes a table item csv download url"""
+        if self.item_type != 'tables':
+            return None
+        csv_url = self.meta_json.get(
+            url_key,
+            f'{settings.CLOUD_BASE_URL}/{settings.CLOUD_CONTAINER_EXPORTS}/{str(self.uuid)}--v{version}--{filename_suffix}.csv'
+        )
+        return csv_url
+
+    @property
+    def table_full_csv_url(self):
+        """Make a url for the datatable full download url"""
+        return self.make_table_csv_url()
+
+    @property
+    def table_preview_csv_url(self):
+        """Make a url for the datatable preview download url"""
+        return self.make_table_csv_url(
+            url_key='preview_csv_url',
+            filename_suffix='head100'
+        )
+
 
     def clean_label(self, label, item_type='subjects'):
         label = label.strip()
@@ -853,8 +879,10 @@ class AllSpaceTime(models.Model):
                 'documents',
                 'media',
                 'types',
+                'predicates',
+                'tables',
                 'uri',
-                'class'
+                'class',
             ],
             obj_role='item',
         )

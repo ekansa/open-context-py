@@ -42,7 +42,7 @@ from opencontext_py.apps.all_items.representations.item import (
 )
 
 from opencontext_py.libs.models import (
-    make_dict_json_safe, 
+    make_dict_json_safe,
     make_model_object_json_safe_dict
 )
 
@@ -53,7 +53,7 @@ from django.utils.cache import patch_vary_headers
 
 #----------------------------------------------------------------------
 # NOTE: These are views relating to user interfaces for editing
-# individual items and for handling requests to change individual 
+# individual items and for handling requests to change individual
 # items.
 # ---------------------------------------------------------------------
 
@@ -104,7 +104,7 @@ def item_edit_interface_html(request, uuid):
     man_obj = AllManifest.objects.filter(uuid=valid_uuid).first()
     if not man_obj:
         raise Http404
-    
+
     _, ok_edit = permissions.get_request_user_permissions(
         request,
         man_obj
@@ -264,7 +264,7 @@ def item_history_json(request, uuid):
         api_result.append(
             make_model_object_json_safe_dict(hist_obj)
         )
-    
+
     json_output = json.dumps(
         api_result,
         indent=4,
@@ -297,8 +297,8 @@ def item_manifest_json(request, uuid):
         man_obj,
         more_attributes=[
             'meta_json',
-            'item_class__label', 
-            'context__label', 
+            'item_class__label',
+            'context__label',
             'project__label'
         ]
     )
@@ -499,10 +499,10 @@ def item_assertions_json(request, uuid):
         for_edit=True
     )
     api_result = make_dict_json_safe(
-        observations, 
+        observations,
         javascript_friendly_keys=True
     )
-    
+
     json_output = json.dumps(
         api_result,
         indent=4,
@@ -525,7 +525,7 @@ def update_assertions_objs(request):
         )
     request_json = json.loads(request.body)
     updated, errors = updater_assertions.update_attribute_objs(
-        request_json, 
+        request_json,
         request=request,
     )
     if len(errors):
@@ -670,7 +670,7 @@ def sort_project_assertions(request):
             count_updated = update.get('last_chunk_index', 0)
             complete &= update.get('done', False)
             progress = (
-                updated[0].get('last_chunk_index', 0) 
+                updated[0].get('last_chunk_index', 0)
                 / updated[0].get('total_chunks', 1)
             )
             if complete:
@@ -738,7 +738,7 @@ def item_spacetime_json(request, uuid):
                 more_attributes=more_attributes
             )
         )
-    
+
     json_output = json.dumps(
         api_result,
         indent=4,
@@ -835,8 +835,8 @@ def add_aggregate_space_time(request):
     )
     if len(output.get('errors', [])):
         # We failed.
-        return make_error_response(errors)
-    
+        return make_error_response(output.get('errors'))
+
     json_output = json.dumps(
         output,
         indent=4,
@@ -914,7 +914,7 @@ def item_resources_json(request, uuid):
                 more_attributes=more_attributes
             )
         )
-    
+
     json_output = json.dumps(
         api_result,
         indent=4,
@@ -1043,7 +1043,7 @@ def flag_project_human_remains(request):
         )
     request_json = json.loads(request.body)
     hr_done, updated, errors = updater_project.queued_flag_project_human_remains(
-        request_json, 
+        request_json,
         request=request
     )
     if len(errors):
@@ -1124,7 +1124,7 @@ def item_identifiers_json(request, uuid):
                 more_attributes=more_attributes
             )
         )
-    
+
     json_output = json.dumps(
         api_result,
         indent=4,

@@ -214,6 +214,46 @@ ITEM_TYPE_META_JSON_CONFIGS = {
     ],
     'tables': [
         {
+            'key': 'count_fields',
+            'label': 'Count of fields',
+            'data_type': 'xsd:integer',
+            'note': (
+                'An integer value indicating the number of fields (columns) contained '
+                'in this data table.'
+            ),
+            'options':None,
+        },
+        {
+            'key': 'count_rows',
+            'label': 'Count of rows',
+            'data_type': 'xsd:integer',
+            'note': (
+                'An integer value indicating the number of rows (records) contained '
+                'in this data table.'
+            ),
+            'options':None,
+        },
+        {
+            'key': 'full_csv_url',
+            'label': 'URL to the full CSV file',
+            'data_type': 'xsd:string',
+            'note': (
+                'An (optional) URL to the CSV file of ALL of the rows. '
+                'Add this if the CSV file is not stored in a default location.'
+            ),
+            'options':None,
+        },
+        {
+            'key': 'preview_csv_url',
+            'label': 'URL to the preview CSV file',
+            'data_type': 'xsd:string',
+            'note': (
+                'An (optional) URL to the CSV file of a sample of the rows. '
+                'Add this if the sample CSV file is not stored in a default location.'
+            ),
+            'options':None,
+        },
+        {
             'key': 'edit_status',
             'label': 'Editorial Status',
             'data_type': 'xsd:integer',

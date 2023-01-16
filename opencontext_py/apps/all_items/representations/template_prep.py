@@ -676,21 +676,6 @@ def gather_id_urls_by_scheme(rep_dict):
     return rep_dict
 
 
-def make_table_download_url(man_obj):
-    """Makes a download url for tables items
-
-    :param AllManifest man_obj: A instance of the AllManifest model for the
-        the item that is getting a representation.
-    """
-    if man_obj.item_type != 'tables':
-        return None
-    csv_url = man_obj.meta_json.get(
-        'full_csv_url',
-        f'{settings.CLOUD_BASE_URL}/{settings.CLOUD_CONTAINER_EXPORTS}/{str(man_obj.uuid)}--v1--full.csv'
-    )
-    return csv_url
-
-
 def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     """Prepares a representation dict for Solr indexing and HTML templating
 
@@ -730,7 +715,7 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     if not rep_dict['flag_human_remains']:
         rep_dict['flag_human_remains'] = find_human_remains_media(rep_dict)
 
-    csv_url = make_table_download_url(man_obj)
+    csv_url = man_obj.table_full_csv_url
     if csv_url:
         rep_dict['media_download'] = csv_url
     at_group_key = AllManifest.META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS

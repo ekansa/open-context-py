@@ -133,6 +133,7 @@
                     :project_label="'{{ man_obj.project.label }}'"
                     :project_slug="'{{ man_obj.project.slug|safe }}'"
                     v-bind:table_label="item_obj.label"
+                    v-bind:table_count_rows="table_count_rows"
                     v-bind:table_sample_fields="table_sample_fields"
                     v-bind:table_sample_data="table_sample_data"
                 ></vc-tables>
@@ -202,6 +203,7 @@
             nexus_url: NEXUS_URL,
             osd: null,
             nexus_presenter: null,
+            table_count_rows: item_json.count_rows,
             table_sample_fields: null,
             table_sample_data: null,
         },
