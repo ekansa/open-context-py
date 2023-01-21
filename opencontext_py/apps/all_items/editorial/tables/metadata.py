@@ -23,23 +23,23 @@ from opencontext_py.apps.all_items.editorial.tables import queue_utilities
 COLUMN_PREDICATE_CONFIGS = [
     ('project_id', configs.PREDICATE_DCTERMS_SOURCE_UUID,),
 ] + [
-    (f'{role}_id', pred,) 
+    (f'{role}_id', pred,)
     for pred, role in create_df.DC_AUTHOR_ROLES_TUPS
 ]
 
 
 
 def add_table_resource(
-    man_obj, 
-    export_id, 
-    cloud_obj, 
+    man_obj,
+    export_id,
+    cloud_obj,
     resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID
 ):
     """Adds table resource object objects
 
     :param AllManifest man_obj: An instance of the AllManifest model
         for a tables item associated with an export_id
-    :param str export_id: Export ID for the process that made the 
+    :param str export_id: Export ID for the process that made the
         dataframe that we put in cloud storage
     :param Object cloud_obj: An object for the exported table now
         saved in cloud storage.
@@ -49,7 +49,7 @@ def add_table_resource(
         return None
     if not man_obj.item_type == 'tables':
         return None
-    
+
     # Make the URL for the export download.
     obj_uri = AllManifest().clean_uri(
         f'{settings.CLOUD_BASE_URL}/{cloud_obj.container.name}/{cloud_obj.name}'
@@ -96,11 +96,11 @@ def add_assertions_for_entities_in_col(man_obj, df_ns, col, predicate_id, start_
     if col not in df_ns.columns:
         # This column does not exist.
         return None
-    
+
     if 'subject_id' not in df_ns.columns:
         # This column does not exist.
         return None
-    
+
     no_null = ~df_ns[col].isnull()
     if df_ns[no_null].empty:
         # This column has no data
@@ -111,16 +111,16 @@ def add_assertions_for_entities_in_col(man_obj, df_ns, col, predicate_id, start_
         subject=man_obj,
         predicate_id=predicate_id,
     ).delete()
-    
+
     df_ns = df_ns[no_null]
     # NOTE: Some columns will have lists of entity ids, so lets make them
     # delimited strings.
     df_ns[col] = df_ns.apply(
         lambda row: create_df.join_by_delim(
-            row[col], 
+            row[col],
             delim=';',
             delim_sub=';',
-        ), 
+        ),
         axis=1
     )
     df_g = df_ns[['subject_id', col]].groupby(
@@ -138,7 +138,7 @@ def add_assertions_for_entities_in_col(man_obj, df_ns, col, predicate_id, start_
     for _, row in df_g.iterrows():
         # NOTE: each row[col] may have a ';' delimited
         # list of multiple object_ids. Each one of these
-        # will 
+        # will
         act_counts_for_ranking = row['subject_id']
         act_object_ids = str(row[col]).split(';')
         for object_id in act_object_ids:
@@ -181,7 +181,7 @@ def add_table_dc_metadata(man_obj, export_id, col_configs=COLUMN_PREDICATE_CONFI
 
     :param AllManifest man_obj: An instance of the AllManifest model
         for a tables item associated with an export_id
-    :param str export_id: Export ID for the process that made the 
+    :param str export_id: Export ID for the process that made the
         dataframe that we put in cloud storage
     """
     df_ns = queue_utilities.get_cached_no_style_df(export_id)
@@ -195,10 +195,10 @@ def add_table_dc_metadata(man_obj, export_id, col_configs=COLUMN_PREDICATE_CONFI
         i += 1
         df_ns = df_ns.copy()
         add_assertions_for_entities_in_col(
-            man_obj, 
-            df_ns, 
-            col, 
-            predicate_id, 
+            man_obj,
+            df_ns,
+            col,
+            predicate_id,
             start_sort=i
         )
 
@@ -208,21 +208,21 @@ def add_table_metadata_and_resources(man_obj, export_id, full_cloud_obj, preview
 
     :param AllManifest man_obj: An instance of the AllManifest model
         for a tables item associated with an export_id
-    :param str export_id: Export ID for the process that made the 
+    :param str export_id: Export ID for the process that made the
         dataframe that we put in cloud storage
     :param Object cloud_obj: An object for the exported table now
         saved in cloud storage.
     """
 
     full_res_obj = add_table_resource(
-        man_obj, 
-        export_id, 
+        man_obj,
+        export_id,
         cloud_obj=full_cloud_obj,
         resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID
     )
     preview_res_obj = add_table_resource(
-        man_obj, 
-        export_id, 
+        man_obj,
+        export_id,
         cloud_obj=preview_cloud_obj,
         resourcetype_id=configs.OC_RESOURCE_PREVIEW_UUID,
     )
@@ -230,3 +230,42 @@ def add_table_metadata_and_resources(man_obj, export_id, full_cloud_obj, preview
     add_table_dc_metadata(man_obj, export_id)
 
     return full_res_obj, preview_res_obj
+
+
+def add_table_related_subjects(man_obj, full_cloud_obj=None, csv_uri=None, df=None, max_link_count=5):
+    """Adds links to subjects items based on context relationships.
+
+    :param AllManifest man_obj: An instance of the AllManifest model
+        for a tables item associated with an export_id
+    :param str export_id: Export ID for the process that made the
+        dataframe that we put in cloud storage
+    :param Object full_cloud_obj: An object for the exported table now
+        saved in cloud storage.
+    :param str csv_uri: A string URL to the CSV data table
+    :param DataFrame df: A pandas dataframe from the data table csv data
+    """
+    if df is None and csv_uri is None and full_cloud_obj is not None:
+        csv_uri = AllManifest().clean_uri(
+            f'{settings.CLOUD_BASE_URL}/{full_cloud_obj.container.name}/{full_cloud_obj.name}'
+        )
+    if df is None:
+        df = pd.read_csv(csv_uri, low_memory=False)
+    # Extract the columns that are about contexts.
+    c_cols = [c for c in df.columns.tolist() if c.startswith('Context (') and c.endswith(')')]
+    if not c_cols:
+        # There are no context columns in this data table
+        return None
+    act_cols = []
+    best_df_g = None
+    for col in c_cols:
+        act_cols.append(col)
+        df_g = df[act_cols].groupby(act_cols, as_index=False).size()
+        if len(df_g.index) > max_link_count:
+            break
+        best_df_g = df_g.copy()
+        if len(df_g.index) > 1:
+            break
+    if best_df_g is None:
+        return None
+    best_df_g.sort_values(by=['size'], ascending=False, inplace=True)
+    return best_df_g

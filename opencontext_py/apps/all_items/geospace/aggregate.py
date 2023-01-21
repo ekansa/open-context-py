@@ -276,6 +276,25 @@ def cluster_geo_centroids(
         # We don't have any coordinates, despite having the columns
         return None
 
+    df_g = df[ok_index][['latitude', 'longitude']].groupby(
+        ['latitude', 'longitude'],
+        as_index=False,
+    ).first()
+    if len(df_g.index) == 1:
+        return [
+            {
+                'point': True,
+                'id': 'point',
+                'count_points': 1,
+                'cent_lat': df_g['latitude'].iloc[0],
+                'cent_lon': df_g['longitude'].iloc[0],
+                'coordinates': [
+                    df_g['longitude'].iloc[0],
+                    df_g['latitude'].iloc[0],
+                ],
+            },
+        ]
+
     # Throw out everything missing coordinates.
     df = df[ok_index].copy()
 
@@ -373,8 +392,14 @@ def make_geo_json_geometry_from_region_dicts(region_dicts):
     """
     if not region_dicts:
         return None
-
-    if len(region_dicts) == 1:
+    if len(region_dicts) == 1 and region_dicts[0].get('point'):
+        # We have a simple point as the aggregation output.
+        geometry = {
+            'type': 'Point',
+            'coordinates': region_dicts[0].get('coordinates'),
+        }
+        return geometry
+    elif len(region_dicts) == 1:
         geometry = {
             'type': 'Polygon',
             'coordinates': region_dicts[0].get('coordinates'),
@@ -398,6 +423,9 @@ def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
     """
     space_time_qs = space_time_qs.values(*cols)
     df = pd.DataFrame.from_records(space_time_qs)
+    if not set(['longitude', 'latitude']).issubset(set(df.columns)):
+        # We're missing the required columns
+        return None
     df['longitude'] = df['longitude'].astype(float)
     df['latitude'] = df['latitude'].astype(float)
     return df
@@ -554,6 +582,8 @@ def make_geo_json_of_regions_for_man_obj(
     if df is None and man_obj.item_type != 'tables':
         df = make_df_from_space_time_qs(space_time_qs)
 
+    if df is None:
+        return None, None
     # Do the fancy math of clustering.
     region_dicts = cluster_geo_centroids(
         df,
