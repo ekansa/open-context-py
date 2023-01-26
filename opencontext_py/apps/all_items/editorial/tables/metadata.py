@@ -232,8 +232,8 @@ def add_table_metadata_and_resources(man_obj, export_id, full_cloud_obj, preview
     return full_res_obj, preview_res_obj
 
 
-def add_table_related_subjects(man_obj, full_cloud_obj=None, csv_uri=None, df=None, max_link_count=5):
-    """Adds links to subjects items based on context relationships.
+def get_table_related_subjects(man_obj, full_cloud_obj=None, csv_uri=None, df=None, max_subj_count=5):
+    """Gets the primary (most common and most general) subjects items in a table.
 
     :param AllManifest man_obj: An instance of the AllManifest model
         for a tables item associated with an export_id
@@ -243,6 +243,8 @@ def add_table_related_subjects(man_obj, full_cloud_obj=None, csv_uri=None, df=No
         saved in cloud storage.
     :param str csv_uri: A string URL to the CSV data table
     :param DataFrame df: A pandas dataframe from the data table csv data
+    :param int max_subj_count: The maximum number of subjects items in the table
+        to return
     """
     if df is None and csv_uri is None and full_cloud_obj is not None:
         csv_uri = AllManifest().clean_uri(
@@ -260,12 +262,128 @@ def add_table_related_subjects(man_obj, full_cloud_obj=None, csv_uri=None, df=No
     for col in c_cols:
         act_cols.append(col)
         df_g = df[act_cols].groupby(act_cols, as_index=False).size()
-        if len(df_g.index) > max_link_count:
+        if len(df_g.index) > max_subj_count:
+            # There are too many unique subjects in this dataframe,
+            # so skip out. We'll use the previously defined best_df_g
+            # instead.
             break
         best_df_g = df_g.copy()
         if len(df_g.index) > 1:
+            # We've got more than one subjects paths, but still less than
+            # the maximum allowed, so this is a happy place to quit the
+            # loop. We'll use the current best_df_g.
             break
     if best_df_g is None:
         return None
     best_df_g.sort_values(by=['size'], ascending=False, inplace=True)
-    return best_df_g
+    act_cols = [c for c in best_df_g.columns if c != 'size']
+    rel_subjs = []
+    for _, row in best_df_g.iterrows():
+        path = '/'.join([row[c] for c in act_cols])
+        label = str(row[act_cols[-1]])
+        sub_obj = AllManifest.objects.filter(
+            item_type='subjects',
+            label=label,
+            path__endswith=path,
+        ).first()
+        if not sub_obj:
+            continue
+        rel_subjs.append((sub_obj, row['size']))
+    return rel_subjs
+
+
+def link_table_related_subjects(
+    man_obj,
+    full_cloud_obj=None,
+    csv_uri=None,
+    df=None,
+    max_subj_count=5,
+    tab_to_subj_uuid=configs.PREDICATE_LINK_UUID,
+    subj_to_tab_uuid=configs.PREDICATE_LINK_UUID,
+):
+    """Links the primary (most common and most general) subjects items in a table.
+
+    :param AllManifest man_obj: An instance of the AllManifest model
+        for a tables item associated with an export_id
+    :param str export_id: Export ID for the process that made the
+        dataframe that we put in cloud storage
+    :param Object full_cloud_obj: An object for the exported table now
+        saved in cloud storage.
+    :param str csv_uri: A string URL to the CSV data table
+    :param DataFrame df: A pandas dataframe from the data table csv data
+    :param int max_subj_count: The maximum number of subjects items in the table
+        to return
+    :param UUID tab_to_subj_uuid: UUID for a predicate linking the table
+        Manifest to a subject Manifest item
+    :param UUID subj_to_tab_uuid: UUID for a predicate linking the subject
+        Manifest item to the table Manifest item
+    """
+    rel_subjs = get_table_related_subjects(
+        man_obj=man_obj,
+        full_cloud_obj=full_cloud_obj,
+        csv_uri=csv_uri,
+        df=df,
+        max_subj_count=max_subj_count,
+    )
+    if not rel_subjs:
+        return None
+    sort = 0
+    assert_objs = []
+    for rel_subj_obj, count in rel_subjs:
+        sort += 1
+        assert_dict = {
+            'project': man_obj.project,
+            'publisher': man_obj.publisher,
+            'source_id': man_obj.source_id,
+            'subject': man_obj,
+            'predicate_id': tab_to_subj_uuid,
+            'sort': sort,
+            'object': rel_subj_obj,
+            'meta_json': {
+                'table_object_count': count,
+            },
+        }
+        ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(
+                subject_id=assert_dict['subject'].uuid,
+                predicate_id=assert_dict['predicate_id'],
+                object_id=assert_dict['object'].uuid,
+            ),
+            defaults=assert_dict
+        )
+        assert_objs.append(ass_obj)
+        print(
+            f'Assertion {ass_obj.uuid}: '
+            f'is {ass_obj.subject.label} [{ass_obj.subject.uuid}]'
+            f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
+            f'-> {ass_obj.object.label} [{ass_obj.object.uuid}] '
+        )
+        # Now make the reciprocal assertion
+        r_assert_dict = {
+            'project': man_obj.project,
+            'publisher': man_obj.publisher,
+            'source_id': man_obj.source_id,
+            'subject': rel_subj_obj,
+            'predicate_id': subj_to_tab_uuid,
+            'sort': sort,
+            'object': man_obj,
+            'meta_json': {
+                'table_object_count': count,
+            },
+        }
+        r_ass_obj, _ = AllAssertion.objects.get_or_create(
+            uuid=AllAssertion().primary_key_create(
+                subject_id=r_assert_dict['subject'].uuid,
+                predicate_id=r_assert_dict['predicate_id'],
+                object_id=r_assert_dict['object'].uuid,
+            ),
+            defaults=r_assert_dict
+        )
+        print(
+            f'Reciprocal Assertion {r_ass_obj.uuid}: '
+            f'is {r_ass_obj.subject.label} [{r_ass_obj.subject.uuid}]'
+            f'-> {r_ass_obj.predicate.label} [{r_ass_obj.predicate.uuid}]'
+            f'-> {r_ass_obj.object.label} [{r_ass_obj.object.uuid}] '
+        )
+        assert_objs.append(r_ass_obj)
+    return assert_objs

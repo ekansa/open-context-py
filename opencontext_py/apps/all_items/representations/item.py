@@ -261,7 +261,7 @@ def get_related_subjects_item_from_object_id(object_id):
 
 def get_related_subjects_item_assertion(item_man_obj, assert_qs):
     """Gets the related subject item for a media or documents subject item"""
-    if item_man_obj.item_type not in ['media', 'documents']:
+    if item_man_obj.item_type not in ['media', 'documents', 'tables',]:
         return None
 
     for assert_obj in assert_qs:

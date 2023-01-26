@@ -67,6 +67,7 @@ NO_INDEX_DESCRIPTION_PREDICATE_UUIDS = [
     configs.PREDICATE_CONTAINS_UUID,
     configs.PREDICATE_LINK_UUID,
     configs.PREDICATE_LINKED_FROM_UUID,
+    configs.CSVW_COLUMNS_UUID,
 ]
 
 
@@ -1743,7 +1744,7 @@ class SolrDocumentNS:
         # documents items (that tend not to have great metadata without
         # such associations)
 
-        if not self.man_obj.item_type in ['media', 'documents']:
+        if not self.man_obj.item_type in ['media', 'documents', ]:
             # This is only done for media and documents items.
             return None
         # Get the list of all the observations made on this item.
@@ -1818,6 +1819,17 @@ class SolrDocumentNS:
                         # the redundant value.
                         continue
                     self.fields[field_key].append(val)
+
+
+    def _add_table_specifics(self):
+        """Adds table specifics"""
+        if self.man_obj.item_type != 'tables':
+            return None
+        for assert_obj in self.assert_objs:
+            if str(assert_obj.predicate.uuid) != configs.CSVW_COLUMNS_UUID:
+                continue
+            self.fields['text'] += ' ' + assert_obj.object.label
+            self._clean_add_uri_to_solr_object_uri_field(assert_obj.object.uri)
 
 
     def _calculate_interest_score(self):
@@ -1899,6 +1911,8 @@ class SolrDocumentNS:
         # Applicable only to media and documents item_types,
         # add fields from related subjects items.
         self._add_linked_subjects()
+        # Add table specific indexing information
+        self._add_table_specifics()
         # Calculate the interest score for the item
         self._calculate_interest_score()
         return True
