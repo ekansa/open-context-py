@@ -1,0 +1,58 @@
+{% extends '../page.html' %}
+
+{% block content %}
+
+
+{% include '../item/parts/vue_shared.html' %}
+{% include '../color_gradients.html' %}
+{% include '../common_geo.html' %}
+
+
+
+<!-- General template for views of Open Context items -->
+<div id="main" class="container-fluid">
+
+    <div id="highlights-app">
+
+        <h1>Highlights</h1>
+
+    </div>
+
+</div>
+
+<script type="text/javascript">
+
+
+    var vm = new Vue(
+      {
+        delimiters: ['[[', ']]'],
+        ref: 'highlights_app',
+        el: '#highlights-app',
+        data: {
+
+        },
+        computed: {
+
+        },
+        created() {
+
+        },
+        mounted() {
+
+        },
+        methods: {
+
+        },
+        components: {
+
+        },
+      },
+    ).$mount('#highlights-app');
+
+</script>
+
+
+<script type="application/ld+json">
+    {{ SCHEMA_ORG_JSON_LD|safe }}
+</script>
+{% endblock %}2

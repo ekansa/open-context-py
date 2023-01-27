@@ -15,7 +15,8 @@ from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 from opencontext_py.apps.utilities import views as UtilitiesViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 
-
+# New Open Context highlights page
+from opencontext_py.apps.highlights import views as HighlightsViews
 
 # For testing new search
 from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchViews
@@ -66,6 +67,9 @@ urlpatterns = [
     re_path(r'^about/sponsors', AboutViews.sponsors_view, name='about_sponsors'),
     re_path(r'^about/terms', AboutViews.terms_view, name='about_terms'),
     re_path(r'^about/', AboutViews.index_view, name='about_index'),
+    # Highlights
+    re_path(r'^highlights/', HighlightsViews.index_view, name='highlights_index'),
+
     # Contexts for JSON-LD
     re_path(r'^contexts/item.json', ContextViews.item_view, name='context_item'),
     re_path(r'^contexts/search.json', ContextViews.search_view, name='context_search'),
