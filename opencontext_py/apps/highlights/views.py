@@ -42,6 +42,7 @@ def index_view(request):
             'act_nav': 'highlights',
             'og': open_graph,
             'NAV_ITEMS': settings.NAV_ITEMS,
+            'GOOGLE_MAPS': 'hide',
             'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
                 'bootstrap_vue/highlights/highlights.html'
             ),
