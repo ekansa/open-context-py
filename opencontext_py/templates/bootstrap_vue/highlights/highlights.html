@@ -5,7 +5,6 @@
 
 {% include '../item/parts/vue_shared.html' %}
 {% include '../color_gradients.html' %}
-{% include '../common_geo.html' %}
 
 
 
@@ -14,8 +13,224 @@
 
     <div id="highlights-app">
 
-        <h1>Highlights</h1>
+        <div class="jumbotron">
+            <h1 class="display-4 text-center">Overview and Highlights</h1>
+            <b-container fluid>
+                <b-row>
+                    <b-col>
+                        <div v-if="loading" class="container-fluid text-muted text-center">
+                            <h1 class="display-6">Gathering highlight data...</h1>
+                            <b-spinner class="m-5" label="Busy"></b-spinner>
+                        </div>
+                        <div v-else class="container-fluid">
+                            <b-img v-else v-bind="jumbo_img" fluid blank-color="#777" alt="Transparent image"></b-img>
+                            <apexchart
+                                v-if="data_series"
+                                :id="'chart-' + route_key_index"
+                                :ref="'chart-' + route_key_index"
+                                :height="options.chart.height"
+                                width="100%"
+                                :options="options"
+                                :series="data_series">
+                            </apexchart>
+                        </div>
+                    </b-col>
+                </b-row>
+                <b-row>
+                    <b-col cols="6">
+                        <ul class="list-unstyled">
+                            <b-media tag="li">
+                                <template #aside>
+                                    <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.subjects }}" width="32" alt="placeholder"></b-img>
+                                </template>
+                                <h5 class="mt-0 mb-1">Subjects of Observation</h5>
+                                <small>
+                                    In Open Context, "Subjects of Observation" are the physical things described by
+                                    researchers in their studies. They include archaeological sites, ecofacts (like
+                                    animal bones and plant remains), archaeological contexts and features, areas of
+                                    the landscape defined in surveys, and much more.
+                                </small>
+                            </b-media>
 
+                            <b-media tag="li">
+                                <template #aside>
+                                    <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.media }}" width="32" alt="placeholder"></b-img>
+                                </template>
+                                <h5 class="mt-0 mb-1">Media</h5>
+                                <small>
+                                    "Media" records are binary digital files that help document data published by
+                                    Open Context. They can include image files (photographs or drawings), GIS media files,
+                                    PDF files, Excel data files, video files, 3D model files, and more.
+                                </small>
+                            </b-media>
+
+                            <b-media tag="li">
+                                <template #aside>
+                                    <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.documents }}" width="32" alt="placeholder"></b-img>
+                                </template>
+                                <h5 class="mt-0 mb-1">Documents</h5>
+                                <small>
+                                    "Documents" records are (unstructured) narrative text information stored directly in
+                                    the Open Context database in the HTML format. Because they are HTML they can contain
+                                    links to images and links to other records inside and outside of Open Context. Their content
+                                    is also more thoroughly indexed for search than the content of "media" files above.
+                                </small>
+                            </b-media>
+                        </ul>
+                    </b-col>
+
+                    <b-col cols="6">
+                        <ul class="list-unstyled">
+                            <b-media tag="li">
+                                <template #aside>
+                                    <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.projects }}" width="32" alt="placeholder"></b-img>
+                                </template>
+                                <h5 class="mt-0 mb-1">Projects</h5>
+                                <small>
+                                    In Open Context, "Projects" are the main units of publication. A project represents a collection
+                                    of data, media, and associated documentation developed and contributed by one or more investigators.
+                                    Each project typically has their own manner of describing and categorizing their observations.
+                                </small>
+                            </b-media>
+
+                            <b-media tag="li">
+                                <template #aside>
+                                    <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.tables }}" width="32" alt="placeholder"></b-img>
+                                </template>
+                                <h5 class="mt-0 mb-1">Data Tables</h5>
+                                <small>
+                                    In general, Open Context is a dynamic and frequently updated database. You can download a virtually
+                                    limitless variety of tabular data to output every search or query you make. However, Open Context also
+                                    stores some static and unchanging externally stored "Data Tables" files. Unless otherwise indicated, the content of Data Table
+                                    files will not change even after updates to the Open Context database.
+                                </small>
+                            </b-media>
+                        </ul>
+                    </b-col>
+                </b-row>
+            </b-container>
+
+        </div>
+
+
+        <b-container style="margin-bottom:24px;" fluid>
+            <b-card-group deck>
+                <b-card title="Zooarchaeology" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context publishes standards aligned zooarchaeological (archaeozoology) data documenting animal
+                      bone specimens studied by researchers working around the world.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&type=subjects#tab=0/aq=facet-oc-gen-category---oc-gen-cat-animal-bone/"
+                             title="Query animal bone data">Explore zooarchaeology data</a>
+                        </small>
+                    </template>
+                </b-card>
+
+                <b-card title="Sites and Surveys" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context publishes data from public agencies and archaeological survey projects that
+                      describe archaeological sites and regions.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-site&type=subjects"
+                             title="Query sites">Explore site data</a>
+                        </small>
+                    </template>
+                </b-card>
+
+            </b-card-group>
+        </b-container>
+
+        <b-container style="margin-bottom:24px;" fluid>
+            <b-card-group deck>
+                <b-card title="Objects of Material Culture" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context publishes object (artifact) data and associated documentation, including images, field notes, and
+                      the results of a variety of laboratory studies. You can use these data to find parallels and comporanda or
+                      conduct quantitative studies.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-object&type=subjects"
+                            title="Query objects (artifacts)">Explore object data</a>
+                        </small>
+                    </template>
+                </b-card>
+
+                <b-card title="Archaeological Contexts" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context publishes data describing archaeological contexts and their stratigraphic relationships.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-context&type=subjects" title="Query for contexts">Explore archaeological contexts</a>
+                        </small>
+                    </template>
+                </b-card>
+
+            </b-card-group>
+        </b-container>
+
+        <b-container style="margin-bottom:24px;" fluid>
+            <b-card-group deck>
+                <b-card title="Images" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context publishes images, including photographs and drawings of material collections, features,
+                      sites, contexts and more.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-image&type=media" title="Query for text documents and notes">Explore images</a>
+                        </small>
+                    </template>
+                </b-card>
+
+                <b-card title="Field Notes and Documents" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context publishes narrative field notes and other documents that inform field work and other
+                      studies.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?type=documents" title="Query for text documents and notes">Explore notes and documentation</a>
+                        </small>
+                    </template>
+                </b-card>
+
+            </b-card-group>
+        </b-container>
+
+        <b-container style="margin-bottom:24px;" fluid>
+            <b-card-group deck>
+                <b-card title="Geospatial" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                    Geospatial feature data helps to describe much of the information published by Open Context. This
+                    geospatial data can be downloaded and used in desktop GIS or other applications.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/about/recipes" title="Using Open Context with GIS">Learn More about Open Context and GIS</a>
+                        </small>
+                    </template>
+                </b-card>
+
+                <b-card title="3D Models" img-src="https://picsum.photos/300/300/?image=41" img-alt="Image" img-top>
+                    <b-card-text>
+                      Open Context provides a platform to publish and explore 3D documentation of objects and features
+                      linked to contextual information.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-3d-model&type=media" title="Query for 3D Media">Explore 3D Media</a>
+                        </small>
+                    </template>
+                </b-card>
+
+            </b-card-group>
+        </b-container>
     </div>
 
 </div>
@@ -29,7 +244,42 @@
         ref: 'highlights_app',
         el: '#highlights-app',
         data: {
-
+            url_api_summary: '../query/?rows=1&proj-summary=1',
+            jumbo_img: { blank: true, width: 475, height: 275, class: 'm1' },
+            loading: false,
+            summary_data: null,
+            route_key_index: 0,
+            total_results: null,
+            data_series: null,
+            base_search_url: '/query',
+            options: {
+                chart: {
+                    height: '350px',
+                    type: 'treemap',
+                    toolbar: {
+                        show: false,
+                    },
+                    events: {
+                        click(event, chartContext, config) {
+                            console.log('click event');
+                            let data_index = config.dataPointIndex;
+                            if(!(data_index >= 0)){
+                                return null;
+                            }
+                            let act_item = config.config.series[config.seriesIndex].data[data_index];
+                            console.log(act_item);
+                            window.open(act_item.href);
+                        },
+                    },
+                },
+                tooltip: {
+                    y: {
+                        formatter: function(value, { series, seriesIndex, dataPointIndex, w }) {
+                        return value;
+                        },
+                    },
+                },
+            },
         },
         computed: {
 
@@ -38,13 +288,56 @@
 
         },
         mounted() {
-
+            this.fetch_oc_api();
         },
         methods: {
-
+            prep_series: function(api_items){
+                let items = [];
+                for(let api_item of api_items){
+                    let item = {
+                        x: api_item.label,
+                        href: removeURLParameter(api_item.id, 'rows'),
+                        y: api_item.count,
+                    }
+                    items.push(item);
+                }
+                this.data_series = [
+                    {
+                        name: 'Records:',
+                        data: items,
+                    }
+                ];
+            },
+            fetch_oc_api: function (){
+                this.error = null;
+                this.loading = true;
+                fetch(
+                    this.url_api_summary,
+                    {
+                        headers:{
+                            'Accept': 'application/json',
+                        }
+                    }
+                )
+                .then(this.loading = true)
+                .then(response => response.json())
+                .then(json => {
+                    this.summary_data = json;
+                    this.route_key_index += 1;
+                    this.loading = false;
+                    if(this.summary_data.hasOwnProperty('totalResults')){
+                        if(this.summary_data.totalResults > 0){
+                            this.total_results = this.summary_data.totalResults;
+                        }
+                    }
+                    if(this.summary_data.hasOwnProperty('oc-api:project-item-classes')){
+                        this.prep_series(this.summary_data['oc-api:project-item-classes']);
+                    }
+                });
+            },
         },
         components: {
-
+            apexchart: VueApexCharts,
         },
       },
     ).$mount('#highlights-app');

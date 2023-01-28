@@ -11,6 +11,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 
+from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.icons.configs import DEFAULT_ITEM_TYPE_ICONS
+
 
 # @cache_control(no_cache=True)
 # @never_cache
@@ -46,6 +49,7 @@ def index_view(request):
             'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
                 'bootstrap_vue/highlights/highlights.html'
             ),
+            'DEFAULT_ITEM_TYPE_ICONS': DEFAULT_ITEM_TYPE_ICONS,
         }
         return HttpResponse(template.render(context, request))
     else:
