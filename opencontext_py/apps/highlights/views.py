@@ -50,6 +50,7 @@ def index_view(request):
                 'bootstrap_vue/highlights/highlights.html'
             ),
             'DEFAULT_ITEM_TYPE_ICONS': DEFAULT_ITEM_TYPE_ICONS,
+            'DEFAULT_ITEM_TYPE_ICONS_JS': json.dumps(DEFAULT_ITEM_TYPE_ICONS),
         }
         return HttpResponse(template.render(context, request))
     else:

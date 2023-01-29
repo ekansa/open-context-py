@@ -90,6 +90,21 @@ General Page
 	margin-right:auto;
 }
 
+/*
+---------------------------------------------------------
+Highlights Page
+---------------------------------------------------------
+*/
+.data_vis_item_type_icons {
+	margin-top: 4px;
+	margin-left: 6px;
+	margin-right: 12px;
+	margin-bottom: 4px;
+}
+.highlights-item-types li {
+	margin-top: 6px;
+	margin-bottom: 12px;
+}
 
 /*
 ---------------------------------------------------------

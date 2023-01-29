@@ -38,7 +38,7 @@
                 </b-row>
                 <b-row>
                     <b-col cols="6">
-                        <ul class="list-unstyled">
+                        <ul class="list-unstyled highlights-item-types">
                             <b-media tag="li">
                                 <template #aside>
                                     <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.subjects }}" width="32" alt="placeholder"></b-img>
@@ -80,7 +80,7 @@
                     </b-col>
 
                     <b-col cols="6">
-                        <ul class="list-unstyled">
+                        <ul class="list-unstyled highlights-item-types">
                             <b-media tag="li">
                                 <template #aside>
                                     <b-img src="{{ DEFAULT_ITEM_TYPE_ICONS.projects }}" width="32" alt="placeholder"></b-img>
@@ -123,7 +123,7 @@
                     <template #footer>
                         <small class="text-muted">
                             <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&type=subjects#tab=0/aq=facet-oc-gen-category---oc-gen-cat-animal-bone/"
-                             title="Query animal bone data">Explore zooarchaeology data</a>
+                             title="Query animal bone data"><b-icon-search></b-icon-search> Explore zooarchaeology data</a>
                         </small>
                     </template>
                 </b-card>
@@ -136,7 +136,7 @@
                     <template #footer>
                         <small class="text-muted">
                             <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-site&type=subjects"
-                             title="Query sites">Explore site data</a>
+                             title="Query sites"><b-icon-search></b-icon-search> Explore site data</a>
                         </small>
                     </template>
                 </b-card>
@@ -155,7 +155,7 @@
                     <template #footer>
                         <small class="text-muted">
                             <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-object&type=subjects"
-                            title="Query objects (artifacts)">Explore object data</a>
+                            title="Query objects (artifacts)"><b-icon-search></b-icon-search> Explore object data</a>
                         </small>
                     </template>
                 </b-card>
@@ -166,7 +166,8 @@
                     </b-card-text>
                     <template #footer>
                         <small class="text-muted">
-                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-context&type=subjects" title="Query for contexts">Explore archaeological contexts</a>
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-context&type=subjects"
+                            title="Query for contexts"><b-icon-search></b-icon-search> Explore archaeological contexts</a>
                         </small>
                     </template>
                 </b-card>
@@ -183,7 +184,8 @@
                     </b-card-text>
                     <template #footer>
                         <small class="text-muted">
-                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-image&type=media" title="Query for text documents and notes">Explore images</a>
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-image&type=media"
+                            title="Query for text documents and notes"><b-icon-search></b-icon-search> Explore images</a>
                         </small>
                     </template>
                 </b-card>
@@ -195,7 +197,8 @@
                     </b-card-text>
                     <template #footer>
                         <small class="text-muted">
-                            <a href="{{ BASE_URL }}/query/?type=documents" title="Query for text documents and notes">Explore notes and documentation</a>
+                            <a href="{{ BASE_URL }}/query/?type=documents"
+                            title="Query for text documents and notes"><b-icon-search></b-icon-search> Explore notes and documentation</a>
                         </small>
                     </template>
                 </b-card>
@@ -212,7 +215,8 @@
                     </b-card-text>
                     <template #footer>
                         <small class="text-muted">
-                            <a href="{{ BASE_URL }}/about/recipes" title="Using Open Context with GIS">Learn More about Open Context and GIS</a>
+                            <a href="{{ BASE_URL }}/about/recipes"
+                            title="Using Open Context with GIS"><b-icon-info-circle-fill></b-icon-info-circle-fill> Learn More about Open Context and GIS</a>
                         </small>
                     </template>
                 </b-card>
@@ -224,7 +228,8 @@
                     </b-card-text>
                     <template #footer>
                         <small class="text-muted">
-                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-3d-model&type=media" title="Query for 3D Media">Explore 3D Media</a>
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-3d-model&type=media"
+                            title="Query for 3D Media"><b-icon-search></b-icon-search> Explore 3D Media</a>
                         </small>
                     </template>
                 </b-card>
@@ -237,6 +242,27 @@
 
 <script type="text/javascript">
 
+    const SUBJECTS_GRADIENT = [
+        {v: 0, color: '#66CCEE', },
+		{v: 1, color: '#4477AA', },
+    ];
+
+    const ITEM_TYPE_COLORS = {
+        'media': '#228833',
+        'documents': '#CCBB44',
+        'projects': '#AA3377',
+        'tables': '#BBBBBB',
+    };
+
+    const SUBJECTS_CLASS_SLUGS = [
+        "oc-gen-cat-site",
+        "oc-gen-cat-animal-bone",
+        "oc-gen-cat-object",
+        "oc-gen-cat-context",
+        "oc-gen-cat-plant-remains",
+    ];
+
+    const DEFAULT_ITEM_TYPE_ICONS = JSON.parse('{{ DEFAULT_ITEM_TYPE_ICONS_JS|escapejs }}');
 
     var vm = new Vue(
       {
@@ -253,6 +279,14 @@
             data_series: null,
             base_search_url: '/query',
             options: {
+                colors: null,
+                items: null,
+                plotOptions: {
+                    treemap: {
+                        distributed: true,
+                        enableShades: false
+                    }
+                },
                 chart: {
                     height: '350px',
                     type: 'treemap',
@@ -273,10 +307,33 @@
                     },
                 },
                 tooltip: {
-                    y: {
-                        formatter: function(value, { series, seriesIndex, dataPointIndex, w }) {
-                        return value;
-                        },
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        let act_item = w.config.series[seriesIndex].data[dataPointIndex];
+                        let label = act_item.item_type_label;
+                        let subtext = act_item.subtext;
+                        let html_subtext = '';
+                        if(act_item.subtext){
+                            html_subtext = `<small class="text-muted">${act_item.subtext}</small>`;
+                        }
+                        if(act_item.class_label){
+                            label = act_item.class_label;
+                            html_subtext = `<small class="text-muted">A category of <strong>${act_item.item_type_label}</strong> records</small>`;
+                        }
+                        let human_count = act_item.tip_count.toLocaleString();
+                        return (
+                            `<div class="arrow_box">
+                            <div class="media-aside align-self-start">
+                                <img src="${act_item.icon}" alt="${act_item.item_type_label} icon"
+                                height="24"
+                                class="data_vis_item_type_icons"/>
+                                <div class="media-body">
+                                    <p class="mt-0 mb-1"><strong>${label}</strong> (${human_count} items)</p>
+                                    ${html_subtext}
+                                </div>
+                            </div>
+                            </div>
+                            `
+                        );
                     },
                 },
             },
@@ -294,12 +351,84 @@
             prep_series: function(api_items){
                 let items = [];
                 for(let api_item of api_items){
-                    let item = {
-                        x: api_item.label,
-                        href: removeURLParameter(api_item.id, 'rows'),
-                        y: api_item.count,
+                    let item_type = api_item.slug.replace('oc-gen-', '');
+                    let icon = null;
+                    if(item_type in DEFAULT_ITEM_TYPE_ICONS){
+                        icon = DEFAULT_ITEM_TYPE_ICONS[item_type];
                     }
-                    items.push(item);
+                    if(item_type == "subjects" && api_item.hasOwnProperty("oc-api:has-id-options")){
+                        let total_subj_count = api_item.count;
+                        let misc_subj_count = api_item.count;
+                        let subj_counts = [];
+                        let subj_items = [];
+                        for(let subj_item of api_item["oc-api:has-id-options"]){
+                            if(SUBJECTS_CLASS_SLUGS.indexOf(subj_item.slug) < 0){
+                                // this is a misc. type that we don't want to display
+                                continue;
+                            }
+                            misc_subj_count -= subj_item.count;
+                            let item = {
+                                x: subj_item.label,
+                                class_label: subj_item.label,
+                                item_type_label: api_item.label,
+                                subtext: null,
+                                icon: icon,
+                                href: removeURLParameter(subj_item.id, 'rows'),
+                                tip_count: subj_item.count,
+                                y: subj_item.count,
+                            }
+                            subj_items.push(item);
+                            subj_counts.push(subj_item.count);
+                        }
+                        subj_counts.push(misc_subj_count);
+                        let max_subj_item_count = Math.max.apply(Math, subj_counts);
+                        let misc_subj_item = {
+                            x: api_item.label + ' [Misc]',
+                            class_label: null,
+                            item_type_label: api_item.label,
+                            subtext: '(Click to explore all ' + api_item.label + ' items)',
+                            icon: icon,
+                            href: removeURLParameter(api_item.id, 'rows'),
+                            tip_count: api_item.count,
+                            y: misc_subj_count,
+                        }
+                        subj_items.push(misc_subj_item);
+                        // Gather the colors for the subjects items
+
+                        for(let item of subj_items){
+                            console.log('item.y ' + item.y);
+                            console.log(' max_subj_item_count ' +  max_subj_item_count);
+                            let item_color = make_hex_color_in_gradient(
+                                (item.y / max_subj_item_count),
+                                SUBJECTS_GRADIENT
+                            );
+                            item.color = item_color;
+                            items.push(item);
+                        }
+                    }
+                    else{
+                        let item_type_color = null;
+                        if(item_type in ITEM_TYPE_COLORS){
+                            item_type_color = ITEM_TYPE_COLORS[item_type];
+                        }
+                        let item = {
+                            x: api_item.label,
+                            class_label: null,
+                            item_type_label: api_item.label,
+                            subtext: null,
+                            icon: icon,
+                            color: item_type_color,
+                            href: removeURLParameter(api_item.id, 'rows'),
+                            tip_count: api_item.count,
+                            y: api_item.count,
+                        }
+                        items.push(item);
+                    }
+                }
+                console.log(items);
+                let colors = [];
+                for(let item of items){
+                    colors.push(item.color);
                 }
                 this.data_series = [
                     {
@@ -307,6 +436,8 @@
                         data: items,
                     }
                 ];
+                this.items = items;
+                this.options.colors = colors;
             },
             fetch_oc_api: function (){
                 this.error = null;
