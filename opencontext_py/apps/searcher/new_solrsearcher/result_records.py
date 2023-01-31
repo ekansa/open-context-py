@@ -628,8 +628,6 @@ class ResultRecord():
         if len(snippet) < large_limit:
             return snippet
         term_pos = snippet.find(temp_mark_pre)
-        if term_pos <= 120:
-            return snippet
         prefix_text_pos = term_pos - 140
         if prefix_text_pos < 0:
             prefix_text_pos = 0
