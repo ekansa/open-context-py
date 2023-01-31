@@ -5,7 +5,10 @@
 
     <div class="card bg-light" id="filtered-fulltext">
         <div class="card-header">
-            <h5 class="filter_heading_labels">
+            <h5 v-if="prior_text_query" class="filter_heading_labels">
+                Change Text Match Filter
+            </h5>
+            <h5 v-else class="filter_heading_labels">
                 Add a Text Match Filter
             </h5>
         </div>
@@ -43,6 +46,13 @@ var vc_filter_seach_typeahead = Vue.component(
         computed: {
             project_slugs: function() {
                 return this.get_project_slugs_from_result();
+            },
+            prior_text_query: function(){
+                if(!this.base_search_url){
+                    return null;
+                }
+                let prior_q = getURLParameter(this.base_search_url, 'q');
+                return prior_q;
             },
         },
         methods: {
