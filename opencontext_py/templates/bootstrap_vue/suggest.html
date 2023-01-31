@@ -3,7 +3,7 @@
 
 
 <template id="oc-search-typeahead">
-    <form 
+    <form
         :class="form_class"
         @submit="do_search_query"
         >
@@ -24,11 +24,11 @@
             </template>
 
             <template slot="append">
-                <b-button 
-                    :to="router_query_link" 
-                    :href="href_query_link" 
+                <b-button
+                    :to="router_query_link"
+                    :href="href_query_link"
                     :disabled="query.length < 2"
-                    class="btn btn-light" 
+                    class="btn btn-light"
                     v-if="top_nav" >
                     <i alt="Search Icon" class="bi-search"></i>
                 </b-button>
@@ -41,6 +41,7 @@
             v-if="top_nav"
             v-bind:query="query"
         ></oc-search-modal>
+        <small v-if="prior_text_query">New search terms above would replace <strong>[[ prior_text_query ]]</strong></small>
     </form>
 </template>
 
@@ -98,9 +99,9 @@ var vc_oc_seach_typeahead = Vue.component(
         delimiters: ['[[', ']]'],
         template: '#oc-search-typeahead',
         props: [
-            'frontend_state_obj', 
-            'project_slugs', 
-            'search_via_router', 
+            'frontend_state_obj',
+            'project_slugs',
+            'search_via_router',
             'base_search_url',
             'top_nav',
             'act_place_holder',
@@ -158,9 +159,19 @@ var vc_oc_seach_typeahead = Vue.component(
                 }
                 return "form-control me-2";
             },
+            prior_text_query: function(){
+                if(this.top_nav){
+                    return null;
+                }
+                if(!this.base_search_url){
+                    return null;
+                }
+                let prior_q = getURLParameter(this.base_search_url, 'q');
+                return prior_q;
+            },
         },
         watch: {
-            query: function(q_term) { 
+            query: function(q_term) {
                 this.get_suggestions(q_term);
             },
         },
@@ -257,7 +268,7 @@ var vc_oc_seach_typeahead = Vue.component(
                     },
                 };
                 const res = await fetch(
-                    ('/suggest?' + new URLSearchParams(params)), 
+                    ('/suggest?' + new URLSearchParams(params)),
                     requestOptions,
                 );
                 const data = await res.json();
