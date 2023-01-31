@@ -82,13 +82,13 @@
 
 
 <template id='records-tab-field-context'>
-    <div>
+    <b-container fluid>
         <span>[[ field_item.context ]]</span>
         <dl v-if="field_item.snippet" class="result-snippet">
             <dt>Search text snippet</dt>
             <dd v-html="field_item.snippet"></dd>
         </dl>
-    </div>
+    </b-container>
 </template>
 
 
@@ -169,7 +169,7 @@
 <template id="records-tab-template">
 
     <div id="search-records-tab">
-
+        <b-container fluid>
         <records-tab-header-footer
             :hr_role="'header'"
             v-bind:route_key_index="route_key_index"
@@ -188,8 +188,8 @@
             :fields="fields"
             :striped="striped"
             :bordered="bordered"
-            responsive="xl"
             :small="true"
+            responsive
             selectable
             select-mode="single"
             hover
@@ -248,6 +248,8 @@
             v-bind:result_page_last_link="result_page_last_link"
         >
         </records-tab-header-footer>
+
+        </b-container>
     </div>
 
 </template>
@@ -459,6 +461,13 @@ var vc_records_tab = Vue.component(
                     { key: 'updated', sortable: true },
                 ],
                 selected: [],
+                // NOTE: the order mattters. The '/' needs to come in first because it
+                // will be put into HTML tags.
+                text_split_delims: [
+                    '/',
+                    '%',
+                    '.',
+                ]
             };
         },
         template: '#records-tab-template',
@@ -576,6 +585,7 @@ var vc_records_tab = Vue.component(
                     let snippet = null;
                     if('snippet' in props){
                         snippet = props['snippet'];
+                        snippet = this.text_seperate(snippet);
                         snippet = '...' + snippet.replace(context, '') + '...';
                     }
 
@@ -609,6 +619,55 @@ var vc_records_tab = Vue.component(
             },
         },
         methods: {
+            text_seperate(act_text){
+                if(!act_text){
+                    return act_text;
+                }
+                // let act_text = 'abcde<mark>bone 1</mark>fgh<mark>bone 2</mark>ijk';
+                let start_i = 0;
+                let end_i = act_text.length;
+                let new_text = '';
+                let m_split = act_text.split('<mark>');
+                let text_obj_list = [];
+                for(let t_str of m_split){
+                    let mark_end_sp = t_str.split('</mark>');
+                    if(mark_end_sp.length > 1){
+                        text_obj_list.push({txt: mark_end_sp[0], m: true});
+                        text_obj_list.push({txt: mark_end_sp[1], m: false});
+                    }
+                    else{
+                        text_obj_list.push({txt: t_str, m: false});
+                    }
+                }
+                for(let t_obj of text_obj_list){
+                    if(t_obj.m){
+                        new_text += `<mark>${t_obj.txt}</mark>`;
+                        continue;
+                    }
+                    else{
+                        if(false){
+                            for(let char of this.text_split_delims){
+                                new_text += t_obj.txt.replaceAll(char, (char + '&#8203;'));
+                            }
+                        }
+                        let start_i = 0;
+                        for (var i = 0; i < t_obj.txt.length; i += 5) {
+                            if(i == 0){
+                                continue;
+                            }
+                            let cur_text = t_obj.txt.substring(start_i, i);
+                            if(cur_text.charAt(cur_text.length - 1) == '\\'){
+                                new_text += cur_text;
+                            }
+                            else{
+                                new_text += cur_text + '&#8203;';
+                            }
+                            start_i = i;
+                        }
+                    }
+                }
+                return new_text;
+            },
             interest_level(des_act, des_min, dex_max){
                 let level = 0;
                 let increments = (dex_max - des_min) / this.interest_levels;

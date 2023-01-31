@@ -510,6 +510,16 @@ FROM: https://github.com/consbio/Leaflet.ZoomBox
 .result_icon {
 	max-width: 75%;
 }
+.result_text_sep {
+	font-size:1px;
+}
+.wordwrap {
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
 /* IDs and Classes for search data export */
 #download-attribs-save-opts-row {
 	margin-top: 36px;
