@@ -710,6 +710,18 @@ NAV_ITEMS = [
         ]
     },
     {
+        'key': 'highlights',
+        'link': '/highlights/',
+        'display': 'Highlights',
+        'always': True,
+        'urls': [
+            {
+                'display': 'Highlights',
+                'link': '/highlights/'
+            },
+        ]
+    },
+    {
         'key': 'explore',
         'link': '/query/',
         'display': 'Explore',
