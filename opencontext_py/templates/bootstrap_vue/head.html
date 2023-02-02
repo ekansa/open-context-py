@@ -47,7 +47,7 @@
     {% if GOOGLE_MAPS == 'hide' %}
     <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo"></script> -->
     {%else%}
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo&callback=gm_callback"></script>
     {%endif%}
     <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="//unpkg.com/vue2-leaflet"></script>
