@@ -42,6 +42,14 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Two+Tone" rel="stylesheet">
 
+
+    <script type="text/javascript">
+        function gm_callback(args){
+            console.log('Google Map callback done.');
+            return null;
+        }
+    </script>
+
     <!-- Load the leaflet libraries -->
     <link rel="stylesheet" href="//unpkg.com/leaflet/dist/leaflet.css" />
     {% if GOOGLE_MAPS == 'hide' %}

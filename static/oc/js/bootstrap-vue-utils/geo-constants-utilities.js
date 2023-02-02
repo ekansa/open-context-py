@@ -2,6 +2,10 @@
 This configures Open Context geojson data visualization.
 */
 
+function gm_callback(args){
+    console.log('Google Map callback done.');
+    return null;
+}
 
 
 // These are geojson feature properties for individual records
@@ -63,8 +67,8 @@ function map_property_key_to_field(key){
 
 /*
 Adapted from: https://github.com/consbio/Leaflet.ZoomBox
-Developed with support from the South Atlantic Landscape Conservation 
-Cooperative, and maintained with support from Peninsular Florida LCC 
+Developed with support from the South Atlantic Landscape Conservation
+Cooperative, and maintained with support from Peninsular Florida LCC
 and the U.S. Forest Service Northwest Regional Climate Hub.
 Binding to the map's zoom box (shift-click) was inspired by ScanEx
 */
@@ -123,7 +127,7 @@ L.Control.ZoomBox = L.Control.extend({
                 }
                 if (act_point.lng > max_lng) {
                     max_lng = act_point.lng;
-                }    
+                }
             }
             let bbox_query = [min_lng, min_lat, max_lng, max_lat].join(',');
             console.log('bbox_query is: ' + bbox_query);
