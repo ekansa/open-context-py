@@ -635,7 +635,7 @@ class ResultRecord():
         suffix = snippet[term_pos:]
         # print(f'Prefix: "{prefix}"')
         # print(f'Suffix: "{suffix}"')
-        nice_breaks = ['\n', ' ',]
+        nice_breaks = ['\n', '\t', ' ',]
         for nb in nice_breaks:
             # print(f'Check {nb} in {prefix}')
             nb_pos = prefix.find(nb)
@@ -683,7 +683,8 @@ class ResultRecord():
             suffix = suffix[:last_suffix_pos]
         snippet = prefix + suffix
         # Remove the line breaks.
-        snippet = snippet.replace('/n', ' ')
+        snippet = snippet.replace('\n', ' ')
+        snippet = snippet.replace('\t', ' ')
         return snippet
 
 
