@@ -201,6 +201,16 @@ SITE_KEY_WORDS = {
         'IP address',
         'colonialism',
     ],
+    '/highlights/': [
+        'zooarchaeology',
+        'archaeozoology',
+        'overview',
+        'highlights',
+        'collections',
+        'material culture',
+        'ecofacts',
+        'field notes',
+    ],
 }
 
 PROJ_MAN_OBJ = AllManifest.objects.get(
@@ -325,7 +335,7 @@ def make_site_pages_solr_docs():
         },
     ]
     for nav_root in settings.NAV_ITEMS:
-        if nav_root.get('key') != 'about':
+        if not nav_root.get('key') in ['about', 'highlights']:
             continue
         urls += nav_root.get('urls', [])
     solr_docs = []
