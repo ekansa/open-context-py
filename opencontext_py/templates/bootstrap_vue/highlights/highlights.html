@@ -23,7 +23,6 @@
                             <b-spinner class="m-5" label="Busy"></b-spinner>
                         </div>
                         <div v-else class="container-fluid">
-                            <b-img v-else v-bind="jumbo_img" fluid blank-color="#777" alt="Transparent image"></b-img>
                             <apexchart
                                 v-if="data_series"
                                 :id="'chart-' + route_key_index"
@@ -33,6 +32,14 @@
                                 :options="options"
                                 :series="data_series">
                             </apexchart>
+                            <b-container fluid class="text-center text-muted">
+                                <small>
+                                    The areas above represent the relative proportion of different types of content published by Open Context.
+                                    See below to learn about how Open Context organizes content.
+                                </small>
+                                <br/>
+                                <br/>
+                            </b-container>
                         </div>
                     </b-col>
                 </b-row>
@@ -128,7 +135,7 @@
                     </template>
                 </b-card>
 
-                <b-card title="Sites and Surveys" img-src="../../static/oc/images/highlights/sites-surveys.jpg" img-alt="Image: sites-surveys" img-top>
+                <b-card title="Sites and Surveys" img-src="../../static/oc/images/highlights/sites-surveys.png" img-alt="Image: sites-surveys" img-top>
                     <b-card-text>
                       Open Context publishes data from public agencies and archaeological survey projects that
                       describe archaeological sites and regions.
