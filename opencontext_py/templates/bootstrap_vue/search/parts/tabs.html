@@ -428,8 +428,10 @@ var vc_all_search_tabs = Vue.component(
           act_frontend_state.tab = found_tab;
           this.set_frontend_state_obj(act_frontend_state);
           setTimeout(() => {
-            this.input_int_tab_clicked(found_tab);
-            this.tab = found_tab;
+            if(!isSafari){
+              this.input_int_tab_clicked(found_tab);
+              this.tab = found_tab;
+            }
           }, 200);
           return null;
         },
