@@ -377,14 +377,14 @@ var vc_all_search_tabs = Vue.component(
           this.tab = initial_tab;
         },
         input_int_tab_clicked: function(t_id){
-          if(t_id == null){
+          if(t_id === null){
             return null;
           }
           let temp_t_id = 0;
           if(window.location.hash){
             let act_frag_str =  window.location.hash.substring(1);
             let act_frag_tab = get_search_frag_key('tab', act_frag_str);
-            if(act_frag_tab != null){
+            if(act_frag_tab !== null){
               temp_t_id = parseInt(act_frag_tab);
             }
           }
@@ -393,7 +393,7 @@ var vc_all_search_tabs = Vue.component(
           // window.dispatchEvent(new Event('resize'));
         },
         tab_clicked: function(t_id){
-          if(this.tab == null || this.tab < 0){
+          if(this.tab === null || this.tab < 0){
             console.log('Fake Tab clicked: ' + this.tab);
             return null;
           }
@@ -406,7 +406,7 @@ var vc_all_search_tabs = Vue.component(
           let found_tab = null;
           for(let i = 0; i < this.tab_ids.length; i++){
             let act_id = this.tab_ids[i];
-            if(!t_id.target == null){
+            if(!t_id.target === null){
               continue;
             }
             if(t_id.target.id.indexOf(act_id)>=0){
@@ -415,7 +415,7 @@ var vc_all_search_tabs = Vue.component(
               found_tab = i;
             }
           }
-          if(found_tab == null){
+          if(found_tab === null){
             return null;
           }
           this.tab = found_tab;
