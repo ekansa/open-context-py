@@ -156,6 +156,9 @@
 
 <script type="text/javascript">
 
+let isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && window['safari'].pushNotification));
+
+
 var vc_all_search_tabs = Vue.component(
     'all-search-tabs',
     {
@@ -387,6 +390,7 @@ var vc_all_search_tabs = Vue.component(
             if(act_frag_tab !== null){
               temp_t_id = parseInt(act_frag_tab);
             }
+            console.log('tab from window.location.hash: ' + temp_t_id);
           }
           this.tab = temp_t_id;
           // this.set_frontend_state_obj(act_frontend_state);
@@ -431,7 +435,7 @@ var vc_all_search_tabs = Vue.component(
         },
         set_frontend_state_obj(frontend_state_obj){
           if(frontend_state_obj){
-            // console.log('tab update to frontend state');
+            console.log('tab update to frontend state');
             // console.log(frontend_state_obj);
             this.$emit('set_frontend_state_obj', frontend_state_obj);
           }
