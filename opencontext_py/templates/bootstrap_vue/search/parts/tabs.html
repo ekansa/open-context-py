@@ -18,7 +18,7 @@
                 <span class="text-left">Map</span>
                 <span class="text-right">Loading Records...</span>
             </h5>
-            <div id="app_media" v-if="result_count > 0 && tab == 0">
+            <div id="app_media" v-if="result_count > 0 && tab == 0 && !safari">
               <common_map
                 v-if="result.features.length > 0"
                 :map_key="0"
@@ -194,6 +194,7 @@ var vc_all_search_tabs = Vue.component(
           map_tab: 0,
           human_remains_ok: HUMAN_REMAINS_OK,
           geojson_record_layers: null,
+          safari: isSafari,
         };
       },
       mounted(){
@@ -428,10 +429,8 @@ var vc_all_search_tabs = Vue.component(
           act_frontend_state.tab = found_tab;
           this.set_frontend_state_obj(act_frontend_state);
           setTimeout(() => {
-            if(!isSafari){
-              this.input_int_tab_clicked(found_tab);
-              this.tab = found_tab;
-            }
+            this.input_int_tab_clicked(found_tab);
+            this.tab = found_tab;
           }, 200);
           return null;
         },
