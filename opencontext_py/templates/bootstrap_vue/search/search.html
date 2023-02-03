@@ -47,8 +47,8 @@
                     <div v-if="result">
 
                         <b-button
-                            id="search_export_button" 
-                            block 
+                            id="search_export_button"
+                            block
                             variant="primary"
                             :disabled="result.totalResults == 0"
                             @click="show_exporter_modal"
@@ -61,7 +61,7 @@
                             @toggle_human_remains_ok="toggle_human_remains_ok($event)"
                         ></human-remains-results-alert>
 
-                        <all-filters 
+                        <all-filters
                             v-bind:grouped_filters="grouped_filters"
                             v-bind:frontend_state_obj="frontend_state_obj">
                         </all-filters>
@@ -71,8 +71,8 @@
                             v-bind:frontend_state_obj="frontend_state_obj"
                             v-bind:base_search_url="result.id"
                         ></filter-search-typeahead>
-                                    
-                        <all-facets 
+
+                        <all-facets
                             v-bind:facets_group_dtype_id="'main_facets'"
                             v-bind:facets_dtypes_groups_opts="facets_cat_dtypes_groups_opts"
                             v-bind:frontend_state_obj="frontend_state_obj"></all-facets>
@@ -109,7 +109,7 @@
     // If true, we'll link to the testing 'all-items' new templates for
     // links to specific item records.
     const USE_TEST_ALL_ITEMS_HREF = true
-    
+
     // Set up the vue router in 'history' mode to manage
     // API requests to the backend. The history mode pushes
     // changes to the client's browser URL, which should let
@@ -158,6 +158,10 @@
                 if(!this.frontend_state_obj){
                     this.frontend_state_obj = get_search_current_frag_obj();
                     console.log('Create frontend_state_obj');
+                    if(!('tab' in this.frontend_state_obj)){
+                        console.log('Initial frontend state has no tab, so set tab=0');
+                        this.frontend_state_obj.tab = 0;
+                    }
                     console.log(this.frontend_state_obj);
                 }
             },
@@ -263,8 +267,8 @@
         },
         computed: {
             grouped_filters: function () {
-                // Group individual, hierarchy related 
-                // filters returned from the API 
+                // Group individual, hierarchy related
+                // filters returned from the API
                 return group_filters(
                     this.result,
                     frontend_state_obj=this.frontend_state_obj,
