@@ -2,11 +2,6 @@
 This configures Open Context geojson data visualization.
 */
 
-function gm_callback(args){
-    console.log('Google Map callback done.');
-    return null;
-}
-
 
 // These are geojson feature properties for individual records
 // that should be excluded from the UI and downloads.
