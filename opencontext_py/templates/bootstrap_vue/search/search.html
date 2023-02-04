@@ -144,6 +144,18 @@
             '$route': 'fetch_oc_api',
         },
         methods: {
+            iOS: function() {
+                return [
+                    'iPad Simulator',
+                    'iPhone Simulator',
+                    'iPod Simulator',
+                    'iPad',
+                    'iPhone',
+                    'iPod'
+                ].includes(navigator.platform)
+                // iPad on iOS 13 detection
+                || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+            },
             update_frontent_state_obj: function(){
                 let current_path = this.$route.fullPath;
                 if(current_path.indexOf('#') >= 0){
@@ -166,6 +178,9 @@
                 }
             },
             add_hash_to_location(hash_str) {
+                if(this.iOS()){
+                    return null;
+                }
                 let current_path = this.$route.fullPath;
                 if(current_path.indexOf('#') >= 0){
                     let current_path_ex = current_path.split('#');
