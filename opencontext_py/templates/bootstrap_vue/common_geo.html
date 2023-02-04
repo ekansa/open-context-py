@@ -2178,6 +2178,7 @@ var vc_common_map = Vue.component(
                     act_layer.min_count = act_geojson.min_count;
                     act_layer.max_count = act_geojson.max_count;
                     act_layer.id = act_geojson.id;
+                    console.log('act_layer is now: ' + act_layer.id);
                 }
                 else{
                     act_layer = L.geoJson(
@@ -2193,6 +2194,7 @@ var vc_common_map = Vue.component(
                         act_layer.query_url = act_geojson.query_url;
                         act_layer.totalResults = act_geojson.totalResults;
                     }
+                    console.log('act_layer is now a point layer');
                 }
                 i += 1;
                 act_layer.ref = act_geojson.ref;
