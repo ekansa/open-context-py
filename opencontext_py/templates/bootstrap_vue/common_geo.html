@@ -2274,9 +2274,12 @@ var vc_common_map = Vue.component(
 
                 //Make and add the heatmap layer.
                 // First, set up the color gradient for the heatmap.
-                if(this.iOS() && (!this.frontend_state_obj.hasOwnProperty('zoom') || this.frontend_state_obj.zoom == null)){
-                    console.log('skip heatmap when frontend config is not fully set');
-                    continue;
+                if(this.iOS()){
+                    let frag_obj = this.geo_view_from_state_obj(this.frontend_state_obj);
+                    if(!frag_obj.center){
+                        console.log('skip heatmap when center is not yet set');
+                        continue;
+                    }
                 }
                 let act_heatmap_config = JSON.parse(JSON.stringify(this.heatmap_config));
                 let feature_cnt = this.geo_tile_facets.features.length;
