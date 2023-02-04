@@ -109,6 +109,14 @@
               v-bind:chrono_facets="chrono_facets"></chronotiles>
 
           </b-card-text>
+          <b-card-text v-else>
+            <div class="jumbotron jumbotron-fluid">
+              <div class="container-fluid text-muted text-center">
+                <h1 class="display-4">Preparing chart...</h1>
+                <b-spinner class="m-5" label="Busy"></b-spinner>
+              </div>
+            </div>
+          </b-card-text>
         </b-tab>
 
         <b-tab

@@ -91,6 +91,20 @@
 
                 </b-col>
             </b-row>
+            <b-row class="range-explain">
+                <b-col class="text-muted">
+                    <small>
+                        <strong>Note:</strong> This chart shows the distribution search records in different time-spans. Wider "hills" indicate
+                        longer durations and/or more chronological uncertainty. The height of the "hills" indicate the proportion
+                        of search results falling within a given time range. Some records (like archaeological sites) may
+                        have multiple time-spans.
+                        <br/>
+                        <br/>
+                        Use the slider below the chart to select a range of dates or the input boxes then the filter button to
+                        filter your search by time ranges.
+                    </small>
+                </b-col>
+            </b-row>
         </b-container>
         <div v-else>
             <b-spinner class="m-5" label="Busy"></b-spinner>
@@ -218,6 +232,9 @@
   margin-top: -7px;
 }
 
+.range-explain {
+    margin-top: 24px;
+}
 </style>
 
 
