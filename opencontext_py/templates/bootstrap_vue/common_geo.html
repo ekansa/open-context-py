@@ -472,8 +472,26 @@
             }
         },
 
+        iOS: function() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform)
+            // iPad on iOS 13 detection
+            || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+        },
+
         update_new_fontend_state: function(frag_obj){
             // Updates the frontend state for all vue components.
+            if(this.iOS()){
+                // Don't do hash changes for iOS. The browser will say
+                // we have an error.
+                return false;
+            }
             if(frag_obj.hasOwnProperty('center')){
                 delete frag_obj.center;
             }
