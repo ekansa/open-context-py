@@ -472,26 +472,8 @@
             }
         },
 
-        iOS: function() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform)
-            // iPad on iOS 13 detection
-            || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
-        },
-
         update_new_fontend_state: function(frag_obj){
             // Updates the frontend state for all vue components.
-            if(this.iOS()){
-                // Don't do hash changes for iOS. The browser will say
-                // we have an error.
-                return false;
-            }
             if(frag_obj.hasOwnProperty('center')){
                 delete frag_obj.center;
             }
@@ -839,6 +821,18 @@ var vc_common_map = Vue.component(
     },
     methods: {
         // Utility functions for search map interface
+        iOS: function() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform)
+            // iPad on iOS 13 detection
+            || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+        },
         util_search_map_ok: function(){
             if(this.map_type != 'search'){
                 return false;
@@ -1258,18 +1252,25 @@ var vc_common_map = Vue.component(
             }
             this.map.visible_overlay_ids = [];
             this.set_map_view_from_frontend_state_obj();
-            this.map_hash_obj = new L.Hash(this.map);
-            this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
-            this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
-            this.map_hash_obj.update_base_layer = this.update_base_layer;
-            this.map.hash_obj = this.map_hash_obj;
-            this.map.on('baselayerchange', function(e) {
-                // when the base layer changes, keep the id
-                this.baselayer_name = e.name;
-                if(this.hash_obj){
-                    this.hash_obj.forceHashChange();
-                }
-            });
+            if(this.iOS()){
+                this.map_hash_obj = null;
+                this.map.hash_obj = null;
+                console.log('iOS detected. This does not like url hash updating, so do not install');
+            }
+            else{
+                this.map_hash_obj = new L.Hash(this.map);
+                this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+                this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
+                this.map_hash_obj.update_base_layer = this.update_base_layer;
+                this.map.hash_obj = this.map_hash_obj;
+                this.map.on('baselayerchange', function(e) {
+                    // when the base layer changes, keep the id
+                    this.baselayer_name = e.name;
+                    if(this.hash_obj){
+                        this.hash_obj.forceHashChange();
+                    }
+                });
+            }
             this.map.overlay_ready = false;
             this.map.on('overlayadd', function(e) {
                 // Adding an overlay layer, note what layers are active
