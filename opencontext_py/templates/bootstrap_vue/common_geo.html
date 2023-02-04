@@ -1266,7 +1266,6 @@ var vc_common_map = Vue.component(
                     this.hash_obj.forceHashChange();
                 }
             });
-            console.log('Added map.hash_obj');
             this.map.overlay_ready = false;
             this.map.on('overlayadd', function(e) {
                 // Adding an overlay layer, note what layers are active
@@ -1317,7 +1316,6 @@ var vc_common_map = Vue.component(
                     this.hash_obj.forceHashChange();
                 }
             });
-            console.log('end add_search_map_hash');
         },
         cat_limit_feature_data(category_limit, feature_data=null){
             if(!feature_data){
@@ -2139,7 +2137,6 @@ var vc_common_map = Vue.component(
 
             // Removes prior geojson overlay layers from prior routing.
             this.remove_prior_overlays();
-            console.log('removed prior layers');
 
             // Gather all the types of 'raw' geojson used to build overlay layers.
             let overlays_geojson = [];
@@ -2200,6 +2197,7 @@ var vc_common_map = Vue.component(
                 i += 1;
                 act_layer.ref = act_geojson.ref;
                 act_layer.label = act_geojson.label;
+                console.log('act_layer is now: ' + act_layer.label);
                 if(act_geojson.hasOwnProperty('ov_id')){
                     act_layer.ov_id = act_geojson.ov_id;
                 }
