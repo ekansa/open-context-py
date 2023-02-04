@@ -1138,7 +1138,7 @@ var vc_common_map = Vue.component(
                         act_layer.removeFrom(map);
                     }
                 }
-                if(map.hash_obj){
+                if(!this.iOS() && map.hash_obj){
                     map.hash_obj.forceHashChange();
                 }
             };
@@ -1255,6 +1255,7 @@ var vc_common_map = Vue.component(
             if(this.iOS()){
                 this.map_hash_obj = null;
                 this.map.hash_obj = null;
+                this.hash_obj = null;
                 console.log('iOS detected. This does not like url hash updating, so do not install');
             }
             else{
@@ -1293,7 +1294,7 @@ var vc_common_map = Vue.component(
                     // Nothing changed so skip out.
                     return null;
                 }
-                if(this.hash_obj){
+                if(!this.iOS() && this.hash_obj){
                     this.hash_obj.forceHashChange();
                 }
             });
@@ -1317,7 +1318,7 @@ var vc_common_map = Vue.component(
                     return null;
                 }
                 this.visible_overlay_ids = new_overlay_ids;
-                if(this.hash_obj){
+                if(!this.iOS() && this.hash_obj){
                     this.hash_obj.forceHashChange();
                 }
             });
@@ -2418,7 +2419,9 @@ var vc_common_map = Vue.component(
             if(this.frontend_state_obj.ov == null || this.frontend_state_obj.ov == ''){
                 // No overlays passed from frontend state object.
                 delete this.frontend_state_obj.ov;
-                this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+                if(this.map_hash_obj){
+                    this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+                }
                 return null;
             }
             if(typeof this.frontend_state_obj.ov === 'string'){
@@ -2436,7 +2439,9 @@ var vc_common_map = Vue.component(
             if(valid_ov_ids.length < 0){
                 // no valid overlays found, so delete this key and skip out.
                 delete this.frontend_state_obj.ov;
-                this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+                if(this.map_hash_obj){
+                    this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+                }
                 return null;
             }
 
@@ -2568,7 +2573,7 @@ var vc_common_map = Vue.component(
                 return null;
             }
             this.map.overlay_ready = false;
-            if(this.map_type == 'search' && this.map_hash_obj){
+            if(this.map_type == 'search' && this.map_hash_obj && !this.iOS()){
                 this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
                 this.map.hash_obj = this.map_hash_obj;
             }
