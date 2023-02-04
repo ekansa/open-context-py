@@ -2500,10 +2500,19 @@ var vc_common_map = Vue.component(
                 console.log('Missing this.geo_json, use GEO_JSON');
                 this.geo_json = GEO_JSON;
             }
+            if(this.$refs[this.map_ref] == null){
+                console.log('no item: ' + this.map_ref);
+                return null;
+            }
             setTimeout(() => {
                 // wait a bit so the geojson layer is available.
-                this.$refs[this.map_ref].mapObject.invalidateSize();
-            }, 50);
+                try {
+                    this.$refs[this.map_ref].mapObject.invalidateSize();
+                } catch (error) {
+                    console.log('Map not yet ready to invalidateSize()');
+                    console.log(error);
+                }
+            }, 100);
         },
         get_item_location_info: function() {
             if(!this.geo_json || !this.item_json){
