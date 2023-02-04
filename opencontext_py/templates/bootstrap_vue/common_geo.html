@@ -2122,6 +2122,7 @@ var vc_common_map = Vue.component(
                 this.frontend_state_obj.ovgrd = MAP_DEFAULT_COLOR_GRADIENT_KEY;
             }
 
+            console.log('overlay color gradient: ' + this.frontend_state_obj.ovgrd);
             // prevent mutation of the result.
             this.geo_tile_facets = this.cat_limit_feature_data(
                 'oc-api:geo-facet',
@@ -2138,6 +2139,7 @@ var vc_common_map = Vue.component(
 
             // Removes prior geojson overlay layers from prior routing.
             this.remove_prior_overlays();
+            console.log('removed prior layers');
 
             // Gather all the types of 'raw' geojson used to build overlay layers.
             let overlays_geojson = [];
@@ -2162,6 +2164,7 @@ var vc_common_map = Vue.component(
             if(overlays_geojson.length < 1){
                 return null;
             }
+            console.log('overlays_geojson.length = ' + overlays_geojson.length);
 
             this.map.overlay_layers_by_id = {};
             let i = -1;
