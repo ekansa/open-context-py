@@ -2178,7 +2178,7 @@ var vc_common_map = Vue.component(
                     act_layer.min_count = act_geojson.min_count;
                     act_layer.max_count = act_geojson.max_count;
                     act_layer.id = act_geojson.id;
-                    console.log('act_layer is now: ' + act_layer.id);
+                    console.log('act_layer id is now: ' + act_layer.id);
                 }
                 else{
                     act_layer = L.geoJson(
@@ -2212,6 +2212,7 @@ var vc_common_map = Vue.component(
                     act_layer.legend = this.make_record_layer_legend(act_layer);
                 }
 
+                console.log('act_layer legend made');
                 // Now add it again fresh.
                 act_layer.addTo(this.map, act_geojson.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
@@ -2219,6 +2220,8 @@ var vc_common_map = Vue.component(
                     act_geojson.label
                 );
                 act_layer.bringToFront();
+
+                console.log('act_layer moved to front');
                 // Add to the object of all overlays keyed by their ID.
                 this.map.overlay_layers_by_id[act_layer.ov_id] = act_layer;
 
@@ -2227,6 +2230,7 @@ var vc_common_map = Vue.component(
                     this.map.removeLayer(l_geo_json);
                 }
 
+                console.log('start layer visible');
                 if(!this.frontend_state_obj.hasOwnProperty('ov') && act_layer.ov_id == SEARCH_MAP_DEFAULT_OVERLAY_KEY){
                     // we don't have a frontend obj determined overlay, and we don't have any
                     // currently visible overlays, so make this active layer visible.
@@ -2236,6 +2240,7 @@ var vc_common_map = Vue.component(
                 else{
                     this.map.removeLayer(act_layer);
                 }
+                console.log('end layer visible');
 
                 // Add headmap if relevant.
                 let heatmap_data = this.geojson_to_heatmap_data(act_geojson);
@@ -2247,6 +2252,7 @@ var vc_common_map = Vue.component(
                 // Extract the current geodeep property. This is needed to give a starting
                 // value for increasing or decreasing the tile resolution controls.
                 this.get_map_geodeep_from_geojson(act_geojson);
+                console.log('got geodeep');
 
                 // Make and add a circle layer
                 let circle_layer = L.geoJson(
@@ -2270,6 +2276,7 @@ var vc_common_map = Vue.component(
                 circle_layer.bringToFront();
                 this.map.removeLayer(circle_layer);
                 this.map.overlay_layers_by_id[circle_layer.ov_id] = circle_layer;
+                console.log('end circle layer');
 
                 //Make and add the heatmap layer.
                 // First, set up the color gradient for the heatmap.
@@ -2318,6 +2325,7 @@ var vc_common_map = Vue.component(
                 heatmap_layer.zIndex = 100;
                 this.map.removeLayer(heatmap_layer);
                 this.map.overlay_layers_by_id[heatmap_layer.ov_id] = heatmap_layer;
+                console.log('end heatmap layer');
             }
 
             console.log('end add_overlay_layers');
