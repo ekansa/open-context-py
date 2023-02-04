@@ -2281,15 +2281,6 @@ var vc_common_map = Vue.component(
                 //Make and add the heatmap layer.
                 // First, set up the color gradient for the heatmap.
                 let act_heatmap_config = JSON.parse(JSON.stringify(this.heatmap_config));
-                if(false && this.geo_tile_facets.features.length > 100 && this.map.geodeep && this.frontend_state_obj.zm && this.frontend_state_obj.zm < (this.map.geodeep - 4) ){
-                    let zm_factor = Math.round((5 * (this.map.geodeep - this.frontend_state_obj.zm)), 0);
-                    if(zm_factor > 30){
-                        zm_factor = 30;
-                    }
-                    console.log('tile features: ' + this.geo_tile_facets.features.length);
-                    console.log('zm_factor is: ' + zm_factor);
-                    act_heatmap_config.radius = act_heatmap_config.radius - zm_factor;
-                }
                 let feature_cnt = this.geo_tile_facets.features.length;
                 if(feature_cnt >= 100){
                     let act_radius = act_heatmap_config.radius - Math.round(
@@ -2306,9 +2297,11 @@ var vc_common_map = Vue.component(
                     console.log('act_radius is: ' + act_radius);
                     act_heatmap_config.radius = act_radius;
                 }
+                console.log('make heatmap gradient with: ' + this.selected_gradient_key);
                 act_heatmap_config.gradient = this.make_heatmap_gradient_config(
                     this.selected_gradient_key
                 );
+                console.log('make heatmap layer');
                 let heatmap_layer = new HeatmapOverlay(act_heatmap_config);
                 heatmap_layer.ref = heatmap_data.ref;
                 heatmap_layer.label = heatmap_data.label;
