@@ -1067,6 +1067,10 @@ def get_general_hierarchic_paths_query_dict(
     return query_dict
 
 
+# ---------------------------------------------------------------------
+# SPECIALIZED DINAA FUNCTIONS
+# ---------------------------------------------------------------------
+
 def get_linked_dinaa_query_dict():
     """Get a query dict for records that in some way cross reference with DINAA records"""
     query_dict = {'fq': [], 'facet.field': []}
@@ -1082,4 +1086,45 @@ def get_linked_dinaa_query_dict():
     # facets for class_uris for the current item type.
     query_dict['facet.field'].append(configs.ROOT_OC_CATEGORY_SOLR)
     query_dict['facet.field'].append('dc_terms_is_referenced_by___pred_id')
+    return query_dict
+
+
+def get_trinomial_query_dict(raw_trinomial):
+    """Make a query dict for trinomial identifiers"""
+    if not raw_trinomial:
+        return None
+    query_dict = {'fq': []}
+    values_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_trinomial,
+        or_delim=configs.REQUEST_OR_OPERATOR,
+        hierarchy_delim=None
+    )
+    tri_list = []
+    for value in values_list:
+        if not value:
+            continue
+        tri_list += utilities.make_uri_equivalence_list(value)
+
+    act_terms = []
+    for act_tri in tri_list:
+        # The act_id maybe a persistent URI, escape it and
+        # query the persistent_uri string.
+        escape_tri = utilities.escape_solr_arg(act_tri)
+        act_terms.append(
+            f'(52_smithsonian_trinomial_identifier___pred_string:{escape_tri})'
+        )
+        act_terms.append(
+            f'(52_sortable_trinomial___pred_string:{escape_tri})'
+        )
+        act_terms.append(
+            f'(52_variant_trinomial_expressions___pred_string:{escape_tri})'
+        )
+        act_terms.append(
+            f'(slug_type_uri_label:*{escape_tri})'
+        )
+        query_dict['fq'].append(
+            utilities.join_solr_query_terms(
+                act_terms, operator='OR'
+            )
+        )
     return query_dict
