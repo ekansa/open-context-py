@@ -178,9 +178,6 @@
                 }
             },
             add_hash_to_location(hash_str) {
-                if(this.iOS()){
-                    return null;
-                }
                 let current_path = this.$route.fullPath;
                 if(current_path.indexOf('#') >= 0){
                     let current_path_ex = current_path.split('#');

@@ -1138,7 +1138,7 @@ var vc_common_map = Vue.component(
                         act_layer.removeFrom(map);
                     }
                 }
-                if(!this.iOS() && map.hash_obj){
+                if(map.hash_obj){
                     map.hash_obj.forceHashChange();
                 }
             };
@@ -1252,26 +1252,18 @@ var vc_common_map = Vue.component(
             }
             this.map.visible_overlay_ids = [];
             this.set_map_view_from_frontend_state_obj();
-            if(this.iOS()){
-                this.map_hash_obj = null;
-                this.map.hash_obj = null;
-                this.hash_obj = null;
-                console.log('iOS detected. This does not like url hash updating, so do not install');
-            }
-            else{
-                this.map_hash_obj = new L.Hash(this.map);
-                this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
-                this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
-                this.map_hash_obj.update_base_layer = this.update_base_layer;
-                this.map.hash_obj = this.map_hash_obj;
-                this.map.on('baselayerchange', function(e) {
-                    // when the base layer changes, keep the id
-                    this.baselayer_name = e.name;
-                    if(this.hash_obj){
-                        this.hash_obj.forceHashChange();
-                    }
-                });
-            }
+            this.map_hash_obj = new L.Hash(this.map);
+            this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
+            this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
+            this.map_hash_obj.update_base_layer = this.update_base_layer;
+            this.map.hash_obj = this.map_hash_obj;
+            this.map.on('baselayerchange', function(e) {
+                // when the base layer changes, keep the id
+                this.baselayer_name = e.name;
+                if(this.hash_obj){
+                    this.hash_obj.forceHashChange();
+                }
+            });
             this.map.overlay_ready = false;
             this.map.on('overlayadd', function(e) {
                 // Adding an overlay layer, note what layers are active
@@ -1294,7 +1286,7 @@ var vc_common_map = Vue.component(
                     // Nothing changed so skip out.
                     return null;
                 }
-                if(!this.iOS() && this.hash_obj){
+                if(this.hash_obj){
                     this.hash_obj.forceHashChange();
                 }
             });
@@ -1318,7 +1310,7 @@ var vc_common_map = Vue.component(
                     return null;
                 }
                 this.visible_overlay_ids = new_overlay_ids;
-                if(!this.iOS() && this.hash_obj){
+                if(this.hash_obj){
                     this.hash_obj.forceHashChange();
                 }
             });
@@ -2377,7 +2369,7 @@ var vc_common_map = Vue.component(
                 console.log('Frontend state object set map bounds.');
                 return null;
             }
-            // console.log('Use overlay layer to fit bounds.');
+            console.log('Use overlay layer to fit bounds.');
             let act_overlay_layer = null;
             if(this.map.hasOwnProperty('overlay_layers_by_id')){
                 if (this.map.overlay_layers_by_id && this.map.overlay_layers_by_id.hasOwnProperty('sqr')){
@@ -2387,7 +2379,7 @@ var vc_common_map = Vue.component(
             if(act_overlay_layer == null){
                 act_overlay_layer = this.$refs[this.geojson_ref];
                 if(act_overlay_layer == null){
-                    // console.log('no geo-json layer item: ' + this.geojson_ref);
+                    console.log('no geo-json layer item: ' + this.geojson_ref);
                     return null;
                 }
             }
@@ -2398,7 +2390,7 @@ var vc_common_map = Vue.component(
             this.map.auto_fit = true;
             let bounds = act_overlay_layer.getBounds();
             this.map.fitBounds(bounds);
-            // console.log(bounds);
+            console.log(bounds);
             this.map.auto_fit = false;
         },
         frontend_obj_overlays_prep: function(){
@@ -2573,7 +2565,7 @@ var vc_common_map = Vue.component(
                 return null;
             }
             this.map.overlay_ready = false;
-            if(this.map_type == 'search' && this.map_hash_obj && !this.iOS()){
+            if(this.map_type == 'search' && this.map_hash_obj){
                 this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
                 this.map.hash_obj = this.map_hash_obj;
             }
