@@ -2313,6 +2313,7 @@ var vc_common_map = Vue.component(
                 console.log('heatmap: did set data');
                 heatmap_layer.legend = this.make_layer_legend(heatmap_layer, 'heat_style');
                 console.log('heatmap: made legend');
+                console.log(heatmap_layer);
                 heatmap_layer.addTo(this.map, heatmap_layer.label);
                 console.log('heatmap: added to map');
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
