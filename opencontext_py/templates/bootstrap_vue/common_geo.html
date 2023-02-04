@@ -2178,7 +2178,7 @@ var vc_common_map = Vue.component(
                     act_layer.min_count = act_geojson.min_count;
                     act_layer.max_count = act_geojson.max_count;
                     act_layer.id = act_geojson.id;
-                    console.log('act_layer id is now: ' + act_layer.id);
+                    // console.log('act_layer id is now: ' + act_layer.id);
                 }
                 else{
                     act_layer = L.geoJson(
@@ -2194,7 +2194,7 @@ var vc_common_map = Vue.component(
                         act_layer.query_url = act_geojson.query_url;
                         act_layer.totalResults = act_geojson.totalResults;
                     }
-                    console.log('act_layer is now a point layer');
+                    // console.log('act_layer is now a point layer');
                 }
                 i += 1;
                 act_layer.ref = act_geojson.ref;
@@ -2212,7 +2212,6 @@ var vc_common_map = Vue.component(
                     act_layer.legend = this.make_record_layer_legend(act_layer);
                 }
 
-                console.log('act_layer legend made');
                 // Now add it again fresh.
                 act_layer.addTo(this.map, act_geojson.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
@@ -2221,7 +2220,6 @@ var vc_common_map = Vue.component(
                 );
                 act_layer.bringToFront();
 
-                console.log('act_layer moved to front');
                 // Add to the object of all overlays keyed by their ID.
                 this.map.overlay_layers_by_id[act_layer.ov_id] = act_layer;
 
@@ -2230,7 +2228,6 @@ var vc_common_map = Vue.component(
                     this.map.removeLayer(l_geo_json);
                 }
 
-                console.log('start layer visible');
                 if(!this.frontend_state_obj.hasOwnProperty('ov') && act_layer.ov_id == SEARCH_MAP_DEFAULT_OVERLAY_KEY){
                     // we don't have a frontend obj determined overlay, and we don't have any
                     // currently visible overlays, so make this active layer visible.
@@ -2240,7 +2237,6 @@ var vc_common_map = Vue.component(
                 else{
                     this.map.removeLayer(act_layer);
                 }
-                console.log('end layer visible');
 
                 // Add headmap if relevant.
                 let heatmap_data = this.geojson_to_heatmap_data(act_geojson);
@@ -2252,7 +2248,6 @@ var vc_common_map = Vue.component(
                 // Extract the current geodeep property. This is needed to give a starting
                 // value for increasing or decreasing the tile resolution controls.
                 this.get_map_geodeep_from_geojson(act_geojson);
-                console.log('got geodeep');
 
                 // Make and add a circle layer
                 let circle_layer = L.geoJson(
@@ -2276,10 +2271,13 @@ var vc_common_map = Vue.component(
                 circle_layer.bringToFront();
                 this.map.removeLayer(circle_layer);
                 this.map.overlay_layers_by_id[circle_layer.ov_id] = circle_layer;
-                console.log('end circle layer');
 
                 //Make and add the heatmap layer.
                 // First, set up the color gradient for the heatmap.
+                if(this.iOS() && (!this.frontend_state_obj.hasOwnProperty('zoom') || this.frontend_state_obj.zoom == null)){
+                    console.log('skip heatmap when frontend config is not fully set');
+                    continue;
+                }
                 let act_heatmap_config = JSON.parse(JSON.stringify(this.heatmap_config));
                 let feature_cnt = this.geo_tile_facets.features.length;
                 if(feature_cnt >= 100){
@@ -2297,35 +2295,27 @@ var vc_common_map = Vue.component(
                     console.log('act_radius is: ' + act_radius);
                     act_heatmap_config.radius = act_radius;
                 }
-                console.log('make heatmap gradient with: ' + this.selected_gradient_key);
+
                 act_heatmap_config.gradient = this.make_heatmap_gradient_config(
                     this.selected_gradient_key
                 );
-                console.log('make heatmap layer');
                 let heatmap_layer = new HeatmapOverlay(act_heatmap_config);
                 heatmap_layer.ref = heatmap_data.ref;
                 heatmap_layer.label = heatmap_data.label;
                 heatmap_layer.ov_id = heatmap_data.ov_id;
                 heatmap_layer.min_count = heatmap_data.min_count;
                 heatmap_layer.max_count = heatmap_data.max_count;
-                console.log('heatmap: will set data');
                 heatmap_layer.setData(heatmap_data);
-                console.log('heatmap: did set data');
                 heatmap_layer.legend = this.make_layer_legend(heatmap_layer, 'heat_style');
-                console.log('heatmap: made legend');
                 console.log(heatmap_layer);
                 heatmap_layer.addTo(this.map, heatmap_layer.label);
-                console.log('heatmap: added to map');
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
                     heatmap_layer,
                     heatmap_layer.label
                 );
-                console.log('heatmap: added overlay');
                 heatmap_layer.zIndex = 100;
                 this.map.removeLayer(heatmap_layer);
-                console.log('heatmap: removed layer');
                 this.map.overlay_layers_by_id[heatmap_layer.ov_id] = heatmap_layer;
-                console.log('end heatmap layer');
             }
 
             console.log('end add_overlay_layers');
