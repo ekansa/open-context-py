@@ -1253,7 +1253,7 @@ var vc_common_map = Vue.component(
                 return null;
             }
             this.map.visible_overlay_ids = [];
-            this.set_map_view_from_frontend_state_obj();
+            let map_view_set = this.set_map_view_from_frontend_state_obj();
             this.map_hash_obj = new L.Hash(this.map);
             this.map_hash_obj.frontend_state_obj = this.frontend_state_obj;
             this.map_hash_obj.update_map_frontend_state_obj = this.update_map_frontend_state_obj;
@@ -1266,6 +1266,7 @@ var vc_common_map = Vue.component(
                     this.hash_obj.forceHashChange();
                 }
             });
+            console.log('Added map.hash_obj');
             this.map.overlay_ready = false;
             this.map.on('overlayadd', function(e) {
                 // Adding an overlay layer, note what layers are active
