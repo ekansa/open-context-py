@@ -1238,6 +1238,8 @@ var vc_common_map = Vue.component(
                 return null;
             }
             let frag_obj = this.geo_view_from_state_obj(this.frontend_state_obj);
+            console.log('frag obj geo view');
+            console.log(frag_obj);
             if (this.map_type == 'search' && frag_obj != null && frag_obj.center != null) {
                 console.log('Update map view from frontend state');
                 this.map.auto_fit = false;
