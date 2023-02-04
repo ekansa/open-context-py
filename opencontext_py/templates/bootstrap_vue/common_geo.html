@@ -2317,6 +2317,7 @@ var vc_common_map = Vue.component(
                 this.map.overlay_layers_by_id[heatmap_layer.ov_id] = heatmap_layer;
             }
 
+            console.log('end add_overlay_layers');
         },
         finesse_item_view: function(){
             if(!this.map){
@@ -2458,6 +2459,7 @@ var vc_common_map = Vue.component(
                     this.map.removeLayer(act_layer);
                 }
             }
+            console.log('end frontend_obj_overlays_prep');
         },
         add_bbox_obj: function(){
             if(!this.geo_json){
