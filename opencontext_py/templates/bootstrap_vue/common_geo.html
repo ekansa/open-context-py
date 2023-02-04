@@ -2308,15 +2308,21 @@ var vc_common_map = Vue.component(
                 heatmap_layer.ov_id = heatmap_data.ov_id;
                 heatmap_layer.min_count = heatmap_data.min_count;
                 heatmap_layer.max_count = heatmap_data.max_count;
+                console.log('heatmap: will set data');
                 heatmap_layer.setData(heatmap_data);
+                console.log('heatmap: did set data');
                 heatmap_layer.legend = this.make_layer_legend(heatmap_layer, 'heat_style');
+                console.log('heatmap: made legend');
                 heatmap_layer.addTo(this.map, heatmap_layer.label);
+                console.log('heatmap: added to map');
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
                     heatmap_layer,
                     heatmap_layer.label
                 );
+                console.log('heatmap: added overlay');
                 heatmap_layer.zIndex = 100;
                 this.map.removeLayer(heatmap_layer);
+                console.log('heatmap: removed layer');
                 this.map.overlay_layers_by_id[heatmap_layer.ov_id] = heatmap_layer;
                 console.log('end heatmap layer');
             }
