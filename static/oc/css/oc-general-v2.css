@@ -431,14 +431,10 @@ Search
 #search-records-tab .btn {
 	margin-bottom: 6px;
 }
-.easy-button-button-old span {
-	margin-top: 1px;
-	margin-left: -0.08em;
-}
 .easy-button-button span {
 	margin-top: 1px;
-	margin-left: -1px;
-	-webkit-text-size-adjust: none;
+	margin-left: -0.08em;
+	text-align: center;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {
