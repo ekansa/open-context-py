@@ -44,7 +44,7 @@
         <b-list-group flush>
             <b-list-group-item v-for="(legend, index) in legends" class="map-overlay-legend-item">
                 <b-row align-v="center">
-                    <b-col cols="3">
+                    <b-col lg="3">
                         <small>
                             <b-avatar
                             v-if="legend.icon"
@@ -70,32 +70,24 @@
                         </small>
                     </b-col>
                     <b-col>
-                        <div v-if="legend.poly_list">
+                        <b-container fluid v-if="legend.poly_list">
                             <b-row align-h="center" align-v="center">
-                                <b-col v-for="(sqr, c_index) in legend.poly_list" class="text-center">
+                                <b-col sm v-for="(sqr, c_index) in legend.poly_list" class="text-center">
                                     <svg width="25" height="25">
                                         <rect x="0" y="0" width="25" height="25" :style="sqr.svg_style" />
-                                    </svg>
+                                    </svg><br/>
+                                    <small class="text-center">[[ sqr.count ]]</small>
                                 </b-col>
                             </b-row>
-                            <b-row align-h="center" align-v="top">
-                                <b-col v-for="(sqr, c_index) in legend.poly_list" class="text-center">
-                                    <small>[[ sqr.count ]]</small>
-                                </b-col>
-                            </b-row>
-                        </div>
+                        </b-container>
 
                         <div v-if="legend.circle_list">
                             <b-row align-h="center" align-v="center">
-                                <b-col v-for="(crc, c_index) in legend.circle_list" class="text-center">
+                                <b-col sm v-for="(crc, c_index) in legend.circle_list" class="text-center">
                                     <svg :height="(crc.radius * 2) + 4" :width="(crc.radius * 2) + 4">
                                         <circle :cx="crc.radius + 2" :cy="crc.radius + 2" :r="crc.radius" :style="crc.svg_style" />
-                                    </svg>
-                                </b-col>
-                            </b-row>
-                            <b-row align-h="center" align-v="top">
-                                <b-col v-for="(crc, c_index) in legend.circle_list" class="text-center">
-                                    <small>[[ crc.count ]]</small>
+                                    </svg><br/>
+                                    <small class="text-center">[[ crc.count ]]</small>
                                 </b-col>
                             </b-row>
                         </div>
