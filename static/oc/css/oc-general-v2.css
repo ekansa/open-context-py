@@ -432,9 +432,12 @@ Search
 	margin-bottom: 6px;
 }
 .easy-button-button span {
-	margin-top: 1px;
-	margin-left: -0.08em;
+	margin-top: 2px;
+	margin-left: -0.06em;
 	text-align: center;
+	display: block;
+	height: 24px;
+	width: 24px;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {
