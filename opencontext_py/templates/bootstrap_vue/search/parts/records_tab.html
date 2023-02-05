@@ -93,79 +93,79 @@
 
 
 <template id="records-tab-header-footer">
-    <b-row>
-        <b-col cols="8">
+    <b-row align-v="center" align-h="between">
+        <b-col md="6">
             <h5 class="filter_heading_labels">
                 Search Results [[ view_range_note ]]
             </h5>
         </b-col>
-        <b-col sm cols="1">
-            <b-button
-                pill
-                variant="outline-primary"
-                size="sm"
-                v-if="result_page_first_link"
-                :to="result_page_first_link"
-                :id="hr_role + '-first-page-link-' + route_key_index"
-                :title="'First page of results'"
-                class="result_paging_button"
-            >
-                <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
-            </b-button>
-            <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
-                <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
-            </b-button>
-        </b-col>
-        <b-col sm cols="1">
-            <b-button
-                pill
-                variant="outline-primary"
-                size="sm"
-                v-if="result_page_previous_link"
-                :to="result_page_previous_link"
-                :id="hr_role + '-previous-page-link-' + route_key_index"
-                :title="'Previous page of results'"
-                class="result_paging_button"
-            >
-                <b-icon-chevron-left></b-icon-chevron-left>
-            </b-button>
-            <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
-                <b-icon-chevron-left></b-icon-chevron-left>
-            </b-button>
-        </b-col>
-        <b-col sm cols="1">
-            <b-button
-                pill
-                variant="outline-primary"
-                size="sm"
-                v-if="result_page_next_link"
-                :to="result_page_next_link"
-                :id="hr_role + '-next-page-link-' + route_key_index"
-                :title="'Next page of results'"
-                class="result_paging_button"
-            >
-                <b-icon-chevron-right></b-icon-chevron-right>
-            </b-button>
-            <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
-                <b-icon-chevron-right></b-icon-chevron-right>
-            </b-button>
-        </b-col>
-        <b-col sm cols="1">
-            <b-button
-                pill
-                variant="outline-primary"
-                size="sm"
-                v-if="result_page_last_link"
-                :to="result_page_last_link"
-                :id="hr_role + '-last-page-link-' + route_key_index"
-                :title="'Last page of results'"
-                class="result_paging_button"
-            >
-                <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
-            </b-button>
-            <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
-                <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
-            </b-button>
+        <b-col sm md="5" class="ml-auto text-right">
+            <b-button-group>
+                <small class="text-muted" style="margin-top:2%; margin-right:12px;">Paging Links</small>
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_first_link"
+                    :to="result_page_first_link"
+                    :id="hr_role + '-first-page-link-' + route_key_index"
+                    :title="'First page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
+                </b-button>
+
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_previous_link"
+                    :to="result_page_previous_link"
+                    :id="hr_role + '-previous-page-link-' + route_key_index"
+                    :title="'Previous page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-left></b-icon-chevron-left>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-left></b-icon-chevron-left>
+                </b-button>
+
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_next_link"
+                    :to="result_page_next_link"
+                    :id="hr_role + '-next-page-link-' + route_key_index"
+                    :title="'Next page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-right></b-icon-chevron-right>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-right></b-icon-chevron-right>
+                </b-button>
+
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_last_link"
+                    :to="result_page_last_link"
+                    :id="hr_role + '-last-page-link-' + route_key_index"
+                    :title="'Last page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
+                </b-button>
+            <b-button-group>
         </b-col>
     </b-row>
 </template>
