@@ -434,15 +434,14 @@ Search
 .easy-button-button span .button-state {
 	text-align: center;
 }
-.easy-button-button span .material-icons-two-tone {
+.easy-button-button span .cntrl-icons  {
 	margin-top: 2px;
 	margin-left: -0.1em;
 	text-align: center;
 }
-.easy-button-button span .material-icons {
+.easy-button-button span .ios_overlay_icons {
 	margin-top: 2px;
-	margin-left: -0.1em;
-	text-align: center;
+	margin-left: -8px;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {

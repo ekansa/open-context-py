@@ -711,11 +711,20 @@ var vc_common_map = Vue.component(
             geo_all_records: null,
             heatmap_data: null,
             overlay_icons: {
-                sqr: '<span class="material-icons-two-tone">grid_on</span>',
-                sqr_hr: '<span class="material-icons-two-tone">grid_on</span>',
-                sqr_lr: '<span class="material-icons-two-tone">window</span>',
-                crc: '<span class="material-icons">circle</span>',
-                heat: '<span class="material-icons">thermostat</span>',
+                sqr: '<span class="cntrl-icons material-icons-two-tone">grid_on</span>',
+                sqr_hr: '<span class="cntrl-icons material-icons-two-tone">grid_on</span>',
+                sqr_lr: '<span class="cntrl-icons material-icons-two-tone">window</span>',
+                crc: '<span class="cntrl-icons material-icons">circle</span>',
+                heat: '<span class="cntrl-icons material-icons">thermostat</span>',
+                color: '<span class="cntrl-icons material-icons-two-tone">palette</span>',
+            },
+            ios_overlay_icons: {
+                sqr: '<span class="ios-cntrl-icons material-icons-two-tone">grid_on</span>',
+                sqr_hr: '<span class="ios-cntrl-icons material-icons-two-tone">grid_on</span>',
+                sqr_lr: '<span class="ios-cntrl-icons material-icons-two-tone">window</span>',
+                crc: '<span class="ios-cntrl-icons material-icons">circle</span>',
+                heat: '<span class="ios-cntrl-icons material-icons">thermostat</span>',
+                color: '<span class="ios-cntrl-icons material-icons-two-tone">palette</span>',
             },
             geo_tile_facets_default: {
                 type: "FeatureCollection",
@@ -1118,7 +1127,12 @@ var vc_common_map = Vue.component(
             }
             this.map.update_geodeep = this.update_geodeep;
             this.map.show_map_color_ui = this.show_map_color_ui;
-            this.map.overlay_icons = this.overlay_icons;
+            if(this.iOS()){
+                this.map.overlay_icons = this.ios_overlay_icons;
+            }
+            else{
+                this.map.overlay_icons = this.overlay_icons;
+            }
             this.map.deactivate_all_overlays_except = function(map, active_ov_id){
                 if(!map.hasOwnProperty('overlay_layers_by_id')){
                     console.log('missing overlay_layers_by_id');
@@ -1188,7 +1202,7 @@ var vc_common_map = Vue.component(
                     'Heat-map visualization',
                 );
                 let color_control = L.easyButton(
-                    '<span class="material-icons-two-tone">palette</span>',
+                    map.overlay_icons.color,
                     function (){
                         map.show_map_color_ui();
                     },
