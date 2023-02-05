@@ -431,18 +431,14 @@ Search
 #search-records-tab .btn {
 	margin-bottom: 6px;
 }
-.easy-button-button span .button-state {
-	text-align: center;
-}
 .easy-button-button span .cntrl-icons  {
 	margin-top: 2px;
 	margin-left: -0.1em;
-	text-align: center;
 }
 .easy-button-button span .ios_overlay_icons {
 	margin-top: 2px;
 	margin-left: -0.2em;
-	text-align: center;
+	margin-right: 0.2em;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {
