@@ -1868,8 +1868,6 @@ var vc_common_map = Vue.component(
                     background-image: linear-gradient(${l_gradient_parts.join(', ')});`
                 );
             }
-            // console.log('Finished making legend');
-            // console.log(legend);
             return legend;
         },
         make_record_layer_legend: function(act_layer){
@@ -1891,7 +1889,6 @@ var vc_common_map = Vue.component(
                 query_url: null,
                 totalResults: null,
             };
-            console.log('make record legend');
             let record_layer_index = -1;
             if(act_layer.hasOwnProperty('record_layer_index')){
                 record_layer_index = act_layer.record_layer_index;
@@ -2120,7 +2117,6 @@ var vc_common_map = Vue.component(
                 this.frontend_state_obj.ovgrd = MAP_DEFAULT_COLOR_GRADIENT_KEY;
             }
 
-            console.log('overlay color gradient: ' + this.frontend_state_obj.ovgrd);
             // prevent mutation of the result.
             this.geo_tile_facets = this.cat_limit_feature_data(
                 'oc-api:geo-facet',
@@ -2161,7 +2157,6 @@ var vc_common_map = Vue.component(
             if(overlays_geojson.length < 1){
                 return null;
             }
-            console.log('overlays_geojson.length = ' + overlays_geojson.length);
 
             this.map.overlay_layers_by_id = {};
             let i = -1;
@@ -2199,7 +2194,6 @@ var vc_common_map = Vue.component(
                 i += 1;
                 act_layer.ref = act_geojson.ref;
                 act_layer.label = act_geojson.label;
-                console.log('act_layer is now: ' + act_layer.label);
                 if(act_geojson.hasOwnProperty('ov_id')){
                     act_layer.ov_id = act_geojson.ov_id;
                 }
@@ -2310,7 +2304,6 @@ var vc_common_map = Vue.component(
                 heatmap_layer.max_count = heatmap_data.max_count;
                 heatmap_layer.setData(heatmap_data);
                 heatmap_layer.legend = this.make_layer_legend(heatmap_layer, 'heat_style');
-                console.log(heatmap_layer);
                 heatmap_layer.addTo(this.map, heatmap_layer.label);
                 this.$refs[this.l_controls_ref].mapObject.addOverlay(
                     heatmap_layer,
@@ -2320,8 +2313,6 @@ var vc_common_map = Vue.component(
                 this.map.removeLayer(heatmap_layer);
                 this.map.overlay_layers_by_id[heatmap_layer.ov_id] = heatmap_layer;
             }
-
-            console.log('end add_overlay_layers');
         },
         finesse_item_view: function(){
             if(!this.map){
