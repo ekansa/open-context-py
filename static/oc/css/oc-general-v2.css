@@ -437,8 +437,8 @@ Search
 }
 .easy-button-button span .ios_overlay_icons {
 	margin-top: 2px;
-	margin-left: -0.2em;
-	margin-right: 0.2em;
+	margin-left: -12px;
+	display: block;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {
