@@ -431,14 +431,13 @@ Search
 #search-records-tab .btn {
 	margin-bottom: 6px;
 }
-.easy-button-button span .cntrl-icons  {
+.cntrl-icons  {
 	margin-top: 2px;
 	margin-left: -0.1em;
 }
-.easy-button-button span .ios_overlay_icons {
+.ios_overlay_icons {
 	margin-top: 2px;
-	margin-left: -12px;
-	display: block;
+	margin-right: 12px;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {
