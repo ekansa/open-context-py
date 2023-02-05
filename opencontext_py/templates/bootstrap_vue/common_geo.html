@@ -1128,6 +1128,7 @@ var vc_common_map = Vue.component(
             this.map.update_geodeep = this.update_geodeep;
             this.map.show_map_color_ui = this.show_map_color_ui;
             if(this.iOS()){
+                console.log('Use iOS class for icons');
                 this.map.overlay_icons = this.ios_overlay_icons;
             }
             else{
