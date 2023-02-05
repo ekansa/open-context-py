@@ -437,7 +437,7 @@ Search
 }
 .ios_overlay_icons {
 	margin-top: 2px;
-	margin-right: 12px;
+	margin-left: -24px;
 }
 /* This puts the heatmap layer above image overlays */
 .leaflet-zoom-hide {
