@@ -67,7 +67,7 @@ ul.works-list-right {
 ul.works-list li{
     background-repeat: no-repeat;
     padding-left: 70px;
-    height:70px;
+    min-height:70px;
     margin-left:-85px;
     padding-top:10px;
 }
