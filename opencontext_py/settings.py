@@ -672,10 +672,6 @@ NAV_ITEMS = [
                 'link': '/about/estimate',
             },
             {
-                'display': 'Concepts',
-                'link': '/about/concepts',
-            },
-            {
                 'display': 'Technology',
                 'link': '/about/technology',
             },
