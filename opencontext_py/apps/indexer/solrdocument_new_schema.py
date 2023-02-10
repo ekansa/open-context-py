@@ -2,6 +2,8 @@ import copy
 import datetime
 from django.core.cache import caches
 
+from django.db.models import Q
+
 from opencontext_py.libs.utilities import chronotiles
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
@@ -151,6 +153,15 @@ ITEM_TYPE_INTEREST_SCORES = {
 
 
 ALL_ATTRIBUTE_GROUPS_SLUG = 'oc-gen-attribute-groups'
+
+# Projects with more records and more variety of records
+# should have a greater information content. For every 500
+# records, they should get an extra interest score point.
+# This gets
+PROJ_ITEM_COUNT_FACTOR = 0.00125
+# Projects with more variety will get an extra bonus to the
+# raw counts of their items.
+PROJ_ITEM_TYPE_ITEM_CLASS_COUNT_VARIETY_BONUS = 0.005
 
 
 def clear_caches():
@@ -1832,6 +1843,55 @@ class SolrDocumentNS:
             self._clean_add_uri_to_solr_object_uri_field(assert_obj.object.uri)
 
 
+    def _calculate_interest_for_project(self):
+        """Add to the interest score for projects based on scale and diversity"""
+        if self.man_obj.item_type != 'projects':
+            return 0
+        sub_projects_qs = AllManifest.objects.filter(
+            project=self.man_obj,
+            item_type='projects'
+        )
+        projects = [self.man_obj]
+        for proj_obj in sub_projects_qs:
+            if proj_obj in projects:
+                continue
+            projects.append(proj_obj)
+        item_type_class_mq = AllManifest.objects.filter(
+            project__in=projects,
+            item_type__in=configs.OC_ITEM_TYPES,
+        ).distinct(
+            'item_type',
+            'item_class'
+        ).order_by(
+            'item_type',
+            'item_class'
+        ).values_list(
+            'item_type',
+            'item_class',
+        )
+        print(f'found {len(item_type_class_mq)} distinct item_types and item_classes')
+        item_type_class_counts = []
+        for (item_type, item_class) in item_type_class_mq:
+            count_item_type_class = AllManifest.objects.filter(
+                project__in=projects,
+                item_type=item_type,
+                item_class=item_class,
+            ).count()
+            tup = (item_type, item_class, count_item_type_class,)
+            item_type_class_counts.append(tup)
+        item_type_class_counts.sort(reverse=True, key=lambda a: a[2])
+        proj_score = 0
+        count_multiplier = PROJ_ITEM_COUNT_FACTOR
+        for item_type, _, count_item_type_class in item_type_class_counts:
+            media_bonus = 1
+            if item_type == 'media':
+                media_bonus = 1.5
+            proj_score += count_item_type_class * count_multiplier * media_bonus
+            print(f'Proj score: {proj_score} += {count_item_type_class} * {count_multiplier} * {media_bonus} [{item_type}]')
+            count_multiplier += PROJ_ITEM_TYPE_ITEM_CLASS_COUNT_VARIETY_BONUS
+        return proj_score
+
+
     def _calculate_interest_score(self):
         """ Calculates the 'interest score' for sorting items with more
         documentation / description to a higher rank.
@@ -1865,6 +1925,9 @@ class SolrDocumentNS:
         score += self.fields['subjects_count']
         score += self.fields['persons_count'] * 2
         score += self.fields['tables_count'] * 5
+        # Add project scale and diversity score values. Will be
+        # zero for non-project item_types
+        score += self._calculate_interest_for_project()
         if self.geo_specified:
             # geo data specified, more interesting
             score += 5
