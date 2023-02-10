@@ -62,12 +62,12 @@
     >
         <b-row>
             <b-col cols="12">
-                <p>This tool exports the current set of records as a data table or a GIS output. 
-                    GIS exports can be saved and previewed on the search result map. For convenience, 
-                    these outputs represent data in somewhat simplified formats. If you need more 
-                    expressive and complete representations of these data, 
-                    please see the <a href="../../about/services" target="_blank">API documentation</a>. 
-                    Please also note that location data for certain records may be approximated as a 
+                <p>This tool exports the current set of records as a data table or a GIS output.
+                    GIS exports can be saved and previewed on the search result map. For convenience,
+                    these outputs represent data in somewhat simplified formats. If you need more
+                    expressive and complete representations of these data,
+                    please see the <a href="../../about/services" target="_blank">API documentation</a>.
+                    Please also note that location data for certain records may be approximated as a
                     security precaution or because precise data are not available.
                 </p>
             </b-col>
@@ -78,16 +78,16 @@
 
                 <b-row v-if="dl_progress" class="progress_row">
                     <b-col cols="12">
-              
+
                       <b-progress max="1" height="2rem" variant="success">
                         <b-progress-bar :value="dl_progress">
                           <span><strong>[[ (dl_progress * 100).toFixed(1) ]] %</strong> ([[ dl_message ]])</span>
                         </b-progress-bar>
                       </b-progress>
-              
+
                     </b-col>
                 </b-row>
-                
+
             </b-col>
         </b-row>
 
@@ -129,7 +129,7 @@
                     <b-col cols="12">
                         <b-alert show variant="info"  v-if="!dl_started">
                             <small>
-                                After you have selected attributes to include in your download, click the button below to 
+                                After you have selected attributes to include in your download, click the button below to
                                 begin the download. Once the download is complete, you will see options to save the downloaded
                                 records on your device. You will also be able to view the downloaded records on Open Context's
                                 map interface.
@@ -139,14 +139,14 @@
                             <b-button
                                 block
                                 :disabled="dl_button_disable"
-                                variant="primary" 
+                                variant="primary"
                                 @click="get_records">
                                 <b-icon-download></b-icon-download> Start Download
                             </b-button>
                         </b-alert>
                         <b-alert show variant="secondary" v-if="dl_complete">
                             <p><strong>NOTE</strong><br/>
-                            Your completed download is now available to view on the map. Open the map layer options 
+                            Your completed download is now available to view on the map. Open the map layer options
                             to select the downloaded records for view. However, the map view is only kept temporarily on
                             your browser. If you reload this page, you will need to redo the download to view on the map.
                             </p>
@@ -164,8 +164,13 @@
                         </div>
                         <b-alert show variant="info" v-else-if="dl_complete">
                             <h5 class="text-center">Download of <strong>[[ human_act_total_count ]]</strong> records completed.</h5>
-                            <p>Data for all records are fully downloaded and can be saved on your device in a tabular (CSV) and/or 
+                            <p v-if="act_downloaded_count === act_total_count">Data for all records are fully downloaded and can be saved on your device in a tabular (CSV) and/or
                             a GIS (GeoJSON) format using the buttons below.
+                            </p>
+                            <p v-else>The download is complete, however [[ act_downloaded_count ]] of [[ act_total_count ]] records
+                                have enough public data to be saved on your device in a tabular (CSV) and/or
+                                a GIS (GeoJSON) format using the buttons below. The remaining [[ (act_total_count - act_downloaded_count)]] records
+                                with partial data are currently only available via the <a href="../../about/services" target="_blank">Open Context API</a>.
                             </p>
 
                             <b-row align-v="center">
@@ -176,15 +181,15 @@
                                     <b-form-input
                                         debounce="100"
                                         @change="update_act_download_label"
-                                        type="text" 
-                                        v-model="act_download_label" 
+                                        type="text"
+                                        v-model="act_download_label"
                                         value="act_download_label"></b-form-input>
                                 </b-col>
                             </b-row>
                             <b-row align-v="center" class="download-filesave-row">
                                 <b-col cols="8">
                                     <small><strong>CSV (Comma Separated Value)</strong> format to save data as a
-                                        table for use in a spreadsheet or database application, or 
+                                        table for use in a spreadsheet or database application, or
                                         for analysis using scripting languages like
                                         <strong>R</strong> or <strong>Python</strong>.
                                     </small>
@@ -214,7 +219,7 @@
                             </b-row>
 
                             <p><strong><b-icon-gear-fill></b-icon-gear-fill> Advanced Options</strong><br/>
-                                <small>Some attributes may have multiple values. 
+                                <small>Some attributes may have multiple values.
                                     Select how multi-valued attributes should be expressed in saved files.
                                 </small>
                             </p>
@@ -237,25 +242,25 @@
                         <div v-if="!dl_started">
                             <div class="accordion" role="tablist" v-if="act_attribs">
                                 <h5>Choose Additional Fields / Attributes to Include in Export</h5>
-                                <b-card 
+                                <b-card
                                     no-body
                                     class="mb-1"
                                     v-for="(attrib_grp, a_grp_index) in act_attribs">
                                     <b-card-header header-tag="header" class="p-1" role="tab">
-                                        <b-button 
+                                        <b-button
                                             block
                                             v-b-toggle="'attrib_grp_panel_' + a_grp_index"
                                             variant="secondary"><i class="bi bi-arrows-expand"></i> [[attrib_grp.label]]</b-button>
                                     </b-card-header>
-                                    <b-collapse 
+                                    <b-collapse
                                         :id="'attrib_grp_panel_' + a_grp_index"
                                         visible
-                                        :accordion="'attrib_grp_panel_accordion_' + a_grp_index" 
+                                        :accordion="'attrib_grp_panel_accordion_' + a_grp_index"
                                         role="tabpanel">
                                         <b-card-body>
                                             <small v-if="attrib_grp.note">[[attrib_grp.note]]</small>
                                             <b-list-group flush>
-                                                
+
                                                 <selectable-dl-attribs
                                                     v-for="(attrib_dt_grp, a_dt_grp_index) in attrib_grp.attribs"
                                                     v-bind:attrib_freq_types="attrib_freq_types"
@@ -263,7 +268,7 @@
                                                     v-bind:data_type="attrib_dt_grp.data_type"
                                                     v-bind:act_download_attribs="act_download_attribs">
                                                 </selectable-dl-attribs>
-                                                    
+
                                             </b-list-group>
                                         </b-card-body>
                                     </b-collapse>
@@ -278,7 +283,7 @@
             </b-col>
         </b-row>
 
-       
+
         <template #modal-footer="{ ok, cancel, hide }">
             <b-button size="sm" variant="outline-secondary" @click="cancel_close">
               Cancel
@@ -286,13 +291,13 @@
           </template>
     </b-modal>
 </template>
-    
+
 
 <script type="text/javascript">
 Vue.use(VueJsonToCsv);
 /*
 const vc_json_to_csv = Vue.component(
-    'vue-json-to-csv', 
+    'vue-json-to-csv',
     window.VueJsonToCsv,
 );
 */
@@ -634,7 +639,7 @@ var vc_search_exporter_ui = Vue.component(
                     // Something went wrong, so append the
                     // field using the other method
                     field_list.splice(i, 0, field);
-                    return field_list; 
+                    return field_list;
                 }
                 return new_field_list;
             },
@@ -689,7 +694,7 @@ var vc_search_exporter_ui = Vue.component(
                     lat = feature.geometry.coordinates[1];
                 }
                 else if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
-                    
+
                     let centroid = turf.centroid(feature);
                     lon = centroid.geometry.coordinates[0];
                     lat = centroid.geometry.coordinates[1];
@@ -759,8 +764,8 @@ var vc_search_exporter_ui = Vue.component(
                         }
                     }
                     clean_props = this.add_multivalue_fields_for_mapped_key(
-                        mapped_key, 
-                        val_list, 
+                        mapped_key,
+                        val_list,
                         clean_props
                     );
                 }
@@ -774,13 +779,16 @@ var vc_search_exporter_ui = Vue.component(
                     if(skip_excluded_property_key(key)){
                         continue;
                     }
+                    if(!val){
+                        continue;
+                    }
                     let mapped_key = map_property_key_to_field(key);
                     if(split_contexts && mapped_key == 'Context'){
                         // Special treatment for the 'Context' field.
                         val_list = val.split('/');
                         clean_props = this.add_multivalue_fields_for_mapped_key(
-                            mapped_key, 
-                            val_list, 
+                            mapped_key,
+                            val_list,
                             clean_props
                         );
                         // Skip the rest.
@@ -869,7 +877,7 @@ var vc_search_exporter_ui = Vue.component(
                     ov_id: 'records-' + act_record_set.record_layer_index,
                     totalResults: act_record_set.metadata.totalResults,
                     query_url: this.act_start_url,
-                    type: 'FeatureCollection', 
+                    type: 'FeatureCollection',
                     features: features,
                 };
                 this.$emit('add_geojson_record_layers', {geojson: geojson, record_sets:this.record_sets});
@@ -888,13 +896,13 @@ var vc_search_exporter_ui = Vue.component(
                     features.push(feature);
                 }
                 let str_data = JSON.stringify(
-                    {type: 'FeatureCollection', features: features}, 
-                    null, 
+                    {type: 'FeatureCollection', features: features},
+                    null,
                     4
                 );
                 this.save_file(
-                    str_data, 
-                    `${this.act_download_label}.json`, 
+                    str_data,
+                    `${this.act_download_label}.json`,
                     'text/json'
                 );
             },
@@ -1071,13 +1079,13 @@ var vc_search_exporter_ui = Vue.component(
                     record_sets[act_start_url] = null;
                     this.record_sets = JSON.parse(JSON.stringify(record_sets));
                 }
-                
+
                 let record_layer_index = this.geo_json_record_layer_count;
                 if(this.record_sets[act_start_url] != null){
                     // Skip out, we already have this.
                     return this.record_sets[act_start_url].metadata.totalResults;
                 }
-                
+
                 let start_metadata = JSON.parse(JSON.stringify(this.result)); // prevent mutation of the result.
                 if(start_metadata.hasOwnProperty('features')){
                     delete start_metadata.features;
@@ -1115,7 +1123,7 @@ var vc_search_exporter_ui = Vue.component(
             },
             check_page_in_record_sets: function(page_id){
                 let page_res = {
-                    ok: null, 
+                    ok: null,
                     page_new: null,
                     next_url: null,
                     downloaded_count: null,
@@ -1195,7 +1203,7 @@ var vc_search_exporter_ui = Vue.component(
                     // We already have this page downloaded.
                     this.act_downloaded_count = page_res.downloaded_count;
                     if(!this.dl_complete && page_res.next_url != null){
-                        this.recursive_fetch_oc_records_api(page_res.next_url); 
+                        this.recursive_fetch_oc_records_api(page_res.next_url);
                     }
                     this.error = null;
                     this.loading = false;
@@ -1230,9 +1238,12 @@ var vc_search_exporter_ui = Vue.component(
                     }
                     if(this.act_page_url != null){
                         console.log('Fetch next act page ' + this.act_page_url);
-                        setTimeout(() => { 
-                            this.recursive_fetch_oc_records_api(this.act_page_url); 
+                        setTimeout(() => {
+                            this.recursive_fetch_oc_records_api(this.act_page_url);
                         }, this.sleep_pause);
+                    }
+                    if(this.act_page_url === null){
+                        this.dl_complete = true;
                     }
                 })
                 .catch(error => {
