@@ -257,3 +257,58 @@ def projects_geojson(request):
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
     return make_json_response(request, req_neg, proj_geojson)
+
+
+def projects_html(request, spatial_context=None):
+    """Project index and discovery page"""
+    request_dict = utilities.make_request_obj_dict(
+        request, spatial_context=spatial_context
+    )
+    request_dict['item_type'] = 'projects'
+    response_dict = process_solr_query(request_dict.copy())
+
+    req_neg = RequestNegotiation('text/html')
+    req_neg.supported_types = [
+        'application/json',
+        'application/ld+json',
+    ]
+
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+
+    # Associate the request media type with the request so we can
+    # make sure that different representations of this resource get different
+    # cache responses.
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # Client wanted a mimetype we don't support
+        response = HttpResponse(
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+
+    if req_neg.use_response_type.endswith('json'):
+        return make_json_response(request, req_neg, response_dict)
+
+    rp = RootPath()
+    # Disable the search template and just use vue with the JSON
+    # API.
+    # search_temp = SearchTemplate(response_dict.copy())
+    context = {
+        'NAV_ITEMS': settings.NAV_ITEMS,
+        'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
+        'BASE_URL': rp.get_baseurl(),
+        'st': response_dict.copy(),
+        'api_url': response_dict.get('id'),
+        'configs': configs,
+        'SORT_OPTIONS_FRONTEND': json.dumps(configs.SORT_OPTIONS_FRONTEND),
+        # Consent to view human remains defaults to False if not actually set.
+        'human_remains_ok': request.session.get('human_remains_ok', False),
+    }
+    template = loader.get_template('bootstrap_vue/projects/projects.html')
+    response = HttpResponse(template.render(context, request))
+    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+    return response

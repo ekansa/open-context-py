@@ -93,13 +93,13 @@ urlpatterns = [
     re_path(r'^query/(?P<spatial_context>\S+)?', NewSearchViews.query_html, name='new_search_html'),
 
     # New attribute-group dereference
-    re_path(r'^attribute-groups/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='attribute_groups_json'),
-    re_path(r'^attribute-groups/(?P<uuid>\S+)', AllItemsViews.test_html, name='attribute_groups'),
+    re_path(r'^attribute-groups/(?P<uuid>\S+)?\.json$', AllItemsViews.all_items_json, name='attribute_groups_json'),
+    re_path(r'^attribute-groups/(?P<uuid>\S+)', AllItemsViews.all_items_html, name='attribute_groups'),
 
     # Testing for all manifest items
-    re_path(r'^all-items/(?P<uuid>\S+)?\.json$', AllItemsViews.test_json, name='all_items_json'),
-    re_path(r'^all-items/(?P<uuid>\S+)/full', AllItemsViews.test_html_full, name='all_items_full'),
-    re_path(r'^all-items/(?P<uuid>\S+)', AllItemsViews.test_html, name='all_items_html'),
+    re_path(r'^all-items/(?P<uuid>\S+)?\.json$', AllItemsViews.all_items_json, name='all_items_json'),
+    re_path(r'^all-items/(?P<uuid>\S+)/full', AllItemsViews.all_items_html_full, name='all_items_full'),
+    re_path(r'^all-items/(?P<uuid>\S+)', AllItemsViews.all_items_html, name='all_items_html'),
     re_path(r'^all-items-solr/(?P<uuid>\S+)', AllItemsViews.make_solr_doc_in_html, name='all_items_solr_html'),
 
     # New add_items administrative (for editing, etl) views
@@ -375,6 +375,7 @@ urlpatterns = [
     re_path(r'^projects/(?P<uuid>\S+)?\.geojson$', AllItemsViews.projects_json, name='projects_geojson'),
     re_path(r'^projects/(?P<uuid>\S+)?\.json$', AllItemsViews.projects_json, name='projects_json'),
     re_path(r'^projects/(?P<uuid>\S+)', AllItemsViews.projects_html, name='projects_html'),
+    re_path(r'^projects', NewSearchViews.projects_html, name='search_projects_html'),
     # Predicates views for descriptive variables and linking relations from OC contributors
     re_path(r'^predicates/(?P<uuid>\S+)?\.jsonld$', AllItemsViews.predicates_json, name='predicates_jsonld'),
     re_path(r'^predicates/(?P<uuid>\S+)?\.json$', AllItemsViews.predicates_json, name='predicates_json'),
