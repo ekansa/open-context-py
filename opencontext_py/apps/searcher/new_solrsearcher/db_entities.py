@@ -290,6 +290,8 @@ def get_project_overlay_qs(
         # We've already cached this, so returned the cached queryset
         return proj_overlay_qs
     proj_overlay_qs = db_get_projects_overlay_qs(project_slugs)
+    # Evaluate the queryset (lazy load, so it caches evaluated)
+    proj_overlay_qs.count()
     try:
         cache.set(cache_key, proj_overlay_qs)
     except:
@@ -339,7 +341,7 @@ def get_unique_project_item_class_list(
     hash_obj = hashlib.sha1()
     path_item_str = f'projects-item-class-summary: {project_slugs}'
     hash_obj.update(path_item_str.encode('utf-8'))
-    cache_key = f'proj-overlay-{str(hash_obj.hexdigest())}'
+    cache_key = f'proj-classes-{str(hash_obj.hexdigest())}'
     cache = caches['redis']
     proj_class_sum_list = cache.get(cache_key)
     if proj_class_sum_list is not None:
@@ -414,3 +416,77 @@ def get_proj_geo_by_slugs(slugs, use_cache=True):
     except:
         pass
     return act_qs
+
+
+
+def db_get_project_banner_qs(project_slugs):
+    """Get get a project (image) banners
+
+    :param str project_slugs: List string slug identifiers for a project
+        that may image overlays
+    """
+
+    item_hero_qs = AllResource.objects.filter(
+        item_id=OuterRef('uuid'),
+        resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
+    ).values('uri')[:1]
+
+    proj_hero_qs = AllResource.objects.filter(
+        item_id=OuterRef('project'),
+        resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
+    ).values('uri')[:1]
+
+    proj_proj_hero_qs = AllResource.objects.filter(
+        item_id=OuterRef('project__project'),
+        resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
+    ).values('uri')[:1]
+
+    proj_hero_qs = AllManifest.objects.filter(
+        slug__in=project_slugs,
+    ).select_related(
+        'project'
+    ).select_related(
+        'project__project'
+    ).annotate(
+        item_hero_hero=Subquery(item_hero_qs)
+    ).annotate(
+        proj_hero=Subquery(proj_hero_qs)
+    ).annotate(
+        proj_proj_hero=Subquery(proj_proj_hero_qs)
+    )
+    return proj_hero_qs
+
+
+def get_project_banner_qs(
+    projects=None,
+    project_slugs=None,
+    use_cache=True
+):
+    """Get get a project (image) banners via the cache"""
+    if not project_slugs and projects:
+        project_slugs = [p.slug for p in projects]
+    if not len(project_slugs):
+        return None
+
+    # Sort the slugs generating a consistent cache key
+    project_slugs.sort()
+    if not use_cache:
+        # Skip the case, just use the database.
+        return db_get_project_banner_qs(project_slugs)
+
+    hash_obj = hashlib.sha1()
+    path_item_str = f'projects-hero: {project_slugs}'
+    hash_obj.update(path_item_str.encode('utf-8'))
+    cache_key = f'proj-hero-{str(hash_obj.hexdigest())}'
+    cache = caches['redis']
+    proj_banner_qs = cache.get(cache_key)
+    if proj_banner_qs is not None:
+        # We've already cached this, so returned the cached queryset
+        return proj_banner_qs
+    proj_banner_qs = db_get_project_banner_qs(project_slugs)
+    proj_banner_qs.count() # evaluate for caching.
+    try:
+        cache.set(cache_key, proj_banner_qs)
+    except:
+        pass
+    return proj_banner_qs
