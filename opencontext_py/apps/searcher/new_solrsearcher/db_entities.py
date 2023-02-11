@@ -473,7 +473,6 @@ def get_project_banner_qs(
     if not use_cache:
         # Skip the case, just use the database.
         return db_get_project_banner_qs(project_slugs)
-
     hash_obj = hashlib.sha1()
     path_item_str = f'projects-hero: {project_slugs}'
     hash_obj.update(path_item_str.encode('utf-8'))
@@ -489,4 +488,6 @@ def get_project_banner_qs(
         cache.set(cache_key, proj_banner_qs)
     except:
         pass
+    if not proj_banner_qs:
+        return []
     return proj_banner_qs

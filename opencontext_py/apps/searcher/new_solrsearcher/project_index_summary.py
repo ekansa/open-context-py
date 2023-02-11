@@ -39,6 +39,26 @@ def get_project_facet_options(result_json):
     return project_dicts
 
 
+def get_banner_url_by_slug(proj_banner_qs, slug):
+    """Gets the banner image url for a slug"""
+    if not proj_banner_qs:
+        return None
+    if not slug:
+        return None
+    for man_obj in proj_banner_qs:
+        if man_obj.slug != slug:
+            continue
+        if man_obj.item_hero_hero:
+            return man_obj.item_hero_hero
+        elif man_obj.proj_hero:
+            return man_obj.proj_hero
+        elif man_obj.proj_proj_hero:
+            return man_obj.proj_proj_hero
+        else:
+            return None
+    return None
+
+
 def make_project_geojson_features(
     result_json,
 ):
@@ -53,8 +73,13 @@ def make_project_geojson_features(
         return None
     project_slugs = [proj_dict.get('slug') for proj_dict in project_dicts]
     proj_geo_qs = db_entities.get_proj_geo_by_slugs(project_slugs)
+    proj_banner_qs = db_entities.get_project_banner_qs(project_slugs=project_slugs)
     features = []
     for proj_dict in project_dicts:
+        hero_banner_url = get_banner_url_by_slug(
+            proj_banner_qs,
+            proj_dict.get('slug', '')
+        )
         for p_obj in proj_geo_qs:
             if proj_dict.get('slug') != p_obj.item.slug:
                 continue
@@ -79,6 +104,8 @@ def make_project_geojson_features(
                     'query_link': proj_dict.get('id'),
                 },
             }
+            if hero_banner_url:
+                feature['properties']['hero_banner_url'] = f'https://{hero_banner_url}'
             features.append(feature)
             break
     return features
