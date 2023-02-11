@@ -71,6 +71,8 @@ def make_project_geojson_features(
     project_dicts = get_project_facet_options(result_json)
     if not project_dicts:
         return None
+    rp = RootPath()
+    base_url = rp.get_baseurl()
     project_slugs = [proj_dict.get('slug') for proj_dict in project_dicts]
     proj_geo_qs = db_entities.get_proj_geo_by_slugs(project_slugs)
     proj_banner_qs = db_entities.get_project_banner_qs(project_slugs=project_slugs)
@@ -100,7 +102,7 @@ def make_project_geojson_features(
                     'label': p_obj.item.label,
                     'description': p_obj.description,
                     'count': proj_dict.get('count'),
-                    'href': f'https://{p_obj.item.uri}',
+                    'href': f'{base_url}/{p_obj.item.item_type}/{p_obj.item.uuid}',
                     'query_link': proj_dict.get('id'),
                 },
             }
