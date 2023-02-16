@@ -419,7 +419,7 @@ def get_proj_geo_by_slugs(slugs, use_cache=True):
 
 
 
-def db_get_project_banner_qs(project_slugs):
+def db_get_project_banner_qs(project_slugs, all_projects=False):
     """Get get a project (image) banners
 
     :param str project_slugs: List string slug identifiers for a project
@@ -441,8 +441,7 @@ def db_get_project_banner_qs(project_slugs):
         resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
     ).values('uri')[:1]
 
-    proj_hero_qs = AllManifest.objects.filter(
-        slug__in=project_slugs,
+    proj_hero_qs = AllManifest.objects.all(
     ).select_related(
         'project'
     ).select_related(
@@ -454,27 +453,39 @@ def db_get_project_banner_qs(project_slugs):
     ).annotate(
         proj_proj_hero=Subquery(proj_proj_hero_qs)
     )
+    if project_slugs:
+        proj_hero_qs = proj_hero_qs.filter(slug__in=project_slugs,)
+    if all_projects:
+        proj_hero_qs = proj_hero_qs.filter(item_type='projects')
     return proj_hero_qs
 
 
 def get_project_banner_qs(
     projects=None,
     project_slugs=None,
-    use_cache=True
+    use_cache=True,
+    all_projects=False,
 ):
     """Get get a project (image) banners via the cache"""
     if not project_slugs and projects:
         project_slugs = [p.slug for p in projects]
-    if not len(project_slugs):
+    if not project_slugs and not all_projects:
         return None
 
     # Sort the slugs generating a consistent cache key
-    project_slugs.sort()
+    if project_slugs:
+        project_slugs.sort()
     if not use_cache:
         # Skip the case, just use the database.
-        return db_get_project_banner_qs(project_slugs)
+        return db_get_project_banner_qs(
+            project_slugs,
+            all_projects=all_projects
+        )
     hash_obj = hashlib.sha1()
-    path_item_str = f'projects-hero: {project_slugs}'
+    if all_projects:
+        path_item_str = f'projects-hero:ALL'
+    else:
+        path_item_str = f'projects-hero: {project_slugs}'
     hash_obj.update(path_item_str.encode('utf-8'))
     cache_key = f'proj-hero-{str(hash_obj.hexdigest())}'
     cache = caches['redis']
@@ -482,7 +493,10 @@ def get_project_banner_qs(
     if proj_banner_qs is not None:
         # We've already cached this, so returned the cached queryset
         return proj_banner_qs
-    proj_banner_qs = db_get_project_banner_qs(project_slugs)
+    proj_banner_qs = db_get_project_banner_qs(
+        project_slugs,
+        all_projects=all_projects
+    )
     proj_banner_qs.count() # evaluate for caching.
     try:
         cache.set(cache_key, proj_banner_qs)
@@ -491,3 +505,39 @@ def get_project_banner_qs(
     if not proj_banner_qs:
         return []
     return proj_banner_qs
+
+
+def get_banner_url_by_slug(proj_banner_qs, slug, use_cache=True):
+    """Gets the banner image url for a slug"""
+    if not proj_banner_qs:
+        return None
+    if not slug:
+        return None
+    banner_url = None
+    if use_cache:
+        hash_obj = hashlib.sha1()
+        path_item_str = f'projects-hero-for-slug: {slug}'
+        hash_obj.update(path_item_str.encode('utf-8'))
+        cache_key = f'hero-slug-{str(hash_obj.hexdigest())}'
+        cache = caches['redis']
+        banner_url = cache.get(cache_key)
+    if banner_url:
+        return banner_url
+    for man_obj in proj_banner_qs:
+        if man_obj.slug != slug:
+            continue
+        if man_obj.item_hero_hero:
+            banner_url = man_obj.item_hero_hero
+        elif man_obj.proj_hero:
+            banner_url = man_obj.proj_hero
+        elif man_obj.proj_proj_hero:
+            banner_url = man_obj.proj_proj_hero
+        if banner_url:
+            break
+    if not use_cache:
+        return banner_url
+    try:
+        cache.set(cache_key, banner_url)
+    except:
+        pass
+    return banner_url

@@ -93,6 +93,12 @@ class SearchSolr():
                     param, raw_path
                 )
 
+    def _add_project_index_query_terms(self, query):
+        """Adds project index query terms"""
+        # Get facets for all the object category (item_class) entities
+        query['facet.field'] = [configs.SITEMAP_FACET_FIELD]
+        return query
+
     def _add_project_summary_query_terms(self, query):
         """Adds project summary query terms"""
         # Get facets for all the object category (item_class) entities
@@ -101,7 +107,6 @@ class SearchSolr():
             'item_type,obj_all___oc_gen_category___pred_id'
         ]
         return query
-
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
@@ -541,6 +546,9 @@ class SearchSolr():
         # -------------------------------------------------------------
         # Special purpose queries
         # -------------------------------------------------------------
+        if request_dict.get('proj-index'):
+            # we're making a project index query
+            query = self._add_project_index_query_terms(query)
         if request_dict.get('proj-summary'):
             # we're making a project summary query.
             query = self._add_project_summary_query_terms(query)

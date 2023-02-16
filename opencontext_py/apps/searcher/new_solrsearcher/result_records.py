@@ -19,6 +19,7 @@ from opencontext_py.apps.all_items.icons import configs as icon_configs
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher import event_utilities
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
@@ -379,13 +380,14 @@ class ResultRecord():
         self.late_date = None
         self.thumbnail_href = None
         self.thumbnail_uri = None
-        self.thumbnail_scr = None
-        self.preview_scr = None
-        self.fullfile_scr = None
+        self.thumbnail_src = None
+        self.preview_src = None
+        self.fullfile_src = None
         self.iiif_json_uri = None
         self.snippet = None
         self.cite_uri = None  # stable identifier as an HTTP uri
         self.descriptiveness = None # maps to interest_score
+        self.hero_banner_src = None # hero banner, collected for the project index
 
         # All spatial contexts (dicts derived from solr entity stings)
         self.contexts = None
@@ -613,7 +615,7 @@ class ResultRecord():
 
     def set_media(self, solr_doc):
         """Sets media urls for the record"""
-        self.thumbnail_scr = solr_doc.get('thumbnail_uri')
+        self.thumbnail_src = solr_doc.get('thumbnail_uri')
         self.iiif_json_uri = solr_doc.get('iiif_json_uri')
 
 
@@ -857,6 +859,8 @@ class ResultRecord():
         id_value=None,
         feature_type=None,
         add_lat_lon=False,
+        add_descriptiveness=False,
+        add_slug=False,
         ):
         """Makes a properties dict to return to a client
 
@@ -867,6 +871,8 @@ class ResultRecord():
         properties = LastUpdatedOrderedDict()
         if id_value:
             properties['id'] = id_value
+        if add_slug:
+            properties['slug'] = self.slug
         if feature_type:
             properties['feature-type'] = feature_type
         properties['uri'] = self.uri
@@ -888,11 +894,14 @@ class ResultRecord():
             properties['icon'] = self.icon
         if self.snippet:
             properties['snippet'] = self.snippet
-        if self.thumbnail_scr:
-            properties['thumbnail'] = f'https://{self.thumbnail_scr}'
+        if self.thumbnail_src:
+            properties['thumbnail'] = f'https://{self.thumbnail_src}'
+        if self.hero_banner_src:
+            properties['hero_banner'] = f'https://{self.hero_banner_src}'
         properties['published'] = self.published
         properties['updated'] = self.updated
-
+        if add_descriptiveness:
+            properties['descriptiveness'] = self.descriptiveness
 
         # Add linked data (standards) attributes if they exist.
         for pred_dict, raw_vals in self.ld_attributes:
@@ -944,6 +953,7 @@ class ResultRecord():
         geo_json = LastUpdatedOrderedDict()
         geo_json['id'] = f'#record-{record_index}-of-{total_found}'
         geo_json['label'] = self.label
+        geo_json['slug'] = self.slug
         geo_json['rdfs:isDefinedBy'] = self.uri
         geo_json['oc-api:descriptiveness'] = self.descriptiveness
         geo_json['oc-api:human-remains-related'] = self.human_remains_flagged
@@ -992,12 +1002,13 @@ class ResultRecords():
 
     """ Methods to prepare result records """
 
-    def __init__(self, request_dict, total_found=0, start=0):
+    def __init__(self, request_dict, total_found=0, start=0, proj_index=False):
         rp = RootPath()
         self.request_dict = copy.deepcopy(request_dict)
         self.base_url = rp.get_baseurl()
         self.total_found = total_found
         self.start = start
+        self.proj_index = proj_index
 
         # Flatten attributes into single value strings?
         self.flatten_attributes = False
@@ -1162,6 +1173,10 @@ class ResultRecords():
         # that we will add to the result records.
         requested_attrib_slugs = self._gather_requested_attrib_slugs()
 
+        proj_banner_qs = None
+        if self.proj_index:
+            proj_banner_qs = db_entities.get_project_banner_qs(all_projects=True)
+
         # Get the keyword search highlighting dict. Default
         # to an empty dict if there's no snippet highlighting.
         highlight_dict = solr_json.get('highlighting', {})
@@ -1226,6 +1241,10 @@ class ResultRecords():
                 rr.pred_attributes
             )
 
+            rr.hero_banner_src = db_entities.get_banner_url_by_slug(
+                proj_banner_qs,
+                slug=rr.slug
+            )
             # Add the result record object to the list of records.
             records.append(rr)
 
@@ -1258,7 +1277,9 @@ class ResultRecords():
         meta_result_records = []
         for i, rr in enumerate(records, 1):
             properties = rr.make_client_properties_dict(
-                add_lat_lon=True
+                add_lat_lon=True,
+                add_descriptiveness=self.proj_index,
+                add_slug=self.proj_index,
             )
             meta_result_records.append(properties)
         return meta_result_records

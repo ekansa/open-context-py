@@ -626,7 +626,9 @@ class ResultMaker():
         facets = facets_standard.get_facets_and_options(
             solr_json
         )
-        if self.sitemap_facets:
+        if self.sitemap_facets or self.request_dict.get('proj-index'):
+            # a project index also gets the same facets as the site map, as
+            # these have a similar purpose.
             facets += facets_standard.get_sitemap_facets_and_options(
                 solr_json
             )
@@ -711,6 +713,7 @@ class ResultMaker():
             request_dict=self.request_dict,
             total_found=self.total_found,
             start=self.start,
+            proj_index=self.request_dict.get('proj-index', False),
         )
 
         # Make metadata dict objects for each individual search result
@@ -741,6 +744,7 @@ class ResultMaker():
             request_dict=self.request_dict,
             total_found=self.total_found,
             start=self.start,
+            proj_index=self.request_dict.get('proj-index', False),
         )
 
         # Make geojson features for each individual search result

@@ -261,12 +261,18 @@ def projects_geojson(request):
 
 def projects_html(request, spatial_context=None):
     """Project index and discovery page"""
+
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
-    request_dict['item_type'] = 'projects'
+    request_dict['proj-index'] = 1
+    request_dict['response'] = ','.join(
+        [
+            'metadata',
+            'prop-facet',
+        ]
+    )
     response_dict = process_solr_query(request_dict.copy())
-
     req_neg = RequestNegotiation('text/html')
     req_neg.supported_types = [
         'application/json',
@@ -293,17 +299,34 @@ def projects_html(request, spatial_context=None):
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
 
+    proj_item_attribs =  [
+        'dc-terms-creator',
+        'dc-terms-description',
+        'dc-terms-license',
+        'dc-terms-subject',
+        'dc-terms-spatial',
+        'dc-terms-coverage',
+        'dc-terms-contributor',
+        'dc-terms-temporal',
+        'dc-terms-is-referenced-by',
+        'dc-terms-references',
+    ]
     rp = RootPath()
-    # Disable the search template and just use vue with the JSON
-    # API.
-    # search_temp = SearchTemplate(response_dict.copy())
+    base_url = rp.get_baseurl()
+    proj_items_geojson_url = (
+        base_url
+        + f'/query/.json?attributes={",".join(proj_item_attribs)}'
+        + '&response=geo-record&rows=1000&start=0&type=projects&proj-index=1'
+    )
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
-        'BASE_URL': rp.get_baseurl(),
+        'BASE_URL': base_url ,
         'st': response_dict.copy(),
         'api_url': response_dict.get('id'),
+        'proj_items_geojson_url': proj_items_geojson_url,
         'configs': configs,
+        'load_index_static': True,
         'SORT_OPTIONS_FRONTEND': json.dumps(configs.SORT_OPTIONS_FRONTEND),
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),

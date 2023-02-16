@@ -16,9 +16,9 @@ class ResultFacetsNonPath():
 
     """ Methods to prepare result facets not involving entities in a hierarchy """
 
-    def __init__(self, 
-        request_dict=None, 
-        current_filters_url=None, 
+    def __init__(self,
+        request_dict=None,
+        current_filters_url=None,
         base_search_url='/search/'
     ):
         rp = RootPath()
@@ -28,12 +28,12 @@ class ResultFacetsNonPath():
         if current_filters_url is None:
             current_filters_url = self.base_search_url
         self.current_filters_url = current_filters_url
-    
+
 
     def make_item_type_facets(self, solr_json):
-        """Makes item_type facets from a solr_json response""" 
+        """Makes item_type facets from a solr_json response"""
         item_type_path_keys = (
-            configs.FACETS_SOLR_ROOT_PATH_KEYS 
+            configs.FACETS_SOLR_ROOT_PATH_KEYS
             + ['item_type']
         )
         item_type_val_count_list = utilities.get_dict_path_value(
@@ -75,7 +75,7 @@ class ResultFacetsNonPath():
                 'type',
                 match_old_value=None,
                 new_value=facet_value,
-            )  
+            )
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
                 # The new URL matches our current filter
@@ -89,24 +89,24 @@ class ResultFacetsNonPath():
                 option[key] = val
             option['count'] = count
             options.append(option)
-        
+
         if not len(options):
             return None
-        
+
         facet = configs.FACETS_ITEM_TYPE.copy()
         facet['oc-api:has-id-options'] = options
         return facet
 
 
     def make_related_media_facets(self, solr_json):
-        """Makes related media facets from a solr_json response""" 
+        """Makes related media facets from a solr_json response"""
         options = []
         for media_config in configs.FACETS_RELATED_MEDIA['oc-api:has-rel-media-options']:
             facet_val_count_tups = utilities.get_path_facet_value_count_tuples(
-                media_config['facet_path'], 
+                media_config['facet_path'],
                 solr_json
             )
-            
+
             media_type_total_count = 0
             for facet_val, facet_count in facet_val_count_tups:
                 if facet_val == "0":
@@ -114,7 +114,7 @@ class ResultFacetsNonPath():
                     # items with NO related media of this type
                     continue
                 media_type_total_count += facet_count
- 
+
             if media_type_total_count == 0:
                 # No items have related media of this type,
                 # so continue and don't make a facet option
@@ -132,7 +132,7 @@ class ResultFacetsNonPath():
             sl.replace_param_value(
                 media_config['param_key'],
                 new_value=1,
-            ) 
+            )
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
                 # The new URL matches our current filter
@@ -145,7 +145,7 @@ class ResultFacetsNonPath():
             option['id'] = urls['html']
             option['json'] = urls['json']
             options.append(option)
-        
+
         if not len(options):
             # We found no related media configs, so return None
             return None
@@ -166,7 +166,7 @@ class ResultFacetsNonPath():
     ):
         """Checks to see if a pivot item_class_slug is on the list for
         project
-        
+
         :param dict item_type: The item type associated with the
             item_class_slug
         :param dict item_class_slug: The item_class_slug for the pivot
@@ -185,7 +185,7 @@ class ResultFacetsNonPath():
 
 
     def make_project_item_class_summary_facets(self, solr_json):
-        """Makes item_class_summary facets from a solr_json response""" 
+        """Makes item_class_summary facets from a solr_json response"""
         item_type_classes_pivot = utilities.get_dict_path_value(
             ['facet_counts', 'facet_pivot', 'item_type,obj_all___oc_gen_category___pred_id'],
             solr_json
@@ -244,7 +244,7 @@ class ResultFacetsNonPath():
                 'type',
                 match_old_value=None,
                 new_value=item_type,
-            )  
+            )
             urls = sl.make_urls_from_request_dict()
             if urls['html'] == self.current_filters_url:
                 # The new URL matches our current filter
