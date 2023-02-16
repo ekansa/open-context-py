@@ -114,7 +114,6 @@ def make_json_response(request, req_neg, response_dict):
     return response
 
 
-@cache_control(no_cache=True)
 def query_json(request, spatial_context=None):
     """ API for searching Open Context """
 
@@ -146,7 +145,6 @@ def query_json(request, spatial_context=None):
     return make_json_response(request, req_neg, response_dict)
 
 
-@cache_control(no_cache=True)
 def query_html(request, spatial_context=None):
     """HTML representation for searching Open Context """
 
