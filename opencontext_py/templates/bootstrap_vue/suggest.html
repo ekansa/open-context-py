@@ -167,6 +167,7 @@ var vc_oc_seach_typeahead = Vue.component(
                     return null;
                 }
                 let prior_q = getURLParameter(this.base_search_url, 'q');
+                prior_q = decodeURIComponent(prior_q);
                 return prior_q;
             },
         },
