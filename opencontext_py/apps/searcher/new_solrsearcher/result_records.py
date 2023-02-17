@@ -388,6 +388,7 @@ class ResultRecord():
         self.cite_uri = None  # stable identifier as an HTTP uri
         self.descriptiveness = None # maps to interest_score
         self.hero_banner_src = None # hero banner, collected for the project index
+        self.description = None # short description of a project.
 
         # All spatial contexts (dicts derived from solr entity stings)
         self.contexts = None
@@ -902,6 +903,8 @@ class ResultRecord():
         properties['updated'] = self.updated
         if add_descriptiveness:
             properties['descriptiveness'] = self.descriptiveness
+        if self.description:
+            properties['description'] = self.description
 
         # Add linked data (standards) attributes if they exist.
         for pred_dict, raw_vals in self.ld_attributes:
@@ -1173,9 +1176,11 @@ class ResultRecords():
         # that we will add to the result records.
         requested_attrib_slugs = self._gather_requested_attrib_slugs()
 
-        proj_banner_qs = None
+        proj_desc_banner_qs = None
         if self.proj_index:
-            proj_banner_qs = db_entities.get_project_banner_qs(all_projects=True)
+            proj_desc_banner_qs = db_entities.get_project_desc_banner_qs(
+                all_projects=True,
+            )
 
         # Get the keyword search highlighting dict. Default
         # to an empty dict if there's no snippet highlighting.
@@ -1241,10 +1246,15 @@ class ResultRecords():
                 rr.pred_attributes
             )
 
-            rr.hero_banner_src = db_entities.get_banner_url_by_slug(
-                proj_banner_qs,
-                slug=rr.slug
-            )
+            if proj_desc_banner_qs:
+                description, banner_url = db_entities.get_desc_and_banner_url_by_slug(
+                    proj_desc_banner_qs,
+                    slug=rr.slug
+                )
+                if description:
+                    rr.description = description
+                if banner_url:
+                    rr.hero_banner_src = banner_url
             # Add the result record object to the list of records.
             records.append(rr)
 

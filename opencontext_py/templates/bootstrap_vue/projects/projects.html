@@ -18,7 +18,8 @@
     <div>
         <b-img-lazy
             v-if="proj_item.media"
-            fluid :src="proj_item.media"
+            fluid
+            :src="proj_item.media"
             alt="Project banner"
             class="proj_item_banner"
         ></b-img-lazy>
@@ -71,17 +72,38 @@
                 :fields="fields"
                 striped
                 bordered
-                :small="true"
+                borderless
                 stacked="md"
                 responsive
                 hover
                 no-local-sorting
                 sort-icon-left
             >
+                <template #cell(descriptiveness)="data">
+                    <h4 class="text-center"><b-badge pill variant="info">[[ percent_format(data.item.percentile)]] %</b-badge></h4>
+                    <p class="text-center"><small>Scale, diversity, documentation</small></p>
+                </template>
+
                 <template #cell(label)="data">
                     <proj-tab-field-proj-label
                     v-bind:proj_item="data.item">
                     </proj-tab-field-proj-label>
+                </template>
+
+                <template #cell(published)="data">
+                    <p class="text-center"><strong>[[ data.item.published ]] </strong></p>
+                    <p class="text-center text-muted"><small>Last updated:<br/>[[ data.item.updated ]]</small></p>
+                </template>
+
+                <template #cell(metadata)="data">
+                    <dl v-for="m_obj in data.item.metadata">
+                        <dt><small>[[ m_obj.rel ]]</small></dt>
+                        <dd class="text-muted">
+                            <small>
+                            <a v-for="meta, i in m_obj.named_entities" :href="meta.href" target="_blank">[[ meta.label ]]<span v-if="i < (m_obj.named_entities.length -1)">, </span></a>
+                            </small>
+                        </dd>
+                    </dl>
                 </template>
 
                 <template #cell()="data">
@@ -96,18 +118,12 @@
 
 
 <style type="text/css">
-    .proj_tr {
-        width: 100%;
-        height: 300px;
-        background-size: cover;
-        background-position: center center;
-        filter: opacity(50%) saturate(25%);
-    }
     .proj_item_banner {
         max-height: 290px;
 	    overflow-y: hidden;
         background-color: #dee4f5;
         object-fit: cover;
+        width: 100%;
     }
 </style>
 
@@ -153,11 +169,12 @@
             error: null,
             emit_update_fetch_done: false,
             fields: [
+                { key: 'descriptiveness', sortable: true, label: 'Info Content', tdClass: 'align-middle'},
                 { key: 'label', sortable: true, label: 'Project'},
-                { key: 'updated', sortable: true },
-                { key: 'count', sortable: true, label: 'Record Count'},
-                { key: 'descriptiveness', sortable: true, label: 'Info Content'},
+                { key: 'metadata', sortable: false, tdClass: 'align-middle'},
+                { key: 'published', sortable: true, tdClass: 'align-middle'},
             ],
+            descriptiveness_scores:null,
         },
         created(){
             this.fetch_proj_items_geojson();
@@ -192,21 +209,21 @@
                 // iPad on iOS 13 detection
                 || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
             },
-            rowClass(item, type){
-                if (!item || type !== 'row') return null;
-                return 'proj_tr';
+            percent_format: function(raw_val){
+                return parseFloat(raw_val * 100).toFixed(0);
             },
-            rowImg(item, type){
-                if (!item || type !== 'row') return null;
-                if(!item.hasOwnProperty('media') || !item.media){
-                    return null;
+            get_percentile_of_val: function(act_array, val) {
+                if (act_array.length === 0) return null;
+                if (typeof val !== 'number') return null;
+                let act_num = 0;
+                for (let i in act_array) {
+                    act_num = (
+                        act_num
+                        + (act_array[i] < val ? 1 : 0)
+                        + (act_array[i] === val ? 0.5 : 0)
+                    );
                 }
-                let style = {
-                    backgroundImage: ('url(' + item.media + ')'),
-                };
-                return {
-                    style: "background-image:url(' " + item.media + "');",
-                };
+                return (act_num / act_array.length);
             },
             props_valid: function(act_obj, prop_list){
                 if (!(act_obj.constructor == Object)) {
@@ -263,6 +280,31 @@
                 }
                 return links_objs;
             },
+            get_valid_features: function(raw_features){
+                let act_descriptiveness_scores = [];
+                let valid_features = [];
+                for(let feature of raw_features){
+                    let ok = this.props_valid(
+                        feature,
+                        ['slug', 'properties', 'oc-api:descriptiveness', 'rdfs:isDefinedBy'],
+                    )
+                    if(!ok){
+                        continue;
+                    }
+                    if(feature.slug == 'open-context'){
+                        // slip open context.
+                        continue;
+                    }
+                    act_descriptiveness_scores.push(
+                        feature['oc-api:descriptiveness']
+                    )
+                    valid_features.push(feature);
+                }
+                if(this.descriptiveness_scores == null){
+                    this.descriptiveness_scores = act_descriptiveness_scores.sort();
+                }
+                return valid_features;
+            },
             prepare_all_proj_items: function(){
                 // combine information from the proj_geojson
                 // and the this.proj_items_raw.
@@ -276,18 +318,7 @@
                     return null;
                 }
                 let all_proj_items = [];
-                for(let feature of this.proj_geojson.features){
-                    let ok = this.props_valid(
-                        feature,
-                        ['slug', 'properties', 'oc-api:descriptiveness', 'rdfs:isDefinedBy'],
-                    )
-                    if(!ok){
-                        continue;
-                    }
-                    if(feature.slug == 'open-context'){
-                        // slip open context.
-                        continue;
-                    }
+                for(let feature of this.get_valid_features(this.proj_geojson.features)){
                     let props = feature.properties;
                     let url = feature['rdfs:isDefinedBy'];
                     url = abs_to_rel_url(url, BASE_URL);
@@ -302,14 +333,25 @@
                     }
                     let updated = props['updated'];
                     let updated_ex = updated.split('T');
-                    updated = updated_ex[0];
+                    let published = props['published'];
+                    let published_ex = published.split('T');
+                    let description = null;
+                    if('description' in props){
+                        description = props['description'];
+                    }
                     let item = {
                         label: feature['label'],
                         url: url,
                         href: href,
-                        updated: updated,
+                        updated: updated_ex[0],
+                        published: published_ex[0],
                         media: hero_uri,
+                        description: description,
                         descriptiveness: feature['oc-api:descriptiveness'],
+                        percentile: this.get_percentile_of_val(
+                            this.descriptiveness_scores,
+                            feature['oc-api:descriptiveness'],
+                        ),
                         people: this.make_link_entity_objs(
                             feature.properties,
                             [

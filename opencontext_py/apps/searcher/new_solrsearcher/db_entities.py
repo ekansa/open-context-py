@@ -419,12 +419,31 @@ def get_proj_geo_by_slugs(slugs, use_cache=True):
 
 
 
-def db_get_project_banner_qs(project_slugs, all_projects=False):
-    """Get get a project (image) banners
+def db_get_project_desc_banner_qs(project_slugs, all_projects=False):
+    """Get get a project description and (image) banners
 
     :param str project_slugs: List string slug identifiers for a project
         that may image overlays
     """
+    item_description_qs = AllAssertion.objects.filter(
+        subject=OuterRef('uuid'),
+        predicate_id=configs.PREDICATE_DCTERMS_DESCRIPTION_UUID,
+        visible=True,
+    ).order_by(
+        'sort'
+    ).values(
+        'obj_string'
+    )[:1]
+
+    proj_description_qs = AllAssertion.objects.filter(
+        subject=OuterRef('project'),
+        predicate_id=configs.PREDICATE_DCTERMS_DESCRIPTION_UUID,
+        visible=True,
+    ).order_by(
+        'sort'
+    ).values(
+        'obj_string'
+    )[:1]
 
     item_hero_qs = AllResource.objects.filter(
         item_id=OuterRef('uuid'),
@@ -447,6 +466,10 @@ def db_get_project_banner_qs(project_slugs, all_projects=False):
     ).select_related(
         'project__project'
     ).annotate(
+        item_description=Subquery(item_description_qs)
+    ).annotate(
+        proj_description=Subquery(proj_description_qs)
+    ).annotate(
         item_hero_hero=Subquery(item_hero_qs)
     ).annotate(
         proj_hero=Subquery(proj_hero_qs)
@@ -460,7 +483,7 @@ def db_get_project_banner_qs(project_slugs, all_projects=False):
     return proj_hero_qs
 
 
-def get_project_banner_qs(
+def get_project_desc_banner_qs(
     projects=None,
     project_slugs=None,
     use_cache=True,
@@ -477,7 +500,7 @@ def get_project_banner_qs(
         project_slugs.sort()
     if not use_cache:
         # Skip the case, just use the database.
-        return db_get_project_banner_qs(
+        return db_get_project_desc_banner_qs(
             project_slugs,
             all_projects=all_projects
         )
@@ -489,55 +512,62 @@ def get_project_banner_qs(
     hash_obj.update(path_item_str.encode('utf-8'))
     cache_key = f'proj-hero-{str(hash_obj.hexdigest())}'
     cache = caches['redis']
-    proj_banner_qs = cache.get(cache_key)
-    if proj_banner_qs is not None:
+    proj_desc_banner_qs = cache.get(cache_key)
+    if proj_desc_banner_qs is not None:
         # We've already cached this, so returned the cached queryset
-        return proj_banner_qs
-    proj_banner_qs = db_get_project_banner_qs(
+        return proj_desc_banner_qs
+    proj_desc_banner_qs = db_get_project_desc_banner_qs(
         project_slugs,
         all_projects=all_projects
     )
-    proj_banner_qs.count() # evaluate for caching.
+    proj_desc_banner_qs.count() # evaluate for caching.
     try:
-        cache.set(cache_key, proj_banner_qs)
+        cache.set(cache_key, proj_desc_banner_qs)
     except:
         pass
-    if not proj_banner_qs:
+    if not proj_desc_banner_qs:
         return []
-    return proj_banner_qs
+    return proj_desc_banner_qs
 
 
-def get_banner_url_by_slug(proj_banner_qs, slug, use_cache=True):
-    """Gets the banner image url for a slug"""
-    if not proj_banner_qs:
-        return None
+def get_desc_and_banner_url_by_slug(proj_desc_banner_qs, slug, use_cache=True):
+    """Gets the project description and banner image url for a slug"""
+    if not proj_desc_banner_qs:
+        return None, None
     if not slug:
-        return None
+        return None, None
+    description = None
     banner_url = None
+    cached_tuple = None
     if use_cache:
         hash_obj = hashlib.sha1()
         path_item_str = f'projects-hero-for-slug: {slug}'
         hash_obj.update(path_item_str.encode('utf-8'))
         cache_key = f'hero-slug-{str(hash_obj.hexdigest())}'
         cache = caches['redis']
-        banner_url = cache.get(cache_key)
-    if banner_url:
-        return banner_url
-    for man_obj in proj_banner_qs:
+        cached_tuple = cache.get(cache_key)
+    if cached_tuple:
+        # return description, banner_url
+        return cached_tuple[0], cached_tuple[1]
+    for man_obj in proj_desc_banner_qs:
         if man_obj.slug != slug:
             continue
+        if man_obj.item_description:
+            description = man_obj.item_description
+        elif man_obj.proj_description:
+            description = man_obj.proj_description
         if man_obj.item_hero_hero:
             banner_url = man_obj.item_hero_hero
         elif man_obj.proj_hero:
             banner_url = man_obj.proj_hero
         elif man_obj.proj_proj_hero:
             banner_url = man_obj.proj_proj_hero
-        if banner_url:
+        if description or banner_url:
             break
     if not use_cache:
-        return banner_url
+        return description, banner_url
     try:
-        cache.set(cache_key, banner_url)
+        cache.set(cache_key, (description, banner_url))
     except:
         pass
-    return banner_url
+    return description, banner_url
