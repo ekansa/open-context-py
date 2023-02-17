@@ -55,11 +55,11 @@ def make_project_geojson_features(
     base_url = rp.get_baseurl()
     project_slugs = [proj_dict.get('slug') for proj_dict in project_dicts]
     proj_geo_qs = db_entities.get_proj_geo_by_slugs(project_slugs)
-    proj_banner_qs = db_entities.get_project_banner_qs(project_slugs=project_slugs)
+    proj_desc_banner_qs = db_entities.get_project_desc_banner_qs(project_slugs=project_slugs)
     features = []
     for proj_dict in project_dicts:
-        hero_banner_url = db_entities.get_banner_url_by_slug(
-            proj_banner_qs,
+        description, banner_url = db_entities.get_desc_and_banner_url_by_slug(
+            proj_desc_banner_qs,
             proj_dict.get('slug', '')
         )
         for p_obj in proj_geo_qs:
@@ -80,14 +80,15 @@ def make_project_geojson_features(
                 'properties': {
                     'id': f'#proj-map-props-{p_obj.item.slug}',
                     'label': p_obj.item.label,
-                    'description': p_obj.description,
                     'count': proj_dict.get('count'),
                     'href': f'{base_url}/{p_obj.item.item_type}/{p_obj.item.uuid}',
                     'query_link': proj_dict.get('id'),
                 },
             }
-            if hero_banner_url:
-                feature['properties']['hero_banner_url'] = f'https://{hero_banner_url}'
+            if description:
+                feature['properties']['description'] = description
+            if banner_url:
+                feature['properties']['hero_banner_url'] = f'https://{banner_url}'
             features.append(feature)
             break
     return features
