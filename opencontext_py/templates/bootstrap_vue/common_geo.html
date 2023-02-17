@@ -774,6 +774,9 @@ var vc_common_map = Vue.component(
             },
             show_default_overlay: true,
             selected_gradient_key: MAP_DEFAULT_COLOR_GRADIENT_KEY,
+            // relative influence of percentile rankings for determining visualization color.
+            // a positive value here shows more detail in cases where a few high values obscure variation in lower values
+            percentile_color_influence: 0.175,
             legend_config: {
                 poly_list: null,
                 circle_list: null,
@@ -1360,9 +1363,10 @@ var vc_common_map = Vue.component(
             }
             if(counts.length > 0){
                 // Add information needed to style features.
+
                 feature_data.min_count = Math.min.apply(Math, counts);
                 feature_data.max_count = Math.max.apply(Math, counts);
-                feature_data.all_counts = counts;
+                feature_data.all_counts = counts.sort();
                 let count_features = [];
                 for(let feature of feature_data.features){
                     feature.max_count = feature_data.max_count;
@@ -1719,8 +1723,15 @@ var vc_common_map = Vue.component(
                 act_gradient = COLOR_GRADIENTS[gradient_key];
             }
             let normalized_count = act_count / max_count;
-            if (typeof percentile === 'number'){
-                normalized_count = ((normalized_count * 3.75) + percentile) / 4.75;
+            if (typeof percentile === 'number' && typeof this.percentile_color_influence === 'number'){
+                if(this.percentile_color_influence > 0 && this.percentile_color_influence <= 1 ){
+                    // Use the percentile value in determining the normalized count
+                    // that gives the color value.
+                    normalized_count = (
+                        normalized_count * (1 - this.percentile_color_influence)
+                        + (percentile * this.percentile_color_influence)
+                    );
+                }
             }
             let hex_color = make_hex_color_in_gradient(
                 normalized_count,
@@ -1961,16 +1972,6 @@ var vc_common_map = Vue.component(
             let geo_id_ex = feature.geometry.id.split('-');
 			let geo_tile = geo_id_ex[geo_id_ex.length - 1];
             this.map.geodeep = geo_tile.length;
-        },
-        make_count_array_for_percentiles: function(features){
-            let count_array = [];
-            for(let feature of features){
-                if(!feature.hasOwnProperty('count')){
-                    continue;
-                }
-                count_array.push(feature.count);
-            }
-            return count_array;
         },
         geojson_to_circle_data: function(act_geojson){
             if(act_geojson.category != 'oc-api:geo-facet'){
