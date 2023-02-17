@@ -1324,6 +1324,19 @@ var vc_common_map = Vue.component(
                 }
             });
         },
+        get_percentile_of_val: function(act_array, val) {
+            if (act_array.length === 0) return null;
+            if (typeof val !== 'number') return null;
+            let act_num = 0;
+            for (let i in act_array) {
+                act_num = (
+                    act_num
+                    + (act_array[i] < val ? 1 : 0)
+                    + (act_array[i] === val ? 0.5 : 0)
+                );
+            }
+            return (act_num / act_array.length);
+        },
         cat_limit_feature_data(category_limit, feature_data=null){
             if(!feature_data){
                 let feature_data = {
@@ -1349,10 +1362,12 @@ var vc_common_map = Vue.component(
                 // Add information needed to style features.
                 feature_data.min_count = Math.min.apply(Math, counts);
                 feature_data.max_count = Math.max.apply(Math, counts);
+                feature_data.all_counts = counts;
                 let count_features = [];
                 for(let feature of feature_data.features){
                     feature.max_count = feature_data.max_count;
                     feature.gradient_key = this.selected_gradient_key;
+                    feature.percentile = this.get_percentile_of_val(counts, feature.count);
                     count_features.push(feature);
                 }
                 feature_data.features = count_features;
@@ -1698,28 +1713,17 @@ var vc_common_map = Vue.component(
             let map_scale = L.control.scale(this.map_scale_options).addTo(this.map);
             this.map_scale = map_scale;
         },
-        percentile: function(arr, p) {
-            if (arr.length === 0) return 0;
-            if (typeof p !== 'number') throw new TypeError('p must be a number');
-            if (p <= 0) return arr[0];
-            if (p >= 1) return arr[arr.length - 1];
-
-            arr.sort(function (a, b) { return a - b; });
-            var index = (arr.length - 1) * p
-                lower = Math.floor(index),
-                upper = lower + 1,
-                weight = index % 1;
-
-            if (upper >= arr.length) return arr[lower];
-            return arr[lower] * (1 - weight) + arr[upper] * weight;
-        },
-        count_style: function(gradient_key, act_count, max_count){
+        count_style: function(gradient_key, act_count, max_count, percentile=null){
             let act_gradient = COLOR_GRADIENTS[MAP_DEFAULT_COLOR_GRADIENT_KEY];
             if(gradient_key in COLOR_GRADIENTS){
                 act_gradient = COLOR_GRADIENTS[gradient_key];
             }
+            let normalized_count = act_count / max_count;
+            if (typeof percentile === 'number'){
+                normalized_count = ((normalized_count * 3.75) + percentile) / 4.75;
+            }
             let hex_color = make_hex_color_in_gradient(
-                (act_count / max_count),
+                normalized_count,
                 act_gradient
             );
             let fill_opacity = (
@@ -1732,14 +1736,22 @@ var vc_common_map = Vue.component(
             };
         },
         polygon_count_style: function(feature){
+            if(feature.hasOwnProperty('percentile')){
+                return this.count_style(
+                    feature.gradient_key,
+                    feature.count,
+                    feature.max_count,
+                    feature.percentile,
+                );
+            }
             return this.count_style(
                 feature.gradient_key,
                 feature.count,
                 feature.max_count,
             );
         },
-        circle_count_style: function(gradient_key, act_count, max_count){
-            let marker_opts = this.count_style(gradient_key, act_count, max_count);
+        circle_count_style: function(gradient_key, act_count, max_count, percentile=null){
+            let marker_opts = this.count_style(gradient_key, act_count, max_count, percentile);
             marker_opts.radius = Math.round(30 * (act_count / max_count), 0) + 5;
             marker_opts.fillColor = marker_opts.color;
             marker_opts.weight = 1;
@@ -1748,11 +1760,22 @@ var vc_common_map = Vue.component(
             return marker_opts;
         },
         circle_pointToLayer: function(feature,  latlng){
-            let marker_opts = this.circle_count_style(
-                feature.gradient_key,
-                feature.count,
-                feature.max_count,
-            );
+            let marker_opts = null;
+            if(feature.hasOwnProperty('percentile')){
+                marker_opts = this.circle_count_style(
+                    feature.gradient_key,
+                    feature.count,
+                    feature.max_count,
+                    feature.percentile,
+                );
+            }
+            else{
+                marker_opts = this.circle_count_style(
+                    feature.gradient_key,
+                    feature.count,
+                    feature.max_count,
+                );
+            }
             return L.circleMarker(latlng, marker_opts);
         },
         circle_record_style: function(record_layer_index){
@@ -1845,10 +1868,16 @@ var vc_common_map = Vue.component(
                 legend[legend_key] = [];
             }
             for(let act_count of example_values){
+                let percentile = null;
+                if(act_layer.hasOwnProperty('all_counts')){
+                    percentile = this.get_percentile_of_val(act_layer.all_counts, act_count);
+                }
+                // console.log('legend count ' + act_count + ' is percentile ' + percentile);
                 let opts = this.circle_count_style(
                     this.selected_gradient_key,
                     act_count,
-                    act_layer.max_count
+                    act_layer.max_count,
+                    percentile
                 );
                 opts.fillOpacity = 0.95;
                 let rgb = convertToRGB(opts.color);
@@ -1932,6 +1961,16 @@ var vc_common_map = Vue.component(
             let geo_id_ex = feature.geometry.id.split('-');
 			let geo_tile = geo_id_ex[geo_id_ex.length - 1];
             this.map.geodeep = geo_tile.length;
+        },
+        make_count_array_for_percentiles: function(features){
+            let count_array = [];
+            for(let feature of features){
+                if(!feature.hasOwnProperty('count')){
+                    continue;
+                }
+                count_array.push(feature.count);
+            }
+            return count_array;
         },
         geojson_to_circle_data: function(act_geojson){
             if(act_geojson.category != 'oc-api:geo-facet'){
@@ -2179,6 +2218,7 @@ var vc_common_map = Vue.component(
                     );
                     act_layer.min_count = act_geojson.min_count;
                     act_layer.max_count = act_geojson.max_count;
+                    act_layer.all_counts = act_geojson.all_counts;
                     act_layer.id = act_geojson.id;
                     // console.log('act_layer id is now: ' + act_layer.id);
                 }
