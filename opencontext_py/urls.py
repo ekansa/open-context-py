@@ -375,7 +375,8 @@ urlpatterns = [
     re_path(r'^projects/(?P<uuid>\S+)?\.geojson$', AllItemsViews.projects_json, name='projects_geojson'),
     re_path(r'^projects/(?P<uuid>\S+)?\.json$', AllItemsViews.projects_json, name='projects_json'),
     re_path(r'^projects/(?P<uuid>\S+)', AllItemsViews.projects_html, name='projects_html'),
-    re_path(r'^projects', NewSearchViews.projects_html, name='search_projects_html'),
+    re_path(r'^projects.json?', NewSearchViews.projects_index_json, name='search_projects_json'),
+    re_path(r'^projects', NewSearchViews.projects_index_html, name='search_projects_html'),
     # Predicates views for descriptive variables and linking relations from OC contributors
     re_path(r'^predicates/(?P<uuid>\S+)?\.jsonld$', AllItemsViews.predicates_json, name='predicates_jsonld'),
     re_path(r'^predicates/(?P<uuid>\S+)?\.json$', AllItemsViews.predicates_json, name='predicates_json'),

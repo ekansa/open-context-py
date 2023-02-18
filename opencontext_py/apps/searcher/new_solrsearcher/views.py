@@ -257,11 +257,51 @@ def projects_geojson(request):
     return make_json_response(request, req_neg, proj_geojson)
 
 
-def projects_html(request, spatial_context=None):
+def projects_index_json(request):
     """Project index and discovery page"""
 
     request_dict = utilities.make_request_obj_dict(
-        request, spatial_context=spatial_context
+        request, spatial_context=None
+    )
+    request_dict['proj-index'] = 1
+    request_dict['response'] = ','.join(
+        [
+            'metadata',
+            'prop-facet',
+        ]
+    )
+    response_dict = process_solr_query(request_dict.copy())
+    req_neg = RequestNegotiation('application/json')
+    req_neg.supported_types = [
+        'application/json',
+        'application/ld+json',
+    ]
+
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+
+    # Associate the request media type with the request so we can
+    # make sure that different representations of this resource get different
+    # cache responses.
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # Client wanted a mimetype we don't support
+        response = HttpResponse(
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+
+    return make_json_response(request, req_neg, response_dict)
+
+
+def projects_index_html(request):
+    """Project index and discovery page"""
+
+    request_dict = utilities.make_request_obj_dict(
+        request, spatial_context=None
     )
     request_dict['proj-index'] = 1
     request_dict['response'] = ','.join(

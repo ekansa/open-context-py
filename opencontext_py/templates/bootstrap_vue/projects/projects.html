@@ -41,7 +41,17 @@
 
 
 
+<template id="proj-search-typeahead">
 
+    <div id="proj-fulltext">
+        <oc-search-typeahead
+            v-bind:base_search_url="base_search_url"
+            v-bind:project_index_search="true"
+        >
+        </oc-search-typeahead>
+    </div>
+
+</template>
 
 
 
@@ -66,6 +76,19 @@
 
             </b-card>
 
+            <b-row class="align-items-center">
+                <b-col>Search Project Contents</b-col>
+                <b-col>
+
+                    <proj-search-typeahead
+                        v-bind:base_search_url="proj_base_search_url"
+                    ></proj-search-typeahead>
+
+                </b-col>
+            </b-row>
+
+
+
             <b-table
                 v-if="items"
                 :items="items"
@@ -78,10 +101,21 @@
                 hover
                 no-local-sorting
                 sort-icon-left
+                selectable
+                select-mode="single"
+                @row-selected="onRowSelected"
             >
                 <template #cell(descriptiveness)="data">
-                    <h4 class="text-center"><b-badge pill variant="info">[[ percent_format(data.item.percentile)]] %</b-badge></h4>
-                    <p class="text-center"><small>Scale, diversity, documentation</small></p>
+                    <h3 v-if="data.item.percentile >= 0.67" class="text-center">
+                        <b-badge pill variant="info">Large</b-badge>
+                    </h3>
+                    <h4 v-if="(data.item.percentile >= 0.33) && (data.item.percentile < 0.67)" class="text-center">
+                        <b-badge pill variant="info">Medium</b-badge>
+                    </h4>
+                    <h5 v-if="(data.item.percentile < 0.33)" class="text-center">
+                        <b-badge pill variant="info">Small</b-badge>
+                    </h5>
+                    <p class="text-center"><small>Scale, diversity, and/or documentation</small></p>
                 </template>
 
                 <template #cell(label)="data">
@@ -155,12 +189,43 @@
         },
     );
 
+    var vc_proj_seach_typeahead = Vue.component(
+        'proj-search-typeahead',
+        {
+            template: '#proj-search-typeahead',
+            delimiters: ['[[', ']]'],
+            props: ['base_search_url'],
+            data() {
+                return {
+                    base_search_url: '/projects',
+                };
+            },
+            computed: {
+                prior_text_query: function(){
+                    if(!this.base_search_url){
+                        return null;
+                    }
+                    let prior_q = getURLParameter(this.base_search_url, 'q');
+                    return prior_q;
+                },
+            },
+            methods: {
+
+            },
+            components: {
+                //'oc-search-typeahead': vc_oc_seach_typeahead,
+            }
+        }
+    );
+
     var vm = new Vue({
         router: router,
         delimiters: ['[[', ']]'],
         el: '#app',
         data: {
             proj_items_geojson_url: "{{ proj_items_geojson_url|safe }}",
+            proj_base_search_url: '/projects',
+            api_base_search_url: '/query',
             proj_geojson: null,
             all_proj_items: null,
             filtered_projs: null,
@@ -174,13 +239,14 @@
                 { key: 'metadata', sortable: false, tdClass: 'align-middle'},
                 { key: 'published', sortable: true, tdClass: 'align-middle'},
             ],
-            descriptiveness_scores:null,
+            descriptiveness_scores: null,
+            search_type: null,
         },
         created(){
             this.fetch_proj_items_geojson();
         },
         mounted(){
-
+            this.fetch_oc_api();
         },
         watch: {
             // call again the method if the route changes
@@ -194,7 +260,9 @@
                 }
                 return all_proj_items;
             },
-
+            proj_search_placeholder: function(){
+                return 'Enter search term(s)';
+            },
         },
         methods: {
             iOS: function() {
@@ -208,6 +276,16 @@
                 ].includes(navigator.platform)
                 // iPad on iOS 13 detection
                 || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+            },
+            onRowSelected(items){
+                if(!items){
+                    return None;
+                }
+                console.log('selected row');
+                console.log(items);
+                this.selected = items;
+                console.log(this.selected);
+                window.open(items[0].href, "_blank");
             },
             percent_format: function(raw_val){
                 return parseFloat(raw_val * 100).toFixed(0);
@@ -408,14 +486,14 @@
                 if(!api_result.hasOwnProperty('oc-api:has-facets')){
                     return null;
                 }
-                for (let f_field of result['oc-api:has-facets']){
+                for (let f_field of api_result['oc-api:has-facets']){
                     if(!f_field.hasOwnProperty('type')){
                         continue;
                     }
                     if(!f_field.hasOwnProperty('oc-api:has-id-options')){
                         continue;
                     }
-                    if(f_field.type != 'oc-api:facet-project'){
+                    if(f_field.type != 'oc-api:sitemap-facet-project'){
                         continue;
                     }
                     return f_field['oc-api:has-id-options'];
@@ -425,8 +503,17 @@
             fetch_oc_api: function (){
                 this.error = null;
                 this.loading = true;
+                let url = this.$route.fullPath;
+                let act_q = getURLParameter(url, 'q');
+                if(!act_q){
+                    return null;
+                }
+                if(url.startsWith(this.proj_base_search_url)){
+                    // url = this.api_base_search_url + url.slice(this.proj_base_search_url.length);
+                }
+                console.log('url for fetch is: ' + url );
                 fetch(
-                    this.$route.fullPath,
+                    url,
                     {
                         headers:{
                             'Accept': 'application/json',
@@ -438,6 +525,8 @@
                 .then(json => {
                     let api_result = json;
                     this.filtered_projs = this.get_filtered_projects(api_result);
+                    console.log('filtered projects');
+                    console.log(this.filtered_projs);
                     this.route_key_index += 1;
                     this.loading = false;
                     if(this.emit_update_fetch_done){
@@ -454,6 +543,7 @@
         components: {
             'common_map': vc_common_map,
             'proj-field-proj-label': vs_proj_field_proj_label,
+            'proj-search-typeahead': vc_proj_seach_typeahead,
         },
     }).$mount('#app');
 </script>

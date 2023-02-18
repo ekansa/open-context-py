@@ -102,6 +102,7 @@ var vc_oc_seach_typeahead = Vue.component(
             'frontend_state_obj',
             'project_slugs',
             'search_via_router',
+            'project_index_search',
             'base_search_url',
             'top_nav',
             'act_place_holder',
@@ -114,6 +115,7 @@ var vc_oc_seach_typeahead = Vue.component(
                 query: '',
                 selected_term: null,
                 search_via_router: false,
+                project_index_search: false,
                 base_search_url: '/query',
                 top_nav: false,
                 act_place_holder: null,
@@ -226,6 +228,10 @@ var vc_oc_seach_typeahead = Vue.component(
                 let url = this.compose_query_link();
                 if(this.search_via_router){
                     console.log('search via router: ' + url);
+                    router.push(url);
+                }
+                else if(this.project_index_search){
+                    console.log('project index search via router: ' + url);
                     router.push(url);
                 }
                 else{
