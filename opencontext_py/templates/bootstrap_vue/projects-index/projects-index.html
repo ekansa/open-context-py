@@ -24,17 +24,11 @@
             class="proj_item_banner"
         ></b-img-lazy>
         <div>
-            <h4>[[ proj_item.label ]]</h4>
-            <p>[[ proj_item.description ]]</p>
-            <dl v-for="p_obj in proj_item.people">
-                <dt><small>[[ p_obj.rel ]]</small></dt>
-                <dd class="text-muted">
-                    <small>
-                    <a v-for="pers, i in p_obj.named_entities" :href="pers.href" target="_blank">[[ pers.label ]]<span v-if="i < (p_obj.named_entities.length -1)">, </span></a>
-                    </small>
-                </dd>
-            </dl>
-            </b-card-body>
+            <h3>[[ proj_item.label ]]</h3>
+            <p class="lead">[[ proj_item.description ]]</p>
+            <p v-if="proj_item.cite">
+                Cite with: <a :href="proj_item.cite" target="_blank">[[ proj_item.cite ]]</a>
+            </p>
         </div>
     </div>
 </template>
@@ -54,6 +48,84 @@
 </template>
 
 
+
+<template id="projects-tab-header-footer">
+    <b-row align-v="center" align-h="between">
+        <b-col md="6">
+            <h5 class="filter_heading_labels">
+                [[ view_range_note ]] Projects
+            </h5>
+        </b-col>
+        <b-col sm md="5" class="ml-auto text-right">
+            <b-button-group>
+                <small class="text-muted" style="margin-top:2%; margin-right:12px;">Paging Links</small>
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_first_link"
+                    :to="result_page_first_link"
+                    :id="hr_role + '-first-page-link-' + route_key_index"
+                    :title="'First page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-bar-left></b-icon-chevron-bar-left>
+                </b-button>
+
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_previous_link"
+                    :to="result_page_previous_link"
+                    :id="hr_role + '-previous-page-link-' + route_key_index"
+                    :title="'Previous page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-left></b-icon-chevron-left>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-left></b-icon-chevron-left>
+                </b-button>
+
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_next_link"
+                    :to="result_page_next_link"
+                    :id="hr_role + '-next-page-link-' + route_key_index"
+                    :title="'Next page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-right></b-icon-chevron-right>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-right></b-icon-chevron-right>
+                </b-button>
+
+                <b-button
+                    pill
+                    variant="outline-primary"
+                    size="sm"
+                    v-if="result_page_last_link"
+                    :to="result_page_last_link"
+                    :id="hr_role + '-last-page-link-' + route_key_index"
+                    :title="'Last page of results'"
+                    class="result_paging_button"
+                >
+                    <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
+                </b-button>
+                <b-button v-else disabled pill variant="outline-secondary" size="sm" class="result_paging_button">
+                    <b-icon-chevron-bar-right></b-icon-chevron-bar-right>
+                </b-button>
+            <b-button-group>
+        </b-col>
+    </b-row>
+</template>
 
 
 
@@ -88,6 +160,17 @@
             </b-row>
 
 
+            <projects-tab-header-footer
+                :hr_role="'header'"
+                v-bind:route_key_index="route_key_index"
+                v-bind:result_count="result_count"
+                v-bind:result_start_index="result_start_index"
+                v-bind:result_items_per_page="result_items_per_page"
+                v-bind:result_page_first_link="result_page_first_link"
+                v-bind:result_page_previous_link="result_page_previous_link"
+                v-bind:result_page_next_link="result_page_next_link"
+                v-bind:result_page_last_link="result_page_last_link"
+            ></projects-tab-header-footer>
 
             <b-table
                 v-if="items"
@@ -100,25 +183,26 @@
                 responsive
                 hover
                 no-local-sorting
+                @sort-changed="sortingChanged"
                 sort-icon-left
                 selectable
                 select-mode="single"
                 @row-selected="onRowSelected"
             >
                 <template #cell(descriptiveness)="data">
-                    <h3 v-if="data.item.percentile >= 0.67" class="text-center">
+                    <h3 v-if="data.item.percentile >= 67" class="text-center">
                         <b-badge pill variant="info">Large</b-badge>
                     </h3>
-                    <h4 v-if="(data.item.percentile >= 0.33) && (data.item.percentile < 0.67)" class="text-center">
+                    <h4 v-if="(data.item.percentile >= 33) && (data.item.percentile < 67)" class="text-center">
                         <b-badge pill variant="info">Medium</b-badge>
                     </h4>
-                    <h5 v-if="(data.item.percentile < 0.33)" class="text-center">
+                    <h5 v-if="(data.item.percentile < 33)" class="text-center">
                         <b-badge pill variant="info">Small</b-badge>
                     </h5>
                     <p class="text-center"><small>Scale, diversity, and/or documentation</small></p>
                 </template>
 
-                <template #cell(label)="data">
+                <template #cell(project)="data">
                     <proj-tab-field-proj-label
                     v-bind:proj_item="data.item">
                     </proj-tab-field-proj-label>
@@ -130,6 +214,14 @@
                 </template>
 
                 <template #cell(metadata)="data">
+                    <dl v-for="p_obj in data.item.people">
+                        <dt><small>[[ p_obj.rel ]]</small></dt>
+                        <dd class="text-muted">
+                            <small>
+                            <a v-for="pers, i in p_obj.named_entities" :href="pers.href" target="_blank">[[ pers.label ]]<span v-if="i < (p_obj.named_entities.length -1)">, </span></a>
+                            </small>
+                        </dd>
+                    </dl>
                     <dl v-for="m_obj in data.item.metadata">
                         <dt><small>[[ m_obj.rel ]]</small></dt>
                         <dd class="text-muted">
@@ -145,6 +237,18 @@
                 </template>
 
             </b-table>
+
+            <projects-tab-header-footer
+                :hr_role="'footer'"
+                v-bind:route_key_index="route_key_index"
+                v-bind:result_count="result_count"
+                v-bind:result_start_index="result_start_index"
+                v-bind:result_items_per_page="result_items_per_page"
+                v-bind:result_page_first_link="result_page_first_link"
+                v-bind:result_page_previous_link="result_page_previous_link"
+                v-bind:result_page_next_link="result_page_next_link"
+                v-bind:result_page_last_link="result_page_last_link"
+            ></projects-tab-header-footer>
         </div>
     </div>
 </div>
@@ -166,6 +270,8 @@
 
     const USE_TEST_ALL_ITEMS_HREF = true;
     const START_API_URL = "{{ api_url|safe }}";
+    const SORT_OPTIONS_FRONTEND = JSON.parse('{{ SORT_OPTIONS_FRONTEND|escapejs }}');
+
     const routes = [{path: START_API_URL}];
     const router = new VueRouter({
          mode: 'history',
@@ -197,7 +303,7 @@
             props: ['base_search_url'],
             data() {
                 return {
-                    base_search_url: '/projects',
+                    base_search_url: '/projects-index',
                 };
             },
             computed: {
@@ -218,14 +324,66 @@
         }
     );
 
+
+    var vs_projects_tab_header_footer = Vue.component(
+        'projects-tab-header-footer',
+        {
+            delimiters: ['[[', ']]'],
+            props: [
+                'hr_role',
+                'route_key_index',
+                'result_count',
+                'result_start_index',
+                'result_items_per_page',
+                'result_page_first_link',
+                'result_page_previous_link',
+                'result_page_next_link',
+                'result_page_last_link',
+            ],
+            data() {
+                return {
+                    hr_role: 'header',
+                    route_key_index: 0,
+                    result_count: 0,
+                    result_start_index: 0,
+                    result_items_per_page: 1,
+                    result_page_first_link: null,
+                    result_page_previous_link: null,
+                    result_page_next_link: null,
+                    result_page_last_link: null,
+                };
+            },
+            template: '#projects-tab-header-footer',
+            computed: {
+                view_range_note: function() {
+                    if(this.result_count < 1 || this.result_count == null){
+                        return 'Current filters return no items';
+                    }
+                    if(this.result_start_index == null || this.result_items_per_page == null){
+                        return 'Error. Please change filter criteria.';
+                    }
+                    let first_index = this.result_start_index + 1;
+                    let last_index = this.result_start_index + this.result_items_per_page;
+                    if(last_index > this.result_count){
+                        last_index = this.result_count;
+                    }
+                    return `${first_index.toLocaleString()} to ${last_index.toLocaleString()} of ${this.result_count.toLocaleString()}`;
+                },
+            },
+            methods: {
+                on_click: function(b_clicked) {
+                    this.$forceUpdate();
+                },
+            },
+        }
+    );
+
     var vm = new Vue({
         router: router,
         delimiters: ['[[', ']]'],
         el: '#app',
         data: {
-            proj_items_geojson_url: "{{ proj_items_geojson_url|safe }}",
-            proj_base_search_url: '/projects',
-            api_base_search_url: '/query',
+            proj_base_search_url: '/projects-index',
             proj_geojson: null,
             all_proj_items: null,
             filtered_projs: null,
@@ -235,15 +393,14 @@
             emit_update_fetch_done: false,
             fields: [
                 { key: 'descriptiveness', sortable: true, label: 'Info Content', tdClass: 'align-middle'},
-                { key: 'label', sortable: true, label: 'Project'},
+                { key: 'project', sortable: true, label: 'Project'},
                 { key: 'metadata', sortable: false, tdClass: 'align-middle'},
                 { key: 'published', sortable: true, tdClass: 'align-middle'},
             ],
             descriptiveness_scores: null,
-            search_type: null,
         },
         created(){
-            this.fetch_proj_items_geojson();
+
         },
         mounted(){
             this.fetch_oc_api();
@@ -262,6 +419,38 @@
             },
             proj_search_placeholder: function(){
                 return 'Enter search term(s)';
+            },
+            result_count: function() {
+                return safe_get_nested_object_by_str_key(this.proj_geojson, 'totalResults');
+            },
+            result_count_human: function(){
+                let result_count = safe_get_nested_object_by_str_key(this.proj_geojson, 'totalResults');
+                if(!result_count){
+                    return '(No records returned)';
+                }
+                return result_count.toLocaleString();
+            },
+            result_start_index: function() {
+                return safe_get_nested_object_by_str_key(this.proj_geojson, 'startIndex');
+            },
+            result_items_per_page: function() {
+                return safe_get_nested_object_by_str_key(this.proj_geojson, 'itemsPerPage');
+            },
+            result_page_first_link: function() {
+                let act_link = safe_get_nested_object_by_str_key(this.proj_geojson, 'first');
+                return abs_to_rel_url(act_link, BASE_URL);
+            },
+            result_page_previous_link: function() {
+                let act_link = safe_get_nested_object_by_str_key(this.proj_geojson, 'previous');
+                return abs_to_rel_url(act_link, BASE_URL);
+            },
+            result_page_next_link: function() {
+                let act_link = safe_get_nested_object_by_str_key(this.proj_geojson, 'next');
+                return abs_to_rel_url(act_link, BASE_URL);
+            },
+            result_page_last_link: function() {
+                let act_link = safe_get_nested_object_by_str_key(this.proj_geojson, 'last');
+                return abs_to_rel_url(act_link, BASE_URL);
             },
         },
         methods: {
@@ -289,19 +478,6 @@
             },
             percent_format: function(raw_val){
                 return parseFloat(raw_val * 100).toFixed(0);
-            },
-            get_percentile_of_val: function(act_array, val) {
-                if (act_array.length === 0) return null;
-                if (typeof val !== 'number') return null;
-                let act_num = 0;
-                for (let i in act_array) {
-                    act_num = (
-                        act_num
-                        + (act_array[i] < val ? 1 : 0)
-                        + (act_array[i] === val ? 0.5 : 0)
-                    );
-                }
-                return (act_num / act_array.length);
             },
             props_valid: function(act_obj, prop_list){
                 if (!(act_obj.constructor == Object)) {
@@ -364,7 +540,14 @@
                 for(let feature of raw_features){
                     let ok = this.props_valid(
                         feature,
-                        ['slug', 'properties', 'oc-api:descriptiveness', 'rdfs:isDefinedBy'],
+                        [
+                            'slug',
+                            'properties',
+                            'oc-api:descriptiveness',
+                            'oc-api:descriptiveness-percentile',
+                            'oc-api:project-contents-count',
+                            'rdfs:isDefinedBy',
+                        ],
                     )
                     if(!ok){
                         continue;
@@ -384,11 +567,6 @@
                 return valid_features;
             },
             prepare_all_proj_items: function(){
-                // combine information from the proj_geojson
-                // and the this.proj_items_raw.
-                if(this.all_proj_items != null){
-                    return this.all_proj_items;
-                }
                 if(!this.proj_geojson){
                     return null;
                 }
@@ -426,10 +604,8 @@
                         media: hero_uri,
                         description: description,
                         descriptiveness: feature['oc-api:descriptiveness'],
-                        percentile: this.get_percentile_of_val(
-                            this.descriptiveness_scores,
-                            feature['oc-api:descriptiveness'],
-                        ),
+                        percentile: feature['oc-api:descriptiveness-percentile'],
+                        count: safe_get_nested_object_by_str_key(feature, 'oc-api:project-contents-count'),
                         people: this.make_link_entity_objs(
                             feature.properties,
                             [
@@ -448,7 +624,8 @@
                                 {p:'References', l:'References',},
                                 {p:'Is Referenced By', l:'Is Referenced By',},
                             ],
-                        )
+                        ),
+                        cite: safe_get_nested_object_by_str_key(props, 'citation uri'),
                     };
                     all_proj_items.push(item);
                 }
@@ -460,60 +637,36 @@
             add_project_map: function(){
 
             },
-            fetch_proj_items_geojson: function (){
-                if(this.proj_geojson != null){
+            sortingChanged(ctx){
+                console.log(ctx);
+                let current_url = START_API_URL;
+                if(this.proj_geojson){
+                    current_url = this.proj_geojson.id;
+                }
+                if(!(ctx.sortBy in SORT_OPTIONS_FRONTEND)){
+                    console.log(ctx.sortBy + ' needs config');
                     return null;
                 }
-                this.error = null;
-                this.loading = true;
-                fetch(
-                    this.proj_items_geojson_url,
-                    {
-                        headers: {
-                            'Accept': 'application/json, application/geo+json, application/vnd.geo+json,',
-                        },
-                    }
-                )
-                .then(this.loading = true)
-                .then(response => response.json())
-                .then(json => {
-                    this.proj_geojson = json;
-                    console.log('Downloaded geojson for project items: ' + this.proj_geojson.features.length);
-                    this.prepare_all_proj_items();
-                });
-            },
-            get_filtered_projects(api_result){
-                if(!api_result.hasOwnProperty('oc-api:has-facets')){
+                let sort_val = SORT_OPTIONS_FRONTEND[ctx.sortBy];
+                if(ctx.sortDesc){
+                    sort_val += '--desc';
+                }
+                else{
+                    sort_val += '--asc';
+                }
+                if(sort_val == getURLParameter(current_url, 'sort')){
+                    // no sort change.
                     return null;
                 }
-                for (let f_field of api_result['oc-api:has-facets']){
-                    if(!f_field.hasOwnProperty('type')){
-                        continue;
-                    }
-                    if(!f_field.hasOwnProperty('oc-api:has-id-options')){
-                        continue;
-                    }
-                    if(f_field.type != 'oc-api:sitemap-facet-project'){
-                        continue;
-                    }
-                    return f_field['oc-api:has-id-options'];
-                }
-                return [];
+                let url = replaceURLparameter(current_url, 'sort', sort_val);
+                url = abs_to_rel_url(url, BASE_URL);
+                router.push(url);
             },
             fetch_oc_api: function (){
                 this.error = null;
                 this.loading = true;
-                let url = this.$route.fullPath;
-                let act_q = getURLParameter(url, 'q');
-                if(!act_q){
-                    return null;
-                }
-                if(url.startsWith(this.proj_base_search_url)){
-                    // url = this.api_base_search_url + url.slice(this.proj_base_search_url.length);
-                }
-                console.log('url for fetch is: ' + url );
                 fetch(
-                    url,
+                    this.$route.fullPath,
                     {
                         headers:{
                             'Accept': 'application/json',
@@ -523,10 +676,9 @@
                 .then(this.loading = true)
                 .then(response => response.json())
                 .then(json => {
-                    let api_result = json;
-                    this.filtered_projs = this.get_filtered_projects(api_result);
-                    console.log('filtered projects');
-                    console.log(this.filtered_projs);
+                    this.proj_geojson = json;
+                    console.log('Downloaded geojson for project items: ' + this.proj_geojson.features.length);
+                    this.prepare_all_proj_items();
                     this.route_key_index += 1;
                     this.loading = false;
                     if(this.emit_update_fetch_done){
@@ -544,6 +696,7 @@
             'common_map': vc_common_map,
             'proj-field-proj-label': vs_proj_field_proj_label,
             'proj-search-typeahead': vc_proj_seach_typeahead,
+            'projects-tab-header-footer': vs_projects_tab_header_footer,
         },
     }).$mount('#app');
 </script>

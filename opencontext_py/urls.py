@@ -92,6 +92,10 @@ urlpatterns = [
     re_path(r'^query/(?P<spatial_context>\S+)?.json', NewSearchViews.query_json, name='new_search_json'),
     re_path(r'^query/(?P<spatial_context>\S+)?', NewSearchViews.query_html, name='new_search_html'),
 
+    # Projects index searches
+    re_path(r'^projects-index/(?P<spatial_context>\S+)?.json', NewSearchViews.projects_index_json, name='projects_index_json'),
+    re_path(r'^projects-index/(?P<spatial_context>\S+)?', NewSearchViews.projects_index_html, name='projects_index_html'),
+
     # New attribute-group dereference
     re_path(r'^attribute-groups/(?P<uuid>\S+)?\.json$', AllItemsViews.all_items_json, name='attribute_groups_json'),
     re_path(r'^attribute-groups/(?P<uuid>\S+)', AllItemsViews.all_items_html, name='attribute_groups'),
@@ -375,8 +379,6 @@ urlpatterns = [
     re_path(r'^projects/(?P<uuid>\S+)?\.geojson$', AllItemsViews.projects_json, name='projects_geojson'),
     re_path(r'^projects/(?P<uuid>\S+)?\.json$', AllItemsViews.projects_json, name='projects_json'),
     re_path(r'^projects/(?P<uuid>\S+)', AllItemsViews.projects_html, name='projects_html'),
-    re_path(r'^projects.json?', NewSearchViews.projects_index_json, name='search_projects_json'),
-    re_path(r'^projects', NewSearchViews.projects_index_html, name='search_projects_html'),
     # Predicates views for descriptive variables and linking relations from OC contributors
     re_path(r'^predicates/(?P<uuid>\S+)?\.jsonld$', AllItemsViews.predicates_json, name='predicates_jsonld'),
     re_path(r'^predicates/(?P<uuid>\S+)?\.json$', AllItemsViews.predicates_json, name='predicates_json'),

@@ -9,10 +9,10 @@ from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
+from opencontext_py.apps.searcher.new_solrsearcher import main_search
 from opencontext_py.apps.searcher.new_solrsearcher import configs
-from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
-from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
 from opencontext_py.apps.searcher.new_solrsearcher import project_index_summary
+from opencontext_py.apps.searcher.new_solrsearcher import project_index_search
 from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
@@ -27,70 +27,6 @@ if settings.DEBUG:
     SEARCH_CACHE_TIMEOUT = 60 # 1 minute
 else:
     SEARCH_CACHE_TIMEOUT = 60 * 60 * 24 * 7 # 1 week
-
-
-def process_solr_query_via_solr_and_db(request_dict):
-    """Processes a request dict to formulate a solr query and process a
-       response from solr
-
-    :param dict request_dict: Dictionary derived from a solr
-        request object with client GET request parameters.
-    """
-    search_solr = SearchSolr()
-    search_solr.add_initial_facet_fields(request_dict)
-    search_solr.init_facet_fields.append('item_type')
-    query = search_solr.compose_query(request_dict)
-    query = search_solr.update_query_with_stats_prequery(
-        query
-    )
-    solr_response = search_solr.query_solr(query)
-    result_maker = ResultMaker(
-        request_dict=request_dict,
-        facet_fields_to_client_request=copy.deepcopy(search_solr.facet_fields_to_client_request),
-        slugs_for_config_facets=copy.deepcopy(search_solr.slugs_for_config_facets),
-        base_search_url='/query/',
-    )
-    result_maker.create_result(
-        solr_json=solr_response
-    )
-    if isinstance(result_maker.result, dict):
-        result_maker.result['query'] = query
-    if 'no-docs' in request_dict.get('solr', []):
-        solr_response['response'].pop('docs')
-        result_maker.result = solr_response
-    return result_maker.result
-
-
-def process_solr_query(request_dict):
-    """Processes a request dict to formulate a solr query and process a
-       response from solr
-
-    :param dict request_dict: Dictionary derived from a solr
-        request object with client GET request parameters.
-    """
-    reset_cache = False
-    if request_dict.get('reset_cache'):
-        reset_cache = True
-        request_dict.pop('reset_cache')
-        print(f'Resetting cache for {request_dict}')
-    cache = caches['redis']
-    cache_key = make_hash_id_from_args(
-        args=request_dict
-    )
-    result = None
-    if not reset_cache:
-        result = cache.get(cache_key)
-    if result:
-        # We have a result from the cache, so return it.
-        print(f'Solr query result from cache {cache_key}')
-        return result
-    # Do the hard work of computing the result from scratch
-    result = process_solr_query_via_solr_and_db(request_dict)
-    try:
-        cache.set(cache_key, result, timeout=SEARCH_CACHE_TIMEOUT)
-    except:
-        pass
-    return result
 
 
 def make_json_response(request, req_neg, response_dict):
@@ -120,7 +56,7 @@ def query_json(request, spatial_context=None):
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
-    response_dict = process_solr_query(request_dict)
+    response_dict = main_search.process_solr_query(request_dict.copy())
 
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = ['application/ld+json']
@@ -151,7 +87,7 @@ def query_html(request, spatial_context=None):
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
-    response_dict = process_solr_query(request_dict.copy())
+    response_dict = main_search.process_solr_query(request_dict.copy())
 
     req_neg = RequestNegotiation('text/html')
     req_neg.supported_types = [
@@ -240,7 +176,7 @@ def suggest_json(request):
 def projects_geojson(request):
     """Makes a geojson response for mapping all projects"""
     request_dict = {'path': None}
-    result_json = process_solr_query(request_dict)
+    result_json = main_search.process_solr_query(request_dict)
     proj_geojson = project_index_summary.make_map_project_geojson(result_json)
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = ['application/json']
@@ -257,20 +193,13 @@ def projects_geojson(request):
     return make_json_response(request, req_neg, proj_geojson)
 
 
-def projects_index_json(request):
-    """Project index and discovery page"""
 
-    request_dict = utilities.make_request_obj_dict(
-        request, spatial_context=None
+def projects_index_json(request, spatial_context=None):
+    """Project index and discovery page json"""
+    response_dict = project_index_search.get_cache_project_index_filtered_summary_and_items(
+        request,
+        spatial_context=spatial_context,
     )
-    request_dict['proj-index'] = 1
-    request_dict['response'] = ','.join(
-        [
-            'metadata',
-            'prop-facet',
-        ]
-    )
-    response_dict = process_solr_query(request_dict.copy())
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = [
         'application/json',
@@ -297,20 +226,12 @@ def projects_index_json(request):
     return make_json_response(request, req_neg, response_dict)
 
 
-def projects_index_html(request):
+def projects_index_html(request, spatial_context=None):
     """Project index and discovery page"""
-
-    request_dict = utilities.make_request_obj_dict(
-        request, spatial_context=None
+    response_dict = project_index_search.get_cache_project_index_filtered_summary_and_items(
+        request,
+        spatial_context=spatial_context,
     )
-    request_dict['proj-index'] = 1
-    request_dict['response'] = ','.join(
-        [
-            'metadata',
-            'prop-facet',
-        ]
-    )
-    response_dict = process_solr_query(request_dict.copy())
     req_neg = RequestNegotiation('text/html')
     req_neg.supported_types = [
         'application/json',
@@ -336,40 +257,23 @@ def projects_index_html(request):
 
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
-
-    proj_item_attribs =  [
-        'dc-terms-creator',
-        'dc-terms-description',
-        'dc-terms-license',
-        'dc-terms-subject',
-        'dc-terms-spatial',
-        'dc-terms-coverage',
-        'dc-terms-contributor',
-        'dc-terms-temporal',
-        'dc-terms-is-referenced-by',
-        'dc-terms-references',
-    ]
     rp = RootPath()
     base_url = rp.get_baseurl()
-    proj_items_geojson_url = (
-        base_url
-        + f'/query/.json?attributes={",".join(proj_item_attribs)}'
-        + '&response=geo-record&rows=1000&start=0&type=projects&proj-index=1'
-    )
+    sort_configs = configs.SORT_OPTIONS_FRONTEND.copy()
+    sort_configs['published'] = 'published'
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
         'BASE_URL': base_url ,
         'st': response_dict.copy(),
         'api_url': response_dict.get('id'),
-        'proj_items_geojson_url': proj_items_geojson_url,
         'configs': configs,
         'load_index_static': True,
-        'SORT_OPTIONS_FRONTEND': json.dumps(configs.SORT_OPTIONS_FRONTEND),
+        'SORT_OPTIONS_FRONTEND': json.dumps(sort_configs),
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),
     }
-    template = loader.get_template('bootstrap_vue/projects/projects.html')
+    template = loader.get_template('bootstrap_vue/projects-index/projects-index.html')
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response
