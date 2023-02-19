@@ -97,6 +97,9 @@ class SearchSolr():
         """Adds project index query terms"""
         # Get facets for all the object category (item_class) entities
         query['facet.field'] = [configs.SITEMAP_FACET_FIELD]
+        query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.limit'] = -1
+        query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.mincount'] = 2
+        # query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.sort'] = 'index'
         return query
 
     def _add_project_summary_query_terms(self, query):
