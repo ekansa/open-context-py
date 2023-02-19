@@ -1,12 +1,12 @@
 {% block relations_media %}
 
-<div class="row align-items-center item_rel_obj_val_row">
-  {% for val in vals %}    
-      <div class="col">
+<div class="row align-items-start justify-content-center">
+  {% for val in vals %}
+      <div class="col-sm-6 col-md-6 col-lg-4 col-xl-3 text-center" style="min-width:220px;">
         <figure class="figure text-center">
           <a title="{{ val.label }}" href="{% url 'media_html' val.object_id %}">
             {% if val.object__meta_json.flag_human_remains %}
-            
+
             <human-remains-image
               v-bind:human_remains_ok="human_remains_ok"
               :human_remains_flagged="true"
@@ -29,8 +29,7 @@
         </figure>
       </div>
       {% if forloop.counter|divisibleby:max_cols %}
-  </div>    
-  <div class="row align-items-center item_rel_obj_val_row">
+      <div class="w-100"></div>
       {%endif%}
   {% endfor %}
 </div>

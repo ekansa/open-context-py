@@ -1,7 +1,7 @@
 {% block relations_other %}
 
 <div class="row align-items-center item_rel_obj_val_row">
-  {% for val in vals %}    
+  {% for val in vals %}
     <div class="col-{{ col_width }}">
       {% if val.object_class_icon %}
       <div class="row align-items-center">
@@ -11,10 +11,10 @@
           {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
           {%endif%}
-            <img 
-            role="img" 
-            src="{{ val.object_class_icon }}" 
-            class="rounded item_rel_obj_class_icon" 
+            <img
+            role="img"
+            src="{{ val.object_class_icon }}"
+            class="rounded item_rel_obj_class_icon"
             alt="Icon for {{ val.object__item_type }}, {{ val.object__item_class__label }} ,{{ val.label }}"/>
           </a>
         </div>
@@ -45,7 +45,7 @@
       {%endif%}
     </div>
     {% if forloop.counter|divisibleby:max_cols %}
-  </div>    
+  </div>
   <div class="row align-items-center item_rel_obj_val_row">
       {%endif%}
   {% endfor %}
