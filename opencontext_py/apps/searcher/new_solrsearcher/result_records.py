@@ -447,6 +447,10 @@ class ResultRecord():
             base_url=settings.CANONICAL_HOST
         )
 
+        cite_uris = solr_doc.get('persistent_uri', [None])
+        if cite_uris[0]:
+            self.cite_uri = f'https://{cite_uris[0]}'
+
         self.item_type = solr_doc['item_type']
         self.label = item_dict.get('label')
         self.slug = item_dict.get('slug')
