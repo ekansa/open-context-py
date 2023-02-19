@@ -34,7 +34,7 @@ class SortingOptions():
     def get_requested_sort_from_dict(self, request_dict):
         """ makes a list indicating the current
             sorting requested
-            
+
         :param dict request_dict: The dictionary of keyed by client
         request parameters and their request parameter values.
         """
@@ -45,11 +45,11 @@ class SortingOptions():
         if not requested_sort:
             return None
         return requested_sort
-    
+
 
     def make_sort_args_list(self, raw_sorting_str, field_sep=None):
         """Makes a list of solr args by parsing a raw sorting string value
-        
+
         :param str raw_sorting_str: The raw sorting order string.
         :param str field_sep: The delimiter/seperator for different
         sorting arguments.
@@ -61,22 +61,22 @@ class SortingOptions():
         else:
             sort_args = [raw_sorting_str]
         return sort_args
-    
-    
+
+
     def make_solr_sort_param(self, requested_sort):
         """ Translates a client request sort parameter to a solr
             sorting parameter.
-        
+
         :param str requested_sort: A string provided by a client with
             a sorting value that needs translating for Solr.
         """
         if not requested_sort:
             # No sort indicated in the request, so use the default
             return self.solr_sort_default
-        
+
         sort_fields = []
         sole_sort_list = []
-        
+
         # Iterate through a list of sorting arguments.
         for cur_field_raw in self.make_sort_args_list(requested_sort):
             order = 'asc'  # the default sort order
@@ -101,11 +101,11 @@ class SortingOptions():
         if len(sole_sort_list) == 0:
             # We didn't find valid sort fields, so use the default
             return self.solr_sort_default
-            
+
         # We have valid sort fields, so make the solr sort
         if 'item' in sort_fields and 'interest' not in sort_fields:
             # Add interest sorting to sorting on items if
-            # iterest sorting is not already present.
+            # interest sorting is not already present.
             sole_sort_list.append(self.solr_sort_default)
         if 'item' not in sort_fields:
             # Only append this if we're not already sorting by items
@@ -113,14 +113,14 @@ class SortingOptions():
             sole_sort_list.append('slug_type_uri_label asc')
         solr_sort = ', '.join(sole_sort_list)
         return solr_sort
-    
-    
+
+
     def make_solr_sort_param_from_request_dict(self, request_dict):
         """ Makes a solr sort parameter for a solr query.
-        
+
         Returns either the default solr sorting or solr sorting
         translated from the client request dict.
-        
+
         :param dict request_dict: The dictionary of keyed by client
         request parameters and their request parameter values.
         """
@@ -128,7 +128,7 @@ class SortingOptions():
             request_dict
         )
         return self.make_solr_sort_param(requested_sort)
-    
+
 
     def make_current_sorting_list(self, request_dict):
         """ makes a list indicating the current
@@ -169,7 +169,7 @@ class SortingOptions():
         """
 
         sort_links = []
-        
+
         # Make a deep copy, because we're mutating the
         # request_dict.
         act_request_dict = copy.deepcopy(request_dict)
@@ -177,14 +177,14 @@ class SortingOptions():
         for param in ['sort', 'start']:
             if param in act_request_dict:
                 act_request_dict.pop(param, None)
-        
+
         order_opts = [
             {'key': 'asc',
              'order': 'ascending'},
             {'key': 'desc',
              'order': 'descending'}
         ]
-        
+
         for act_sort in configs.SORT_OPTIONS:
             if not act_sort.get('opt'):
                 continue
@@ -193,7 +193,7 @@ class SortingOptions():
                     request_dict=act_request_dict,
                     base_search_url=self.base_search_url
                 )
-                if act_sort.get('value') is None: 
+                if act_sort.get('value') is None:
                     if order_opt['key'] == 'asc':
                         # Skip the option of adding an ascending order sort
                         # option if the act_sort value is None (the default sorting
@@ -203,12 +203,12 @@ class SortingOptions():
                     # Make sort links for this sort_option and
                     # order_opt.
                     act_sort_val = (
-                        act_sort['value'] 
+                        act_sort['value']
                         + self.request_sort_dir_delim
                         + order_opt['key']
                     )
                     sl.add_param_value('sort', act_sort_val)
-                
+
                 urls = sl.make_urls_from_request_dict()
                 new_sort_obj = LastUpdatedOrderedDict()
                 new_sort_obj['id'] = urls['html']
@@ -225,6 +225,6 @@ class SortingOptions():
                         break
                 if in_active_list is False:
                     sort_links.append(new_sort_obj)
-        
+
         # Return the sort option links
         return sort_links
