@@ -4,7 +4,7 @@ recommendations for color choices developed by data visualization
 experts (considering perception, variation in human color
 sensitivity, etc.).
 
-For more, see: 
+For more, see:
 https://www.thinkingondata.com/something-about-viridis-library/
 https://academy.datawrapper.de/article/140-what-to-consider-when-choosing-colors-for-data-visualization
 
@@ -132,6 +132,13 @@ const COLOR_PALLET = [
 	'#CC79A7',
 ];
 
+// Map colors for markers of Open Context projects.
+const PROJECTS_MAP_COLOR_LIST = [
+	{v: 0, color: '#0088cc'},
+	{v: 0.5, color: '#6e5fcc'},
+	{v: 1, color: '#002a66'},
+];
+
 function hex (c) {
 	// converts decimal to hexidecimal value
 	var s = "0123456789abcdef";
@@ -141,7 +148,7 @@ function hex (c) {
 	i = Math.round (Math.min (Math.max (0, i), 255));
 	return s.charAt((i - i % 16) / 16) + s.charAt (i % 16);
 }
- 
+
 function convertToHex (rgb) {
 	// converts rgb list to a hexadecimal string value
 	return hex(rgb[0]) + hex(rgb[1]) + hex(rgb[2]);
@@ -188,11 +195,11 @@ function make_hex_color_in_gradient(act_p, gradient_list){
 	if(low_color.v == high_color.v){
 		return low_color.color;
 	}
-	
+
     let color_p =  act_p / high_color.v;
 	let low_rgb = convertToRGB(low_color.color);
 	let high_rgb = convertToRGB(high_color.color);
-	
+
 	let act_rgb = new Array();
 	for (let i = 0; i < 3; i++) {
 		act_rgb[i] = low_rgb[i] + Math.round((high_rgb[i] - low_rgb[i]) * color_p);

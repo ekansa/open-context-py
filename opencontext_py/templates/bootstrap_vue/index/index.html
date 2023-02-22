@@ -308,11 +308,8 @@
 <script type="text/javascript">
 <!--
     let home_project_map = new project_map("home-map", "{{ json_url|safe }}" + "/map-projects.json");
-    home_project_map.map.color_list = [
-        {v: 0, color: '#0088cc'},
-        {v: 0, color: '#6e5fcc'},
-        {v: 0, color: '#002a66'},
-    ];
+    // PROJECTS_MAP_COLOR_LIST is defined with color-scales.js
+    home_project_map.map.color_list = PROJECTS_MAP_COLOR_LIST;
     home_project_map.map.get_geojson();
 -->
 </script>

@@ -265,6 +265,7 @@ def projects_index_html(request, spatial_context=None):
         'NAV_ITEMS': settings.NAV_ITEMS,
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
         'BASE_URL': base_url ,
+        'load_index_static': True,
         'st': response_dict.copy(),
         'api_url': response_dict.get('id'),
         'configs': configs,
