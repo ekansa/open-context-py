@@ -513,9 +513,88 @@ class SolrDocumentNS:
             )
 
 
+    def _get_spatial_context_items_for_project(self):
+        """Gets spatial context items list for projects items"""
+        if self.man_obj.item_type != 'projects':
+            return None
+        sub_projects_qs = AllManifest.objects.filter(
+            project=self.man_obj,
+            item_type='projects'
+        )
+        projects = [self.man_obj]
+        for proj_obj in sub_projects_qs:
+            if proj_obj in projects:
+                continue
+            projects.append(proj_obj)
+        # Now get the root subjects items. These are items
+        # in the project (and sub projects) that have contexts in the Open
+        # Context project
+        root_qs = AllManifest.objects.filter(
+            item_type='subjects',
+            project__in=projects,
+            context__project_id=configs.OPEN_CONTEXT_PROJ_UUID
+        )
+        if len(root_qs) < 1:
+            return None
+        proj_root_man_obj = None
+        root_max_count = 0
+        # Does this project span multiple world regions? Check
+        # the top level paths to see.
+        top_paths = []
+        for act_man_obj in root_qs:
+            path_ex = act_man_obj.path.split('/')
+            top_path = '/'.join(path_ex[0:1])
+            if top_path in top_paths:
+                continue
+            top_paths.append(top_path)
+        if len(top_paths) > 1:
+            # This project spans multiple world regions.
+            for top_path in top_paths:
+                act_count = AllManifest.objects.filter(
+                    item_type='subjects',
+                    project__in=projects,
+                    path__startswith=top_path
+                ).count()
+                print(f'Project world region {top_path} is parent of {act_count} items')
+                if act_count < root_max_count:
+                    continue
+                root_max_count = act_count
+                proj_root_man_obj = AllManifest.objects.filter(
+                    item_type='subjects',
+                    path=top_path,
+                    project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+                ).first()
+        else:
+            for act_man_obj in root_qs:
+                act_count = AllManifest.objects.filter(
+                    item_type='subjects',
+                    project__in=projects,
+                    path__startswith=act_man_obj.path
+                ).count()
+                print(f'Project root {act_man_obj.path} [{act_man_obj.uuid}] is parent of {act_count} items')
+                if act_count < root_max_count:
+                    continue
+                root_max_count = act_count
+                proj_root_man_obj = act_man_obj
+        if not proj_root_man_obj:
+            return None
+        # Get the current root item and all of its parents.
+        context_items = item.add_to_parent_context_list(
+            manifest_obj=proj_root_man_obj,
+            for_solr_or_html=True,
+        )
+        # the most general (root) items go first.
+        context_items.reverse()
+        return context_items
+
+
     def _add_solr_spatial_context(self):
         """Adds spatial context fields to the solr document."""
         context_items = self.rep_dict.get('contexts', [])
+        if not context_items and self.man_obj.item_type == 'projects':
+            # We have a project item, so do some additional queries to get
+            # context items.
+            context_items = self._get_spatial_context_items_for_project()
         if not context_items:
             # This item has no spatial context.
             return None
