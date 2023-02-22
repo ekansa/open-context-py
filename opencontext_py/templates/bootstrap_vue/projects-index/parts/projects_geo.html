@@ -1,0 +1,568 @@
+{% block projects_geo %}
+
+{% load humanize %}
+
+
+<template id='projects_map'>
+    <div>
+        <l-map
+            v-if="geo_json"
+            @ready="ready_map_setup"
+            :style="'min-height: ' + min_height + 'px;'"
+            :ref="'map-' + ref_suffix"
+            :zoom="11"
+            :load-tiles-while-animating="true"
+            :load-tiles-while-interacting="true">
+
+            <l-control-layers
+                :ref="'map-l-controls-' + ref_suffix"
+                position="topright"></l-control-layers>
+
+            <l-tile-layer
+                v-for="tp in tileProviders"
+                :ref="'map-tile-' + ref_suffix + '-' + tp.name"
+                :key="tp.name"
+                :name="tp.name"
+                :visible="tp.visible"
+                :url="tp.url"
+                :attribution="tp.attribution"
+                :maxZoom="tp.maxZoom"
+                :maxNativeZoom="tp.maxNativeZoom"
+                layer-type="base"></l-tile-layer>
+
+        </l-map>
+        <div v-else class="text-center mb-3 d-flex justify-content-between">
+            <b-spinner
+                variant="primary"
+                style="width: 3rem; height: 3rem;" label="Large Spinner"></b-spinner>
+        </div>
+    </div>
+</template>
+
+
+<script type="text/javascript">
+  // Import Vue2Leaflet components.
+  // Assumes we have all of the common map components loaded.
+
+var vc_projects_map = Vue.component(
+  'projects-map',
+  {
+    props: [
+        'uuid',
+        'map_key',
+        'ref_suffix',
+        'geo_json',
+        'geo_overlays',
+        'min_height',
+        'route_key_index',
+        'result_count_human',
+        'datavis_scale_max',
+        'datavis_scale_min',
+    ],
+    data() {
+        return {
+            // Map Options
+            uuid: null,
+            map: null,
+            map_key: 0,
+            ref_suffix: '-prj-map',
+            zoom_def: 2,
+            base_layers: {},
+            tileProviders: TILE_PROVIDERS, // map box light only
+            selectedTileSet: TILE_PROVIDERS[3], // map box light
+            google_tile_configs: GOOGLE_TILE_CONFIGS,
+            map_scale: null,
+            added_google_tiles: false,
+            added_google_tile_types: [],
+            minZoom_def: 1,
+            maxZoom_def: MAX_ZOOM,
+            show_mapsets_default: true,
+            center: null,
+            result_count_human: null,
+            geo_json: null,
+            min_height: 300,
+            route_key_index: 0,
+            map_hash_obj: null,
+            baselayer_name: null,
+            default_zoom: 2,
+            default_tilelayer_name: 'MapBox Light',
+            geo_projects_circles_default: {
+                type: "FeatureCollection",
+                label: "Projects",
+                ov_id: 'crc',
+                ref: "map-circle-geojson-" + this.ref_suffix,
+                min_value: null,
+                max_value: null,
+                legend: null,
+                features: [],
+            },
+            default_ov_ids: ['crc'],
+            show_default_overlay: true,
+            count_feature_attribute_path: ['oc-api:project-contents-count'],
+            datavis_feature_attribute_path: ['oc-api:descriptiveness-percentile'],
+            datavis_scale_max: 100,
+            datavis_scale_min: 1,
+        };
+    },
+    template: '#projects_map',
+    delimiters: ['[[', ']]'],
+    created(){
+
+    },
+    mounted(){
+
+    },
+    updated(){
+        this.update_map_setup();
+    },
+    computed: {
+        map_ref(){return 'map-' + this.ref_suffix},
+        l_controls_ref(){return 'map-l-controls-' + this.ref_suffix},
+        geojson_ref(){return 'map-geojson-' + this.ref_suffix},
+        options() {
+            return {
+                onEachFeature: this.onEachFeatureFunction
+            };
+        },
+        onEachFeatureFunction() {
+            return (feature, layer) => {
+                let popup_content = this.make_feature_popup(feature);
+                let tooltip_content = this.make_feature_tooltip(feature);
+                layer.bindPopup(popup_content);
+                layer.bindTooltip(
+                    tooltip_content,
+                    { permanent: false, sticky: true }
+                );
+            };
+        },
+    },
+    methods: {
+        // Utility functions for search map interface
+        iOS: function() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform)
+            // iPad on iOS 13 detection
+            || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+        },
+        util_search_map_ok_with_props: function(prop_list){
+            if(!this.util_search_map_ok()){
+                return false;
+            }
+            for(let prop of prop_list){
+                if(!this.map.hasOwnProperty(prop)){
+                    return false;
+                }
+            }
+            return true;
+        },
+        add_links(str){
+            if (!(typeof str === 'string' || str instanceof String)){
+                return str;
+            }
+            if(str.startsWith("https://")||str.startsWith("http://")){
+                return `<a target="_blank" href="${str}">${str}</a>`;
+            }
+            return str;
+        },
+        update_router: function(url){
+            let hash = '';
+            if(window.location.hash) {
+                hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+            }
+            if(url.indexOf(hash) < 0){
+                url += hash;
+            }
+            url = abs_to_rel_url(url, BASE_URL);
+            router.push(url);
+        },
+        get_current_geo_json_id: function(){
+            if(this.geo_json){
+                if(this.geo_json.hasOwnProperty('id')){
+                    return this.geo_json.id;
+                }
+            }
+            return null;
+        },
+        get_object_from_path_keys: function(act_object, path_keys){
+            for(let act_key of path_keys){
+                if(!act_object.hasOwnProperty(act_key)){
+                    return null;
+                }
+                act_object = act_object[act_key];
+            }
+            return act_object;
+        },
+        update_base_layer(baselayer_name){
+            if(!this.map){
+                return null;
+            }
+            if(!(baselayer_name in this.base_layers)){
+                console.log('Cannot find baselayer: ' + baselayer_name);
+                return null;
+            }
+            for(let name_key in this.base_layers){
+                let act_layer = this.base_layers[name_key];
+                if(name_key == baselayer_name){
+                    this.map.addLayer(act_layer);
+                }
+                else{
+                    this.map.removeLayer(act_layer);
+                }
+            }
+            let new_tile_state_list = [];
+            for(tp of this.tileProviders){
+                tp.visible = false;
+                if(tp.name == baselayer_name){
+                    tp.visible = true;
+                    this.selectedTileSet = tp;
+                }
+                new_tile_state_list.push(tp);
+            }
+            this.tileProviders = new_tile_state_list;
+            this.map.baselayer_name = baselayer_name;
+        },
+        make_feature_popup(feature){
+            // for an area (count) aggregate summary feature
+            let count = this.get_object_from_path_keys(feature, this.count_feature_attribute_path);
+            if(!count){
+                return '(No data currently)';
+            }
+
+            if(!feature.hasOwnProperty('properties')){
+                return '(No data currently)';
+            }
+            let slug = this.get_object_from_path_keys(feature, ['slug']);
+            if(!slug){
+                return '(No data currently)';
+            }
+            let query_link = BASE_URL + '/query/?proj=' + slug;
+            let description = this.get_object_from_path_keys(feature, ['properties', 'description']);
+            if(!description){
+                description = '';
+            }
+            let proj_html =  (
+                `<dl>
+                <dt>Project</dt>
+                <dd><a href="${feature.properties.href}" target="_blank">${feature.properties.label}</a>
+                    <br/>${feature.properties.description}
+                </dd>
+                </dl>
+                <dl>
+                <dt>Data Records</dt>
+                <dd><a href="${query_link}" target="_blank">${count} (Click to explore project data)</a></dd>
+                </dl>
+                `
+            );
+            let popup_content = (
+                `<div class="container geo_feature_popup">${proj_html}</div>`
+            );
+            return popup_content;
+        },
+        make_feature_tooltip(feature){
+            if(!feature.hasOwnProperty('properties')){
+                return '';
+            }
+            if(feature.properties.length < 1){
+                return '';
+            }
+            let count = this.get_object_from_path_keys(feature, this.count_feature_attribute_path);
+            if(count && feature.properties.hasOwnProperty('label')){
+                return `<div>${feature.properties.label} (${count} items)</div>`;
+            }
+            return '';
+        },
+        gather_base_layers: function(){
+            if(!this.map){
+                return null;
+            }
+            for(tp of this.tileProviders){
+                let tile_key = 'map-tile-' + this.ref_suffix + '-' + tp.name;
+                if(this.$refs[tile_key] == null){
+                    console.log('no basemap with key: ' + tile_key);
+                    continue;
+                }
+                this.base_layers[tp.name] = this.$refs[tile_key][0].mapObject;
+            }
+        },
+        add_google_tiles: function() {
+            if(this.added_google_tiles){
+                return null;
+            }
+            if(!this.map){
+                return null;
+            }
+            if(this.$refs[this.l_controls_ref] == null){
+                console.log('no item: ' + this.l_controls_ref);
+                return null;
+            }
+            if(this.$refs[this.map_ref] == null){
+                console.log('no item: ' + this.map_ref);
+                return null;
+            }
+            // console.log(this.map);
+            for(let gtile_config of this.google_tile_configs){
+                if(this.added_google_tile_types.indexOf(gtile_config.type) >= 0){
+                    // Don't add the same layer twice!
+                    continue;
+                }
+                let gtile = L.gridLayer.googleMutant(gtile_config);
+                this.base_layers[gtile.options.name] = gtile;
+                this.$refs[this.l_controls_ref].mapObject.addBaseLayer(
+                    gtile, gtile.options.name
+                );
+                this.added_google_tile_types.push(gtile_config.type);
+            }
+            this.added_google_tiles = true;
+        },
+        get_datavis_attribute_value_from_feature: function(feature){
+            return this.get_object_from_path_keys(feature, this.datavis_feature_attribute_path);
+        },
+        count_style: function(act_datavis_value, max_value, percentile=null){
+            let act_gradient = PROJECTS_MAP_COLOR_LIST;
+            let normalized_count = act_datavis_value / max_value;
+            if (typeof percentile === 'number' && typeof this.percentile_color_influence === 'number'){
+                if(this.percentile_color_influence > 0 && this.percentile_color_influence <= 1 ){
+                    // Use the percentile value in determining the normalized count
+                    // that gives the color value.
+                    normalized_count = (
+                        normalized_count * (1 - this.percentile_color_influence)
+                        + (percentile * this.percentile_color_influence)
+                    );
+                }
+            }
+            let hex_color = make_hex_color_in_gradient(
+                normalized_count,
+                act_gradient
+            );
+            let fill_opacity = (
+                ((act_datavis_value / max_value) * 0.5 ) + 0.20
+            );
+            return {
+                color: hex_color,
+                fillOpacity: fill_opacity,
+                weight: 1.5,
+            };
+        },
+        circle_count_style: function(act_datavis_value, max_value, percentile=null){
+            let marker_opts = this.count_style(act_datavis_value, max_value, percentile);
+            marker_opts.radius = Math.round(20 * (act_datavis_value / max_value), 0) + 5;
+            marker_opts.fillColor = marker_opts.color;
+            marker_opts.weight = 1;
+            marker_opts.opacity = 0.95;
+            marker_opts.fillOpacity = 0.8;
+            return marker_opts;
+        },
+        circle_pointToLayer: function(feature,  latlng){
+            let marker_opts = null;
+            let act_datavis_value = this.get_datavis_attribute_value_from_feature(feature);
+            if(!act_datavis_value){
+                act_datavis_value = 0;
+            }
+            marker_opts = this.circle_count_style(
+                act_datavis_value,
+                this.datavis_scale_max,
+            );
+            return L.circleMarker(latlng, marker_opts);
+        },
+        remove_prior_overlays: function(){
+            if(!this.map){
+                return null;
+            }
+            // Removes prior geojson overlay layers from prior routing.
+            if(this.map.hasOwnProperty('overlay_layers_by_id')){
+                for(let ov_id in this.map.overlay_layers_by_id){
+                    if(!this.map.overlay_layers_by_id.hasOwnProperty(ov_id)){
+                        continue;
+                    }
+                    let act_layer = this.map.overlay_layers_by_id[ov_id];
+                    act_layer.removeFrom(this.map);
+                    this.$refs[this.l_controls_ref].mapObject.removeLayer(
+                        act_layer,
+                    );
+                    delete this.map.overlay_layers_by_id[ov_id];
+                }
+            }
+            this.map.overlay_layers_by_id = null;
+        },
+        add_overlay_layers: function() {
+            if(!this.geo_json){
+                return null;
+            }
+            if(!this.map){
+                this.map = this.$refs[this.map_ref].mapObject;
+                // this.ready_map_setup();
+            }
+            if(!this.map){
+                console.log('What map?');
+                return null;
+            }
+            if(this.$refs[this.l_controls_ref] == null){
+                console.log('no item: ' + this.l_controls_ref);
+                return null;
+            }
+            if(this.geo_json.features.length < 1){
+                return null;
+            }
+
+            // Removes prior geojson overlay layers from prior routing.
+            this.remove_prior_overlays();
+
+            // prevent mutation of the result.
+            let act_geojson = JSON.parse(JSON.stringify(this.geo_projects_circles_default));
+            act_geojson.features = JSON.parse(JSON.stringify(this.geo_json.features));
+
+            this.map.overlay_layers_by_id = {};
+
+            let act_layer = L.geoJson(
+                act_geojson,
+                    {
+                        pointToLayer: this.circle_pointToLayer,
+                        onEachFeature: this.onEachFeatureFunction,
+                    },
+                );
+            act_layer.id = act_geojson.id;
+            act_layer.ref = act_geojson.ref;
+            act_layer.label = act_geojson.label;
+            act_layer.ov_id = act_geojson.ov_id;
+
+            // Now add it again fresh.
+            act_layer.addTo(this.map, act_geojson.label);
+            this.$refs[this.l_controls_ref].mapObject.addOverlay(
+                act_layer,
+                act_geojson.label
+            );
+            act_layer.bringToFront();
+            this.map.overlay_layers_by_id[act_layer.ov_id] = act_layer;
+        },
+        finesse_item_view: function(){
+            if(!this.map){
+                return null;
+            }
+            if(!('features' in this.geo_json)){
+                return null;
+            }
+            let center = this.map.getCenter();
+            this.map.setView(center, this.default_zoom);
+        },
+        fit_bounds: function(){
+            if(!this.geo_json && GEO_JSON != null){
+                this.geo_json = GEO_JSON;
+            }
+            if(!this.map){
+                return null;
+            }
+            console.log('Use overlay layer to fit bounds.');
+            let act_overlay_layer = null;
+            if(this.map.hasOwnProperty('overlay_layers_by_id')){
+                if (this.map.overlay_layers_by_id && this.map.overlay_layers_by_id.hasOwnProperty('sqr')){
+                    act_overlay_layer = this.map.overlay_layers_by_id.sqr;
+                }
+            }
+            if(act_overlay_layer == null){
+                act_overlay_layer = this.$refs[this.geojson_ref];
+                if(act_overlay_layer == null){
+                    console.log('no geo-json layer item: ' + this.geojson_ref);
+                    return null;
+                }
+            }
+            if(act_overlay_layer == null){
+                console.log('no overlay layer for fitbounds');
+                return null;
+            }
+            this.map.auto_fit = true;
+            let bounds = act_overlay_layer.getBounds();
+            this.map.fitBounds(bounds);
+            console.log(bounds);
+            this.map.auto_fit = false;
+        },
+        ready_map_setup: function(){
+            this.map = this.$refs[this.map_ref].mapObject;
+            this.map._layersMaxZoom = MAX_ZOOM;
+            this.map.auto_fit = true;
+            this.map.legends = null;
+            this.add_google_tiles();
+            if(this.selectedTileSet){
+                this.selectedTileSet.visible = true;
+            }
+            this.add_overlay_layers();
+            this.fit_bounds();
+            this.map.auto_fit = false;
+            this.map.overlay_ready = true;
+        },
+        map_size_reset: function(){
+            if(!this.geo_json && GEO_JSON != null){
+                console.log('Missing this.geo_json, use GEO_JSON');
+                this.geo_json = GEO_JSON;
+            }
+            if(this.$refs[this.map_ref] == null){
+                console.log('no item: ' + this.map_ref);
+                return null;
+            }
+            setTimeout(() => {
+                // wait a bit so the geojson layer is available.
+                try {
+                    this.$refs[this.map_ref].mapObject.invalidateSize();
+                } catch (error) {
+                    console.log('Map not yet ready to invalidateSize()');
+                    console.log(error);
+                }
+            }, 100);
+        },
+        update_map_setup: function(){
+            if(!this.map){
+                this.map = this.$refs[this.map_ref].mapObject;
+                // this.ready_map_setup();
+            }
+            if(!this.map){
+                console.log('What map?');
+                return null;
+            }
+            this.map.overlay_ready = false;
+            if(this.selectedTileSet){
+                this.selectedTileSet.visible = true;
+            }
+            this.add_overlay_layers();
+            this.map_size_reset();
+            this.fit_bounds();
+            this.finesse_item_view();
+            this.map.overlay_ready = true;
+            console.log('update done...');
+            console.log(this.geo_json);
+        },
+        reset_overlay_layer_control: function(act_layer){
+            this.$refs[this.l_controls_ref].mapObject.removeLayer(
+                act_layer,
+            );
+            this.$refs[this.l_controls_ref].mapObject.addOverlay(
+                act_layer,
+                act_layer.label
+            );
+        },
+    },
+    components: {
+      'l-popup': l_popup,
+      'l-img-overlay' : l_img_overlay,
+      'l-tile-layer': l_tile_layer,
+      'l-geo-json': l_geo_json,
+      'l-marker': l_marker,
+      'l-map': l_map,
+    },
+});
+
+
+
+
+
+
+
+</script>
+
+
+
+{% endblock %}

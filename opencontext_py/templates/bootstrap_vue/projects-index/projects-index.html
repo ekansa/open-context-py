@@ -9,9 +9,9 @@
     let proj_items_api_url = abs_to_rel_url('{{ proj_items_api_url|safe }}', BASE_URL);
 </script>
 
-{% include '../color_gradients.html' %}
-{% include '../common_geo.html' %}
 
+{% include '../common_map_constants.html' %}
+{% include '../projects-index/parts/projects_geo.html' %}
 
 
 <template id='proj-tab-field-proj-label'>
@@ -138,12 +138,32 @@
     <div class="container-fluid">
         <div id="app">
             <b-card
-                title="Map of Project and Collection Publications"
+                v-if="loading || !proj_geojson"
+                title="Getting Project and Collection Publications"
             >
 
                 <b-card-text>
-                    <div class="main-map" id="home-map">
-                    </div>
+                    <h1 class="display-4">Preparing data...</h1>
+                    <b-spinner class="m-5" label="Busy"></b-spinner>
+                </b-card-text>
+
+            </b-card>
+            <b-card
+                v-else
+                title="Project and Collection Publications"
+            >
+
+                <b-card-text v-if="items">
+
+                    <projects-map
+                        v-if="proj_geojson.features.length > 0"
+                        :map_key="0"
+                        :min_height="600"
+                        v-bind:route_key_index="route_key_index"
+                        v-bind:geo_json="proj_geojson"
+                        v-bind:result_count_human="result_count_human"
+                    ></projects-map>
+
                 </b-card-text>
 
             </b-card>
@@ -397,7 +417,6 @@
                 { key: 'metadata', sortable: false, tdClass: 'align-middle'},
                 { key: 'published', sortable: true, tdClass: 'align-middle'},
             ],
-            descriptiveness_scores: null,
         },
         created(){
 
@@ -556,13 +575,7 @@
                         // slip open context.
                         continue;
                     }
-                    act_descriptiveness_scores.push(
-                        feature['oc-api:descriptiveness']
-                    )
                     valid_features.push(feature);
-                }
-                if(this.descriptiveness_scores == null){
-                    this.descriptiveness_scores = act_descriptiveness_scores.sort();
                 }
                 return valid_features;
             },
@@ -693,7 +706,7 @@
             },
         },
         components: {
-            'common_map': vc_common_map,
+            'projects-map': vc_projects_map,
             'proj-field-proj-label': vs_proj_field_proj_label,
             'proj-search-typeahead': vc_proj_seach_typeahead,
             'projects-tab-header-footer': vs_projects_tab_header_footer,
