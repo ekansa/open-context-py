@@ -718,6 +718,18 @@ NAV_ITEMS = [
         ]
     },
     {
+        'key': 'publications',
+        'link': '/projects-index/',
+        'display': 'Publications',
+        'always': True,
+        'urls': [
+            {
+                'display':  'Publications',
+                'link': '/projects-index/',
+            },
+        ]
+    },
+    {
         'key': 'explore',
         'link': '/query/',
         'display': 'Explore',
