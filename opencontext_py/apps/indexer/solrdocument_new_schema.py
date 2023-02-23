@@ -3,6 +3,7 @@ import datetime
 from django.core.cache import caches
 
 from django.db.models import Q
+from django.db.models.functions import Length
 
 from opencontext_py.libs.utilities import chronotiles
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -517,13 +518,20 @@ class SolrDocumentNS:
         if len(root_qs) < 1:
             # look for root_qs items among items that belong to parents or sibling
             # projects.
-            projects = self._get_parent_and_sibling_projects()
+            sib_projects = self._get_parent_and_sibling_projects()
+            projects += [proj for proj in sib_projects if proj not in projects]
 
         root_qs = AllManifest.objects.filter(
             item_type='subjects',
             project__in=projects,
             context__project_id=configs.OPEN_CONTEXT_PROJ_UUID
         )
+        if len(root_qs) < 1:
+            root_qs = AllManifest.objects.filter(
+                item_type='subjects',
+                project__in=projects,
+            ).order_by(Length('path').asc())[:10]
+
         if len(root_qs) < 1:
             # We really can't find anything that seems to be a root for this project.
             return None
@@ -573,7 +581,6 @@ class SolrDocumentNS:
                 proj_root_man_obj = AllManifest.objects.filter(
                     item_type='subjects',
                     path=top_path,
-                    project_id__in=proj_uuids_with_oc,
                 ).first()
         else:
             for act_man_obj in root_qs:
