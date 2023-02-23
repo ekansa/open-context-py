@@ -138,16 +138,38 @@
     <div class="container-fluid">
         <div id="app">
 
-            <b-row class="align-items-center">
-                <b-col>Search Project Contents</b-col>
-                <b-col>
+
+            <b-jumbotron>
+
+                <b-media vertical-align="center">
+
+                    <template #aside>
+                        <b-img-lazy
+                        fluid
+                        src="../../static/oc/icons-v2/noun-research-project-2341022.svg"
+                        width="120" alt="Projects icon"></b-img>
+                    </template>
+
+                    <h1 class="display-4">Publication Projects</h1>
+                    <p class="lead">
+                        A "project" is the main unit of publication in Open Context. Each project
+                        includes one or more datasets created by an individual researcher, a team
+                        of researchers, or an organization.
+                    </p>
+
+                    <hr class="my-4"></hr>
+
 
                     <proj-search-typeahead
                         v-bind:base_search_url="proj_base_search_url"
                     ></proj-search-typeahead>
+                    <p>Type search term(s) above to filter the projects below</p>
 
-                </b-col>
-            </b-row>
+
+                </b-media>
+
+            </b-jumbotron>
+
 
 
             <projects-tab-header-footer
@@ -401,11 +423,11 @@
             error: null,
             emit_update_fetch_done: false,
             fields: [
-                { key: 'context', sortable: true, label: 'Region', tdClass: 'align-middle'},
+                { key: 'context', sortable: true, label: 'Region', },
                 { key: 'project', sortable: true, label: 'Project'},
-                { key: 'metadata', sortable: false, tdClass: 'align-middle'},
-                { key: 'published', sortable: true, tdClass: 'align-middle'},
-                { key: 'descriptiveness', sortable: true, label: 'Info Content', tdClass: 'align-middle'},
+                { key: 'metadata', sortable: false, },
+                { key: 'published', sortable: true, },
+                { key: 'descriptiveness', sortable: true, label: 'Info Content', },
             ],
         },
         created(){
