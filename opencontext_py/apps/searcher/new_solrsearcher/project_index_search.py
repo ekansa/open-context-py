@@ -208,6 +208,8 @@ def get_cache_project_index_filtered_summary_and_items(request, spatial_context=
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
+    if not request_dict.get('rows'):
+        request_dict['rows'] = 20
     request_dict['proj-index'] = 1
     request_dict['response'] = ','.join(
         [
