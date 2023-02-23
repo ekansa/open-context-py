@@ -26,15 +26,15 @@
 
         </div>
         <div v-else>
-
-          <apexchart
-            v-if="data_series"
-            :id="'chart-' + chart_id"
-            :ref="'chart-' + chart_id"
-            width="100%" 
-            :options="options"
-            :series="data_series">
-          </apexchart>
+          <div v-if="data_series && (data_series.length > 0)">
+            <apexchart
+              :id="'chart-' + chart_id"
+              :ref="'chart-' + chart_id"
+              width="100%"
+              :options="options"
+              v-bind:series="data_series">
+            </apexchart>
+          </div>
 
           <b-row align-v="center"  align-h="end" v-if="query_href">
             <b-col cols="12" cols="12" md="auto">
@@ -44,9 +44,9 @@
               </b-button>
             </b-col>
           </b-row>
-    
+
         </div>
-          
+
       </div>
     </div>
 
@@ -114,6 +114,9 @@
                 fontFamily: 'Open Sans',
               },
             },
+            xaxis: {
+              type: 'category',
+            },
             tooltip: {
               y: {
                 formatter: function(value, { series, seriesIndex, dataPointIndex, w }) {
@@ -123,8 +126,8 @@
             }
           },
           data_series: null,
-          min_value: null,
-          max_value: null,
+          min_value: 0,
+          max_value: 1,
           route_key_index: 0,
         };
       },
@@ -156,10 +159,13 @@
         },
       },
       created(){
-        this.fetch_oc_api();
+        // this.fetch_oc_api();
       },
       watch: {
-        
+
+      },
+      mounted(){
+        this.fetch_oc_api();
       },
       methods: {
         fetch_oc_api: function(){
@@ -257,6 +263,9 @@
               if(!opt.hasOwnProperty('count')){
                 continue;
               }
+              if(opt.count === null){
+                continue;
+              }
               if(!opt.hasOwnProperty('label')){
                 continue;
               }
@@ -281,12 +290,15 @@
           this.options.title.text = (
             `Currently indexed values from ${min_ui} to ${max_ui} for ${this.predicate_label}`
           );
-          let series = [{
-            name: 'Records:',
-            type: 'column',
-            data: data_series,
-          }];
-          return series;
+          let final_series = [
+            {
+              name: 'Records:',
+              type: 'column',
+              data: data_series,
+            },
+          ];
+          console.log(final_series);
+          return final_series;
         },
       },
       components: {
@@ -294,7 +306,7 @@
       }
     }
   );
-  
+
 </script>
 
 
