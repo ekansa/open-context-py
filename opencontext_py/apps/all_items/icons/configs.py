@@ -528,3 +528,13 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
         },
     ]
 }
+
+WORLD_REGION_ICONS = {
+    'Africa': '../../static/oc/icons-v2/noun-africa-297982.svg',
+    'Americas': '../../static/oc/icons-v2/noun-americas-829021.svg',
+    'Asia': '../../static/oc/icons-v2/noun-asia-740449.svg',
+    'Europe': '../../static/oc/icons-v2/noun-europe-178615.svg',
+    'Off World': '../../static/oc/icons-v2/noun-solar-system-167829.svg',
+    'Oceania': '../../static/oc/icons-v2/noun-pacific-411980.svg',
+    'World': '../../static/oc/icons-v2/noun-earth-1867754.svg',
+}
