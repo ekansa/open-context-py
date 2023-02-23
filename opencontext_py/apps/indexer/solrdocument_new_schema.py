@@ -514,7 +514,7 @@ class SolrDocumentNS:
             item_type='subjects',
             project__in=projects,
             context__project_id=configs.OPEN_CONTEXT_PROJ_UUID
-        )
+        )[:500]
         if len(root_qs) < 1:
             # look for root_qs items among items that belong to parents or sibling
             # projects.
@@ -525,7 +525,7 @@ class SolrDocumentNS:
             item_type='subjects',
             project__in=projects,
             context__project_id=configs.OPEN_CONTEXT_PROJ_UUID
-        )
+        )[:500]
         if len(root_qs) < 1:
             root_qs = AllManifest.objects.filter(
                 item_type='subjects',
