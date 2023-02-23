@@ -159,12 +159,16 @@
 
                     <hr class="my-4"></hr>
 
-
                     <proj-search-typeahead
-                        v-bind:base_search_url="proj_base_search_url"
+                        v-bind:base_search_url="proj_search_url"
                     ></proj-search-typeahead>
-                    <p>Type search term(s) above to filter the projects below</p>
 
+                    <br/>
+                    <p>
+                        <small><u>Note</u>: Search term(s) used above filter project descriptions
+                        and project content (data records, media descriptions, field notes, etc.).
+                        </small>
+                    </p>
 
                 </b-media>
 
@@ -206,7 +210,7 @@
                     <b-img-lazy
                         v-if="data.item.context_icon"
                         :src="data.item.context_icon"
-                        thumbnail
+
                         fluid
                         rounded
                         center
@@ -451,6 +455,13 @@
             proj_search_placeholder: function(){
                 return 'Enter search term(s)';
             },
+            proj_search_url: function(){
+                let current_url = START_API_URL;
+                if(this.proj_geojson){
+                    current_url = this.proj_geojson.id;
+                }
+                return current_url;
+            },
             result_count: function() {
                 return safe_get_nested_object_by_str_key(this.proj_geojson, 'totalResults');
             },
@@ -483,6 +494,7 @@
                 let act_link = safe_get_nested_object_by_str_key(this.proj_geojson, 'last');
                 return abs_to_rel_url(act_link, BASE_URL);
             },
+
         },
         methods: {
             iOS: function() {
