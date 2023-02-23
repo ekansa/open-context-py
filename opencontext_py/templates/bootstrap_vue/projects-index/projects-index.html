@@ -137,36 +137,6 @@
 
     <div class="container-fluid">
         <div id="app">
-            <b-card
-                v-if="loading || !proj_geojson"
-                title="Getting Project and Collection Publications"
-            >
-
-                <b-card-text>
-                    <h1 class="display-4">Preparing data...</h1>
-                    <b-spinner class="m-5" label="Busy"></b-spinner>
-                </b-card-text>
-
-            </b-card>
-            <b-card
-                v-else
-                title="Project and Collection Publications"
-            >
-
-                <b-card-text v-if="items">
-
-                    <projects-map
-                        v-if="proj_geojson.features.length > 0"
-                        :map_key="0"
-                        :min_height="450"
-                        v-bind:route_key_index="route_key_index"
-                        v-bind:geo_json="proj_geojson"
-                        v-bind:result_count_human="result_count_human"
-                    ></projects-map>
-
-                </b-card-text>
-
-            </b-card>
 
             <b-row class="align-items-center">
                 <b-col>Search Project Contents</b-col>
@@ -209,6 +179,21 @@
                 select-mode="single"
                 @row-selected="onRowSelected"
             >
+
+                <template #cell(context)="data">
+                    <b-img-lazy
+                        v-if="data.item.context_icon"
+                        :src="data.item.context_icon"
+                        thumbnail
+                        fluid
+                        rounded
+                        center
+                        class="proj_region_icon"
+                        :alt="'Icon related to ' + data.item.context">
+                    </b-img-lazy>
+                    <p class="text-center"><small>[[ data.item.context ]]</small></p>
+                </template>
+
                 <template #cell(descriptiveness)="data">
                     <h3 v-if="data.item.percentile >= 67" class="text-center">
                         <b-badge pill variant="info">Large</b-badge>
@@ -276,6 +261,9 @@
 
 
 <style type="text/css">
+    .proj_region_icon {
+        max-width: 175px;
+    }
     .proj_item_banner {
         max-height: 290px;
 	    overflow-y: hidden;
@@ -291,6 +279,7 @@
     const USE_TEST_ALL_ITEMS_HREF = true;
     const START_API_URL = "{{ api_url|safe }}";
     const SORT_OPTIONS_FRONTEND = JSON.parse('{{ SORT_OPTIONS_FRONTEND|escapejs }}');
+    const WORLD_REGION_ICONS = JSON.parse('{{ WORLD_REGION_ICONS|escapejs }}');
 
     const routes = [{path: START_API_URL}];
     const router = new VueRouter({
@@ -412,10 +401,11 @@
             error: null,
             emit_update_fetch_done: false,
             fields: [
-                { key: 'descriptiveness', sortable: true, label: 'Info Content', tdClass: 'align-middle'},
+                { key: 'context', sortable: true, label: 'Region', tdClass: 'align-middle'},
                 { key: 'project', sortable: true, label: 'Project'},
                 { key: 'metadata', sortable: false, tdClass: 'align-middle'},
                 { key: 'published', sortable: true, tdClass: 'align-middle'},
+                { key: 'descriptiveness', sortable: true, label: 'Info Content', tdClass: 'align-middle'},
             ],
         },
         created(){
@@ -579,6 +569,17 @@
                 }
                 return valid_features;
             },
+            get_region_icon: function(context){
+                let icon = WORLD_REGION_ICONS['World'];
+                if(!context){
+                    return icon;
+                }
+                let region = context.split('/')[0];
+                if(region in WORLD_REGION_ICONS){
+                    return WORLD_REGION_ICONS[region];
+                }
+                return icon;
+            },
             prepare_all_proj_items: function(){
                 if(!this.proj_geojson){
                     return null;
@@ -596,6 +597,14 @@
                     if('href' in props){
                         href = use_all_items_href(props['href'], BASE_URL, USE_TEST_ALL_ITEMS_HREF);
                     }
+                    let context = '(No spatial context)';
+                    let context_url = null;
+                    if('context label' in props){
+                        // Only the first part of the context is needed, to limit depth
+                        // shown in this interface
+                        let context_ex = props['context label'].split('/').slice(0,3);
+                        context = context_ex.join('/');
+                    }
                     let hero_uri = null;
                     if('hero_banner' in props){
                         hero_uri = props['hero_banner'];
@@ -612,6 +621,8 @@
                         label: feature['label'],
                         url: url,
                         href: href,
+                        context: context,
+                        context_icon: this.get_region_icon(context),
                         updated: updated_ex[0],
                         published: published_ex[0],
                         media: hero_uri,

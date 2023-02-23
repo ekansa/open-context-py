@@ -9,6 +9,8 @@ from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
+from opencontext_py.apps.all_items.icons import configs as icon_configs
+
 from opencontext_py.apps.searcher.new_solrsearcher import main_search
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import project_index_summary
@@ -271,6 +273,7 @@ def projects_index_html(request, spatial_context=None):
         'configs': configs,
         'load_index_static': True,
         'SORT_OPTIONS_FRONTEND': json.dumps(sort_configs),
+        'WORLD_REGION_ICONS': json.dumps(icon_configs.WORLD_REGION_ICONS),
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),
     }
