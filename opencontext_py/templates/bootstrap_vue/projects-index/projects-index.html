@@ -602,8 +602,10 @@
                     if('context label' in props){
                         // Only the first part of the context is needed, to limit depth
                         // shown in this interface
-                        let context_ex = props['context label'].split('/').slice(0,3);
-                        context = context_ex.join('/');
+                        if(props['context label']){
+                            let context_ex = props['context label'].split('/').slice(0,3);
+                            context = context_ex.join('/');
+                        }
                     }
                     let hero_uri = null;
                     if('hero_banner' in props){
