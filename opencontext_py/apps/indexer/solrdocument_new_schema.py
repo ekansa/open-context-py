@@ -163,6 +163,13 @@ PROJ_ITEM_COUNT_FACTOR = 0.00125
 # raw counts of their items.
 PROJ_ITEM_TYPE_ITEM_CLASS_COUNT_VARIETY_BONUS = 0.005
 
+# List of item_class slugs that are OK for project root items
+PROJECT_ROOT_SUBJECT_OK_ITEM_CLASS_SLUGS = [
+    'oc-gen-cat-region',
+    'oc-gen-cat-site',
+    'oc-gen-cat-survey-unit',
+]
+
 
 def clear_caches():
     """Clears caches in case we're making DB updates on
@@ -467,50 +474,23 @@ class SolrDocumentNS:
             )
 
 
-    def _add_solr_spatial_context(self):
-        """Adds spatial context fields to the solr document."""
-        context_items = self.rep_dict.get('contexts', [])
-        if not context_items:
-            # This item has no spatial context.
+    def _get_parent_and_sibling_projects(self):
+        """Gets a project's parent and sibling projects"""
+        if self.man_obj.item_type != 'projects':
             return None
-        # Iterate through the spatial context items.
-        for index, context in enumerate(context_items):
-            # Compose the solr_value for this item in the context
-            # hierarchy.
-            act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
-                obj_or_dict=copy.deepcopy(context),
-                act_solr_doc_prefix='', # No prefixing for projects!
+        projects = [self.man_obj]
+        parent_projects = hierarchy.get_project_hierarchy(self.man_obj)
+        for proj_obj in parent_projects:
+            if proj_obj not in projects:
+                projects.append(proj_obj)
+            sub_projects_qs = AllManifest.objects.filter(
+                project=proj_obj,
+                item_type='projects'
             )
-            # The self.ALL_CONTEXT_SOLR takes values for
-            # each context item in spatial context hierarchy, thereby
-            # facilitating queries at all levels of the context
-            # hierarchy. Without the self.ALL_CONTEXT_SOLR, we would need
-            # to know the full hierarchy path of parent items in order
-            # to query for a given spatial context.
-            self._add_id_field_and_value(
-                ALL_CONTEXT_SOLR,
-                act_solr_value,
-                act_solr_doc_prefix='', # No prefixing for contexts
-            )
-            if index == 0:
-                # We are at the top of the spatial hierarchy
-                # so the solr context field is self.ROOT_CONTEXT_SOLR.
-                solr_context_field = ROOT_CONTEXT_SOLR
-            else:
-                # We are at sub-levels in the spatial hierarchy
-                # so the solr context field comes from the parent item
-                # in the spatial context hierarchy
-                solr_context_field = (
-                    context_items[index - 1].get('slug')
-                    + SOLR_VALUE_DELIM
-                    + FIELD_SUFFIX_CONTEXT
-                )
-
-            self._add_id_field_and_value(
-                solr_context_field,
-                act_solr_value,
-                act_solr_doc_prefix='', # No prefixing for contexts!
-            )
+            for sub_proj in sub_projects_qs:
+                if sub_proj not in projects:
+                    projects.append(sub_proj)
+        return projects
 
 
     def _get_spatial_context_items_for_project(self):
@@ -535,19 +515,50 @@ class SolrDocumentNS:
             context__project_id=configs.OPEN_CONTEXT_PROJ_UUID
         )
         if len(root_qs) < 1:
+            # look for root_qs items among items that belong to parents or sibling
+            # projects.
+            projects = self._get_parent_and_sibling_projects()
+
+        root_qs = AllManifest.objects.filter(
+            item_type='subjects',
+            project__in=projects,
+            context__project_id=configs.OPEN_CONTEXT_PROJ_UUID
+        )
+        if len(root_qs) < 1:
+            # We really can't find anything that seems to be a root for this project.
             return None
-        proj_root_man_obj = None
-        root_max_count = 0
         # Does this project span multiple world regions? Check
         # the top level paths to see.
-        top_paths = []
+        root_paths = {}
         for act_man_obj in root_qs:
             path_ex = act_man_obj.path.split('/')
-            top_path = '/'.join(path_ex[0:1])
-            if top_path in top_paths:
-                continue
-            top_paths.append(top_path)
-        if len(top_paths) > 1:
+            for level in range(1, 5):
+                act_path = '/'.join(path_ex[0:level])
+                if not level in root_paths:
+                    root_paths[level] = []
+                if act_path in root_paths[level]:
+                    continue
+                root_paths[level].append(act_path)
+
+        top_paths = None
+        if len(root_paths[1]) > 1:
+            # we have a project spanning multiple world regions. There's no need to check for a
+            # unique context path that goes deeper.
+            top_paths = root_paths[1]
+        else:
+            # check for unique context paths for deeper levels of the
+            # spatial hierarchy.
+            top_paths = root_paths[1]
+            for level in range(1, 5):
+                if len(root_paths[level]) > 1:
+                    break
+                top_paths = root_paths[level]
+        # Now finally, determine which manifest "subjects" item is the best one to use
+        # as the project root.
+        proj_uuids_with_oc = [p.uuid for p in projects] + [configs.OPEN_CONTEXT_PROJ_UUID]
+        proj_root_man_obj = None
+        root_max_count = 0
+        if top_paths:
             # This project spans multiple world regions.
             for top_path in top_paths:
                 act_count = AllManifest.objects.filter(
@@ -562,7 +573,7 @@ class SolrDocumentNS:
                 proj_root_man_obj = AllManifest.objects.filter(
                     item_type='subjects',
                     path=top_path,
-                    project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+                    project_id__in=proj_uuids_with_oc,
                 ).first()
         else:
             for act_man_obj in root_qs:
@@ -577,6 +588,18 @@ class SolrDocumentNS:
                 root_max_count = act_count
                 proj_root_man_obj = act_man_obj
         if not proj_root_man_obj:
+            return None
+        # Sometimes the proj_root_man_obj will be overly specific. The check below will make sure
+        # we have a proj_root_man_obj that has an item_class that makes sense to use as a root item.
+        check_count = 0
+        while (
+            check_count < 10
+            and not proj_root_man_obj.item_class.slug in PROJECT_ROOT_SUBJECT_OK_ITEM_CLASS_SLUGS):
+            # Go up a level until we find an OK item class to use as a root item
+            # for the project
+            proj_root_man_obj = proj_root_man_obj.context
+            check_count += 1
+        if check_count > 8:
             return None
         # Get the current root item and all of its parents.
         context_items = item.add_to_parent_context_list(
