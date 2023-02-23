@@ -3,8 +3,8 @@
 
 <template id="projects-item-type-template">
 
-  <b-dropdown v-if="item_type_obj" 
-    :id="'dropdown-proj-item-types-' + item_type_obj.slug" 
+  <b-dropdown v-if="item_type_obj"
+    :id="'dropdown-proj-item-types-' + item_type_obj.slug"
     :text="item_type_obj.label"
     block
     offset="25"
@@ -12,9 +12,9 @@
     class="proj_item_type_dropdowns">
     <b-dropdown-item target="_blank" :href="item_type_obj.id">[[ item_type_obj.label ]] <strong>(All)</strong>
     </b-dropdown-item>
-    <b-dropdown-item 
+    <b-dropdown-item
       v-for="(opt, index) in item_type_obj.options"
-      target="_blank" 
+      target="_blank"
       :href="opt.id">[[ opt.label ]]</b-dropdown-item>
   </b-dropdown>
 
@@ -32,18 +32,19 @@
       <div v-if="summary_data.length > 0" class="alert alert-info" id="proj_explore_alert">
 
         <small>Use the dropdown options below to explore different types of information in this project.</small>
-        
+
         <vc-projects-item-type
           v-if="subjects_obj"
           v-bind:item_type_obj="subjects_obj"></vc-projects-item-type>
-        
+
         <vc-projects-item-type
           v-if="media_obj"
           v-bind:item_type_obj="media_obj"></vc-projects-item-type>
-        
+
         <vc-projects-item-type
           v-if="documents_obj"
           v-bind:item_type_obj="documents_obj"></vc-projects-item-type>
+
 
         <div id="proj_text_search">
           <oc-search-typeahead
@@ -74,7 +75,7 @@
           </div>
 
       </div>
-          
+
     </div>
   </div>
 
@@ -100,10 +101,10 @@ var vc_projects_item_type = Vue.component(
       computed: {
       },
       methods: {
-        
+
       },
       components: {
-        
+
       }
     }
   );
@@ -157,10 +158,11 @@ var vc_projects_item_type = Vue.component(
         this.fetch_oc_api();
       },
       watch: {
-        
+
       },
       methods: {
         fetch_oc_api: function(){
+
           if(!this.project_slug){
             // missing our query criteria
             return null;
@@ -249,7 +251,7 @@ var vc_projects_item_type = Vue.component(
       }
     }
   );
-  
+
 </script>
 
 

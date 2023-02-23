@@ -216,7 +216,7 @@
 
                     <vc-projects
                         :base_search_url="'/query'"
-                        v-bind:project_label="'{{ man_obj.label }}'"
+                        v-bind:project_label="item_obj.label"
                         v-bind:project_slug="'{{ man_obj.slug|safe }}'"
                     ></vc-projects>
 
@@ -229,6 +229,7 @@
                 {% include '../item/parts/spacetime.html' %}
 
                 {% include '../item/parts/license.html' %}
+
             </div>
         </div>
 
