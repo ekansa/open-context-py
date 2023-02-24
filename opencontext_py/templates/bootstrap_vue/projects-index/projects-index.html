@@ -168,6 +168,7 @@
                     <p>
                         <small><u>Note</u>: Search term(s) used above filter project descriptions
                         and project content (data records, media descriptions, field notes, etc.).
+                        Some projects are still in preparation and not listed here.
                         </small>
                     </p>
 
@@ -193,6 +194,7 @@
                 v-if="items"
                 :items="items"
                 :fields="fields"
+                :busy.sync="loading"
                 striped
                 bordered
                 borderless
@@ -200,6 +202,8 @@
                 responsive
                 hover
                 no-local-sorting
+                :sort-by="default_sort_by_key"
+                :sort-desc="default_sort_desc"
                 @sort-changed="sortingChanged"
                 sort-icon-left
                 selectable
@@ -432,16 +436,24 @@
             loading: false,
             error: null,
             emit_update_fetch_done: false,
+            default_sort_by_key: 'descriptiveness',
+            default_sort_desc: true,
             fields: [
                 { key: 'context', sortable: true, label: 'Region', },
                 { key: 'project', sortable: true, label: 'Project'},
                 { key: 'metadata', sortable: false, },
                 { key: 'published', sortable: true, },
-                { key: 'descriptiveness', sortable: true, label: 'Info Content', },
+                { key: 'descriptiveness', sortable: true, label: 'Info Content',},
+            ],
+            default_sorts: [
+                {
+                    field_key: 'descriptiveness',
+                    sortDirection: 'desc',
+                },
             ],
         },
         created(){
-
+            this.set_initial_sort_state();
         },
         mounted(){
             this.fetch_oc_api();
@@ -514,6 +526,17 @@
                 ].includes(navigator.platform)
                 // iPad on iOS 13 detection
                 || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+            },
+            set_initial_sort_state: function(){
+                let act_sorts = get_field_sorting_from_url(START_API_URL, SORT_OPTIONS_FRONTEND);
+                if(act_sorts == null || act_sorts.length < 1){
+                    act_sorts = JSON.parse(JSON.stringify(this.default_sorts));
+                }
+                for(let act_sort of act_sorts){
+                    this.default_sort_by_key = act_sort.field_key;
+                    this.default_sort_desc = (act_sort.sortDirection == 'desc');
+                    console.log(`Initial direction for ${this.default_sort_by_key} is desc ${this.default_sort_desc}`);
+                }
             },
             onRowSelected(items){
                 if(!items){
@@ -703,6 +726,25 @@
             add_project_map: function(){
 
             },
+            set_field_sort_state: function (url){
+                let act_sorts = get_field_sorting_from_url(url, SORT_OPTIONS_FRONTEND);
+                if(act_sorts == null || act_sorts.length < 1){
+                    act_sorts = JSON.parse(JSON.stringify(this.default_sorts));
+
+                }
+                let rev_fields = [];
+                for(let act_field of this.fields){
+                    for(let act_sort of act_sorts){
+                        if(act_sort.field_key != act_field.key){
+                            continue;
+                        }
+                        act_field.sortDirection = act_sort.sortDirection;
+                        console.log(`Sort direction for ${act_field.key} is ${act_field.sortDirection}`);
+                    }
+                    rev_fields.push(act_field);
+                }
+                this.fields = rev_fields;
+            },
             sortingChanged(ctx){
                 console.log(ctx);
                 let current_url = START_API_URL;
@@ -726,6 +768,7 @@
                 }
                 let url = replaceURLparameter(current_url, 'sort', sort_val);
                 url = abs_to_rel_url(url, BASE_URL);
+                this.set_field_sort_state(url);
                 router.push(url);
             },
             fetch_oc_api: function (){
@@ -745,6 +788,7 @@
                     this.proj_geojson = json;
                     console.log('Downloaded geojson for project items: ' + this.proj_geojson.features.length);
                     this.prepare_all_proj_items();
+                    this.set_field_sort_state(this.proj_geojson.id);
                     this.route_key_index += 1;
                     this.loading = false;
                     if(this.emit_update_fetch_done){

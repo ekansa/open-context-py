@@ -350,9 +350,43 @@ function use_local_subjects_href(href, base_url){
     let ok_local = false;
     let req_part = 'opencontext.org/subjects/'
     if(href.indexOf(req_part) < 0){
-        // We're not a subjects item, jusr return the url without change
+        // We're not a subjects item, just return the url without change
         return href;
     }
     href_ex = href.split('/');
     return base_url + '/subjects/' + href_ex[(href_ex.length - 1)];
+}
+
+
+// a utility function to extract the sort from a URL
+function get_field_sorting_from_url(url, sort_config){
+    let sort_param = getURLParameter(url, 'sort');
+    if(!sort_param){
+        return null;
+    }
+    // multiple sorts are '---' split.
+    let act_sorts = sort_param.split('---');
+    let field_sorting = [];
+    for(let act_sort of act_sorts){
+        // the sort attribute and direction are '--' split
+        let act_sort_ex = act_sort.split('--');
+        if(act_sort_ex.length != 2){
+            // not a valid sort.
+            continue;
+        }
+        let act_oc_sort = act_sort_ex[0];
+        let act_oc_dir = act_sort_ex[1];
+        for (const [field_key, oc_value] of Object.entries(sort_config)) {
+            if(act_oc_sort != oc_value){
+                continue;
+            }
+            let field_sort = {
+                field_key: field_key,
+                oc_attrib: act_oc_sort,
+                sortDirection: act_oc_dir,
+            };
+            field_sorting.push(field_sort);
+        }
+    }
+    return field_sorting;
 }
