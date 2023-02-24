@@ -464,6 +464,12 @@ var vc_records_tab = Vue.component(
                     { key: 'chronology', sortable: false },
                     { key: 'updated', sortable: true },
                 ],
+                default_sorts: [
+                    {
+                        field_key: 'descriptiveness',
+                        sortDirection: 'desc',
+                    },
+                ],
                 selected: [],
                 // NOTE: the order mattters. The '/' needs to come in first because it
                 // will be put into HTML tags.
@@ -476,7 +482,7 @@ var vc_records_tab = Vue.component(
         },
         template: '#records-tab-template',
         mounted() {
-
+            this.set_initial_sort_state();
         },
         computed: {
             all_raw_records: function() {
@@ -693,6 +699,22 @@ var vc_records_tab = Vue.component(
                 console.log(this.selected);
                 window.open(items[0].href, "_blank");
             },
+            set_field_sort_state: function (url){
+                let act_sorts = get_field_sorting_from_url(url, SORT_OPTIONS_FRONTEND);
+                if(act_sorts == null || act_sorts.length < 1){
+                    act_sorts = JSON.parse(JSON.stringify(this.default_sorts));
+
+                }
+                for(let act_sort of act_sorts){
+                    for(let act_field of this.fields){
+                        if(act_sort.field_key != act_field.key){
+                            continue;
+                        }
+                        act_field.sortDirection = act_sort.sortDirection;
+                        console.log(`Sort direction for ${act_field.key} is ${act_field.sortDirection}`);
+                    }
+                }
+            },
             sortingChanged(ctx){
                 console.log(ctx);
                 let current_url = this.result_id;
@@ -713,7 +735,19 @@ var vc_records_tab = Vue.component(
                 }
                 let url = replaceURLparameter(current_url, 'sort', sort_val);
                 url = abs_to_rel_url_with_frag_obj(url, BASE_URL, this.frontend_state_obj);
+                this.set_field_sort_state(url);
                 router.push(url);
+            },
+            set_initial_sort_state: function(){
+                let act_sorts = get_field_sorting_from_url(this.result_id, SORT_OPTIONS_FRONTEND);
+                if(act_sorts == null || act_sorts.length < 1){
+                    act_sorts = JSON.parse(JSON.stringify(this.default_sorts));
+                }
+                for(let act_sort of act_sorts){
+                    this.sortBy = act_sort.field_key;
+                    this.sortDesc = (act_sort.sortDirection == 'desc');
+                    console.log(`Initial direction for ${this.default_sort_by_key} is desc ${this.default_sort_desc}`);
+                }
             },
         },
         components: {
