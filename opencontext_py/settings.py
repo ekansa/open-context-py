@@ -720,11 +720,11 @@ NAV_ITEMS = [
     {
         'key': 'publications',
         'link': '/projects-index/',
-        'display': 'Publications',
+        'display': 'Data Publications',
         'always': True,
         'urls': [
             {
-                'display':  'Publications',
+                'display':  'Data Publications',
                 'link': '/projects-index/',
             },
         ]
