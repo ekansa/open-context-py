@@ -44,3 +44,4 @@ static/d3/d3.v3.min.js
 .venv/
 frontend/node_modules
 frontend/dist
+entrypoint.sh
