@@ -608,6 +608,11 @@ class SolrDocumentNS:
             check_count += 1
         if check_count > 8:
             return None
+
+        # Add the context to the full text search field. This will make the spatial context
+        # searchable with fulltext search
+        self.fields['text'] += proj_root_man_obj.path.replace('/', ' ')
+
         # Get the current root item and all of its parents.
         context_items = item.add_to_parent_context_list(
             manifest_obj=proj_root_man_obj,
