@@ -1249,6 +1249,13 @@ class ResultRecords():
             string_pred_uuids += get_attribute_tuples_string_pred_uuids(
                 rr.pred_attributes
             )
+            if self.proj_index and not rr.geometry_coords:
+                # We're doing a project index. Allow the data to be on "null island"
+                # so it shows up on the search interface.
+                rr.latitude = 0.0000000001
+                rr.longitude = 0.0000000001
+                rr.geo_feature_type = 'Point'
+                rr.geometry_coords = [0.0000000001, 0.0000000001,]
 
             if proj_desc_banner_qs:
                 description, banner_url = db_entities.get_desc_and_banner_url_by_slug(
