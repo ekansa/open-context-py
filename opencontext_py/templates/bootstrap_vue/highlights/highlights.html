@@ -32,6 +32,34 @@
                                 :options="options"
                                 :series="data_series">
                             </apexchart>
+                            <!--
+                            <b-row>
+                                <b-col>
+                                    <apexchart
+                                        v-if="subjects_data_series"
+                                        :id="'subjects-chart-' + route_key_index"
+                                        :ref="'subjects-chart-' + route_key_index"
+                                        :height="subjects_options.chart.height"
+                                        width="100%"
+                                        :options="subjects_options"
+                                        :series="subjects_data_series">
+                                    </apexchart>
+                                </b-col>
+                            </b-row>
+                            <b-row>
+                                <b-col>
+                                    <apexchart
+                                        v-if="other_data_series"
+                                        :id="'other-chart-' + route_key_index"
+                                        :ref="'other-chart-' + route_key_index"
+                                        :height="other_options.chart.height"
+                                        width="100%"
+                                        :options="other_options"
+                                        :series="other_data_series">
+                                    </apexchart>
+                                </b-col>
+                            </b-row>
+                            -->
                             <b-container fluid class="text-center text-muted">
                                 <small>
                                     The areas above represent the relative proportion of different types of content published by Open Context.
@@ -119,38 +147,6 @@
 
         </div>
 
-
-        <b-container style="margin-bottom:24px;" fluid>
-            <b-card-group deck>
-                <b-card title="Zooarchaeology" img-src="../../static/oc/images/highlights/zooarchaeology.jpg" img-alt="Image: zooarchaeology" img-top>
-                    <b-card-text>
-                      Open Context publishes standards aligned zooarchaeological (archaeozoology) data documenting animal
-                      bone specimens together with biometrics studied by researchers working around the world.
-                    </b-card-text>
-                    <template #footer>
-                        <small class="text-muted">
-                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&type=subjects#tab=0/aq=facet-oc-gen-category---oc-gen-cat-animal-bone/"
-                             title="Query animal bone data"><b-icon-search></b-icon-search> Explore zooarchaeology data</a>
-                        </small>
-                    </template>
-                </b-card>
-
-                <b-card title="Sites and Surveys" img-src="../../static/oc/images/highlights/sites-surveys.png" img-alt="Image: sites-surveys" img-top>
-                    <b-card-text>
-                      Open Context publishes data from public agencies and archaeological survey projects that
-                      describe archaeological sites and regions.
-                    </b-card-text>
-                    <template #footer>
-                        <small class="text-muted">
-                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-site&type=subjects"
-                             title="Query sites"><b-icon-search></b-icon-search> Explore site data</a>
-                        </small>
-                    </template>
-                </b-card>
-
-            </b-card-group>
-        </b-container>
-
         <b-container style="margin-bottom:24px;" fluid>
             <b-card-group deck>
                 <b-card title="Objects of Material Culture" img-src="../../static/oc/images/highlights/object.jpg" img-alt="Image: object (artifact)" img-top>
@@ -177,6 +173,37 @@
                         <small class="text-muted">
                             <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-context&type=subjects"
                             title="Query for contexts"><b-icon-search></b-icon-search> Explore archaeological contexts</a>
+                        </small>
+                    </template>
+                </b-card>
+
+            </b-card-group>
+        </b-container>
+
+        <b-container style="margin-bottom:24px;" fluid>
+            <b-card-group deck>
+                <b-card title="Zooarchaeology" img-src="../../static/oc/images/highlights/zooarchaeology.jpg" img-alt="Image: zooarchaeology" img-top>
+                    <b-card-text>
+                      Open Context publishes standards aligned zooarchaeological (archaeozoology) data documenting animal
+                      bone specimens together with biometrics studied by researchers working around the world.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&type=subjects#tab=0/aq=facet-oc-gen-category---oc-gen-cat-animal-bone/"
+                             title="Query animal bone data"><b-icon-search></b-icon-search> Explore zooarchaeology data</a>
+                        </small>
+                    </template>
+                </b-card>
+
+                <b-card title="Sites and Surveys" img-src="../../static/oc/images/highlights/sites-surveys.png" img-alt="Image: sites-surveys" img-top>
+                    <b-card-text>
+                      Open Context publishes data from public agencies and archaeological survey projects that
+                      describe archaeological sites and regions.
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-loc-or-context---oc-gen-cat-site&type=subjects"
+                             title="Query sites"><b-icon-search></b-icon-search> Explore site data</a>
                         </small>
                     </template>
                 </b-card>
@@ -290,6 +317,8 @@
             route_key_index: 0,
             total_results: null,
             data_series: null,
+            subjects_data_series: null,
+            other_data_series: null,
             base_search_url: '/query',
             options: {
                 colors: null,
@@ -350,6 +379,124 @@
                     },
                 },
             },
+            subjects_options: {
+                colors: null,
+                items: null,
+                plotOptions: {
+                    treemap: {
+                        distributed: true,
+                        enableShades: false
+                    }
+                },
+                chart: {
+                    height: '175px',
+                    type: 'treemap',
+                    toolbar: {
+                        show: false,
+                    },
+                    events: {
+                        click(event, chartContext, config) {
+                            console.log('click event');
+                            let data_index = config.dataPointIndex;
+                            if(!(data_index >= 0)){
+                                return null;
+                            }
+                            let act_item = config.config.series[config.seriesIndex].data[data_index];
+                            console.log(act_item);
+                            window.open(act_item.href);
+                        },
+                    },
+                },
+                tooltip: {
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        let act_item = w.config.series[seriesIndex].data[dataPointIndex];
+                        let label = act_item.item_type_label;
+                        let subtext = act_item.subtext;
+                        let html_subtext = '';
+                        if(act_item.subtext){
+                            html_subtext = `<small class="text-muted">${act_item.subtext}</small>`;
+                        }
+                        if(act_item.class_label){
+                            label = act_item.class_label;
+                            html_subtext = `<small class="text-muted">A category of <strong>${act_item.item_type_label}</strong> records</small>`;
+                        }
+                        let human_count = act_item.tip_count.toLocaleString();
+                        return (
+                            `<div class="arrow_box">
+                            <div class="media-aside align-self-start">
+                                <img src="${act_item.icon}" alt="${act_item.item_type_label} icon"
+                                height="24"
+                                class="data_vis_item_type_icons"/>
+                                <div class="media-body">
+                                    <p class="mt-0 mb-1"><strong>${label}</strong> (${human_count} items)</p>
+                                    ${html_subtext}
+                                </div>
+                            </div>
+                            </div>
+                            `
+                        );
+                    },
+                },
+            },
+            other_options: {
+                colors: null,
+                items: null,
+                plotOptions: {
+                    treemap: {
+                        distributed: true,
+                        enableShades: false
+                    }
+                },
+                chart: {
+                    height: '175px',
+                    type: 'treemap',
+                    toolbar: {
+                        show: false,
+                    },
+                    events: {
+                        click(event, chartContext, config) {
+                            console.log('click event');
+                            let data_index = config.dataPointIndex;
+                            if(!(data_index >= 0)){
+                                return null;
+                            }
+                            let act_item = config.config.series[config.seriesIndex].data[data_index];
+                            console.log(act_item);
+                            window.open(act_item.href);
+                        },
+                    },
+                },
+                tooltip: {
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        let act_item = w.config.series[seriesIndex].data[dataPointIndex];
+                        let label = act_item.item_type_label;
+                        let subtext = act_item.subtext;
+                        let html_subtext = '';
+                        if(act_item.subtext){
+                            html_subtext = `<small class="text-muted">${act_item.subtext}</small>`;
+                        }
+                        if(act_item.class_label){
+                            label = act_item.class_label;
+                            html_subtext = `<small class="text-muted">A category of <strong>${act_item.item_type_label}</strong> records</small>`;
+                        }
+                        let human_count = act_item.tip_count.toLocaleString();
+                        return (
+                            `<div class="arrow_box">
+                            <div class="media-aside align-self-start">
+                                <img src="${act_item.icon}" alt="${act_item.item_type_label} icon"
+                                height="24"
+                                class="data_vis_item_type_icons"/>
+                                <div class="media-body">
+                                    <p class="mt-0 mb-1"><strong>${label}</strong> (${human_count} items)</p>
+                                    ${html_subtext}
+                                </div>
+                            </div>
+                            </div>
+                            `
+                        );
+                    },
+                },
+            },
         },
         computed: {
 
@@ -362,7 +509,12 @@
         },
         methods: {
             prep_series: function(api_items){
-                let items = [];
+                let all_colors = [];
+                let all_items = [];
+                let subjects_colors = [];
+                let final_subjects_items = [];
+                let other_colors = [];
+                let final_other_items = [];
                 for(let api_item of api_items){
                     let item_type = api_item.slug.replace('oc-gen-', '');
                     let icon = null;
@@ -407,7 +559,6 @@
                         }
                         subj_items.push(misc_subj_item);
                         // Gather the colors for the subjects items
-
                         for(let item of subj_items){
                             console.log('item.y ' + item.y);
                             console.log(' max_subj_item_count ' +  max_subj_item_count);
@@ -416,7 +567,9 @@
                                 SUBJECTS_GRADIENT
                             );
                             item.color = item_color;
-                            items.push(item);
+                            all_items.push(item);
+                            subjects_colors.push(item.color);
+                            final_subjects_items.push(item);
                         }
                     }
                     else{
@@ -435,22 +588,40 @@
                             tip_count: api_item.count,
                             y: api_item.count,
                         }
-                        items.push(item);
+                        all_items.push(item);
+                        final_other_items.push(item);
                     }
                 }
-                console.log(items);
-                let colors = [];
-                for(let item of items){
-                    colors.push(item.color);
+                // gather colors for the all items
+                for(let item of all_items){
+                    all_colors.push(item.color);
                 }
+                // gather colors for the other (non subjects) items
+                for(let item of final_other_items){
+                    other_colors.push(item.color);
+                }
+                this.items = all_items;
+                this.options.colors = all_colors;
+                this.subjects_options.colors = subjects_colors;
+                this.other_options.colors = other_colors;
                 this.data_series = [
                     {
                         name: 'Records:',
-                        data: items,
+                        data: all_items,
                     }
                 ];
-                this.items = items;
-                this.options.colors = colors;
+                this.subjects_data_series = [
+                    {
+                        name: 'Records:',
+                        data: final_subjects_items,
+                    }
+                ];
+                this.other_data_series = [
+                    {
+                        name: 'Records:',
+                        data: final_other_items,
+                    }
+                ];
             },
             fetch_oc_api: function (){
                 this.error = null;
