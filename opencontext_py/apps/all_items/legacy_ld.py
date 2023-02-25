@@ -17,6 +17,8 @@ from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
+from opencontext_py.apps.ocitems.manifest.models import Manifest as OldManifest
+
 
 """
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
@@ -469,12 +471,40 @@ def check_legacy_la_objects(print_found=False, exclude_strs=OC_ITEM_URI_STRS ):
     return  missing_entities
 
 
+def get_missing_legacy_person(person_uri, new_proj_obj):
+    """Gets a record for an Open Context person entity that may
+    have an updated URI
+    """
+    if '/persons/' not in person_uri:
+        return None
+    uri_ex = person_uri.split('/persons/')
+    old_person_uuid = uri_ex[-1]
+    old_man_obj = OldManifest.objects.filter(uuid=old_person_uuid).first()
+    if not old_man_obj:
+        return None
+    new_man_obj = AllManifest.objects.filter(
+        project=new_proj_obj,
+        label=old_man_obj.label,
+        item_type='persons'
+    ).first()
+    if not new_man_obj:
+        # Don't limit by project.
+        new_man_obj = AllManifest.objects.filter(
+            label=old_man_obj.label,
+            item_type='persons'
+        ).first()
+    if new_man_obj:
+        print(f'Found person record for {person_uri}: {new_man_obj.label} ({new_man_obj.uuid})')
+    return new_man_obj
+
+
 def migrate_legacy_link_annotations(
     project_uuid='0',
     more_filters_dict={'subject_type': 'uri'},
     after_date=None,
     use_cache=False,
     check_skip_existing=False,
+    subject_uuid=None,
 ):
     """Migrates legacy link annotations (limited to entities already in the manifest)"""
 
@@ -488,14 +518,24 @@ def migrate_legacy_link_annotations(
 
     missing_entities = []
 
-    la_qs = LinkAnnotation.objects.filter(
-        project_uuid=old_proj_id
-    ).order_by(
-        'subject',
-        'predicate_uri',
-        'sort',
-        'object_uri'
-    )
+    if not subject_uuid:
+        la_qs = LinkAnnotation.objects.filter(
+            project_uuid=old_proj_id
+        ).order_by(
+            'subject',
+            'predicate_uri',
+            'sort',
+            'object_uri'
+        )
+    else:
+        la_qs = LinkAnnotation.objects.filter(
+            subject=subject_uuid,
+        ).order_by(
+            'subject',
+            'predicate_uri',
+            'sort',
+            'object_uri'
+        )
     if more_filters_dict:
         # Add some additional filters to this query set.
         la_qs = la_qs.filter(**more_filters_dict)
@@ -506,6 +546,9 @@ def migrate_legacy_link_annotations(
         subj_obj = get_man_obj_from_la(la.subject, use_cache=use_cache)
         pred_obj = get_man_obj_from_la(la.predicate_uri, use_cache=use_cache)
         obj_obj = get_man_obj_from_la(la.object_uri, use_cache=use_cache)
+        if not obj_obj:
+            # Try to find a missing person
+           obj_obj = get_missing_legacy_person(la.object_uri, new_proj_obj)
         if not subj_obj or not pred_obj or not obj_obj:
             if not subj_obj and la.subject not in missing_entities:
                 missing_entities.append(la.subject)
