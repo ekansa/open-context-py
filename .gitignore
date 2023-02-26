@@ -3,6 +3,7 @@
 *.pot
 *.py[cod]
 *.djcache
+*:Zone.Identifier
 __pycache__/
 testing.txt
 db-logs/
