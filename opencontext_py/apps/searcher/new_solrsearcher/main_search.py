@@ -57,7 +57,7 @@ def process_solr_query_via_solr_and_db(request_dict, base_search_url='/query/'):
     if 'no-docs' in request_dict.get('solr', []):
         solr_response['response'].pop('docs')
         result_maker.result = solr_response
-    if not settings.DEBUG and not request_dict.get('solr') and result_maker.result.get('query'):
+    if False and not settings.DEBUG and not request_dict.get('solr') and result_maker.result.get('query'):
         # Get rid of the solr query if we're not in debug mode and did not specifically
         # ask for it.
         result_maker.result.pop('query')
