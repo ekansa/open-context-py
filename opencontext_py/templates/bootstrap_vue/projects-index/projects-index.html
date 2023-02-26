@@ -180,114 +180,119 @@
             </b-jumbotron>
 
 
+            <div v-if="result_count >0">
+                <projects-tab-header-footer
+                    :hr_role="'header'"
+                    v-bind:route_key_index="route_key_index"
+                    v-bind:result_count="result_count"
+                    v-bind:result_start_index="result_start_index"
+                    v-bind:result_items_per_page="result_items_per_page"
+                    v-bind:result_page_first_link="result_page_first_link"
+                    v-bind:result_page_previous_link="result_page_previous_link"
+                    v-bind:result_page_next_link="result_page_next_link"
+                    v-bind:result_page_last_link="result_page_last_link"
+                ></projects-tab-header-footer>
 
-            <projects-tab-header-footer
-                :hr_role="'header'"
-                v-bind:route_key_index="route_key_index"
-                v-bind:result_count="result_count"
-                v-bind:result_start_index="result_start_index"
-                v-bind:result_items_per_page="result_items_per_page"
-                v-bind:result_page_first_link="result_page_first_link"
-                v-bind:result_page_previous_link="result_page_previous_link"
-                v-bind:result_page_next_link="result_page_next_link"
-                v-bind:result_page_last_link="result_page_last_link"
-            ></projects-tab-header-footer>
+                <b-table
+                    v-if="items"
+                    :items="items"
+                    :fields="fields"
+                    :busy.sync="loading"
+                    striped
+                    bordered
+                    borderless
+                    stacked="md"
+                    responsive
+                    hover
+                    no-local-sorting
+                    :sort-by="default_sort_by_key"
+                    :sort-desc="default_sort_desc"
+                    @sort-changed="sortingChanged"
+                    sort-icon-left
+                    selectable
+                    select-mode="single"
+                    @row-selected="onRowSelected"
+                >
 
-            <b-table
-                v-if="items"
-                :items="items"
-                :fields="fields"
-                :busy.sync="loading"
-                striped
-                bordered
-                borderless
-                stacked="md"
-                responsive
-                hover
-                no-local-sorting
-                :sort-by="default_sort_by_key"
-                :sort-desc="default_sort_desc"
-                @sort-changed="sortingChanged"
-                sort-icon-left
-                selectable
-                select-mode="single"
-                @row-selected="onRowSelected"
-            >
+                    <template #cell(context)="data">
+                        <b-img-lazy
+                            v-if="data.item.context_icon"
+                            :src="data.item.context_icon"
 
-                <template #cell(context)="data">
-                    <b-img-lazy
-                        v-if="data.item.context_icon"
-                        :src="data.item.context_icon"
+                            fluid
+                            rounded
+                            center
+                            class="proj_region_icon"
+                            :alt="'Icon related to ' + data.item.context">
+                        </b-img-lazy>
+                        <p class="text-center"><small>[[ data.item.context ]]</small></p>
+                    </template>
 
-                        fluid
-                        rounded
-                        center
-                        class="proj_region_icon"
-                        :alt="'Icon related to ' + data.item.context">
-                    </b-img-lazy>
-                    <p class="text-center"><small>[[ data.item.context ]]</small></p>
-                </template>
+                    <template #cell(descriptiveness)="data">
+                        <h3 v-if="data.item.percentile >= 67" class="text-center">
+                            <b-badge pill variant="info">Large</b-badge>
+                        </h3>
+                        <h4 v-if="(data.item.percentile >= 33) && (data.item.percentile < 67)" class="text-center">
+                            <b-badge pill variant="info">Medium</b-badge>
+                        </h4>
+                        <h5 v-if="(data.item.percentile < 33)" class="text-center">
+                            <b-badge pill variant="info">Small</b-badge>
+                        </h5>
+                        <p class="text-center"><small>Scale, diversity, and/or documentation</small></p>
+                    </template>
 
-                <template #cell(descriptiveness)="data">
-                    <h3 v-if="data.item.percentile >= 67" class="text-center">
-                        <b-badge pill variant="info">Large</b-badge>
-                    </h3>
-                    <h4 v-if="(data.item.percentile >= 33) && (data.item.percentile < 67)" class="text-center">
-                        <b-badge pill variant="info">Medium</b-badge>
-                    </h4>
-                    <h5 v-if="(data.item.percentile < 33)" class="text-center">
-                        <b-badge pill variant="info">Small</b-badge>
-                    </h5>
-                    <p class="text-center"><small>Scale, diversity, and/or documentation</small></p>
-                </template>
+                    <template #cell(project)="data">
+                        <proj-tab-field-proj-label
+                        v-bind:proj_item="data.item">
+                        </proj-tab-field-proj-label>
+                    </template>
 
-                <template #cell(project)="data">
-                    <proj-tab-field-proj-label
-                    v-bind:proj_item="data.item">
-                    </proj-tab-field-proj-label>
-                </template>
+                    <template #cell(published)="data">
+                        <p class="text-center"><strong>[[ data.item.published ]] </strong></p>
+                        <p class="text-center text-muted"><small>Last updated:<br/>[[ data.item.updated ]]</small></p>
+                    </template>
 
-                <template #cell(published)="data">
-                    <p class="text-center"><strong>[[ data.item.published ]] </strong></p>
-                    <p class="text-center text-muted"><small>Last updated:<br/>[[ data.item.updated ]]</small></p>
-                </template>
+                    <template #cell(metadata)="data">
+                        <dl v-for="p_obj in data.item.people">
+                            <dt><small>[[ p_obj.rel ]]</small></dt>
+                            <dd class="text-muted">
+                                <small>
+                                <a v-for="pers, i in p_obj.named_entities" :href="pers.href" target="_blank">[[ pers.label ]]<span v-if="i < (p_obj.named_entities.length -1)">, </span></a>
+                                </small>
+                            </dd>
+                        </dl>
+                        <dl v-for="m_obj in data.item.metadata">
+                            <dt><small>[[ m_obj.rel ]]</small></dt>
+                            <dd class="text-muted">
+                                <small>
+                                <a v-for="meta, i in m_obj.named_entities" :href="meta.href" target="_blank">[[ meta.label ]]<span v-if="i < (m_obj.named_entities.length -1)">, </span></a>
+                                </small>
+                            </dd>
+                        </dl>
+                    </template>
 
-                <template #cell(metadata)="data">
-                    <dl v-for="p_obj in data.item.people">
-                        <dt><small>[[ p_obj.rel ]]</small></dt>
-                        <dd class="text-muted">
-                            <small>
-                            <a v-for="pers, i in p_obj.named_entities" :href="pers.href" target="_blank">[[ pers.label ]]<span v-if="i < (p_obj.named_entities.length -1)">, </span></a>
-                            </small>
-                        </dd>
-                    </dl>
-                    <dl v-for="m_obj in data.item.metadata">
-                        <dt><small>[[ m_obj.rel ]]</small></dt>
-                        <dd class="text-muted">
-                            <small>
-                            <a v-for="meta, i in m_obj.named_entities" :href="meta.href" target="_blank">[[ meta.label ]]<span v-if="i < (m_obj.named_entities.length -1)">, </span></a>
-                            </small>
-                        </dd>
-                    </dl>
-                </template>
+                    <template #cell()="data">
+                        [[ data.value ]]
+                    </template>
 
-                <template #cell()="data">
-                    [[ data.value ]]
-                </template>
+                </b-table>
 
-            </b-table>
-
-            <projects-tab-header-footer
-                :hr_role="'footer'"
-                v-bind:route_key_index="route_key_index"
-                v-bind:result_count="result_count"
-                v-bind:result_start_index="result_start_index"
-                v-bind:result_items_per_page="result_items_per_page"
-                v-bind:result_page_first_link="result_page_first_link"
-                v-bind:result_page_previous_link="result_page_previous_link"
-                v-bind:result_page_next_link="result_page_next_link"
-                v-bind:result_page_last_link="result_page_last_link"
-            ></projects-tab-header-footer>
+                <projects-tab-header-footer
+                    :hr_role="'footer'"
+                    v-bind:route_key_index="route_key_index"
+                    v-bind:result_count="result_count"
+                    v-bind:result_start_index="result_start_index"
+                    v-bind:result_items_per_page="result_items_per_page"
+                    v-bind:result_page_first_link="result_page_first_link"
+                    v-bind:result_page_previous_link="result_page_previous_link"
+                    v-bind:result_page_next_link="result_page_next_link"
+                    v-bind:result_page_last_link="result_page_last_link"
+                ></projects-tab-header-footer>
+            </div>
+            <div v-else class="container-fluid text-muted text-center">
+                <h1 class="display-4">No records</h1>
+                <p>Broaden or otherwise change search and filtering criteria.</p>
+            </div>
         </div>
     </div>
 </div>
