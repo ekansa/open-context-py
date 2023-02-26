@@ -225,7 +225,6 @@ def get_cache_project_index_filtered_summary_and_items(request, spatial_context=
     )
     cache_key = f'allprjindex-{cache_key}'
     result = None
-    result = None
     if not reset_cache:
         result = cache.get(cache_key)
     if result:
