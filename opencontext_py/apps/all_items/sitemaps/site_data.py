@@ -36,6 +36,10 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.sitemaps import site_data
 importlib.reload(site_data)
 
+# This iterates through the database to flag certain
+# as part of a project's representative sample
+site_data.db_cache_projects_representative_sample_no_worker()
+
 site_data.warm_sitemap_representative_items()
 
 
@@ -192,6 +196,58 @@ def get_cache_project_representative_sample(proj_obj, reset_proj_item_index=Fals
     if not rep_man_objs:
         return []
     return rep_man_objs
+
+
+def get_cache_project_representative_sample_no_worker(proj_obj, reset_proj_item_index=False):
+    """Gets a representative sample of a project. Uses a sitemap index id to
+    find items in the meta_json for the manifest. This does NOT use the worker.
+    """
+    rep_man_objs = None
+    if not reset_proj_item_index and proj_obj.meta_json.get('sitemap_index_id'):
+        rep_man_objs = AllManifest.objects.filter(
+            project=proj_obj,
+            meta_json__sitemap_index_id=proj_obj.meta_json.get('sitemap_index_id')
+        )
+        if len(rep_man_objs) > 1:
+            return rep_man_objs
+    # We do this if we don't have any prior (database cached) rep_man_objs
+    dt_obj = datetime.datetime.now()
+    index_id = dt_obj.strftime('%Y-%m-%d')
+    rep_man_objs =db_site_data.db_get_project_representative_sample(proj_obj)
+    if rep_man_objs:
+        print(f'Marking {len(rep_man_objs)} representative items of {proj_obj.slug} with sitemap index id {index_id}')
+        for man_obj in rep_man_objs:
+            man_obj.meta_json['sitemap_index_id'] = index_id
+            man_obj.save()
+        # Remove the worker job id, since it is done.
+        proj_obj.meta_json['sitemap_job_ids'] = {}
+        proj_obj.meta_json['sitemap_index_id'] = index_id
+        proj_obj.save()
+    if not rep_man_objs:
+        return []
+    return rep_man_objs
+
+
+def db_cache_projects_representative_sample_no_worker(reset_proj_item_index=False):
+    """Iterates through projects, and flags representative sample of
+    project manifest items. The flagging caches these items for use in a sitemap index"""
+    project_slug_counts, max_count = get_cache_solr_indexed_project_slugs(
+        reset_cache=True
+    )
+    for proj_slug, _ in project_slug_counts:
+        proj_obj = AllManifest.objects.filter(
+            item_type='projects',
+            slug=proj_slug,
+        ).exclude(
+            uuid=configs.OPEN_CONTEXT_PROJ_UUID,
+        ).first()
+        if not proj_obj:
+            continue
+        rep_man_objs = get_cache_project_representative_sample_no_worker(
+            proj_obj,
+            reset_proj_item_index=reset_proj_item_index,
+        )
+        print(f'DB flagged {len(rep_man_objs)} rep items for {proj_slug}')
 
 
 def compute_sitemap_priority(item_type, proj_count, max_count):
