@@ -17,7 +17,7 @@
     "bootstrap": "4.5.3",
     "bootstrap-vue": "^2.21.2",
     "heatmapjs": "^2.0.2",
-    "jquery": "1.9.1",
+    "jquery": "3.5.0",
     "leaflet": "^1.7.1",
     "leaflet-easybutton": "^2.4.0",
     "leaflet-heatmap": "^1.0.0",
