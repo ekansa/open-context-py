@@ -40,7 +40,10 @@ def sitemap_index(request):
         )
         if not proj_obj:
             continue
-        site = f'{base_url}/sitemap-{proj_obj.slug}.xml'
+        site = {
+            'location': f'{base_url}/sitemap-{proj_obj.slug}.xml',
+            'lastmod':  proj_obj.updated,
+        }
         sitemaps.append(site)
     return TemplateResponse(
         request,
