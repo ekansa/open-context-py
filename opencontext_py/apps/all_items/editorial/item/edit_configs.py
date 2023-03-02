@@ -43,6 +43,20 @@ FLAG_HUMAN_REMAINS = {
     ],
 }
 
+# This flag, if True, will mean the solr indexer will NOT index an item
+FLAG_DO_NOT_INDEX = {
+    'key': 'flag_do_not_index',
+    'label': 'Flag Do NOT Index',
+    'data_type': 'xsd:boolean',
+    'note': 'Flag to NOT include in the Solr Index.',
+    'options': [
+        {'value': None, 'text': 'Not set',},
+        {'value': True, 'text': 'Do NOT Index with Solr',},
+        {'value': False, 'text': 'Un-flag to permit indexing with Solr',},
+    ],
+}
+
+
 GEO_ZOOM = {
     'key': 'geo_zoom',
     'label': 'Default zoom level for map views',
@@ -122,6 +136,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'subjects': [
         {
@@ -167,6 +182,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'media': [
         {
@@ -189,6 +205,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'documents': [
         {
@@ -211,6 +228,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'tables': [
         {
@@ -273,6 +291,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'predicates': [
         {
@@ -287,6 +306,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'observations': [
         {
@@ -368,6 +388,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             'options':None,
         },
         FLAG_HUMAN_REMAINS.copy(),
+        FLAG_DO_NOT_INDEX.copy(),
     ],
     'languages': [
         {
