@@ -1,0 +1,160 @@
+{% block navbar %}
+
+{% include '../bootstrap_vue/suggest.html' %}
+
+<style type="text/css">
+    #oc-bv-nav {
+        background-color: #141518;
+    }
+    #oc-bv-nav li.active a {
+        background-color: #141518;
+    }
+    #oc-nav-branding {
+        padding-top:0px;
+        padding-left:0px;
+    }
+    #nav-search-button {
+        margin-left:4px;
+    }
+</style>
+
+<nav id="oc-bv-nav" class="navbar sticky-top navbar-expand-sm navbar-dark">
+    <div class="container-fluid">
+
+        <div class="navbar-brand navbar-left">
+            {% if 'opencontext.dainst.org' in BASE_URL %}
+            <a id="oc-nav-branding" class="navbar-brand" href="{{ BASE_URL }}">
+                <img style="margin-top: 2px; margin-left: 12px; height: 22px;" src="{{ BASE_URL }}/static/oc/images/nav/oc-nav-logo.png" alt="Open Context DAI-Mirror Logo" />
+            </a>
+            {% else %}
+            <a id="oc-nav-branding" class="navbar-brand" href="{{ BASE_URL }}">
+                <img style="margin-top: 2px; margin-left: 12px; height: 22px;" src="{{ BASE_URL }}/static/oc/images/nav/oc-nav-dai-inst-logo.png" alt="Open Context DAI-Mirror Logo" />
+            </a>
+            {%endif%}
+        </div>
+
+        <button class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbar_nav_opts"
+            aria-controls="navbar_nav_opts"
+            aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse navbar-collapse-sm" id="navbar_nav_opts">
+            <ul class="navbar-nav mr-auto">
+
+            {% for nav_dict in NAV_ITEMS %}
+            {% if nav_dict.link == None %}
+                <li class="nav-item dropdown">
+                    <a
+                        href="#"
+                        class="nav-link dropdown-toggle"
+                        id="nav-dropdown-{{nav_dict.key}}"
+                        role="button"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >{{ nav_dict.display }}</a>
+                    <div class="dropdown-menu" aria-labelledby="nav-dropdown-{{nav_dict.key}}">
+                    {% for drop_item in nav_dict.urls %}
+                        <a class="dropdown-item" href="{{ BASE_URL }}{{ drop_item.link }}">{{ drop_item.display }}</a>
+                    {% endfor %}
+                    </div>
+                </li>
+            {% else %}
+                {% if nav_dict.always %}
+                    {% if nav_dict.key == act_nav %}
+                    <li class="nav-item active">{% else %}<li class="nav-item">{%endif%}<a class="nav-link" href="{{ BASE_URL }}{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
+                {% else %}
+                    {% if nav_dict.key == act_nav %}
+                    <li class="nav-item active"><a class="nav-link" href="{{ BASE_URL }}{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
+                    {%endif%}
+                {%endif%}
+            {%endif%}
+            {% endfor %}
+
+
+
+            {% if user.is_authenticated and man_obj %}
+                <li class="nav-item dropdown">
+                    <a
+                        href="#"
+                        class="nav-link dropdown-toggle"
+                        id="nav-dropdown-editorial"
+                        role="button"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    >Edit</a>
+                    <div class="dropdown-menu" aria-labelledby="nav-dropdown-editorial">
+                        {% if man_obj %}
+                        {% if man_obj.project.uuid %}
+                        <a class="dropdown-item" href="{% url 'editorial_item_edit_interface_html' man_obj.project.uuid %}">Edit Project</a>
+                        {%endif%}
+                        {% if man_obj.uuid %}
+                        <a class="dropdown-item" href="{% url 'editorial_item_edit_interface_html' man_obj.uuid %}">Edit Item</a>
+                        {%endif%}
+                        {%endif%}
+                    </div>
+                </li>
+		    {%endif%}
+
+
+
+            </ul>
+
+            <!--
+            <form class="navbar-form navbar-right d-flex" role="search" id="nav-app">
+                <oc-search-typeahead
+                    v-bind:top_nav="1"
+                    v-bind:search_via_router="0"
+                    :base_search_url="'/query'"
+                    >
+                </oc-search-typeahead>
+            </form>
+            -->
+            <div id="nav-app">
+                <oc-search-typeahead
+                    v-bind:top_nav="1"
+                    v-bind:search_via_router="0"
+                    :base_search_url="'/query'"
+                    >
+                </oc-search-typeahead>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<script type="text/javascript">
+
+const BASE_URL = '{{ BASE_URL|safe }}';
+
+var vm_nav = new Vue(
+    {
+      delimiters: ['[[', ']]'],
+      ref: 'nav_app',
+      el: '#nav-app',
+      data: {
+          base_url: { BASE_URL },
+      },
+      computed: {
+
+      },
+      methods: {
+
+      },
+      created() {
+
+      },
+      components: {
+        'oc-search-typeahead': vc_oc_seach_typeahead,
+      },
+    },
+  ).$mount('#nav-app');
+
+</script>
+
+{% endblock %}
