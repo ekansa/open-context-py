@@ -7,9 +7,11 @@ import time
 from itertools import islice
 
 from django.core.cache import caches
+
+from django.db.models import Q
+
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import AllAssertion, AllManifest
-
 
 
 from opencontext_py.libs.solrclient import SolrClient
@@ -191,6 +193,9 @@ def make_solr_documents(uuids):
     solr_docs = []
     for uuid in uuids:
         solrdoc = SolrDocumentNS(uuid)
+        if solrdoc.flag_do_not_index:
+            print(f'Flagged to NOT index: {solrdoc.man_obj.label} [{uuid}]')
+            continue
         ok = solrdoc.make_solr_doc()
         if not ok:
             logger.warn(f'Problem making solr doc for {str(uuid)}')
@@ -470,5 +475,25 @@ def delete_solr_documents(uuids, solr=None):
         solr = get_solr_connection()
     print(f'Delete {len(uuids)} solr documents from solr index.')
     for uuid in uuids:
+        solr.delete(id=uuid)
+    solr.commit()
+
+
+def delete_flagged_no_index_from_solr(filter_args=None, solr=None):
+    """Deletes solr documents flagged for NOT indexing with solr"""
+    m_uuid_qs = AllManifest.objects.filter(
+        Q(meta_json__flag_do_not_index=True)
+        | Q(project__meta_json__flag_do_not_index=True)
+    ).values_list(
+        'uuid',
+        flat=True,
+    )
+    if filter_args:
+        m_uuid_qs = m_uuid_qs.filter(**filter_args)
+    print(f'Identified {len(m_uuid_qs)} items to remove from solr (if indexed by solr)')
+    if not solr:
+        solr = get_solr_connection()
+    for uuid in m_uuid_qs:
+        uuid = str(uuid)
         solr.delete(id=uuid)
     solr.commit()
