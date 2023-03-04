@@ -234,6 +234,15 @@ class SolrDocumentNS:
         rep_dict['for_solr_assert_objs'] = len(
             rep_dict.get('for_solr_assert_objs', [])
         )
+
+        self.flag_do_not_index = None
+        if man_obj:
+            # Check to see if the item or its project are flagged for not indexing
+            self.flag_do_not_index = man_obj.meta_json.get(
+                'flag_do_not_index',
+                man_obj.meta_json.project.meta_json.get('flag_do_not_index')
+            )
+            
         self.man_obj = man_obj
         self.rep_dict = rep_dict
 
