@@ -1,30 +1,44 @@
 <!DOCTYPE html>
 
 <html lang="en">
-    {% include 'bootstrap_vue/head.html' %}
-     <body>
-          <div id="main">
-               <div class="container-fluid">
-                    {% with page_label='' %}
-                    {% include 'header.html' %}
-                    {% endwith %}
-                    {% with nav_items=nav_items %}
-                    {% with act_nav='home' %}
-                    {% include 'navbar.html' %}
-                    {% endwith %}
-                    {% endwith %}
+    {% include '../bootstrap_vue/head.html' %}
+    <body>
 
+        {% with nav_items=item.nav_items %}
+        {% with act_nav=item.act_nav %}
+        {% include '../bootstrap_vue/navbar.html' %}
+        {% endwith %}
+        {% endwith %}
+
+        <div id="page">
+
+            <div class="jumbotron" id="overview">
+                <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-12">
-                            <h1>Server Error (500)</h1>
-                        </div>
-                        <div class="col-sm-12" style="min-height:400px;">
-                            <p>We're still in an intial phase of development. Sorry for the server error!</p>
+                            <h1 class="text-center">Server Error (500)</h1>
                         </div>
                     </div>
 
-                    {% include 'footer.html' %}
-               </div>
-          </div>
+                    <div class="row">
+                        <div class="col-sm-2"> </div>
+                        <div class="col-sm-8">
+                            <img style="max-width:350px; text-align:center; margin-left:auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px;"
+                                class="img-responsive"
+                                src="{{ BASE_URL }}/static/oc/icons-v2/noun-server-error-1302982.svg"
+                                alt="No Entry Icon" />
+                            <p class="text-center">Open Context has an internal error processing yor request.</p>
+                            {% if abusive %}
+                            <p class="text-center">It looks like Open Context has an internal bug that stops it from processing your request. Please report details of this problem to: <a href="https://github.com/ekansa/open-context-py/issues">submit an bug report</a>, otherwise please find something better and less harmful to do with your life.</p>
+                            {%endif%}
+                        </div>
+                        <div class="col-sm-2"> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include ''../bootstrap_vue/page_footer.html' %}
+
      </body>
 </html>
