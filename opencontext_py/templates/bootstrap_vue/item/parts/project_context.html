@@ -11,16 +11,16 @@
         <h5>Part of Project</h5>
         <div class="row align-items-center">
           <div class="col-2 item_rel_cell_obj_class_icon">
-            <a title="{{ man_obj.project.label }}" href="{% url 'all_items_html' man_obj.project.uuid %}">
-              <img 
-              role="img" 
-              src="../../static/oc/icons-v2/noun-research-project-2341022.svg" 
-              class="rounded item_rel_obj_class_icon" 
+            <a title="{{ man_obj.project.label }}" href="{% url 'projects_html' man_obj.project.uuid %}">
+              <img
+              role="img"
+              src="../../static/oc/icons-v2/noun-research-project-2341022.svg"
+              class="rounded item_rel_obj_class_icon"
               alt="Icon for project: {{ man_obj.project.label }}"/>
             </a>
           </div>
           <div class="col">
-            <a href="{% url 'all_items_html' man_obj.project.uuid %}">{{ man_obj.project.label }}</a>
+            <a href="{% url 'projects_html' man_obj.project.uuid %}">{{ man_obj.project.label }}</a>
           </div>
         </div>
       </div>
