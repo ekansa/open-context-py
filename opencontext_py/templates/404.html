@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 
 <html lang="en">
-    {% include 'bootstrap_vue/head.html' %}
-     <body>
-          <div id="main">
-               <div class="container-fluid">
-                    {% with page_label='Resource not found (404)' %}
-                    {% include 'header.html' %}
-                    {% endwith %}
-                    {% with nav_items=nav_items %}
-                    {% with act_nav='error' %}
-                    {% include 'navbar.html' %}
-                    {% endwith %}
-                    {% endwith %}
+    {% include '../bootstrap_vue/head.html' %}
+    <body>
 
+        {% with nav_items=item.nav_items %}
+        {% with act_nav=item.act_nav %}
+        {% include '../bootstrap_vue/navbar.html' %}
+        {% endwith %}
+        {% endwith %}
+
+        <div id="page">
+               <div class="container-fluid">
 
                     <div class="jumbotron" id="overview">
                         <div class="container-fluid">
@@ -26,7 +24,7 @@
                             <div class="row">
                                 <div class="col-sm-2"> </div>
                                 <div class="col-sm-8">
-                                    <img style="max-width:350px; text-align:center; margin-left:auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px;" class="img-responsive" src="{{ base_url }}/static/oc/images/noun-icons/sock-noun-27503.png" alt="Sock Icon" />
+                                    <img style="max-width:350px; text-align:center; margin-left:auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px;" class="img-responsive" src="{{ BASE_URL }}/static/oc/images/noun-icons/sock-noun-27503.png" alt="Sock Icon" />
                                     <h3 class="text-center"><em>Looking for this?</em></h3>
                                     <p class="text-center">We looked and we looked, but we still could not find the requested resource. Maybe it is lost, beyond space and time, along with many of the world's missing socks?</p>
                                 </div>
@@ -34,9 +32,10 @@
                             </div>
                         </div>
                     </div>
-
-                    {% include 'footer.html' %}
                </div>
-          </div>
-     </body>
+        </div>
+
+        {% include ''../bootstrap_vue/page_footer.html' %}
+
+    </body>
 </html>
