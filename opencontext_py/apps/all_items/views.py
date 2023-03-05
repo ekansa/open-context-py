@@ -67,6 +67,8 @@ def all_items_json(request, uuid):
             subject_id=ok_uuid,
             for_solr=True,
         )
+        if not man_obj or not rep_dict:
+            raise Http404
         rep_dict = prepare_for_item_dict_solr_and_html_template(
             man_obj,
             rep_dict
@@ -80,6 +82,8 @@ def all_items_json(request, uuid):
             subject_id=ok_uuid,
             for_solr=True,
         )
+        if not man_obj or not rep_dict:
+            raise Http404
         rep_dict = prepare_for_item_dict_solr_and_html_template(
             man_obj,
             rep_dict
@@ -124,6 +128,8 @@ def make_solr_doc_in_html(request, uuid):
         subject_id=ok_uuid,
         for_solr=True,
     )
+    if not man_obj or not rep_dict:
+        raise Http404
     rep_dict = prepare_for_item_dict_solr_and_html_template(
         man_obj,
         rep_dict
@@ -167,6 +173,8 @@ def all_items_html(request, uuid, full_media=False, template_file='item.html'):
         subject_id=ok_uuid,
         for_solr_or_html=True,
     )
+    if not man_obj or not rep_dict:
+        raise Http404
     allow_view, allow_edit = get_request_user_permissions(request, man_obj)
     if not allow_view:
         for rem_key in ['oc-gen:has-obs', 'oc-gen:has-files']:

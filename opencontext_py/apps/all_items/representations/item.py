@@ -553,6 +553,7 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         for_solr_or_html = True
 
     item_man_obj = get_annotate_item_manifest_obj(subject_id)
+
     if not item_man_obj:
         return None, None
 
