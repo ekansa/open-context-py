@@ -98,7 +98,8 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 # for some reason, I can't get the following to work
-                # 'opencontext_py.templates.context_processors.piwik_settings',
+                'opencontext_py.templates.context_processors.piwik_settings',
+                'opencontext_py.templates.context_processors.page_metadata',
             ],
             'debug': DEBUG,
             # 'DEBUG': DEBUG,
