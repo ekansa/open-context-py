@@ -15,4 +15,5 @@ def page_metadata(request):
     BASE_URL = rp.get_baseurl()
     return {
         'BASE_URL': BASE_URL,
+        'NAV_ITEMS': settings.NAV_ITEMS,
     }
