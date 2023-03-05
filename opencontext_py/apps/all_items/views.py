@@ -98,7 +98,8 @@ def all_items_json(request, uuid):
     else:
         # default, simple JSON-LD
         man_obj, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
-
+    if not man_obj or not rep_dict:
+        raise Http404
     allow_view, allow_edit = get_request_user_permissions(request, man_obj)
     if not allow_view:
         for rem_key in ['oc-gen:has-obs', 'oc-gen:has-files']:
