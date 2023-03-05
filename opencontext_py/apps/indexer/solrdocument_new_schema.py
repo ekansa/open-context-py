@@ -240,9 +240,9 @@ class SolrDocumentNS:
             # Check to see if the item or its project are flagged for not indexing
             self.flag_do_not_index = man_obj.meta_json.get(
                 'flag_do_not_index',
-                man_obj.meta_json.project.meta_json.get('flag_do_not_index')
+                man_obj.project.meta_json.get('flag_do_not_index')
             )
-            
+
         self.man_obj = man_obj
         self.rep_dict = rep_dict
 
