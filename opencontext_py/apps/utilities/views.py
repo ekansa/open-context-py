@@ -8,8 +8,9 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 from opencontext_py.apps.all_items.legacy_all import update_old_id
+from opencontext_py.apps.etl.importer import utilities as etl_utils
 
-from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
+
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 
@@ -103,8 +104,10 @@ def lat_lon_to_quadtree(request):
         lon_ok = gm.validate_geo_coordinate(lon, 'lon')
     if request.GET.get('zoom') is not None:
         check_zoom = request.GET['zoom']
-        dtc_obj = DescriptionDataType()
-        zoom = dtc_obj.validate_integer(check_zoom)
+        zoom = etl_utils.validate_transform_data_type_value(
+            check_zoom,
+            data_type='xsd:integer',
+        )
         if zoom is not None:
             # zoom is valid
             if zoom > gm.MAX_ZOOM:
@@ -112,19 +115,25 @@ def lat_lon_to_quadtree(request):
             elif zoom < 1:
                 zoom = 1
     if request.GET.get('rand') is not None:
-        dtc_obj = DescriptionDataType()
-        rand = dtc_obj.validate_numeric(request.GET['rand'])
+        rand = etl_utils.validate_transform_data_type_value(
+            request.GET['rand'],
+            data_type='xsd:double',
+        )
     if lat_ok and lon_ok and zoom is not None:
         output = gm.lat_lon_to_quadtree(lat, lon, zoom)
-        return HttpResponse(output,
-                            content_type='text/plain; charset=utf8')
+        return HttpResponse(
+            output,
+            content_type='text/plain; charset=utf8',
+        )
     else:
         message = 'ERROR: "lat" and "lon" parameters must be valid WGS-84 decimal degrees'
         if zoom is None:
             message += ', "zoom" parameter needs to be an integer between 1 and ' + str(gm.MAX_ZOOM) + '.'
-        return HttpResponse(message,
-                            content_type='text/plain; charset=utf8',
-                            status=406)
+        return HttpResponse(
+            message,
+            content_type='text/plain; charset=utf8',
+            status=406,
+        )
 
 
 def quadtree_to_lat_lon(request):

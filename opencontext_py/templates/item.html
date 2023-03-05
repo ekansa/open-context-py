@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 
 <html lang="en" prefix="og: http://ogp.me/ns#">
-    {% include 'items/head.html' %}
+     {% include '../bootstrap_vue/head.html' %}
      <body>
-          <div id="main">
+          {% with nav_items=item.nav_items %}
+          {% with act_nav=item.act_nav %}
+          {% include '../bootstrap_vue/navbar.html' %}
+          {% endwith %}
+          {% endwith %}
+
+          <div id="page">
                <div class="container-fluid">
                     {% with page_label='' %}
-                    {% include 'header.html' %}
-                    {% endwith %}
-                    {% with nav_items=item.nav_items %}
-                    {% with act_nav=item.act_nav %}
-                    {% include 'navbar.html' %}
-                    {% endwith %}
                     {% endwith %}
                     {% block itemcontent %}
                     {% endblock %}
-                    {% include 'footer.html' %}
                </div>
           </div>
+          {% include ''../bootstrap_vue/page_footer.html' %}
      </body>
 </html>

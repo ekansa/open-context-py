@@ -98,7 +98,8 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 # for some reason, I can't get the following to work
-                # 'opencontext_py.templates.context_processors.piwik_settings',
+                'opencontext_py.templates.context_processors.piwik_settings',
+                'opencontext_py.templates.context_processors.page_metadata',
             ],
             'debug': DEBUG,
             # 'DEBUG': DEBUG,
@@ -215,16 +216,10 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.identifiers',
     'opencontext_py.apps.ocitems.obsmetadata',
     'opencontext_py.apps.ocitems.editorials',
-    'opencontext_py.apps.imports.ocmysql',
-    'opencontext_py.apps.imports.fields',
-    'opencontext_py.apps.imports.fieldannotations',
-    'opencontext_py.apps.imports.records',
-    'opencontext_py.apps.imports.sources',
+
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
-    'opencontext_py.apps.exports.expfields',
-    'opencontext_py.apps.exports.exprecords',
-    'opencontext_py.apps.exports.exptables',
+
     'django.contrib.staticfiles',
     'debug_toolbar',
     'django_user_agents',

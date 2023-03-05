@@ -1,44 +1,46 @@
 <!DOCTYPE html>
 
 <html lang="en">
-    {% include 'bootstrap_vue/head.html' %}
-     <body>
-          <div id="main">
-               <div class="container-fluid">
-                    {% with page_label='Bad Request' %}
-                    {% include 'header.html' %}
-                    {% endwith %}
-                    {% with nav_items=nav_items %}
-                    {% with act_nav='error' %}
-                    {% include 'navbar.html' %}
-                    {% endwith %}
-                    {% endwith %}
+    {% include './bootstrap_vue/head.html' %}
+    <body>
 
+        {% with nav_items=item.nav_items %}
+        {% with act_nav=item.act_nav %}
+        {% include './navbar_root.html' %}
+        {% endwith %}
+        {% endwith %}
 
-                    <div class="jumbotron" id="overview">
-                        <div class="container-fluid">
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <h1 class="text-center">Bad Request Error (400)</h1>
-                                </div>
-                            </div>
+        <div id="page">
 
-                            <div class="row">
-                                <div class="col-sm-2"> </div>
-                                <div class="col-sm-8">
-                                    <img style="max-width:350px; text-align:center; margin-left:auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px;" class="img-responsive" src="{{ base_url }}/static/oc/images/noun-icons/no-entry-noun-13077.png" alt="No Entry Icon" />
-                                    <p class="text-center">There seems to be an error in your request.</p>
-                                    {% if abusive %}
-                                    <p class="text-center">We are taking this request badly, interpreting it as potentially abusive. If you mean no harm, please <a href="https://github.com/ekansa/open-context-py/issues">submit an bug report</a>, otherwise please find something better and less harmful to do with your life.</p>
-                                    {%endif%}
-                                </div>
-                                <div class="col-sm-2"> </div>
-                            </div>
+            <div class="jumbotron" id="overview">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <h1 class="text-center">Bad Request Error (400)</h1>
                         </div>
                     </div>
 
-                    {% include 'footer.html' %}
-               </div>
-          </div>
+                    <div class="row">
+                        <div class="col-sm-2"> </div>
+                        <div class="col-sm-8">
+                            <div class="text-center">
+                                <img style="max-width:350px; text-align:center; margin-left:auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px;"
+                                    class="img-responsive" src="{{ BASE_URL }}/static/oc/images/noun-icons/no-entry-noun-13077.png" alt="No Entry Icon" />
+                                <p class="text-center">There seems to be an error in your request.</p>
+                                {% if abusive %}
+                                <p class="text-center">We are taking this request badly, interpreting it as potentially abusive. If you mean no harm, please
+                                    <a href="https://github.com/ekansa/open-context-py/issues">submit an bug report</a>,
+                                    otherwise please find something better and less harmful to do with your life.</p>
+                                {%endif%}
+                            </div>
+                        </div>
+                        <div class="col-sm-2"> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include './bootstrap_vue/page_footer.html' %}
+
      </body>
 </html>

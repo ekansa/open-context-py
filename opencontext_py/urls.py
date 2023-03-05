@@ -7,10 +7,7 @@ from opencontext_py.apps.index import views as HomeViews
 from opencontext_py.apps.ocitems.manifest import views as ManifestViews
 from opencontext_py.apps.about import views as AboutViews
 from opencontext_py.apps.contexts import views as ContextViews
-from opencontext_py.apps.exports.exptables import views as OCtableViews
-from opencontext_py.apps.imports.sources import views as Imp_sources
-from opencontext_py.apps.imports.fields import views as Imp_fields
-from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
+
 from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 from opencontext_py.apps.utilities import views as UtilitiesViews
 from opencontext_py.apps.entities.entity import views as EntityViews
@@ -403,62 +400,7 @@ urlpatterns = [
     re_path(r'^vocabularies/(?P<identifier>\S+).json', vocabViews.json_view, name='vocabularies_json'),
     re_path(r'^vocabularies/(?P<identifier>\S+)', vocabViews.html_view, name='vocabularies_html'),
     re_path(r'^vocabularies', vocabViews.index_view, name='vocabularies_index'),
-    # --------------------------
-    # IMPORTER INTERFACE PAGES
-    # --------------------------
-    re_path(r'^imports/projects/(?P<project_uuid>\S+)',  Imp_sources.project,
-        name='imp_sources_projects'),
-    re_path(r'^imports/field-types/(?P<source_id>\S+)', Imp_sources.field_types,
-        name='field_types'),
-    re_path(r'^imports/field-types-more/(?P<source_id>\S+)', Imp_sources.field_types_more,
-        name='field_types_more'),
-    re_path(r'^imports/field-entity-relations/(?P<source_id>\S+)', Imp_sources.field_entity_relations,
-        name='field_entity_relations'),
-    re_path(r'^imports/field-complex-desciptions/(?P<source_id>\S+)', Imp_sources.field_complex_descriptions,
-        name='field_complex_descriptions'),
-    re_path(r'^imports/field-descriptions/(?P<source_id>\S+)', Imp_sources.field_descriptions,
-        name='field_descriptions'),
-    re_path(r'^imports/finalize/(?P<source_id>\S+)', Imp_sources.finalize,
-        name='imp_source_finalize'),
-    # --------------------------
-    # IMPORTER PROJECT POST REQUESTS
-    # --------------------------
-    re_path(r'^imports/create-project', Imp_sources.create_project,
-        name='imp_sources_create_project'),
-    re_path(r'^imports/edit-project/(?P<project_uuid>\S+)', Imp_sources.edit_project,
-        name='imp_sources_edit_project'),
-    # --------------------------
-    # BELOW ARE URLs FOR IMPORTER AJAX REQUESTS
-    # --------------------------
-    re_path(r'^imports/project-import-refine/(?P<project_uuid>\S+)', Imp_sources.project_import_refine,
-        name='imp_sources_project_import_refine'),
-    re_path(r'^imports/import-finalize/(?P<source_id>\S+)', Imp_sources.import_finalize,
-        name='imp_sources_import_finalize'),
-    re_path(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
-        name='imp_field_classify'),
-    re_path(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
-        name='imp_field_meta_update'),
-    re_path(r'^imports/field-titlecase/(?P<source_id>\S+)', Imp_fields.field_titlecase,
-        name='imp_field_titlecase'),
-    re_path(r'^imports/field-list/(?P<source_id>\S+)', Imp_fields.field_list,
-        name='imp_field_list'),
-    re_path(r'^imports/field-annotations/(?P<source_id>\S+)', Imp_field_annos.view,
-        name='imp_field_annos_view'),
-    re_path(r'^imports/subjects-hierarchy-examples/(?P<source_id>\S+)', Imp_field_annos.subjects_hierarchy_examples,
-        name='imp_field_annos_subjects_hierarchy_examples'),
-    re_path(r'^imports/field-described-examples/(?P<source_id>\S+)', Imp_field_annos.described_examples,
-        name='imp_field_annos_described_examples'),
-    re_path(r'^imports/field-linked-examples/(?P<source_id>\S+)', Imp_field_annos.linked_examples,
-        name='imp_field_annos_linked_examples'),
-    re_path(r'^imports/field-annotation-delete/(?P<source_id>\S+)/(?P<annotation_id>\S+)', Imp_field_annos.delete,
-        name='imp_field_annos_delete'),
-    re_path(r'^imports/field-annotation-create/(?P<source_id>\S+)', Imp_field_annos.create,
-        name='imp_field_annos_create'),
-    # --------------------------
-    # BELOW IS THE INDEX PAGE FOR THE IMPORTER
-    # --------------------------
-    re_path(r'^imports/', Imp_sources.index,
-        name='imp_sources_index'),
+
     #----------------------------
     # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)
     #----------------------------
