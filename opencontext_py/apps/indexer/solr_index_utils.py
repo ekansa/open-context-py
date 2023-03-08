@@ -9,6 +9,7 @@ UUID_ROWS = 500
 
 
 def fetch_solr_index_metadata_uuids_json(query_url, uuid_rows=UUID_ROWS):
+    """Makes a request to an Open Context solr index to get record UUIDs"""
     if '#' in query_url:
         # Remove the client side hash frag identifer
         url_x = query_url.split('#')
@@ -44,6 +45,7 @@ def fetch_solr_index_metadata_uuids_json(query_url, uuid_rows=UUID_ROWS):
 
 
 def get_solr_uuids(query_url, uuids=None, do_paging=True):
+    """Makes recursive paged requests to an Open Context solr index to get record UUIDs"""
     if uuids is None:
         uuids = []
     json_r = fetch_solr_index_metadata_uuids_json(query_url)
@@ -60,3 +62,14 @@ def get_solr_uuids(query_url, uuids=None, do_paging=True):
             do_paging=do_paging,
         )
     return uuids
+
+def check_uuids_exist(uuids):
+    """Makes a list of UUIDs that do not exist in the Manifest"""
+    bad_uuids = []
+    for uuid in uuids:
+        m_obj = AllManifest.objects.filter(uuid=uuid).first()
+        if m_obj:
+            # we found it, so it is OK
+            continue
+        bad_uuids.append(uuid)
+    return bad_uuids

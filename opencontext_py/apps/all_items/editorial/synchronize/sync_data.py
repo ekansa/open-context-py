@@ -18,7 +18,7 @@ import importlib
 from opencontext_py.apps.all_items.editorial.synchronize import sync_data
 importlib.reload(sync_data)
 
-sync_data.update_prod_from_default(after_date='2021-01-31')
+sync_data.update_prod_from_default(after_date='2023-03-04', prod_only_insert=False)
 
 
 
@@ -44,7 +44,7 @@ sync_data.update_default_from_prod(project_uuid=project_uuid, update_models=upda
 
 """
 
-# These configure foreign key relationships to 
+# These configure foreign key relationships to
 # Manifest objects. This config helps to identify foreign key
 # referenced objects that must be synchronized.
 MODELS_TO_SYNC = [
@@ -58,8 +58,8 @@ MODELS_TO_SYNC = [
 
 
 def update_default_from_prod(
-    project_uuid=None, 
-    after_date=None, 
+    project_uuid=None,
+    after_date=None,
     only_insert=True,
     raise_on_error=True,
     update_models=MODELS_TO_SYNC,
@@ -71,7 +71,7 @@ def update_default_from_prod(
         if raise_on_error:
             raise RuntimeError('No "prod" database connection config.')
         return None
-    
+
     all_migrated_objs = 0
     for model, project_id_attrib in update_models:
         filter_args = {}
@@ -84,9 +84,9 @@ def update_default_from_prod(
             m_qs = m_qs.filter(**filter_args)
         if model != AllManifest:
             safe_model_save.bulk_update_create(
-                act_model=model, 
-                m_qs=m_qs, 
-                from_db='prod', 
+                act_model=model,
+                m_qs=m_qs,
+                from_db='prod',
                 to_db='default'
             )
             continue
@@ -97,8 +97,8 @@ def update_default_from_prod(
         migrated_model_objs = 0
         for model_object in m_qs:
             ok = safe_model_save.default_safe_save_model_object_and_related(
-                model_object, 
-                raise_on_error=True, 
+                model_object,
+                raise_on_error=True,
                 only_insert=only_insert,
             )
             if not ok:
@@ -113,10 +113,11 @@ def update_default_from_prod(
 
 
 def update_prod_from_default(
-    project_uuid=None, 
-    after_date=None, 
+    project_uuid=None,
+    after_date=None,
     raise_on_error=True,
     update_models=MODELS_TO_SYNC,
+    prod_only_insert=True,
 ):
     if not project_uuid and not after_date:
         raise ValueError('Must limit sync by project, date, or both')
@@ -125,7 +126,7 @@ def update_prod_from_default(
         if raise_on_error:
             raise RuntimeError('No "prod" database connection config.')
         return None
-    
+
     all_migrated_objs = 0
     for model, project_id_attrib in update_models:
         filter_args = {}
@@ -133,7 +134,7 @@ def update_prod_from_default(
             filter_args[project_id_attrib] = project_uuid
         if after_date:
             filter_args[f'updated__gte'] = after_date
-        
+
         # Check the default database to get rows that we may want to
         # transfer to prod.
         m_qs = model.objects.all()
@@ -141,10 +142,11 @@ def update_prod_from_default(
             m_qs = m_qs.filter(**filter_args)
         if model != AllManifest:
             safe_model_save.bulk_update_create(
-                act_model=model, 
-                m_qs=m_qs, 
-                from_db='default', 
-                to_db='prod'
+                act_model=model,
+                m_qs=m_qs,
+                from_db='default',
+                to_db='prod',
+                prod_only_insert=prod_only_insert,
             )
             continue
         m_qs = m_qs.using('default')
@@ -154,8 +156,9 @@ def update_prod_from_default(
         migrated_model_objs = 0
         for model_object in m_qs:
             ok = safe_model_save.prod_safe_save_model_object_and_related(
-                model_object, 
+                model_object,
                 raise_on_error=True,
+                only_insert=prod_only_insert,
             )
             if not ok:
                 print(f'Failed to save: {model_object}')

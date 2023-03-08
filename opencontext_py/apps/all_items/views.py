@@ -98,7 +98,8 @@ def all_items_json(request, uuid):
     else:
         # default, simple JSON-LD
         man_obj, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
-
+    if not man_obj or not rep_dict:
+        raise Http404
     allow_view, allow_edit = get_request_user_permissions(request, man_obj)
     if not allow_view:
         for rem_key in ['oc-gen:has-obs', 'oc-gen:has-files']:
@@ -143,6 +144,7 @@ def make_solr_doc_in_html(request, uuid):
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'CANONICAL_URI': f'https://{man_obj.uri}',
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Solr Doc: {man_obj.label}',
         'solr_json': json.dumps(
@@ -207,6 +209,7 @@ def all_items_html(request, uuid, full_media=False, template_file='item.html'):
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'CANONICAL_URI': f'https://{man_obj.uri}',
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
         'SCHEMA_ORG_JSON_LD': json.dumps(

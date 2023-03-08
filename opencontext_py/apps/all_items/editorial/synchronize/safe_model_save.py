@@ -19,7 +19,7 @@ from opencontext_py.apps.all_items.models import (
 
 DB_SYNC_CACHE_LIFE = 60 * 60 * 6 # Allow hours for keeping the cache alive
 
-# These configure foreign key relationships to 
+# These configure foreign key relationships to
 # Manifest objects. This config helps to identify foreign key
 # referenced objects that must be synchronized.
 MODEL_FK_MANIFEST_ATTRIBUTES = {
@@ -62,7 +62,7 @@ MODEL_FK_MANIFEST_ATTRIBUTES = {
 
 
 
-def prod_safe_save_model_object(model_object, raise_on_error=True):
+def prod_safe_save_model_object(model_object, raise_on_error=True, only_insert=True):
     """Safely save a model object to the PROD database"""
 
     # NOTE: This helps to make sure that we only do INSERTs to the
@@ -79,7 +79,10 @@ def prod_safe_save_model_object(model_object, raise_on_error=True):
     ok = None
     try:
         with transaction.atomic():
-            model_object.save(using='prod', force_insert=True)
+            if not only_insert:
+                model_object.save(using='prod')
+            else:
+                model_object.save(using='prod', force_insert=True)
             ok = True
     except Exception as e:
         ok = False
@@ -99,7 +102,7 @@ def default_safe_save_model_object(model_object, raise_on_error=True, only_inser
     ok = None
     try:
         with transaction.atomic():
-            # NOTE: This allows updates, not just inserts, 
+            # NOTE: This allows updates, not just inserts,
             # so as to sync data from prod to the default (usually local)
             if not only_insert:
                 model_object.save(using='default')
@@ -111,7 +114,7 @@ def default_safe_save_model_object(model_object, raise_on_error=True, only_inser
     return ok
 
 
-def prod_safe_save_model_object_and_related(model_object, raise_on_error=True):
+def prod_safe_save_model_object_and_related(model_object, raise_on_error=True, only_insert=True):
     """Safely save a model object, and foreign key related objects to the PROD database"""
     if not settings.CONNECT_PROD_DB:
         if raise_on_error:
@@ -121,14 +124,14 @@ def prod_safe_save_model_object_and_related(model_object, raise_on_error=True):
         if raise_on_error:
             raise ValueError('Model object has no "primary key" cannot safely insert.')
         return False
-    
+
     act_model = model_object._meta.model
 
     cache = caches['redis']
     cache_key = f'prod-pk-{str(act_model._meta.label)}-{str(model_object.pk)}'
     prod_exists = cache.get(cache_key)
     if prod_exists:
-        # Our work is done, we know this already exists on prod, 
+        # Our work is done, we know this already exists on prod,
         # because we cached our knowledge that it does exist.
         return True
 
@@ -152,7 +155,7 @@ def prod_safe_save_model_object_and_related(model_object, raise_on_error=True):
         if not fk_obj:
             print(f'No attribute {str(fk_attrib)} in {str(act_model._meta.label)}')
             continue
-        fk_ok = prod_safe_save_model_object_and_related(fk_obj)
+        fk_ok = prod_safe_save_model_object_and_related(fk_obj, only_insert=only_insert)
         if not fk_ok:
             # Sadly, we can't save this foreign key refed object.
             all_fk_ok = False
@@ -161,12 +164,12 @@ def prod_safe_save_model_object_and_related(model_object, raise_on_error=True):
         if raise_on_error:
             raise ValueError('Model object foreign key object problem.')
         return False
-    
+
     # Now save this!
     # NOTE: This will fail if default objects are not yet present in the
     # 'prod' database, because ultimately, those default objects give context
     # to other objects.
-    ok = prod_safe_save_model_object(model_object, raise_on_error=raise_on_error)
+    ok = prod_safe_save_model_object(model_object, raise_on_error=raise_on_error, only_insert=only_insert)
     if ok and act_model == AllManifest:
         # Only set the cache if this is a manifest item,
         # which we hit often b/c of foreign key relations
@@ -189,10 +192,10 @@ def default_safe_save_model_object_and_related(model_object, raise_on_error=True
     cache_key = f'default-pk-{str(model_object.pk)}'
     default_exists = cache.get(cache_key)
     if default_exists:
-        # Our work is done, we know this already exists on default 
+        # Our work is done, we know this already exists on default
         # because we cached our knowledge that it does exist.
         return True
-    
+
     act_model = model_object._meta.model
 
     # Check the production database to see if this object already exists there.
@@ -215,7 +218,7 @@ def default_safe_save_model_object_and_related(model_object, raise_on_error=True
             print(f'No attribute {str(fk_attrib)} in {str(act_model._meta.label)}')
             continue
         fk_ok = default_safe_save_model_object_and_related(
-            fk_obj, 
+            fk_obj,
             raise_on_error=raise_on_error,
             only_insert=only_insert
         )
@@ -227,13 +230,13 @@ def default_safe_save_model_object_and_related(model_object, raise_on_error=True
         if raise_on_error:
             raise ValueError('Model object foreign key object problem.')
         return False
-    
+
     # Now save this!
     # NOTE: This will fail if default objects are not yet present in the
     # local default database, because ultimately, those default objects give context
     # to other objects.
     ok = default_safe_save_model_object(
-        model_object, 
+        model_object,
         raise_on_error=raise_on_error,
         only_insert=only_insert
     )
@@ -268,7 +271,7 @@ def check_other_db_foreign_keys_in_qs(act_model, m_qs, from_db, to_db):
         ).order_by(
             fK_attib
         ).values_list(
-            f'{fK_attib}_id', 
+            f'{fK_attib}_id',
             flat=True
         )
         act_ids = set(act_ids)
@@ -279,7 +282,7 @@ def check_other_db_foreign_keys_in_qs(act_model, m_qs, from_db, to_db):
         ).order_by(
             'uuid'
         ).values_list(
-            'uuid', 
+            'uuid',
             flat=True
         )
         check_db_ids = set(check_db_ids)
@@ -303,11 +306,11 @@ def make_list_of_model_objs(act_ids, from_objs, act_model):
     return model_objs, update_attribs
 
 
-def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500, target_page=None):
+def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500, target_page=None, prod_only_insert=True):
     to_db_missing_ids = check_other_db_foreign_keys_in_qs(
-        act_model=act_model, 
-        m_qs=m_qs, 
-        from_db=from_db, 
+        act_model=act_model,
+        m_qs=m_qs,
+        from_db=from_db,
         to_db=to_db
     )
     all_ok = True
@@ -316,7 +319,7 @@ def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500, target_p
         fk_qs = AllManifest.objects.using(from_db).filter(uuid__in=to_db_missing_ids)
         for model_object in fk_qs:
             if from_db == 'default' and to_db == 'prod':
-                ok = prod_safe_save_model_object_and_related(model_object)
+                ok = prod_safe_save_model_object_and_related(model_object, only_insert=prod_only_insert)
             elif from_db == 'prod' and to_db == 'default':
                 ok = default_safe_save_model_object_and_related(model_object)
             else:
@@ -337,14 +340,14 @@ def bulk_update_create(act_model, m_qs, from_db, to_db, chunk_size=500, target_p
         for model_object in paginator.page(page).object_list:
             from_objs[model_object.pk] = make_migrate_safe_dict_obj(model_object)
             from_pks.append(model_object.pk)
-        
+
         # Query to make a list of the items that already exist in the destination to_db
         to_exists_ids = act_model.objects.using(
             to_db
         ).filter(
             pk__in=from_pks
         ).values_list(
-            'pk', 
+            'pk',
             flat=True
         )
         # Make a list if records for a bulk UPDATE (where the PKs exist in the destination to_db)

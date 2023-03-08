@@ -22,10 +22,10 @@ importlib.reload(imm)
 
 imm.OK_HUGE_IMAGES = True
 df = imm.inventory_make_oc_files(
-    orig_media_dir_path='/home/ekansa/github/open-context-py/static/imports/kahramanmaras-survey-raw',
-    media_inventory_csv_path='/home/ekansa/github/open-context-py/static/imports/kahramanmaras-survey.csv',
-    oc_media_root_dir='/home/ekansa/github/open-context-py/static/imports/kahramanmaras-survey',
-    media_base_url='https://artiraq.org/static/opencontext/kahramanmaras-survey/',
+    orig_media_dir_path='/home/ekansa/github/open-context-py/static/imports/obea-photos-raw',
+    media_inventory_csv_path='/home/ekansa/github/open-context-py/static/imports/obea-photos.csv',
+    oc_media_root_dir='/home/ekansa/github/open-context-py/static/imports/obea-photos',
+    media_base_url='https://artiraq.org/static/opencontext/oracle-bones-china/obea-photos',
 )
 
 """
@@ -91,6 +91,9 @@ def make_directory_files_df(orig_media_dir_path):
         for filename in filenames:
             if filename.endswith(':Zone.Identifier'):
                 # A convenience hack for Windows subsystem for linux
+                continue
+            if filename.endswith('.ini'):
+                # Skip .ini files probably from a MacOS
                 continue
             file_path = os.path.join(dirpath, filename)
             rec = {

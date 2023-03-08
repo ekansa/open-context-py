@@ -3,7 +3,15 @@
     <title>{{ PAGE_TITLE }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    {% if CANONICAL_SITEMAP_URL %}
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ CANONICAL_SITEMAP_URL }}">
+    {%else%}
     <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ BASE_URL }}/sitemap.xml">
+    {%endif%}
+
+    {% if CANONICAL_URI %}
+    <link rel="canonical" href="{{ CANONICAL_URI }}">
+    {%endif%}
 
     {% if PAGE_MODIFIED %}
     <meta id="page_dc_terms_modified" name="dcterms.modified" content="{{ PAGE_MODIFIED }}" />
