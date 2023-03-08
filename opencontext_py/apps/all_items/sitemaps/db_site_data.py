@@ -40,7 +40,7 @@ def db_get_proj_items_unique_by_descriptors(proj_obj):
 
     :param AllManifest proj_obj: An AllManifest instance of the project
         for which we want a representative set of
-    
+
     returns set(AllManifest objects) where the set includes a representative
         associated with each unique predicate, type (controlled vocab concept),
         person.
@@ -53,6 +53,10 @@ def db_get_proj_items_unique_by_descriptors(proj_obj):
         subject=OuterRef('subject'),
         object__item_type='media',
         visible=True,
+    ).exclude(
+        subject__meta_json__has_key='flag_do_not_index',
+    ).exclude(
+        subject__meta_json__has_key='view_group_id',
     ).annotate(
         media_count=Count('object')
     ).values('media_count')[:1]
@@ -61,6 +65,10 @@ def db_get_proj_items_unique_by_descriptors(proj_obj):
         subject__project=proj_obj,
         subject__item_type__in=configs.OC_ITEM_TYPES,
         visible=True,
+    ).exclude(
+        subject__meta_json__has_key='flag_do_not_index',
+    ).exclude(
+        subject__meta_json__has_key='view_group_id',
     ).annotate(
         media_count=Subquery(media_count_qs)
     ).select_related(
@@ -79,6 +87,10 @@ def db_get_proj_items_unique_by_descriptors(proj_obj):
         subject__item_type__in=configs.OC_ITEM_TYPES,
         object__item_type__in=['types', 'persons'],
         visible=True,
+    ).exclude(
+        subject__meta_json__has_key='flag_do_not_index',
+    ).exclude(
+        subject__meta_json__has_key='view_group_id',
     ).annotate(
         media_count=Subquery(media_count_qs)
     ).select_related(
@@ -104,7 +116,7 @@ def db_get_proj_items_biggest_files(proj_obj):
 
     :param AllManifest proj_obj: An AllManifest instance of the project
         for which we want a representative set of
-    
+
     returns set(AllManifest objects) that have the biggest file sizes for
         different media types
     """
@@ -112,6 +124,10 @@ def db_get_proj_items_biggest_files(proj_obj):
     media_type_qs = AllResource.objects.filter(
         item__project=proj_obj,
         resourcetype_id__in=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
+    ).exclude(
+        item__meta_json__has_key='flag_do_not_index',
+    ).exclude(
+        item__meta_json__has_key='view_group_id',
     ).select_related(
         'item'
     ).distinct(
@@ -128,6 +144,10 @@ def db_get_proj_items_biggest_files(proj_obj):
             item__project=proj_obj,
             resourcetype_id__in=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
             mediatype=act_res.mediatype,
+        ).exclude(
+            item__meta_json__has_key='flag_do_not_index',
+        ).exclude(
+            item__meta_json__has_key='view_group_id',
         ).select_related(
             'item'
         ).order_by(
@@ -144,7 +164,7 @@ def db_get_proj_items_verbose_text(proj_obj):
 
     :param AllManifest proj_obj: An AllManifest instance of the project
         for which we want a representative set of
-    
+
     returns set(AllManifest objects) that have the biggest file sizes for
         different media types
     """
@@ -152,6 +172,10 @@ def db_get_proj_items_verbose_text(proj_obj):
     m_qs = AllManifest.objects.filter(
         project=proj_obj,
         item_type__in=configs.OC_ITEM_TYPES,
+    ).exclude(
+        meta_json__has_key='flag_do_not_index',
+    ).exclude(
+        meta_json__has_key='view_group_id',
     ).distinct(
         'item_type',
         'item_class'
@@ -169,6 +193,10 @@ def db_get_proj_items_verbose_text(proj_obj):
             subject__item_class=man_obj.item_class,
             predicate__data_type='xsd:string',
             visible=True,
+        ).exclude(
+            subject__meta_json__has_key='flag_do_not_index',
+        ).exclude(
+            subject__meta_json__has_key='view_group_id',
         ).annotate(
             text_len=Length('obj_string')
         ).distinct(
@@ -189,10 +217,10 @@ def db_get_proj_items_verbose_text(proj_obj):
 
 def db_get_project_representative_sample(proj_obj):
     """Gets a unique representative sample of resources from a project
-    
+
     :param AllManifest proj_obj: An AllManifest instance of the project
         for which we want a representative set of
-    
+
     returns set(AllManifest objects) where the set includes a representative
         associated with each unique predicate, type (controlled vocab concept),
         person, item_type, and item_class in the project. This sampling method
@@ -205,7 +233,7 @@ def db_get_project_representative_sample(proj_obj):
     # number of records (because so much data is pretty repetitive)
     proj_count = AllManifest.objects.filter(project=proj_obj).count()
     print_prefix = f'{proj_obj.label} ({str(proj_obj.uuid)}) [Total: {proj_count}]'
-    
+
     unique_by_des = db_get_proj_items_unique_by_descriptors(proj_obj)
     print(f'{print_prefix}; items for distinct descriptors: {len(unique_by_des)}')
 
