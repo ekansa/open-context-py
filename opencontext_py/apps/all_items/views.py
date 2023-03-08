@@ -144,6 +144,7 @@ def make_solr_doc_in_html(request, uuid):
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'CANONICAL_URI': f'https://{man_obj.uri}',
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Solr Doc: {man_obj.label}',
         'solr_json': json.dumps(
@@ -208,6 +209,7 @@ def all_items_html(request, uuid, full_media=False, template_file='item.html'):
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'CANONICAL_URI': f'https://{man_obj.uri}',
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
         'SCHEMA_ORG_JSON_LD': json.dumps(
