@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
 
-
+from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllAssertion,
+)
 
 from opencontext_py.apps.etl.importer.models import (
     DataSourceField,
@@ -16,19 +20,19 @@ from opencontext_py.apps.etl.importer.models import (
 
 def get_matching_project_field_by_labels(
     project,
-    label, 
-    ref_name=None, 
-    ref_origin_name=None, 
+    label,
+    ref_name=None,
+    ref_origin_name=None,
     added_filters=None,
     added_excludes=None,
 ):
     """Gets a DataSourceField object by matching labels in projects
-    
+
     :param AllManifest project: The project that is getting updated
         by this ETL process.
     :param str label: The label for the field that we're trying to
         match within the project.
-    :param str ref_name: The most recent label for the field as stored 
+    :param str ref_name: The most recent label for the field as stored
         in Open Refine
     :param str ref_origin_name: The original label for the field as
         first imported into Open Refine.
@@ -66,8 +70,8 @@ def get_matching_project_field_by_labels(
 
 def get_matching_project_field(ds_new_field):
     """Gets a DataSourceField object by matching labels in projects
-    
-    :param DataSourceField ds_new_field: The new data source field 
+
+    :param DataSourceField ds_new_field: The new data source field
         that we want to match with a prior data source field already
         defined in this project.
     """
@@ -81,15 +85,15 @@ def get_matching_project_field(ds_new_field):
         if not filter_val:
             continue
         added_filters[poss_filter] = filter_val
-    
+
     if not added_filters:
         added_filters = None
 
     return get_matching_project_field_by_labels(
         project=ds_new_field.data_source.project,
-        label=ds_new_field.label, 
-        ref_name=ds_new_field.ref_name, 
-        ref_origin_name=ds_new_field.ref_origin_name, 
+        label=ds_new_field.label,
+        ref_name=ds_new_field.ref_name,
+        ref_origin_name=ds_new_field.ref_origin_name,
         added_filters=added_filters,
         # NOTE: the added_excludes makes sure that we match data source
         # fields from a different datasource within this project.
@@ -100,7 +104,7 @@ def get_matching_project_field(ds_new_field):
 def copy_prior_project_field_attributes(ds_new_field, prior_field):
     """Copies attributes from a field in the same project """
     # Copy certain attributes from the a field, defined
-    # within this project.  
+    # within this project.
     ds_new_field.label = prior_field.label
     ds_new_field.item_type = prior_field.item_type
     ds_new_field.data_type = prior_field.data_type
@@ -116,13 +120,13 @@ def get_annotations_on_mapped_prior_fields(prior_to_new_fields):
 
     :param dict prior_to_new_fields: A dictionary keyed by a prior_field
        object that has a mapping to a new data source field
-    
+
     returns a dictionary keyed by prior_field objects that lists
         DataSourceAnnotation objects that can be mapped to a
         new DataSource
     """
     map_ready_field_annotations = {
-        prior_field: [] 
+        prior_field: []
         for prior_field, _ in prior_to_new_fields.items()
     }
     for prior_field, _ in prior_to_new_fields.items():
@@ -141,7 +145,7 @@ def get_annotations_on_mapped_prior_fields(prior_to_new_fields):
                     # to check
                     continue
                 # The act_anno has a relationship to a field that
-                # has NO mapping between prior and new fields, so it is 
+                # has NO mapping between prior and new fields, so it is
                 # NOT ok to add
                 ok_to_add = False
                 break
@@ -152,13 +156,13 @@ def get_annotations_on_mapped_prior_fields(prior_to_new_fields):
 
 
 def copy_prior_annotations_to_new_datasource(
-    prior_to_new_fields, 
+    prior_to_new_fields,
     map_ready_field_annotations=None
 ):
     """Map and copies prior annotations on fields mapped to fields in a new data source"""
     if not prior_to_new_fields:
         return None
-    
+
     if not map_ready_field_annotations:
         # We haven't already made a dictionary of annotations that
         # are OK for mapping.
@@ -222,6 +226,54 @@ def copy_prior_annotations_to_new_datasource(
     return new_annotations
 
 
+def copy_project_predicates_to_data_source_fields(ds_source):
+    """Copies attributes from a field in the same project """
+    df_new_field_qs = DataSourceField.objects.filter(
+        data_source=ds_source,
+        item_type=None,
+        data_type=None,
+    )
+    for ds_new_field in df_new_field_qs:
+        field_labels = [ds_new_field.label.strip()]
+        if ds_new_field.ref_name:
+            field_labels.append(ds_new_field.ref_name.strip())
+        if ds_new_field.ref_orig_name:
+            field_labels.append(ds_new_field.ref_orig_name.strip())
+        print(f'Check to match predicates: {field_labels}')
+        proj_pred_obj = AllManifest.objects.filter(
+            project=ds_source.project,
+            item_type='predicates',
+            label__in=field_labels,
+        ).first()
+        if not proj_pred_obj:
+            continue
+        if proj_pred_obj.data_type == 'id':
+            if str(proj_pred_obj.item_class.uuid) == configs.CLASS_OC_VARIABLES_UUID:
+                ds_new_field.item_type = 'types'
+                ds_new_field.data_type = 'id'
+                ds_new_field.context = proj_pred_obj
+            else:
+                obj_types = AllAssertion.objects.filter(
+                    predicate=proj_pred_obj
+                ).distinct(
+                    'object__item_type'
+                ).order_by(
+                    'object__item_type'
+                ).values_list(
+                    'object__item_type',
+                    flat=True,
+                )
+                if obj_types.count() == 1:
+                    ds_new_field.item_type = obj_types[0]
+                    ds_new_field.data_type = 'id'
+                    ds_new_field.context = proj_pred_obj.project
+        else:
+            ds_new_field.item_type = 'predicates'
+            ds_new_field.data_type = proj_pred_obj.data_type
+            ds_new_field.context = proj_pred_obj
+        ds_new_field.save()
+
+
 def copy_prior_project_fields_for_data_source(ds_source, copy_annotations=True):
     """Copies attributes from a field in the same project """
     df_new_field_qs = DataSourceField.objects.filter(
@@ -235,16 +287,15 @@ def copy_prior_project_fields_for_data_source(ds_source, copy_annotations=True):
         # Now copy the attributes made on the prior field to the
         # ds_new_field.
         ds_new_field = copy_prior_project_field_attributes(
-            ds_new_field, 
+            ds_new_field,
             prior_field
         )
         prior_to_new_fields[prior_field] = ds_new_field
 
+    # Use any existing project predicates to update data source fields.
+    copy_project_predicates_to_data_source_fields(ds_source)
     if not copy_annotations:
         return None
-    
+
     # Now copy the mapped prior to new datasource field annotations.
     copy_prior_annotations_to_new_datasource(prior_to_new_fields)
-
-
-
