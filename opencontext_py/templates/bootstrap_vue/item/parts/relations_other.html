@@ -8,6 +8,10 @@
         <div class="col-1 item_rel_cell_obj_class_icon">
           {% if val.object__item_type == 'persons' %}
           <a title="{{ val.label }}" href="{% url 'persons_html' val.object_id %}">
+          {%elif val.object__item_type == 'subjects' %}
+          <a title="{{ val.label }}" href="{% url 'subjects_html' val.object_id %}">
+          {%elif val.object__item_type == 'documents' %}
+            <a title="{{ val.label }}" href="{% url 'documents_html' val.object_id %}">
           {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
           {%endif%}
@@ -21,6 +25,10 @@
         <div class="col">
           {% if val.object__item_type == 'persons' %}
           <a title="{{ val.label }}" href="{% url 'persons_html' val.object_id %}">{{ val.label }}</a>
+          {%elif val.object__item_type == 'subjects' %}
+          <a title="{{ val.label }}" href="{% url 'subjects_html' val.object_id %}">{{ val.label }}</a>
+          {%elif val.object__item_type == 'documents' %}
+          <a title="{{ val.label }}" href="{% url 'documents_html' val.object_id %}">{{ val.label }}</a>
           {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
           {%endif%}
@@ -34,6 +42,10 @@
       {%else%}
         {% if val.object__item_type == 'persons' %}
         <a title="{{ val.label }}" href="{% url 'persons_html' val.object_id %}">{{ val.label }}</a>
+        {%elif val.object__item_type == 'subjects' %}
+          <a title="{{ val.label }}" href="{% url 'subjects_html' val.object_id %}">{{ val.label }}</a>
+        {%elif val.object__item_type == 'documents' %}
+          <a title="{{ val.label }}" href="{% url 'documents_html' val.object_id %}">{{ val.label }}</a>
         {%else%}
         <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
         {%endif%}
