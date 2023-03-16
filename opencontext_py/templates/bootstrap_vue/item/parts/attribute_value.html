@@ -14,6 +14,12 @@
     info
     </span></a>
   <br/><small>Vocabulary: <a href="https://{{act_val.object__context__uri }}">{{ act_val.object__context__label }}</a></small>
+  {% if act_val.object__context__item_type == 'vocabularies' %}
+  <br/><small>Open Context References: <a
+      href="{{BASE_URL}}/query/?obj={{ act_val.slug }}" target="_blank"
+      title="Search Open Context for records for references to: {{ act_val.object__label }}">{{ act_val.object__label }} <span
+      style="font-size: 18px; display:inline; " class="material-icons">hub</span></a></small>
+  {% endif %}
 
 {% elif act_val.predicate__data_type == 'xsd:string' %}
 
