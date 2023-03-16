@@ -722,6 +722,10 @@ def prepare_for_item_dict_solr_and_html_template(man_obj, rep_dict):
     rep_dict[at_group_key] = man_obj.meta_json.get(at_group_key, None)
 
     rep_dict = gather_id_urls_by_scheme(rep_dict)
+
+    # Make the local url for this item.
+    rp = RootPath()
+    rep_dict['href'] = rp.get_baseurl() + f'/{man_obj.item_type}/{str(man_obj.uuid)}'
     return rep_dict
 
 

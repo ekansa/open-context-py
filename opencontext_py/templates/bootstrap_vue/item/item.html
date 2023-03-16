@@ -230,6 +230,17 @@
 
                 {% include '../item/parts/license.html' %}
 
+                <div id="item_json_link" class="card">
+                    <div class="card-body">
+                        <small>
+                            <a href="{{ HREF }}.json" title="Link to the JSON representation of: {{ man_obj.label }}">JSON View <span
+                                style="font-size: 18px; display:inline; " class="material-icons">settings</span>
+                            </a>
+                            <br/><span class="text-muted">API (Machine-readable) representation of this item</span>
+                        </small>
+                    </div>
+                </div>
+
             </div>
         </div>
 

@@ -209,6 +209,7 @@ def all_items_html(request, uuid, full_media=False, template_file='item.html'):
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'HREF': rep_dict['href'],
         'CANONICAL_URI': f'https://{man_obj.uri}',
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
