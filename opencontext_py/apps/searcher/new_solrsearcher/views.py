@@ -3,7 +3,8 @@ import json
 
 from django.conf import settings
 from django.core.cache import caches
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect
 
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
@@ -23,6 +24,7 @@ from opencontext_py.libs.queue_utilities import make_hash_id_from_args
 
 from django.views.decorators.cache import cache_control
 from django.utils.cache import patch_vary_headers
+from django.utils.http import urlencode
 
 
 if settings.DEBUG:
@@ -281,3 +283,32 @@ def projects_index_html(request, spatial_context=None):
     response = HttpResponse(template.render(context, request))
     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
     return response
+
+# ---------------------------------------
+# Below are redirects for legacy queries.
+# ---------------------------------------
+def old_projects_search_html(request, spatial_context=None):
+    """Legacy projects search"""
+    return redirect('projects_index_html', permanent=True)
+
+def old_search_html(request, spatial_context=None):
+    """Legacy search"""
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    full_url = request.get_full_path()
+    url_ex = full_url.split('/search')
+    url = f'{base_url}/query' + url_ex[-1]
+    return HttpResponseRedirect(url)
+
+def old_subjects_search_html(request, spatial_context=None):
+    """Legacy search"""
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    full_url = request.get_full_path()
+    url_ex = full_url.split('/subjects-search')
+    url = f'{base_url}/query' + url_ex[-1]
+    if '?' in url:
+        url += '&type=subjects'
+    else:
+        url += '?type=subjects'
+    return HttpResponseRedirect(url)
