@@ -139,11 +139,33 @@
         <div id="app">
 
 
-            <b-jumbotron>
+            <b-jumbotron fluid="1">
 
+                <b-row align-v="center" align-h="center">
+                    <b-col sm="6" md="4" lg="3">
+                        <b-img-lazy
+                        fluid
+                        class="proj_jumbo-icon"
+                        src="../../static/oc/icons-v2/noun-research-project-2341022.svg"
+                        width="160" alt="Projects icon"></b-img>
+                    </b-col>
+                    <b-col sm="8" md="8" lg="8">
+                        <h1 class="display-4">Data Publication Projects</h1>
+                        <p class="lead">
+                            Open Context publishes digital datasets &mdash; structured (often tabular) data,
+                            images, maps, field notes, 3D models, etc. We publish and cross-reference
+                            data records to conventional publications available elsewhere but we typically do not
+                            post PDFs of articles or chapters. A "project" is the main unit of publication
+                            in Open Context. Each project includes one or more datasets created by an
+                            individual researcher, a team of researchers, or an organization.
+                        </p>
+                    </b-col>
+                </b-row>
+
+                <!--
                 <b-media vertical-align="center">
 
-                    <template #aside>
+                    <template #aside class="my-4">
                         <b-img-lazy
                         fluid
                         class="proj_jumbo-icon"
@@ -176,6 +198,7 @@
                     </p>
 
                 </b-media>
+                -->
 
             </b-jumbotron>
 
