@@ -7,6 +7,7 @@ from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
+from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.permissions import get_request_user_permissions
 from opencontext_py.apps.all_items.representations import item
 from opencontext_py.apps.all_items.representations.template_prep import (
@@ -206,11 +207,15 @@ def all_items_html(request, uuid, full_media=False, template_file='item.html'):
         'edit_status',
         man_obj.project.meta_json.get('edit_status')
     )
+    canonical_uri = f'https://{man_obj.uri}'
+    if str(man_obj.item_class.uuid) == configs.CLASS_OC_IMAGE_MEDIA and rep_dict.get('media_iiif'):
+        # Use the media full url for as the canonical uri for this item.
+        canonical_uri = f'https://{man_obj.uri}/full'
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
         'HREF': rep_dict['href'],
-        'CANONICAL_URI': f'https://{man_obj.uri}',
+        'CANONICAL_URI': canonical_uri,
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
         'SCHEMA_ORG_JSON_LD': json.dumps(

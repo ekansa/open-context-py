@@ -2,9 +2,9 @@
 
 {% if item.media_download %}
 
-<a href="{{ item.media_download }}" 
-  role="button" 
-  aria-disabled="true" 
+<a href="{{ item.media_download }}"
+  role="button"
+  aria-disabled="true"
   class="btn btn-primary btn-lg btn-block media_download">
   Download File
   {% if item.media_filesize_human %}
@@ -17,9 +17,9 @@
 
 {% if item.item_class__slug == 'oc-gen-image' and item.media_iiif and not full_media %}
 
-<a href="{% url 'all_items_full' item.uuid %}" 
-  role="button" 
-  aria-disabled="true" 
+<a href="{% url 'media_full' item.uuid %}"
+  role="button"
+  aria-disabled="true"
   class="btn btn-info btn-lg btn-block media_download">
   Dynamic Image Zoom
   <i class="bi bi-zoom-in"></i>
