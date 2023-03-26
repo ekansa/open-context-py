@@ -475,6 +475,10 @@ class AllManifest(models.Model):
                 self.item_type
             )
 
+        # Add revised if it doesn't exist
+        if not self.revised:
+            self.revised = timezone.now()
+
         # Make sure the project is actually a project
         self.validate_project()
 
