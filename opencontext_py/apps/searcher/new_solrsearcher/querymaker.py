@@ -1106,19 +1106,22 @@ def get_trinomial_query_dict(raw_trinomial):
         tri_list += utilities.make_uri_equivalence_list(value)
 
     act_terms = []
+    tri_pred_solr_slugs = [
+        '52_smithsonian_trinomial_identifier',
+        '52_sortable_trinomial',
+        '52_variant_trinomial_expressions',
+        '145_smithsonian_trinomial_identifier',
+        '145_sortable_trinomial',
+        '145_variant_trinomial_expressions',
+    ]
     for act_tri in tri_list:
         # The act_id maybe a persistent URI, escape it and
         # query the persistent_uri string.
         escape_tri = utilities.escape_solr_arg(act_tri)
-        act_terms.append(
-            f'(52_smithsonian_trinomial_identifier___pred_string:{escape_tri})'
-        )
-        act_terms.append(
-            f'(52_sortable_trinomial___pred_string:{escape_tri})'
-        )
-        act_terms.append(
-            f'(52_variant_trinomial_expressions___pred_string:{escape_tri})'
-        )
+        for tri_pred_solr_slug in tri_pred_solr_slugs:
+            act_terms.append(
+                f'({tri_pred_solr_slug}___pred_string:{escape_tri})'
+            )
         act_terms.append(
             f'(slug_type_uri_label:*{escape_tri})'
         )

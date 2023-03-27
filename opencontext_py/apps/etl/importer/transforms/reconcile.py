@@ -32,17 +32,17 @@ logger = logging.getLogger("etl-importer-logger")
 # NOTE: These functions manage general entity reconciliation
 # ---------------------------------------------------------------------
 def get_or_create_single_predicate_manifest_entity(
-    ds_source, 
+    ds_source,
     label,
     sort=100,
-    item_class_id=configs.CLASS_OC_LINKS_UUID, 
+    item_class_id=configs.CLASS_OC_LINKS_UUID,
     data_type='id',
     new_uuid=None,
 ):
     """Gets or creates a predicate manifest entity after reconciliation"""
 
     # NOTE: This is usually for making predicates used for linking
-    # relationships, which is why the item_class_id defaults to a 
+    # relationships, which is why the item_class_id defaults to a
     # linking relationship item class.
 
     # Limit the projects in which we will search for matching spatial items
@@ -60,18 +60,18 @@ def get_or_create_single_predicate_manifest_entity(
     )
     if new_uuid:
         man_qs = man_qs.filter(uuid=new_uuid)
-    
-    # Now handle the results where of our query to attempt to 
+
+    # Now handle the results where of our query to attempt to
     # find matching records for this specific item.
     made_new = False
-    num_matching = len(man_qs) 
+    num_matching = len(man_qs)
     if num_matching == 1:
         # We have found exactly one match for this, meaning this
         # entity already exists so return it
         return man_qs[0], made_new, num_matching
     elif num_matching > 1:
         # Too many items found, meaning our reconciliation filters where too
-        # permissive. 
+        # permissive.
         return None, made_new, num_matching
 
     # Make a new Manifest item
@@ -89,7 +89,7 @@ def get_or_create_single_predicate_manifest_entity(
     if new_uuid:
         # Use a specified uuid for this new item.
         man_dict['uuid'] = new_uuid
-    
+
     try:
         item_obj = AllManifest(**man_dict)
         item_obj.save()
@@ -117,22 +117,22 @@ def ensure_ok_item_class_for_item_type(ds_field, context, record_item_class=None
     """Makes sure the item_type and item_class are OK"""
     item_type = ds_field.item_type
     if (
-        record_item_class is None 
-        and ds_field.item_class 
+        record_item_class is None
+        and ds_field.item_class
         and str(ds_field.item_class.uuid) != configs.DEFAULT_CLASS_UUID
     ):
         record_item_class = ds_field.item_class
-    
+
     if not ds_field.item_type in ['predicates', 'types']:
         return item_type, record_item_class
-    
+
     if (
         ds_field.data_type == 'id'
-        and context.item_type == 'predicates' 
+        and context.item_type == 'predicates'
         and (
             (str(context.item_class.uuid) == configs.CLASS_OC_VARIABLES_UUID)
             or (
-                ds_field.item_class 
+                ds_field.item_class
                 and
                 str(ds_field.item_class.uuid) == configs.CLASS_OC_VARIABLES_UUID
             )
@@ -145,11 +145,11 @@ def ensure_ok_item_class_for_item_type(ds_field, context, record_item_class=None
             uuid=configs.DEFAULT_CLASS_UUID
         ).first()
         return item_type, record_item_class
-    
+
     if (ds_field.item_type == 'predicates'
         and (
-            not record_item_class 
-            or 
+            not record_item_class
+            or
             str(record_item_class.uuid) not in configs.CLASS_LIST_OC_PREDICATES
         )
     ):
@@ -164,11 +164,12 @@ def ensure_ok_item_class_for_item_type(ds_field, context, record_item_class=None
 
 
 def get_or_create_manifest_entity(
-    ds_field, 
-    context, 
-    raw_column_record, 
-    record_item_class=None, 
-    record_uuid=None
+    ds_field,
+    context,
+    raw_column_record,
+    record_item_class=None,
+    record_uuid=None,
+    record_other_id=None,
 ):
     """Gets or creates a manifest entity after reconciliation"""
 
@@ -184,10 +185,10 @@ def get_or_create_manifest_entity(
         # parent spatial context for item in this ds_field.
         reconcile_project_ids.append(context.uuid)
         context = None
-    
+
     item_type, record_item_class = ensure_ok_item_class_for_item_type(
-        ds_field, 
-        context, 
+        ds_field,
+        context,
         record_item_class
     )
 
@@ -197,7 +198,7 @@ def get_or_create_manifest_entity(
         # The raw_column_record is not a slug.
         slug_check = None
 
-    # Prepare the item label. 
+    # Prepare the item label.
     item_label = str(raw_column_record)
     if ds_field.value_prefix:
         item_label = ds_field.value_prefix + raw_column_record
@@ -209,13 +210,17 @@ def get_or_create_manifest_entity(
         data_type=ds_field.data_type,
     )
     # If we're passing a UUID argument, use it!
-    if record_uuid: 
+    if record_uuid:
         man_qs = man_qs.filter(uuid=record_uuid)
 
+    if record_other_id:
+        record_uri = AllManifest().clean_uri(record_other_id)
+        man_qs = man_qs.filter(Q(uri=record_uri)|Q(slug=record_other_id))
+
     # Limit by context if we don't know the uuid
-    if context and not record_uuid:
+    if context and not record_uuid and not record_other_id:
         man_qs = man_qs.filter(context=context)
-    
+
     # Limit by item_class if we don't know the uuid
     if record_item_class and not record_uuid:
         man_qs = man_qs.filter(item_class=record_item_class)
@@ -256,18 +261,18 @@ def get_or_create_manifest_entity(
         man_qs = man_qs.filter(**more_filter_args)
     if more_exclude_args:
         man_qs = man_qs.exclude(**more_exclude_args)
-    
-    # Now handle the results where of our query to attempt to 
+
+    # Now handle the results where of our query to attempt to
     # find matching records for this specific item.
     made_new = False
-    num_matching = len(man_qs) 
+    num_matching = len(man_qs)
     if num_matching == 1:
         # We have found exactly one match for this, meaning this
         # entity already exists so return it
         return man_qs[0], made_new, num_matching
     elif num_matching > 1:
         # Too many items found, meaning our reconciliation filters where too
-        # permissive. 
+        # permissive.
         return None, made_new, num_matching
     if num_matching == 0 and context is None:
         # We didn't find a match, but we lack the context to mint
@@ -310,7 +315,7 @@ def get_or_create_manifest_entity(
         made_new = False
         print(f'Failed to make new manifest item: {str(man_dict)}')
         print(f'Exception: {str(e)}')
-    return item_obj, made_new, 0 
+    return item_obj, made_new, 0
 
 
 
@@ -333,7 +338,7 @@ def get_immediate_parent_field_objs_db(child_field_obj):
     only_variable_range = False
     if child_field_obj.item_type == 'subjects':
         only_spatial_contains = True
-    
+
     if child_field_obj.item_type in ['types', 'values']:
         only_variable_range = True
 
@@ -351,7 +356,7 @@ def get_immediate_parent_field_objs_db(child_field_obj):
         # Our work is done, spatial containment hierarchies are defined in
         # only one direction. Same with relations to variable fields.
         return all_parents
-    
+
     subj_subord_qs = DataSourceAnnotation.objects.filter(
         subject_field=child_field_obj,
         predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
@@ -370,7 +375,7 @@ def get_immediate_child_field_objs_db(parent_field_obj):
     only_variable_range = False
     if parent_field_obj.item_type == 'subjects':
         only_spatial_contains = True
-    
+
     if parent_field_obj.item_type in ['variables', 'predicates']:
         only_variable_range = True
 
@@ -406,15 +411,15 @@ def get_immediate_child_field_objs_db(parent_field_obj):
 
 
 def df_reconcile_id_field(
-    df, 
-    ds_field, 
-    context=None, 
-    col_record_tuples=None, 
+    df,
+    ds_field,
+    context=None,
+    col_record_tuples=None,
     do_recursive=True,
     filter_index=None,
     ):
     """Reconciles a data_type = 'id' field, walking down a hierarchy if hierarchic.
-    
+
     :param DataFrame df: A dataframe that we are currently preparing for ETL. This
         df may be limited to the fields specifically involved in entity reconciliation.
     :param DataSourceField ds_field: A DataSourceField object that has attributes
@@ -432,17 +437,17 @@ def df_reconcile_id_field(
         up child fields for continued entity reconciliation.
     """
     context = get_ds_field_context(ds_field, context)
-    # Set up the filter index for the dataframe so as to 
+    # Set up the filter index for the dataframe so as to
     if col_record_tuples is None:
         col_record_tuples = []
-    
+
     if filter_index is None:
         filter_index = df['row_num'] >= 0
 
     current_index = filter_index
     for index_col, index_col_record in col_record_tuples:
         current_index &= (df[index_col] == index_col_record)
-    
+
     # Check to see if the ds_field has a uuid field.
     col_uuid = None
     ds_anno_uuid =  DataSourceAnnotation.objects.filter(
@@ -452,6 +457,16 @@ def df_reconcile_id_field(
     ).first()
     if ds_anno_uuid:
         col_uuid = f'{ds_anno_uuid.object_field.field_num}_col'
+
+    # Check to se if the ds_field has a URI field id.
+    col_other_id = None
+    ds_anno_other_id =  DataSourceAnnotation.objects.filter(
+        subject_field=ds_field,
+        predicate_id=configs.PREDICATE_OC_ETL_DESCRIBED_BY,
+        object_field__item_type__in=['uri'],
+    ).first()
+    if ds_anno_other_id:
+        col_other_id = f'{ds_anno_other_id.object_field.field_num}_col'
 
 
     col_context = f'{ds_field.field_num}_context'
@@ -473,28 +488,34 @@ def df_reconcile_id_field(
     # NOTE: Because of the possibility that a raw_column_record maybe
     # associated with a UUID, we need to iterate through all the rows
     # so as to maintain the association between raw_column_record and
-    # UUID. 
+    # UUID.
     for _, row in  df[current_index].iterrows():
         raw_column_record = row[col]
         record_uuid = None
+        record_other_id = None
         if col_uuid:
             record_uuid = is_valid_uuid(row[col_uuid])
+        if col_other_id and row[col_other_id]:
+            record_other_id = row[col_other_id]
         act_index = current_index & (df[col] == raw_column_record)
         if record_uuid:
             act_index &= (df[col_uuid] == row[col_uuid])
-        act_rec_uuid_tup = (raw_column_record, record_uuid)
+        if record_other_id:
+            act_index &= (df[col_other_id] == row[col_other_id])
+        act_rec_uuid_tup = (raw_column_record, record_uuid, record_other_id,)
         if act_rec_uuid_tup in done_rec_uuid_tups:
-            # We've already done this combination of raw_column_record and 
+            # We've already done this combination of raw_column_record and
             # record uuid, so continue to the next one.
             continue
         done_rec_uuid_tups.append(act_rec_uuid_tup)
         item_obj = None
         if raw_column_record:
             item_obj, made_new, num_matching = get_or_create_manifest_entity(
-                ds_field, 
-                context, 
+                ds_field,
+                context,
                 raw_column_record,
                 record_uuid=record_uuid,
+                record_other_id=record_other_id,
             )
             if not item_obj:
                 logger.info(
@@ -526,26 +547,26 @@ def df_reconcile_id_field(
             if child_field_obj.item_type in ['subjects', 'types']:
                 if item_obj and item_obj.item_type in ['subjects', 'predicates']:
                     # The child field is for a subject or a type, which means that
-                    # it is reconciled within a specific context. Item_type = 
+                    # it is reconciled within a specific context. Item_type =
                     # 'subjects' get reconciled within the context of another
                     # item_type subjects context. Item_types = 'types' get reconciled
                     # within the context of an item_type = 'predicates' context.
                     next_context = item_obj
                 elif (
-                        ds_field.item_type in ['subjects', 'predicates',] 
+                        ds_field.item_type in ['subjects', 'predicates',]
                         and context.item_type in ['subjects', 'predicates']
                     ):
-                    # We don't have an item_obj, so use the current context to 
-                    # carry down to be the context for the next level down 
+                    # We don't have an item_obj, so use the current context to
+                    # carry down to be the context for the next level down
                     # in the hierarchy of ds_fields.
                     next_context = context
-            # Now process the items down in this next child field. We add the 
+            # Now process the items down in this next child field. We add the
             # col, raw_column_record to the filters so that the df is further filtered
             # at next level down the hierarchy.
             df = df_reconcile_id_field(
-                df=df, 
-                ds_field=child_field_obj, 
-                context=next_context, 
+                df=df,
+                ds_field=child_field_obj,
+                context=next_context,
                 col_record_tuples=(col_record_tuples + [(col, raw_column_record,)])
             )
     return df
