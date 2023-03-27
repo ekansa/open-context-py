@@ -544,7 +544,7 @@ else:
 
 # PIWIK tracking, if enabled
 PIWIK_SITE_ID = 0
-PIWIK_DOMAIN_PATH = False
+PIWIK_DOMAIN_PATH = None
 if DEBUG is False:
     if 'PIWIK_SITE_ID' in secrets:
         # site id for PIWIK tracking

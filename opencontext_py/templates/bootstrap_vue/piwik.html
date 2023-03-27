@@ -1,0 +1,30 @@
+{% block piwik %}
+	<!-- Piwik / Matomo -->
+	<!--
+	id: {{ first_nav.PIWIK_SITE_ID }}
+	domain: {{ first_nav.PIWIK_DOMAIN_PATH }}
+	-->
+	{% if PIWIK_SITE_ID > 0 %}
+		{% if PIWIK_DOMAIN_PATH %}
+
+		<!-- Matomo -->
+		<script type="text/javascript">
+			var _paq = window._paq = window._paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+			var u="//{{ PIWIK_DOMAIN_PATH }}/";
+			_paq.push(['setTrackerUrl', u+'matomo.php']);
+			_paq.push(['setSiteId', '{{ PIWIK_SITE_ID }}']);
+			var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+			g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Matomo Code -->
+
+
+		{%endif%}
+	{%endif%}
+
+{% endblock %}

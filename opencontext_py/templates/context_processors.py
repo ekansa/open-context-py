@@ -5,8 +5,7 @@ def piwik_settings(request):
     # return values for using PIWIK in templates
     return {
         'PIWIK_SITE_ID': settings.PIWIK_SITE_ID,
-        # 'PIWIK_DOMAIN_PATH': settings.PIWIK_DOMAIN_PATH
-        'PIWIK_DOMAIN_PATH': 'blubbie'
+        'PIWIK_DOMAIN_PATH': settings.PIWIK_DOMAIN_PATH,
     }
 
 def page_metadata(request):
