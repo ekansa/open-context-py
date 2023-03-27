@@ -56,7 +56,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         while (act_man_obj.context.item_type in GEO_OK_ITEM_TYPES
         and str(act_man_obj.context.uuid)
         not in configs.DEFAULT_SUBJECTS_ROOTS):
-            print(f'check spacetime for {act_man_obj.label}')
+            # print(f'check spacetime for {act_man_obj.label}')
             if act_man_obj.context in context_objs:
                 # We've already seen this context, so skip out
                 # to avoid infinite looping.
