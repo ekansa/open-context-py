@@ -1,4 +1,5 @@
 from django.conf import settings
+from opencontext_py.apps.web_metadata.social import make_social_media_metadata
 
 
 def piwik_settings(request):
@@ -13,7 +14,6 @@ def page_metadata(request):
     from opencontext_py.libs.rootpath import RootPath
     rp = RootPath()
     BASE_URL = rp.get_baseurl()
-
     url = request.get_full_path()
     canonical_uri = f'https://{settings.CANONICAL_BASE_URL}{url}'
     if url.startswith('/all-items/'):
@@ -32,4 +32,8 @@ def page_metadata(request):
         'CANONICAL_SITEMAP_URL': f'https://{settings.CANONICAL_BASE_URL}/sitemap.xml',
         'BASE_URL': BASE_URL,
         'NAV_ITEMS': settings.NAV_ITEMS,
+        'SOCIAL_MEDIA_META': make_social_media_metadata(
+            url_path=url,
+            canonical_uri=canonical_uri,
+        ),
     }

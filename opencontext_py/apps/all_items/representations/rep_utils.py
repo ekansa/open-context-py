@@ -26,6 +26,16 @@ ASSERTION_DATA_TYPE_LITERAL_MAPPINGS = {
 # all other representations (esp. HTML) will be built from the JSON-LD
 # representation as a starting point.
 # ---------------------------------------------------------------------
+def get_hero_banner_url(manifest_obj):
+    """Returns a hero manner url (without prefix) in order of preference"""
+    if getattr(manifest_obj, 'hero', None):
+        return manifest_obj.hero
+    if getattr(manifest_obj, 'proj_hero', None):
+        return manifest_obj.proj_hero
+    if getattr(manifest_obj, 'proj_proj_hero', None):
+        return manifest_obj.proj_proj_hero
+    return None
+
 
 def make_web_url(manifest_obj):
     """Makes a Web URL for a manifest object"""
