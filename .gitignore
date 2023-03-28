@@ -3,30 +3,30 @@
 *.pot
 *.py[cod]
 *.djcache
-*:Zone.Identifier
+*Zone.Identifier
 __pycache__/
 testing.txt
 db-logs/
 assets/
-static/admin/
+# static/admin/
 static/exports/
 static/bootstrap/
 static/jquery/
 static/angularjs/
-static/viewerjs/
+# static/viewerjs/
 static/leaflet/
 static/fontawesome/
 static/fonts/
 static/exports/
 static/imports/
 static/d3/
-static/openseadragon/
+# static/openseadragon/
 static/chart/
 static/3d-nexus/
 static/3Dhop-4-1/
 static/3Dhop-4-2/
-static/3Dhop-4-3/
-static/bootstrap-slider/
+# static/3Dhop-4-3/
+# static/bootstrap-slider/
 static/bootstrap-vue/
 static/robots/robots.txt
 *.pyc
