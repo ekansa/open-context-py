@@ -269,7 +269,7 @@ def get_item_thumbnail_url(rep_dict):
     if not rep_dict:
         return None
     # First check to see if we have a thumbnail image.
-    for file_obj in rep_dict.get('oc_gen__has_files', []):
+    for file_obj in rep_dict.get('oc-gen:has-files', []):
         if file_obj.get('type') == 'oc-gen:thumbnail':
             return file_obj.get('id')
     # OK, not check if we have linked media resources, which may have a thumbnail.
