@@ -10,6 +10,7 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.permissions import get_request_user_permissions
 from opencontext_py.apps.all_items.representations import item
+from opencontext_py.apps.all_items.representations.rep_utils import get_hero_banner_url
 from opencontext_py.apps.all_items.representations.template_prep import (
     prepare_for_item_dict_solr_and_html_template,
     prepare_for_item_dict_html_template,
@@ -27,6 +28,8 @@ from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 from opencontext_py.apps.all_items.models import (
     AllManifest
 )
+
+from opencontext_py.apps.web_metadata.social import make_social_media_metadata
 
 from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers
@@ -218,12 +221,18 @@ def all_items_html(request, uuid, full_media=False, template_file='item.html'):
         'CANONICAL_URI': canonical_uri,
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context: {rep_dict["label"]}',
+        'SOCIAL_MEDIA_META': make_social_media_metadata(
+            canonical_uri=canonical_uri,
+            man_obj=man_obj,
+            rep_dict=rep_dict,
+        ),
         'SCHEMA_ORG_JSON_LD': json.dumps(
             schema_org_meta,
             indent=4,
             ensure_ascii=False
         ),
         'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
+        'HERO_BANNER_URL': get_hero_banner_url(man_obj),
         'GEO_JSON': geo_json,
         # Expected order of related item_types
         'order_of_related_item_types': [

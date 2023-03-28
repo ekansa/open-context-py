@@ -43,18 +43,10 @@
 
 
 <div id="project_hero_banner">
-    {% if man_obj.hero %}
-        <img class="img-fluid mx-auto d-block"
-             alt="project banner image"
-             src="https://{{ man_obj.hero }}" />
-    {% elif man_obj.proj_hero %}
+    {% if HERO_BANNER_URL %}
         <img class="img-fluid mx-auto d-block"
             alt="project banner image"
-            src="https://{{ man_obj.proj_hero }}" />
-    {% elif man_obj.proj_proj_hero %}
-        <img class="img-fluid mx-auto d-block"
-            alt="project banner image"
-            src="https://{{ man_obj.proj_proj_hero }}" />
+            src="https://{{ HERO_BANNER_URL }}" />
     {% else %}
         <img class="img-fluid mx-auto d-block"
             alt="default project banner image"
