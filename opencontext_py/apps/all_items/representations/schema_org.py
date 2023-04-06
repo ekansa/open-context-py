@@ -101,6 +101,7 @@ def make_image_schema_org_json_ld(
                 continue
             full_link = file_dict.get('id')
 
+    creator_txt = f"{', '.join(citation_dict.get('authors', []))}"
     schema = {
         '@context': 'http://schema.org/',
         '@type': 'ImageObject',
@@ -120,6 +121,8 @@ def make_image_schema_org_json_ld(
         'publisher': MAINTAINER_PUBLISHER_DICT.copy(),
         'isPartOf': citation_dict.get('part_of_uri'),
         'creditText': citation_txt,
+        'acquireLicensePage': f'https://{configs.OC_URI_ROOT}/about/terms',
+        'copyrightNotice': f'Copyright owned by the creator(s)/contributors(s): {creator_txt}',
     }
     if about_link:
         schema['about'] = about_link
