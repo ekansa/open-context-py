@@ -97,6 +97,7 @@ urlpatterns = [
     re_path(r'^projects-search/(?P<spatial_context>\S+)?', NewSearchViews.old_projects_search_html, name='old_projects_search_html'),
     re_path(r'^search/(?P<spatial_context>\S+)?', NewSearchViews.old_search_html, name='old_search_html'),
     re_path(r'^subjects-search/(?P<spatial_context>\S+)?', NewSearchViews.old_subjects_search_html, name='old_subjects_search_html'),
+    re_path(r'^media-search/(?P<spatial_context>\S+)?', NewSearchViews.old_media_search_html, name='old_media_search_html'),
 
     # New attribute-group dereference
     re_path(r'^attribute-groups/(?P<uuid>\S+)?\.json$', AllItemsViews.all_items_json, name='attribute_groups_json'),
