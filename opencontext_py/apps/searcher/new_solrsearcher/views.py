@@ -312,3 +312,16 @@ def old_subjects_search_html(request, spatial_context=None):
     else:
         url += '?type=subjects'
     return HttpResponseRedirect(url)
+
+def old_media_search_html(request, spatial_context=None):
+    """Legacy media search"""
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    full_url = request.get_full_path()
+    url_ex = full_url.split('/media-search')
+    url = f'{base_url}/query' + url_ex[-1]
+    if '?' in url:
+        url += '&type=media'
+    else:
+        url += '?type=media'
+    return HttpResponseRedirect(url)
