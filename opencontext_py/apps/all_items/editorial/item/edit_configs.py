@@ -70,6 +70,7 @@ GEO_ZOOM = {
 }
 
 view_groups = Group.objects.filter(name__icontains='can view')
+edit_groups = Group.objects.filter(name__icontains='can edit')
 
 # A commonly used attribute to add to meta_json. If this attribute is
 # present and is True, then one will need a login to view items. This
@@ -86,6 +87,17 @@ LOGIN_TO_VIEW = {
     ],
 }
 
+LOGIN_TO_EDIT = {
+    'key': 'edit_group_id',
+    'label': 'Login edit group',
+    'data_type': 'xsd:integer',
+    'note': 'Optional group membership required for logged in users to edit items.',
+    'options': [
+        {'value': None, 'text': 'Not set',},
+    ] + [
+        {'value': g.id, 'text': g.name,} for g in edit_groups
+    ],
+}
 
 ITEM_TYPE_META_JSON_CONFIGS = {
     'projects': [
@@ -136,6 +148,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        LOGIN_TO_EDIT.copy(),
         FLAG_DO_NOT_INDEX.copy(),
     ],
     'subjects': [
@@ -182,6 +195,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        LOGIN_TO_EDIT.copy(),
         FLAG_DO_NOT_INDEX.copy(),
     ],
     'media': [
@@ -205,6 +219,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        LOGIN_TO_EDIT.copy(),
         FLAG_DO_NOT_INDEX.copy(),
     ],
     'documents': [
@@ -228,6 +243,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        LOGIN_TO_EDIT.copy(),
         FLAG_DO_NOT_INDEX.copy(),
     ],
     'tables': [
@@ -291,6 +307,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        LOGIN_TO_EDIT.copy(),
         FLAG_DO_NOT_INDEX.copy(),
     ],
     'predicates': [
@@ -306,6 +323,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
+        LOGIN_TO_EDIT.copy(),
         FLAG_DO_NOT_INDEX.copy(),
     ],
     'observations': [
