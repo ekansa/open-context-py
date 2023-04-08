@@ -123,13 +123,14 @@ PATH_CONFIGS = {
     '/about/technology': {
         'title': {
             'property': 'og:title',
-            'content': 'Open Context: Open Source Software Technologies',
+            'content': 'Open Context: Open Source Software Technologies and Archiving',
         },
         'description': {
             'property': 'og:description',
             'content': (
                 'Open Context integrates several open-source software applications to publish '
-                'archaeological data via the Web.'
+                'archaeological data via the Web. We work with multiple digital repository '
+                'partners to archive data for the long-term.'
             ),
         },
     },
