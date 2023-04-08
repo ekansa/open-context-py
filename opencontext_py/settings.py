@@ -667,7 +667,7 @@ NAV_ITEMS = [
                 'link': '/about/estimate',
             },
             {
-                'display': 'Technology',
+                'display': 'Technology and Archiving',
                 'link': '/about/technology',
             },
             {
