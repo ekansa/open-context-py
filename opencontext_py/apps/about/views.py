@@ -362,7 +362,7 @@ def fair_care_view(request):
             'act_nav': 'about',
             'NAV_ITEMS': settings.NAV_ITEMS,
             'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
-                'bootstrap_vue/about/intellectual-property.html'
+                'bootstrap_vue/about/fair-care.html'
             ),
         }
         return HttpResponse(template.render(context))

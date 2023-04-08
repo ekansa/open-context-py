@@ -165,6 +165,17 @@ SITE_KEY_WORDS = {
         'descendent communities',
         'collaboration',
     ],
+    '/about/fair-care': [
+        'Traditional Knowledge Labels',
+        'Notices',
+        'CARE data',
+        'FAIR data'
+        'Mukurtu',
+        'Arches',
+        'open source',
+        'open data',
+        'LocalContexts',
+    ],
     '/about/people': [
         'Sarah Whitcher Kansa',
         'Eric Kansa',
