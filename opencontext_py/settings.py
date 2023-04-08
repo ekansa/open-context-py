@@ -683,6 +683,10 @@ NAV_ITEMS = [
                 'link': '/about/intellectual-property',
             },
             {
+                'display': 'FAIR and CARE Data',
+                'link': '/about/fair-care',
+            },
+            {
                 'display': 'People',
                 'link': '/about/people',
             },

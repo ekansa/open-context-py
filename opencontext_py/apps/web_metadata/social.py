@@ -168,6 +168,22 @@ PATH_CONFIGS = {
         'description': {
             'property': 'og:description',
             'content': (
+                'Open Context has intellectual property policies shaped to promote both the '
+                'FAIR Data Principles and CARE Principles. While open data '
+                'can be a powerful tool to promote scientific collaboration and teaching, they are '
+                'not universally appropriate. We promote open data in ethically appropriate '
+                'contexts.'
+            ),
+        },
+    },
+    '/about/fair-care': {
+        'title': {
+            'property': 'og:title',
+            'content': 'Open Context: FAIR + CARE Data Policies',
+        },
+        'description': {
+            'property': 'og:description',
+            'content': (
                 'Open Context promotes both the FAIR Data Principles and CARE Principles. While open data '
                 'can be a powerful tool to promote scientific collaboration and teaching, they are '
                 'not universally appropriate. We promote open data in ethically appropriate '

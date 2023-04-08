@@ -1,0 +1,160 @@
+{% extends '../page.html' %}
+
+{% block content %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>FAIR + CARE Data Principles</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+                            <img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ BASE_URL }}/static/oc/images/about/noun-certificate-authority-4797148.svg" alt="Certificate Authority icon from Noun Project (#ID 4797148)" />
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Good practice in archaeological data management works towards both the <a href="https://www.go-fair.org/fair-principles/" title="Findable Accessible Interoperable Reusable Data">FAIR Data Principles</a>) and the <a href="https://www.gida-global.org/care" title="Collective Benefit, Authority to Control, Responsibility, Ethics">CARE Principles for Indigenous Data Governance</a>. By integrating both FAIR and CARE practices into data curation, we can improve the overall quantity and quality of reusable cultural heritage data, reduce risks of harm, and encourage meaningful benefits-sharing with Indigenous nations and other descendant communities.</p>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-sm-12">
+                <h2>History and Background</h2>
+                <p>Open Context's work to align to the FAIR and CARE data principles build upon nearly two decades of the ethical engagement in cultural heritage data sovereignty issues. We began this engagement even before the initial launch of Open Context in 2006. Below we list some outcomes of this prior work:</p>
+                <ul class="sep-list ref-list">
+
+                    <li id="pub-2005-ijcp" rel="dcterms:isReferencedBy">
+                        <a style="display:none;" href="#pub-2005-ijcp" ></a>
+                        <span typeof="dcterms:BibliographicResource bibo:Article" resource="#pub-2005-ijcp">
+                              <span property="dcterms:bibliographicCitation">Kansa, E. C., Schultz, J., &amp; Bissell, A. N. (2005). Protecting traditional knowledge and expanding access to scientific data: juxtaposing intellectual property agendas via a "some rights reserved" model. <em>International Journal of Cultural Property</em>, 12(3), 285-314.</span>
+                              <span class="ref-links">
+                                  [<a rel="dcterms:identifier" href="https://doi.org/10.1017/S0940739105050204">Published Version</a> (Open Access)]
+                              </span>
+                        </span>
+                    </li>
+
+                    <li id="pub-2007-icommons" rel="dcterms:isReferencedBy">
+                        <a style="display:none;" href="#pub-2007-icommons" ></a>
+                        <span typeof="dcterms:BibliographicResource bibo:Article" resource="#pub-2007-icommons">
+                            <span property="dcterms:bibliographicCitation">Kansa, E. C. (2007). Finding common ground in the Digital Commons. <em>iCommons Lab Report</em>.</span>
+                            <span class="ref-links">
+                                [<a rel="dcterms:identifier" href="https://zenodo.org/record/7810688">Archived Version</a> (Open Access)]
+                            </span>
+                        </span>
+                    </li>
+
+                    <li id="pub-2009-chap" rel="dcterms:isReferencedBy">
+                        <a style="display:none;" href="#pub-2009-chap" ></a>
+                        <span typeof="dcterms:BibliographicResource bibo:Chapter" resource="#pub-2009-chap">
+                            <span property="dcterms:bibliographicCitation">Kansa, E. (2009). Indigenous heritage and the digital commons. In Christoph Antons (Ed) <em>Traditional Knowledge, Traditional Cultural Expressions, and Intellectual Property Law in the Asia-Pacific Region</em>, Kluwer Law International BV, pp 219-44.</span>
+                            <span class="ref-links">
+                                [<a rel="dcterms:hasVersion" href="https://law-store.wolterskluwer.com/s/product/traditional-knowledge-traditional-cultural-expressions-intell-pr/01t0f00000J3aYuAAJ">Publisher version</a>]
+                            </span>
+                        </span>
+                    </li>
+
+                    <li id="pub-2016-chap" rel="dcterms:isReferencedBy">
+                        <a style="display:none;" href="#pub-2016-chap" ></a>
+                        <span typeof="dcterms:BibliographicResource bibo:Chapter" resource="#pub-2016-chap">
+                            <span property="dcterms:bibliographicCitation">Kansa, E. C. (2016). Click here to save the past. <em>Mobilizing the past for a digital future : the potential of digital archaeology</em>, Grand Forks, ND: Digital Press at the University of North Dakota, pp 443-472.</span>
+                            <span class="ref-links">
+                                [<a rel="dcterms:hasVersion" href="https://escholarship.org/uc/item/9w9593tn">Open Access</a>]
+                            </span>
+                        </span>
+                    </li>
+
+                    <li><strong>IPinCH:</strong> In addition, the Open Context team participated in the "<a href="https://www.sfu.ca/ipinch/">Intellectual Property Issues in Cultural Heritage</a>" (2008-2016) project. IPinCH was a collaboration of scholars, students, heritage professionals, community members, policy makers, and Indigenous organizations across the globe. IPinCH informed development of Open Context's current <a href="../about/intellectual-property">intellectual property</a> policies.</li>
+
+                </ul>
+                <br/>
+                <hr class="my-4"></hr>
+                <br/>
+                <br/>
+            </div> <!-- end  col-sm-12 -->
+        </div>
+
+
+        <div class="row">
+            <div class="col-sm-12">
+                <h2>Open Context and FAIR</h2>
+                <ul class="sep-list">
+                    <li><strong>Findable:</strong> Open Context has rich query capabilities that enable searches across and within datasets based on standards-aligned metadata and project specific criteria. To improve discovery with commercial search engines, Open Context also provides XML sitemaps and Schema.org metadata.</li>
+
+                    <li><strong>Accessible:</strong> Open Context provides a range of Web browser user interfaces that range from very simple and intuitive keyword searches to more powerful filters on structured data. Open Context has a mission to provide free and open access to the data that it publishes.</li>
+
+                    <li><strong>Interoperable:</strong> Open Context provides standards aligned data in widely adopted open formats, especially GeoJSON and JSON-LD. These enable Open Context data to be usable in a wide variety of software and information systems. </li>
+
+                    <li><strong>Reusable:</strong> Editorial annotation to common standards, using a variety of gazetteers, controlled vocabularies, ontologies, and cross-references to online data curated by other organizations add context and help explain meaning. In addition, Open Context data is explicitly licensed for reuse (provided citation is provided) and is easily accessible in bulk as simple tabular CSV data or more feature-rich GeoJSON + JSON-LD formats. </li>
+
+                </ul>
+                <br/>
+                <hr class="my-4"></hr>
+                <br/>
+                <br/>
+            </div> <!-- end  col-sm-12 -->
+        </div>
+
+
+        <div class="row">
+            <div class="col-sm-12">
+                <h2>Open Context and CARE</h2>
+                <p>Open Context <a href="../about/terms">terms of service</a>, <a href="../about/intellectual-property">intellectual property</a>, and data curation and editing policies promote CARE principles by highlighting the need for meaningful collaboration and understanding of data sensitivities, sovereignty issues, and interests across stakeholder communities. These understandings need to shape projects before data collection begins and need to be communicated to Open Context's editorial team. Certain metadata, especially <a href="https://localcontexts.org/">LocalContexts.org</a> defined <em>Traditional Knowledge Labels</em> and <em>Notices</em> can be applied as required to data determined to be appropriate for open access publication by Open Context. Sensitive data not appropriate for dissemination via Open Context needs to be curated using other services.
+                </p>
+                <br/>
+                <br/>
+                <h4>Open Data and Data Sovereignty</h4>
+                <p>Open Context has a mission to publish open data for archaeology and related fields. This does not mean that all cultural heritage data should be available open access and free of restrictions. Open Context itself currently lacks the technical and administrative capacity to manage sensitive data in a responsible manner. To maintain data security and guard against accidental or malicious data breaches, Open Context does not store sensitive data, even behind a login.
+                </p>
+                <p>While Open Context publishes only open data, these open data often reference and link to information with greater access and use restrictions. For example, <a href="https://opencontext.org/projects/416a274c-cf88-4471-3e31-93db825e9e4a">the Digital Index of North American Archaeology</a> provides very general and low-sensitivity information about nearly 1 million archaeological and historical sites. These open access records typically provide links and contact information to authorities and outside repositories that manage more detailed and more sensitive information. In this way, the open data published by Open Context serves as a "finding aid" (an index) to sensitive or restricted data managed elsewhere. Thus, open data can work together with restricted access data managed independently by other communities, including Indigenous communities.</p>
+                <br/>
+                <br/>
+                <h4>Data Sovereignty and Capacity Building</h4>
+                <p>Data can empower communities and organizations to meet cultural heritage conservation, teaching, public education, and research goals. We recognize the authority and sovereignty of Indigenous peoples to manage (organize, keep secret or disclose) data about their landscapes, history and culture as they see appropriate. While Open Context itself is not a good venue to manage sensitive information, we hope to share our experience with data management and open source software to help build wider capacity for communities to better manage data autonomously:</p>
+                <ul class="sep-list">
+
+                    <li><strong>Technical Autonomy:</strong> Managing data well requires the appropriate tools. We encourage the use of open source tools such as <a href="https://archesproject.org">Arches</a> and <a href="https://mukurtu.org/">Mukurtu</a> that empower communities. Open source does not mean open access. You can use open source to securely manage protected, confidential information. Use of open source tools also enables communities and organizations to avoid technological <em>lock-in</em> or dependency.</li>
+
+                    <li><strong>Skills and Expertise:</strong> Greater data sovereignty requires development of skills and expertise within a community. Knowledge about open source, interoperability (the capacity to move data to where it is needed), maintenance, and longevity issues all help inform decision making. These topics, in addition to skills on how to use specific tools, all reduce costs and promote autonomy.
+                    </li>
+                </ul>
+                <br/>
+            </div> <!-- end  col-sm-12 -->
+        </div>
+
+
+        <h5 style="margin-top: 120px;">Icon Credits</h5>
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Certificate-Authority icon by <a target="_blank" href="https://thenounproject.com/icon/certificate-authority-4797148/">M. Oki Orlando</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+
+
+
+    </div>
+
+{% endblock %}
