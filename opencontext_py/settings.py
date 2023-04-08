@@ -667,7 +667,7 @@ NAV_ITEMS = [
                 'link': '/about/estimate',
             },
             {
-                'display': 'Technology',
+                'display': 'Technology and Archiving',
                 'link': '/about/technology',
             },
             {
@@ -681,6 +681,10 @@ NAV_ITEMS = [
             {
                 'display': 'Intellectual Property',
                 'link': '/about/intellectual-property',
+            },
+            {
+                'display': 'FAIR and CARE Data',
+                'link': '/about/fair-care',
             },
             {
                 'display': 'People',

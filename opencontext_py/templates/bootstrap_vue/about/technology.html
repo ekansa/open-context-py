@@ -17,7 +17,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                    <h1>Open Context's Technology</h1>
+                    <h1>Open Context's Technology and Archiving</h1>
                 </div>
             </div>
 
@@ -25,7 +25,7 @@
                 <div class="col-sm-12">
                     <div class="media">
                         <div class="media-left media-top">
-							<img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ base_url }}/static/oc/images/about/digital-noun-27662.png" alt="Digital icon"/>
+							<img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ BASE_URL }}/static/oc/images/about/digital-noun-27662.png" alt="Digital icon"/>
                         </div>
                         <div class="media-body">
                             <div style="padding-left: 4%;">
@@ -67,7 +67,7 @@
             <div class="col-sm-1">
             </div>
             <div class="col-sm-2">
-                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/database-noun-175016.png" alt="Database icon"/>
+                <img class="img-responsive img-rounded uses-icon" src="{{ BASE_URL }}/static/oc/images/about/database-noun-175016.png" alt="Database icon"/>
             </div>
             <div class="col-sm-8 step-text">
                 <h3>Data Organization</h3>
@@ -83,17 +83,36 @@
             <div class="col-sm-1">
             </div>
             <div class="col-sm-2">
-                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/pull-request-noun-368568.png" alt="Pull-request icon"/>
+                <img class="img-responsive img-rounded uses-icon" src="{{ BASE_URL }}/static/oc/images/about/pull-request-noun-368568.png" alt="Pull-request icon"/>
             </div>
             <div class="col-sm-8 step-text">
                 <h3>Source Code and Version Control</h3>
-				<p>Open Context is a Python 3 application built on the Django project. Where feasible, we try to keep to "plain vanilla" coding patterns and use of Django components. Because Open Context emphasizes Web interoperability, it uses its own APIs to generate views of individual item records and search results. As described <a href="{{ base_url }}/about/services">here</a> most of Open Context's APIs provide JSON-LD formatted data.</p>
+				<p>Open Context is a Python 3 application built on the Django project. Where feasible, we try to keep to "plain vanilla" coding patterns and use of Django components. Because Open Context emphasizes Web interoperability, it uses its own APIs to generate views of individual item records and search results. As described <a href="{{ BASE_URL }}/about/services">here</a> most of Open Context's APIs provide JSON-LD formatted data.</p>
 				<p>The source code for Open Context carries a <a href="http://www.gnu.org/licenses/quick-guide-gplv3">GNU General Public License (Version 3)</a>. We use GitHub for software version control, issue tracking, documentation and collaboration. Relevant code repostories are:</p>
 				<ul>
 					<li><a href="https://github.com/ekansa/open-context-py" title="Open Context source code">Open Context Python Application</a>: the primary software code repository for Open Context. This has source code, deployment instructions, and additional documentation.</li>
 					<li><a href="https://github.com/ekansa/oc-ontologies" title="Open Context contologies">Open Context Ontologies / Controlled Vocabularies</a>: Open Context uses a variety of ontologies and controlled vocabularies described in OWL and SKOS. While still incompletely documented, these versions for these vocabularies are tracked in this repository.</li>
 					<li><a href="https://github.com/ekansa/ekansa.github.io" title="Open Context javascript clients">Open Context API Client Demos</a>: Open Context provides a variety of powerful Web APIs that others can use for independent data analysis, visualization, or other projects. This repository provides public domain (no copyright) sample javascript and demos illustrating use of these APIs.</li>
 					<li><a href="https://github.com/opencontext" title="Open Context data">Open Context Data Repositories</a>: Open Context has used GitHub for version control of datasets. Currently these repositories provide access to older legacy versions of Open Context data in XML format. We will be updating these shorting to add current data in JSON-LD format once we've finished GitHub API integration.</li>
+				</ul>
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+
+        <div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ BASE_URL }}/static/oc/images/about/institution-noun-37388.png" alt="Archive icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Digital Archiving</h3>
+				<p>To ensure longevity and long-term citability, Open Context archives data with the University of California's California Digital Library (CDL) Merritt repository and Zenodo, and uses the Internet Archive for image hosting. To promote data citation, Open Context uses the <a href="https://ezid.cdlib.org/">EZID</a> service to issue persistent and globally unique identifiers to individual data records as well as larger aggregations of data. As is common practice with most digital repositories, Open Context issues DOIs (<a href="https://www.doi.org/">Document Object Identifiers</a>) to facilitate the identification and citation of aggregate datasets. However, unlike most repositories, Open Context's editorial and publishing workflow also includes the creation of persistent identifiers at much more granular and specific levels. To facilitate the identification and citation of specific individual records of data, Open Context uses EZID to mint ARK (<a href="https://arks.org/">Archival Resource Keys</a>) identifiers.</p>
+				<ul>
+					<li><a href="https://merritt.cdlib.org/m/ucb_open_context" title="Open Context in the Merritt repository">Merritt Repository</a>: location of Open Context content in the Merritt repository.</li>
+					<li><a href="https://zenodo.org/communities/opencontext/" title="Open Context in Zenodo">Zenodo.org</a>: location of Open Context content in the Zenodo repository</li>
+					<li><a href="https://archive.org/details/@open_context_editors" title="Open Context in the Internet Archive">Internet Archive</a>: location of Open Context content in the Internet Archive. While the Internet Archive is not a formal digital repository, it does provide additional safeguards for Open Context published digital media. In addition, we gratefully thank the Internet Archive for providing <a href="https://iiif.io/">IIIF</a> hosting of the image media we publish.</li>
 				</ul>
 			</div>
             <div class="col-sm-1">

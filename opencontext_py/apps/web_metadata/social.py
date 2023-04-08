@@ -123,13 +123,14 @@ PATH_CONFIGS = {
     '/about/technology': {
         'title': {
             'property': 'og:title',
-            'content': 'Open Context: Open Source Software Technologies',
+            'content': 'Open Context: Open Source Software Technologies and Archiving',
         },
         'description': {
             'property': 'og:description',
             'content': (
                 'Open Context integrates several open-source software applications to publish '
-                'archaeological data via the Web.'
+                'archaeological data via the Web. We work with multiple digital repository '
+                'partners to archive data for the long-term.'
             ),
         },
     },
@@ -164,6 +165,22 @@ PATH_CONFIGS = {
         'title': {
             'property': 'og:title',
             'content': 'Open Context: Intellectual Property Policies',
+        },
+        'description': {
+            'property': 'og:description',
+            'content': (
+                'Open Context has intellectual property policies shaped to promote both the '
+                'FAIR Data Principles and CARE Principles. While open data '
+                'can be a powerful tool to promote scientific collaboration and teaching, they are '
+                'not universally appropriate. We promote open data in ethically appropriate '
+                'contexts.'
+            ),
+        },
+    },
+    '/about/fair-care': {
+        'title': {
+            'property': 'og:title',
+            'content': 'Open Context: FAIR + CARE Data Policies',
         },
         'description': {
             'property': 'og:description',

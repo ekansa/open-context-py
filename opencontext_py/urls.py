@@ -60,6 +60,7 @@ urlpatterns = [
     re_path(r'^about/services', AboutViews.services_view, name='about_services'),
     re_path(r'^about/bibliography', AboutViews.bibliography_view, name='about_bibliography'),
     re_path(r'^about/intellectual-property', AboutViews.ip_view, name='about_ip'),
+    re_path(r'^about/fair-care', AboutViews.fair_care_view, name='about_fair_care'),
     re_path(r'^about/people', AboutViews.people_view, name='about_people'),
     re_path(r'^about/sponsors', AboutViews.sponsors_view, name='about_sponsors'),
     re_path(r'^about/terms', AboutViews.terms_view, name='about_terms'),
