@@ -371,17 +371,17 @@ else:
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
             'LOCATION': 'oc_cache_table',
-            'TIMEOUT': (1.5 * 24 * 60 * 60),  # 1.5 days for cache
+            'TIMEOUT': (7 * 24 * 60 * 60),  # 7 days for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 50000
+                'MAX_ENTRIES': 500000,
             }
         },
         'redis': {
             'BACKEND': 'redis_cache.cache.RedisCache',
             'LOCATION': f'redis://{REDIS_HOST}/1',
-            'TIMEOUT': (60 * 60),  # 1 hour for cache
+            'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 100000,
+                'MAX_ENTRIES': 500000,
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient'
             }
         },
