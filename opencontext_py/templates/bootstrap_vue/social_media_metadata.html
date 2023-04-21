@@ -2,6 +2,9 @@
 	{% if SOCIAL_MEDIA_META %}
 	{% for key, sm_meta_item in SOCIAL_MEDIA_META.items %}
 		<meta property="{{ sm_meta_item.property }}" content="{{ sm_meta_item.content }}" />
+		{% if key == 'description' %}
+		<meta property="description" content="{{ sm_meta_item.content }}" />
+		{%endif%}
 	{% endfor %}
 	{%endif%}
 {% endblock %}
