@@ -130,6 +130,18 @@
         </div>
         {%endif%}
 
+        {% if man_obj.context.item_type == 'vocabularies' %}
+        <!-- Note: Some templated not in javascript to ease search engine bot indexing.-->
+        <div class="card card_w_chart">
+            <div class="card-header">
+                <h5><b>{{ man_obj.label }}</b> ({{ man_obj.item_type }})</h5>
+            </div>
+            <div class="card-body">
+                <p>This is a concept defined by: <em>{{ man_obj.context.label }}</em></p>
+            </div>
+        </div>
+        {%endif%}
+
         {% if man_obj.item_type == 'persons' %}
         <div class="card card_w_chart">
             <div class="card-header">

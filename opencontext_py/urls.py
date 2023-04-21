@@ -8,7 +8,6 @@ from opencontext_py.apps.ocitems.manifest import views as ManifestViews
 from opencontext_py.apps.about import views as AboutViews
 from opencontext_py.apps.contexts import views as ContextViews
 
-from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 from opencontext_py.apps.utilities import views as UtilitiesViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 
@@ -404,9 +403,8 @@ urlpatterns = [
     re_path(r'^tables/(?P<uuid>\S+)', AllItemsViews.tables_html, name='tables_html'),
     re_path(r'^types', AboutViews.index_view, name='about_index'),
     # Vocabulary views for viewing controlled vocab + ontology entities
-    re_path(r'^vocabularies/(?P<identifier>\S+).json', vocabViews.json_view, name='vocabularies_json'),
-    re_path(r'^vocabularies/(?P<identifier>\S+)', vocabViews.html_view, name='vocabularies_html'),
-    re_path(r'^vocabularies', vocabViews.index_view, name='vocabularies_index'),
+    re_path(r'^vocabularies/(?P<identifier>\S+).json', AllItemsViews.vocabularies_json, name='vocabularies_json'),
+    re_path(r'^vocabularies/(?P<identifier>\S+)', AllItemsViews.vocabularies_html, name='vocabularies_html'),
 
     #----------------------------
     # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)

@@ -493,6 +493,8 @@ def get_annotate_item_manifest_obj(subject_id):
         'project__project'
     ).select_related(
         'item_class'
+    ).select_related(
+        'context'
     ).annotate(
         hero=Subquery(item_hero_qs)
     ).annotate(
@@ -694,6 +696,25 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         act_dict=rep_dict,
         for_solr_or_html=for_solr_or_html
     )
+    if item_man_obj.context.item_type == 'vocabularies':
+        vocab_meta_qs = metadata.get_vocabulary_metadata_qs(
+            vocab=item_man_obj.context
+        )
+        pred_keyed_vocab_assert_objs = make_tree_dict_from_grouped_qs(
+            qs=vocab_meta_qs,
+            index_list=['predicate']
+        )
+        rep_dict = rep_utils.add_predicates_assertions_to_dict(
+            pred_keyed_vocab_assert_objs,
+            act_dict=rep_dict,
+            add_objs_to_existing_pred=False,
+            for_edit=for_solr_or_html,
+        )
+        rep_dict = metadata.check_add_vocabulary(
+            vocab=item_man_obj.context,
+            act_dict=rep_dict,
+        )
+
     # NOTE: This add project Dublin Core metadata.
     proj_metadata_qs = metadata.get_project_metadata_qs(
         project=item_man_obj.project
