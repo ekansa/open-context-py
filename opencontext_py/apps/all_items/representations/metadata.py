@@ -108,7 +108,7 @@ def db_get_project_metadata_qs(project_id):
         predicate__data_type='id',
         visible=True,
     ).filter(
-        # Get dublin core metadate or a project geo-overlay image
+        # Get dublin core metadata or a project geo-overlay image
         Q(predicate__context_id=configs.DCTERMS_VOCAB_UUID)
         |Q(predicate_id=configs.PREDICATE_GEO_OVERLAY_UUID)
     ).exclude(
@@ -171,6 +171,97 @@ def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
     except:
         pass
     return proj_meta_qs
+
+
+def db_get_vocabulary_metadata_qs(vocab_id):
+    """Get Dublin Core vocabulary metadata
+
+    :param str project_id: UUID or string UUID for a project
+        that may have Dublin Core metadata.
+    """
+
+    class_icon_qs = AllResource.objects.filter(
+        item=OuterRef('object__item_class'),
+        resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
+    ).values('uri')[:1]
+
+    qs = AllAssertion.objects.filter(
+        subject_id=vocab_id,
+        predicate__data_type='id',
+        visible=True,
+    ).filter(
+        # Get dublin core metadata
+        predicate__context_id=configs.DCTERMS_VOCAB_UUID
+    ).exclude(
+        # Don't include references to related tables
+        object__item_type='tables',
+    ).select_related(
+        'subject'
+    ).select_related(
+        'observation'
+    ).select_related(
+        'event'
+    ).select_related(
+        'attribute_group'
+    ).select_related(
+        'predicate'
+    ).select_related(
+        'predicate__item_class'
+    ).select_related(
+        'predicate__context'
+    ).select_related(
+        'language'
+    ).select_related(
+        'object'
+    ).select_related(
+        'object__item_class'
+    ).select_related(
+        'object__context'
+    ).annotate(
+        object_class_icon=Subquery(class_icon_qs)
+    )
+    return qs
+
+
+def get_vocabulary_metadata_qs(vocab=None, vocab_id=None, use_cache=True):
+    """Get Dublin Core vocabulary metadata via the cache"""
+    if not vocab and vocab_id:
+        vocab = AllManifest.objects.filter(uuid=vocab_id).first()
+    if not vocab:
+        return None
+
+    if not use_cache:
+        # Skip the case, just use the database.
+        return db_get_vocabulary_metadata_qs(vocab_id=vocab.uuid)
+
+    cache_key = f'vocab-dc-meta-{vocab.slug}'
+    cache = caches['redis']
+
+    vocab_meta_qs = cache.get(cache_key)
+    if vocab_meta_qs is not None:
+        # We've already cached this, so returned the cached queryset
+        return vocab_meta_qs
+
+    vocab_meta_qs = db_get_vocabulary_metadata_qs(vocab_id=vocab.uuid)
+    try:
+        cache.set(cache_key, vocab_meta_qs)
+    except:
+        pass
+    return vocab_meta_qs
+
+def check_add_vocabulary(vocab, act_dict=None):
+    """Adds a Dublin Core Part-of relationship for the vocabulary"""
+    if not act_dict:
+        act_dict = LastUpdatedOrderedDict()
+    if len(act_dict.get('dc-terms:isPartOf', [])) > 0:
+        return act_dict
+
+    vocab_dict = LastUpdatedOrderedDict()
+    vocab_dict['id'] = f'https://{vocab.uri}'
+    vocab_dict['slug'] = vocab.slug
+    vocab_dict['label'] = vocab.label
+    act_dict['dc-terms:isPartOf'] = [vocab_dict]
+    return act_dict
 
 
 def add_dublin_core_literal_metadata(item_man_obj, rel_subjects_man_obj=None, act_dict=None):

@@ -58,9 +58,13 @@ def evaluate_update_id(uuid):
 
 
 @never_cache
-def all_items_json(request, uuid):
+def all_items_json(request, uuid, man_obj=None):
     """ API for searching Open Context """
-    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if man_obj:
+        ok_uuid = man_obj.uuid
+        do_redirect = False
+    else:
+        ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
         raise Http404
     if do_redirect:
@@ -164,9 +168,19 @@ def make_solr_doc_in_html(request, uuid):
 
 
 @never_cache
-def all_items_html(request, uuid, full_media=False, template_file='item.html'):
+def all_items_html(
+    request,
+    uuid,
+    full_media=False,
+    template_file='item.html',
+    man_obj=None
+):
     """HTML representation for searching Open Context """
-    ok_uuid, do_redirect = evaluate_update_id(uuid)
+    if man_obj:
+        ok_uuid = man_obj.uuid
+        do_redirect = False
+    else:
+        ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
         raise Http404
     if do_redirect:
@@ -455,3 +469,20 @@ def tables_csv(request, uuid):
     if not csv_url:
         raise Http404
     return redirect(csv_url, permanent=False)
+
+
+def vocabularies_html(request, identifier):
+    uri = f'{settings.CANONICAL_BASE_URL}/vocabularies/{identifier}'
+    uri = AllManifest().clean_uri(uri)
+    man_obj = AllManifest.objects.filter(uri=uri).first()
+    if not man_obj:
+        raise Http404
+    return all_items_html(request, man_obj.uuid, man_obj=man_obj)
+
+def vocabularies_json(request, identifier):
+    uri = f'{settings.CANONICAL_BASE_URL}/vocabularies/{identifier}'
+    uri = AllManifest().clean_uri(uri)
+    man_obj = AllManifest.objects.filter(uri=uri).first()
+    if not man_obj:
+        raise Http404
+    return all_items_json(request, man_obj.uuid, man_obj=man_obj)
