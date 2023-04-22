@@ -135,6 +135,8 @@ def db_get_project_metadata_qs(project_id):
     ).select_related(
         'object__item_class'
     ).select_related(
+        'object__item_class__context'
+    ).select_related(
         'object__context'
     ).annotate(
         object_class_icon=Subquery(class_icon_qs)
@@ -215,6 +217,8 @@ def db_get_vocabulary_metadata_qs(vocab_id):
         'object'
     ).select_related(
         'object__item_class'
+    ).select_related(
+        'object__item_class__context'
     ).select_related(
         'object__context'
     ).annotate(
