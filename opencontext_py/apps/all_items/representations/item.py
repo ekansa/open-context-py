@@ -372,6 +372,8 @@ def get_related_media_resources(item_man_obj):
         'resourcetype'
     ).select_related(
         'mediatype'
+    ).select_related(
+        'mediatype__context'
     )
     return resource_qs
 
