@@ -150,9 +150,9 @@ def db_make_dataframe_from_etl_data_source(
         row_data[f'{ds_rec.field_num}_col'] = ds_rec.record
     # Now add the final row.
     all_rows.append(row_data)
-
+    df_all_rows = pd.DataFrame(data=all_rows)
     # Append the all_rows list all at once for a major speed boost.
-    df = df.append(all_rows, ignore_index=True)
+    df = pd.concat([df, df_all_rows], ignore_index=True)
 
     # Fill na with empty strings for missing records.
     for df_field in ds_fields_qs:
