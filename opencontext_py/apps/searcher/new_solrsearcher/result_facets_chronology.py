@@ -111,6 +111,19 @@ class ResultFacetsChronology():
             valid_tile_dicts.append(tile_dict)
         return valid_tile_dicts
 
+    def _time_range_adjust_chronodeep(self, deep):
+        """Adjust the chronodeep value by time range"""
+        if self.min_date is None or self.max_date is None:
+            return deep
+        range =  self.max_date - self.min_date
+        if range <= 2500:
+            # Don't chronological deep for short time ranges.
+            return deep
+        deep_less = round(range / 160, 0)
+        # print(f'Initial deep: {deep} less {deep_less}, range: {range}')
+        if deep_less >= deep:
+            return deep
+        return int(deep - deep_less)
 
     def _get_tile_aggregation_depth(self, valid_tile_dicts):
         """Set aggregation depth for grouping tile options"""
@@ -131,6 +144,7 @@ class ResultFacetsChronology():
                 paths=valid_tiles,
                 max_depth=self.max_depth,
             )
+            deep = self._time_range_adjust_chronodeep(deep)
         # Now put some limits on it.
         if deep < self.min_tile_depth:
             deep = self.min_tile_depth
