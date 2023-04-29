@@ -38,7 +38,7 @@ importlib.reload(new_ind)
 
 
 new_ind.make_indexed_solr_documents_in_chunks(fix_uuids, start_clear_caches=False)
-
+suggest.get_rebuild_solr_suggest()
 
 d_slugs = [
     '52-georgia-archaeological-site-file-gasf',
