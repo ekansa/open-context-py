@@ -320,6 +320,7 @@ class SearchSolr():
 
 
         do_lr_geotile_facet = True
+        do_lr_chronotile_facet = True
         # -------------------------------------------------------------
         # GEO-SPACE AND TIME
         # -------------------------------------------------------------
@@ -368,6 +369,8 @@ class SearchSolr():
             solr_escape=False,
         )
         if raw_chrono_tile:
+            # we have chronological limits, so look at high resolution chronotiles
+            do_lr_chronotile_facet = False
             query_dict = querymaker.get_form_use_life_chronotile_query_dict(
                 raw_chrono_tile
             )
@@ -379,24 +382,29 @@ class SearchSolr():
             )
 
         # One or both of the form use life date limits can be None.
-        query_dict = querymaker.get_all_event_chrono_span_query_dict(
-            all_start=utilities.get_request_param_value(
-                request_dict,
-                param='allevent-start',
-                default=None,
-                as_list=False,
-                solr_escape=False,
-                require_float=True,
-            ),
-            all_stop=utilities.get_request_param_value(
-                request_dict,
-                param='allevent-stop',
-                default=None,
-                as_list=False,
-                solr_escape=False,
-                require_float=True,
-            ),
+        all_start = utilities.get_request_param_value(
+            request_dict,
+            param='allevent-start',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+            require_float=True,
         )
+        all_stop=utilities.get_request_param_value(
+            request_dict,
+            param='allevent-stop',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+            require_float=True,
+        )
+        query_dict = querymaker.get_all_event_chrono_span_query_dict(
+            all_start=all_start,
+            all_stop=all_stop,
+        )
+        if all_start or all_stop:
+            # we have chronological limits, so look at high resolution chronotiles
+            do_lr_chronotile_facet = False
         # Now add results of this raw_item_type to the over-all query.
         query = utilities.combine_query_dict_lists(
             part_query_dict=query_dict,
@@ -418,6 +426,7 @@ class SearchSolr():
                 )
                 if context_deep >= configs.MIN_CONTEXT_DEPTH_FOR_HIGH_RES_GEOTILES:
                     do_lr_geotile_facet = False
+                    do_lr_chronotile_facet = False
 
                 # Associate the facet fields with the client request param
                 # and param value.
@@ -465,6 +474,7 @@ class SearchSolr():
                 # One ore more projects are selected, so do high
                 # resolution map tiles.
                 do_lr_geotile_facet = False
+                do_lr_chronotile_facet = False
             for raw_path in raw_paths:
                 query_dict = querymaker.get_general_hierarchic_paths_query_dict(
                     raw_path=raw_path, **param_args
@@ -539,7 +549,7 @@ class SearchSolr():
             solr_escape=False,
             require_int=True,
         )
-        if chronodeep > SolrDoc.LOW_RESOLUTION_CHRONOTILE_DROP_LAST:
+        if not do_lr_chronotile_facet or (chronodeep > SolrDoc.LOW_RESOLUTION_CHRONOTILE_DROP_LAST):
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
         else:
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
