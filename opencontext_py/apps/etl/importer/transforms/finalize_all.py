@@ -341,7 +341,7 @@ def initialize_df(ds_source):
         limit_row_num_last=(cached_max + DF_LOAD_BATCH_SIZE)
     )
     # Append the new batch data to this dataframe.
-    df = df.append(df_batch, ignore_index=True)
+    df = pd.concat([df, df_batch], ignore_index=True)
     df.drop_duplicates(subset=['row_num'], inplace=True)
     # Update the cache with the added data from this last batch.
     cache_item_and_cache_key_for_etl_source(ds_source, df_cache_key, df)

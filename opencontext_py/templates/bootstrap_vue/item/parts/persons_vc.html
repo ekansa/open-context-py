@@ -3,8 +3,8 @@
 
 <template id="persons-item-type-template">
 
-  <b-dropdown v-if="item_type_obj" 
-    :id="'dropdown-pers-item-types-' + item_type_obj.slug" 
+  <b-dropdown v-if="item_type_obj"
+    :id="'dropdown-pers-item-types-' + item_type_obj.slug"
     :text="item_type_obj.label"
     block
     offset="25"
@@ -12,9 +12,9 @@
     class="pers_item_type_dropdowns">
     <b-dropdown-item target="_blank" :href="item_type_obj.id">[[ item_type_obj.label ]] <strong>(All)</strong>
     </b-dropdown-item>
-    <b-dropdown-item 
+    <b-dropdown-item
       v-for="(opt, index) in item_type_obj.options"
-      target="_blank" 
+      target="_blank"
       :href="opt.id">[[ opt.label ]]</b-dropdown-item>
   </b-dropdown>
 
@@ -32,15 +32,15 @@
       <div v-if="summary_data.length > 0" class="alert alert-info" id="pers_explore_alert">
 
         <small>Use the dropdown options below to explore different types of information associated with this [[person_class_display_label]].</small>
-        
+
         <vc-persons-item-type
           v-if="subjects_obj"
           v-bind:item_type_obj="subjects_obj"></vc-persons-item-type>
-        
+
         <vc-persons-item-type
           v-if="media_obj"
           v-bind:item_type_obj="media_obj"></vc-persons-item-type>
-        
+
         <vc-persons-item-type
           v-if="documents_obj"
           v-bind:item_type_obj="documents_obj"></vc-persons-item-type>
@@ -59,7 +59,7 @@
 
       <div v-else-if="loading">
         <div class="container-fluid text-muted text-center">
-          <h1 class="display-5">Summarizing associated records...</h1>
+          <h2 class="display-5">Summarizing associated records...</h2>
           <b-spinner class="m-5" label="Busy"></b-spinner>
         </div>
       </div>
@@ -67,14 +67,14 @@
       <div v-else>
 
           <div class="container-fluid text-muted text-center">
-            <h1 class="display-4">No records</h1>
+            <h2 class="display-4">No records</h2>
             <p>Records associated with this [[person_class_display_label]] have yet to be
               indexed. These records are still in preparation and not
               yet fully published.</p>
           </div>
 
       </div>
-          
+
     </div>
   </div>
 
@@ -100,10 +100,10 @@ var vc_persons_item_type = Vue.component(
       computed: {
       },
       methods: {
-        
+
       },
       components: {
-        
+
       }
     }
   );
@@ -173,7 +173,7 @@ var vc_persons_item_type = Vue.component(
         this.fetch_oc_api();
       },
       watch: {
-        
+
       },
       methods: {
         fetch_oc_api: function(){
@@ -266,7 +266,7 @@ var vc_persons_item_type = Vue.component(
       }
     }
   );
-  
+
 </script>
 
 

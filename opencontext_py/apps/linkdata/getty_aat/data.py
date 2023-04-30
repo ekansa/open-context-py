@@ -41,6 +41,15 @@ def normalize_aat_uri(raw_uri):
     return raw_uri
 
 
+def validate_normalize_aat_uri(raw_uri):
+    """Validates and normalizes a Getty AAT URI"""
+    if not 'vocab.getty.edu' in raw_uri:
+        return None
+    if not '/aat/' in raw_uri:
+        return None
+    return normalize_aat_uri(raw_uri)
+
+
 def get_getty_aat_vocabulary_obj():
     """Get the Manifest object for the vocabulary object"""
     m = AllManifest.objects.filter(
