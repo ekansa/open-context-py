@@ -380,6 +380,14 @@ HIERARCHY_PARAM_TO_SOLR = [
         },
     ),
     (
+        'dc-license', None,
+        {
+            'root_field': 'dc_terms_license___pred_id',
+            'obj_all_slug': 'dc-terms-license',
+            'field_suffix': SolrDoc.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
         'bibo-status', None,
         {
             'root_field': 'bibo_status___pred_id',
