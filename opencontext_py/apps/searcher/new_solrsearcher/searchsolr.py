@@ -57,6 +57,22 @@ class SearchSolr():
 
     def add_initial_facet_fields(self, request_dict):
         """Adds to initial facet field list based on request_dict"""
+        add_projects_facet = False
+        if request_dict.get('path', ''):
+            add_projects_facet = True
+        if request_dict.get('type'):
+            add_projects_facet = True
+        if request_dict.get('prop'):
+            add_projects_facet = True
+        if len(request_dict) > 2:
+            add_projects_facet = True
+        if SolrDoc.ROOT_PROJECT_SOLR in self.init_facet_fields:
+            # No need to add it again!
+            add_projects_facet = False
+        if add_projects_facet:
+            self.init_facet_fields.append(
+                SolrDoc.ROOT_PROJECT_SOLR
+            )
         if 'proj' in request_dict:
             self.init_facet_fields.append(
                 SolrDoc.ROOT_PREDICATE_SOLR

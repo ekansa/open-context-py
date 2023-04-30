@@ -50,7 +50,8 @@ SOLR_MAX_RESULT_ROW_COUNT = 10000
 
 DEFAULT_FACET_FIELDS = [
     SolrDoc.ROOT_CONTEXT_SOLR,
-    SolrDoc.ROOT_PROJECT_SOLR,
+    # Remove some clutter
+    # SolrDoc.ROOT_PROJECT_SOLR,
     SolrDoc.ROOT_LINK_DATA_SOLR,
     'image_media_count',
     'three_d_media_count',
