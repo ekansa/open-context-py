@@ -552,7 +552,7 @@ class ResultFacetsStandard():
         options_length = len(options_tuples)
         for i, option_tup in enumerate(options_tuples):
             facet_value, count = option_tup
-            if count < 1:
+            if False and count < 1:
                 # We don't make facet options for facet values with no
                 # records.
                 continue
@@ -579,11 +579,15 @@ class ResultFacetsStandard():
             if data_type == 'xsd:integer':
                 min_value = int(round(float(facet_value),0))
                 max_value = int(round(float(max_value),0))
+                if max_value <= min_value:
+                    continue
             elif data_type == 'xsd:double':
                 if round_digits is not None:
                     label = str(round(float(facet_value), round_digits))
                 min_value = float(facet_value)
                 max_value = float(max_value)
+                if max_value <= min_value:
+                    continue
             elif data_type == 'xsd:date':
                 min_value = facet_value
             elif data_type == 'xsd:boolean':
@@ -786,7 +790,8 @@ class ResultFacetsStandard():
             range_value_count_list = range_dict.get('counts', [])
             # Make  list of the tuples for this solr facet field.
             options_tuples = utilities.get_facet_value_count_tuples(
-                range_value_count_list
+                range_value_count_list,
+                no_zeros=(data_type in ['xsd:date',]),
             )
             if not len(options_tuples):
                 # Skip, because we don't have any facet range options

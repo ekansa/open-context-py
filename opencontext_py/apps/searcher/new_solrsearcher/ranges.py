@@ -8,7 +8,7 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 def compose_stats_query(fq_list=[], stats_fields_list=[], facet_fields=[], q='*:*'):
     """Compose a stats query to get stats for solr fields for ranges
-    
+
     :param list fq_list: List of facet-query terms
     :param list stats_fields_list: List of fields for stats
     :param list facet_fields: List of fields to get facet counts
@@ -30,8 +30,8 @@ def compose_stats_query(fq_list=[], stats_fields_list=[], facet_fields=[], q='*:
 
 
 def stats_ranges_query_dict_via_solr(
-    stats_query, 
-    default_group_size=20, 
+    stats_query,
+    default_group_size=20,
     solr=None,
     return_pre_query_response=False):
     """ Makes stats range facet query dict by processing a solr query
@@ -76,8 +76,9 @@ def stats_ranges_query_dict_via_solr(
         findex = f'f.{solr_field_key}.facet.range.sort'
         fother = f'f.{solr_field_key}.facet.range.other'
         finclude = f'f.{solr_field_key}.facet.range.include'
+        fmin = f'f.{solr_field_key}.facet.mincount'
         query_dict[fother] = 'all'
-        query_dict[finclude] = 'all'
+        query_dict[finclude] = 'lower'
         query_dict[findex] = 'index'  # sort by index, not by count
         if (stats['count'] / group_size) < 3:
             group_size = 4
@@ -89,24 +90,32 @@ def stats_ranges_query_dict_via_solr(
                 stats['max']
             )
             query_dict[fgap] = utilities.get_date_difference_for_solr(
-                stats['min'], 
-                stats['max'], 
+                stats['min'],
+                stats['max'],
                 group_size
             )
         elif solr_field_key.endswith('___pred_int'):
-            query_dict[fstart] = int(round(stats['min'], 0))
-            query_dict[fend] = int(round(stats['max'], 0)) + 1
-            query_dict[fgap] = int(round(((stats['max'] - stats['min']) / group_size), 0))
-            if query_dict[fgap] > stats['mean']:
-                query_dict[fgap] = int(round((stats['mean'] / 3), 0))
-            if query_dict[fgap] < 1:
-                query_dict[fgap] = 1
+            min_val =  int(round(stats['min'], 0))
+            max_val = int(round(stats['max'], 0)) + 1
+            gap = int(round(((stats['max'] - stats['min']) / group_size), 0))
+            if gap > stats['mean']:
+                gap = int(round((stats['mean'] / 3), 0))
+            if gap < 1:
+                gap = 1
+            query_dict[fmin] = 0
+            query_dict[fstart] = min_val
+            query_dict[fend] = max_val
+            query_dict[fgap] = gap
         else:
-            query_dict[fstart] = stats['min']
-            query_dict[fend] = stats['max'] + 1
-            query_dict[fgap] = ((stats['max'] - stats['min']) / group_size)
-            if query_dict[fgap] > stats['mean']:
-                query_dict[fgap] = stats['mean'] / 3
-            if query_dict[fgap] == 0:
-                query_dict[fgap] = 0.001
+            gap =  ((stats['max'] - stats['min']) / group_size)
+            if gap > stats['mean']:
+                gap = stats['mean'] / 3
+            if gap == 0:
+                gap = 0.001
+            min_val = stats['min']
+            max_val = stats['max'] + (gap / 10)
+            query_dict[fmin] = 0
+            query_dict[fstart] = min_val
+            query_dict[fend] = max_val
+            query_dict[fgap] = gap
     return query_dict
