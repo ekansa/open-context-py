@@ -128,6 +128,7 @@
           data_series: null,
           min_value: 0,
           max_value: 1,
+          gap: 0,
           route_key_index: 0,
         };
       },
@@ -214,15 +215,6 @@
             console.log(this.data_series);
           });
         },
-        make_default_zero_series(data_type, min, max, gap){
-          let y_x_defaults = {};
-          if((data_type == 'xsd:double') || (data_type == 'xsd:integer')){
-              for (let step = min; step < (max + gap); step += gap) {
-                  y_x_defaults[step] = 0;
-              }
-          }
-          return y_x_defaults;
-        },
         make_ui_friendly_date: function(iso_datetime_str){
             if(iso_datetime_str.indexOf('T') < 0){
                 return iso_datetime_str;
@@ -259,6 +251,9 @@
             if(facet.hasOwnProperty('oc-api:max')){
               this.max_value = facet['oc-api:max'];
             }
+            if(facet.hasOwnProperty('oc-api:max')){
+              this.gap = facet['oc-api:gap'];
+            }
             for(let opt of facet['oc-api:has-range-options']){
               if(!opt.hasOwnProperty('count')){
                 continue;
@@ -276,6 +271,8 @@
               let item = {
                 x: label,
                 href: removeURLParameter(opt.id, 'rows'),
+                min: opt['oc-api:min'],
+                max: opt['oc-api:max'],
                 y: opt.count,
               }
               data_series.push(item);
