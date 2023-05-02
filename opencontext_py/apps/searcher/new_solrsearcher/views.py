@@ -179,7 +179,7 @@ def suggest_json(request):
 
 def projects_geojson(request):
     """Makes a geojson response for mapping all projects"""
-    request_dict = {'path': None}
+    request_dict = {'path': None, 'project-map': True}
     result_json = main_search.process_solr_query(request_dict)
     proj_geojson = project_index_summary.make_map_project_geojson(result_json)
     req_neg = RequestNegotiation('application/json')
