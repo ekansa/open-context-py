@@ -18,3 +18,7 @@ All the usual liability waivers and disclaimers about using this code at your ow
 
 Open Context draws in libraries and frameworks from other sources (Leaflet, Django etc.). 
 Please see the documentation associated with these libraries for additional licensing information.
+
+Clientside Testing:
+===================
+This project is tested with BrowserStack (https://www.browserstack.com/).
