@@ -41,7 +41,6 @@ FOOTER
 	margin-left:-45px;
 }
 div.footer-cell {
-	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
 	padding: 2%;
