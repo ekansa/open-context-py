@@ -5,17 +5,18 @@ import reversion
 from django.utils import timezone
 
 
+from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllResource,
 )
 
 from opencontext_py.apps.all_items.editorial.item import updater_general
-
+from opencontext_py.apps.utilities.remote_image_size import get_image_dimensions
 
 
 #----------------------------------------------------------------------
-# NOTE: These are methods for handling requests to change individual 
+# NOTE: These are methods for handling requests to change individual
 # items.
 # ---------------------------------------------------------------------
 RESOURCE_ATTRIBUTES_UPDATE_CONFIG = [
@@ -49,10 +50,24 @@ def make_resource_note_string(resource_obj):
     return note
 
 
+def set_hero_dimensions(resource_obj):
+    if str(resource_obj.resourcetype.uuid) != configs.OC_RESOURCE_HERO_UUID:
+        return resource_obj
+    size_dict = get_image_dimensions(f'https://{resource_obj.uri}')
+    if not size_dict:
+        return resource_obj
+    for size_key in ['width', 'height',]:
+        if not size_dict.get(size_key):
+            return resource_obj
+        resource_obj.meta_json[size_key] = size_dict.get(size_key)
+    return resource_obj
+
+
+
 def update_resource_objs(request_json):
     """Updates AllResource fields based on listed attributes in client request JSON"""
     errors = []
-    
+
     if not isinstance(request_json, list):
         errors.append('Request json must be a list of dictionaries to update')
         return [], errors
@@ -76,14 +91,14 @@ def update_resource_objs(request_json):
         man_obj = AllManifest.objects.filter(
             uuid=resource_obj.item.uuid
         ).first()
-    
+
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
-            k:item_update.get(k) 
-            for k in RESOURCE_ATTRIBUTES_UPDATE_ALLOWED 
+            k:item_update.get(k)
+            for k in RESOURCE_ATTRIBUTES_UPDATE_ALLOWED
             if item_update.get(k) is not None and str(getattr(resource_obj, k)) != str(item_update.get(k))
         }
-        
+
         if not len(update_dict):
             print('Nothing to update')
             continue
@@ -104,10 +119,13 @@ def update_resource_objs(request_json):
             attribute_edit_note = edit_note_dict.get(attr)
             if old_edited_obj and new_edited_obj and attribute_edit_note:
                 attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
-            
+
             if attribute_edit_note:
                 edits.append(attribute_edit_note)
             setattr(resource_obj, attr, value)
+
+        # Update the dimensions in the meta_json if a HERO image
+        resource_obj = set_hero_dimensions(resource_obj)
 
         try:
             resource_obj.save()
@@ -143,7 +161,7 @@ def update_resource_objs(request_json):
 def add_resource_objs(request_json, source_id=DEFAULT_SOURCE_ID):
     """Add AllResource and from a client request JSON"""
     errors = []
-    
+
     if not isinstance(request_json, list):
         errors.append('Request json must be a list of dictionaries to update')
         return [], errors
@@ -159,20 +177,20 @@ def add_resource_objs(request_json, source_id=DEFAULT_SOURCE_ID):
         if not man_obj:
             errors.append(f'Cannot find manifest object for resource {str(item_add)}')
             continue
-        
+
         resource_obj = None
         if item_add.get('resourcetype_id'):
             resource_obj = AllManifest.objects.filter(
                 uuid=item_add.get('resourcetype_id')
             ).first()
-        
+
         if not resource_obj:
             errors.append(f'Cannot find resource-type object for resource {str(item_add)}')
             continue
 
         # Update if the item_update has attributes that we allow to update.
         add_dict = {
-            k:item_add.get(k) 
+            k:item_add.get(k)
             for k in RESOURCE_ATTRIBUTES_UPDATE_ALLOWED
             if k != 'uuid' and item_add.get(k) is not None
         }
@@ -207,14 +225,14 @@ def add_resource_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             add_dict['meta_json'] = {}
 
         for attr, value in add_dict.items():
-    
+
             if not attr.endswith('_id'):
                 continue
-        
+
             if attr == 'source_id':
                 # Skip this, it's not meant to be a manifest object.
                 continue
-            
+
             # Get the label for the attribute that we're changing.
             ref_obj = AllManifest.objects.filter(uuid=value).first()
             if ref_obj:
@@ -224,12 +242,13 @@ def add_resource_objs(request_json, source_id=DEFAULT_SOURCE_ID):
 
         if len(errors):
             continue
-
         try:
             resource_obj = AllResource(**add_dict)
             resource_obj.uri = AllManifest().clean_uri(resource_obj.uri)
             resource_obj.uuid = resource_obj.primary_key_create_for_self()
             resource_obj.created = timezone.now()
+            # Update the dimensions in the meta_json if a HERO image
+            resource_obj = set_hero_dimensions(resource_obj)
             resource_obj.save()
             ok = True
         except Exception as e:
@@ -280,7 +299,7 @@ def delete_resource_objs(request_json):
         if not to_delete_res_obj:
             errors.append(f'Cannot find resource object for {uuid}')
             continue
-        
+
         # Get the item manifest object for this resource object. This
         # will be used for history tracking.
         man_obj = AllManifest.objects.filter(
@@ -306,5 +325,3 @@ def delete_resource_objs(request_json):
         deleted.append(item_delete)
 
     return deleted, errors
-
-
