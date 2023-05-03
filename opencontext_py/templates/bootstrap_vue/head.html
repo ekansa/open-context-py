@@ -63,12 +63,24 @@
     {%endif%}
     <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="//unpkg.com/vue2-leaflet"></script>
+
+    {% if load_index_static %}
+
+    {%else%}
     <script src="//cdn.jsdelivr.net/npm/heatmapjs"></script>
     <script src="//cdn.jsdelivr.net/npm/leaflet-heatmap"></script>
     <script src="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
 
     <script src="{{ BASE_URL }}/static/oc/js/mapping-rev/GoogleMutant.js"></script>
+    {%endif%}
 
+
+    {% if load_index_static %}
+    <!-- Only needed in the index -->
+    <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/project-mapping.js"></script>
+
+    {%else%}
+    <!-- Not needed for the index -->
     <!-- Load Vue-apexcharts.js later than apexcharts doesn't work 3.36.3 -->
     <script src="//unpkg.com/apexcharts@3.36.3/dist/apexcharts.min.js"></script>
     <script src="//unpkg.com/vue-apexcharts"></script>
@@ -81,11 +93,9 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script async defer src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    {%endif%}
 
     <!-- Load Open Context specific resources -->
-    {% if load_index_static %}
-    <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/project-mapping.js"></script>
-    {%endif%}
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/url-utilities.js"></script>
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/general-utilities.js"></script>
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/color-scales.js"></script>

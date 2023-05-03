@@ -11,13 +11,15 @@
             <div class="col col-sm-4 text-center" id="item_license_icon_div">
                 <a href="{{ item.dc_terms__license.0.id }}" target="_blank">
                     <img class="img-responsive"
+                        height="42"
+                        width="120"
                         id="item_license_icon"
                         src="{{ item.dc_terms__license.0.object_class_icon }}"
                         alt="Icon for {{ item.dc_terms__license.0.label }}" />
                 </a>
             </div>
             <div class="col col-sm-8" id="item_license_label_div">
-                <a href="{{ item.dc_terms__license.0.id }}" 
+                <a href="{{ item.dc_terms__license.0.id }}"
                    target="_blank">
                     {{ item.dc_terms__license.0.label }}
                 </a>
