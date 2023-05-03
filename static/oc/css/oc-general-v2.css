@@ -41,13 +41,12 @@ FOOTER
 	margin-left:-45px;
 }
 div.footer-cell {
-	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
 	padding: 2%;
 }
 div.footer-cell img {
-	max-height: 75px;
+	object-fit: contain;
 	margin-left: auto;
 	margin-right: auto;
 }
