@@ -14,7 +14,7 @@
 {% include '../projects-index/parts/projects_geo.html' %}
 
 
-<template id='proj-tab-field-proj-label'>
+<script type="text/x-template" id='proj-tab-field-proj-label'>
     <div>
         <b-img-lazy
             v-if="proj_item.media"
@@ -31,11 +31,11 @@
             </p>
         </div>
     </div>
-</template>
+</script>
 
 
 
-<template id="proj-search-typeahead">
+<script type="text/x-template" id="proj-search-typeahead">
 
     <div id="proj-fulltext">
         <oc-search-typeahead
@@ -45,11 +45,11 @@
         </oc-search-typeahead>
     </div>
 
-</template>
+</script>
 
 
 
-<template id="projects-tab-header-footer">
+<script type="text/x-template" id="projects-tab-header-footer">
     <b-row align-v="center" align-h="between">
         <b-col md="6">
             <h5 class="filter_heading_labels">
@@ -125,7 +125,7 @@
             <b-button-group>
         </b-col>
     </b-row>
-</template>
+</script>
 
 
 
