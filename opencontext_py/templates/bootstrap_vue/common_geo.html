@@ -4,7 +4,7 @@
 
 {% include './common_map_constants.html' %}
 
-<template id="map_color_ui">
+<script type="text/x-template" id="map_color_ui">
     <b-modal
         size="lg"
         scrollable
@@ -32,11 +32,11 @@
             </b-button>
           </template>
     </b-modal>
-</template>
+</script>
 
 
 
-<template id="map_legends">
+<script type="text/x-template" id="map_legends">
     <b-card v-if="legends"
         border-variant="secondary"
         header-border-variant="secondary"
@@ -150,11 +150,11 @@
             </b-list-group-item>
         </b-list-group>
     </b-card>
-</template>
+</script>
 
 
 
-<template id='common_map'>
+<script type="text/x-template" id='common_map'>
     <div>
         <l-map
             v-if="geo_json"
@@ -226,7 +226,7 @@
                 v-bind:legends="map_legends"></map-legends>
         </div>
     </div>
-</template>
+</script>
 
 
 <script type="text/javascript">
