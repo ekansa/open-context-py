@@ -1,8 +1,8 @@
 {% block suggest %}
 <!-- General code for full text search with suggest/autocomplete API integration-->
 
+<script type="text/x-template" id="oc-search-typeahead">
 
-<template id="oc-search-typeahead">
     <form
         :class="form_class"
         @submit="do_search_query"
@@ -43,10 +43,11 @@
         ></oc-search-modal>
         <small v-if="prior_text_query">New search terms above would replace <strong>[[ prior_text_query ]]</strong></small>
     </form>
-</template>
 
+</script>
 
-<template id="oc_search_modal">
+<script type="text/x-template" id="oc_search_modal">
+
     <b-modal
         size="md"
         ref="oc-main-fulltext-modal"
@@ -63,7 +64,8 @@
             </b-row>
         </b-alert>
     </b-modal>
-</template>
+
+</script>
 
 <script type="text/javascript">
 

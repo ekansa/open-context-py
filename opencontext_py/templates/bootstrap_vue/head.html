@@ -26,7 +26,6 @@
 
     <link rel="shortcut icon" href="{{ BASE_URL }}/static/oc/images/oc-favicon.ico" />
 
-
     <!-- Load jquery and bootstrap -->
     <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
@@ -42,11 +41,18 @@
     <!-- Autocomplete, search typeahead -->
     <script src="//unpkg.com/vue-bootstrap-typeahead@0.2.6/dist/VueBootstrapTypeahead.umd.min.js"></script>
 
+    {% if load_index_static %}
+    <script defer src="https://unpkg.com/vue-router@3.0.1/dist/vue-router.min.js"></script>
+
+    <!-- Load the following for BootstrapVueIcons support -->
+    <script defer src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
+    {%else%}
     <!-- Load a Vue router-->
     <script src="https://unpkg.com/vue-router@3.0.1/dist/vue-router.min.js"></script>
 
     <!-- Load the following for BootstrapVueIcons support -->
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
+    {%endif%}
 
     <script type="text/javascript">
         function gm_callback(args){
@@ -56,23 +62,9 @@
     </script>
 
     <!-- Load the leaflet libraries -->
-    {% if GOOGLE_MAPS == 'hide' %}
-    <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo"></script> -->
-    {%else%}
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo&callback=gm_callback"></script>
-    {%endif%}
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuhr3tCQOxbGxnOki11vuvDB86-sxjHwo&callback=gm_callback"></script>
     <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="//unpkg.com/vue2-leaflet"></script>
-
-    {% if load_index_static %}
-
-    {%else%}
-    <script src="//cdn.jsdelivr.net/npm/heatmapjs"></script>
-    <script src="//cdn.jsdelivr.net/npm/leaflet-heatmap"></script>
-    <script src="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
-
-    <script src="{{ BASE_URL }}/static/oc/js/mapping-rev/GoogleMutant.js"></script>
-    {%endif%}
 
 
     {% if load_index_static %}
@@ -80,6 +72,12 @@
     <script src="{{ BASE_URL }}/static/oc/js/bootstrap-vue-utils/project-mapping.js"></script>
 
     {%else%}
+
+    <script async defer src="//cdn.jsdelivr.net/npm/heatmapjs"></script>
+    <script async defer src="//cdn.jsdelivr.net/npm/leaflet-heatmap"></script>
+    <script src="//cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+
+    <script src="{{ BASE_URL }}/static/oc/js/mapping-rev/GoogleMutant.js"></script>
     <!-- Not needed for the index -->
     <!-- Load Vue-apexcharts.js later than apexcharts doesn't work 3.36.3 -->
     <script src="//unpkg.com/apexcharts@3.36.3/dist/apexcharts.min.js"></script>

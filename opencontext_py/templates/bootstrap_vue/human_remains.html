@@ -4,16 +4,16 @@
 
 
 
+<script type="text/x-template" id="human-remains-ok-button">
 
-<template id="human-remains-ok-button">
     <b-button @click="click_toggle"  variant="warning" size="sm">
         <span v-if="!human_remains_ok">OK Display</span>
         <span v-else>NO Display</span>
     </b-button>
-</template>
-    
 
-<template id="human-remains-results-alert">
+</script>
+
+<script type="text/x-template" id="human-remains-results-alert">
     <b-alert :id="'human_remains_alert_' + alert_type" :show="human_remains_flagged" variant="warning">
         <b-row align-v="center">
             <b-col>
@@ -33,7 +33,7 @@
                 </span>
             </b-col>
             <b-col cols='3'>
-                <human-remains-ok-button 
+                <human-remains-ok-button
                     v-bind:human_remains_ok="human_remains_ok"
                     @toggle_human_remains_ok="toggle_human_remains_ok($event)"
                 ></human-remains-ok-button>
@@ -41,7 +41,7 @@
         </b-row>
 
     </b-alert>
-</template>
+</script>
 
 
 
@@ -51,11 +51,11 @@
   const URL_CONSENT_TOGGLE_HUMAN_REM = '/utilities/human-remains-ok';
   const CLASSES_HUMAN_REMAINS = [
     {
-        ok_display: 'human_remains_thumb_allow_display', 
+        ok_display: 'human_remains_thumb_allow_display',
         no_display: 'human_remains_thumb_blur',
     },
     {
-        ok_display: 'human_remains_ok_display', 
+        ok_display: 'human_remains_ok_display',
         no_display: 'human_remains_blur',
     },
   ];
@@ -64,13 +64,13 @@
   {% if human_remains_ok %}
   // Initial state from the request session token.
   let HUMAN_REMAINS_OK = true;
-  
+
   {% else %}
 
   let HUMAN_REMAINS_OK = false;
 
   {% endif %}
-  
+
 
 
 var vc_human_remains_ok_button = Vue.component(
@@ -79,7 +79,7 @@ var vc_human_remains_ok_button = Vue.component(
         delimiters: ['[[', ']]'],
         template: '#human-remains-ok-button',
         props: [
-            'human_remains_ok', 
+            'human_remains_ok',
         ],
         data() {
             return {
@@ -88,7 +88,7 @@ var vc_human_remains_ok_button = Vue.component(
             }
         },
         computed: {
-            
+
         },
         methods: {
             click_toggle: function(){
@@ -101,9 +101,9 @@ var vc_human_remains_ok_button = Vue.component(
                         'Content-Type': 'application/json',
                     },
                 };
-                
+
                 fetch(
-                    (URL_CONSENT_TOGGLE_HUMAN_REM), 
+                    (URL_CONSENT_TOGGLE_HUMAN_REM),
                     requestOptions,
                 )
                 .then(this.loading = false)
@@ -121,7 +121,7 @@ var vc_human_remains_ok_button = Vue.component(
             },
         },
         components: {
-            
+
         }
     }
 );
@@ -145,7 +145,7 @@ var vc_human_remains_results_alert = Vue.component(
             }
         },
         computed: {
-            
+
         },
         methods: {
             toggle_human_remains_ok: function(human_remains_ok) {
