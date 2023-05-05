@@ -2,7 +2,7 @@
 
 {% load humanize %}
 
-<template id="search_exporter_selectable_dl_attribs">
+<script type="text/x-template" id="search_exporter_selectable_dl_attribs">
     <b-list-group-item v-if="show_attribs_exist">
         <b-row>
             <b-col cols="3">
@@ -46,10 +46,10 @@
             </b-col>
         </b-row>
     </b-list-group-item>
-</template>
+</script>
 
 
-<template id="search_exporter_ui">
+<script type="text/x-template" id="search_exporter_ui">
     <b-modal
         size="xl"
         scrollable
@@ -290,7 +290,7 @@
             </b-button>
           </template>
     </b-modal>
-</template>
+</script>
 
 
 <script type="text/javascript">

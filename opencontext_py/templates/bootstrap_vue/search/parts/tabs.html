@@ -1,6 +1,6 @@
 {% block search_tabs %}
 
-<template id="all-search-tabs-temp">
+<script type="text/x-template" id="all-search-tabs-temp">
   <div>
     <b-card no-body>
       <b-tabs card v-if="loading || !result || (result_count == 0)" :ref="'search-tabs'">
@@ -180,7 +180,7 @@
       </b-tabs>
     </b-card>
   </div>
-</template>
+</script>
 
 
 <script type="text/javascript">
