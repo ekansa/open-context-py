@@ -1,7 +1,7 @@
 {% block predicates_chart %}
 
 
-<template id="id-predicates-template">
+<script type="text/x-template" id="id-predicates-template">
   <div>
 
     <div :ref="'id-predicates-' + route_key_index">
@@ -46,14 +46,14 @@
               </b-button>
             </b-col>
           </b-row>
-    
+
         </div>
-          
+
       </div>
     </div>
 
   </div>
-</template>
+</script>
 
 
 
@@ -154,7 +154,7 @@
         this.fetch_oc_api();
       },
       watch: {
-        
+
       },
       methods: {
         fetch_oc_api: function(){
@@ -358,7 +358,7 @@
       }
     }
   );
-  
+
 </script>
 
 

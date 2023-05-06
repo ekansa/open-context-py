@@ -1,7 +1,7 @@
 {% block predicates_chart %}
 
 
-<template id="string-predicates-template">
+<script type="text/x-template" id="string-predicates-template">
   <div>
 
     <div :ref="'string-predicates-' + route_key_index">
@@ -31,13 +31,13 @@
           <div class="container-fluid" id="pred_string_search">
             <h4>Search Text within this Attribute</h4>
             <p>The free-text attribute <strong>[[ predicate_label ]]</strong> is used
-              in the description of <strong>[[ display_count ]]</strong> records. Type 
+              in the description of <strong>[[ display_count ]]</strong> records. Type
               a term to search text within this attribute using for form below:</p>
 
               <b-input-group>
                 <b-form-input
                   v-model="search_text"
-                  placeholder="Search within attribute" 
+                  placeholder="Search within attribute"
                   :type="'search'">
                 </b-form-input>
                 <b-input-group-append>
@@ -48,15 +48,15 @@
             </b-input-group>
 
           </div>
-          
-    
+
+
         </div>
-          
+
       </div>
     </div>
 
   </div>
-</template>
+</script>
 
 
 
@@ -118,7 +118,7 @@
         this.fetch_oc_api();
       },
       watch: {
-        
+
       },
       methods: {
         fetch_oc_api: function(){
@@ -168,11 +168,11 @@
         },
       },
       components: {
-        
+
       }
     }
   );
-  
+
 </script>
 
 

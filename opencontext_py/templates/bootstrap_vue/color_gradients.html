@@ -2,8 +2,8 @@
 
 {% load humanize %}
 
-<template id="color_gradient_ui">
-    
+<script type="text/x-template" id="color_gradient_ui">
+
     <b-list-group flush>
         <b-list-group-item>
             <b-row class="text-center" align-v="center">
@@ -26,7 +26,7 @@
                 <b-row align-v="center">
                     <b-col cols="1">
                         <b-form-radio
-                        name="color-radios" 
+                        name="color-radios"
                         :value="color_choice.key"></b-form-radio>
                     </b-col>
                     <b-col>
@@ -37,20 +37,20 @@
         </b-form-radio-group>
     </b-list-group>
 
-</template>
-    
+</script>
+
 
 <script type="text/javascript">
   // Import Vue2Leaflet components.
   const DEFAULT_COLOR_GRADIENT_KEY = 'oc';
-  
+
 
 var vc_color_gradient_ui = Vue.component(
     'color-gradient-ui',
     {
         delimiters: ['[[', ']]'],
         props: [
-            'selected_gradient_key', 
+            'selected_gradient_key',
         ],
         data() {
             return {
@@ -93,7 +93,7 @@ var vc_color_gradient_ui = Vue.component(
             },
         },
         components: {
-            
+
         }
     }
 );

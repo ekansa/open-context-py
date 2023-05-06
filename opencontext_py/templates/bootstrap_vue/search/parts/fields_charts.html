@@ -1,20 +1,20 @@
 {% load humanize %}
 
 
-<template id="fields-chart-template">
+<script type="text/x-template" id="fields-chart-template">
 
 <div class="card bg-light numeric_chart">
-    <div class="card-header"> 
+    <div class="card-header">
         <h5 class="filter_heading_labels">
             [[ chart_title ]]
         </h5>
     </div>
-        
+
     <div class="card-body small">
         <b-container fluid v-if="data_series">
             <apexchart
                 :id="'chart-' + chart_id"
-                width="100%" 
+                width="100%"
                 :type="chart_type"
                 :options="options"
                 :series="data_series">
@@ -41,7 +41,7 @@
                             <b-icon-filter-circle-fill></b-icon-filter-circle-fill>
                         </b-button>
                     </div>
-                    
+
                 </b-col>
             </b-row>
         </b-container>
@@ -50,13 +50,13 @@
             <p>Getting chart data...</p>
         </div>
     </div>
-        
+
 </div>
 
-</template>
+</script>
 
 
-<template id="fields-all-charts-template">
+<script type="text/x-template" id="fields-all-charts-template">
 
     <b-container fluid v-if="all_range_facets">
         <b-row v-for="(range_facet_obj, index) in all_range_facets">
@@ -70,17 +70,9 @@
             </b-cell>
         </b-row>
     </b-container>
-    
-</template>
 
+</script>
 
-
-
-
-<style type="text/css">
-
-
-</style>
 
 
 <script type="text/javascript">
@@ -275,11 +267,11 @@ var vc_fields_chart = Vue.component(
                 let sp_date = iso_datetime_str.split('T');
                 return sp_date[0];
             },
-            find_str_dif(str1, str2){ 
+            find_str_dif(str1, str2){
                 let diff= "";
                 str2.split('').forEach(function(val, i){
                     if (val != str1.charAt(i))
-                    diff += val ;         
+                    diff += val ;
                 });
                 return diff;
             },
@@ -390,13 +382,13 @@ var vc_fields_all_charts = Vue.component(
         },
         template: '#fields-all-charts-template',
         mounted() {
-            
+
         },
         computed: {
-            
+
         },
         methods: {
-            
+
         },
         components: {
             'fields-chart': vc_fields_chart,

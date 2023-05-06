@@ -1,7 +1,7 @@
 {% load humanize %}
 
 
-<template id='records-tab-field-label'>
+<script type="text/x-template" id='records-tab-field-label'>
     <div>
         <a v-if="field_item.href"
             :href="field_item.href"
@@ -13,10 +13,10 @@
             (Loading...)
         </span>
     </div>
-</template>
+</script>
 
 
-<template id='records-tab-field-proj-label'>
+<script type="text/x-template" id='records-tab-field-proj-label'>
     <div>
         [[ field_item.project ]]
         <a v-if="field_item.project_url"
@@ -29,11 +29,11 @@
             (Loading...)
         </span>
     </div>
-</template>
+</script>
 
 
 
-<template id='records-tab-field-descriptiveness'>
+<script type="text/x-template" id='records-tab-field-descriptiveness'>
     <div class="clearfix record-thumb-outer">
     <b-img-lazy
         v-if="field_item.media && (!field_item.human_remains_flag || human_remains_ok)"
@@ -77,11 +77,11 @@
         </span>
         </div>
     </div>
-</template>
+</script>
 
 
 
-<template id='records-tab-field-context'>
+<script type="text/x-template" id='records-tab-field-context'>
     <b-container fluid>
         <span>[[ field_item.context ]]</span>
         <dl v-if="field_item.snippet" class="result-snippet">
@@ -89,10 +89,10 @@
             <dd v-html="field_item.snippet"></dd>
         </dl>
     </b-container>
-</template>
+</script>
 
 
-<template id="records-tab-header-footer">
+<script type="text/x-template" id="records-tab-header-footer">
     <b-row align-v="center" align-h="between">
         <b-col md="6">
             <h5 class="filter_heading_labels">
@@ -168,9 +168,9 @@
             <b-button-group>
         </b-col>
     </b-row>
-</template>
+</script>
 
-<template id="records-tab-template">
+<script type="text/x-template" id="records-tab-template">
 
     <b-container fluid id="search-records-tab">
 
@@ -256,17 +256,10 @@
 
     </b-container>
 
-</template>
+</script>
 
 
 
-
-
-
-<style type="text/css">
-
-
-</style>
 
 
 <script type="text/javascript">

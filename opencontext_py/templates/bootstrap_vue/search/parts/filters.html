@@ -1,15 +1,15 @@
 {% load humanize %}
 
 
-<template id="filter-list-template">
+<script type="text/x-template" id="filter-list-template">
 
 <div class="card bg-light" id="search_filters">
-    <div class="card-header"> 
+    <div class="card-header">
         <h5 class="filter_heading_labels">
             Applied Filters
         </h5>
     </div>
-        
+
     <div class="card-body small">
         <div v-if="grouped_filters">
             <div v-if="grouped_filters.length">
@@ -29,13 +29,13 @@
             <p>Listing filters currently in use...</p>
         </div>
     </div>
-        
+
 </div>
 
-</template>
+</script>
 
 
-<template id="filter-item-template">
+<script type="text/x-template" id="filter-item-template">
 <div>
     <div class="row act-filter-type">
         <div class="col-12">
@@ -48,10 +48,10 @@
                 <b-icon-x-circle-fill></b-icon-x-circle-fill>
             </router-link>
         </div>
-        <div class="col-10 act-filter-val"> 
+        <div class="col-10 act-filter-val">
             <span v-for="(filter, index) in filter_group.filters">
                 <span v-if="index != 0">[[filter_group.path_delim]]</span>
-                <!-- 
+                <!--
                     <a :title="'Broaden to all: ' + filter.label" :href="filter['oc-api:broaden']">[[filter.label]]</a>
                 -->
 
@@ -63,7 +63,7 @@
         </div>
     </div>
 </div>
-</template>
+</script>
 
 
 <script type="text/javascript">

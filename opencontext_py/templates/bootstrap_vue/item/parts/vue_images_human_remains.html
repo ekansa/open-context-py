@@ -1,15 +1,15 @@
 {% load humanize %}
 
 
-<template id="human-remains-image">
+<script type="text/x-template" id="human-remains-image">
 
   <b-img
-    :src="image_uri" 
-    :class="act_class" 
+    :src="image_uri"
+    :class="act_class"
     :alt="alt_label"/>
-  
 
-</template>
+
+</script>
 
 
 
@@ -63,10 +63,10 @@ var vc_human_remains_image = Vue.component(
         }
       },
       methods: {
-         
+
       },
       components: {
-          
+
       }
   }
 );

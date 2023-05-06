@@ -1,7 +1,7 @@
 {% load humanize %}
 
 
-<template id="all-numeric-facets-template">
+<script type="text/x-template" id="all-numeric-facets-template">
     <div>
         <div v-if="facets_numeric_groups_opts">
             <div class="row" v-if="all_range_facets">
@@ -35,7 +35,7 @@
             </div>
         </div>
     </div>
-</template>
+</script>
 
 
 <script type="text/javascript">
@@ -64,10 +64,10 @@ var vc_all_numeric_facets = Vue.component(
             facets_date_groups_opts: null,
             result_id: null,
             route_key_index: 0,
-            frontend_state_obj: {}, 
+            frontend_state_obj: {},
         },
         methods: {
-            
+
         },
         components: {
             'all-facets': vc_all_facets,

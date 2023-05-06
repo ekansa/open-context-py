@@ -1,7 +1,7 @@
 {% load humanize %}
 
 
-<template id="all-facets-template">
+<script type="text/x-template" id="all-facets-template">
     <div :id="facets_group_dtype_id + '_all'">
         <h4 v-if="options_title">[[ options_title ]]</h4>
         <div v-if="facets_dtypes_groups_opts">
@@ -22,9 +22,9 @@
             <p>Gathering filtering options...</p>
         </div>
     </div>
-</template>
+</script>
 
-<template id="facets-xfacet-dtypes-groups-opts-template">
+<script type="text/x-template" id="facets-xfacet-dtypes-groups-opts-template">
 <div>
     <facets-xfacet-xdtype-groups-opts
         v-for="(xfacet_xdtype_groups_opts, index) in xfacet_dtypes_groups_opts.dtypes_groups_opts"
@@ -38,9 +38,9 @@
         v-bind:index="index">
     </facets-xfacet-xdtype-groups-opts>
 </div>
-</template>
+</script>
 
-<template id="facets-xfacet-xdtype-groups-opts-template">
+<script type="text/x-template" id="facets-xfacet-xdtype-groups-opts-template">
 <div class="panel card">
     <div class="card-header">
         <b-row align-v="center">
@@ -58,12 +58,12 @@
                     title="Toggle multi-select options"
                 ></b-icon>
             </b-col>
-            <b-col v-if="multi_opt_url" class="text-right" cols="1"> 
+            <b-col v-if="multi_opt_url" class="text-right" cols="1">
                 <router-link
-                    :to="multi_opt_url" 
-                    :id="multi_opt_url" 
+                    :to="multi_opt_url"
+                    :id="multi_opt_url"
                     :title="'Filter using the selected ' + selected_opts.length + ' options'">
-                    <span 
+                    <span
                         class="material-icons">
                         manage_search
                     </span>
@@ -88,9 +88,9 @@
         </ul>
     </b-collapse>
 </div>
-</template>
+</script>
 
-<template id="facets-xfacet-xdtype-xgroup-opts-template">
+<script type="text/x-template" id="facets-xfacet-xdtype-xgroup-opts-template">
     <div>
         <li v-if="xfacet_xdtype_xgroup_opts.label" class="list-group-item list-group-item-info f-sub-group">
             <small><strong>[[xfacet_xdtype_xgroup_opts.label]]</strong></small>
@@ -102,7 +102,7 @@
             v-bind:option="xfacet_xdtype_xgroup_xopt"
             v-bind:index="index">
         </facets-xfacet-xdtype-xgroup-xopt>
-        <b-form-checkbox-group 
+        <b-form-checkbox-group
             v-if="multi_opts"
             @change="on_selected" v-model="selected_opts"
             >
@@ -115,29 +115,29 @@
             </facets-xfacet-xdtype-xgroup-xopt-multi>
         </b-form-checkbox-group>
     </div>
-</template>
+</script>
 
 
 
-<template id="facets-xfacet-xdtype-xgroup-xopt-multi-template">
+<script type="text/x-template" id="facets-xfacet-xdtype-xgroup-xopt-multi-template">
     <b-list-group-item v-bind:class="get_class()">
         <b-form-checkbox :name="radio_name" :value="option.id">[[ option.label ]] <small v-if="option.alt_label" class="text-muted">[[ option.alt_label ]]</small></b-form-checkbox>
-        <a class="text-right" v-if="option.define_uri" :href="option.define_uri" target="_blank" title="Link about this option"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>  
+        <a class="text-right" v-if="option.define_uri" :href="option.define_uri" target="_blank" title="Link about this option"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
         <span class="badge badge-secondary badge-pill">[[option.count]]</span>
     </b-list-group-item>
-</template>
+</script>
 
 
-<template id="facets-xfacet-xdtype-xgroup-xopt-template">
+<script type="text/x-template" id="facets-xfacet-xdtype-xgroup-xopt-template">
     <li v-bind:class="get_class()">
         <span>
             <router-link :to="option.id" :id="option.dom_id" :class="'facet_link f-op-l' + option.dom_id" :title="'Filter by: ' + option.label" >[[option.label]]</router-link>
             <small v-if="option.alt_label" class="text-left text-muted">[[ option.alt_label ]]</small>
-            <a v-if="option.define_uri" :href="option.define_uri" target="_blank" title="Link about this option"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>   
+            <a v-if="option.define_uri" :href="option.define_uri" target="_blank" title="Link about this option"><b-icon-info-circle-fill></b-icon-info-circle-fill></a>
         </span>
         <span class="badge badge-secondary badge-pill">[[option.count]]</span>
     </li>
-</template>
+</script>
 
 
 
@@ -167,7 +167,7 @@ var vc_xfacet_xdtype_xgroup_xopt_multi = Vue.component(
             },
         },
         components: {
-            
+
         }
     }
 );
@@ -190,7 +190,7 @@ var vc_xfacet_xdtype_xgroup_xopt = Vue.component(
             },
         },
         components: {
-            
+
         }
     }
 );
@@ -202,7 +202,7 @@ var vc_xfacet_xdtype_xgroup_opts = Vue.component(
         template: '#facets-xfacet-xdtype-xgroup-opts-template',
         props: ['facet_id', 'facet_label', 'facet_type', 'facet_start_open', 'dom_key', 'xfacet_xdtype_xgroup_opts', 'index', 'multi_opts'],
         data() {
-            return {     
+            return {
                 facet_id: null,
                 facet_label: null,
                 facet_start_open: null,
@@ -238,7 +238,7 @@ var vc_xfacet_xdtype_groups_opts = Vue.component(
         template: '#facets-xfacet-xdtype-groups-opts-template',
         props: ['facet_id', 'facet_label', 'facet_type', 'facet_start_open', 'dom_key', 'xfacet_xdtype_groups_opts'],
         data() {
-            return {     
+            return {
                 facet_id: null,
                 facet_label: null,
                 facet_type: null,
@@ -352,7 +352,7 @@ var vc_xfacet_xdtype_groups_opts = Vue.component(
                     console.log(url_parts);
                     return url_parts;
                 }
-               
+
                 // First validate that the non-context URL is OK
                 // for processing for multi-select.
                 if(url_obj.hash.length < 1){
@@ -522,7 +522,7 @@ function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
         if(f_opt['rdfs:isDefinedBy'].startsWith('http')){
             f_opt.define_uri = f_opt['rdfs:isDefinedBy'];
         }
-    }   
+    }
     if (typeof(f_opt.id) === 'undefined'){
         console.log('No id in ' + f_opt);
         return null;
@@ -545,8 +545,8 @@ function prepare_option(prefix, hash_prefix, i, f_opt, frontend_state_obj={},){
 }
 
 function prepare_options_list(
-    dom_id_prefix, 
-    hash_prefix, 
+    dom_id_prefix,
+    hash_prefix,
     raw_options_list,
     frontend_state_obj={},){
     let prepare_options = [];
@@ -554,10 +554,10 @@ function prepare_options_list(
     for(let f_opt of raw_options_list){
         i +=1;
         f_opt = prepare_option(
-            dom_id_prefix, 
-            hash_prefix, 
-            i, 
-            f_opt,  
+            dom_id_prefix,
+            hash_prefix,
+            i,
+            f_opt,
             frontend_state_obj=frontend_state_obj
         );
         if(!f_opt){
@@ -569,8 +569,8 @@ function prepare_options_list(
 }
 
 function prep_id_media_options(
-    dom_id_prefix, 
-    hash_prefix, 
+    dom_id_prefix,
+    hash_prefix,
     raw_options_list,
     frontend_state_obj={},
 ){
@@ -588,9 +588,9 @@ function prep_id_media_options(
             i +=1;
             var opt_uri = i;
             f_opt = prepare_option(
-                dom_id_prefix, 
-                hash_prefix, 
-                i, 
+                dom_id_prefix,
+                hash_prefix,
+                i,
                 f_opt,
                 frontend_state_obj=frontend_state_obj,
             );
@@ -617,7 +617,7 @@ function prep_id_media_options(
                 continue;
             }
             if (group_config.uris.length == 0){
-                // No prefixes configured, so put it into the catch-all 
+                // No prefixes configured, so put it into the catch-all
                 act_group.options.push(f_opt);
                 all_grouped_uris.push(opt_uri);
                 continue;
@@ -648,7 +648,7 @@ function prep_id_media_options(
 }
 
 function prepare_facets_dtypes_groups_opts_by_data_types(
-    raw_result, 
+    raw_result,
     allowed_data_types,
     frontend_state_obj={},
 ){
@@ -660,7 +660,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
     if(frontend_state.hasOwnProperty("aq")){
         aq_from_hash = frontend_state.aq;
     }
-    
+
     let first_dtypes_groups_opts = []; // output associated with a hash ID (the last option selected)
     let facets_dtypes_groups_opts = []; // main output.
     if (!('oc-api:has-facets' in result)){
@@ -687,7 +687,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
                 'type': f_field.type,
                 'groups_opts': null,
             };
-        
+
             if(allowed_data_types.indexOf(opts_conf.data_type) < 0){
                 // The data-type here is not what we want to handle
                 continue;
@@ -728,7 +728,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
             f_field['dtypes_groups_opts'].push(act_dtype_groups_opts);
             f_field[opts_conf.list_key] = 'moved';
         }
-        
+
         if((aq_from_hash != null) && f_field.id.endsWith(aq_from_hash)){
             f_field.start_open = true;
             first_dtypes_groups_opts.push(f_field);
@@ -744,7 +744,7 @@ function prepare_facets_dtypes_groups_opts_by_data_types(
 
 function prepare_facets_dtypes_groups_opts(result, frontend_state_obj={},){
     return prepare_facets_dtypes_groups_opts_by_data_types(
-        result, 
+        result,
         ['id', 'media'],
         frontend_state_obj=frontend_state_obj,
     )
