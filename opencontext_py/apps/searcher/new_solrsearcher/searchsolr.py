@@ -64,6 +64,8 @@ class SearchSolr():
             add_projects_facet = True
         if request_dict.get('prop'):
             add_projects_facet = True
+        if request_dict.get('q'):
+            add_projects_facet = True
         if request_dict.get('project-map'):
             add_projects_facet = True
         if len(request_dict) > 2:
