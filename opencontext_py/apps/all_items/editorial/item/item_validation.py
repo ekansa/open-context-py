@@ -16,7 +16,9 @@ from opencontext_py.apps.all_items import models_utils
 
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
+from opencontext_py.apps.all_items.editorial.item import edit_configs
 
+from opencontext_py.apps.etl.importer.utilities import validate_transform_data_type_value
 
 from opencontext_py.libs.models import (
     make_model_object_json_safe_dict
@@ -77,7 +79,7 @@ def suggest_label(check_label, required_prefix=None, filter_args=None, exclude_u
     if last_number is None and req_prefix_last_num is None:
         # No number part, so we can't suggest a similar numeric value
         return None
-    
+
     query_prefix = label_prefix
     if required_prefix and (not label_prefix or len(required_prefix) > len(label_prefix)):
         query_prefix = required_prefix
@@ -96,7 +98,7 @@ def suggest_label(check_label, required_prefix=None, filter_args=None, exclude_u
         m_qs = m_qs.exclude(uuid=exclude_uuid)
     if tested:
         m_qs = m_qs.exclude(label__in=tested)
-    
+
     if check_label:
         m_exact = m_qs.filter(label=check_label).first()
         if not m_exact:
@@ -109,7 +111,7 @@ def suggest_label(check_label, required_prefix=None, filter_args=None, exclude_u
         # The check label is OK, because we don't have any
         # manifest items with that label.
         return check_label
-    
+
     # Note that we've already checked on some labels,
     # This prevents us for checking on them over and over.
     tested.append(check_label)
@@ -131,7 +133,7 @@ def suggest_label(check_label, required_prefix=None, filter_args=None, exclude_u
     _, query_last_number = get_prefix_last_number_part(m.label)
     if query_last_number is not None:
         query_last_number = int(float(query_last_number))
-    
+
         if new_last_number is None or query_last_number > new_last_number:
             new_last_number = query_last_number + 1
 
@@ -145,8 +147,8 @@ def suggest_label(check_label, required_prefix=None, filter_args=None, exclude_u
     return suggest_label(
         new_check_label,
         required_prefix=required_prefix,
-        filter_args=filter_args, 
-        exclude_uuid=exclude_uuid, 
+        filter_args=filter_args,
+        exclude_uuid=exclude_uuid,
         tested=tested
     )
 
@@ -200,10 +202,10 @@ def validate_label(check_label, filter_args=None, exclude_uuid=None):
     report['suggested'] = None
     if not report['is_valid']:
         report['suggested'] = suggest_label(
-            check_label, 
-            required_prefix=None, 
-            filter_args=filter_args, 
-            exclude_uuid=exclude_uuid, 
+            check_label,
+            required_prefix=None,
+            filter_args=filter_args,
+            exclude_uuid=exclude_uuid,
         )
 
     # Now check for warnings.
@@ -236,14 +238,14 @@ def validate_project_short_id(raw_short_id, exclude_uuid=None):
             'valid_conflict_examples': [],
             'suggested': models_utils.suggest_project_short_id(),
         }
-    
+
     m_qs = AllManifest.objects.filter(
         item_type='projects',
         meta_json__short_id=short_id,
     )
     if exclude_uuid:
         m_qs = m_qs.exclude(uuid=exclude_uuid)
-    
+
     report = report_id_conflicts(m_qs)
     report['short_id'] = short_id
     if not report['is_valid']:
@@ -356,6 +358,41 @@ def validate_uri(raw_uri, filter_args=None, exclude_uuid=None):
     return report
 
 
+def validate_meta_json_key_val(key, val):
+    errors = []
+    report = {
+        'is_valid': False,
+        'key': key,
+        'val': val,
+        'errors': errors,
+    }
+    if val in [None, '', 'null']:
+        # A null value is OK, it is essentially a deletion
+        report['is_valid'] = True
+        return report
+    for _, meta_configs in edit_configs.ITEM_TYPE_META_JSON_CONFIGS.items():
+        for meta_config in meta_configs:
+            if key != meta_config.get('key'):
+                continue
+            if isinstance(meta_config.get('options'), list):
+                for opt in meta_config.get('options'):
+                    if val != opt.get('value'):
+                        continue
+                    report['is_valid'] = True
+                    return report
+            elif not meta_config.get('data_type'):
+                continue
+            else:
+                validated_value = validate_transform_data_type_value(
+                    raw_str_value=str(val),
+                    data_type=meta_config.get('data_type'),
+                )
+                if validated_value is not None:
+                    report['is_valid'] = True
+                    return report
+    return report
+
+
 def validate_manifest_dict(manifest_dict):
     """Validates certain fields of a manifest dict"""
     validation_checks = [
@@ -378,14 +415,14 @@ def validate_manifest_dict(manifest_dict):
         filter_args = None
         if check == 'label':
             filter_args = {
-                attrib:manifest_dict.get(attrib) 
+                attrib:manifest_dict.get(attrib)
                 for attrib in LABEL_UNIQUENESS_ATTRIBUTES
                 if manifest_dict.get(attrib)
             }
         # Get the validation result
         result = check_func(
-            check_value, 
-            filter_args=filter_args, 
+            check_value,
+            filter_args=filter_args,
             exclude_uuid=manifest_dict.get('uuid')
         )
         if result.get('is_valid'):
@@ -400,32 +437,33 @@ def validate_manifest_dict(manifest_dict):
 
 
 
+
 def api_validate_manifest_attributes(request_dict, value_delim=editorial_api.MULTI_VALUE_DELIM):
     """Validates manifest attributes for a request dict"""
     if request_dict.get('label'):
         check_label = request_dict.get('label')
         filter_args = {
-            attrib:request_dict.get(attrib) 
+            attrib:request_dict.get(attrib)
             for attrib in LABEL_UNIQUENESS_ATTRIBUTES
             if request_dict.get(attrib)
         }
         return validate_label(
-            check_label, 
-            filter_args=filter_args, 
+            check_label,
+            filter_args=filter_args,
             exclude_uuid=request_dict.get('uuid')
         )
     if request_dict.get('label_prefix'):
         label_prefix = request_dict.get('label_prefix')
         filter_args = {
-            attrib:request_dict.get(attrib) 
+            attrib:request_dict.get(attrib)
             for attrib in LABEL_UNIQUENESS_ATTRIBUTES
             if request_dict.get(attrib)
-        }        
+        }
         return {
             'suggested': suggest_label(
                 check_label=None,
                 required_prefix=label_prefix,
-                filter_args=filter_args, 
+                filter_args=filter_args,
                 exclude_uuid=request_dict.get('uuid')
             ),
         }
@@ -435,31 +473,39 @@ def api_validate_manifest_attributes(request_dict, value_delim=editorial_api.MUL
             check_short_id,
             exclude_uuid=request_dict.get('uuid')
         )
-    
+
     if request_dict.get('slug'):
         slug = request_dict.get('slug')
         return validate_slug(
             slug,
             exclude_uuid=request_dict.get('uuid')
         )
-    
+
     if request_dict.get('new_uuid'):
         uuid = request_dict.get('new_uuid')
         return validate_uuid(
             uuid,
             exclude_uuid=None,
         )
-    
+
     if request_dict.get('item_key'):
         item_key = request_dict.get('item_key')
         return validate_item_key(
             item_key,
             exclude_uuid=request_dict.get('uuid')
         )
-    
+
     if request_dict.get('uri'):
         uri = request_dict.get('uri')
         return validate_uri(
             uri,
             exclude_uuid=request_dict.get('uuid')
+        )
+
+    if request_dict.get('meta_json_key'):
+        meta_json_key = request_dict.get('meta_json_key')
+        meta_json_value = request_dict.get('meta_json_value', '')
+        return validate_meta_json_key_val(
+            meta_json_key,
+            meta_json_value,
         )

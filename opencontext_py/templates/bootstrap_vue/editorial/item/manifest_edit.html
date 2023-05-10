@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to edit an item's identifier objects
 -->
 
@@ -51,7 +51,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     variant="danger">
     <div v-if="val_obj.valid_conflict_examples">
       <small v-if="val_obj.valid_conflict_examples.length > 0">
-      Used by: <a 
+      Used by: <a
         :href="'/editorial/item-edit/' + val_obj.valid_conflict_examples[0].uuid"
         target="_blank">
         [[val_obj.valid_conflict_examples[0].label]] ([[val_obj.valid_conflict_examples[0].uuid]])
@@ -66,8 +66,8 @@ NOTE: Templates and view components to edit an item's identifier objects
 
 <template id="meta-json-form-item">
   <b-row class="
-    meta_field_row 
-    border 
+    meta_field_row
+    border
     border-info
     border-top-0
     border-right-0
@@ -110,7 +110,7 @@ NOTE: Templates and view components to edit an item's identifier objects
     </b-col>
 
     <b-col cols="4">
-      
+
     </b-col>
   </b-row>
 </template>
@@ -134,12 +134,12 @@ NOTE: Templates and view components to edit an item's identifier objects
 
 <template id="edit-manifest-obj">
   <div>
-    
+
     <b-row v-if="add_result">
       <b-col cols="12">
         <b-alert show>
           <h5>Successfully created new item <strong>[[ add_result.label ]]</strong> ([[add_result.item_type]])</h5>
-          <p>Edit new item: <a 
+          <p>Edit new item: <a
             :href="'/editorial/item-edit/' + add_result.uuid"
             target="_blank">
             [[add_result.label]] ([[add_result.uuid]])
@@ -170,19 +170,19 @@ NOTE: Templates and view components to edit an item's identifier objects
         </b-alert>
       </b-col>
     </b-row>
-    
+
     <b-row class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
       border-left-0">
       <b-col cols="9">
         <label for="input-label"><strong>Label</strong></label>
-        <b-form-input 
-          @change="check_value_change" 
-          size="sm" 
+        <b-form-input
+          @change="check_value_change"
+          size="sm"
           id="input-label"
           :state="is_attribute_valid('label')"
           v-model="man_obj.label">[[ man_obj.label ]]</b-form-input>
@@ -191,8 +191,8 @@ NOTE: Templates and view components to edit an item's identifier objects
             v-bind:val_obj="validations.label"
           ></alert-invalid>
         </div>
-        <small>A label is the primary name used by people to identify an item. 
-          This differs from an item's UUID and URI, both of which are universally 
+        <small>A label is the primary name used by people to identify an item.
+          This differs from an item's UUID and URI, both of which are universally
           unique identifiers used by software. A label is not necessarily unique.
         </small>
       </b-col>
@@ -208,7 +208,7 @@ NOTE: Templates and view components to edit an item's identifier objects
           @click="add_item"
           variant="primary">Create <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
         </b-button>
-        
+
         <b-button
           v-if="!add_new & is_value_changed"
           sm
@@ -224,7 +224,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
     <b-row class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
@@ -232,10 +232,10 @@ NOTE: Templates and view components to edit an item's identifier objects
 
       <b-col v-if="add_new & item_type_config.edit_uuid">
         <label for="input-uuid"><strong>UUID</strong></label>
-        <b-form-input 
+        <b-form-input
           @change="check_value_change"
           size="sm"
-          id="input-uuid" 
+          id="input-uuid"
           :state="is_attribute_valid('uuid')"
           v-model="man_obj.uuid">[[ man_obj.uuid ]]</b-form-input>
         <div v-if="validations.uuid">
@@ -250,9 +250,9 @@ NOTE: Templates and view components to edit an item's identifier objects
 
       <b-col v-if="item_type_config.edit_slug">
         <label for="input-slug"><strong>Slug</strong></label>
-        <b-form-input 
-          @change="check_value_change" 
-          size="sm" 
+        <b-form-input
+          @change="check_value_change"
+          size="sm"
           id="input-slug"
           :state="is_attribute_valid('slug')"
           v-model="man_obj.slug">[[ man_obj.slug ]]</b-form-input>
@@ -261,16 +261,16 @@ NOTE: Templates and view components to edit an item's identifier objects
             v-bind:val_obj="validations.slug"
           ></alert-invalid>
         </div>
-        <small>This is a secondary identifier for an item, intended to make readable URLs. 
+        <small>This is a secondary identifier for an item, intended to make readable URLs.
           It must be valid and unique without repeated use in Open Context.
           </small>
       </b-col>
-      
+
       <b-col v-if="item_type_config.edit_item_key">
         <label for="input-item-key"><strong>Item Key</strong></label>
-        <b-form-input 
-          @change="check_value_change" 
-          size="sm" 
+        <b-form-input
+          @change="check_value_change"
+          size="sm"
           id="input-item-key"
           :state="is_attribute_valid('item_key')"
           v-model="man_obj.item_key">[[ man_obj.item_key ]]</b-form-input>
@@ -280,28 +280,28 @@ NOTE: Templates and view components to edit an item's identifier objects
           ></alert-invalid>
         </div>
         <small>This is an abbreviated identifier for an item, that provides a convenient short
-          way of identifying an entity in JSON-LD representations. For example, 
+          way of identifying an entity in JSON-LD representations. For example,
           <code>dc-terms:creator</code> is used as an abbreviated identifier of the full
-          URL <code>http://purl.org/dc/terms/creator</code>. It must be valid and unique 
+          URL <code>http://purl.org/dc/terms/creator</code>. It must be valid and unique
           without repeated use in Open Context.
         </small>
       </b-col>
 
     </b-row>
-    
+
 
     <b-row v-if="add_new & item_type_config.edit_uri" class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
       border-left-0">
       <b-col cols="9">
         <label for="input-uri"><strong>URI</strong></label>
-        <b-form-input 
-          @change="check_value_change" 
-          size="sm" 
+        <b-form-input
+          @change="check_value_change"
+          size="sm"
           id="input-uri"
           :state="is_attribute_valid('uri')"
           v-model="man_obj.uri">[[ man_obj.uri ]]</b-form-input>
@@ -312,7 +312,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         </div>
         <small>This is an item's primary Web identifier (URI). A URI is used to uniquely reference
           Linked Data resources published outside of Open Context. For these outside
-          Linked Data, Open Context derives a (non-random, deterministic) corresponding UUID 
+          Linked Data, Open Context derives a (non-random, deterministic) corresponding UUID
           as an internal database identifier. Open Context will always create the same UUID
           for a given URI.
         </small>
@@ -325,7 +325,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
     <b-row v-if="item_type_config.data_type_options" class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
@@ -351,7 +351,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
     <b-row v-if="item_type_config.item_class_lookup" class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
@@ -362,8 +362,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         </label><br/>
         <b-form-input
           @change="check_value_change"
-          size="sm" 
-          id="input-class-id" 
+          size="sm"
+          id="input-class-id"
           v-model="man_obj.item_class_id">[[ man_obj.item_class_id ]]</b-form-input>
         <small>This is an item's primary classification within an item-type.
         </small>
@@ -386,7 +386,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
     <b-row v-if="item_type_config.context_lookup" class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
@@ -397,8 +397,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         </label><br/>
         <b-form-input
           @change="check_value_change"
-          size="sm" 
-          id="input-context-id" 
+          size="sm"
+          id="input-context-id"
           v-model="man_obj.context_id">[[ man_obj.context_id ]]</b-form-input>
 
         <small v-if="man_obj.item_type == 'subjects'">
@@ -440,7 +440,7 @@ NOTE: Templates and view components to edit an item's identifier objects
 
     <b-row v-if="item_type_config.project_lookup" class="
       man_obj_field_row
-      border 
+      border
       border-secondary
       border-top-0
       border-right-0
@@ -451,8 +451,8 @@ NOTE: Templates and view components to edit an item's identifier objects
         </label><br/>
         <b-form-input
           @change="check_value_change"
-          size="sm" 
-          id="input-project-id" 
+          size="sm"
+          id="input-project-id"
           v-model="man_obj.project_id">[[ man_obj.project_id ]]</b-form-input>
 
         <small>
@@ -498,7 +498,7 @@ NOTE: Templates and view components to edit an item's identifier objects
         &nbsp;
       </b-col>
       <b-col cols="3">
-        
+
         <b-spinner v-if="updating" label="Updating..."></b-spinner>
 
         <div v-if="!updating">
@@ -510,7 +510,7 @@ NOTE: Templates and view components to edit an item's identifier objects
             @click="add_item"
             variant="primary">Create <b-icon-plus-circle-fill></b-icon-plus-circle-fill>
           </b-button>
-          
+
           <b-button
             v-if="!add_new & is_value_changed"
             sm
@@ -534,7 +534,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       size="lg"
       scrollable
       ref="add-item-modal"
-      id="add-item-modal" 
+      id="add-item-modal"
       title="Add Item"
       @shown="on_shown"
     >
@@ -573,7 +573,7 @@ NOTE: Templates and view components to edit an item's identifier objects
           </b-col>
         </b-row>
         <div v-if="item_type_config">
-          
+
           <edit-manifest-obj
             @update_metadata="update_metadata($event)"
             v-bind:add_new="true"
@@ -602,7 +602,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       size="lg"
       scrollable
       ref="delete-item-modal"
-      id="delete-item-modal" 
+      id="delete-item-modal"
       :title="modal_title"
       @shown="on_shown"
     >
@@ -612,10 +612,10 @@ NOTE: Templates and view components to edit an item's identifier objects
             <b-col cols="12">
               <h5>Delete <strong>[[ man_obj.label ]]</strong> ([[ man_obj.item_type ]])</h5>
               <p>
-                <small>Open Context organizes data by linking records together. 
+                <small>Open Context organizes data by linking records together.
                   This means deleting a given record can impact other related records. For example,
-                  if you delete a descriptive attribute predicate like "Material" used to describe 1000 
-                  other records, then those 1000 other records will be impacted by losing 
+                  if you delete a descriptive attribute predicate like "Material" used to describe 1000
+                  other records, then those 1000 other records will be impacted by losing
                   "Material" descriptions.</small>
               </p>
               <p>
@@ -635,14 +635,14 @@ NOTE: Templates and view components to edit an item's identifier objects
                 @click="open_confirm_delete"
                 variant="danger"
                 title="Delete assertion"
-                class="text-center confirm_delete_button">[[ delete_label ]] 
+                class="text-center confirm_delete_button">[[ delete_label ]]
                 <b-icon-arrows-angle-contract v-if="keep_obj"></b-icon-arrows-angle-contract><b-icon-x-circle v-else></b-icon-x-circle>
               </b-button>
 
               <b-overlay no-wrap z-index="100" :show="show_confirm_delete" @hidden="on_hide_confirm_delete">
                 <template #overlay>
                   <b-spinner v-if="updating" label="Deleting..."></b-spinner>
-                  <b-card 
+                  <b-card
                     v-else
                     ref="dialog"
                     bg-variant="light"
@@ -654,8 +654,8 @@ NOTE: Templates and view components to edit an item's identifier objects
                     class="text-center p-3"
                   >
                     <p>
-                      <strong 
-                        v-if="keep_obj" 
+                      <strong
+                        v-if="keep_obj"
                         :id="'delete-confirm-label-' + man_obj.uuid">Confirm Merge</strong>
                       <strong v-else :id="'delete-confirm-label-' + man_obj.uuid">Confirm deletion</strong>
                     </p>
@@ -666,9 +666,9 @@ NOTE: Templates and view components to edit an item's identifier objects
                       <b-button variant="outline-secondary" class="mr-3" @click="on_hide_confirm_delete">
                         Cancel
                       </b-button>
-                      <b-button 
-                        variant="outline-danger" 
-                        @click="confirm_delete">[[ delete_label ]] 
+                      <b-button
+                        variant="outline-danger"
+                        @click="confirm_delete">[[ delete_label ]]
                         <b-icon-arrows-angle-contract v-if="keep_obj"></b-icon-arrows-angle-contract><b-icon-x-circle v-else></b-icon-x-circle>
                       </b-button>
                     </div>
@@ -694,7 +694,7 @@ NOTE: Templates and view components to edit an item's identifier objects
                   <strong>PRIOR</strong> to deleting [[ man_obj.label ]].</small></p>
                 <p><small class="text-muted">
                   This will combine all the data associated with "[[ man_obj.label ]]"
-                  (such as descriptive attributes and linking relations) with the data 
+                  (such as descriptive attributes and linking relations) with the data
                   associated with another item. After Open Context combines these
                   associated data, this record "[[ man_obj.label ]]" ([[ man_obj.uuid ]])
                   will get deleted. Use the search interface below to select another item to
@@ -707,7 +707,7 @@ NOTE: Templates and view components to edit an item's identifier objects
               <b-col cols="5">
                 <div v-if="keep_obj">
                   Merge [[ man_obj.label ]] into <b-icon-box-arrow-in-right></b-icon-box-arrow-in-right>
-                  <a 
+                  <a
                     :href="'/editorial/item-edit/' + keep_obj.uuid"
                     target="_blank">
                     [[keep_obj.label]] ([[keep_obj.uuid]])
@@ -734,22 +734,22 @@ NOTE: Templates and view components to edit an item's identifier objects
             </b-row>
           </b-alert>
         </b-container>
-        
+
         <b-container fluid v-if="show_result">
 
           <b-row v-if="delete_result">
-      
+
             <b-col cols="12">
               <b-alert show>
                 <h5>Successfully deleted item <strong>[[ man_obj.label ]]</strong> ([[man_obj.item_type]])</h5>
                 <p v-if="keep_obj">
-                  This item was merged into: <a 
+                  This item was merged into: <a
                     :href="'/editorial/item-edit/' + keep_obj.uuid"
                     target="_blank">
                     [[ keep_obj.label ]] ([[ keep_obj.uuid ]])
                   </a>
                 </p>
-                <p v-else>Go to item context: <a 
+                <p v-else>Go to item context: <a
                   :href="'/editorial/item-edit/' + man_obj.context_id"
                   target="_blank">
                   [[ man_obj.context__label ]] ([[ man_obj.context_id ]])
@@ -757,7 +757,7 @@ NOTE: Templates and view components to edit an item's identifier objects
               </b-alert>
             </b-col>
           </b-row>
-      
+
           <b-row v-if="errors">
             <b-col cols="12">
               <b-alert show variant="danger">
@@ -857,7 +857,7 @@ var vc_meta_json_form_item = Vue.component(
       this.set_original_meta_json();
     },
     computed: {
-      
+
     },
     methods: {
       set_original_meta_json: function (){
@@ -889,19 +889,21 @@ var vc_meta_json_form_item = Vue.component(
           },
         };
         fetch(
-          ('/editorial/item-manifest-validation?' + new URLSearchParams(params)), 
+          ('/editorial/item-manifest-validation?' + new URLSearchParams(params)),
           requestOptions,
         )
         .then(this.loading = false)
         .then(response => response.json())
         .then(json => {
+          console.log('API vc_meta_json_form_item validation response');
+          console.log(json);
           this.validation = json;
           let output = {
             input_value: this.meta_json[key],
             key: this.key_config.key,
             is_value_changed: this.is_value_changed,
             meta_json: this.meta_json,
-            validation: this.validation,
+            validation: json,
           };
           this.$emit('get_value_change', output);
         });
@@ -964,9 +966,19 @@ var vc_meta_json_form_item = Vue.component(
               const error = (data && data.message) || response.status;
               return Promise.reject(error);
             }
+            console.log('API vc_meta_json_form_item html validation response');
+            console.log(data);
             this.is_valid_html = data.ok;
             this.errors = data.errors;
-            this.$emit('get_validation_errors', this.errors);
+            // this.$emit('get_validation_errors', this.errors);
+            let output = {
+              input_value: input_value,
+              key: this.key_config.key,
+              is_value_changed: this.is_value_changed,
+              meta_json: this.meta_json,
+              validation: {is_valid: data.ok},
+            };
+            this.$emit('get_value_change', output);
           })
           .catch(error => {
             this.errorMessage = error;
@@ -979,7 +991,7 @@ var vc_meta_json_form_item = Vue.component(
       'meta-json-form-item': vc_meta_json_form_item,
     },
   }
-); 
+);
 
 
 var vc_meta_json_form = Vue.component(
@@ -1001,7 +1013,7 @@ var vc_meta_json_form = Vue.component(
       this.set_empty_keys();
     },
     computed: {
-      
+
     },
     methods: {
       set_empty_keys(){
@@ -1045,7 +1057,7 @@ var vc_meta_json_form = Vue.component(
       'alert-invalid': vc_alert_invalid,
     },
   }
-); 
+);
 
 
 var vc_edit_manifest_obj = Vue.component(
@@ -1125,6 +1137,7 @@ var vc_edit_manifest_obj = Vue.component(
         }
         this.update_ok = true;
         for(let val_key in this.validations){
+
           if(this.is_attribute_valid(val_key) != null && this.is_attribute_valid(val_key) === false){
             this.update_ok = false;
           }
@@ -1188,12 +1201,14 @@ var vc_edit_manifest_obj = Vue.component(
           },
         };
         fetch(
-          ('/editorial/item-manifest-validation?' + new URLSearchParams(params)), 
+          ('/editorial/item-manifest-validation?' + new URLSearchParams(params)),
           requestOptions,
         )
         .then(this.loading = false)
         .then(response => response.json())
         .then(json => {
+          console.log('API vc_edit_manifest_obj validation response');
+          console.log(json);
           this.cache_validation(params, json);
           this.validations[key] = json;
           this.check_add_ok();
@@ -1539,7 +1554,7 @@ var vc_add_item = Vue.component(
         this.man_obj.data_type = this.item_type_config.data_type;
         this.man_obj.project_id = EDITING_PROJECT.uuid;
         this.man_obj.project__label = EDITING_PROJECT.label;
-        if(this.item_type_config.project_id 
+        if(this.item_type_config.project_id
            && !this.item_type_config.pref_editing_project_id){
           // Use config project id because we don't prefer the editing project.
           this.man_obj.project_id = this.item_type_config.project_id;
@@ -1570,7 +1585,7 @@ var vc_add_item = Vue.component(
       'edit-manifest-obj': vc_edit_manifest_obj,
     },
   }
-); 
+);
 
 
 var vc_delete_item = Vue.component(
@@ -1739,5 +1754,5 @@ var vc_delete_item = Vue.component(
       'lookup-list': vs_look_up_list,
     },
   }
-); 
+);
 </script>
