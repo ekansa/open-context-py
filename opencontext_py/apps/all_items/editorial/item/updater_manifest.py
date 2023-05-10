@@ -38,7 +38,7 @@ from opencontext_py.libs.models import (
 from opencontext_py.apps.indexer import index_new_schema as new_ind
 
 #----------------------------------------------------------------------
-# NOTE: These are methods for handling requests to change individual 
+# NOTE: These are methods for handling requests to change individual
 # items.
 # ---------------------------------------------------------------------
 MANIFEST_ATTRIBUTES_UPDATE_CONFIG = [
@@ -74,7 +74,7 @@ URI_ITEM_TYPES_ADD_OK_ATTRIBUTES = [
 # The source id to use for adding new resource if not provided
 DEFAULT_SOURCE_ID = 'ui-added'
 
-# Make a list of default Manifest objects for which we prohibit 
+# Make a list of default Manifest objects for which we prohibit
 # edits.
 EDIT_EXCLUDE_UUIDS = [m.get('uuid') for m in DEFAULT_MANIFESTS if m.get('uuid')]
 
@@ -84,7 +84,7 @@ def recursive_subjects_path_update(man_obj):
     if man_obj.item_type != 'subjects':
         # Skip out. not a subjects item.
         return None
-    
+
     man_children = AllManifest.objects.filter(
         context=man_obj
     ).exclude(uuid=man_obj.uuid)
@@ -137,7 +137,7 @@ def update_subjects_context_containment_assertion(man_obj):
 def update_manifest_objs(request_json, request=None):
     """Updates AllManifest fields based on listed attributes in client request JSON"""
     errors = []
-    
+
     if not isinstance(request_json, list):
         errors.append('Request json must be a list of dictionaries to update')
         return [], errors
@@ -155,31 +155,31 @@ def update_manifest_objs(request_json, request=None):
         if not man_obj:
             errors.append(f'Cannot find manifest object for {uuid}')
             continue
-    
+
         _, ok_edit = permissions.get_request_user_permissions(
-            request, 
-            man_obj, 
+            request,
+            man_obj,
             null_request_ok=True
         )
         if not ok_edit:
             errors.append(f'Need permission to edit manifest object {man_obj}')
             continue
-    
+
         if uuid in EDIT_EXCLUDE_UUIDS:
             errors.append(f'Edits prohibited on required item {man_obj}')
             continue
 
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
-            k:item_update.get(k) 
-            for k in MANIFEST_ATTRIBUTES_UPDATE_ALLOWED  
+            k:item_update.get(k)
+            for k in MANIFEST_ATTRIBUTES_UPDATE_ALLOWED
             if item_update.get(k) is not None and str(getattr(man_obj, k)) != str(item_update.get(k))
         }
-        
+
         if not len(update_dict):
             print('Nothing to update')
             continue
-        
+
         # Do some update validations.
         if update_dict.get('label'):
             update_dict['label'] = str(update_dict['label']).strip()
@@ -195,7 +195,7 @@ def update_manifest_objs(request_json, request=None):
             if not report.get('is_valid'):
                 errors.append(f'Label "{update_dict["label"]}" invalid.')
                 continue
-        
+
         if update_dict.get('slug'):
             update_dict['slug'] = str(update_dict['slug']).strip()
             report = item_validation.validate_slug(
@@ -205,7 +205,7 @@ def update_manifest_objs(request_json, request=None):
             if not report.get('is_valid'):
                 errors.append(f'Slug "{update_dict["slug"]}" invalid.')
                 continue
-        
+
         if update_dict.get('item_key'):
             update_dict['item_key'] = str(update_dict['item_key']).strip()
             report = item_validation.validate_item_key(
@@ -215,7 +215,7 @@ def update_manifest_objs(request_json, request=None):
             if not report.get('is_valid'):
                 errors.append(f'Item key "{update_dict["item_key"]}" invalid.')
                 continue
-        
+
         if update_dict.get('uri'):
             update_dict['uri'] = str(update_dict['uri']).strip()
             report = item_validation.validate_uri(
@@ -225,7 +225,7 @@ def update_manifest_objs(request_json, request=None):
             if not report.get('is_valid'):
                 errors.append(f'URI "{update_dict["uri"]}" invalid.')
                 continue
-            
+
         # Keep a copy of the old state before saving it.
         prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=man_obj)
 
@@ -249,7 +249,7 @@ def update_manifest_objs(request_json, request=None):
             attribute_edit_note = edit_note_dict.get(attr)
             if old_edited_obj and new_edited_obj and attribute_edit_note:
                 attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
-            
+
             if attr == 'meta_json' and isinstance(value, dict):
                 for key, new_key_value in value.items():
                     old_key_value = man_obj.meta_json.get(key)
@@ -288,7 +288,7 @@ def update_manifest_objs(request_json, request=None):
             # We updated a label for a subjects item, so now update the path for all the
             # item children recursively.
             recursive_subjects_path_update(man_obj)
-        
+
         if update_dict.get('context_id') and man_obj.item_type == 'subjects':
             # We updated the context for a subjects item, so now update the path for all the
             # item children recursively.
@@ -304,7 +304,7 @@ def update_manifest_objs(request_json, request=None):
                     models_dict=prior_to_edit_model_dict,
                     item_obj=old_contain
                 )
-        
+
         edit_note = "; ".join(edits)
 
         history_obj = updater_general.record_edit_history(
@@ -324,7 +324,7 @@ def get_item_type_req_attribs_dict():
     """Gets a dict keyed by item_type for attributes required to add manifest obj"""
     item_type_req_attribs = {
         'tables': TABLES_ADD_EDIT_CONFIG.get(
-            'add_required_attributes', 
+            'add_required_attributes',
             []
         ),
     }
@@ -332,7 +332,7 @@ def get_item_type_req_attribs_dict():
         for i_type_config in group.get('item_types', []):
             item_type = i_type_config.get('item_type')
             item_type_req_attribs[item_type] = i_type_config.get(
-                'add_required_attributes', 
+                'add_required_attributes',
                 []
             )
     return item_type_req_attribs
@@ -358,7 +358,7 @@ def get_item_type_ok_attribs_dict():
 def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
     """Adds AllManifest objects from attributes given in client request JSON"""
     errors = []
-    
+
     if not isinstance(request_json, list):
         errors.append('Request json must be a list of dictionaries to add')
         return [], errors
@@ -366,11 +366,11 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
     # This makes a dict keyed by item_type for attributes we REQUIRE
     # to create a new manifest item.
     item_type_req_attribs = get_item_type_req_attribs_dict()
-    
+
     # This makes a dict keyed by item_type for attributes we ALLOW
     # to create a new manifest item.
     item_type_ok_attribs = get_item_type_ok_attribs_dict()
-        
+
     added = []
     for item_add in request_json:
         item_type = item_add.get('item_type')
@@ -393,7 +393,7 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             edited_obj = AllManifest.objects.filter(uuid=item_add.get('context_id')).first()
         else:
             edited_obj = AllManifest.objects.filter(uuid=item_add.get('project_id')).first()
-        
+
         if not edited_obj:
             errors.append(f'Missing project or context to add into: {str(item_add)}')
             continue
@@ -402,7 +402,7 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
         if not ok_attributes:
             errors.append(f'Allowed add config missing for: {str(item_type)}')
             continue
-        
+
         # Make an add dictionary limited to attributes allowed for adding
         # for this item type
         add_dict = {k:item_add.get(k) for k in ok_attributes if item_add.get(k)}
@@ -417,7 +417,7 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
         if not valid_ok:
             errors.append(f'Attribute validation errors: {str(valid_errors)}')
             continue
-        
+
         # NOTE: We will want to save a table export CSV data to cloud storage
         # before we go on to make the item.
         full_cloud_obj = None
@@ -428,22 +428,30 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             # it will be valid (if set).
             export_id = item_add.get('export_id')
             uuid, full_cloud_obj = cloud_utilities.cloud_store_csv_from_cached_export(
-                export_id=export_id, 
+                export_id=export_id,
                 uuid=add_dict.get('uuid'),
             )
             if not uuid or not full_cloud_obj:
                 errors.append(f'Cloud storage failure for full csv: {export_id}')
+                if not uuid:
+                    errors.append(f'Missing uuid')
+                if not full_cloud_obj:
+                    errors.append(f'Missing full_cloud_obj')
                 continue
 
             # Make sure the uuid is synced so the preview has the correct key / object name
             add_dict['uuid'] = uuid
             uuid, preview_cloud_obj = cloud_utilities.cloud_store_csv_from_cached_export(
-                export_id=export_id, 
+                export_id=export_id,
                 uuid=add_dict.get('uuid'),
                 preview_rows=cloud_utilities.DEFAULT_PREVIEW_ROW_SIZE,
             )
             if not uuid or not preview_cloud_obj:
                 errors.append(f'Cloud storage failure for preview csv: {export_id}')
+                if not uuid:
+                    errors.append(f'Missing uuid')
+                if not full_cloud_obj:
+                    errors.append(f'Missing preview_cloud_obj')
                 continue
 
         # Check to make sure we can de-reference identified items.
@@ -459,10 +467,10 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
                 continue
             error = f'Cannot find {attr} object {value}'
             errors.append(error)
-        
+
         if len(errors):
             continue
-        
+
         print(f'add dict is: {str(add_dict)}')
 
         try:
@@ -484,8 +492,8 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             # We succeeded in making a table and have a cloud_obj
             # so, time to add some related resources.
             tables_metadata.add_table_metadata_and_resources(
-                man_obj, 
-                export_id, 
+                man_obj,
+                export_id,
                 full_cloud_obj=full_cloud_obj,
                 preview_cloud_obj=preview_cloud_obj,
             )
@@ -502,8 +510,8 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
             prior_to_edit_model_dict={},
             after_edit_model_dict=after_edit_model_dict,
         )
-        
-        # Make an added dict with the manifest item. 
+
+        # Make an added dict with the manifest item.
         final_added = make_model_object_json_safe_dict(man_obj)
         final_added['history_id'] = str(history_obj.uuid)
         added.append(final_added)
@@ -534,13 +542,13 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, note=None, d
     if context_recursive and len(context_qs):
         for item_in_context in context_qs:
             deleted, errors = delete_manifest_obj(
-                to_delete_man_obj=item_in_context, 
+                to_delete_man_obj=item_in_context,
                 context_recursive=context_recursive,
                 note=note,
-                deleted=deleted, 
+                deleted=deleted,
                 errors=errors
             )
-    
+
     if len(errors):
         # Stop if there was a problem in deleting child items.
         return deleted, errors
@@ -603,7 +611,7 @@ def delete_manifest_obj(to_delete_man_obj, context_recursive=False, note=None, d
         # item.
         total_objects += len(qs)
         prior_to_edit_model_dict = updater_general.add_queryset_objs_to_models_dict(
-            prior_to_edit_model_dict, 
+            prior_to_edit_model_dict,
             qs
         )
         # Delete all the items in these query sets.
@@ -662,10 +670,10 @@ def delete_manifest_objs(request_json):
             errors.append(f'Edits prohibited on required item {man_obj}')
             continue
         deleted, errors = delete_manifest_obj(
-            to_delete_man_obj=to_delete_man_obj, 
-            context_recursive=item_delete.get('context_recursive', False), 
+            to_delete_man_obj=to_delete_man_obj,
+            context_recursive=item_delete.get('context_recursive', False),
             note=note,
-            deleted=deleted, 
+            deleted=deleted,
             errors=errors,
         )
     return deleted, errors
@@ -692,14 +700,14 @@ def get_rank(keep_man_obj, legacy_obj, model):
 
 
 def merge_manifest_objs(
-    keep_man_obj, 
-    to_delete_man_obj, 
-    note=None, 
-    merges=None, 
-    errors=None, 
+    keep_man_obj,
+    to_delete_man_obj,
+    note=None,
+    merges=None,
+    errors=None,
     warnings=None
 ):
-    """Merges manifest objects. 
+    """Merges manifest objects.
 
     :param AllManifest keep_man_obj: The manifest object that will be
         retained.
@@ -727,11 +735,11 @@ def merge_manifest_objs(
     if keep_man_obj.item_type != to_delete_man_obj.item_type:
         errors.append('Cannot merge, mismatched item types.')
         return errors
-    
+
     if keep_man_obj.data_type != to_delete_man_obj.data_type:
         errors.append('Cannot merge, mismatched data types.')
         return errors
-    
+
     exclude_keep_attribs = {
         AllManifest: 'uuid',
         AllAssertion: 'subject_id',
@@ -740,7 +748,7 @@ def merge_manifest_objs(
     related_models_attribs = [
         (
             AllManifest,
-            True, 
+            True,
             [
                 'publisher',
                 'project',
@@ -750,7 +758,7 @@ def merge_manifest_objs(
         ),
         (
             AllSpaceTime,
-            False, 
+            False,
             [
                 'publisher',
                 'project',
@@ -775,7 +783,7 @@ def merge_manifest_objs(
         ),
         (
             AllResource,
-            False, 
+            False,
             [
                 'project',
                 'item',
@@ -785,7 +793,7 @@ def merge_manifest_objs(
         ),
         (
             AllIdentifier,
-            False, 
+            False,
             ['item',],
         ),
         (
@@ -820,7 +828,7 @@ def merge_manifest_objs(
             total_objects += len_objects
             # Record the objects in this query set before we make updates.
             prior_to_edit_model_dict = updater_general.add_queryset_objs_to_models_dict(
-                prior_to_edit_model_dict, 
+                prior_to_edit_model_dict,
                 qs
             )
             updated_objs = []
@@ -862,7 +870,7 @@ def merge_manifest_objs(
                 updated_objs.append(new_obj)
 
             after_edit_model_dict = updater_general.add_queryset_objs_to_models_dict(
-                after_edit_model_dict, 
+                after_edit_model_dict,
                 updated_objs
             )
 
@@ -874,9 +882,9 @@ def merge_manifest_objs(
 
     # Now delete the to_delete_man_obj
     _, del_errors = delete_manifest_obj(
-        to_delete_man_obj=to_delete_man_obj, 
+        to_delete_man_obj=to_delete_man_obj,
         context_recursive=False,
-        note=note, 
+        note=note,
     )
     errors += del_errors
 
@@ -929,11 +937,11 @@ def api_merge_manifest_objs(request_json):
             errors.append(f'Edits prohibited on required item {to_delete_man_obj}')
             continue
         merges, errors, warnings = merge_manifest_objs(
-            keep_man_obj=keep_man_obj, 
+            keep_man_obj=keep_man_obj,
             to_delete_man_obj=to_delete_man_obj,
             note=note,
-            merges=merges, 
-            errors=errors, 
+            merges=merges,
+            errors=errors,
             warnings=warnings,
         )
     return merges, errors, warnings

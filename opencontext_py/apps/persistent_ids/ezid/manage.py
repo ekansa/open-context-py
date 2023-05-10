@@ -45,7 +45,6 @@ m_qs = AllManifest.objects.filter(
 id_objs = []
 for m_obj in m_qs:
     ezid_m = manage.EZIDmanage(do_test=False)
-    ezid_m.uri_replace = ('opencontext.org', 'staging.opencontext.org')
     id_obj = ezid_m.make_save_ark_by_uuid(uuid=m_obj.uuid)
     id_objs.append(id_obj)
 
