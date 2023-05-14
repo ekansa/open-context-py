@@ -76,12 +76,6 @@
 
 
 <div id="json-ld-caveat" style="margin-top:20px;">
-    <h4>Notes about GeoJSON, JSON, and JSON-LD</h4>
-
-    <p>In general, the GeoJSON, JSON, and JSON-LD responses from Open Context are all exactly the same. However, the JSON-LD standard currently has some constraints that make it unsuitable for expressing deeply nested lists of coordinates as required for representing non-point geospatial features. If you specify a JSON-LD response (as opposed to a plain JSON or GeoJSON response), only point geospatial features will be returned by Open Context. This will help keep the JSON-LD response valid, but it will not express richer geospatial data for polygon, multipolygon or line features.</p>
-</div>
-
-<div id="json-ld-caveat" style="margin-top:20px;">
     <h4>Other Linked Data Representations</h4>
 
     <p>Open Context provides preliminary / experimental support for other RDF (linked data) representations via content negotiation or by appending extensions to the URLs of item records. These now include:</p>
@@ -90,4 +84,24 @@
         <li><samp>Accept: application/rdf+xml</samp>, or extension: <samp>.rdf</samp></li>
         <li><samp>Accept: text/turtle</samp>, or extension: <samp>.ttl</samp></li>
     </ul>
+</div>
+
+
+<div id="json-ld-caveat" style="margin-top:20px;">
+    <h4>Permissions, Request Headers, and Example</h4>
+
+    <p>
+        Web bots (crawlers, spiders) constantly make requests to Open Context. Some of these bots serve malicious purposes.
+        To avoid getting overwhelmed by bots, Open Context has fairly strict controls to intercept suspicious requests.
+    </p>
+
+    <p>
+        Open Context will often block API requests unless you specifically add an allowed <code>User-Agent</code> to the
+        HTTP header of your request. A good user agent would be: <code>'User-Agent': 'oc-api-client'</code>. Some
+        example Python code that includes this <code>User-Agent</code> in making requests to Open Context's APIs can
+        be found in this repository: <a title="Link to Python code for Open Context API"
+        href="https://github.com/ekansa/open-context-jupyter/blob/release/opencontext/api.py">
+        https://github.com/ekansa/open-context-jupyter/blob/release/opencontext/api.py</a>.
+    </p>
+
 </div>
