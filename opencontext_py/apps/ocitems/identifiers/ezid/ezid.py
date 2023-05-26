@@ -110,7 +110,7 @@ resp = ezid.mint_identifier(url, meta, 'ark')
         metadata = LastUpdatedOrderedDict()
         for anvl_line in anvl.decode("UTF-8").splitlines():
             if ':' in anvl_line:
-                line_ex = anvl_line.split(':')
+                line_ex = anvl_line.split(':', maxsplit=1)
                 if len(line_ex) > 1:
                     esc_key = line_ex[0].strip()
                     esc_value = line_ex[1].strip()
