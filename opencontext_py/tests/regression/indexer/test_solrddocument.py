@@ -1,6 +1,8 @@
 import pytest
 import logging
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+
+from opencontext_py.apps.indexer import solrdocument_new_schema
+from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
 
 logger = logging.getLogger("tests-regression-logger")
 
@@ -10,7 +12,7 @@ def do_slug_id_checks(checks, sd_obj):
     """Checks to see if a slug identified value is in a solr_field."""
     if getattr(sd_obj, "do_legacy_id_fq"):
         # Only check the fields ending in _fq if we're doing
-        # legacy fields with the ending of "_fq" 
+        # legacy fields with the ending of "_fq"
         for slug, solr_field in checks:
             solr_field += '_fq'
             assert solr_field in sd_obj.fields
@@ -21,7 +23,7 @@ def do_slug_id_checks(checks, sd_obj):
         if not solr_field in sd_obj.fields:
             continue
         slug_part_found = False
-        slug_part = slug + SolrDocument.SOLR_VALUE_DELIM
+        slug_part = slug + solrdocument_new_schema.SOLR_VALUE_DELIM
         for solr_field_val in sd_obj.fields[solr_field]:
             if solr_field_val.startswith(slug_part):
                 slug_part_found = True
@@ -61,7 +63,7 @@ def test_subjects_bone():
 def test_subjects_coin():
     """Tests solr_document creation on an example coin subjects item."""
     uuid = 'BB35B081-FD20-4339-67F4-00DB99079338'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
@@ -84,7 +86,7 @@ def test_subjects_coin():
 def test_predicates():
     """Tests solr_document creation on an example predicates item."""
     uuid = '04909421_C28E-46AF-98FA-10F888B64A4D'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
@@ -103,7 +105,7 @@ def test_predicates():
 def test_media_human_flag():
     """Tests solr_document creation on an example media item with human remains flaging."""
     uuid = 'F675E155-81C9-4641-41AA-85A28DC44D90'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
@@ -118,21 +120,21 @@ def test_media_human_flag():
         ('1_domuztepe', 'obj_all___context_id', ),
         ('oc_gen_cat_human_bone', 'rel__obj_all___oc_gen_subjects___pred_id', ),
     ]
-    do_slug_id_checks(checks, sd_obj)    
+    do_slug_id_checks(checks, sd_obj)
 
 
 @pytest.mark.django_db
 def test_documents():
     """Tests solr_document creation on an example documents item."""
     uuid = 'e4676e00-0b9f-40c7-9cb1-606965445056'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
     sd_obj.make_solr_doc()
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'documents'
-    assert (sd_obj.fields['slug_type_uri_label'] 
+    assert (sd_obj.fields['slug_type_uri_label']
         == '24_jn_ii_1972_05_011_134_tesoro_18_northern_extensio___id___/documents/e4676e00-0b9f-40c7-9cb1-606965445056___JN II (1972-05-01):1-134; Tesoro 18 - Northern Extension - Pottery'
     )
     assert sd_obj.fields['image_media_count'] > 10
@@ -149,7 +151,7 @@ def test_documents():
 def test_projects():
     """Tests solr_document creation on an example projects item."""
     uuid = '3F6DCD13-A476-488E-ED10-47D25513FCB2'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
@@ -163,7 +165,7 @@ def test_projects():
     assert 'https://doi.org/10.6078/M7B56GNS' in sd_obj.fields['persistent_uri']
     assert 'https://doi.org/10.6078/M7B56GNS' in sd_obj.fields.get('object_uri')
     checks = [
-        ('42_pyla_koutsopetria_archaeological_project_i_pedestrian', 
+        ('42_pyla_koutsopetria_archaeological_project_i_pedestrian',
         'obj_all___project_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
@@ -173,7 +175,7 @@ def test_projects():
 def test_projects_with_sub_projects():
     """Tests solr_document creation on an example projects item that has sub-projects."""
     uuid = '416A274C-CF88-4471-3E31-93DB825E9E4A'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
@@ -186,7 +188,7 @@ def test_projects_with_sub_projects():
     assert 'dc_terms_subject___pred_id' in sd_obj.fields
     assert 'https://doi.org/10.6078/M7N877Q0' in sd_obj.fields['persistent_uri']
     checks = [
-        ('52_coastal_state_site_data_for_sea_level_rise_modeling', 
+        ('52_coastal_state_site_data_for_sea_level_rise_modeling',
         'obj_all___dc_terms_isreferencedby___pred_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
@@ -196,7 +198,7 @@ def test_projects_with_sub_projects():
 def test_projects_is_sub_project():
     """Tests solr_document creation on an example projects item that has sub-projects."""
     uuid = '0cea2f4a-84cb-4083-8c66-5191628abe67'
-    sd_obj = SolrDocument(uuid)
+    sd_obj = SolrDocumentNS(uuid)
     if not sd_obj.oc_item:
         # Skip this test, this item is not in the DB
         return None
@@ -206,9 +208,9 @@ def test_projects_is_sub_project():
     assert not 'obj_all___context_id_fq' in sd_obj.fields
     assert not 'obj_all___context_id' in sd_obj.fields
     checks = [
-        ('52_digital_index_of_north_american_archaeology_dinaa', 
+        ('52_digital_index_of_north_american_archaeology_dinaa',
         'root___project_id', ),
-        ('52_digital_index_of_north_american_archaeology_dinaa', 
+        ('52_digital_index_of_north_american_archaeology_dinaa',
         'obj_all___project_id', ),
     ]
     do_slug_id_checks(checks, sd_obj)
@@ -228,7 +230,7 @@ def test_random_items(random_sample_items):
             'Test {}/{}: project_uuid="{}", item_type="{}", class_uri="{}", uuid="{}"'.format(
                i, num_tests, project_uuid, item_type, class_uri, uuid)
         )
-        sd_obj = SolrDocument(uuid)
+        sd_obj = SolrDocumentNS(uuid)
         sd_obj.make_solr_doc()
         logger.info('Number of solr fields made: {}'.format(len(sd_obj.fields)))
         assert sd_obj.fields['uuid'] == uuid

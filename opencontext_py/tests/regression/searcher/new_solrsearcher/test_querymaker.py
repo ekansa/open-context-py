@@ -1,8 +1,7 @@
 import pytest
 import logging
 
-from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
-
+from opencontext_py.apps.indexer import solrdocument_new_schema
 from opencontext_py.apps.searcher.new_solrsearcher import querymaker
 
 logger = logging.getLogger("tests-regression-logger")
@@ -18,7 +17,7 @@ TESTS_SPATIAL_CONTEXTS = [
         None,
         {
            'fq':[],
-           'facet.field':[SolrDocument.ROOT_CONTEXT_SOLR],
+           'facet.field':[solrdocument_new_schema.ROOT_CONTEXT_SOLR],
         },
     ),
     (
@@ -63,7 +62,7 @@ TESTS_SPATIAL_CONTEXTS = [
            'facet.field':['california___context_id'],
         },
     ),
-    
+
     # Test case where Foo Bar are parts of context paths that do
     # not exist
     (
@@ -73,7 +72,7 @@ TESTS_SPATIAL_CONTEXTS = [
            'facet.field':['california___context_id'],
         },
     ),
-    
+
     # Test case where Foo and Bar are parts of context paths that do
     # not exist
     (
@@ -90,12 +89,12 @@ TESTS_SPATIAL_CONTEXTS = [
            'facet.field':['california___context_id', 'florida___context_id',],
         },
     ),
-    
+
     # The following test case highlights how the solr query uses slugs
     # like "24-poggio-civitate" and "24-civitate-a" as identifiers.
     # Translanding a context path string into a solr query requires
     # use of the database to look up the corresponding slugs assigned
-    # to the spatial context (subjects) entities being queried. 
+    # to the spatial context (subjects) entities being queried.
     (
         'Italy/Poggio+Civitate/Civitate+A',
         {
@@ -197,7 +196,7 @@ TESTS_PREDICATES = TESTS_NULLS + [
         }
     ),
     (
-        # NOTE: '24-textile-relatedrocchetto' is a hierarchic type 
+        # NOTE: '24-textile-relatedrocchetto' is a hierarchic type
         # (child level)
         '24-object-type---24-textile-related---24-textile-relatedrocchetto',
         {
@@ -206,7 +205,7 @@ TESTS_PREDICATES = TESTS_NULLS + [
         }
     ),
     (
-        # NOTE: '24-textile-relatedspindle-whorl' is a hierarchic type 
+        # NOTE: '24-textile-relatedspindle-whorl' is a hierarchic type
         # (child level), but the parent is not in the path.
         '24-object-type---24-textile-relatedspindle-whorl',
         {
@@ -253,7 +252,7 @@ TESTS_PREDICATES = TESTS_NULLS + [
     (
         '35-sd---35-glcstandard-measurement',
         {
-            'fq': ['((root___pred_id:35_sd___*) ' 
+            'fq': ['((root___pred_id:35_sd___*) '
                    + 'AND (35_glc___pred_id:35_glcstandard_measurement___*))',
             ],
             # NOTE: We don't expect a facet field for 35-glcstandard-measurement,
@@ -305,9 +304,9 @@ TESTS_PREDICATES = TESTS_NULLS + [
     (
         'biol-term-hastaxonomy---eol-p-7687',
         {
-            # NOTE: This is a linked-data predicate, with the entity 
+            # NOTE: This is a linked-data predicate, with the entity
             # eol-p-7687 as a child of entity eol-p-7678
-            'fq': ['((ld___pred_id:biol_term_hastaxonomy___*) ' 
+            'fq': ['((ld___pred_id:biol_term_hastaxonomy___*) '
                    + 'AND (eol_p_7678___biol_term_hastaxonomy___pred_id:eol_p_7687___*) '
                    + 'AND (obj_all___biol_term_hastaxonomy___pred_id:eol_p_7687___*))',
             ],
@@ -375,8 +374,8 @@ def test_get_projects_query_dict():
     for raw_projects_path, exp_dict in TESTS_PROJECTS:
         query_dict = querymaker.get_general_hierarchic_paths_query_dict(
             raw_projects_path,
-            root_field=SolrDocument.ROOT_PROJECT_SOLR,
-            field_suffix=SolrDocument.FIELD_SUFFIX_PROJECT,
+            root_field=solrdocument_new_schema.ROOT_PROJECT_SOLR,
+            field_suffix=solrdocument_new_schema.FIELD_SUFFIX_PROJECT,
         )
         if query_dict is None:
             # Case where we don't have a dict response.
@@ -397,8 +396,8 @@ def test_get_predicates_query_dict():
     for raw_prop_path, exp_dict in TESTS_PREDICATES:
         query_dict = querymaker.get_general_hierarchic_paths_query_dict(
             raw_prop_path,
-            root_field=SolrDocument.ROOT_PREDICATE_SOLR,
-            field_suffix=SolrDocument.FIELD_SUFFIX_PREDICATE
+            root_field=solrdocument_new_schema.ROOT_PREDICATE_SOLR,
+            field_suffix=solrdocument_new_schema.FIELD_SUFFIX_PREDICATE
         )
         if query_dict is None:
             # Case where we don't have a dict response.
@@ -421,7 +420,7 @@ def test_get_dc_subjects_query_dict():
             raw_dc_path,
             root_field='dc_terms_subject___pred_id',
             obj_all_slug='dc-terms-subject',
-            field_suffix=SolrDocument.FIELD_SUFFIX_PREDICATE,
+            field_suffix=solrdocument_new_schema.FIELD_SUFFIX_PREDICATE,
             attribute_field_part='dc_terms_subject___',
         )
         if query_dict is None:
