@@ -69,35 +69,44 @@ GEO_ZOOM = {
     'options': None,
 }
 
-view_groups = Group.objects.filter(name__icontains='can view')
-edit_groups = Group.objects.filter(name__icontains='can edit')
+def make_login_to_view_config():
+    view_groups = Group.objects.filter(name__icontains='can view')
+    output = {
+        'key': 'view_group_id',
+        'label': 'Login view group',
+        'data_type': 'xsd:integer',
+        'note': 'Optional group membership required for logged in users to view items.',
+        'options': [
+            {'value': None, 'text': 'Not set',},
+        ] + [
+            {'value': g.id, 'text': g.name,} for g in view_groups
+        ],
+    }
+    return output
+
+def make_login_to_edit_config():
+    edit_groups = Group.objects.filter(name__icontains='can edit')
+    output = {
+        'key': 'edit_group_id',
+        'label': 'Login edit group',
+        'data_type': 'xsd:integer',
+        'note': 'Optional group membership required for logged in users to edit items.',
+        'options': [
+            {'value': None, 'text': 'Not set',},
+        ] + [
+            {'value': g.id, 'text': g.name,} for g in edit_groups
+        ],
+    }
+    return output
+
+
 
 # A commonly used attribute to add to meta_json. If this attribute is
 # present and is True, then one will need a login to view items. This
 # can be applied to single manifest items or whole projects.
-LOGIN_TO_VIEW = {
-    'key': 'view_group_id',
-    'label': 'Login view group',
-    'data_type': 'xsd:integer',
-    'note': 'Optional group membership required for logged in users to view items.',
-    'options': [
-        {'value': None, 'text': 'Not set',},
-    ] + [
-        {'value': g.id, 'text': g.name,} for g in view_groups
-    ],
-}
+LOGIN_TO_VIEW = make_login_to_view_config()
 
-LOGIN_TO_EDIT = {
-    'key': 'edit_group_id',
-    'label': 'Login edit group',
-    'data_type': 'xsd:integer',
-    'note': 'Optional group membership required for logged in users to edit items.',
-    'options': [
-        {'value': None, 'text': 'Not set',},
-    ] + [
-        {'value': g.id, 'text': g.name,} for g in edit_groups
-    ],
-}
+LOGIN_TO_EDIT = make_login_to_edit_config()
 
 ITEM_TYPE_META_JSON_CONFIGS = {
     'projects': [

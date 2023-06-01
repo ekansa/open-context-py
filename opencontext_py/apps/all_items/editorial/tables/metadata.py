@@ -163,7 +163,7 @@ def add_assertions_for_entities_in_col(man_obj, df_ns, col, predicate_id, start_
                 'sort': sort,
                 'object': obj,
                 'meta_json': {
-                    'table_object_count': act_counts_for_ranking,
+                    'object_count': act_counts_for_ranking,
                 },
             }
             ass_obj, _ = AllAssertion.objects.get_or_create(
@@ -201,35 +201,6 @@ def add_table_dc_metadata(man_obj, export_id, col_configs=COLUMN_PREDICATE_CONFI
             predicate_id,
             start_sort=i
         )
-
-
-def add_table_metadata_and_resources(man_obj, export_id, full_cloud_obj, preview_cloud_obj):
-    """Adds table metadata and related resources objects
-
-    :param AllManifest man_obj: An instance of the AllManifest model
-        for a tables item associated with an export_id
-    :param str export_id: Export ID for the process that made the
-        dataframe that we put in cloud storage
-    :param Object cloud_obj: An object for the exported table now
-        saved in cloud storage.
-    """
-
-    full_res_obj = add_table_resource(
-        man_obj,
-        export_id,
-        cloud_obj=full_cloud_obj,
-        resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID
-    )
-    preview_res_obj = add_table_resource(
-        man_obj,
-        export_id,
-        cloud_obj=preview_cloud_obj,
-        resourcetype_id=configs.OC_RESOURCE_PREVIEW_UUID,
-    )
-    # Add the dublin core metadata for this item.
-    add_table_dc_metadata(man_obj, export_id)
-
-    return full_res_obj, preview_res_obj
 
 
 def get_table_related_subjects(man_obj, full_cloud_obj=None, csv_uri=None, df=None, max_subj_count=5):
@@ -340,7 +311,7 @@ def link_table_related_subjects(
             'sort': sort,
             'object': rel_subj_obj,
             'meta_json': {
-                'table_object_count': count,
+                'object_count': count,
             },
         }
         ass_obj, _ = AllAssertion.objects.get_or_create(
@@ -368,7 +339,7 @@ def link_table_related_subjects(
             'sort': sort,
             'object': man_obj,
             'meta_json': {
-                'table_object_count': count,
+                'object_count': count,
             },
         }
         r_ass_obj, _ = AllAssertion.objects.get_or_create(
@@ -387,3 +358,48 @@ def link_table_related_subjects(
         )
         assert_objs.append(r_ass_obj)
     return assert_objs
+
+
+def add_table_row_cols(man_obj, export_id):
+    df = queue_utilities.get_cached_export_df(export_id)
+    man_obj.meta_json['count_fields'] = len(df.columns.tolist())
+    man_obj.meta_json['count_rows'] = len(df.index)
+    man_obj.save()
+    return man_obj
+
+
+def add_table_metadata_and_resources(man_obj, export_id, full_cloud_obj, preview_cloud_obj):
+    """Adds table metadata and related resources objects
+
+    :param AllManifest man_obj: An instance of the AllManifest model
+        for a tables item associated with an export_id
+    :param str export_id: Export ID for the process that made the
+        dataframe that we put in cloud storage
+    :param Object cloud_obj: An object for the exported table now
+        saved in cloud storage.
+    """
+    man_obj = add_table_row_cols(man_obj, export_id)
+    full_res_obj = add_table_resource(
+        man_obj,
+        export_id,
+        cloud_obj=full_cloud_obj,
+        resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID
+    )
+    preview_res_obj = add_table_resource(
+        man_obj,
+        export_id,
+        cloud_obj=preview_cloud_obj,
+        resourcetype_id=configs.OC_RESOURCE_PREVIEW_UUID,
+    )
+    man_obj.meta_json['full_csv_url'] = f'https://{full_res_obj.uri}'
+    man_obj.meta_json['preview_csv_url'] = f'https://{preview_res_obj.uri}'
+    man_obj.save()
+    # Add the dublin core metadata for this item.
+    add_table_dc_metadata(man_obj, export_id)
+    # Add links to related subject items
+    link_table_related_subjects(
+        man_obj=man_obj,
+        full_cloud_obj=full_res_obj,
+        df=queue_utilities.get_cached_export_df(export_id),
+    )
+    return full_res_obj, preview_res_obj
