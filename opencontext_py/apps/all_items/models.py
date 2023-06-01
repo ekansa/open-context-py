@@ -125,6 +125,8 @@ class AllManifest(models.Model):
             url_key,
             f'{settings.CLOUD_BASE_URL}/{settings.CLOUD_CONTAINER_EXPORTS}/{str(self.uuid)}--v{version}--{filename_suffix}.csv'
         )
+        if not csv_url.startswith('http'):
+            csv_url = 'https://' + csv_url
         return csv_url
 
     @property
