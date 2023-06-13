@@ -13,7 +13,7 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.representations import rep_utils
 
 # Item types that may have their own geospatial data
-GEO_OK_ITEM_TYPES = ['subjects', 'projects', 'media', 'tables',]
+GEO_OK_ITEM_TYPES = ['subjects', 'projects', 'media', 'tables', 'persons',]
 
 # List of URIs for gazetteer vocabularies to help identify
 # non-subjects manifest entities that may have spacetime objects.
@@ -46,6 +46,9 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         return None
     if (rel_subjects_man_obj.item_type not in GEO_OK_ITEM_TYPES
         and rel_subjects_man_obj.context.uri not in GAZETTEER_VOCAB_URIS):
+        return None
+    if rel_subjects_man_obj.item_type == 'persons' and not rel_subjects_man_obj.meta_json.get('flag_do_index'):
+        # Only get geospatial data for persons records if they have a meta_json do_index key = True
         return None
     context_objs = [rel_subjects_man_obj]
     # Get a list of all the context objects in this manifest_obj

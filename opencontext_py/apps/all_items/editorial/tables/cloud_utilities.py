@@ -95,7 +95,7 @@ def cloud_store_csv_from_cached_export(
         in cloud storage. This can be use to upload legacy CSV data from
         previous versions of Open Context, rather than making a new export.
     """
-    if df is None and export_id is None:
+    if df is None and export_id is not None:
         df = queue_utilities.get_cached_export_df(export_id)
     if df is None:
         return None, None
