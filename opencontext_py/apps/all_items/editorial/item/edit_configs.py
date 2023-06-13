@@ -56,6 +56,20 @@ FLAG_DO_NOT_INDEX = {
     ],
 }
 
+# This flag, if True, will mean the solr indexer WILL index an item not normally indexed
+FLAG_DO_INDEX = {
+    'key': 'flag_do_index',
+    'label': 'Flag DO Index',
+    'data_type': 'xsd:boolean',
+    'note': 'Flag to include in the Solr Index.',
+    'options': [
+        {'value': None, 'text': 'Not set',},
+        {'value': True, 'text': 'DO index with Solr',},
+        {'value': False, 'text': 'Un-flag for default, likely no indexing with Solr',},
+    ],
+}
+
+
 
 GEO_ZOOM = {
     'key': 'geo_zoom',
@@ -416,6 +430,7 @@ ITEM_TYPE_META_JSON_CONFIGS = {
         },
         FLAG_HUMAN_REMAINS.copy(),
         FLAG_DO_NOT_INDEX.copy(),
+        FLAG_DO_INDEX.copy(),
     ],
     'languages': [
         {
