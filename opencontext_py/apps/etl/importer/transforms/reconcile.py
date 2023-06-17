@@ -1,5 +1,4 @@
 import logging
-from tkinter import E
 
 import numpy as np
 import pandas as pd
