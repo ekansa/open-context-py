@@ -565,6 +565,7 @@ FILTER_IGNORE_PARAMS = [
     'rows',
     'start',
     'proj-summary',
+    'download',
 ]
 
 # Request parameters that describe different search or

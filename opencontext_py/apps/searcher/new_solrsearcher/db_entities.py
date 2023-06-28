@@ -571,3 +571,92 @@ def get_desc_and_banner_url_by_slug(proj_desc_banner_qs, slug, use_cache=True):
     except:
         pass
     return description, banner_url
+
+
+def get_string_attribute_data_for_uuids_qs(
+    uuids, 
+    db_limit_string_attributes=None, 
+    requested_attrib_slugs=None
+):
+    """Gets an AllAssertion queryset for string attribute data
+
+    :param list uuids: A list of UUIDs for the subject items
+    :param str db_limit_string_attributes: Options to limit the predicates
+        retrieved in the query set. Choices are: None (no limits), 
+        'project' (non-opencontext project attributes only), 
+        and 'requested_attrib_slugs' (attributes specified by the 
+        requested_attrib_slugs)
+    :param list requested_attrib_slugs: An optional list of predicate
+        slugs to limit the query set.
+
+    return AllAssertion queryset
+    """
+    qs = AllAssertion.objects.filter(
+        subject_id__in=uuids,
+        predicate__data_type='xsd:string',
+    ).select_related(
+        'predicate'
+    )
+    if not db_limit_string_attributes:
+        # No further limits on the queryset.
+        return qs
+    if db_limit_string_attributes == 'project':
+        # Exclude the Open Context project from the results
+        qs = qs.exclude(predicate__project_id=configs.OPEN_CONTEXT_PROJ_UUID)
+        return qs
+    # Limit the queryset by attribute slugs requested by the client.
+    qs = qs.filter(predicate__slug__in=requested_attrib_slugs)
+    return qs
+
+
+def get_db_uuid_pred_str_dict(
+    uuids, 
+    db_limit_string_attributes=None, 
+    requested_attrib_slugs=None
+):
+    """Gets a dictionary of string attribute data for uuids
+
+    :param list uuids: A list of UUIDs for the subject items
+    :param str db_limit_string_attributes: Options to limit the predicates
+        retrieved in the query set. Choices are: None (no limits), 
+        'project' (non-opencontext project attributes only), 
+        and 'requested_attrib_slugs' (attributes specified by the 
+        requested_attrib_slugs)
+    :param list requested_attrib_slugs: An optional list of predicate
+        slugs to limit the query set.
+
+    return dict
+    """
+    qs = get_string_attribute_data_for_uuids_qs(
+        uuids, 
+        db_limit_string_attributes, 
+        requested_attrib_slugs
+    )
+    prep_dict = {}
+    for ass_obj in qs:
+        uuid = str(ass_obj.subject.uuid)
+        pred_slug = ass_obj.predicate.slug
+        if not uuid in prep_dict:
+            prep_dict[uuid] = {}
+        if not pred_slug in prep_dict[uuid]:
+            prep_dict[uuid][pred_slug] = {
+                'label': ass_obj.predicate.label,
+                'slug': ass_obj.predicate.slug,
+                'uri': ass_obj.predicate.uri,
+                'vals_list': [],
+            }
+        prep_dict[uuid][pred_slug]['vals_list'].append(
+            ass_obj.obj_string
+        )
+    db_uuid_pred_str_dict = {}
+    for uuid, a_dict in prep_dict.items():
+        db_uuid_pred_str_dict[uuid] = []
+        for _, b_dict in a_dict.items():
+            pred_dict = {
+                'label': b_dict['label'],
+                'slug': b_dict['slug'],
+                'uri': b_dict['uri'],
+            }
+            tup = (pred_dict, b_dict['vals_list'])
+            db_uuid_pred_str_dict[uuid].append(tup)
+    return db_uuid_pred_str_dict
