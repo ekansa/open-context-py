@@ -776,6 +776,39 @@ class ResultRecord():
         self.pred_attributes = updated_pred_attributes
 
 
+    def add_db_string_content(self, db_uuid_pred_str_dict):
+        """Adds database fetched string content to the pred_attributes"""
+        if not db_uuid_pred_str_dict:
+            # There are no db_uuid_pred_str_dict data.
+            return None
+
+        item_preds_vals = db_uuid_pred_str_dict.get(self.uuid)
+        if not item_preds_vals:
+            # This record doesn't have any string predicates
+            # and values associated with it.
+            return None
+        
+        for pred_dict, vals_list in item_preds_vals:
+            ok_add = True
+            if self.ld_attributes:
+                for old_pred_dict, _ in self.ld_attributes:
+                    if old_pred_dict.get('slug') == pred_dict.get('slug'):
+                        ok_add = False
+                        break
+            if self.pred_attributes:
+                for old_pred_dict, _ in self.pred_attributes:
+                    if old_pred_dict.get('slug') == pred_dict.get('slug'):
+                        ok_add = False
+                        break
+            if not ok_add:
+                # We already have this predicate from another source.
+                continue
+            # Go ahead and add our string data
+            self.pred_attributes.append(
+                (pred_dict, vals_list,)
+            )
+
+
     def add_non_point_geojson_coordinates(self, uuid_geo_dict):
         """Adds non-point geojson coordinates to the result"""
         geo_obj =  uuid_geo_dict.get(self.uuid)
@@ -1016,6 +1049,22 @@ class ResultRecords():
         self.total_found = total_found
         self.start = start
         self.proj_index = proj_index
+        # allow_missing_strings_db_query is for the default case where we
+        # allow DB queries to fetch string attribute data, because we don't 
+        # store string values in solr.
+        self.allow_missing_strings_db_query = True
+        # do_missing_strings_db_query will be True if we determine we
+        # actually need to make a database query for string attribute data
+        self.do_missing_strings_db_query = None
+
+        # If we do a DB query for string attributes limit DB queries 
+        # to only project specific string attribute data.
+        # Choices are: None (no limits), 'project' (non-opencontext 
+        # project attributes only), and 'requested_attrib_slugs' 
+        # (attributes specified by the requested_attrib_slugs)
+        self.db_limit_string_attributes = 'requested_attrib_slugs'
+
+
 
         # Flatten attributes into single value strings?
         self.flatten_attributes = False
@@ -1165,6 +1214,78 @@ class ResultRecords():
         return output
 
 
+    def _set_strings_db_query_config(self, requested_attrib_slugs):
+        """Checks to see if we will do database queries to get
+        string attribute data
+        """
+        if not self.allow_missing_strings_db_query:
+            # We're not allowing DB check2s for string attribute data
+            self.do_missing_strings_db_query = False
+            return None
+        
+        raw_download = utilities.get_request_param_value(
+            self.request_dict,
+            param='download',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        
+        raw_attributes = utilities.get_request_param_value(
+            self.request_dict,
+            param='attributes',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if not raw_download and not raw_attributes:
+            # We're not making a request for a download, so there's
+            # no need to do something expensive like a database
+            # fetch of string attribute data.
+            self.do_missing_strings_db_query = False
+            return None
+        
+        raw_fulltext_search = utilities.get_request_param_value(
+            self.request_dict,
+            param='q',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_fulltext_search:
+            # We're doing a full text search, so we should do a
+            # query for string attributes.
+            self.do_missing_strings_db_query = True
+            # No limits on what string attributes get returned.
+            self.db_limit_string_attributes = None
+
+        if configs.REQUEST_ALL_ATTRIBUTES in requested_attrib_slugs:
+            # If the client made a requires for all attributes, do
+            # a DB query for string attributes too
+            self.do_missing_strings_db_query = True
+            # No limits on what string attributes get returned.
+            self.db_limit_string_attributes = None
+
+        if configs.REQUEST_ALL_PROJ_ATTRIBUTES in requested_attrib_slugs:
+            # If the client made a requires for all attributes, do
+            # a DB query for string attributes too
+            self.do_missing_strings_db_query = True
+            self.db_limit_string_attributes = 'project'
+        
+
+    def make_db_uuid_pred_str_dict(self, uuids, requested_attrib_slugs):
+        """Uses the database to get string attribute data for the list of
+        uuids
+        """
+        if not self.allow_missing_strings_db_query or not self.do_missing_strings_db_query:
+            return {}
+        return db_entities.get_db_uuid_pred_str_dict(
+            uuids=uuids,
+            db_limit_string_attributes=self.db_limit_string_attributes,
+            requested_attrib_slugs=requested_attrib_slugs
+        )
+        
+
     def make_records_from_solr(self, solr_json):
         """Makes record objects from solr_json"""
         records = []
@@ -1249,6 +1370,8 @@ class ResultRecords():
             string_pred_uuids += get_attribute_tuples_string_pred_uuids(
                 rr.pred_attributes
             )
+
+
             if self.proj_index and not rr.geometry_coords:
                 # We're doing a project index. Allow the data to be on "null island"
                 # so it shows up on the search interface.
@@ -1269,6 +1392,11 @@ class ResultRecords():
             # Add the result record object to the list of records.
             records.append(rr)
 
+        
+        # Setup configuration for doing DB queries for string
+        # attributes
+        self._set_strings_db_query_config(requested_attrib_slugs)
+
         # Remove the duplicates.
         string_pred_uuids = list(set(string_pred_uuids))
 
@@ -1278,6 +1406,17 @@ class ResultRecords():
             uuids,
             string_pred_uuids
         )
+        if uuid_pred_str_dict:
+            # We already have uuid_pred_str_dict data, so don't
+            # get it from the database.
+            self.do_missing_strings_db_query = False
+
+        # Make a dict with string attribute data pulled from the database,
+        # if required.
+        db_uuid_pred_str_dict = self.make_db_uuid_pred_str_dict(
+            uuids, 
+            requested_attrib_slugs,
+        )
 
         # Make a query to get any non-point geospatial feature data
         # associated with these result records.
@@ -1285,6 +1424,7 @@ class ResultRecords():
 
         for rr in records:
             rr.add_string_content(uuid_pred_str_dict)
+            rr.add_db_string_content(db_uuid_pred_str_dict)
             rr.add_non_point_geojson_coordinates(uuid_geo_dict)
 
         return records

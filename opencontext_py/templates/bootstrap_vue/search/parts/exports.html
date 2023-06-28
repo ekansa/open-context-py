@@ -1192,6 +1192,7 @@ var vc_search_exporter_ui = Vue.component(
                 if(this.dl_complete){
                     return true;
                 }
+                url = replaceURLparameter(url, 'download', 1);
                 url = replaceURLparameter(url, 'response', this.param_response_value);
                 let page_res = this.check_page_in_record_sets(url);
                 if(!page_res.ok){
