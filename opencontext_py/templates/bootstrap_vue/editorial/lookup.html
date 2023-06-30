@@ -36,6 +36,19 @@
 
 <template id='lookup-list'>
   <div>
+
+    <b-form-group v-if="show_id_search_box"
+      description="Lookup item by any ID"
+      :label-for="'lookup-list-id-search-box' + id_part"
+    >
+      <b-form-input
+        :id="'lookup-list-id-search-box' + id_part"
+        size="sm"
+        debounce="250"
+        @update="on_change_id_search"
+        :value="q_id"></b-form-input>
+    </b-form-group>
+
     <b-form-group v-if="show_q_search_box"
       description="Lookup item by any label (enter search text above)"
       :label-for="'lookup-list-q-search-box' + id_part"
@@ -255,6 +268,7 @@
         'fetch_on_create',
         'start',
         'rows',
+        'show_id_search_box',
         'show_q_search_box',
         'show_label_search_box',
         'show_path_search_box',
@@ -277,6 +291,7 @@
           context_id: [],
           path__icontains: null,
           label__icontains: null,
+          q_id: null,
           q: null,
           selected_item: null,
           multi_val_delim: '||',
@@ -286,6 +301,7 @@
           start: null,
           rows: null,
           totalResults: null,
+          show_id_search_box: false,
           show_q_search_box: true,
           show_label_search_box: false,
           show_path_search_box: false,
@@ -391,6 +407,10 @@
           this.loading = true;
           let params = this.get_list_request_params();
           let has_query = false;
+          if(this.q_id && this.q_id.length > 0){
+            params.id = this.q_id;
+            has_query = true;
+          }
           if(this.q && this.q.length > 0){
             params.q = this.q;
             has_query = true;
@@ -441,6 +461,10 @@
           this.loading = true;
           let params = this.get_list_request_params();
           let has_query = false;
+          if(this.q_id && this.q_id.length > 0){
+            params.id = this.q_id;
+            has_query = true;
+          }
           if(this.q && this.q.length > 0){
             params.q = this.q;
             has_query = true;
@@ -483,6 +507,11 @@
         clear_selected_item(){
           this.selected_item = null;
           this.$emit('clear_selected_item', this.selected_item);
+        },
+        on_change_id_search(q_id){
+          this.q_id = q_id;
+          this.clear_selected_item();
+          this.fetch_api_item_look_up();
         },
         on_change_q_search(q){
           this.q = q;

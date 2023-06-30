@@ -16,6 +16,10 @@ sql proxy, use this invocation:
 
     ./cloud_sql_proxy -instances=<INSTANCE NAME>=tcp:5436
 
+The updated Google Cloud proxy is:
+
+    ./cloud-sql-proxy <INSTANCE NAME> -p 5436
+
 
 The Django will connect to the Cloud sql proxy at the local host, so make sure you
 have a different port specified than your local Postgresql instance so the 
