@@ -123,17 +123,35 @@ NOTE: Templates and view components to edit assertions made on an item
         </b-col>
 
         <b-col v-if="linked_data">
-          <lookup-list
-            :key="'lookup' + assert.uuid"
-            v-bind:item_type="['class', 'property', 'units', 'uri', 'persons', 'tables', 'projects',]"
-            v-bind:show_label_search_box="true"
-            v-bind:show_context="true"
-            v-bind:do_meta="true"
-            v-bind:show_total_results="true"
-            @set_selected_item="set_selected_obj_item($event)"
-          ></lookup-list>
-        </b-col>
+          <div v-if="ITEM_TYPE=='types'">
+          
+            <lookup-list
+              :key="'lookup' + assert.uuid"
+              v-bind:item_type="['types', 'class', 'property', 'units', 'uri', 'persons', 'tables', 'projects',]"
+              v-bind:show_id_search_box="true"
+              v-bind:show_label_search_box="true"
+              v-bind:show_context="true"
+              v-bind:do_meta="true"
+              v-bind:show_total_results="true"
+              @set_selected_item="set_selected_obj_item($event)"
+            ></lookup-list>
 
+          </div>
+          <div v-else>
+
+            <lookup-list
+              :key="'lookup' + assert.uuid"
+              v-bind:item_type="['class', 'property', 'units', 'uri', 'persons', 'tables', 'projects',]"
+              v-bind:show_id_search_box="true"
+              v-bind:show_label_search_box="true"
+              v-bind:show_context="true"
+              v-bind:do_meta="true"
+              v-bind:show_total_results="true"
+              @set_selected_item="set_selected_obj_item($event)"
+            ></lookup-list>
+          </div>
+
+        </b-col>
       </b-row>
     </div>
   </div>
@@ -351,7 +369,6 @@ NOTE: Templates and view components to edit assertions made on an item
         </b-col>
         <b-col cols="1"></b-col>
         <b-col cols="4">
-          <div v-if="assert">
             
             <assert-object-edit
               v-bind:assert="assert"

@@ -101,6 +101,8 @@ class ResultFacetsGeo():
             max(lats), 
             max(lons),
         )
+        max_distance = int(max_distance)
+        if max_distance < 1: max_distance = 1
         # Converts the maximum distance between points into a zoom level
         # appropriate for tile aggregation. Seems to work well.
         return gm.ZoomForPixelSize(max_distance) + 3

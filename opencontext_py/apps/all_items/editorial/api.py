@@ -293,10 +293,12 @@ def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
     )
 
 
-def get_man_obj_by_any_id(identifier):
+def get_man_qs_by_any_id(identifier, man_qs=None):
     """Gets a manifest object by an type of unique identifier"""
     _, new_uuid = update_old_id(identifier)
 
+    if not man_qs:
+        man_qs = AllManifest.objects.all()
     man_obj = AllManifest.objects.filter(
         Q(uuid=new_uuid)
         |Q(slug=identifier)
@@ -306,8 +308,14 @@ def get_man_obj_by_any_id(identifier):
         'context'
     ).select_related(
         'project'
-    ).first()
+    )
     return man_obj
+
+
+def get_man_obj_by_any_id(identifier):
+    """Gets a manifest object by an type of unique identifier"""
+    man_qs = get_man_qs_by_any_id(identifier)
+    return man_qs.first()
 
 
 def get_item_children(identifier, man_obj=None, output_child_objs=False):
@@ -516,6 +524,13 @@ def make_lookup_qs(request_dict, value_delim=MULTI_VALUE_DELIM):
                 value_delim=value_delim,
                 as_exclude=True,
             )
+
+    if request_dict.get('id'):
+        # Add an ID filter
+        qs = get_man_qs_by_any_id(
+            identifier=request_dict.get('id'),
+            man_qs=qs
+        )
 
     return qs, assert_qs
 
