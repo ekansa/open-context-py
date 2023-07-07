@@ -945,3 +945,32 @@ def api_merge_manifest_objs(request_json):
             warnings=warnings,
         )
     return merges, errors, warnings
+
+
+def reindex_manifest_objs(request_json):
+    """Reindexes manifest objects"""
+    errors = []
+    reindex_list = []
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return reindex_list, errors
+
+    for item_reindex in request_json:
+        uuid = item_reindex.get('uuid')
+        if not uuid:
+            errors.append('Must have "uuid" attribute.')
+            continue
+        to_reindex_man_obj = AllManifest.objects.filter(uuid=uuid).first()
+        if not to_reindex_man_obj:
+            errors.append(f'Cannot find manifest object for {uuid}')
+            continue
+        reindex_list.append(uuid)
+    
+    if len(reindex_list) > 0:
+        # The assumption here is that our reindex list is small enough
+        # to finish indexing before a web request times out.
+        new_ind.make_indexed_solr_documents_in_chunks(
+            uuids=reindex_list,
+            start_clear_caches=False,
+        )
+    return reindex_list, errors
