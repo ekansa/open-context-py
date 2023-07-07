@@ -426,7 +426,7 @@ urlpatterns = [
     #----------------------------
     # BELOW ARE KOBO Requests
     #----------------------------
-    re_path(r'^submissions', koboViews.submissions_kobo_proxy, name='submissions_kobo_proxy'),
+    re_path(r'^kobo/submissions', koboViews.submissions_kobo_proxy, name='submissions_kobo_proxy'),
 
     #----------------------------
     # ENTITIES PROXY views
