@@ -491,6 +491,9 @@ def load_general_subjects_attributes(
             prelim_source_id=source_id, 
             source_exists="replace"
         )
+        if not ds_source:
+            print(f'No data source for {form_type}, {source_id}, {attrib_csv_path}')
+            continue
         prepare_ds_source_attribute_cols(form_type, ds_source)
         print(f'Prepared ds_source {ds_source.__dict__}')
         import_from_ds_source(ds_source)

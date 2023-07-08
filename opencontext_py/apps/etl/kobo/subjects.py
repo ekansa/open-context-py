@@ -4,6 +4,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from functools import reduce
+
 from pathlib import Path
 
 
@@ -166,6 +168,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
     last_cols = [f_c for _, f_c in SUBJECTS_GENERAL_KOBO_COLS]
     mid_cols = []
     for excel_filepath in xlsx_files:
+        print(f'reading: {excel_filepath}')
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         for sheet_name, df in dfs.items():
             sheet_config = SUBJECTS_SHEET_COLS.get(sheet_name)
@@ -194,8 +197,10 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             ]
             print(f'Made subject df from {sheet_name}')
             print(df.head())
+            print(f'Columns: {df.columns.tolist()}')
             subj_dfs.append(df)
     # import pdb; pdb.set_trace()
+    # df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True, how='outer'), subj_dfs)
     df = pd.concat(subj_dfs, axis=0)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
     all_cols = start_cols + locus_cols + mid_cols + last_cols

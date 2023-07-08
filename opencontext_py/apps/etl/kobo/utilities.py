@@ -196,8 +196,12 @@ def split_col_with_delim_into_multiple_cols(df, col, delim=' '):
         new_cols.append(f'{col}/{i}')
         i += 1
     df[new_cols] = df[col].str.split(delim, expand=True)
+    for act_col in new_cols:
+        print(f'Normalize slugs for {act_col}')
+        df = make_col_normal_slug_values(df, act_col)
     df.drop(columns=[col], inplace=True)
     df.rename(columns={f'{col}/0': col}, inplace=True)
+    df = make_col_normal_slug_values(df, col)
     return df
 
 
@@ -549,21 +553,36 @@ def add_person_object_rels(
         df.loc[up_index, person_uuid_source_col] = 'df_persons'
     return df
 
+def make_col_normal_slug_values(df, col, prefix_for_slugs='24_'):
+    """Updates values in a column of a dataframe so slug values are consistent 
+    with Open Context expectations
+    """
+    fix_index = (
+         ~df[col].isnull()
+    )
+    df.loc[fix_index, col] = df[fix_index][col].str.strip()
+    act_index = (
+        ~df[col].isnull()
+        & df[col].str.startswith(prefix_for_slugs)
+    )
+    if df[act_index].empty:
+        return df
+    df.loc[act_index, col] = df[act_index][col].str.replace('_', '-')
+    return df
 
 def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
-    """Updates attribute columns so slug values are consistent 
+    """Updates a dataframe's attribute columns so slug values are consistent 
     with Open Context expectations
     """
     for col in df.columns.tolist():
-        if not pd.api.types.is_string_dtype(df[col]):
+        no_null_index = ~df[col].isnull()
+        if not pd.api.types.is_string_dtype(df[no_null_index][col]):
             continue
-        act_index = (
-            ~df[col].isnull()
-            & df[col].str.startswith(prefix_for_slugs)
+        df = make_col_normal_slug_values(
+            df, 
+            col, 
+            prefix_for_slugs=prefix_for_slugs
         )
-        if df[act_index].empty:
-            continue
-        df.loc[act_index, col] = df[act_index][col].str.replace('_', '-')
     return df
 
 def not_null_subject_uuid(df):
