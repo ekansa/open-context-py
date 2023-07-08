@@ -69,6 +69,14 @@ FLAG_DO_INDEX = {
     ],
 }
 
+# Item types allowed to be reindexed by members of an editing group (non-super users)
+EDIT_GROUP_USER_ALLOWED_REINDEX_TYPES = [
+    'subjects',
+    'media',
+    'documents',
+    'projects',
+    'tables',
+]
 
 
 GEO_ZOOM = {

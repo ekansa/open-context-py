@@ -1327,7 +1327,8 @@ def reindex_manifest_objs(request):
         )
     request_json = json.loads(request.body)
     reindex_list, errors = updater_manifest.reindex_manifest_objs(
-        request_json
+        request_json,
+        request=request,
     )
     if len(errors):
         # We failed.
