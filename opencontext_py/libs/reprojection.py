@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import pyproj
 
-from pyproj import Proj, transform
+from pyproj import Proj, CRS, Transformer
 
 from opencontext_py.libs.validategeojson import ValidateGeoJson
 
@@ -19,23 +19,32 @@ class ReprojectUtilities():
     def __init__(self):
         self.input_crs = None
         self.output_crs = None
+        self.input_proj = None
+        self.output_proj = None
         self.invert_x_y_pairs = False
     
     def set_in_out_crs(self, input_crs_id, output_crs_id):
         """Sets the input and output CRS by passing CRS ids. """
         try:
-            self.input_crs = Proj('+init=' + input_crs_id)
-            self.output_crs = Proj('+init=' + output_crs_id)
+            self.input_crs = CRS(input_crs_id)
+            self.output_crs = CRS(output_crs_id)
+            self.input_proj = Proj(input_crs_id)
+            self.output_proj = Proj(output_crs_id)
         except:
             raise ValueError('Could not set input and output projections.')
         return True
     
     def reproject_coordinates(self, in_x_vals, in_y_vals):
         """Returns lists of reprojected x and y coordinate values. """
-        out_x, out_y = pyproj.transform(self.input_crs,
-                                        self.output_crs,
-                                        in_x_vals,
-                                        in_y_vals)
+        transformer = Transformer.from_proj(
+            self.input_proj, 
+            self.output_proj,
+            always_xy=True,
+        )
+        out_x, out_y = transformer.transform(
+            in_x_vals,
+            in_y_vals
+        )
         return out_x, out_y
     
     def make_coordinate_list(self, x_list, y_list):
