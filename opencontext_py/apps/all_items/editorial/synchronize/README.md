@@ -21,7 +21,7 @@ The updated Google Cloud proxy is:
     # First log in:
     gcloud auth login
 
-    ./cloud-sql-proxy <INSTANCE NAME> -p 5436
+    ./cloud-sql-proxy <INSTANCE NAME> -p 5436 -g
 
 
 See more:
