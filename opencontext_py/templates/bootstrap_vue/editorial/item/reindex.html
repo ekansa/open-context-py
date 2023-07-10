@@ -1,0 +1,115 @@
+{% load humanize %}
+
+<!-- 
+NOTE: Templates and view components to edit an item's manifest object.
+-->
+
+
+
+
+<template id="reindex-item">
+  <div>
+    <b-button
+        sm
+        block
+        @click="do_reindex_request"
+        v-b-tooltip.hover title="(Re)index this item in the search index"
+        variant="primary">Reindex Item <b-icon-arrow-repeat></b-icon-arrow-repeat>
+    </b-button>
+
+    <div v-if="errors">
+      <b-alert show dismissible variant="warning">
+        <strong>Reindexing failed!</strong><br/> 
+        <b-list-group v-if="errors">
+          <b-list-group-item v-for="(error, index) in errors"
+          :key="act_obs.id + '-error-' + index"
+          variant="warning">
+          <small>[[error]]</small>
+          </b-list-group-item>
+        </b-list-group>
+      </b-alert>
+    </div>
+
+    <div v-if="show_alert">
+      <b-alert show dismissible variant="secondary">
+        <small>
+          <b-spinner v-if="updating" label="Reindexing..."></b-spinner>
+          <b-icon-check v-else></b-icon-check>
+        (Re)indexing updates the site search index (in  Solr) to make
+        edits about this item searchable. For performance reasons, the search
+        index heavily caches search results. A (re)index may not be visible
+        in cached searches for several days. Contact the site administrator
+        if you need to clear the caches. 
+        </small>
+      </b-alert>
+    </div>
+</template>
+
+
+<script type="text/javascript">
+
+    var vc_reindex_item = Vue.component(
+        'reindex-item',
+        {
+          delimiters: ['[[', ']]'],
+          props: ['uuid',],
+          data() {
+            return {
+              uuid: null,
+              show_alert: false,
+              errors: null,
+              updating: false,
+              reindexed_result: null,
+            }
+          },
+          template: '#reindex-item',
+          computed: {
+            
+          },
+          methods: {
+            do_reindex_request(){
+              this.show_alert = true;
+              this.updating = true;
+              let reindex_objs = [
+                {uuid: this.uuid}
+              ];
+              const requestOptions = {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(reindex_objs)
+              };
+              fetch('/editorial/item-reindex', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  if(data && data.errors){
+                    this.updating = false;
+                    this.errors = data.errors;
+                  }
+                  return Promise.reject(error);
+                }
+                this.updating = false;
+                if(data.hasOwnProperty('reindexed')){
+                  this.reindexed_result = data.reindexed;
+                }
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+            },
+            
+          },
+          components: {
+            
+          },
+        }
+    ); 
+  
+  </script>

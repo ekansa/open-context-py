@@ -1316,3 +1316,33 @@ def project_persons_json(request, identifier):
         json_output,
         content_type="application/json; charset=utf8"
     )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def reindex_manifest_objs(request):
+    if request.method != 'POST':
+        return HttpResponse(
+            'Must be a POST request', status=405
+        )
+    request_json = json.loads(request.body)
+    reindex_list, errors = updater_manifest.reindex_manifest_objs(
+        request_json,
+        request=request,
+    )
+    if len(errors):
+        # We failed.
+        return make_error_response(errors)
+    output = {
+        'ok': True,
+        'reindexed': reindex_list,
+    }
+    json_output = json.dumps(
+        output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )

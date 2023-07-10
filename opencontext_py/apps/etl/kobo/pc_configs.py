@@ -9,7 +9,8 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-DEFAULT_IMPORT_YEAR = 2022
+DEFAULT_IMPORT_YEAR = 2023
+IMPORT_SOURCE_ID_SUFFIX = '-v1'
 
 HOME = str(Path.home())
 ALL_IMPORTS_PATH = f'{HOME}/data-dumps/pc-{DEFAULT_IMPORT_YEAR}'
@@ -20,8 +21,8 @@ KOBO_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-media-files'
 OC_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-media-files'
 OC_IMPORT_FILES_PATH = f'{ALL_IMPORTS_PATH}/oc-import'
 
-TRENCH_CSV_PATH = f'{ALL_IMPORTS_PATH}/trenches-2022.csv'
-PEOPLE_CSV_PATH = f'{ALL_IMPORTS_PATH}/people-2022.csv'
+TRENCH_CSV_PATH = f'{ALL_IMPORTS_PATH}/trenches-{DEFAULT_IMPORT_YEAR}.csv'
+PEOPLE_CSV_PATH = f'{ALL_IMPORTS_PATH}/people-{DEFAULT_IMPORT_YEAR}.csv'
 
 SUBJECTS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/subjects.csv'
 SUBJECTS_VALIDATION_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/item-validation.csv'
@@ -49,13 +50,13 @@ TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
 # The column in the Kobo exports with the trench identifier
 KOBO_TRENCH_COL = 'Trench ID'
 
-SOURCE_ID_PREFIX = f'pc{DEFAULT_IMPORT_YEAR}'
+SOURCE_ID_PREFIX = f'pc{DEFAULT_IMPORT_YEAR}{IMPORT_SOURCE_ID_SUFFIX}'
 SOURCE_ID_SUBJECTS = f'{SOURCE_ID_PREFIX}-subjects'
 SOURCE_ID_TB_DEFAULT = f'{SOURCE_ID_PREFIX}-tb-default'
 SOURCE_ID_MEDIA_FILES = f'{SOURCE_ID_PREFIX}-files'
 SOURCE_ID_MEDIA_LINKS = f'{SOURCE_ID_PREFIX}-files-link'
-SOURCE_ID_CATALOG_ATTRIB = f'{SOURCE_ID_PREFIX}-cat-attrib'
-SOURCE_ID_CATALOG_LINKS = f'{SOURCE_ID_PREFIX}-cat-link'
+SOURCE_ID_CATALOG_ATTRIB = f'{SOURCE_ID_PREFIX}-cat-attrib-2022-fix'
+SOURCE_ID_CATALOG_LINKS = f'{SOURCE_ID_PREFIX}-cat-link-2022-fix'
 SOURCE_ID_SMALL_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-small-attrib'
 SOURCE_ID_SMALL_FINDS_LINKS = f'{SOURCE_ID_PREFIX}-small-link'
 SOURCE_ID_BULK_FINDS_ATTRIB = f'{SOURCE_ID_PREFIX}-bulk-attrib'
@@ -239,7 +240,7 @@ GEO_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': REPROJECTED_LAT_COL,
-            'item_type': 'longitude',
+            'item_type': 'latitude',
             'data_type': 'xsd:double',
         },
         'field_rel': {
@@ -535,6 +536,33 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
 
     {
         'source_col': 'Alternative Object General Type',
+        'form_type': ['catalog',],
+        'match_type': 'startswith',
+        'field_args': {
+            # NOTE: This is also mapped to the 'Object Type' predicate.
+            'label': 'Object Type',  # Note the difference from the source-column!
+            'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
+            'item_type': 'types',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Object Type (General)',
+        'form_type': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Object Type',  # Note the difference from the source-column!
+            'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
+            'item_type': 'types',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Alternative Object Type (General)',
         'form_type': ['catalog',],
         'match_type': 'startswith',
         'field_args': {

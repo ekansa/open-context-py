@@ -26,6 +26,7 @@ from opencontext_py.apps.all_items.editorial.item import item_validation
 from opencontext_py.apps.all_items.editorial.item.edit_configs import (
     MANIFEST_ADD_EDIT_CONFIGS,
     TABLES_ADD_EDIT_CONFIG,
+    EDIT_GROUP_USER_ALLOWED_REINDEX_TYPES,
 )
 
 from opencontext_py.apps.all_items.editorial.tables import cloud_utilities
@@ -945,3 +946,55 @@ def api_merge_manifest_objs(request_json):
             warnings=warnings,
         )
     return merges, errors, warnings
+
+
+def reindex_manifest_objs(request_json, request=None):
+    """Reindexes manifest objects"""
+    errors = []
+    reindex_list = []
+    if not isinstance(request_json, list):
+        errors.append('Request json must be a list of dictionaries to update')
+        return reindex_list, errors
+
+    for item_reindex in request_json:
+        uuid = item_reindex.get('uuid')
+        if not uuid:
+            errors.append('Must have "uuid" attribute.')
+            continue
+        to_reindex_man_obj = AllManifest.objects.filter(uuid=uuid).first()
+        if not to_reindex_man_obj:
+            errors.append(f'Cannot find manifest object for {uuid}')
+            continue
+
+        _, ok_edit = permissions.get_request_user_permissions(
+            request,
+            to_reindex_man_obj,
+            null_request_ok=True
+        )
+        if not ok_edit:
+            errors.append(f'Need permission reindex manifest object {man_obj}')
+            continue
+
+        if (request and not request.user.is_superuser 
+            and not to_reindex_man_obj.item_type in EDIT_GROUP_USER_ALLOWED_REINDEX_TYPES):
+            errors.append(f'Only super user can reindex item_type: {to_reindex_man_obj.item_type}')
+            continue
+
+        if to_reindex_man_obj.meta_json.get('flag_do_not_index'):
+            errors.append(f'Item {to_reindex_man_obj.label} ({to_reindex_man_obj.uuid}) has "do_not_index" flag')
+            continue
+
+        if to_reindex_man_obj.project.meta_json.get('flag_do_not_index'):
+            errors.append(f'Item {to_reindex_man_obj.label} ({to_reindex_man_obj.uuid}) in project with "do_not_index" flag')
+            continue
+
+        reindex_list.append(uuid)
+    
+    if len(reindex_list) > 0:
+        # The assumption here is that our reindex list is small enough
+        # to finish indexing before a web request times out.
+        new_ind.make_indexed_solr_documents_in_chunks(
+            uuids=reindex_list,
+            start_clear_caches=False,
+        )
+    return reindex_list, errors

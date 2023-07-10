@@ -17,6 +17,7 @@
 {% include './spacetime.html' %}
 {% include './resources.html' %}
 {% include './identifiers.html' %}
+{% include './reindex.html' %}
 
 
 <b-container fluid id="app">
@@ -51,6 +52,11 @@
                     :href="public_url"
                     target="_blank"><b-icon-globe-2></b-icon-globe-2> Public View
                 </b-button>
+
+                <reindex-item
+                    v-bind:uuid="ITEM_UUID"
+                >
+                </reindex-item>
 
                 <add-item
                     v-bind:project_ids="ITEM_PROJECT_UUIDS">
@@ -213,6 +219,7 @@
                 'edit-spacetime': vc_edit_spacetime,
                 'edit-resources': vc_edit_resources,
                 'edit-identifiers': vc_edit_identifiers,
+                'reindex-item': vc_reindex_item,
             },
         },
     ).$mount('#app');

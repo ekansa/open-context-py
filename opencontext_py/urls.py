@@ -31,6 +31,8 @@ from opencontext_py.apps.etl.importer.setup import views as etlSetupViews
 # Testing new ETL views for POST request for final transform, load steps.
 from opencontext_py.apps.etl.importer.transforms import views as etlTransformsViews
 
+# Testing new ETL views. These are for GET requests
+from opencontext_py.apps.etl.kobo import views as koboViews
 
 # Site map related
 from opencontext_py.apps.all_items.sitemaps import views as oc_sitemap_views
@@ -268,6 +270,11 @@ urlpatterns = [
         EditorialItemViews.delete_identifiers,
         name='editorial_delete_identifiers'
     ),
+    re_path(
+        r'^editorial/item-reindex',
+        EditorialItemViews.reindex_manifest_objs,
+        name='editorial_item_reindex'
+    ),
     # Project Human-Remains flagging
     re_path(
         r'^editorial/flag-project-human-remains',
@@ -415,6 +422,11 @@ urlpatterns = [
     re_path(r'^utilities/reproject', UtilitiesViews.reproject, name='utilities_reproject'),
     re_path(r'^utilities/human-remains-ok', UtilitiesViews.human_remains_ok, name='human_remains_ok'),
     re_path(r'^utilities/uuid', UtilitiesViews.uuid, name='utilities_uuid'),
+
+    #----------------------------
+    # BELOW ARE KOBO Requests
+    #----------------------------
+    re_path(r'^kobo/submissions', koboViews.submissions_kobo_proxy, name='submissions_kobo_proxy'),
 
     #----------------------------
     # ENTITIES PROXY views
