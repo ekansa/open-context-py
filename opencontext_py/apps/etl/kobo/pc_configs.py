@@ -9,8 +9,8 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-DEFAULT_IMPORT_YEAR = 2022
-IMPORT_SOURCE_ID_SUFFIX = '-fix2'
+DEFAULT_IMPORT_YEAR = 2023
+IMPORT_SOURCE_ID_SUFFIX = '-v1'
 
 HOME = str(Path.home())
 ALL_IMPORTS_PATH = f'{HOME}/data-dumps/pc-{DEFAULT_IMPORT_YEAR}'
