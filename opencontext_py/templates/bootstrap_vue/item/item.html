@@ -373,9 +373,14 @@
 
         },
         mounted() {
-            this.start_iiif_viewer();
-            this.start_nexus_viewer();
-            this.get_table_sample();
+            document.onreadystatechange = () => {
+                // wait for everything to load before starting specialized viewers
+                if (document.readyState == "complete") {
+                    this.start_iiif_viewer();
+                    this.start_nexus_viewer();
+                    this.get_table_sample();
+                }
+            };
         },
         methods: {
             start_iiif_viewer: function(){
