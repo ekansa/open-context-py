@@ -270,6 +270,33 @@ for old_class_id in s_class_qs:
     )
 
 
+def make_old_man_for_missing_type(old_type_uuid):
+    """Makes an Old Manifest object for an old type uuid"""
+    if not old_type_uuid:
+        return None
+    old_man_obj = OldManifest.objects.filter(uuid=old_type_uuid).first()
+    if old_man_obj:
+        # this already exists
+        return old_man_obj
+    old_type = OCtype.objects.filter(uuid=old_type_uuid).first()
+    if not old_type:
+        # not even the type exists
+        return None
+    old_s = OCstring.objects.filter(uuid=old_type.content_uuid).first()
+    if not old_s:
+        # No string, so we don't know what the label should be
+        return None
+    old_man_obj = OldManifest()
+    old_man_obj.uuid = old_type.uuid
+    old_man_obj.source_id = old_type.source_id
+    old_man_obj.project_uuid = old_type.project_uuid
+    old_man_obj.item_type = 'types'
+    old_man_obj.label = old_s.content
+    old_man_obj.save()
+    print(f'made old manifest type record: {old_man_obj.label} [{old_man_obj.uuid}]')
+    return old_man_obj
+
+
 def copy_attributes(
     old_man_obj,
     new_dict={},
@@ -1816,7 +1843,7 @@ def ensure_legacy_assertion_refs(old_asserts_qs, old_assert_count):
     ).order_by(
         '-uuid_count',
         'object_uuid'
-    ).values_list(
+    ).values(
         'object_uuid',
         'uuid_count'
     )[:2000]
