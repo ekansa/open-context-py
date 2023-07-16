@@ -1,6 +1,7 @@
 import logging
 import hashlib
 
+from django.conf import settings
 from django.core.cache import caches
 from django.db.models import OuterRef, Subquery, Prefetch
 
@@ -51,7 +52,8 @@ def make_path_manifest_item_cache_key(path, filter_args):
     hash_obj = hashlib.sha1()
     path_item_str = f'context: {path} {str(filter_args)}'
     hash_obj.update(path_item_str.encode('utf-8'))
-    return hash_obj.hexdigest()
+    id = hash_obj.hexdigest()
+    return f'{settings.CACHE_PREFIX_SEARCH}{str(id)}'
 
 
 def make_id_manifest_item_cache_key(identifier):
@@ -59,7 +61,8 @@ def make_id_manifest_item_cache_key(identifier):
     hash_obj = hashlib.sha1()
     id_item_str = f'id: {identifier}'
     hash_obj.update(id_item_str.encode('utf-8'))
-    return hash_obj.hexdigest()
+    id = hash_obj.hexdigest()
+    return f'{settings.CACHE_PREFIX_SEARCH}{str(id)}'
 
 
 def make_slug_manifest_children_cache_key(parent_slug):
@@ -67,7 +70,8 @@ def make_slug_manifest_children_cache_key(parent_slug):
     hash_obj = hashlib.sha1()
     id_item_str = f'children-of-slug: {parent_slug}'
     hash_obj.update(id_item_str.encode('utf-8'))
-    return hash_obj.hexdigest()
+    id = hash_obj.hexdigest()
+    return f'{settings.CACHE_PREFIX_SEARCH}{str(id)}'
 
 
 def get_cache_manifest_item_by_path(
@@ -87,7 +91,7 @@ def get_cache_manifest_item_by_path(
             filter_args=filter_args
         )
 
-    cache = caches['redis']
+    cache = caches['redis_search']
     cache_key = make_path_manifest_item_cache_key(path, filter_args)
     man_obj = cache.get(cache_key)
     if man_obj:
@@ -124,7 +128,7 @@ def get_cache_manifest_items_by_path(
             filter_args=filter_args
         )
 
-    cache = caches['redis']
+    cache = caches['redis_search']
     output = []
     db_query_paths = []
     for path in paths_list:
@@ -162,7 +166,7 @@ def get_cache_man_obj_by_any_id(identifier, use_cache=True):
     if not use_cache:
         return editorial_api.get_man_obj_by_any_id(identifier)
 
-    cache = caches['redis']
+    cache = caches['redis_search']
     cache_key = make_id_manifest_item_cache_key(identifier)
     man_obj = cache.get(cache_key)
     if man_obj:
@@ -213,7 +217,7 @@ def get_man_obj_children_list(man_obj, use_cache=True):
             output_child_objs=True
         )
 
-    cache = caches['redis']
+    cache = caches['redis_search']
     cache_key = make_slug_manifest_children_cache_key(man_obj.slug)
     children_objs = cache.get(cache_key)
     if children_objs is not None:
@@ -283,8 +287,8 @@ def get_project_overlay_qs(
     hash_obj = hashlib.sha1()
     path_item_str = f'projects-overlay: {project_slugs}'
     hash_obj.update(path_item_str.encode('utf-8'))
-    cache_key = f'proj-overlay-{str(hash_obj.hexdigest())}'
-    cache = caches['redis']
+    cache_key = f'{settings.CACHE_PREFIX_PROJ_META}ov_{str(hash_obj.hexdigest())}'
+    cache = caches['redis_search']
     proj_overlay_qs = cache.get(cache_key)
     if proj_overlay_qs is not None:
         # We've already cached this, so returned the cached queryset
@@ -341,8 +345,8 @@ def get_unique_project_item_class_list(
     hash_obj = hashlib.sha1()
     path_item_str = f'projects-item-class-summary: {project_slugs}'
     hash_obj.update(path_item_str.encode('utf-8'))
-    cache_key = f'proj-classes-{str(hash_obj.hexdigest())}'
-    cache = caches['redis']
+    cache_key = f'{settings.CACHE_PREFIX_PROJ_META}cl_{str(hash_obj.hexdigest())}'
+    cache = caches['redis_search']
     proj_class_sum_list = cache.get(cache_key)
     if proj_class_sum_list is not None:
         # We've already cached this, so returned the cached list
@@ -401,8 +405,8 @@ def get_proj_geo_by_slugs(slugs, use_cache=True):
     hash_obj = hashlib.sha1()
     slug_str = f'proj-geo-slugs: {slugs}'
     hash_obj.update(slug_str.encode('utf-8'))
-    cache_key = f'proj-geo-slugs-{str(hash_obj.hexdigest())}'
-    cache = caches['redis']
+    cache_key = f'{settings.CACHE_PREFIX_PROJ_META}geo_{str(hash_obj.hexdigest())}'
+    cache = caches['redis_search']
     act_qs = cache.get(cache_key)
     if act_qs is not None:
         # We've already cached this, so returned the cached list
@@ -510,8 +514,8 @@ def get_project_desc_banner_qs(
     else:
         path_item_str = f'projects-hero: {project_slugs}'
     hash_obj.update(path_item_str.encode('utf-8'))
-    cache_key = f'proj-hero-{str(hash_obj.hexdigest())}'
-    cache = caches['redis']
+    cache_key = f'{settings.CACHE_PREFIX_PROJ_META}hero_{str(hash_obj.hexdigest())}'
+    cache = caches['redis_search']
     proj_desc_banner_qs = cache.get(cache_key)
     if proj_desc_banner_qs is not None:
         # We've already cached this, so returned the cached queryset
@@ -543,8 +547,8 @@ def get_desc_and_banner_url_by_slug(proj_desc_banner_qs, slug, use_cache=True):
         hash_obj = hashlib.sha1()
         path_item_str = f'projects-hero-for-slug: {slug}'
         hash_obj.update(path_item_str.encode('utf-8'))
-        cache_key = f'hero-slug-{str(hash_obj.hexdigest())}'
-        cache = caches['redis']
+        cache_key = f'{settings.CACHE_PREFIX_PROJ_META}hs_{str(hash_obj.hexdigest())}'
+        cache = caches['redis_search']
         cached_tuple = cache.get(cache_key)
     if cached_tuple:
         # return description, banner_url
@@ -574,17 +578,17 @@ def get_desc_and_banner_url_by_slug(proj_desc_banner_qs, slug, use_cache=True):
 
 
 def get_string_attribute_data_for_uuids_qs(
-    uuids, 
-    db_limit_string_attributes=None, 
+    uuids,
+    db_limit_string_attributes=None,
     requested_attrib_slugs=None
 ):
     """Gets an AllAssertion queryset for string attribute data
 
     :param list uuids: A list of UUIDs for the subject items
     :param str db_limit_string_attributes: Options to limit the predicates
-        retrieved in the query set. Choices are: None (no limits), 
-        'project' (non-opencontext project attributes only), 
-        and 'requested_attrib_slugs' (attributes specified by the 
+        retrieved in the query set. Choices are: None (no limits),
+        'project' (non-opencontext project attributes only),
+        and 'requested_attrib_slugs' (attributes specified by the
         requested_attrib_slugs)
     :param list requested_attrib_slugs: An optional list of predicate
         slugs to limit the query set.
@@ -610,17 +614,17 @@ def get_string_attribute_data_for_uuids_qs(
 
 
 def get_db_uuid_pred_str_dict(
-    uuids, 
-    db_limit_string_attributes=None, 
+    uuids,
+    db_limit_string_attributes=None,
     requested_attrib_slugs=None
 ):
     """Gets a dictionary of string attribute data for uuids
 
     :param list uuids: A list of UUIDs for the subject items
     :param str db_limit_string_attributes: Options to limit the predicates
-        retrieved in the query set. Choices are: None (no limits), 
-        'project' (non-opencontext project attributes only), 
-        and 'requested_attrib_slugs' (attributes specified by the 
+        retrieved in the query set. Choices are: None (no limits),
+        'project' (non-opencontext project attributes only),
+        and 'requested_attrib_slugs' (attributes specified by the
         requested_attrib_slugs)
     :param list requested_attrib_slugs: An optional list of predicate
         slugs to limit the query set.
@@ -628,8 +632,8 @@ def get_db_uuid_pred_str_dict(
     return dict
     """
     qs = get_string_attribute_data_for_uuids_qs(
-        uuids, 
-        db_limit_string_attributes, 
+        uuids,
+        db_limit_string_attributes,
         requested_attrib_slugs
     )
     prep_dict = {}

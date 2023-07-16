@@ -76,10 +76,11 @@ def process_solr_query(request_dict, base_search_url='/query/'):
         reset_cache = True
         request_dict.pop('reset_cache')
         print(f'Resetting cache for {request_dict}')
-    cache = caches['redis']
-    cache_key = make_hash_id_from_args(
+    cache = caches['redis_search']
+    cache_key_suffix = make_hash_id_from_args(
         args=request_dict
     )
+    cache_key = f'{settings.CACHE_PREFIX_SEARCH}{str(cache_key_suffix)}'
     result = None
     if not reset_cache:
         result = cache.get(cache_key)

@@ -25,19 +25,19 @@ else:
 # NOTE: About context
 #
 # Open Context emphasizes JSON-LD for publishing structured data to the
-# Web. Because each project defines its own set of descriptive 
+# Web. Because each project defines its own set of descriptive
 # attributes and linking relations (project-specific "predicates") and
 # controlled vocabulary terms (project-specific "types"), each project
 # needs a project-specific "context" dictionary for JSON-LD outputs.
 #
 # The functions here query the database to populate a dataframe that
-# describes all of the "predicates" and "types" items used in a 
+# describes all of the "predicates" and "types" items used in a
 # project. Please note! Some predicates and types items are SHARED by
 # multiple projects, and so the context output will include these
 # shared items, even if they come from a different project.
 #
 # Gathering context data to populate the dataframe requires a slow
-# query, so it dataframe should be cached if it does not exist. 
+# query, so it dataframe should be cached if it does not exist.
 # Consider setting up a worker process to pre-cache project data
 # in scenarios where a JSON-LD or HTML representations of many items
 # from the same project will be requested.
@@ -46,9 +46,9 @@ else:
 # data is a dataframe. Externally, the "context" data gets expressed
 # as a JSON-LD context object.
 #
-# The Solr indexer and the item representation (esp. equivalent_ld) 
+# The Solr indexer and the item representation (esp. equivalent_ld)
 # features both use project-context dataframes.
-# 
+#
 # ---------------------------------------------------------------------
 
 
@@ -92,7 +92,7 @@ def get_project_context_object_types(project_id):
         object__item_type='types',
         visible=True,
     )
-    
+
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
         # Exclude predicates from the Open Context
         # project.
@@ -120,7 +120,7 @@ def get_project_context_object_types(project_id):
 
 def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
     """Gets linked data assertions on a list of items
-    
+
     :param list subject_id_list: A list of assertion
         subject identifiers
     :param str project_id: A project's UUID or string UUID primary key
@@ -191,7 +191,7 @@ def rename_pred_obj_df_cols(df, df_type):
     }
     rename_dict[f'{df_type}_id'] = 'subject_id'
     df.rename(
-        columns=rename_dict, 
+        columns=rename_dict,
         inplace=True
     )
     return df
@@ -213,16 +213,16 @@ def db_make_project_context_df(project_id):
 
     ld_qs = get_ld_assertions_on_item_qs(df['subject_id'].unique().tolist())
     df_ld = pd.DataFrame.from_records(ld_qs)
-    
+
     # Avoid duplicating columns already in df
     if len(ld_qs) and not df_ld.empty:
         drop_cols = [c for c in df_ld.columns if c.startswith('subject__')]
         df_ld.drop(columns=drop_cols, inplace=True)
 
         df = df.merge(
-            df_ld, 
+            df_ld,
             how='left',
-            left_on='subject_id', 
+            left_on='subject_id',
             right_on='subject_id'
         )
 
@@ -235,7 +235,7 @@ def db_make_project_context_df(project_id):
 
 def make_project_context_cache_key(project_id):
     """Makes a cache key for a project context"""
-    return f'{str(project_id)}-project-context-df'
+    return f'{settings.CACHE_PREFIX_PROJ_CONTEXT}{str(project_id)}-context-df'
 
 
 def get_project_context_df_from_cache(project_id):
@@ -244,7 +244,7 @@ def get_project_context_df_from_cache(project_id):
     :param str project_id: A project's UUID or string UUID primary key
         identifier
     """
-    cache = caches['redis']
+    cache = caches['redis_context']
     cache_key = make_project_context_cache_key(project_id)
     return cache.get(cache_key)
 
@@ -260,12 +260,12 @@ def get_cache_project_context_df(project_id, use_cache=True, reset_cache=False):
     if not use_cache:
         return db_make_project_context_df(project_id)
 
-    cache = caches['redis']
+    cache = caches['redis_context']
     df = None
     cache_key = make_project_context_cache_key(project_id)
     if not reset_cache:
         df = cache.get(cache_key)
-    
+
     if df is not None:
         return df
 
@@ -291,14 +291,14 @@ def get_item_context_df(subject_id_list, project_id, pref_project_context=True):
         # The requirement is satisfied because we have the
         # project's context df
         return df
-    
+
     if pref_project_context:
         df = get_cache_project_context_df(project_id)
-    
+
     if pref_project_context and df is not None:
         # Satisfy the requirement with the project context.
         return df
-    
+
     # As a fallback, make a dataframe of linked data
     # relating to items in the subject_id_list. These
     # are relevant to an item's context.

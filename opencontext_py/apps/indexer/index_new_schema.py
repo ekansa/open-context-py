@@ -6,6 +6,7 @@ import time
 
 from itertools import islice
 
+from django.conf import settings
 from django.core.cache import caches
 
 from django.db.models import Q
@@ -172,10 +173,19 @@ def get_solr_connection():
         solr =  SolrClient().solr
     return solr
 
+def clear_all_caches():
+    """Clears caches to make sure reidexing uses fresh data. """
+    cache_names = list(settings.CACHES.keys())
+    for cache_name in cache_names:
+        try:
+            cache = caches[cache_name]
+            cache.clear()
+        except Exception as e:
+            print(str(e))
 
 def clear_caches():
     """Clears caches to make sure reidexing uses fresh data. """
-    cache_names = ['redis', 'default', 'memory']
+    cache_names = ['redis_search', 'redis', 'default', 'memory']
     for cache_name in cache_names:
         try:
             cache = caches[cache_name]
@@ -320,6 +330,56 @@ def make_indexed_solr_documents_in_chunks(
         )
     full_rate = get_crawl_rate_in_seconds(total_count, all_start)
     print(f'ALL {total_count} items indexed at rate: {full_rate} items/second')
+
+
+def get_updated_uuid_list(
+        after_date,
+        item_type_list=['projects', 'subjects', 'media', 'documents']
+    ):
+    """Gets a list of UUIDs updated after_date"""
+    a_qs = AllAssertion.objects.filter(
+        subject__item_type__in=item_type_list,
+        updated__gte=after_date,
+        subject__meta_json__flag_do_not_index__isnull=True,
+    ).distinct(
+        'subject_id'
+    ).order_by(
+        'subject_id'
+    ).values_list(
+        'subject_id',
+        flat=True,
+    )
+    uuids = [str(uuid) for uuid in a_qs]
+    m_qs = AllManifest.objects.filter(
+        item_type__in=item_type_list,
+        updated__gte=after_date,
+        meta_json__flag_do_not_index__isnull=True,
+    )
+    uuids += [str(m.uuid) for m in m_qs]
+    uuids = list(set(uuids))
+    return uuids
+
+
+def updated_solr_documents_in_chunks(
+    after_date,
+    solr=None,
+    chunk_size=20,
+    start_clear_caches=True,
+    update_index_time=True,
+    item_type_list=['projects', 'subjects', 'media', 'documents'],
+):
+    """Makes and indexes solr documents in chunks for items updated after_date"""
+    uuids = get_updated_uuid_list(
+        after_date=after_date,
+        item_type_list=item_type_list,
+    )
+    return make_indexed_solr_documents_in_chunks(
+        uuids=uuids,
+        solr=solr,
+        chunk_size=chunk_size,
+        start_clear_caches=start_clear_caches,
+        update_index_time=update_index_time,
+    )
 
 
 def get_uuids_associated_with_vocab(

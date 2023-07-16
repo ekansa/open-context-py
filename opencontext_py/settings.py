@@ -349,6 +349,22 @@ if DEBUG:
                 'MAX_ENTRIES': 100000
             }
         },
+        'redis_search': {
+            'BACKEND': 'redis_cache.RedisCache',
+            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'TIMEOUT': (60 * 5),  # 2 minute for cache
+            'OPTIONS': {
+                'MAX_ENTRIES': 100000
+            }
+        },
+        'redis_context': {
+            'BACKEND': 'redis_cache.RedisCache',
+            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'TIMEOUT': (60 * 5),  # 2 minute for cache
+            'OPTIONS': {
+                'MAX_ENTRIES': 100000
+            }
+        },
         'file': {
             'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
             'LOCATION': get_secret('FILE_CACHE_PATH'),
@@ -377,6 +393,24 @@ else:
             }
         },
         'redis': {
+            'BACKEND': 'redis_cache.cache.RedisCache',
+            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
+            'OPTIONS': {
+                'MAX_ENTRIES': 500000,
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+            }
+        },
+        'redis_search': {
+            'BACKEND': 'redis_cache.cache.RedisCache',
+            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
+            'OPTIONS': {
+                'MAX_ENTRIES': 500000,
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+            }
+        },
+        'redis_context': {
             'BACKEND': 'redis_cache.cache.RedisCache',
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
@@ -763,3 +797,10 @@ LOGGING = {
             }
         }
     }
+
+# These are common prefixes used in caching.
+CACHE_PREFIX_SEARCH = 'search_'
+CACHE_PREFIX_VIEW = 'view_'
+CACHE_PREFIX_PROJ_CONTEXT = 'pcntx_' # For project context dataframe caching
+CACHE_PREFIX_PROJ_META = 'prj_meta_' # For project image overlay and other metadata
+CACHE_PREFIX_MANIFEST_OBJ = 'man_obj_'

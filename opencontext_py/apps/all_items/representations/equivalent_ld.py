@@ -5,6 +5,7 @@ import uuid as GenUUID
 import numpy as np
 import pandas as pd
 
+from django.conf import settings
 from django.core.cache import caches
 
 
@@ -224,7 +225,7 @@ class NotStoredAssertion():
 
 def make_manifest_obj_cache_key(uuid):
     """Make a cache key for fetching a manifest object by cache key"""
-    return f'{str(uuid)}-manifest-by-uuid'
+    return f'{settings.CACHE_PREFIX_MANIFEST_OBJ}{str(uuid)}'
 
 
 def cache_all_df_context_related_manifest_objects(df_context):
