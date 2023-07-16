@@ -13,7 +13,9 @@ from django.db.models import Q
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import AllAssertion, AllManifest
-
+from opencontext_py.apps.all_items.project_contexts.context import (
+    clear_project_context_df_from_cache
+)
 
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
@@ -193,6 +195,16 @@ def clear_caches():
         except Exception as e:
             print(str(e))
 
+def clear_search_cache():
+    """Clears only the search cache. """
+    cache_names = ['redis_search', ]
+    for cache_name in cache_names:
+        try:
+            cache = caches[cache_name]
+            cache.clear()
+        except Exception as e:
+            print(str(e))
+
 
 def chunk_list(act_list, chunk_size):
     """Break a list into smaller chunks"""
@@ -280,10 +292,33 @@ def make_index_solr_documents(uuids, solr=None):
     print(f'Indexed committing {str(uuids)}')
 
 
+def clear_new_project_context(act_uuids, cleared_project_ids):
+    proj_id_qs = AllManifest.objects.filter(
+        uuid__in=act_uuids
+    ).distinct(
+        'project_id'
+    ).order_by(
+        'project_id'
+    ).values_list(
+        'project_id', flat=True
+    )
+    if len(cleared_project_ids):
+        proj_id_qs = proj_id_qs.exclude(project_id__in=cleared_project_ids)
+    for project_id in proj_id_qs:
+        project_id = str(project_id)
+        if project_id in cleared_project_ids:
+            continue
+        print(f'First clear context_df cache for new project: {project_id}')
+        clear_project_context_df_from_cache(project_id)
+        cleared_project_ids.append(project_id)
+    return cleared_project_ids
+
+
 def make_indexed_solr_documents_in_chunks(
     uuids,
     solr=None,
     chunk_size=20,
+    start_clear_all_caches=False,
     start_clear_caches=True,
     update_index_time=True,
 ):
@@ -295,10 +330,15 @@ def make_indexed_solr_documents_in_chunks(
     logger.info(f'Index {total_count} total items.')
     print(f'Index {total_count} total items.')
 
-    if start_clear_caches:
+    if start_clear_all_caches:
+        print('Clearing ALL caches for fresh indexing')
+        clear_all_caches()
+    elif start_clear_caches:
         print('Clearing caches for fresh indexing')
         clear_caches()
-
+    else:
+        print('No caches cleared')
+    cleared_project_ids = []
     all_start = time.time()
     total_indexed = 0
     count_groups, r =  divmod(total_count, chunk_size)
@@ -307,6 +347,14 @@ def make_indexed_solr_documents_in_chunks(
     for act_uuids in chunk_list(uuids, chunk_size):
         i += 1
         print('*' * 50)
+        if start_clear_caches:
+            # Make sure we have cleared the project contexts
+            # for only those projects relevant to the items
+            # we are reindexing.
+            cleared_project_ids = clear_new_project_context(
+                act_uuids,
+                cleared_project_ids
+            )
         act_chunk_size = len(act_uuids)
         print(
             f'Attempting to index chunk {i} of {count_groups} chunks'

@@ -249,6 +249,12 @@ def get_project_context_df_from_cache(project_id):
     return cache.get(cache_key)
 
 
+def clear_project_context_df_from_cache(project_id):
+    cache = caches['redis_context']
+    cache_key = make_project_context_cache_key(project_id)
+    return cache.delete(cache_key)
+
+
 def get_cache_project_context_df(project_id, use_cache=True, reset_cache=False):
     """Gets and caches a project context dataframe
 
