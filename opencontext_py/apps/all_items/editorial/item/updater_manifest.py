@@ -975,7 +975,7 @@ def reindex_manifest_objs(request_json, request=None):
             errors.append(f'Need permission reindex manifest object {man_obj}')
             continue
 
-        if (request and not request.user.is_superuser 
+        if (request and not request.user.is_superuser
             and not to_reindex_man_obj.item_type in EDIT_GROUP_USER_ALLOWED_REINDEX_TYPES):
             errors.append(f'Only super user can reindex item_type: {to_reindex_man_obj.item_type}')
             continue
@@ -989,7 +989,7 @@ def reindex_manifest_objs(request_json, request=None):
             continue
 
         reindex_list.append(uuid)
-    
+
     if len(reindex_list) > 0:
         # The assumption here is that our reindex list is small enough
         # to finish indexing before a web request times out.
