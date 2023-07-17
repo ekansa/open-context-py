@@ -318,6 +318,10 @@ var vc_all_search_tabs = Vue.component(
           return result_no_geo_records;
         },
         result_off_world: function(){
+          let id = safe_get_nested_object_by_str_key(this.result, 'id');
+          if(id && (id.indexOf('/Off+World') >=0)){
+            return true;
+          }
           let facets = safe_get_nested_object_by_str_key(this.result, 'oc-api:has-facets');
           if(facets){
             for (let f_field of facets ){
@@ -330,11 +334,11 @@ var vc_all_search_tabs = Vue.component(
               if(f_field.type != 'oc-api:facet-context'){
                 continue;
               }
-              if(f_field['oc-api:has-id-options'].length != 1){
-                return false;
-              }
-              if(f_field['oc-api:has-id-options'][0].slug == 'oc-off-world-root'){
-                return true;
+              for(let opt of f_field['oc-api:has-id-options']){
+                if(opt.slug == 'oc-off-world-root'){
+                  // simple case
+                  return true;
+                }
               }
             }
           }
