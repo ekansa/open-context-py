@@ -61,11 +61,21 @@
           :active="selected_tab == 0"
           >
           <b-card-text>
-            <h5>
-              <span class="text-left">Summary Map of</span>
-              <span class="text-right">[[ result_count_human ]] Records</span>
-            </h5>
-            <div id="app_media" v-if="(result_count > 0) && (selected_tab == 0)">
+            <div v-if="(result_count > 0)">
+              <h5 v-if="(result_raw_features)">
+                <span class="text-left">Summary Map of</span>
+                <span class="text-right">[[ result_count_human ]] Records</span>
+              </h5>
+              <h5 v-else-if="result_off_world">
+                <span class="text-left">[[ result_count_human ]] Records</span>
+                <span class="text-right">(Off-World Results, not Mapped)</span>
+              </h5>
+              <h5 v-else>
+                <span class="text-left">[[ result_count_human ]] Records</span>
+                <span class="text-right">(Cannot be Mapped)</span>
+              </h5>
+            </div>
+            <div id="app_media" v-if="(result_raw_features) && (result_count > 0) && (selected_tab == 0)">
               <common_map
                 v-if="result.features.length > 0"
                 :map_key="0"
@@ -82,6 +92,12 @@
                 v-bind:result_count_human="result_count_human"
                 @set_frontend_state_obj="set_frontend_state_obj($event)"
                 ></common_map>
+            </div>
+            <div v-if="(result_count > 0) && result_off_world">
+              <b-img center src="{{ BASE_URL }}/static/oc/icons-v2/noun-solar-system-167829.svg" fluid-grow alt="Outer space icon"></b-img>
+            </div>
+            <div v-if="(result_count > 0) && !result_off_world && !result_raw_features">
+              <b-img center src="{{ BASE_URL }}/static/oc/icons-v2/noun-earth-1867754.svg" fluid-grow alt="Outer space icon"></b-img>
             </div>
             <div class="jumbotron jumbotron-fluid" v-else-if="result_count == 0">
               <div class="container-fluid text-muted text-center">
@@ -300,6 +316,29 @@ var vc_all_search_tabs = Vue.component(
             console.log('We have nongeo records: ' +  result_no_geo_records.length);
           }
           return result_no_geo_records;
+        },
+        result_off_world: function(){
+          let facets = safe_get_nested_object_by_str_key(this.result, 'oc-api:has-facets');
+          if(facets){
+            for (let f_field of facets ){
+              if(!('type' in f_field)){
+                continue;
+              }
+              if(!('oc-api:has-id-options' in f_field)){
+                continue;
+              }
+              if(f_field.type != 'oc-api:facet-context'){
+                continue;
+              }
+              if(f_field['oc-api:has-id-options'].length != 1){
+                return false;
+              }
+              if(f_field['oc-api:has-id-options'][0].slug == 'oc-off-world-root'){
+                return true;
+              }
+            }
+          }
+          return false;
         },
         numeric_fields_id: function () {
           let frag_obj = get_search_current_frag_obj();
