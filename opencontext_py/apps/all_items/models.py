@@ -442,6 +442,9 @@ class AllManifest(models.Model):
         if str(self.uuid) in configs.LIST_SUBJECTS_WORLD_REGIONS_UUIDS:
             self.path = self.label
             return self.path
+        if str(self.context.uuid) == configs.DEFAULT_SUBJECTS_OFF_WORLD_UUID:
+            self.path = self.context.label + '/' + self.label
+            return self.path
         if self.context.item_type != 'subjects':
             raise ValueError(
                 f'Context must have item_type="subjects" not {self.context.item_type}'

@@ -3,7 +3,7 @@ import hashlib
 
 from django.conf import settings
 from django.core.cache import caches
-from django.db.models import OuterRef, Subquery, Prefetch
+from django.db.models import Q, OuterRef, Subquery, Prefetch
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
@@ -19,6 +19,14 @@ from opencontext_py.apps.all_items import hierarchy
 logger = logging.getLogger(__name__)
 
 
+def check_off_world(path):
+    """Checks if a path has an off world item"""
+    if not path:
+        return False
+    if path in ['Off World', 'Off+World']:
+        return True
+    return False
+
 
 def db_get_manifest_item_by_path(path, filter_args):
     """Gets a manifest item by an item path
@@ -27,7 +35,17 @@ def db_get_manifest_item_by_path(path, filter_args):
 
     :return AllManifest or None
     """
-    man_obj_qs = AllManifest.objects.filter(path=path)
+    if check_off_world(path):
+        man_obj_qs = AllManifest.objects.filter(
+            Q(path=path)
+            | Q(
+                item_type='subjects',
+                label=path,
+                project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+            )
+        )
+    else:
+        man_obj_qs = AllManifest.objects.filter(path=path)
     if filter_args:
         man_obj_qs = man_obj_qs.filter(**filter_args)
     return man_obj_qs.first()
@@ -40,7 +58,21 @@ def db_get_manifest_items_by_path(paths_list, filter_args):
 
     :return QuerySet of AllManifest items.
     """
-    man_obj_qs = AllManifest.objects.filter(path__in=paths_list)
+    has_off_world = False
+    for path in paths_list:
+        if check_off_world(path):
+            has_off_world = True
+    if has_off_world:
+        man_obj_qs = AllManifest.objects.filter(
+            Q(path__in=paths_list)
+            | Q(
+                item_type='subjects',
+                label__in=paths_list,
+                project_id=configs.OPEN_CONTEXT_PROJ_UUID,
+            )
+        )
+    else:
+        man_obj_qs = AllManifest.objects.filter(path__in=paths_list)
     if filter_args:
         man_obj_qs = man_obj_qs.filter(**filter_args)
     man_obj_qs = man_obj_qs.select_related('context')
