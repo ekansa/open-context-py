@@ -10,7 +10,9 @@ from opencontext_py.apps.indexer.solr_utils import replace_slug_in_solr_field
 
 from opencontext_py.apps.all_items.configs import (
     URI_ITEM_TYPES,
-    DEFAULT_SUBJECTS_ROOTS
+    DEFAULT_SUBJECTS_ROOTS,
+    DEFAULT_SUBJECTS_ROOT_UUID,
+    DEFAULT_SUBJECTS_OFF_WORLD_UUID
 )
 from opencontext_py.apps.all_items.models import AllManifest
 
@@ -412,6 +414,7 @@ def get_spatial_context_query_dict(spatial_context=None):
 
     # Now add path items with URL escape fixes if needed.
     paths_list = add_url_fixes_to_paths_list(paths_list)
+    print(f'paths list {paths_list}')
 
     # Get manifest objects from the paths list. This uses the cache,
     # or the DB if the cache doesn't have what we want.
@@ -422,6 +425,15 @@ def get_spatial_context_query_dict(spatial_context=None):
         parent_slug = man_obj.context.slug
         if str(man_obj.context.uuid) in DEFAULT_SUBJECTS_ROOTS:
             # We're at the root of spatial containment.
+            # Deprecated, because this doesn't work for off world.
+            parent_slug = 'root'
+            if str(man_obj.context.uuid) == DEFAULT_SUBJECTS_OFF_WORLD_UUID:
+                # If the item context is off world, we will use a
+                # different root context.
+                parent_slug = 'oc_off_world_root'
+        if str(man_obj.uuid) in DEFAULT_SUBJECTS_ROOTS:
+            # We're at the root of spatial containment.
+            # Deprecated, because this doesn't work for off world.
             parent_slug = 'root'
         # Make the query term for the path
         path_term = utilities.make_solr_term_via_slugs(
