@@ -93,7 +93,7 @@
                 @set_frontend_state_obj="set_frontend_state_obj($event)"
                 ></common_map>
             </div>
-            <div v-if="(result_count > 0) && result_off_world">
+            <div v-if="(result_count > 0) && result_off_world && !result_raw_features">
               <b-img center src="{{ BASE_URL }}/static/oc/icons-v2/noun-solar-system-167829.svg" fluid-grow alt="Outer space icon"></b-img>
             </div>
             <div v-if="(result_count > 0) && !result_off_world && !result_raw_features">
