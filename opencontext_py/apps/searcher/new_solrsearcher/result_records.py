@@ -787,7 +787,7 @@ class ResultRecord():
             # This record doesn't have any string predicates
             # and values associated with it.
             return None
-        
+
         for pred_dict, vals_list in item_preds_vals:
             ok_add = True
             if self.ld_attributes:
@@ -1050,17 +1050,17 @@ class ResultRecords():
         self.start = start
         self.proj_index = proj_index
         # allow_missing_strings_db_query is for the default case where we
-        # allow DB queries to fetch string attribute data, because we don't 
+        # allow DB queries to fetch string attribute data, because we don't
         # store string values in solr.
         self.allow_missing_strings_db_query = True
         # do_missing_strings_db_query will be True if we determine we
         # actually need to make a database query for string attribute data
         self.do_missing_strings_db_query = None
 
-        # If we do a DB query for string attributes limit DB queries 
+        # If we do a DB query for string attributes limit DB queries
         # to only project specific string attribute data.
-        # Choices are: None (no limits), 'project' (non-opencontext 
-        # project attributes only), and 'requested_attrib_slugs' 
+        # Choices are: None (no limits), 'project' (non-opencontext
+        # project attributes only), and 'requested_attrib_slugs'
         # (attributes specified by the requested_attrib_slugs)
         self.db_limit_string_attributes = 'requested_attrib_slugs'
 
@@ -1222,7 +1222,7 @@ class ResultRecords():
             # We're not allowing DB check2s for string attribute data
             self.do_missing_strings_db_query = False
             return None
-        
+
         raw_download = utilities.get_request_param_value(
             self.request_dict,
             param='download',
@@ -1230,7 +1230,7 @@ class ResultRecords():
             as_list=False,
             solr_escape=False,
         )
-        
+
         raw_attributes = utilities.get_request_param_value(
             self.request_dict,
             param='attributes',
@@ -1244,7 +1244,12 @@ class ResultRecords():
             # fetch of string attribute data.
             self.do_missing_strings_db_query = False
             return None
-        
+
+        if raw_download or raw_attributes:
+            # We're doing a download, so get the string attributes
+            # that may be present in the raw_attributes.
+            self.do_missing_strings_db_query = True
+
         raw_fulltext_search = utilities.get_request_param_value(
             self.request_dict,
             param='q',
@@ -1271,7 +1276,7 @@ class ResultRecords():
             # a DB query for string attributes too
             self.do_missing_strings_db_query = True
             self.db_limit_string_attributes = 'project'
-        
+
 
     def make_db_uuid_pred_str_dict(self, uuids, requested_attrib_slugs):
         """Uses the database to get string attribute data for the list of
@@ -1284,7 +1289,7 @@ class ResultRecords():
             db_limit_string_attributes=self.db_limit_string_attributes,
             requested_attrib_slugs=requested_attrib_slugs
         )
-        
+
 
     def make_records_from_solr(self, solr_json):
         """Makes record objects from solr_json"""
@@ -1392,7 +1397,7 @@ class ResultRecords():
             # Add the result record object to the list of records.
             records.append(rr)
 
-        
+
         # Setup configuration for doing DB queries for string
         # attributes
         self._set_strings_db_query_config(requested_attrib_slugs)
@@ -1414,7 +1419,7 @@ class ResultRecords():
         # Make a dict with string attribute data pulled from the database,
         # if required.
         db_uuid_pred_str_dict = self.make_db_uuid_pred_str_dict(
-            uuids, 
+            uuids,
             requested_attrib_slugs,
         )
 
