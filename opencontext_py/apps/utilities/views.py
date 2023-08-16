@@ -15,6 +15,8 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 
 
+API_MAX_ZOOM = 25
+
 @cache_control(no_cache=True)
 @never_cache
 def uuid(request):
@@ -90,6 +92,7 @@ def meters_to_lat_lon(request):
 def lat_lon_to_quadtree(request):
     """ Converts WGS-84 lat / lon to a quadtree tile of a given zoom level """
     gm = GlobalMercator()
+    gm.MAX_ZOOM = API_MAX_ZOOM
     lat = None
     lon = None
     rand = None
@@ -140,6 +143,7 @@ def quadtree_to_lat_lon(request):
     """ Converts a quadtree tile to WGS-84 lat / lon coordinates in different formats """
     lat_lon = None
     gm = GlobalMercator()
+    gm.MAX_ZOOM = API_MAX_ZOOM
     if request.GET.get('tile') is not None:
         tile = request.GET['tile']
         try:

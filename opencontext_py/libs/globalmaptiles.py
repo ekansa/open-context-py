@@ -313,7 +313,7 @@ class GlobalMercator(object):
         zoom = len(quadtree)
         tx, ty = self.quadtree_to_tile(quadtree, zoom)
         return self.TileLatLonBounds(tx, ty, zoom)
-    
+
     def quadtree_to_geojson_lon_lat(self, quadtree):
         """
         Makes a pair of lon, lat points in the GeoJSON order.
