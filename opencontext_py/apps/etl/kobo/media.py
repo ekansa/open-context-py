@@ -48,31 +48,31 @@ MEDIAFILE_COLS_ENDSWITH = [
 MEDIA_DESCRIPTION_COLS_ENDSWITH = [
     'Note about Primary Image',
     'Note about Supplemental Image',
-    'File Title', 
-    'Date Metadata Recorded', 
-    'Date Created', 
+    'File Title',
+    'Date Metadata Recorded',
+    'Date Created',
     'File Creator',
     'Data Entry Person',
-    'Media Type', 
-    'Image Type', 
-    'Other Image Type Note', 
-    'Type of Composition Subject', 
-    'Type of Composition Subject/Object (artifact, ecofact)', 
-    'Type of Composition Subject/Field', 
-    'Type of Composition Subject/Work', 
-    'Type of Composition Subject/Social', 
-    'Type of Composition Subject/Publicity', 
-    'Type of Composition Subject/Other', 
-    'Other Composition Type Note', 
-    'Direction or Orientation Notes/Object Orientation Note', 
-    'Direction or Orientation Notes/Direction Faced in Field', 
-    'Description', 
-    'Media File Details (file not to be uploaded with this form)/Other Media Type Note', 
-    'Media File Details (file not to be uploaded with this form)/File Storage Type', 
-    'Media File Details (file not to be uploaded with this form)/Web URL', 
-    'Media File Details (file not to be uploaded with this form)/Name of Offline Device', 
-    'Media File Details (file not to be uploaded with this form)/Filename', 
-    'Media File Details (file not to be uploaded with this form)/Director Path', 
+    'Media Type',
+    'Image Type',
+    'Other Image Type Note',
+    'Type of Composition Subject',
+    'Type of Composition Subject/Object (artifact, ecofact)',
+    'Type of Composition Subject/Field',
+    'Type of Composition Subject/Work',
+    'Type of Composition Subject/Social',
+    'Type of Composition Subject/Publicity',
+    'Type of Composition Subject/Other',
+    'Other Composition Type Note',
+    'Direction or Orientation Notes/Object Orientation Note',
+    'Direction or Orientation Notes/Direction Faced in Field',
+    'Description',
+    'Media File Details (file not to be uploaded with this form)/Other Media Type Note',
+    'Media File Details (file not to be uploaded with this form)/File Storage Type',
+    'Media File Details (file not to be uploaded with this form)/Web URL',
+    'Media File Details (file not to be uploaded with this form)/Name of Offline Device',
+    'Media File Details (file not to be uploaded with this form)/Filename',
+    'Media File Details (file not to be uploaded with this form)/Director Path',
 ]
 
 MEDIA_SOURCE_FILE_PREFIXS = {
@@ -162,12 +162,12 @@ def make_oc_filename(filename):
 
 
 def make_sheet_media_df(
-    df, 
+    df,
     subjects_df,
     form_type,
-    media_col_end, 
-    media_source_type, 
-    act_uuid, 
+    media_col_end,
+    media_source_type,
+    act_uuid,
     new_uuid,
 ):
     media_col = None
@@ -198,7 +198,7 @@ def make_sheet_media_df(
     # media file name column, uuid column, and the
     # descriptive fields for the media.
     df_sheet_media = df[
-        ([media_col, act_uuid] + sheet_des_cols)    
+        ([media_col, act_uuid] + sheet_des_cols)
     ].copy()
     df_sheet_media[media_col].replace('', np.nan, inplace=True)
     df_sheet_media.dropna(subset=[media_col], inplace=True)
@@ -208,7 +208,7 @@ def make_sheet_media_df(
     df_sheet_media['kobo_form'] = form_type
     if pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(form_type):
         df_sheet_media = utilities.add_final_subjects_uuid_label_cols(
-            df=df_sheet_media, 
+            df=df_sheet_media,
             subjects_df=subjects_df,
             form_type=form_type,
             final_label_col=new_uuid.replace('uuid', 'label'),
@@ -238,7 +238,7 @@ def make_sheet_media_df(
     if not 'media_uuid' in df_sheet_media.columns:
         # Make a deterministic media_uuid if not already present.
         df_sheet_media['media_uuid'] = df_sheet_media.apply(
-            make_deterministic_media_uuid, 
+            make_deterministic_media_uuid,
             axis=1
         )
         df_sheet_media['media_uuid_source'] = 'deterministic'
@@ -250,7 +250,7 @@ def make_sheet_media_df(
     # Now make the 'subject_label' and 'subject_uuid' the objects
     # to keep things consistent, where the media item is the subject and
     # the associated other records are the objects.
-    df_sheet_media['media_label'] = df_sheet_media['filename'] 
+    df_sheet_media['media_label'] = df_sheet_media['filename']
     df_sheet_media.rename(
         columns={
             'subject_label': 'object_label',
@@ -281,12 +281,12 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
                     sheet_name
                 )
             df_sheet_media = make_sheet_media_df(
-                df, 
+                df,
                 subjects_df,
                 form_type,
-                media_col_end, 
-                media_source_type, 
-                act_uuid, 
+                media_col_end,
+                media_source_type,
+                act_uuid,
                 new_uuid,
             )
             if df_sheet_media is None:
@@ -298,13 +298,13 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
     if df_media.empty:
         return None
     df_media = utilities.df_fill_in_by_shared_id_cols(
-        df=df_media, 
-        col_to_fill='subject_label', 
+        df=df_media,
+        col_to_fill='subject_label',
         id_cols=['subject_uuid'],
     )
     df_media = utilities.df_fill_in_by_shared_id_cols(
-        df=df_media, 
-        col_to_fill='object_label', 
+        df=df_media,
+        col_to_fill='object_label',
         id_cols=['object_uuid'],
     )
     return df_media
@@ -481,20 +481,54 @@ def make_new_size_file(src_file, new_file, new_width):
     im.close()
     return output
 
+
+def make_file_version_dir_and_sub_dirs(
+    new_file_name,
+    file_version_dir,
+    src_file,
+    make_sub_dirs_within=None
+):
+    """Creates a full, preview, or thumb directory file path that may contain
+    internal subdirectories if make_sub_dirs_within is a string"""
+    if not make_sub_dirs_within:
+        return os.path.join(file_version_dir, new_file_name)
+    if not src_file.startswith(make_sub_dirs_within):
+        return os.path.join(file_version_dir, new_file_name)
+    # get the subdirectory that is contained within the make_sub_dirs_within
+    sub_path_ex = src_file.split(make_sub_dirs_within)
+    sub_path = sub_path_ex[-1]
+    sub_path_list = sub_path.split('/')
+    # iterate through the subdirectory hierarchy, skipping the last item which is the
+    # filename.
+    act_path = file_version_dir
+    for sub_path in sub_path_list[:-1]:
+        # make an Open Context URL friendly path from the sub_path
+        sub_path = make_oc_filename(sub_path)
+        act_path = set_check_directory(act_path, sub_path)
+    return os.path.join(act_path, new_file_name)
+
+
 def make_image_versions_src_and_new_file(
     dirs,
     src_file,
     new_file_name,
     over_write=False,
     preview_width=kobo_oc_configs.MAX_PREVIEW_WIDTH,
-    thumbnail_width=kobo_oc_configs.MAX_THUMBNAIL_WIDTH
+    thumbnail_width=kobo_oc_configs.MAX_THUMBNAIL_WIDTH,
+    make_sub_dirs_within=None,
 ):
     """Make different file versions in different directories."""
     if not isinstance(src_file, str):
         return None
     if not os.path.exists(src_file):
         raise RuntimeError('Cannot find {}'.format(src_file))
-    full_file = os.path.join(dirs['full'], new_file_name)
+    # full_file = os.path.join(dirs['full'], new_file_name)
+    full_file = make_file_version_dir_and_sub_dirs(
+        new_file_name,
+        file_version_dir=dirs['full'],
+        src_file=src_file,
+        make_sub_dirs_within=make_sub_dirs_within,
+    )
     if over_write or not os.path.exists(full_file):
         print('Copy full file {}'.format(new_file_name))
         shutil.copy2(src_file, full_file)
@@ -503,13 +537,25 @@ def make_image_versions_src_and_new_file(
         replace_extension(new_file_name, new_extension='jpg')
     ]
     for mod_new_file in mod_new_possible_files:
-        prev_file = os.path.join(dirs['preview'], mod_new_file)
+        # prev_file = os.path.join(dirs['preview'], mod_new_file)
+        prev_file = make_file_version_dir_and_sub_dirs(
+            new_file_name=mod_new_file,
+            file_version_dir=dirs['preview'],
+            src_file=src_file,
+            make_sub_dirs_within=make_sub_dirs_within,
+        )
         if over_write or not os.path.exists(prev_file):
             prev_file = make_new_size_file(src_file, prev_file, new_width=preview_width)
             print(f'Made preview {prev_file}')
             break
     for mod_new_file in mod_new_possible_files:
-        thumb_file = os.path.join(dirs['thumbs'], mod_new_file)
+        # thumb_file = os.path.join(dirs['thumbs'], mod_new_file)
+        thumb_file = make_file_version_dir_and_sub_dirs(
+            new_file_name=mod_new_file,
+            file_version_dir=dirs['thumbs'],
+            src_file=src_file,
+            make_sub_dirs_within=make_sub_dirs_within,
+        )
         if over_write or not os.path.exists(thumb_file):
             thumb_file = make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
             print(f'Made thumbnail {thumb_file}')
@@ -530,6 +576,7 @@ def make_opencontext_file_versions(
     all_media_kobo_files_path=pc_configs.MEDIA_ALL_KOBO_REFS_CSV_PATH,
     oc_media_root_dir=pc_configs.OC_MEDIA_FILES_PATH,
     oc_sub_dirs=None,
+    make_sub_dirs_within=None,
 ):
     """Makes different file versions expected by Open Context."""
     df_media = pd.read_csv(all_media_kobo_files_path)
@@ -545,24 +592,27 @@ def make_opencontext_file_versions(
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
             dirs,
             row['path'],
-            row['new_filename']
+            row['new_filename'],
+            make_sub_dirs_within=make_sub_dirs_within,
         )
         act_index = (df_media['path'] == row['path'])
         df_media.loc[act_index, 'MEDIA_URL_full'] = make_media_url(
-            file_path=full_file, 
+            file_path=full_file,
             file_type='full'
         )
-        df_media.loc[act_index, 'MEDIA_URL_preview'] = make_media_url(
-            file_path=prev_file, 
-            file_type='preview'
-        )
-        df_media.loc[act_index, 'MEDIA_URL_thumbs'] = make_media_url(
-            file_path=thumb_file, 
-            file_type='thumbs'
-        )
+        if prev_file:
+            df_media.loc[act_index, 'MEDIA_URL_preview'] = make_media_url(
+                file_path=prev_file,
+                file_type='preview'
+            )
+        if thumb_file:
+            df_media.loc[act_index, 'MEDIA_URL_thumbs'] = make_media_url(
+                file_path=thumb_file,
+                file_type='thumbs'
+            )
     df_media.to_csv(all_media_kobo_files_path, index=False)
     return df_media
-    
+
 
 def check_prepare_media_uuid(df_all):
     """Checks on the media-uuid, adding uuids that are needing."""
@@ -590,7 +640,7 @@ def check_prepare_media_uuid(df_all):
             ).filter(
                 meta_json__link_uuid=row['link_uuid']
             ).first()
-        
+
         if man_obj is not None:
             df_all.loc[update_indx, 'media_uuid_source'] = man_obj.source_id
             df_all.loc[update_indx, 'media_created'] = man_obj.revised
@@ -610,7 +660,7 @@ def compose_file_title(filename, prefix="Working "):
     if '.' in filename:
         name_part = '.'.join(filename.split('.')[:-1])
     return prefix + name_part
-    
+
 
 def finalize_combined_media_df(
     df_all,
@@ -667,9 +717,9 @@ def prepare_media(
     df_media = make_all_export_media_df(excels_filepath)
     df_files = utilities.make_directory_files_df(files_path)
     df_media = pd.merge(
-        df_media, 
-        df_files, 
-        on=['path_uuid', 'filename'], 
+        df_media,
+        df_files,
+        on=['path_uuid', 'filename'],
         how='left'
     )
     if all_media_kobo_files_path:
@@ -732,9 +782,9 @@ def add_creator_links_from_all_media_df(
         df = df_orig[act_index].groupby(cols, as_index=False).first()
         df.reset_index(drop=True, inplace=True)
         df = utilities.add_person_object_rels(
-            df=df, 
+            df=df,
             person_col=person_col,
-            link_rel='Photographed by', 
+            link_rel='Photographed by',
         )
         ok_index = ~df['object_uuid'].isnull()
         if df[ok_index].empty:
@@ -746,14 +796,14 @@ def add_creator_links_from_all_media_df(
 def prep_links_df(dfs):
     """Prepares a dataframe of links between media items and related objects"""
     df_link, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Rel_ID'
     )
     if df_link is None:
         return None
     df_link = utilities.prep_df_link_cols(df_link)
     df_sub, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Media'
     )
     df_sub['subject_label'] = df_sub['File Title']
@@ -790,7 +840,7 @@ def prep_links_df(dfs):
         act_labels += [p + str(raw_object_id) for p in act_prefixes]
         act_labels.append(utilities.normalize_catalog_label(raw_object_id))
         man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
-            label_list=act_labels, 
+            label_list=act_labels,
             item_class_slug_list=act_classes,
         )
         if not man_obj:
@@ -798,7 +848,7 @@ def prep_links_df(dfs):
             object_uuid = np.nan
             object_uuid_source = np.nan
         else:
-            # Only accept a single result from the 
+            # Only accept a single result from the
             # lookup.
             object_label = man_obj.label
             object_uuid = str(man_obj.uuid)

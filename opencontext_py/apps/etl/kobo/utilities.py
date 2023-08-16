@@ -58,12 +58,12 @@ def list_excel_files(excel_dirpath):
            item.endswith('.xls')):
             continue
         xlsx_files.append(item_path)
-    return xlsx_files  
+    return xlsx_files
 
 def read_excel_to_dataframes(excel_filepath):
     """Reads an Excel workbook into a dictionary of dataframes keyed by sheet names."""
     dfs = {}
-    wb = load_workbook(excel_filepath)
+    wb = load_workbook(excel_filepath, data_only=True)
     for sheet_name in wb.sheetnames:
         print('Reading sheet ' + sheet_name)
         # This probably needs an upgraded pandas
@@ -206,8 +206,8 @@ def split_col_with_delim_into_multiple_cols(df, col, delim=' '):
 
 
 def split_all_cols_with_delim_into_multiple_cols(
-    form_type, 
-    df, 
+    form_type,
+    df,
     config_tups=pc_configs.FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS
 ):
     """Splits all columns with delimited values into multiple columns"""
@@ -219,8 +219,8 @@ def split_all_cols_with_delim_into_multiple_cols(
 
 
 def get_alternate_labels(
-    label, 
-    project_uuid=pc_configs.PROJECT_UUID, 
+    label,
+    project_uuid=pc_configs.PROJECT_UUID,
     config=None
 ):
     """Returns a list of a label and alternative versions based on project config"""
@@ -293,13 +293,13 @@ def df_fill_in_by_shared_id_cols(df, col_to_fill, id_cols):
     """Fills in the value of a dataframe column based if
     there are values for the same entity identified by values
     in shared ID columns
-    
+
     :param str col_to_fill: The column with blank values that
-        we want to fill with values for the same entities 
-        identified by values in shared ID columns 
+        we want to fill with values for the same entities
+        identified by values in shared ID columns
     :param list id_cols: A list of columns that are used to
         uniquely identify the same entities
-    
+
     return df
     """
     grp_cols = [col_to_fill] + id_cols
@@ -315,7 +315,7 @@ def df_fill_in_by_shared_id_cols(df, col_to_fill, id_cols):
         # We have no good values to fill by
         return df
     df_g = df[good_index][grp_cols].groupby(grp_cols, as_index=False).first()
-    df_g.reset_index(drop=True, inplace=True) 
+    df_g.reset_index(drop=True, inplace=True)
     for _, row in df_g.iterrows():
         # Build an act_index to identify rows with
         # an empty col_to_fill value, but with the same
@@ -400,7 +400,7 @@ def get_general_form_type_from_file_sheet_name(file_or_sheet_name):
 
 
 def add_final_subjects_uuid_label_cols(
-    df, 
+    df,
     subjects_df,
     form_type,
     final_label_col='subject_label',
@@ -422,7 +422,7 @@ def add_final_subjects_uuid_label_cols(
     if orig_uuid_col not in df.columns:
         return df
     s_label, s_uuid = pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(
-        form_type, 
+        form_type,
         (None, None)
     )
     if not s_uuid:
@@ -455,7 +455,7 @@ def add_final_subjects_uuid_label_cols(
 
 
 def make_trench_supervisor_link_df(
-    df, 
+    df,
     person_col='Trench Supervisor',
     link_rel='Supervised by'
 ):
@@ -479,7 +479,7 @@ def make_trench_supervisor_link_df(
     )
     df_super[pc_configs.LINK_RELATION_TYPE_COL] = link_rel
     final_cols = [
-        'subject_label', 
+        'subject_label',
         'subject_uuid',
         pc_configs.LINK_RELATION_TYPE_COL,
         'object_label',
@@ -501,7 +501,7 @@ def look_up_in_df_persons(lookup_name, df_persons):
         act_index = (
             (
                 (df_persons['label'] == lookup_name)
-            | 
+            |
                 (
                     df_persons['label'].str.startswith(name_ex[0])
                     & df_persons['label'].str.endswith(name_ex[-1])
@@ -517,12 +517,12 @@ def look_up_in_df_persons(lookup_name, df_persons):
 
 
 def add_person_object_rels(
-    df, 
+    df,
     person_col,
-    link_rel, 
-    person_label_col='object_label', 
+    link_rel,
+    person_label_col='object_label',
     person_uuid_col='object_uuid',
-    person_uuid_source_col='object_uuid_source', 
+    person_uuid_source_col='object_uuid_source',
 ):
     cols = [person_col]
     if not set(cols).issubset(set(df.columns.tolist())):
@@ -541,7 +541,7 @@ def add_person_object_rels(
     act_index = ~df[person_col].isnull()
     for lookup_name in df[act_index][person_col].unique().tolist():
         person_label, person_uuid = look_up_in_df_persons(
-            lookup_name, 
+            lookup_name,
             df_persons,
         )
         if not person_uuid:
@@ -554,7 +554,7 @@ def add_person_object_rels(
     return df
 
 def make_col_normal_slug_values(df, col, prefix_for_slugs='24_'):
-    """Updates values in a column of a dataframe so slug values are consistent 
+    """Updates values in a column of a dataframe so slug values are consistent
     with Open Context expectations
     """
     fix_index = (
@@ -571,7 +571,7 @@ def make_col_normal_slug_values(df, col, prefix_for_slugs='24_'):
     return df
 
 def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
-    """Updates a dataframe's attribute columns so slug values are consistent 
+    """Updates a dataframe's attribute columns so slug values are consistent
     with Open Context expectations
     """
     for col in df.columns.tolist():
@@ -579,8 +579,8 @@ def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
         if not pd.api.types.is_string_dtype(df[no_null_index][col]):
             continue
         df = make_col_normal_slug_values(
-            df, 
-            col, 
+            df,
+            col,
             prefix_for_slugs=prefix_for_slugs
         )
     return df
