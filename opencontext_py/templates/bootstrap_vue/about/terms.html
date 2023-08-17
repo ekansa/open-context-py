@@ -98,10 +98,10 @@
             </div>
             <div class="col-sm-8 step-text">
                 <h3>Privacy Policies and Tracking</h3>
-				<p>We have set Open Context access and data collection policies to reduce privacy risks for users. Open Context is primarily deployed at an encrypted site <a href="https://opencontext.org">https://opencontext.org</a>, and mirrored by the German Archaeological Institute at <a href="https://opencontext.dainst.org">https://opencontext.dainst.org</a> which also uses encryption.</p>
+				<p>We have set Open Context access and data collection policies to reduce privacy risks for users. Open Context is primarily deployed at an encrypted site <a href="https://opencontext.org">https://opencontext.org</a>.</p>
 
 				<p>Open Context uses websites hosted by other institutions to archive, store, and serve data (especially images). When you use Open Context, you will often make requests to these other institutions to obtain data originally published by Open Context but now stored and archived at other websites. The websites of these other institutions will have their own privacy policies and terms of service. For this reason, Open Context only works with not-for-profit institutional repositories with broadly compatible privacy policies and terms of service. Currently, Open Context stores data in the following services managed by other institutions:
-				<a href="https://merritt.cdlib.org/">Merritt Repository (California Digital Library)</a>; <a href="https://archive.org/">Internet Archive</a>; <a href="https://zenodo.org/">Zenodo Repository (CERN Laboratory)</a>; mirror hosting with the <a href="https://www.dainst.org">German Archaeological Institute (DAI)</a>.
+				<a href="https://merritt.cdlib.org/">Merritt Repository (California Digital Library)</a>; <a href="https://archive.org/">Internet Archive</a>; and <a href="https://zenodo.org/">Zenodo Repository (CERN Laboratory)</a>.
 				</p>
 
 				<br/>
@@ -122,12 +122,7 @@
 				<h4>User Data Collection</h4>
 				<p>Open Context collects very little data about individual users. Open Context only keeps minimal user data for contributing authors on a temporary basis while a dataset is in development for publication. Following publication, Open Context editors delete accounts of contributing data authors. All other uses of Open Context are anonymous and involve no user accounts.</p>
 
-				{% if 'opencontext.dainst.org' in base_url %}
-				<p>This mirror instance of Open Context is generously hosted by the <a href="https://www.dainst.org">German Archaeological Institute (DAI)</a>. As such, instance is also governed by <a href="https://www.dainst.org/datenschutz">DAI policies and European Union data privacy protection laws</a>. As described below, this instance of Open Context protects privacy by limiting data collection on individual users:</p>
-				{% else %}
 				<p>Open Context works towards "best practices" in protecting user privacy by limiting data collection on individual users. User privacy policies are:</p>
-				{%endif%}
-
 
 				<ul>
 					<li><strong>Anonymous Open Access</strong>: To protect user privacy and maximize accessibility, Open Context does not require a login to access published content. Only content in preparation prior to publication and some content subject to outside review lies behind a user login barrier.</li>
@@ -159,9 +154,10 @@
 					<li><p><strong>Opting Out of Tracking</strong>: Open Context respects <em>Do Not Track Directives</em>. If you do not want to be tracked in the manner described above, please select an applicable "Do Not Track" option on your Web browser.</p>
 
 					<p>Alternatively, you can stop Open Context tracking by unchecking the "opt-in" option below:</p>
-					<div class="well well-sm">
-						<iframe style="border: none; height: auto; width: 100%; " src="https://piwik.alexandriaarchive.org/index.php?module=CoreAdminHome&action=optOut&language=en&backgroundColor=&fontColor=&fontSize=&fontFamily=Verdana">
-						</iframe>
+					<div class="alert alert-info" role="alert">
+						<div id="matomo-opt-out"></div>
+						<script src="https://matomo.opencontext.org/index.php?module=CoreAdminHome&action=optOutJS&divId=matomo-opt-out&language=auto&showIntro=1"></script>
+
 					</div>
 
 					</li>
