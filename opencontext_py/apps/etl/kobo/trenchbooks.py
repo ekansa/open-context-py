@@ -442,12 +442,15 @@ def add_tb_json_entries(df_f, json_path=pc_configs.KOBO_TB_JSON_PATH):
     # The JSON file of Trenchbook attributes has the expected data, and
     # will merge this in via a join.
     df_j = pd.read_json(json_path)
-    if 'Entry_Text' in df_j.columns:
+    if 'Entry Text' in df_j.columns:
+        pass
+    elif 'Entry_Text' in df_j.columns:
         df_j['Entry Text'] = df_j['Entry_Text']
-    elif 'Description' in df_j.columns:
-        df_j['Entry Text'] = df_j['Description']
     df_j = df_j[['_uuid', 'Entry Text']].copy()
+    if 'Entry Text' in df_f.columns:
+        df_f.drop('Entry Text', axis=1, inplace=True)
     df_f = pd.merge(df_f, df_j, on='_uuid', how='left')
+    # import pdb; pdb.set_trace()
     return df_f
 
 def prep_attributes_df(

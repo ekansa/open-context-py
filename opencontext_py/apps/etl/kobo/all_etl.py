@@ -95,7 +95,7 @@ def extract_transform_load_subject_items():
 
 def extract_transform_load_kobo_data():
     """Extracts and transforms kobo data prior to loading."""
-    # Extract and load all subjects items. Do this first because the 
+    # Extract and load all subjects items. Do this first because the
     # entities need to be in the database to support reconciliation
     # of identifiers while preparing the other data.
     extract_transform_load_subject_items()
@@ -129,3 +129,5 @@ def extract_transform_load_kobo_data():
     db_updates.load_general_subjects_attributes()
     # Now load the linking relationship data
     db_updates.make_all_link_assertion()
+    # Now make sure the page order is resonable.
+    db_updates.sort_page_order()

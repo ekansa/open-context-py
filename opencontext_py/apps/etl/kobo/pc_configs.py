@@ -311,6 +311,15 @@ GEO_ATTRIBUTE_CONFIGS = [
     },
 ]
 
+
+MEDIA_IMAGE_FIELD_ARGS = {
+    'label': 'subject_label',
+    'item_type': 'media',
+    'data_type': 'id',
+    'item_class_id': configs.CLASS_OC_IMAGE_MEDIA,
+}
+
+
 DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS + [
 
     {
@@ -395,12 +404,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         'source_col': 'subject_label',
         'form_type': ['media',],
         'match_type': 'exact',
-        'field_args': {
-            'label': 'subject_label',
-            'item_type': 'media',
-            'data_type': 'id',
-            'item_class_id': configs.CLASS_OC_IMAGE_MEDIA,
-        },
+        'field_args': MEDIA_IMAGE_FIELD_ARGS,
         'subject_pk': True,
     },
 
@@ -1424,7 +1428,7 @@ SUBJECTS_IMPORT_TREE_COL_TUPS = [
 ]
 
 
-MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/2022-media'
+MEDIA_BASE_URL = f'https://storage.googleapis.com/opencontext-media/poggio-civitate/{DEFAULT_IMPORT_YEAR}-media'
 
 
 MAIN_TRENCH_BOOKS = {

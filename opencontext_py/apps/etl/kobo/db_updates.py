@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import os
 from operator import sub
 import re
 
@@ -80,7 +81,7 @@ def get_or_create_manifest_obj(
         # We have an existing manifest object, so
         # don't make it again.
         return man_obj, False
-    
+
     # Make a new Manifest item
     man_dict = {
         'publisher_id': configs.OPEN_CONTEXT_PUB_UUID,
@@ -112,15 +113,15 @@ def get_or_create_manifest_obj(
     if not man_obj:
         return man_obj, made_new
     print(f'---> Created {man_obj.label} ({man_obj.uuid}) in context {man_obj.context.label} ({man_obj.context.uuid})')
-    return man_obj, made_new 
+    return man_obj, made_new
 
 
 # ---------------------------------------------------------------------
 # CONTEXT (item_type: subjects) RELATED FUNCTIONS
 # ---------------------------------------------------------------------
-def load_subject_and_containment( 
-    source_id, 
-    parent_uuid, 
+def load_subject_and_containment(
+    source_id,
+    parent_uuid,
     child_label,
     child_uuid,
     child_item_class_slug,
@@ -211,9 +212,9 @@ def load_subjects_parent_child_cols_df(
     cache = caches['redis']
     cache.clear()
     for _, row in df_g.iterrows():
-        ok = load_subject_and_containment( 
-            source_id=source_id, 
-            parent_uuid=str(row[parent_context_col]), 
+        ok = load_subject_and_containment(
+            source_id=source_id,
+            parent_uuid=str(row[parent_context_col]),
             child_label=str(row[child_label_col]),
             child_uuid=str(row[child_uuid_col]),
             child_item_class_slug=str(row[child_class_slug_col]),
@@ -232,12 +233,12 @@ def load_catalog_no_locus(
 ):
     """Loads catalog subjects not contained in a locus"""
     req_cols = [
-        'unit_uuid', 
+        'unit_uuid',
         'locus_name',
         'locus_uuid',
         'trench_year',
-        'catalog_name', 
-        'catalog_uuid', 
+        'catalog_name',
+        'catalog_uuid',
         'catalog_item_class_slug',
     ]
     if not set(req_cols).issubset(subjects_df.columns.tolist()):
@@ -252,8 +253,8 @@ def load_catalog_no_locus(
     )
     parent_child_col_tup = (
         'unit_uuid',
-        'catalog_name', 
-        'catalog_uuid', 
+        'catalog_name',
+        'catalog_uuid',
         'catalog_item_class_slug',
     )
     return load_subjects_parent_child_cols_df(
@@ -293,7 +294,7 @@ def load_subjects_dataframe(
 # dataframe with attributes, sets up the field types and relationships,
 # assigns UUIDs where feasible, and imports the data into Open Context.
 # The main expectation is that entities receiving attributes have been
-# already created. 
+# already created.
 # ---------------------------------------------------------------------
 def record_original_field_names(ds_source):
     ds_field_qs = DataSourceField.objects.filter(
@@ -320,10 +321,10 @@ def import_from_ds_source(ds_source):
         print(f'Working on import stage: {stage_label}')
         if not updates_df:
             func_output = func(ds_source)
-            print(f'Made {func_output} annotations') 
+            print(f'Made {func_output} annotations')
             continue
         df = etl_df.db_make_dataframe_from_etl_data_source(
-            ds_source, 
+            ds_source,
             include_uuid_cols=True,
             include_error_cols=True,
             use_column_labels=False,
@@ -373,7 +374,16 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
     """Assigns attributes to the columns for a data source"""
     # Make sure we have the original field names recorded
     # properly.
+    print(f'Configuring {form_type} fields for {ds_source.source_id}')
     record_original_field_names(ds_source)
+    if ds_source.source_id.endswith('-files'):
+        # make sure the sub_field has a field type of media.
+        _ = DataSourceField.objects.filter(
+            data_source=ds_source,
+            label='subject_label',
+        ).update(
+            **pc_configs.MEDIA_IMAGE_FIELD_ARGS
+        )
     sub_field = DataSourceField.objects.filter(
         data_source=ds_source,
         label='subject_label'
@@ -396,7 +406,7 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
             q_term |= Q(ref_orig_name__startswith=config['source_col'])
         elif config['match_type'] == 'endswith':
             q_term |= Q(ref_orig_name__endswith=config['source_col'])
-        
+
         dsf_qs = dsf_qs.filter(q_term)
         if dsf_qs.count() < 1:
             print(f"Cannot find source_col {config['source_col']}")
@@ -444,10 +454,10 @@ def load_trench_books_and_attributes(
     """Loads/creates trenchbook items and attributes"""
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
     ds_source = etl_df.load_csv_for_etl(
-        project=project, 
-        file_path=attrib_csv_path, 
-        data_source_label=source_id, 
-        prelim_source_id=source_id, 
+        project=project,
+        file_path=attrib_csv_path,
+        data_source_label=source_id,
+        prelim_source_id=source_id,
         source_exists="replace"
     )
     prepare_ds_source_attribute_cols(form_type, ds_source)
@@ -464,10 +474,10 @@ def load_media_files_and_attributes(
     """Loads/creates media items, associate resource files and attributes"""
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
     ds_source = etl_df.load_csv_for_etl(
-        project=project, 
-        file_path=attrib_csv_path, 
-        data_source_label=source_id, 
-        prelim_source_id=source_id, 
+        project=project,
+        file_path=attrib_csv_path,
+        data_source_label=source_id,
+        prelim_source_id=source_id,
         source_exists="replace"
     )
     prepare_ds_source_attribute_cols(form_type, ds_source)
@@ -485,10 +495,10 @@ def load_general_subjects_attributes(
     project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
     for form_type, source_id, attrib_csv_path in configs:
         ds_source = etl_df.load_csv_for_etl(
-            project=project, 
-            file_path=attrib_csv_path, 
-            data_source_label=source_id, 
-            prelim_source_id=source_id, 
+            project=project,
+            file_path=attrib_csv_path,
+            data_source_label=source_id,
+            prelim_source_id=source_id,
             source_exists="replace"
         )
         if not ds_source:
@@ -512,7 +522,7 @@ def load_general_subjects_attributes(
 # relation and a UUID plus an option UUID for the inverse relationship.
 #
 # The main expectation is that entities receiving links have been
-# already created. 
+# already created.
 # ---------------------------------------------------------------------
 
 def make_link_assertion(source_id, subject_obj, object_obj, predicate_obj):
@@ -551,10 +561,10 @@ def make_link_assertion(source_id, subject_obj, object_obj, predicate_obj):
 
 
 def make_link_assertion_and_inverse(
-    source_id, 
-    subject_obj, 
-    object_obj, 
-    predicate_obj, 
+    source_id,
+    subject_obj,
+    object_obj,
+    predicate_obj,
     inv_predicate_obj
 ):
     """Make a link assertion and inverse if applicable"""
@@ -562,15 +572,15 @@ def make_link_assertion_and_inverse(
     assert_obj = make_link_assertion(
         source_id=source_id,
         subject_obj=subject_obj,
-        object_obj=object_obj, 
+        object_obj=object_obj,
         predicate_obj=predicate_obj,
     )
     if inv_predicate_obj:
         # Make the inverse relationship now
         inv_assert_obj = make_link_assertion(
             source_id=source_id,
-            subject_obj=object_obj, 
-            object_obj=subject_obj, 
+            subject_obj=object_obj,
+            object_obj=subject_obj,
             predicate_obj=inv_predicate_obj
         )
     return assert_obj, inv_assert_obj
@@ -586,6 +596,24 @@ def get_manifest_obj_from_dict_or_db(uuid, man_uuid_dict):
     man_obj = AllManifest.objects.filter(uuid=uuid).first()
     man_uuid_dict[uuid] = man_obj
     return man_obj, man_uuid_dict
+
+
+def sort_page_order():
+    a_qs = AllAssertion.objects.filter(
+        subject__item_type__in=['subjects', 'documents',],
+        source_id__in=pc_configs.ALL_SOURCE_IDS,
+        predicate__label__in=['Has part', 'Has Related Trench Book Entry',],
+        object__item_type='documents',
+    ).order_by('subject_id', 'object__label')
+    last_subject_uuid = None
+    i = 0
+    for ass in a_qs:
+        if ass.subject.uuid != last_subject_uuid:
+            i = 0
+        last_subject_uuid = ass.subject.uuid
+        i += 0.001
+        ass.sort = ass.sort + i
+        ass.save()
 
 
 def make_link_assertions_from_link_csv(source_id, links_csv_path):
@@ -622,26 +650,26 @@ def make_link_assertions_from_link_csv(source_id, links_csv_path):
             print('-'*50)
             continue
         subject_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
-            uuid=str(row['subject_uuid']), 
+            uuid=str(row['subject_uuid']),
             man_uuid_dict=man_uuid_dict
         )
         object_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
-            uuid=str(row['object_uuid']), 
+            uuid=str(row['object_uuid']),
             man_uuid_dict=man_uuid_dict
         )
         predicate_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
-            uuid=pred_uuid, 
+            uuid=pred_uuid,
             man_uuid_dict=man_uuid_dict
         )
         inv_predicate_obj, man_uuid_dict = get_manifest_obj_from_dict_or_db(
-            uuid=inv_pred_uuid, 
+            uuid=inv_pred_uuid,
             man_uuid_dict=man_uuid_dict
         )
         assert_obj, inv_assert_obj = make_link_assertion_and_inverse(
-            source_id, 
-            subject_obj, 
-            object_obj, 
-            predicate_obj, 
+            source_id,
+            subject_obj,
+            object_obj,
+            predicate_obj,
             inv_predicate_obj
         )
         print(f'Link: {assert_obj}')
@@ -650,7 +678,9 @@ def make_link_assertions_from_link_csv(source_id, links_csv_path):
 
 def make_all_link_assertion(
     configs=pc_configs.ALL_LINK_SOURCE_FILE_LIST
-):  
+):
     """Makes all link assertions based on extracted, transformed data in CSV files"""
     for source_id, links_csv_path in configs:
+        if not os.path.exists(links_csv_path):
+            continue
         make_link_assertions_from_link_csv(source_id, links_csv_path)

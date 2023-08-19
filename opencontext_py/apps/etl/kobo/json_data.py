@@ -39,6 +39,11 @@ def convert_multi_value_dict_to_row_dict(output_multi_row_dict, input_val_dict):
 def create_initial_row_dict(kobo_form, kobo_form_year, input_result_dict):
     """Creates an initial row dict from an input result dict"""
     row_dict = {
+        # get the uuid for the kobo record.
+        'kobo_uuid': input_result_dict.get(
+            'kobo_uuid',
+            input_result_dict.get('_uuid')
+        ),
         'kobo_form': kobo_form,
         'kobo_form_year': kobo_form_year,
     }
@@ -60,8 +65,10 @@ def extract_main_and_multi_rows_from_json_data(kobo_form, kobo_form_year, json_d
     all_list_keys = []
     sub_item_rows = {}
     for result in results:
-        uuid = result.get('_uuid')
         for key, val in result.items():
+            if key == '_uuid':
+                # skip this, because we copy it explicitly to kobo_uuid
+                continue
             if key in pc_configs.SKIP_FIELDS:
                 # we throw this key out. not used noise
                 continue
@@ -84,6 +91,9 @@ def extract_main_and_multi_rows_from_json_data(kobo_form, kobo_form_year, json_d
             input_result_dict=result,
         )
         for key, val in result.items():
+            if key == '_uuid':
+                # skip this, because we copy it explicitly to kobo_uuid
+                continue
             if key in pc_configs.SKIP_FIELDS:
                 # we throw this key out. not used noise
                 continue
