@@ -68,7 +68,7 @@ LOCUS_LINK_COLS = [
 def make_df_sub_subjects(dfs):
     """Makes a df_sub subjects only"""
     df_sub, sheet_name = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Trench Book'
     )
     if df_sub is None:
@@ -137,9 +137,9 @@ def make_paging_links_df(dfs):
 
 
 def add_trench_unit_uuids(
-    df, 
-    unit_label_col, 
-    unit_uuid_col, 
+    df,
+    unit_label_col,
+    unit_uuid_col,
     unit_uuid_source_col
 ):
     for col in [unit_label_col, unit_uuid_col, unit_uuid_source_col]:
@@ -152,7 +152,7 @@ def add_trench_unit_uuids(
     )
     for _, row in df[t_index].iterrows():
         man_obj = db_lookups.db_reconcile_trench_unit(
-            trench_id=row['trench_id'], 
+            trench_id=row['trench_id'],
             trench_year=row['trench_year']
         )
         if not man_obj:
@@ -188,10 +188,10 @@ def make_main_trench_books_df(trench_id_list):
             'Entry Text': (
                 """
                 <div>
-                <p>A "trench book" provides a narrative account of excavations activities and initial (preliminary) interpretations. 
-                Trench book documentation can provide key information about archaeological context. 
+                <p>A "trench book" provides a narrative account of excavations activities and initial (preliminary) interpretations.
+                Trench book documentation can provide key information about archaeological context.
                 To facilitate discovery, access, and use, the project's hand-written trench books have been transcribed and associated with other data.
-                </p> <br/> 
+                </p> <br/>
                 <p>The links below provide transcriptions of the entries for this trench book.</p>
                 </div>
                 """
@@ -214,9 +214,9 @@ def make_tb_main_links_df(df_sub):
     df_tb_m = df_tb_m[tb_m_cols]
     df_tb_m[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
     df_tb_m = add_trench_unit_uuids(
-        df=df_tb_m, 
+        df=df_tb_m,
         unit_label_col='object_label',
-        unit_uuid_col='object_uuid', 
+        unit_uuid_col='object_uuid',
         unit_uuid_source_col='object_uuid_source',
     )
     df_links.append(df_tb_m)
@@ -241,7 +241,7 @@ def make_tb_main_links_df(df_sub):
         df_links.append(df_new)
     df_main = pd.concat(df_links)
     return df_main
-    
+
 
 def get_df_sub(dfs, subjects_df):
     """Gets the trench books as subject items """
@@ -250,11 +250,14 @@ def get_df_sub(dfs, subjects_df):
         return None
     df_sub[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
     df_sub['trench_id'] = df_sub['Trench ID']
-    df_sub['trench_year'] = df_sub['Date Documented'].dt.year
+    try:
+        df_sub['trench_year'] = df_sub['Date Documented'].dt.year
+    except:
+        df_sub['trench_year'] = pc_configs.DEFAULT_IMPORT_YEAR
     df_sub = add_trench_unit_uuids(
-        df=df_sub, 
+        df=df_sub,
         unit_label_col='object_label',
-        unit_uuid_col='object_uuid', 
+        unit_uuid_col='object_uuid',
         unit_uuid_source_col='object_uuid_source',
     )
     # Use the subjects_df to fill in missing trench/unit ids.
@@ -286,11 +289,21 @@ def get_df_sub(dfs, subjects_df):
 def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, related_new_col):
     """Makes a dataframe of items related to trenchbooks that includes unit_labels, unit_uuids"""
     df, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part=sheet_name_part,
     )
     if df is None:
         return None
+    cols = df.columns.tolist()
+    if related_orig_col not in cols:
+        partial_match_col = None
+        for col in cols:
+            if related_orig_col in col:
+                partial_match_col = col
+        if not partial_match_col:
+            # skip out, we can't find a matching column.
+            return None
+        related_orig_col = partial_match_col
     df['subject_uuid'] = df['_submission__uuid']
     df[related_new_col] = df[related_orig_col]
     df = df[['subject_uuid', related_new_col]].copy()
@@ -299,8 +312,8 @@ def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, relat
     df_sub.rename(columns={'object_label': 'unit_name', 'object_uuid': 'unit_uuid'}, inplace=True)
     df_sub = df_sub[
         [
-            'subject_label', 
-            'subject_uuid', 
+            'subject_label',
+            'subject_uuid',
             'subject_uuid_source',
             'unit_name',
             'unit_uuid',
@@ -317,14 +330,19 @@ def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, relat
 def make_locus_links_df(df_sub, subjects_df, dfs):
     """Make a dataframe for linking relations with loci"""
     df_loci = make_df_rel_with_units(
-        dfs=dfs, 
-        df_sub=df_sub, 
-        sheet_name_part='locus', 
-        related_orig_col='Related Locus', 
+        dfs=dfs,
+        df_sub=df_sub,
+        sheet_name_part='locus',
+        related_orig_col='Related Locus',
         related_new_col='locus_number'
     )
     if df_loci is None:
         return None
+    # Check to make sure we have the required columns in the subjects_df
+    subjects_df_req_cols = ['unit_uuid', 'locus_number']
+    for req_col in subjects_df_req_cols:
+        if not req_col in subjects_df.columns:
+            return None
     for _, row in df_loci.iterrows():
         lookup_indx = (
             (subjects_df['unit_uuid'] == row['unit_uuid'])
@@ -346,14 +364,19 @@ def make_locus_links_df(df_sub, subjects_df, dfs):
 def make_small_find_links_df(df_sub, subjects_df, dfs):
     """Make a dataframe for linking relations with loci"""
     df_sf = make_df_rel_with_units(
-        dfs=dfs, 
-        df_sub=df_sub, 
-        sheet_name_part='find', 
-        related_orig_col='Related Find', 
+        dfs=dfs,
+        df_sub=df_sub,
+        sheet_name_part='find',
+        related_orig_col='Related Find',
         related_new_col='rel_find'
     )
     if df_sf is None:
         return None
+    # Check to make sure we have the required columns in the subjects_df
+    subjects_df_req_cols = ['unit_uuid', 'find_name']
+    for req_col in subjects_df_req_cols:
+        if not req_col in subjects_df.columns:
+            return None
     for _, row in df_sf.iterrows():
         lookup_indx = (
             (subjects_df['unit_uuid'] == row['unit_uuid'])
@@ -419,7 +442,10 @@ def add_tb_json_entries(df_f, json_path=pc_configs.KOBO_TB_JSON_PATH):
     # The JSON file of Trenchbook attributes has the expected data, and
     # will merge this in via a join.
     df_j = pd.read_json(json_path)
-    df_j['Entry Text'] = df_j['Entry_Text']
+    if 'Entry_Text' in df_j.columns:
+        df_j['Entry Text'] = df_j['Entry_Text']
+    elif 'Description' in df_j.columns:
+        df_j['Entry Text'] = df_j['Description']
     df_j = df_j[['_uuid', 'Entry Text']].copy()
     df_f = pd.merge(df_f, df_j, on='_uuid', how='left')
     return df_f
@@ -430,7 +456,7 @@ def prep_attributes_df(
 ):
     """Prepares the trench book attribute data"""
     df_f, sheet_name = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Trench Book'
     )
     if df_f is None:
@@ -441,11 +467,14 @@ def prep_attributes_df(
     df_f = utilities.clean_up_multivalue_cols(df_f)
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
-    df_f['Entry Year'] = df_f['Date Documented'].dt.year
+    try:
+        df_f['Entry Year'] = df_f['Date Documented'].dt.year
+    except:
+        df_f['Entry Year'] = pc_configs.DEFAULT_IMPORT_YEAR
     df_f['subject_label'] = df_f['Open Context Label']
     df_f['subject_uuid'] = df_f['_uuid']
     df_f['subject_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
-    # Add the main trench book records so they can be added to the 
+    # Add the main trench book records so they can be added to the
     df_f = add_main_trench_books(df_f)
     cols = [c for c in TB_ATTRIBUTE_COLS if c in df_f.columns]
     df_f = df_f[cols].copy()
@@ -457,7 +486,7 @@ def prep_attributes_df(
 
 
 def prepare_attributes_links(
-    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     attrib_csv_path=pc_configs.TB_ATTRIB_CSV_PATH,
     links_csv_path=pc_configs.TB_LINKS_CSV_PATH,
     subjects_path=pc_configs.SUBJECTS_CSV_PATH,

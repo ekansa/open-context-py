@@ -8,13 +8,16 @@ from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 
+KOBO_API_URL = 'https://kform.opencontext.org'
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-DEFAULT_IMPORT_YEAR = 2023
-IMPORT_SOURCE_ID_SUFFIX = '-v1'
+DEFAULT_IMPORT_YEAR = 2022
+IMPORT_SOURCE_ID_SUFFIX = '-fix-8'
 
 HOME = str(Path.home())
 ALL_IMPORTS_PATH = f'{HOME}/data-dumps/pc-{DEFAULT_IMPORT_YEAR}'
 KOBO_EXCEL_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-data'
+KOBO_JSON_DATA_PATH = f'{ALL_IMPORTS_PATH}/kobo-json-data'
+KOBO_CSV_FROM_JSON_DATA_PATH = f'{ALL_IMPORTS_PATH}/kobo-csv-from-json-data'
 KOBO_TB_JSON_PATH = f'{KOBO_EXCEL_FILES_PATH}/trench_books.json'
 KOBO_MEDIA_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-media-files'
 
@@ -45,6 +48,29 @@ LOCUS_GEO_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-geo.csv'
 
 TB_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-attribs.csv'
 TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
+
+
+# API config
+API_FORM_ID_FORM_LABELS_2023 = [
+    ('aRoYQKJ6M4SSewgJJ2GhAV', 'locus', 2023,),
+    ('aTKQPZxVJzHfehk4XD6rL5', 'bulk-finds', 2023,),
+    ('aTTy9G2EZobS4Yj5MLrh8b', 'small-finds', 2023,),
+    ('aLMFzxvXmbSat8XMcjUcjq', 'trench', 2023,),
+    ('a6aorrDfWR8TA8CMAsZmAP', 'catalog', 2023,),
+    ('aQqfNMGNQTiZkcVZ8j5hyr', 'media', 2023,),
+]
+
+API_FORM_ID_FORM_LABELS_2022 = [
+    ('aGkVqvJPGWpgjDEDidmYiz', 'locus', 2022,),
+    ('aKpnDAkEPtJfPYL4ekKfQH', 'trench', 2022,),
+]
+
+API_FORM_ID_FORM_LABELS_ALL = (
+    API_FORM_ID_FORM_LABELS_2023
+    + API_FORM_ID_FORM_LABELS_2022
+)
+
+
 
 
 # The column in the Kobo exports with the trench identifier
@@ -286,7 +312,7 @@ GEO_ATTRIBUTE_CONFIGS = [
 ]
 
 DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS + [
-    
+
     {
         'source_col': 'subject_label',
         'form_type': ['locus',],
@@ -299,7 +325,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
         'subject_pk': True,
     },
-    
+
     {
         'source_col': 'subject_label',
         'form_type': ['bulk find',],
@@ -312,7 +338,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
         'subject_pk': True,
     },
-    
+
     {
         'source_col': 'subject_label',
         'form_type': ['small find',],
@@ -325,7 +351,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
         'subject_pk': True,
     },
-    
+
     {
         'source_col': 'subject_label',
         'form_type': ['catalog',],
@@ -338,7 +364,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
         'subject_pk': True,
     },
-    
+
     {
         'source_col': 'subject_label',
         'form_type': ['trench book',],
@@ -350,7 +376,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
         'subject_pk': True,
     },
-    
+
     {
         'source_col': 'Entry Text',
         'form_type': ['trench book',],
@@ -364,7 +390,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'subject_label',
         'form_type': ['media',],
@@ -377,7 +403,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
         'subject_pk': True,
     },
-    
+
     {
         'source_col': 'Size (Notes)',
         'form_type': ['catalog',],
@@ -390,7 +416,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Condition (Notes)',
         'form_type': ['catalog',],
@@ -403,7 +429,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Description',
         'form_type': ['catalog', 'media',],
@@ -416,7 +442,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Trench ID',
         'form_type': ['catalog',],
@@ -429,7 +455,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Date Cataloged',
         'form_type': ['catalog',],
@@ -442,7 +468,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Year',
         'form_type': ['catalog',],
@@ -455,7 +481,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Record Type',
         'form_type': ['catalog', 'small find'],
@@ -468,7 +494,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Supplemental Find Identification Note',
         'form_type': ['catalog',],
@@ -481,7 +507,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Munsell Color',
         'form_type': ['catalog',],
@@ -494,7 +520,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Fabric Category',
         'form_type': ['catalog',],
@@ -507,7 +533,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Other Fabric Note',
         'form_type': ['catalog',],
@@ -520,7 +546,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Object General Type',
         'form_type': ['catalog',],
@@ -574,20 +600,20 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Object Type',
         'form_type': ['catalog', 'small find',],
         'match_type': 'startswith',
         'field_args': {
-            'label': 'Object Type', 
+            'label': 'Object Type',
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
             'item_type': 'types',
             'data_type': 'id',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Object Type, Title',
         'form_type': ['catalog',],
@@ -600,7 +626,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Decorative Technique',
         'form_type': ['catalog',],
@@ -613,7 +639,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Other Decorative Technique Note',
         'form_type': ['catalog',],
@@ -626,7 +652,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Motif',
         'form_type': ['catalog',],
@@ -639,7 +665,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Other Motif Note',
         'form_type': ['catalog',],
@@ -652,7 +678,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Vessel Form',
         'form_type': ['catalog',],
@@ -665,7 +691,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Vessel Part Present',
         'form_type': ['catalog',],
@@ -717,7 +743,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Grid Y',
         'form_type': ['catalog', 'small find',],
@@ -730,7 +756,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Elevation',
         'form_type': ['catalog', 'small find',],
@@ -743,7 +769,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Grid X Uncertainty (+/- cm)',
         'form_type': ['catalog', 'small find',],
@@ -756,7 +782,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Grid Y Uncertainty (+/- cm)',
         'form_type': ['catalog', 'small find',],
@@ -769,7 +795,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Elevation Uncertainty (+/- cm)',
         'form_type': ['catalog', 'small find',],
@@ -782,7 +808,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Uncertainty Comment',
         'form_type': ['catalog', 'small find',],
@@ -795,7 +821,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Find Type',
         'form_type': ['bulk find',],
@@ -808,7 +834,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Find Type (Other)',
         'form_type': ['bulk find',],
@@ -821,7 +847,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Object Count',
         'form_type': ['bulk find',],
@@ -834,7 +860,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Count Type',
         'form_type': ['bulk find',],
@@ -847,7 +873,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Count Type (Other)',
         'form_type': ['bulk find',],
@@ -860,7 +886,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'General Description',
         'form_type': ['small find', 'bulk find', 'locus'],
@@ -873,7 +899,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Date Discovered',
         'form_type': ['bulk find', 'small find'],
@@ -886,7 +912,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Deposit Compaction',
         'form_type': ['locus',],
@@ -951,7 +977,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Munsell Color',
         'form_type': ['locus',],
@@ -990,7 +1016,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Date Opened',
         'form_type': ['locus',],
@@ -1003,7 +1029,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Date Closed',
         'form_type': ['locus',],
@@ -1016,7 +1042,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Trench',
         'form_type': ['locus',],
@@ -1029,7 +1055,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Field Season',
         'form_type': ['small find', 'bulk find', 'locus',],
@@ -1042,7 +1068,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Entry Type',
         'form_type': ['trench book',],
@@ -1068,7 +1094,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Document Type',
         'form_type': ['trench book',],
@@ -1081,7 +1107,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Date Documented',
         'form_type': ['trench book',],
@@ -1094,7 +1120,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Entry Year',
         'form_type': ['trench book',],
@@ -1107,7 +1133,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Book Year',
         'form_type': ['trench book',],
@@ -1120,7 +1146,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Start Page',
         'form_type': ['trench book',],
@@ -1133,7 +1159,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'End Page',
         'form_type': ['trench book',],
@@ -1146,7 +1172,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Date Created',
         'form_type': ['media',],
@@ -1211,7 +1237,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Direction or Orientation Notes/Direction Faced in Field',
         'form_type': ['media',],
@@ -1224,7 +1250,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Direction or Orientation Notes/Object Orientation Note',
         'form_type': ['media',],
@@ -1237,7 +1263,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Image Type',
         'form_type': ['media',],
@@ -1250,7 +1276,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Images/Note about Primary Image',
         'form_type': ['media',],
@@ -1263,7 +1289,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Images/Supplemental Files/Note about Supplemental Image',
         'form_type': ['media',],
@@ -1276,7 +1302,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
     {
         'source_col': 'Media Type',
         'form_type': ['media',],
@@ -1289,7 +1315,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
-    
+
 ]
 
 LINK_REL_PRED_MAPPINGS = {
@@ -1408,8 +1434,8 @@ MAIN_TRENCH_BOOKS = {
     'T101_2022': ('Trench Book T101 2022', 'd6a6080c-625d-4263-8bea-d20c19a0ee8a',),
     'T102_2022': ('Trench Book T102 2022', '763b203b-c37c-4076-a12e-845cc9fb02ad',),
     'CA90_2022': ('Trench Book CA90 2022', 'e911d2b1-898b-413b-8e8e-d45271bca34d',),
-    'CA91_2022': ('Trench Book CA91 2022', 'b4ed4510-f6cf-4b38-aaea-4d2c136c4c57',), 
-    'CA92_2022': ('Trench Book CA92 2022', '1d4d7311-9dc0-4667-bdb0-93bda1f8bd65',), 
+    'CA91_2022': ('Trench Book CA91 2022', 'b4ed4510-f6cf-4b38-aaea-4d2c136c4c57',),
+    'CA92_2022': ('Trench Book CA92 2022', '1d4d7311-9dc0-4667-bdb0-93bda1f8bd65',),
 }
 
 
@@ -1420,4 +1446,47 @@ FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS = [
     ('catalog', 'Vessel Part Present', ' '),
     ('catalog', 'Motif', ' '),
     ('catalog', 'Decorative Technique', ' '),
+]
+
+
+# SKIP fields
+SKIP_FIELDS = [
+    "_id",
+    "start",
+    "end",
+    "_status",
+    "_geolocation",
+    "_submission_time",
+    "_tags",
+    "_notes",
+    "_validation_status",
+    "_submitted_by",
+    "meta/instanceID",
+    "meta/rootUuid",
+    "meta/deprecatedID",
+    "formhub/uuid",
+    "__version__",
+    "download_url",
+    "download_large_url",
+    "download_medium_url",
+    "download_small_url",
+    "instance",
+    "xform",
+    "id",
+]
+
+# Naming fields
+NAMING_FIELDS = [
+    "_uuid",
+    "Trench",
+    "Trench_ID",
+    "Locus_ID",
+    "Season",
+    "Find_ID",
+    "OC_Locus_ID",
+    "OC_Find_ID",
+    "Catalog_ID_PC",
+    "Tag_ID",
+    "OC_Bulk_ID",
+    "Media_Title",
 ]

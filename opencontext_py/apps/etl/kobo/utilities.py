@@ -1,8 +1,10 @@
 from copy import copy
+import json
 import os
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
+import requests
 import openpyxl
 
 from django.db.models import Q
@@ -328,6 +330,8 @@ def df_fill_in_by_shared_id_cols(df, col_to_fill, id_cols):
 
 
 def get_df_by_sheet_name_part(dfs, sheet_name_part):
+    if dfs is None:
+        return None, None
     for sheet_name, df in dfs.items():
         if not sheet_name_part in sheet_name:
             continue
@@ -337,6 +341,8 @@ def get_df_by_sheet_name_part(dfs, sheet_name_part):
 
 def get_df_with_rel_id_cols(dfs):
     """Gets a dataframe and sheet_name with related ID columns"""
+    if dfs is None:
+        return None, None
     rel_cols = [c for c,_ in pc_configs.RELS_RENAME_COLS.items()]
     for sheet_name, df in dfs.items():
         if not set(rel_cols).issubset(set(df.columns.tolist())):
@@ -585,9 +591,127 @@ def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
         )
     return df
 
+
 def not_null_subject_uuid(df):
     if not 'subject_uuid' in df.columns:
         return df
     act_index = ~df['subject_uuid'].isnull()
     df = df[act_index].copy()
     return df
+
+
+def get_form_data_json(
+    form_id,
+    token,
+    form_url=pc_configs.KOBO_API_URL,
+):
+    """Gets JSON data from a kobo form"""
+    headers = {
+        'Authorization': f'Token {token}',
+    }
+    url = f'{form_url}/api/v2/assets/{form_id}/data/?format=json'
+    json_data = None
+    try:
+        r = requests.get(url, headers=headers)
+        r.raise_for_status()
+    except:
+        return None
+    json_data = r.json()
+    return json_data
+
+
+def make_form_data_json_filepath(
+    form_type,
+    form_id,
+    form_year=None,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    """Makes a filepath for a form json data file"""
+    if form_year:
+        file_name = f'{form_type}--{form_year}--{form_id}.json'
+    else:
+        file_name = f'{form_type}--{form_id}.json'
+    file_path = os.path.join(save_dir, file_name)
+    return file_path
+
+
+def get_save_form_data_json(
+    form_type,
+    form_id,
+    token,
+    form_year=None,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    """Gets and saves JSON data from a kobo form"""
+    json_data = get_form_data_json(
+        form_id=form_id,
+        token=token,
+        form_url=form_url
+    )
+    if not json_data:
+        return None
+    file_path = make_form_data_json_filepath(
+        form_type=form_type,
+        form_id=form_id,
+        form_year=form_year,
+        save_dir=save_dir,
+    )
+    with open(file_path, "w") as outfile:
+        json.dump(json_data, outfile, indent=4)
+    print(f'saved: {file_path}')
+    return json_data
+
+
+def get_save_all_form_data(
+    token,
+    form_tups=pc_configs.API_FORM_ID_FORM_LABELS_ALL,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    """Iterates through configured forms to fetch json data"""
+    for form_id, form_type, form_year in form_tups:
+        _ = get_save_form_data_json(
+            form_type,
+            form_id,
+            token,
+            form_year=form_year,
+            form_url=form_url,
+            save_dir=save_dir,
+        )
+
+
+def read_or_fetch_and_save_form_data_json(
+    form_type,
+    form_id,
+    token=None,
+    form_year=None,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    json_data = None
+    file_path = make_form_data_json_filepath(
+        form_type=form_type,
+        form_id=form_id,
+        form_year=form_year,
+        save_dir=save_dir,
+    )
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as openfile:
+            # Reading from json file
+            json_data = json.load(openfile)
+        print(f'Read json data from: {file_path}')
+    # if we don't have json_data but we do have a token,
+    # try to fetch it from the server
+    if not json_data and token:
+        json_data = get_save_form_data_json(
+            form_type,
+            form_id,
+            token,
+            form_year=form_year,
+            form_url=form_url,
+            save_dir=save_dir,
+        )
+    if not json_data and not token:
+        raise ValueError(f'Cannot fetch data for {form_type} [{form_id}] provide a Kobo API token for {form_url}')
+    return json_data
