@@ -171,9 +171,10 @@ def make_main_trench_books_df(trench_id_list):
     """Makes a dataframe of the main trench books (these are added 'hubs') to bundle
     multiple related trench book entries.
     """
+    main_book_year_config = pc_configs.MAIN_TRENCH_BOOKS.get(pc_configs.DEFAULT_IMPORT_YEAR, {})
     rows = []
     for trench_id in trench_id_list:
-        subject_label, subject_uuid = pc_configs.MAIN_TRENCH_BOOKS.get(trench_id, (None, None))
+        subject_label, subject_uuid = main_book_year_config.get(trench_id, (None, None))
         if not subject_uuid:
             continue
         row = {
@@ -210,7 +211,7 @@ def make_tb_main_links_df(df_sub):
 
     # First make the trench book main entries, and link them to their trenches (unit_uuids)
     df_tb_m = make_main_trench_books_df(trench_id_list)
-    tb_m_cols = ['subject_label', 'subject_uuid', 'subject_uuid_source', 'trench_id', 'trench_year']
+    tb_m_cols = ['subject_label', 'subject_uuid', 'subject_uuid_source', 'trench_id', 'trench_year',]
     df_tb_m = df_tb_m[tb_m_cols]
     df_tb_m[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
     df_tb_m = add_trench_unit_uuids(

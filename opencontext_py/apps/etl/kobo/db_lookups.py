@@ -122,11 +122,11 @@ def db_reconcile_manifest_obj(
             Q(label=item_label)
             | Q(slug=item_any_id)
         )
-       
+
     if (item_type == 'predicates'
         and (
-            not item_class_obj 
-            or 
+            not item_class_obj
+            or
             str(item_class_obj.uuid) not in configs.CLASS_LIST_OC_PREDICATES
         )
     ):
@@ -139,10 +139,10 @@ def db_reconcile_manifest_obj(
 
     if item_class_obj:
         man_qs = man_qs.filter(item_class=item_class_obj)
-    
-    # Now handle the results where of our query to attempt to 
+
+    # Now handle the results where of our query to attempt to
     # find matching records for this specific item.
-    num_matching = len(man_qs) 
+    num_matching = len(man_qs)
     if num_matching == 1:
         # We have found exactly one match for this, meaning this
         # entity already exists so return it
@@ -259,7 +259,7 @@ def db_lookup_manifest_obj(
     )
     if class_slugs is not None:
         # Further filter if we have slugs for item classes
-       man_objs = man_objs.filter(item_class__slug__in=class_slugs) 
+       man_objs = man_objs.filter(item_class__slug__in=class_slugs)
     man_obj = man_objs.first()
     return man_obj
 
@@ -356,19 +356,19 @@ def db_lookup_trenchbook(trench_id, trench_year, entry_date, start_page, end_pag
         return None
     # Return the first match
     return ass_end_qs[0].subject
-    
+
 
 def db_lookup_smallfind(
-    trench_id, 
-    trench_year, 
-    locus_id, 
+    trench_id,
+    trench_year,
+    locus_id,
     find_number,
 ):
     """Looks up a small find record from the Manifest."""
     unit_obj = db_reconcile_trench_unit(trench_id, trench_year)
     if not unit_obj:
         return None
-    
+
     man_obj_qs = AllManifest.objects.filter(
         project_id=pc_configs.PROJECT_UUID,
         item_type='subjects',
@@ -404,10 +404,10 @@ def db_lookup_manifest_uuid(
 
 
 def db_reconcile_by_labels_item_class_slugs(
-    label_list, 
+    label_list,
     item_class_slug_list
 ):
-    """Reconciles against the manifest by labels 
+    """Reconciles against the manifest by labels
     and item class slugs
     """
     man_qs = AllManifest.objects.filter(
@@ -425,11 +425,14 @@ def db_reconcile_by_labels_item_class_slugs(
 
 def db_lookup_manifest_by_uri(uri, item_class_slugs=None):
     """Returns a manifest object uuid on label variations
-    
+
     :param str uri: A URI to identify the item in the manifest
     :param list item_class_slugs: An optional list of
        slugs that we allow.
     """
+    if not uri:
+        return None
+    uri = str(uri)
     uuid_part = None
     uri = AllManifest().clean_uri(uri)
     if '/' in uri:
@@ -449,3 +452,16 @@ def db_lookup_manifest_by_uri(uri, item_class_slugs=None):
             item_class__slug__in=item_class_slugs,
         )
     return man_qs.first()
+
+
+def get_related_object_from_item_label(item_label):
+    clean_object_labels = utilities.get_related_object_labels_from_item_label(item_label)
+    if not clean_object_labels:
+        return None
+    _, class_slugs = pc_configs.REL_SUBJECTS_PREFIXES.get('Cataloged Object', (None, None,))
+    if not class_slugs:
+        return None
+    return db_reconcile_by_labels_item_class_slugs(
+        label_list=clean_object_labels,
+        item_class_slug_list=class_slugs,
+    )

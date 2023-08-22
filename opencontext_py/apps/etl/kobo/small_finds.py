@@ -47,21 +47,27 @@ def get_links_from_rel_ids(dfs):
     """Gets links from the related links sheet"""
     # import pdb; pdb.set_trace()
     df_link, sheet_name = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Small Find'
     )
     if df_link is None:
         return None
+    df_subjects = pd.read_csv(pc_configs.SUBJECTS_CSV_PATH)
     link_indx = ~df_link['Catalog ID'].isnull()
-    df_link = df_link[link_indx][['Find ID', 'Catalog ID', '_uuid']].copy()
+    df_link = df_link[link_indx][['Find ID', 'OC Find ID', 'Catalog ID', '_uuid']].copy()
+    df_link['find_name'] = df_link['OC Find ID']
+    df_link['find_uuid'] = df_link['_uuid']
+    df_link['subject_label'] = df_link['OC Find ID']
+    df_link['subject_uuid'] = df_link['_uuid']
     df_link['object_label'] = df_link['Catalog ID'].apply(
-        lambda x: utilities.normalize_catalog_label(x), 
+        lambda x: utilities.normalize_catalog_label(x),
     )
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Cataloged as'
     df_link['object_uuid'] = np.nan
     df_link['object_uuid_source'] = np.nan
     # Now look up the UUIDs for the objects.
     for i, row in df_link.iterrows():
+        object_label = None
         object_uuid = None
         object_uuid_source = None
         raw_object_id = row['object_label']
@@ -71,19 +77,27 @@ def get_links_from_rel_ids(dfs):
             # Didn't find any classes in our object type lookup, so continue
             continue
         man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
-            label_list=act_labels, 
+            label_list=act_labels,
             item_class_slug_list=act_classes,
         )
         if not man_obj:
-            object_label = np.nan
-            object_uuid = np.nan
-            object_uuid_source = np.nan
-        else:
-            # Only accept a single result from the 
+            # try to extract the related ID from the label of the media resource
+            man_obj = db_lookups.get_related_object_from_item_label(
+                item_label=row['Catalog ID']
+            )
+        if man_obj:
+            # Only accept a single result from the
             # lookup.
             object_label = man_obj.label
             object_uuid = str(man_obj.uuid)
             object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        if not object_uuid:
+            object_label, object_uuid, object_uuid_source = utilities.get_missing_catalog_item_from_df_subjects(
+                item_label=row['Catalog ID'],
+                df_subjects=df_subjects,
+            )
+        if not object_uuid:
+            continue
         up_indx = (
             (df_link['object_label'] == raw_object_id)
         )
@@ -96,7 +110,7 @@ def get_links_from_rel_ids(dfs):
 def make_trench_super_link_df(dfs, subjects_df):
     """Makes a dataframe for locus trench supervisors"""
     df, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Small Find'
     )
     if df is None:
@@ -104,7 +118,7 @@ def make_trench_super_link_df(dfs, subjects_df):
     # Update the locus entry uuids based on the
     # subjects_df uuids.
     df = utilities.add_final_subjects_uuid_label_cols(
-        df=df, 
+        df=df,
         subjects_df=subjects_df,
         form_type='small find',
         final_label_col='subject_label',
@@ -139,7 +153,7 @@ def prep_links_df(
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_all_links = utilities.add_final_subjects_uuid_label_cols(
-        df=df_all_links, 
+        df=df_all_links,
         subjects_df=subjects_df,
         form_type='small find',
         final_label_col='subject_label',
@@ -148,8 +162,8 @@ def prep_links_df(
         orig_uuid_col='_uuid',
     )
     df_all_links = utilities.df_fill_in_by_shared_id_cols(
-        df=df_all_links, 
-        col_to_fill='subject_label', 
+        df=df_all_links,
+        col_to_fill='subject_label',
         id_cols=['subject_uuid'],
     )
     if links_csv_path:
@@ -159,12 +173,12 @@ def prep_links_df(
 
 def prep_attributes_df(
     dfs,
-    subjects_df, 
+    subjects_df,
     attrib_csv_path=pc_configs.SMALL_FINDS_ATTRIB_CSV_PATH,
 ):
     """Prepares the small finds attribute data"""
     df_f, sheet_name = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Small Find'
     )
     if df_f is None:
@@ -175,7 +189,7 @@ def prep_attributes_df(
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(
-        df=df_f, 
+        df=df_f,
         subjects_df=subjects_df,
         form_type='small find',
         final_label_col='subject_label',
@@ -194,7 +208,7 @@ def prep_attributes_df(
 
 
 def prepare_attributes_links(
-    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     attrib_csv_path=pc_configs.SMALL_FINDS_ATTRIB_CSV_PATH,
     links_csv_path=pc_configs.SMALL_FINDS_LINKS_CSV_PATH,
     subjects_path=pc_configs.SUBJECTS_CSV_PATH,

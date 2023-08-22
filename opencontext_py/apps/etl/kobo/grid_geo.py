@@ -24,7 +24,7 @@ def grid_x_y_to_lat_lon(grid_x, grid_y, site_proj='poggio-civitate'):
         site_proj = ReprojectUtilities.MURLO_PRE_TRANSFORMS[site_proj]
     else:
         proj_x_vals = grid_x
-        proj_y_vals = grid_y 
+        proj_y_vals = grid_y
     reproj.set_in_out_crs(site_proj, 'EPSG:4326')
     out_x, out_y = reproj.reproject_coordinates(
         proj_x_vals,
@@ -38,10 +38,10 @@ def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='po
     if (not grid_x_col in df.columns) or (not grid_y_col in df.columns):
         # No local coordinate columns to process for lat, lon columns.
         return df
-    
+    df['subject_label'] = df['subject_label'].astype(str)
     if not pc_configs.REPROJECTED_LAT_COL in df.columns:
         df[pc_configs.REPROJECTED_LAT_COL] = np.nan
-    if not pc_configs.REPROJECTED_LON_COL in df.columns:    
+    if not pc_configs.REPROJECTED_LON_COL in df.columns:
         df[pc_configs.REPROJECTED_LON_COL] = np.nan
     coord_indx = (
         (~df[grid_x_col].isnull()) & (~df[grid_y_col].isnull())
@@ -56,11 +56,11 @@ def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='po
         site_proj = default_site_proj
         if row.get('site') and row['site'].startswith('Vescovado'):
             site_proj = 'vescovado-di-murlo'
-        if row.get('subject_label') and row['subject_label'].startswith('VdM'):
+        if row.get('subject_label') and row['subject_label'].lower().startswith('vdm'):
             site_proj = 'vescovado-di-murlo'
         out_x, out_y = grid_x_y_to_lat_lon(
-            grid_x=row[grid_x_col], 
-            grid_y=row[grid_y_col], 
+            grid_x=row[grid_x_col],
+            grid_y=row[grid_y_col],
             site_proj=site_proj
         )
         # Remember that lat, Lon is the same as y, x !
@@ -108,7 +108,7 @@ def create_grid_validation_columns(
         df_grp = df.groupby(groupby_cols, as_index=False).agg(
             ({grid_x_col: ['min', 'max', 'mean', 'size', q_low, q_high], grid_y_col: ['min', 'max', 'mean', 'size', q_low, q_high]})
         )
-        
+
         df = pd.merge(
             df,
             df_grp,
@@ -122,7 +122,7 @@ def create_grid_validation_columns(
                 (df[(grid_x_col, 'size')] > 4)
                 & (df[(grid_y_col, 'size')] > 4)
             )
-               & 
+               &
             (
                 (df[grid_x_col] <= df[(grid_x_col, 'q_low')])
                 | (df[grid_x_col] >= df[(grid_x_col, 'q_high')])

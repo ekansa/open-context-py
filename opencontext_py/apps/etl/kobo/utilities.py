@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
+import re
 import requests
 import openpyxl
 
@@ -161,6 +162,7 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
         for act_rel_col, act_val  in rel_cols_vals:
             # Update the col by filtering for non null values for col,
             # and for where the act_rel_col has it's act_val.
+            act_val = str(act_val)
             print('Remove the column {} value "{}" in the column {}'.format(act_rel_col, act_val, col))
             rep_indx = (df[col].notnull() & (df[act_rel_col] == act_val))
             # Remove the string we don't want, from col, which concatenates multiple
@@ -600,6 +602,117 @@ def not_null_subject_uuid(df):
     return df
 
 
+def get_related_object_labels_from_item_label(item_label):
+    """Gets related object labels from a given item label"""
+    if not item_label:
+        return None
+    item_label = str(item_label)
+    label_ex = re.split('-|\_|\s', item_label)
+    clean_object_labels = []
+    has_vdm = False
+    has_pc = False
+    for label_part in label_ex:
+        label_part = label_part.strip()
+        if label_part.lower().startswith('vdm'):
+            # We have a Vescovado di Murlo object, so make sure we're only
+            # using those prefixes
+            has_vdm = True
+        if label_part.lower().startswith('pc'):
+            # We have a PC number so lets make sure we use that prefix
+            has_pc = True
+    for label_part in label_ex:
+        label_part = label_part.strip()
+        if len(label_part) < 8:
+            continue
+        # Get only the number part of the string. This should be a PC/VdM number.
+        num_part = ''.join(ch for ch in label_part if ch.isdigit())
+        if len(num_part) < 7:
+            continue
+        if has_pc and not has_vdm:
+            clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.PC_LABEL_PREFIXES]
+        elif has_vdm and not has_pc:
+            clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.VDM_LABEL_PREFIXES]
+        else:
+            clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.ALL_CATALOG_PREFIXES]
+    return clean_object_labels
+
+
+def get_missing_catalog_item_from_df_subjects(item_label, df_subjects):
+    object_label = None
+    object_uuid = None
+    object_uuid_source = None
+    sub_req_cols = ['catalog_name', 'catalog_uuid',]
+    if not set(sub_req_cols).issubset(set(df_subjects.columns.tolist())):
+        return object_label, object_uuid, object_uuid_source
+    clean_object_labels = get_related_object_labels_from_item_label(item_label)
+    if not clean_object_labels:
+        return object_label, object_uuid, object_uuid_source
+    index = df_subjects['catalog_name'].isin(clean_object_labels)
+    object_uuids = df_subjects[index]['catalog_uuid'].unique().tolist()
+    if len(object_uuids) == 1:
+        # we have a good result!
+        object_label = df_subjects[index]['catalog_name'].iloc[0]
+        object_uuid = df_subjects[index]['catalog_uuid'].iloc[0]
+        object_uuid_source = 'subjects.csv'
+    return object_label, object_uuid, object_uuid_source
+
+
+def get_trenchbook_item_from_trench_books_json(
+        trench_id,
+        year,
+        entry_date,
+        start_page,
+        end_page,
+        df_tb,
+    ):
+    object_label = None
+    object_uuid = None
+    object_uuid_source = None
+    if year != pc_configs.DEFAULT_IMPORT_YEAR:
+        # This will only work for the correct import year
+        return object_label, object_uuid, object_uuid_source
+    tb_req_cols = ['Trench_ID', 'Date_Documented', 'Start_Page', 'End_Page', 'OC_Label', '_uuid',]
+    if not set(tb_req_cols).issubset(set(df_tb.columns.tolist())):
+        return object_label, object_uuid, object_uuid_source
+    trench_ids = [
+        trench_id,
+        trench_id.replace('_', '-'),
+        trench_id.lower(),
+        trench_id.lower().replace('_', '-'),
+        f'{trench_id}_{year}',
+        f'{trench_id}_{year}'.lower(),
+        f'{trench_id}-{year}',
+        f'{trench_id}-{year}'.lower(),
+    ]
+    index = (
+        (
+            df_tb['Trench_ID'].isin(trench_ids)
+            & (df_tb['Start_Page'] <= start_page)
+            & (df_tb['End_Page'] >= end_page)
+            & (df_tb['OC_Label'].str.contains(str(entry_date)))
+        )
+    )
+    object_uuids = df_tb[index]['_uuid'].unique().tolist()
+    if len(object_uuids) < 1:
+        return object_label, object_uuid, object_uuid_source
+    use_index = index
+    if len(object_uuids) > 1:
+        new_index = index & (df_tb['Start_Page'] == start_page)
+        object_uuids = df_tb[index]['_uuid'].unique().tolist()
+        if len(object_uuids) == 1:
+            use_index = new_index
+        if len(object_uuids) > 1:
+            new_index &= (df_tb['End_Page'] == end_page)
+            object_uuids = df_tb[index]['_uuid'].unique().tolist()
+        if len(object_uuids) == 1:
+            use_index = new_index
+    # Now use the first result
+    object_label = df_tb[use_index]['OC_Label'].iloc[0]
+    object_uuid = df_tb[use_index]['_uuid'].iloc[0]
+    object_uuid_source = 'trench_books.json'
+    return object_label, object_uuid, object_uuid_source
+
+
 def get_form_data_json(
     form_id,
     token,
@@ -715,3 +828,42 @@ def read_or_fetch_and_save_form_data_json(
     if not json_data and not token:
         raise ValueError(f'Cannot fetch data for {form_type} [{form_id}] provide a Kobo API token for {form_url}')
     return json_data
+
+
+def read_or_fetch_and_save_form_data__results_json(
+    form_type,
+    form_id,
+    token=None,
+    form_year=None,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+    results_dir=pc_configs.KOBO_EXCEL_FILES_PATH,
+    results_file_name='trench_books.json',
+):
+    """Gets """
+    results_json_data = None
+    results_file_path = os.path.join(results_dir, results_file_name)
+    if os.path.exists(results_file_path):
+        with open(results_file_path, 'r') as openfile:
+            # Reading from json file
+            results_json_data = json.load(openfile)
+        print(f'Read results_json_data from: {results_file_path}')
+    if results_json_data:
+        return results_json_data
+    # We need the JSON data returned from the API or already previously
+    # saved on our file system.
+    json_data = read_or_fetch_and_save_form_data_json(
+        form_type=form_type,
+        form_id=form_id,
+        token=token,
+        form_year=form_year,
+        form_url=form_url,
+        save_dir=save_dir,
+    )
+    results_json_data = json_data.get('results')
+    if not results_json_data:
+        raise ValueError(f'Cannot fetch data for {form_type} [{form_id}] lacks results')
+    with open(results_file_path, "w") as outfile:
+        json.dump(results_json_data, outfile, indent=4)
+    print(f'Extracted results_json_data from API json_data, saved at {results_file_path}')
+    return results_json_data

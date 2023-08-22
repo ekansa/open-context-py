@@ -53,14 +53,14 @@ SUBJECTS_GENERAL_KOBO_COLS = [
 ]
 
 SUBJECTS_SHEET_COLS = {
-    'Locus Summary Entry 2022': [
+    f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
         ('_uuid', 'locus_uuid',),
     ],
-    'Field Small Find Entry 2022': [
+    f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -68,7 +68,7 @@ SUBJECTS_SHEET_COLS = {
         ('OC Find ID', 'find_name',),
         ('_uuid', 'find_uuid',),
     ],
-    'Field Bulk Finds Entry 2022': [
+    f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -76,12 +76,13 @@ SUBJECTS_SHEET_COLS = {
         ('OC Bulk', 'bulk_name',),
         ('_uuid', 'bulk_uuid',),
     ],
-    'Catalog Entry 2022': [
+    f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Year', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
         ('Catalog ID (PC)', 'catalog_name',),
+        ('Catalog ID (PC/VdM)', 'catalog_name',),
         ('_uuid', 'catalog_uuid',),
         ('Object General Type', 'object_general_type'),
     ],
@@ -142,7 +143,7 @@ def merge_trench_df(df, trench_df):
     fill_t_index = (
         ~df['trench_id'].isnull()
         & ~df['trench_id'].str.contains('_')
-        & (df['trench_year'] == 2022)
+        & (df['trench_year'] == pc_configs.DEFAULT_IMPORT_YEAR)
     )
     df.loc[fill_t_index, 'trench_id'] = df['trench_id'] + '_' + df['trench_year'].astype(str)
     df = pd.merge(df, trench_df, on='trench_id', how='left')
@@ -157,7 +158,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
     trench_configs = [('trench_id', 'trench_id')]
     trench_configs += copy.deepcopy(TRENCH_CSV_COLS)
     trench_df = limit_rename_cols_by_config_tuples(
-        trench_df, 
+        trench_df,
         trench_configs,
     )
     start_cols = [r_c for _, r_c in trench_configs]
@@ -180,31 +181,32 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             )
             df['kobo_uuid'] = df['_uuid']
             df = limit_rename_cols_by_config_tuples(
-                df, 
+                df,
                 sheet_config,
             )
             df = merge_trench_df(df, trench_df)
             if df is None:
                 continue
             mid_cols += [
-                c for c in df.columns.tolist() 
+                c for c in df.columns.tolist()
                 if (
-                    c not in mid_cols 
-                    and c not in start_cols 
-                    and c not in last_cols 
+                    c not in mid_cols
+                    and c not in start_cols
+                    and c not in last_cols
                     and not c.startswith('locus_')
                 )
             ]
             print(f'Made subject df from {sheet_name}')
             print(df.head())
             print(f'Columns: {df.columns.tolist()}')
+            df.reset_index(inplace=True, drop=True)
             subj_dfs.append(df)
     # import pdb; pdb.set_trace()
     # df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True, how='outer'), subj_dfs)
     df = pd.concat(subj_dfs, axis=0)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
     all_cols = start_cols + locus_cols + mid_cols + last_cols
-    final_cols = [c for c in all_cols if c in df.columns] 
+    final_cols = [c for c in all_cols if c in df.columns]
     df = df[final_cols].copy()
     df.reset_index(drop=True, inplace=True)
     return df
@@ -241,7 +243,7 @@ def add_missing_unit_contexts(df):
         # Missing required columns, so skip out
         return df
     indx = (
-        df['unit_uuid'].isnull() 
+        df['unit_uuid'].isnull()
         & ~df['trench_id'].isnull()
         & ~df['trench_year'].isnull()
     )
@@ -288,7 +290,7 @@ def add_missing_locus_contexts(df):
         # Missing required columns, so skip out
         return df
     indx = (
-        ~df['unit_uuid'].isnull() 
+        ~df['unit_uuid'].isnull()
         & ~df['locus_name'].isnull()
     )
     if df[indx].empty:
@@ -323,7 +325,7 @@ def add_missing_locus_contexts(df):
         )
         if not locus_uuid and not df[exist_indx].empty:
             # This is a NEW locus, so use the Kobo provided UUID.
-            # We're using data from elsewhere in the df to 
+            # We're using data from elsewhere in the df to
             # set the locus_uuid (no need to hit the database)
             locus_uuid = df[exist_indx]['locus_uuid'].iloc[0]
         if not locus_uuid:
@@ -356,9 +358,9 @@ def add_item_class_slugs(df):
         item_classs_slug_col = item_class_slug_col_from_uuid_col(c)
         if not item_classs_slug_col:
             continue
-        # Make sure we have 
+        # Make sure we have
         new_cols.append(item_classs_slug_col)
-        # Add8 the default item_c2lass_slug value for this 
+        # Add8 the default item_c2lass_slug value for this
         # uuid column
         df[item_classs_slug_col] = np.nan
         not_null_indx = ~df[c].isnull()
@@ -375,14 +377,14 @@ def normalize_catalog_labels(df):
     """Makes catalog labels fit Poggio Civitate conventions"""
     if not 'catalog_name' in df.columns:
         return df
-    up_indx = ~df['catalog_name'].isnull() 
+    up_indx = ~df['catalog_name'].isnull()
     df.loc[up_indx, 'catalog_name'] = df[up_indx]['catalog_name'].apply(
         utilities.normalize_catalog_label
     )
     return df
 
 def make_and_classify_subjects_df(
-    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     trench_csv_path=pc_configs.TRENCH_CSV_PATH,
     save_path=pc_configs.SUBJECTS_CSV_PATH,
 ):
@@ -416,7 +418,7 @@ def validate_subjects_df(
             act_index &= ~df[c].isnull()
         all_cols = grp_cols + [count_col] + ['kobo_form']
         df_g = df[act_index][all_cols].groupby(
-            grp_cols, 
+            grp_cols,
             as_index=False
         ).agg(
             {
