@@ -465,3 +465,60 @@ def get_related_object_from_item_label(item_label):
         label_list=clean_object_labels,
         item_class_slug_list=class_slugs,
     )
+
+def check_catalog_item_exists(cat_label, new_cat_uuid=None):
+    """Checks to see if a catalog item already exists"""
+    output = {
+        'catalog_name': cat_label,
+        'catalog_uuid__to_match': new_cat_uuid,
+        'match_count': 0,
+        'uuid_match_exists': None,
+        'assertion_count': 0,
+        'man_obj': None,
+    }
+    clean_object_labels = utilities.get_related_object_labels_from_item_label(cat_label)
+    if not clean_object_labels:
+        return output
+    _, class_slugs = pc_configs.REL_SUBJECTS_PREFIXES.get('Cataloged Object', (None, None,))
+    if not class_slugs:
+        return output
+    man_qs = AllManifest.objects.filter(
+        project_id=pc_configs.PROJECT_UUID,
+        label__in=clean_object_labels,
+        item_class__slug__in=class_slugs
+    )
+    output['match_count'] = man_qs.count()
+    if output['match_count'] > 0:
+        for man_obj in  man_qs:
+            if str(man_obj.uuid) == new_cat_uuid:
+                output['uuid_match_exists'] = True
+                output['man_obj'] = man_obj
+        if not output.get('man_obj'):
+            output['man_obj'] = man_qs.first()
+    if output.get('man_obj'):
+        output['assertion_count'] = AllAssertion.objects.filter(
+            subject=output.get('man_obj'),
+        ).count()
+    return output
+
+
+def make_catalog_exists_df(df_cat_data, cat_label_col, cat_uuid_col):
+    """Makes a dataframe of catalog items to check if they exist and have assertions"""
+    if not set([cat_label_col, cat_uuid_col]).issubset(set(df_cat_data.columns.tolist())):
+        return None
+    rows = []
+    index = ~df_cat_data[cat_label_col].isnull()
+    for _, row in df_cat_data[index].iterrows():
+        cat_label = str(row[cat_label_col])
+        new_cat_uuid = None
+        if isinstance(row[cat_uuid_col], str):
+            new_cat_uuid = row[cat_uuid_col]
+        check_output = check_catalog_item_exists(cat_label, new_cat_uuid)
+        if check_output.get('man_obj'):
+            man_obj = check_output.get('man_obj')
+            check_output['found_label'] = man_obj.label
+            check_output['found_uuid'] = man_obj.uuid
+        check_output.pop('man_obj')
+        rows.append(check_output)
+    df = pd.DataFrame(data=rows)
+    return df

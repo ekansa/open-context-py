@@ -324,6 +324,39 @@ def prep_links_df(
     return df_all_links
 
 
+def redact_existing_records_already_with_data(
+        df_f,
+        cat_label_col='catalog_name',
+        cat_uuid_col='catalog_uuid',
+    ):
+    """Redacts catalog with existing records that already have data"""
+    df_exists = db_lookups.make_catalog_exists_df(
+        df_cat_data=df_f,
+        cat_label_col=cat_label_col,
+        cat_uuid_col=cat_uuid_col,
+    )
+    if df_exists is None:
+        return df_f
+    redact_index = (
+        (df_exists['match_count'] > 0)
+        & ~(df_exists['uuid_match_exists']==True)
+        & (df_exists['assertion_count'] >= 4)
+        & (~df_exists['found_uuid'].isnull())
+    )
+    for _, row in df_exists[redact_index].iterrows():
+        drop_index = (
+            (df_f[cat_label_col] == row['catalog_name'])
+            & (df_f[cat_uuid_col] == row['catalog_uuid__to_match'])
+        )
+        df_f = df_f[~drop_index].copy()
+        df_f.reset_index(drop=True, inplace=True)
+        print(
+            f"[{len(df_f.index)}] rows after dropping existing catalog item "
+            f"{row['catalog_name']} [{row['catalog_uuid__to_match']}]"
+        )
+    return df_f
+
+
 def prep_attributes_df(
     dfs,
     subjects_df,
@@ -359,6 +392,13 @@ def prep_attributes_df(
         )
     else:
         raise ValueError('We do not have a known ID/name field in the catalog data')
+
+    # Redact catalog items that we already have!
+    df_f = redact_existing_records_already_with_data(
+        df_f=df_f,
+        cat_label_col='catalog_name',
+        cat_uuid_col='_uuid',
+    )
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(

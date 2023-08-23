@@ -867,3 +867,54 @@ def read_or_fetch_and_save_form_data__results_json(
         json.dump(results_json_data, outfile, indent=4)
     print(f'Extracted results_json_data from API json_data, saved at {results_file_path}')
     return results_json_data
+
+
+def get_ids_to_deduplicate(df, label_col, uuid_col):
+    delete_suggestions = []
+    if not set([label_col, uuid_col]).issubset(set(df.columns.tolist())):
+        return delete_suggestions
+    index = (
+        ~df[label_col].isnull()
+        & ~df[uuid_col].isnull()
+    )
+    label_list = df[index][label_col].unique().tolist()
+    for label in label_list:
+        act_index = (
+            df[label_col] == label
+        )
+        good_uuid = None
+        for _, row in df[act_index].iterrows():
+            act_uuid = str(row[uuid_col])
+            if good_uuid is None:
+                good_uuid = act_uuid
+            if act_uuid == good_uuid:
+                continue
+            delete_sug = {
+                'name': label,
+                'uuid': act_uuid,
+            }
+            delete_suggestions.append(delete_sug)
+    return delete_suggestions
+
+
+def redact_suggested_deletions(df, uuid_col, delete_suggestions):
+    """Deletes rows by act_label_col and act_uuid_col based on the
+    utilities.get_ids_to_deduplicate delete_suggestions list
+    """
+    if not delete_suggestions:
+        return df
+    if not set([uuid_col]).issubset(set(df.columns.tolist())):
+        # we're missing the columns needed to check for deletions
+        return df
+    for delete_sug in delete_suggestions:
+        if False:
+            drop_index = (
+                (df[label_col] == delete_sug.get('label'))
+                & (df[uuid_col] == delete_sug.get('uuid'))
+            )
+        drop_index = (
+            (df[uuid_col] == delete_sug.get('uuid'))
+        )
+        df = df[~drop_index].copy()
+        df.reset_index(drop=True, inplace=True)
+    return df
