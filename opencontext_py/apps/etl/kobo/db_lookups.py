@@ -474,6 +474,8 @@ def check_catalog_item_exists(cat_label, new_cat_uuid=None):
         'match_count': 0,
         'uuid_match_exists': None,
         'assertion_count': 0,
+        'found_label': None,
+        'found_uuid': None,
         'man_obj': None,
     }
     clean_object_labels = utilities.get_related_object_labels_from_item_label(cat_label)
@@ -496,9 +498,12 @@ def check_catalog_item_exists(cat_label, new_cat_uuid=None):
         if not output.get('man_obj'):
             output['man_obj'] = man_qs.first()
     if output.get('man_obj'):
+        output['found_label'] = man_obj.label
+        output['found_uuid'] = man_obj.uuid
         output['assertion_count'] = AllAssertion.objects.filter(
             subject=output.get('man_obj'),
         ).count()
+        output.pop('man_obj')
     return output
 
 
@@ -514,11 +519,6 @@ def make_catalog_exists_df(df_cat_data, cat_label_col, cat_uuid_col):
         if isinstance(row[cat_uuid_col], str):
             new_cat_uuid = row[cat_uuid_col]
         check_output = check_catalog_item_exists(cat_label, new_cat_uuid)
-        if check_output.get('man_obj'):
-            man_obj = check_output.get('man_obj')
-            check_output['found_label'] = man_obj.label
-            check_output['found_uuid'] = man_obj.uuid
-        check_output.pop('man_obj')
         rows.append(check_output)
     df = pd.DataFrame(data=rows)
     return df

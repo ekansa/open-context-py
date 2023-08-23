@@ -183,8 +183,20 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
 
 def split_col_with_delim_into_multiple_cols(df, col, delim=' '):
     """Splits a column with delimited values into multiple columns"""
-    if not col in df.columns:
+    df_col = None
+    for real_col in df.columns.tolist():
+        if col == real_col:
+            df_col = real_col
+            break
+        if real_col.endswith(col):
+            df_col = real_col
+            break
+    if not df_col:
+        # we couldn't match the col exactly or as the end of a df columns
         return df
+    if not col in df.columns:
+        #  Rename the df_col into col to make processing easier
+        df.rename(columns={df_col:col}, inplace=True)
     delim_count_col = f'{col}___delim_count'
     df[delim_count_col] = np.nan
     act_index = ~df[col].isnull()
