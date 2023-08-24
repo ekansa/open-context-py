@@ -684,3 +684,45 @@ def make_all_link_assertion(
         if not os.path.exists(links_csv_path):
             continue
         make_link_assertions_from_link_csv(source_id, links_csv_path)
+
+
+def fix_trench_book_main_links():
+    trench_df = pd.read_csv(pc_configs.TRENCH_CSV_PATH)
+    unit_to_tb_link_pred = AllManifest.objects.get(uuid='f20e9e2e-246f-4421-b1dd-e31e8b58805c')
+    tb_to_unit_link_pred = AllManifest.objects.get(uuid=configs.PREDICATE_LINK_UUID)
+    tb_to_page_link_pred = AllManifest.objects.get(uuid='bd384f1f-fb29-4a9d-7aca-d8f6b4af0af9')
+    page_to_tb_link_pred = AllManifest.objects.get(uuid='0bb889f9-54dd-4f70-5b63-f5d82425f0db')
+    for unit_uuid in trench_df['uuid'].unique().tolist():
+        unit_obj = AllManifest.objects.filter(uuid=unit_uuid).first()
+        if not unit_obj:
+            continue
+        tb_obj = AllManifest.objects.filter(
+            label__startswith='Trench Book',
+            label__endswith=unit_obj.label,
+            item_type='documents',
+        ).first()
+        if not tb_obj:
+            continue
+        make_link_assertion_and_inverse(
+            source_id=f'{pc_configs.SOURCE_ID_TB_LINKS}-main-tb',
+            subject_obj=unit_obj,
+            object_obj=tb_obj,
+            predicate_obj=unit_to_tb_link_pred,
+            inv_predicate_obj=tb_to_unit_link_pred,
+        )
+        page_to_tb_links_qs = AllAssertion.objects.filter(
+            subject__item_type='documents',
+            predicate=tb_to_unit_link_pred,
+            object=unit_obj,
+        ).exclude(
+            subject=tb_obj,
+        )
+        for ass in page_to_tb_links_qs:
+            page_obj = ass.subject
+            make_link_assertion_and_inverse(
+                source_id=f'{pc_configs.SOURCE_ID_TB_LINKS}-main-tb',
+                subject_obj=tb_obj,
+                object_obj=page_obj,
+                predicate_obj=tb_to_page_link_pred,
+                inv_predicate_obj=page_to_tb_link_pred,
+            )

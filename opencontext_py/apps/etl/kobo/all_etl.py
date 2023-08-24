@@ -9,6 +9,7 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
+from opencontext_py.apps.all_items.geospace import geo_quality
 
 from opencontext_py.apps.etl.kobo import bulk_finds
 from opencontext_py.apps.etl.kobo import catalog
@@ -152,6 +153,7 @@ def db_update_only():
     db_updates.load_media_files_and_attributes()
     db_updates.load_general_subjects_attributes()
     db_updates.make_all_link_assertion()
+    db_updates.fix_trench_book_main_links()
     db_updates.sort_page_order()
 
 
@@ -231,3 +233,20 @@ def add_aggregate_unit_geospatial_data():
         request_list=request_list,
         source_id=pc_configs.SOURCE_ID_UNIT_AGG_GEO,
     )
+
+def check_aggregate_unit_geospatial_data():
+    trench_df = pd.read_csv(pc_configs.TRENCH_CSV_PATH)
+    unit_uuids = trench_df['uuid'].unique().tolist()
+    dfs = []
+    for parent_uuid in trench_df['uuid'].unique().tolist():
+        df = geo_quality.check_points_within_spatial_context(
+            parent_uuid=parent_uuid
+        )
+        if df is None:
+            continue
+        df.reset_index(inplace=True, drop=True)
+        dfs.append(df)
+    df_all = pd.concat(dfs, axis=0)
+    df_all.reset_index(drop=True, inplace=True)
+    df_all.to_csv(pc_configs.UNIT_GEO_QUALITY_REPORT, index=False)
+    return df_all
