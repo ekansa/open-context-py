@@ -238,7 +238,14 @@ REL_SUBJECTS_PREFIXES = {
             'Bulk Metal-',
             'Bulk Other-',
             'Bulk Tile-',
+            'bf Architectural ',
+            'bf Bone ',
+            'bf Ceramic ',
+            'bf Metal ',
+            'bf Other ',
+            'bf Tile ',
         ],
+
         ['oc-gen-cat-sample-col',],
     ),
     'Locus': (
