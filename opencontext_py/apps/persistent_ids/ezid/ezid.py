@@ -1,6 +1,8 @@
 import re
 import requests
 from time import sleep
+import urllib.parse
+
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
@@ -25,12 +27,16 @@ url = 'https://opencontext.org/media/5ffb91c9-18b2-4e61-8cea-470f1049037b'
 resp = ezid.mint_identifier(url, meta, 'ark')
     """
 
+    # Production site for EZID
     EZID_BASE_URL = 'https://ezid.cdlib.org'
+    # Staging site for EZID
+    EZID_STAGING_BASE_URL = 'https://ezid-stg.cdlib.org'
     SLEEP_TIME = .5
     ARK_TEST_SHOULDER = 'ark:/99999/fk4'  # default for testing
     DOI_TEST_SHOULDER = 'doi:10.5072/FK2' # default for testing
 
     def __init__(self):
+        self.act_ezid_base_url = self.EZID_BASE_URL
         self.delay_before_request = self.SLEEP_TIME
         self.username = settings.EZID_USERNAME  # http authentication username
         self.password = settings.EZID_PASSWORD  # http authentication password
@@ -51,9 +57,9 @@ resp = ezid.mint_identifier(url, meta, 'ark')
             # give the remote service a break.
             sleep(self.delay_before_request)
         if id_type == 'doi':
-            url = self.EZID_BASE_URL + '/shoulder/' + self.doi_shoulder
+            url = self.act_ezid_base_url + '/shoulder/' + self.doi_shoulder
         else:
-            url = self.EZID_BASE_URL + '/shoulder/' + self.ark_shoulder
+            url = self.act_ezid_base_url + '/shoulder/' + self.ark_shoulder
         gapi = GeneralAPI()
         headers = gapi.client_headers
         headers['Content-Type'] = 'text/plain; charset=UTF-8'
@@ -61,11 +67,13 @@ resp = ezid.mint_identifier(url, meta, 'ark')
         headers['_target'] = oc_uri
         resp_txt = None
         try:
-            r = requests.post(url,
-                              auth=(self.username, self.password),
-                              timeout=240,
-                              data=anvl,
-                              headers=headers)
+            r = requests.post(
+                url,
+                auth=(self.username, self.password),
+                timeout=240,
+                data=anvl,
+                headers=headers,
+            )
             r.raise_for_status()
             self.request_url = r.url
             resp_txt = r.text
@@ -86,6 +94,62 @@ resp = ezid.mint_identifier(url, meta, 'ark')
             new_id_dict['id'] = new_id
             self.new_ids.append(new_id_dict)
         return new_id
+
+
+    def create_ark_identifier(self, oc_uri, metadata, id_str, update_if_exists=True):
+        """ Creates a stable identifier, where we (the client) has set
+        the identifier. Currently only supporting arks
+        """
+        new_id = None
+        metadata['_target'] = oc_uri
+        anvl = self.make_anvl_metadata_str(metadata)
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        path = '/id/' + self.encode(id_str)
+        if update_if_exists:
+            path += '?update_if_exists=yes'
+        url = self.act_ezid_base_url + path
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        headers['Accept'] = 'text/plain'
+        headers['_target'] = oc_uri
+        resp_txt = None
+        try:
+            r = requests.put(
+                url,
+                auth=(self.username, self.password),
+                timeout=240,
+                data=anvl,
+                headers=headers,
+            )
+            r.raise_for_status()
+            self.request_url = r.url
+            resp_txt = r.text
+        except:
+            self.request_url = r.url
+            print('Error ' + str(r.text))
+        if not resp_txt:
+            return None
+        if not 'success:' in resp_txt:
+            return None
+        text_ex = resp_txt.split('success:')
+        if len(text_ex) < 2:
+            new_id = None
+        else:
+            new_id = text_ex[1].strip()
+            new_id_dict = {
+                'uri': oc_uri,
+                'id': new_id,
+                'response': resp_txt,
+            }
+            self.new_ids.append(new_id_dict)
+        return new_id
+
+    def encode(self, id_str):
+        return urllib.parse.quote(id_str, ":/")
 
     def make_anvl_metadata_str(self, metadata):
         """ converts a dict of metadata into an ANVL formated

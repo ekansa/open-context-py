@@ -59,7 +59,7 @@ DF_REL_ALL_COLS = (
 
 def make_locus_grid_df(dfs, subjects_df):
     df_grid, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='group_elevations'
     )
     if df_grid is None:
@@ -69,7 +69,7 @@ def make_locus_grid_df(dfs, subjects_df):
     renames = {c:r for c, r in pc_configs.LOCUS_GRID_COLS if c in df_grid.columns}
     df_grid.rename(columns=renames, inplace=True)
     df_grid = utilities.add_final_subjects_uuid_label_cols(
-        df=df_grid, 
+        df=df_grid,
         subjects_df=subjects_df,
         form_type='locus',
         final_label_col='subject_label',
@@ -78,8 +78,8 @@ def make_locus_grid_df(dfs, subjects_df):
         orig_uuid_col='_uuid',
     )
     df_grid = utilities.df_fill_in_by_shared_id_cols(
-        df=df_grid, 
-        col_to_fill='subject_label', 
+        df=df_grid,
+        col_to_fill='subject_label',
         id_cols=['subject_uuid'],
     )
     return df_grid
@@ -96,8 +96,8 @@ def make_locus_geo_df(df_grid):
             coords = []
             for _, row in df_grid[f_id_indx].iterrows():
                 out_x, out_y = grid_geo.grid_x_y_to_lat_lon(
-                    grid_x=row['Grid X'], 
-                    grid_y=row['Grid Y'], 
+                    grid_x=row['Grid X'],
+                    grid_y=row['Grid Y'],
                 )
                 geo_tup = (out_x[0], out_y[0],)
                 coords.append(geo_tup)
@@ -129,7 +129,7 @@ def make_locus_geo_df(df_grid):
 
 def add_trench_cols_to_df_link(df_link, dfs):
     df, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Locus'
     )
     if df is None:
@@ -148,14 +148,16 @@ def add_trench_cols_to_df_link(df_link, dfs):
 def make_locus_tb_links_df(dfs, subjects_df):
     """Makes dataframe for a catalog links to trench book entries"""
     df_link, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='group_trench_book'
     )
     if df_link is None:
         return None
+    # get the current trench books.
+    df_tb = pd.read_json(pc_configs.KOBO_TB_JSON_PATH)
     df_link.rename(columns=TRENCH_COL_RENAMES, inplace=True)
     df_link = utilities.add_final_subjects_uuid_label_cols(
-        df=df_link, 
+        df=df_link,
         subjects_df=subjects_df,
         form_type='locus',
         final_label_col='subject_label',
@@ -165,14 +167,14 @@ def make_locus_tb_links_df(dfs, subjects_df):
     )
     # Add the trench_id column to the df_link.
     df_link = add_trench_cols_to_df_link(df_link, dfs)
-
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
     df_link['object_label'] = np.nan
     df_link['object_uuid'] = np.nan
     df_link['object_uuid_source'] = np.nan
     for i, row in df_link.iterrows():
+        object_label = None
         object_uuid = None
-        object_source = None
+        object_uuid_source = None
         # Try looking in the database for a match
         obj = db_lookups.db_lookup_trenchbook(
             row['trench_id'],
@@ -181,16 +183,21 @@ def make_locus_tb_links_df(dfs, subjects_df):
             row['Trench Book Start Page'],
             row['Trench Book End Page']
         )
+        if obj:
+            object_label = obj.label
+            object_uuid = str(obj.uuid)
+            object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
         if not obj:
-            print(
-                f"Cannot find locus trenchbook: {row['trench_id']} "
-                f"year: {row['trench_year']} "
-                f"entry: {row['Trench Book Entry Date']}"
-                f"pages: {row['Trench Book Start Page']} - {row['Trench Book End Page']}"
+            object_label, object_uuid, object_uuid_source = utilities.get_trenchbook_item_from_trench_books_json(
+                trench_id=row['trench_id'],
+                year=row['trench_year'],
+                entry_date=row['Trench Book Entry Date'],
+                start_page=row['Trench Book Start Page'],
+                end_page=row['Trench Book End Page'],
+                df_tb=df_tb,
             )
+        if not object_uuid:
             continue
-        object_uuid = str(obj.uuid)
-        object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
         up_indx = (
             (df_link['trench_id'] == row['trench_id'])
             & (df_link['trench_year'] == row['trench_year'])
@@ -205,11 +212,10 @@ def make_locus_tb_links_df(dfs, subjects_df):
                 f"entry: {row['Trench Book Entry Date']}"
                 f"pages: {row['Trench Book Start Page']} - {row['Trench Book End Page']}"
             )
-            continue
-        df_link.loc[up_indx, 'object_label'] = obj.label
+        df_link.loc[up_indx, 'object_label'] = object_label
         df_link.loc[up_indx, 'object_uuid'] = object_uuid
-        df_link.loc[up_indx, 'object_uuid_source'] = object_source
-    
+        df_link.loc[up_indx, 'object_uuid_source'] = object_uuid_source
+
     df_link = df_link[
         (
            pc_configs.FIRST_LINK_REL_COLS
@@ -257,14 +263,14 @@ def make_strat_other_link_df(df):
         df.loc[up_indx, 'object_label'] = obj.label
         df.loc[up_indx, 'object_uuid'] = object_uuid
         df.loc[up_indx, 'object_uuid_source'] = object_source
-    
+
     return df
 
 
 def make_strat_link_df(df, dfs, subjects_df):
     """Makes a single dataframe for locus stratigraphy relations"""
     df = utilities.add_final_subjects_uuid_label_cols(
-        df=df, 
+        df=df,
         subjects_df=subjects_df,
         form_type='locus',
         final_label_col='subject_label',
@@ -291,7 +297,7 @@ def make_strat_link_df(df, dfs, subjects_df):
     df['object_orig_uuid'] = np.nan
     df['object_uuid_source'] = np.nan
     df_f, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Locus'
     )
     act_indx = ~df[act_col].isnull()
@@ -309,7 +315,7 @@ def make_strat_link_df(df, dfs, subjects_df):
         df.loc[up_index, 'object_orig_uuid'] = df_f[rel_locus_index]['_uuid'].iloc[0]
     # Now update the uuids of the related loci
     df = utilities.add_final_subjects_uuid_label_cols(
-        df=df, 
+        df=df,
         subjects_df=subjects_df,
         form_type='locus',
         final_label_col='object_label',
@@ -339,7 +345,7 @@ def make_strat_links_dfs(
 def make_trench_super_link_df(dfs, subjects_df):
     """Makes a dataframe for locus trench supervisors"""
     df, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Locus'
     )
     if df is None:
@@ -347,7 +353,7 @@ def make_trench_super_link_df(dfs, subjects_df):
     # Update the locus entry uuids based on the
     # subjects_df uuids.
     df = utilities.add_final_subjects_uuid_label_cols(
-        df=df, 
+        df=df,
         subjects_df=subjects_df,
         form_type='locus',
         final_label_col='subject_label',
@@ -379,8 +385,8 @@ def prep_links_df(
     cols = [c for c in DF_REL_ALL_COLS if c in df_all_links.columns]
     df_all_links = df_all_links[cols].copy()
     df_all_links = utilities.df_fill_in_by_shared_id_cols(
-        df=df_all_links, 
-        col_to_fill='subject_label', 
+        df=df_all_links,
+        col_to_fill='subject_label',
         id_cols=['subject_uuid'],
     )
     if links_csv_path:
@@ -390,12 +396,12 @@ def prep_links_df(
 
 def prep_attributes_df(
     dfs,
-    subjects_df, 
+    subjects_df,
     attrib_csv_path=pc_configs.LOCUS_ATTRIB_CSV_PATH,
 ):
     """Prepares the locus attribute data"""
     df_f, sheet_name = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Locus'
     )
     if df_f is None:
@@ -406,7 +412,7 @@ def prep_attributes_df(
     # Update the locus entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(
-        df=df_f, 
+        df=df_f,
         subjects_df=subjects_df,
         form_type='locus',
         final_label_col='subject_label',
@@ -423,7 +429,7 @@ def prep_attributes_df(
 
 
 def prepare_attributes_links(
-    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     attrib_csv_path=pc_configs.LOCUS_ATTRIB_CSV_PATH,
     links_csv_path=pc_configs.LOCUS_LINKS_CSV_PATH,
     geo_csv_path=pc_configs.LOCUS_GEO_CSV_PATH,

@@ -62,7 +62,7 @@ DF_REL_ALL_COLS = (
 
 def prep_df_link_from_attrib_sheet(dfs):
     df_link, _ = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Catalog'
     )
     if df_link is None:
@@ -134,14 +134,16 @@ def make_catalog_tb_links_df(dfs):
         return None
     for col in df_link.columns:
         df_link[col].replace('', np.nan, inplace=True)
+    df_tb = pd.read_json(pc_configs.KOBO_TB_JSON_PATH)
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
     for col in ['object_label', 'object_uuid', 'object_uuid_source']:
         if col in df_link.columns:
             continue
         df_link[col] = np.nan
     for i, row in df_link.iterrows():
+        object_label = None
         object_uuid = None
-        object_source = None
+        object_uuid_source = None
         # Try looking in the database for a match
         obj = db_lookups.db_lookup_trenchbook(
             row['Trench ID'],
@@ -150,10 +152,21 @@ def make_catalog_tb_links_df(dfs):
             row['Trench Book Start Page'],
             row['Trench Book End Page']
         )
+        if obj:
+            object_label = obj.label
+            object_uuid = str(obj.uuid)
+            object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
         if not obj:
+            object_label, object_uuid, object_source = utilities.get_trenchbook_item_from_trench_books_json(
+                trench_id=row['Trench ID'],
+                year=row['Year'],
+                entry_date=row['Trench Book Entry Date'],
+                start_page=row['Trench Book Start Page'],
+                end_page=row['Trench Book End Page'],
+                df_tb=df_tb,
+            )
+        if not object_uuid:
             continue
-        object_uuid = str(obj.uuid)
-        object_source = pc_configs.UUID_SOURCE_OC_LOOKUP
         ind_criteria = []
         up_indx = (
             (df_link[pc_configs.LINK_RELATION_TYPE_COL] == 'Has Related Trench Book Entry')
@@ -161,8 +174,8 @@ def make_catalog_tb_links_df(dfs):
             & (df_link['Year'] == row['Year'])
         )
         ind_criteria = [
-            f"trench_id {row['Trench ID']}", 
-            f"year {row['Year']}", 
+            f"trench_id {row['Trench ID']}",
+            f"year {row['Year']}",
         ]
         if isinstance(row['Trench Book Entry Date'], pd.Timestamp):
             up_indx &= (df_link['Trench Book Entry Date'] == row['Trench Book Entry Date'])
@@ -183,14 +196,18 @@ def make_catalog_tb_links_df(dfs):
             up_indx &= df_link['Trench Book End Page'].isnull()
             ind_criteria.append(f"end is null")
         if df_link[up_indx].empty:
-            print(f'Problem associating {obj.label} ({obj.uuid})')
+            print(f'Problem associating {object_label} ({object_uuid}) so we will do it the simple way')
             print(', '.join(ind_criteria))
-            # import pdb; pdb.set_trace()
-            continue
-        df_link.loc[up_indx, 'object_label'] = obj.label
+            up_indx = (
+                (df_link[pc_configs.LINK_RELATION_TYPE_COL] == 'Has Related Trench Book Entry')
+                & (df_link['Trench ID'] == row['Trench ID'])
+                & (df_link['Year'] == row['Year'])
+                & (df_link['subject_uuid'] == row['subject_uuid'])
+            )
+        df_link.loc[up_indx, 'object_label'] = object_label
         df_link.loc[up_indx, 'object_uuid'] = object_uuid
         df_link.loc[up_indx, 'object_uuid_source'] = object_source
-    
+
     df_link = df_link[
         (
            pc_configs.FIRST_LINK_REL_COLS
@@ -226,9 +243,9 @@ def get_links_from_rel_ids(dfs):
         if len(act_classes) == 0:
             # Didn't find any classes in our object type lookup, so continue
             continue
-        act_labels += [p + str(raw_object_id) for p in act_prefixes if not str(raw_object_id).startswith(p)] 
+        act_labels += [p + str(raw_object_id) for p in act_prefixes if not str(raw_object_id).startswith(p)]
         man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
-            label_list=act_labels, 
+            label_list=act_labels,
             item_class_slug_list=act_classes,
         )
         if not man_obj and object_type == 'Small Find':
@@ -244,7 +261,7 @@ def get_links_from_rel_ids(dfs):
             object_uuid = np.nan
             object_uuid_source = np.nan
         else:
-            # Only accept a single result from the 
+            # Only accept a single result from the
             # lookup.
             object_label = man_obj.label
             object_uuid = str(man_obj.uuid)
@@ -289,7 +306,7 @@ def prep_links_df(
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_all_links = utilities.add_final_subjects_uuid_label_cols(
-        df=df_all_links, 
+        df=df_all_links,
         subjects_df=subjects_df,
         form_type='catalog',
         final_label_col='subject_label',
@@ -298,8 +315,8 @@ def prep_links_df(
         orig_uuid_col='subject_uuid',
     )
     df_all_links = utilities.df_fill_in_by_shared_id_cols(
-        df=df_all_links, 
-        col_to_fill='subject_label', 
+        df=df_all_links,
+        col_to_fill='subject_label',
         id_cols=['subject_uuid'],
     )
     if links_csv_path:
@@ -307,14 +324,47 @@ def prep_links_df(
     return df_all_links
 
 
+def redact_existing_records_already_with_data(
+        df_f,
+        cat_label_col='catalog_name',
+        cat_uuid_col='catalog_uuid',
+    ):
+    """Redacts catalog with existing records that already have data"""
+    df_exists = db_lookups.make_catalog_exists_df(
+        df_cat_data=df_f,
+        cat_label_col=cat_label_col,
+        cat_uuid_col=cat_uuid_col,
+    )
+    if df_exists is None:
+        return df_f
+    redact_index = (
+        (df_exists['match_count'] > 0)
+        & ~(df_exists['uuid_match_exists']==True)
+        & (df_exists['assertion_count'] >= 4)
+        & (~df_exists['found_uuid'].isnull())
+    )
+    for _, row in df_exists[redact_index].iterrows():
+        drop_index = (
+            (df_f[cat_label_col] == row['catalog_name'])
+            & (df_f[cat_uuid_col] == row['catalog_uuid__to_match'])
+        )
+        df_f = df_f[~drop_index].copy()
+        df_f.reset_index(drop=True, inplace=True)
+        print(
+            f"[{len(df_f.index)}] rows after dropping existing catalog item "
+            f"{row['catalog_name']} [{row['catalog_uuid__to_match']}]"
+        )
+    return df_f
+
+
 def prep_attributes_df(
     dfs,
-    subjects_df, 
+    subjects_df,
     attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH,
 ):
     """Prepares the catalog attribute data"""
     df_f, sheet_name = utilities.get_df_by_sheet_name_part(
-        dfs, 
+        dfs,
         sheet_name_part='Catalog'
     )
     if df_f is None:
@@ -323,20 +373,36 @@ def prep_attributes_df(
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
     df_f = utilities.split_all_cols_with_delim_into_multiple_cols(
-        form_type='catalog', 
-        df=df_f, 
+        form_type='catalog',
+        df=df_f,
     )
     # Catalog data has lots of Kobo expressed slugs that need to be
     # normalized to normal Open Context slugs
     df_f = utilities.make_oc_normal_slug_values(df_f)
     # import pdb; pdb.set_trace()
-    df_f['catalog_name'] = df_f['Catalog ID (PC)'].apply(
-        lambda x: utilities.normalize_catalog_label(x), 
+    if 'Catalog ID (PC)' in df_f.columns:
+        # 2022 variant
+        df_f['catalog_name'] = df_f['Catalog ID (PC)'].apply(
+            lambda x: utilities.normalize_catalog_label(x),
+        )
+    elif 'Catalog ID (PC/VdM)' in df_f.columns:
+        # 2023 variant
+        df_f['catalog_name'] = df_f['Catalog ID (PC/VdM)'].apply(
+            lambda x: utilities.normalize_catalog_label(x),
+        )
+    else:
+        raise ValueError('We do not have a known ID/name field in the catalog data')
+
+    # Redact catalog items that we already have!
+    df_f = redact_existing_records_already_with_data(
+        df_f=df_f,
+        cat_label_col='catalog_name',
+        cat_uuid_col='_uuid',
     )
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(
-        df=df_f, 
+        df=df_f,
         subjects_df=subjects_df,
         form_type='catalog',
         final_label_col='subject_label',
@@ -355,7 +421,7 @@ def prep_attributes_df(
 
 
 def prepare_attributes_links(
-    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH, 
+    excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     attrib_csv_path=pc_configs.CATALOG_ATTRIB_CSV_PATH,
     links_csv_path=pc_configs.CATALOG_LINKS_CSV_PATH,
     subjects_path=pc_configs.SUBJECTS_CSV_PATH,

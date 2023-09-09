@@ -10,7 +10,7 @@ class ReprojectUtilities():
     """
     Useful utilitis to reproject coordinates, package them in GeoJSON
     """
-    
+
     MURLO_PRE_TRANSFORMS = {
         'poggio-civitate': 'EPSG:3003',
         'vescovado-di-murlo': 'EPSG:3003',
@@ -22,7 +22,7 @@ class ReprojectUtilities():
         self.input_proj = None
         self.output_proj = None
         self.invert_x_y_pairs = False
-    
+
     def set_in_out_crs(self, input_crs_id, output_crs_id):
         """Sets the input and output CRS by passing CRS ids. """
         try:
@@ -33,11 +33,11 @@ class ReprojectUtilities():
         except:
             raise ValueError('Could not set input and output projections.')
         return True
-    
+
     def reproject_coordinates(self, in_x_vals, in_y_vals):
         """Returns lists of reprojected x and y coordinate values. """
         transformer = Transformer.from_proj(
-            self.input_proj, 
+            self.input_proj,
             self.output_proj,
             always_xy=True,
         )
@@ -46,11 +46,11 @@ class ReprojectUtilities():
             in_y_vals
         )
         return out_x, out_y
-    
+
     def make_coordinate_list(self, x_list, y_list):
         """Lists coordinates of x,y tuples"""
         return [(x, y_list[i]) for i, x in enumerate(x_list)]
-    
+
     def package_coordinates(self, out_x, out_y, geometry_type=None):
         """Packages coordinates into tuples, lists or list of list objects useful for
         generating GeoJSON features """
@@ -68,8 +68,8 @@ class ReprojectUtilities():
                                                                coordinates)
             return coordinates
         return coords
-    
-    def murlo_pre_transform(self, x_list, y_list, local_grid):
+
+    def murlo_pre_transform(self, x_list, y_list, local_grid, print_progress=False):
         """Transforms Poggio Civitate local coordinates into the EPSG: 3003 projection."""
         coords = self.make_coordinate_list(x_list, y_list)
         epsg3003_x = []
@@ -88,11 +88,12 @@ class ReprojectUtilities():
             else:
                 # what the hell?
                 pass
-        print('Local grid transformed: ' + local_grid)
-        print('EPSG:3003 x' + str(epsg3003_x))
-        print('EPSG:3003 y' + str(epsg3003_y))
+        if print_progress:
+            print(f'Local grid transformed: {local_grid}')
+            print(f'EPSG:3003 x: {epsg3003_x}')
+            print(f'EPSG:3003 y: {epsg3003_y}')
         return epsg3003_x, epsg3003_y
-    
+
     def reproject_coordinate_pair(self, c_pair):
         """Reprojects a coordinate pair. """
         if (not isinstance(c_pair, list) or
@@ -109,7 +110,7 @@ class ReprojectUtilities():
             # See if this works?
             return [y_list[0], x_list[0]]
         return [x_list[0], y_list[0]]
-    
+
     def reproject_coordinate_ring(self, ring_list):
         """Reprojects a ring of coorindates"""
         new_ring_list = []
@@ -122,7 +123,7 @@ class ReprojectUtilities():
             # be the same as the first.
             new_ring_list.append(new_ring_list[0])
         return new_ring_list
-    
+
     def reproject_mulipolygon(self, coordinates, geometry_type='MultiPolygon'):
         """Reprojects coordinates for a GeoJSON MultiPolygon geometry"""
         new_coordinates = []
@@ -139,7 +140,7 @@ class ReprojectUtilities():
             new_coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
                                                                new_coordinates)
         return new_coordinates
-                
+
     def reproject_polygon(self, coordinates, geometry_type='Polygon'):
         """Reprojects coordinates for a GeoJSON polygon"""
         new_coordinates = []
@@ -153,7 +154,7 @@ class ReprojectUtilities():
             new_coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
                                                                new_coordinates)
         return new_coordinates
-    
+
     def reproject_multi_or_polygon(self, coordinates, geometry_type):
         """Reprojects GeoJSON Polygon or MultiPolygon coordinates"""
         if geometry_type == 'Polygon':

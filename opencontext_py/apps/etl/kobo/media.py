@@ -1,6 +1,7 @@
 import copy
 import uuid as GenUUID
 import os
+import re
 import shutil
 import numpy as np
 import pandas as pd
@@ -844,6 +845,11 @@ def prep_links_df(dfs):
             item_class_slug_list=act_classes,
         )
         if not man_obj:
+            # try to extract the related ID from the label of the media resource
+            man_obj = db_lookups.get_related_object_from_item_label(
+                item_label=row['subject_label']
+            )
+        if not man_obj:
             object_label = np.nan
             object_uuid = np.nan
             object_uuid_source = np.nan
@@ -863,6 +869,52 @@ def prep_links_df(dfs):
     cols = [c for c in REL_COLS if c in df_link.columns]
     df_link = df_link[cols].copy()
     return df_link
+
+
+def fill_in_missing_catalog_links(df_all_links):
+    """Fills in links to catalog objects based on the media label if missing object relations"""
+    if df_all_links is None:
+        return df_all_links
+    if df_all_links.empty:
+        return df_all_links
+    req_cols = ['subject_label', 'subject_uuid', 'object_label', 'object_uuid', 'object_uuid_source']
+    if not set(req_cols).issubset(set(df_all_links.columns.tolist())):
+        return df_all_links
+    df_subjects = pd.read_csv(pc_configs.SUBJECTS_CSV_PATH)
+    index_missing_objs = (
+        df_all_links['object_uuid'].isnull()
+        & ~df_all_links['subject_label'].isnull()
+        & ~df_all_links['subject_uuid'].isnull()
+    )
+    for _, row in df_all_links[index_missing_objs].iterrows():
+        object_label = None
+        object_uuid = None
+        object_uuid_source = None
+        subject_label = row['subject_label']
+        subject_uuid = row['subject_uuid']
+        man_obj = db_lookups.get_related_object_from_item_label(
+            item_label=subject_label
+        )
+        if man_obj:
+            object_label = man_obj.label
+            object_uuid = str(man_obj.uuid)
+            object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
+        if not object_uuid:
+            object_label, object_uuid, object_uuid_source = utilities.get_missing_catalog_item_from_df_subjects(
+                item_label=subject_label,
+                df_subjects=df_subjects,
+            )
+        if not object_uuid:
+            print(f'Cannot find object related to media: {subject_label} [{subject_uuid}]')
+            continue
+        up_indx = (
+            (df_all_links['subject_uuid'] == subject_uuid)
+        )
+        df_all_links.loc[up_indx, 'object_label'] = object_label
+        df_all_links.loc[up_indx, 'object_uuid'] = object_uuid
+        df_all_links.loc[up_indx, 'object_uuid_source'] = object_uuid_source
+        # print(f'Media item {subject_label} [{subject_uuid}] links with {object_label} [{object_uuid}] based on media label')
+    return df_all_links
 
 
 def prepare_media_links_df(
@@ -890,6 +942,8 @@ def prepare_media_links_df(
     df_all_links = pd.concat(df_links)
     if df_all_links.empty:
         return None
+    # Use label matching to associate images with missing objects
+    df_all_links = fill_in_missing_catalog_links(df_all_links)
     if links_csv_path:
         df_all_links.to_csv(links_csv_path, index=False)
     return df_all_links

@@ -1,8 +1,11 @@
 from copy import copy
+import json
 import os
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
+import re
+import requests
 import openpyxl
 
 from django.db.models import Q
@@ -159,6 +162,7 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
         for act_rel_col, act_val  in rel_cols_vals:
             # Update the col by filtering for non null values for col,
             # and for where the act_rel_col has it's act_val.
+            act_val = str(act_val)
             print('Remove the column {} value "{}" in the column {}'.format(act_rel_col, act_val, col))
             rep_indx = (df[col].notnull() & (df[act_rel_col] == act_val))
             # Remove the string we don't want, from col, which concatenates multiple
@@ -179,8 +183,20 @@ def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
 
 def split_col_with_delim_into_multiple_cols(df, col, delim=' '):
     """Splits a column with delimited values into multiple columns"""
-    if not col in df.columns:
+    df_col = None
+    for real_col in df.columns.tolist():
+        if col == real_col:
+            df_col = real_col
+            break
+        if real_col.endswith(col):
+            df_col = real_col
+            break
+    if not df_col:
+        # we couldn't match the col exactly or as the end of a df columns
         return df
+    if not col in df.columns:
+        #  Rename the df_col into col to make processing easier
+        df.rename(columns={df_col:col}, inplace=True)
     delim_count_col = f'{col}___delim_count'
     df[delim_count_col] = np.nan
     act_index = ~df[col].isnull()
@@ -328,6 +344,8 @@ def df_fill_in_by_shared_id_cols(df, col_to_fill, id_cols):
 
 
 def get_df_by_sheet_name_part(dfs, sheet_name_part):
+    if dfs is None:
+        return None, None
     for sheet_name, df in dfs.items():
         if not sheet_name_part in sheet_name:
             continue
@@ -337,6 +355,8 @@ def get_df_by_sheet_name_part(dfs, sheet_name_part):
 
 def get_df_with_rel_id_cols(dfs):
     """Gets a dataframe and sheet_name with related ID columns"""
+    if dfs is None:
+        return None, None
     rel_cols = [c for c,_ in pc_configs.RELS_RENAME_COLS.items()]
     for sheet_name, df in dfs.items():
         if not set(rel_cols).issubset(set(df.columns.tolist())):
@@ -585,9 +605,328 @@ def make_oc_normal_slug_values(df, prefix_for_slugs='24_'):
         )
     return df
 
+
 def not_null_subject_uuid(df):
     if not 'subject_uuid' in df.columns:
         return df
     act_index = ~df['subject_uuid'].isnull()
     df = df[act_index].copy()
+    return df
+
+
+def get_related_object_labels_from_item_label(item_label):
+    """Gets related object labels from a given item label"""
+    if not item_label:
+        return None
+    item_label = str(item_label)
+    label_ex = re.split('-|\_|\s', item_label)
+    clean_object_labels = []
+    has_vdm = False
+    has_pc = False
+    for label_part in label_ex:
+        label_part = label_part.strip()
+        if label_part.lower().startswith('vdm'):
+            # We have a Vescovado di Murlo object, so make sure we're only
+            # using those prefixes
+            has_vdm = True
+        if label_part.lower().startswith('pc'):
+            # We have a PC number so lets make sure we use that prefix
+            has_pc = True
+    for label_part in label_ex:
+        label_part = label_part.strip()
+        if len(label_part) < 8:
+            continue
+        # Get only the number part of the string. This should be a PC/VdM number.
+        num_part = ''.join(ch for ch in label_part if ch.isdigit())
+        if len(num_part) < 7:
+            continue
+        if has_pc and not has_vdm:
+            clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.PC_LABEL_PREFIXES]
+        elif has_vdm and not has_pc:
+            clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.VDM_LABEL_PREFIXES]
+        else:
+            clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.ALL_CATALOG_PREFIXES]
+    return clean_object_labels
+
+
+def get_missing_catalog_item_from_df_subjects(item_label, df_subjects):
+    object_label = None
+    object_uuid = None
+    object_uuid_source = None
+    sub_req_cols = ['catalog_name', 'catalog_uuid',]
+    if not set(sub_req_cols).issubset(set(df_subjects.columns.tolist())):
+        return object_label, object_uuid, object_uuid_source
+    clean_object_labels = get_related_object_labels_from_item_label(item_label)
+    if not clean_object_labels:
+        return object_label, object_uuid, object_uuid_source
+    index = df_subjects['catalog_name'].isin(clean_object_labels)
+    object_uuids = df_subjects[index]['catalog_uuid'].unique().tolist()
+    if len(object_uuids) == 1:
+        # we have a good result!
+        object_label = df_subjects[index]['catalog_name'].iloc[0]
+        object_uuid = df_subjects[index]['catalog_uuid'].iloc[0]
+        object_uuid_source = 'subjects.csv'
+    return object_label, object_uuid, object_uuid_source
+
+
+def get_trenchbook_item_from_trench_books_json(
+        trench_id,
+        year,
+        entry_date,
+        start_page,
+        end_page,
+        df_tb,
+    ):
+    object_label = None
+    object_uuid = None
+    object_uuid_source = None
+    if year != pc_configs.DEFAULT_IMPORT_YEAR:
+        # This will only work for the correct import year
+        return object_label, object_uuid, object_uuid_source
+    tb_req_cols = ['Trench_ID', 'Date_Documented', 'Start_Page', 'End_Page', 'OC_Label', '_uuid',]
+    if not set(tb_req_cols).issubset(set(df_tb.columns.tolist())):
+        return object_label, object_uuid, object_uuid_source
+    trench_ids = [
+        trench_id,
+        trench_id.replace('_', '-'),
+        trench_id.lower(),
+        trench_id.lower().replace('_', '-'),
+        f'{trench_id}_{year}',
+        f'{trench_id}_{year}'.lower(),
+        f'{trench_id}-{year}',
+        f'{trench_id}-{year}'.lower(),
+    ]
+    index = (
+        (
+            df_tb['Trench_ID'].isin(trench_ids)
+            & (df_tb['Start_Page'] <= start_page)
+            & (df_tb['End_Page'] >= end_page)
+            & (df_tb['OC_Label'].str.contains(str(entry_date)))
+        )
+    )
+    object_uuids = df_tb[index]['_uuid'].unique().tolist()
+    if len(object_uuids) < 1:
+        return object_label, object_uuid, object_uuid_source
+    use_index = index
+    if len(object_uuids) > 1:
+        new_index = index & (df_tb['Start_Page'] == start_page)
+        object_uuids = df_tb[index]['_uuid'].unique().tolist()
+        if len(object_uuids) == 1:
+            use_index = new_index
+        if len(object_uuids) > 1:
+            new_index &= (df_tb['End_Page'] == end_page)
+            object_uuids = df_tb[index]['_uuid'].unique().tolist()
+        if len(object_uuids) == 1:
+            use_index = new_index
+    # Now use the first result
+    object_label = df_tb[use_index]['OC_Label'].iloc[0]
+    object_uuid = df_tb[use_index]['_uuid'].iloc[0]
+    object_uuid_source = 'trench_books.json'
+    return object_label, object_uuid, object_uuid_source
+
+
+def get_form_data_json(
+    form_id,
+    token,
+    form_url=pc_configs.KOBO_API_URL,
+):
+    """Gets JSON data from a kobo form"""
+    headers = {
+        'Authorization': f'Token {token}',
+    }
+    url = f'{form_url}/api/v2/assets/{form_id}/data/?format=json'
+    json_data = None
+    try:
+        r = requests.get(url, headers=headers)
+        r.raise_for_status()
+    except:
+        return None
+    json_data = r.json()
+    return json_data
+
+
+def make_form_data_json_filepath(
+    form_type,
+    form_id,
+    form_year=None,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    """Makes a filepath for a form json data file"""
+    if form_year:
+        file_name = f'{form_type}--{form_year}--{form_id}.json'
+    else:
+        file_name = f'{form_type}--{form_id}.json'
+    file_path = os.path.join(save_dir, file_name)
+    return file_path
+
+
+def get_save_form_data_json(
+    form_type,
+    form_id,
+    token,
+    form_year=None,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    """Gets and saves JSON data from a kobo form"""
+    json_data = get_form_data_json(
+        form_id=form_id,
+        token=token,
+        form_url=form_url
+    )
+    if not json_data:
+        return None
+    file_path = make_form_data_json_filepath(
+        form_type=form_type,
+        form_id=form_id,
+        form_year=form_year,
+        save_dir=save_dir,
+    )
+    with open(file_path, "w") as outfile:
+        json.dump(json_data, outfile, indent=4)
+    print(f'saved: {file_path}')
+    return json_data
+
+
+def get_save_all_form_data(
+    token,
+    form_tups=pc_configs.API_FORM_ID_FORM_LABELS_ALL,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    """Iterates through configured forms to fetch json data"""
+    for form_id, form_type, form_year in form_tups:
+        _ = get_save_form_data_json(
+            form_type,
+            form_id,
+            token,
+            form_year=form_year,
+            form_url=form_url,
+            save_dir=save_dir,
+        )
+
+
+def read_or_fetch_and_save_form_data_json(
+    form_type,
+    form_id,
+    token=None,
+    form_year=None,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+):
+    json_data = None
+    file_path = make_form_data_json_filepath(
+        form_type=form_type,
+        form_id=form_id,
+        form_year=form_year,
+        save_dir=save_dir,
+    )
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as openfile:
+            # Reading from json file
+            json_data = json.load(openfile)
+        print(f'Read json data from: {file_path}')
+    # if we don't have json_data but we do have a token,
+    # try to fetch it from the server
+    if not json_data and token:
+        json_data = get_save_form_data_json(
+            form_type,
+            form_id,
+            token,
+            form_year=form_year,
+            form_url=form_url,
+            save_dir=save_dir,
+        )
+    if not json_data and not token:
+        raise ValueError(f'Cannot fetch data for {form_type} [{form_id}] provide a Kobo API token for {form_url}')
+    return json_data
+
+
+def read_or_fetch_and_save_form_data__results_json(
+    form_type,
+    form_id,
+    token=None,
+    form_year=None,
+    form_url=pc_configs.KOBO_API_URL,
+    save_dir=pc_configs.KOBO_JSON_DATA_PATH,
+    results_dir=pc_configs.KOBO_EXCEL_FILES_PATH,
+    results_file_name='trench_books.json',
+):
+    """Gets """
+    results_json_data = None
+    results_file_path = os.path.join(results_dir, results_file_name)
+    if os.path.exists(results_file_path):
+        with open(results_file_path, 'r') as openfile:
+            # Reading from json file
+            results_json_data = json.load(openfile)
+        print(f'Read results_json_data from: {results_file_path}')
+    if results_json_data:
+        return results_json_data
+    # We need the JSON data returned from the API or already previously
+    # saved on our file system.
+    json_data = read_or_fetch_and_save_form_data_json(
+        form_type=form_type,
+        form_id=form_id,
+        token=token,
+        form_year=form_year,
+        form_url=form_url,
+        save_dir=save_dir,
+    )
+    results_json_data = json_data.get('results')
+    if not results_json_data:
+        raise ValueError(f'Cannot fetch data for {form_type} [{form_id}] lacks results')
+    with open(results_file_path, "w") as outfile:
+        json.dump(results_json_data, outfile, indent=4)
+    print(f'Extracted results_json_data from API json_data, saved at {results_file_path}')
+    return results_json_data
+
+
+def get_ids_to_deduplicate(df, label_col, uuid_col):
+    delete_suggestions = []
+    if not set([label_col, uuid_col]).issubset(set(df.columns.tolist())):
+        return delete_suggestions
+    index = (
+        ~df[label_col].isnull()
+        & ~df[uuid_col].isnull()
+    )
+    label_list = df[index][label_col].unique().tolist()
+    for label in label_list:
+        act_index = (
+            df[label_col] == label
+        )
+        good_uuid = None
+        for _, row in df[act_index].iterrows():
+            act_uuid = str(row[uuid_col])
+            if good_uuid is None:
+                good_uuid = act_uuid
+            if act_uuid == good_uuid:
+                continue
+            delete_sug = {
+                'name': label,
+                'uuid': act_uuid,
+            }
+            delete_suggestions.append(delete_sug)
+    return delete_suggestions
+
+
+def redact_suggested_deletions(df, uuid_col, delete_suggestions):
+    """Deletes rows by act_label_col and act_uuid_col based on the
+    utilities.get_ids_to_deduplicate delete_suggestions list
+    """
+    if not delete_suggestions:
+        return df
+    if not set([uuid_col]).issubset(set(df.columns.tolist())):
+        # we're missing the columns needed to check for deletions
+        return df
+    for delete_sug in delete_suggestions:
+        if False:
+            drop_index = (
+                (df[label_col] == delete_sug.get('label'))
+                & (df[uuid_col] == delete_sug.get('uuid'))
+            )
+        drop_index = (
+            (df[uuid_col] == delete_sug.get('uuid'))
+        )
+        df = df[~drop_index].copy()
+        df.reset_index(drop=True, inplace=True)
     return df

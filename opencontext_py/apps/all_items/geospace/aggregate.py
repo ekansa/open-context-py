@@ -413,7 +413,11 @@ def make_geo_json_geometry_from_region_dicts(region_dicts):
     return geometry
 
 
-def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
+def make_df_from_space_time_qs(
+        space_time_qs,
+        cols=['longitude', 'latitude'],
+        add_item_cols=False
+    ):
     """Make a latitude, longitude dataframe a spacetime query string
 
     :param queryset space_time_qs: The query set of
@@ -421,6 +425,13 @@ def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
 
     return DataFrame
     """
+    if add_item_cols:
+        cols += [
+            'item_id',
+            'item__label',
+            'item__path',
+            'item__item_class__slug',
+        ]
     space_time_qs = space_time_qs.values(*cols)
     df = pd.DataFrame.from_records(space_time_qs)
     if not set(['longitude', 'latitude']).issubset(set(df.columns)):
@@ -428,6 +439,8 @@ def make_df_from_space_time_qs(space_time_qs, cols=['longitude', 'latitude']):
         return None
     df['longitude'] = df['longitude'].astype(float)
     df['latitude'] = df['latitude'].astype(float)
+    if 'item_id' in df.columns:
+        df['item_id'] = df['item_id'].astype(str)
     return df
 
 
@@ -448,6 +461,8 @@ def make_project_space_time_qs(man_obj):
     ).filter(
         latitude__isnull=False,
         longitude__isnull=False
+    ).exclude(
+        item=man_obj,
     )
     if space_time_qs.count() > 0:
         # The very best and happiest scenario,
@@ -541,6 +556,8 @@ def make_geo_json_of_regions_for_man_obj(
     elif man_obj.item_type == 'subjects':
         space_time_qs = AllSpaceTime.objects.filter(
            item__path__startswith=man_obj.path
+        ).exclude(
+            item=man_obj,
         )
     elif man_obj.item_type == 'tables':
         df = make_table_geo_df(man_obj)

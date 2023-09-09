@@ -644,7 +644,8 @@ class DataSourceAnnotation(models.Model):
             return None
         if self.subject_field.item_type != 'media':
             raise ValueError(
-                f'The subject field {self.subject_field.label} must be of type "media" to have files.'
+                f'The subject field {self.subject_field.label} must be of type "media" to have files. '
+                f'currently it has an item_type of: {self.subject_field.item_type}'
             )
         if not self.object_field:
             raise ValueError(
