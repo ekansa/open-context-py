@@ -139,7 +139,11 @@ def _print_tree_dict(tree_dict, level=0):
                 )
 
 
-def get_item_assertions(subject_id, select_related_object_contexts=False):
+def get_item_assertions(
+        subject_id,
+        select_related_object_contexts=False,
+        get_geo_overlays=False,
+    ):
     """Gets an assertion queryset about an item"""
 
     # Limit this subquery to only 1 result, the first.
@@ -576,7 +580,7 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
     # Get the assertion query set for this item
     assert_qs = get_item_assertions(
         subject_id=item_man_obj.uuid,
-        select_related_object_contexts=select_related_object_contexts
+        select_related_object_contexts=select_related_object_contexts,
     )
     # Get the related subjects item (for media and documents)
     # NOTE: rel_subjects_man_obj will be None for all other item types.
@@ -718,9 +722,20 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         )
 
     # NOTE: This add project Dublin Core metadata.
-    proj_metadata_qs = metadata.get_project_metadata_qs(
-        project=item_man_obj.project
-    )
+    if item_man_obj.item_type == 'projects' and str(item_man_obj.project.uuid) == configs.OPEN_CONTEXT_PROJ_UUID:
+        # Get metadata for the current project, then filter only for the geographic overlay
+        proj_metadata_qs = metadata.get_project_metadata_qs(
+            project=item_man_obj
+        )
+        # We only want the geo-overlay, since we have a top-level project item.
+        # This is for displaying a project's geooverlay should it exist.
+        proj_metadata_qs = proj_metadata_qs.filter(
+            predicate_id=configs.PREDICATE_GEO_OVERLAY_UUID
+        )
+    else:
+        proj_metadata_qs = metadata.get_project_metadata_qs(
+            project=item_man_obj.project
+        )
     pred_keyed_assert_objs = make_tree_dict_from_grouped_qs(
         qs=proj_metadata_qs,
         index_list=['predicate']
