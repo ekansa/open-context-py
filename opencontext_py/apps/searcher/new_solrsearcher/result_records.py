@@ -986,13 +986,14 @@ class ResultRecord():
             properties['feature-type'] = feature_type
 
         # Always add these.
+        properties['label'] = self.label
         properties['uri'] = self.uri
         properties['href'] = self.href
         properties['citation uri'] = self.cite_uri
-        properties['label'] = self.label
 
         if self.do_nested_json_attributes:
             # Nested versions
+            properties['id'] = self.uri
             properties['project'] = {
                 'label': self.project_label,
                 'id': self.project_uri,
