@@ -984,14 +984,30 @@ class ResultRecord():
             properties['slug'] = self.slug
         if feature_type:
             properties['feature-type'] = feature_type
+
+        # Always add these.
         properties['uri'] = self.uri
         properties['href'] = self.href
         properties['citation uri'] = self.cite_uri
         properties['label'] = self.label
-        properties['project label'] = self.project_label
-        properties['project href'] = self.project_href
-        properties['context label'] = self.context_label
-        properties['context href'] = self.context_href
+
+        if self.do_nested_json_attributes:
+            # Nested versions
+            properties['project'] = {
+                'label': self.project_label,
+                'id': self.project_uri,
+            }
+            properties['context'] = {
+                'label': self.context_label,
+                'id': self.context_uri,
+            }
+        else:
+            # Non nested versions.
+            properties['project label'] = self.project_label
+            properties['project href'] = self.project_href
+            properties['context label'] = self.context_label
+            properties['context href'] = self.context_href
+
         if add_lat_lon:
             properties['latitude'] = self.latitude
             properties['longitude'] = self.longitude
