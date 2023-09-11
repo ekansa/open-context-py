@@ -305,6 +305,8 @@ def get_man_qs_by_any_id(identifier, man_qs=None):
         |Q(uri=AllManifest().clean_uri(identifier))
         |Q(item_key=identifier)
     ).select_related(
+        'item_class'
+    ).select_related(
         'context'
     ).select_related(
         'project'

@@ -955,7 +955,16 @@ REQUEST_ALL_LD_ATTRIBUTES = 'ALL-STANDARD-LD'
 # on each record
 REQUEST_ALL_PROJ_ATTRIBUTES ='ALL-PROJECT'
 
+# Client request for iSamples specific attributes and nested presentation of results
+REQUEST_ISAMPLES_ATTRIBUTES = 'iSamples'
 
+# Attribute shape, for Nested JSON objects
+REQUEST_NESTED_JSON_ATTRIBUTES = 'JSON-NESTED'
+
+# Sampling site OK item_classes for a given specimen's context
+ISAMPLES_SAMPLING_SITE_ITEM_CLASS_SLUGS = [
+    'oc-gen-cat-site',
+]
 
 # ---------------------------------------------------------------------
 # Configs for front-end (HTML) organization of search facets
