@@ -227,7 +227,7 @@ def all_items_html(
         man_obj.project.meta_json.get('edit_status')
     )
     canonical_uri = f'https://{man_obj.uri}'
-    if str(man_obj.item_class.uuid) == configs.CLASS_OC_IMAGE_MEDIA and rep_dict.get('media_iiif'):
+    if man_obj.item_class and str(man_obj.item_class.uuid) == configs.CLASS_OC_IMAGE_MEDIA and rep_dict.get('media_iiif'):
         # Use the media full url for as the canonical uri for this item.
         canonical_uri = f'https://{man_obj.uri}/full'
     rp = RootPath()
@@ -271,6 +271,7 @@ def all_items_html(
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),
         'allow_view': allow_view,
+        'is_parent_proj_oc': (str(man_obj.project.uuid) == configs.OPEN_CONTEXT_PROJ_UUID),
     }
     template = loader.get_template(f'bootstrap_vue/item/{template_file}')
     response = HttpResponse(template.render(context, request))
