@@ -35,6 +35,8 @@ from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers
 
 
+
+
 def make_redirect_url(request, path, ok_uuid, extension=''):
     request = RequestNegotiation().anonymize_request(request)
     rp = RootPath()
