@@ -121,6 +121,11 @@ def make_citation_dict(rep_dict):
         }
     }
 
+    if citation_dict.get('id') and '/projects/' in citation_dict.get('id'):
+        # A project does not need to be part of Open Context.
+        if citation_dict.get('part_of_label') == configs.OPEN_CONTEXT_PROJ_LABEL:
+            citation_dict['part_of_label'] = None
+
     # Iterate through contributors and creators to add people
     # in these roles to the citation.
     role_keys = [
