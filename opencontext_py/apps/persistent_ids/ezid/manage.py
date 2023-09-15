@@ -57,9 +57,13 @@ class EZIDmanage():
         add them to the database
     """
 
-    def __init__(self, do_test=False):
+    def __init__(self, do_test=False, do_staging=False):
         self.ezid = EZID()
         self.do_test = do_test
+        self.do_staging = do_staging
+        if self.do_staging:
+            # Make requests to the staging server
+            self.ezid.use_staging_site()
         # URI replace is useful for when you want to substitute a
         # cannonical Open Context URI for another URI, like the staging
         # URI.
@@ -83,9 +87,12 @@ class EZIDmanage():
         return who_list
 
 
-    def make_ark_metadata_by_uuid(self, uuid=None, rep_dict=None):
+    def make_ark_metadata_by_uuid(self, uuid=None, rep_dict=None, man_obj=None, verbatim_id=None):
         """Makes ARK metadata for an Open Context record"""
         metadata = None
+        if not uuid and man_obj:
+            # We have a manifest object
+            uuid = man_obj.uuid
         if uuid and rep_dict is None:
             # the item doesn't yet have an ARK id, so make one!
             man_obj, rep_dict = item.make_representation_dict(subject_id=uuid)
@@ -107,6 +114,8 @@ class EZIDmanage():
             meta_ark.when = str(datetime.datetime.now().year)
         who_list = self.make_metadata_authors_list(rep_dict)
         meta_ark.make_who_list(who_list)
+        if verbatim_id:
+            meta_ark.verbatim_id = verbatim_id
         metadata = meta_ark.make_metadata_dict()
         metadata['_target'] = rep_dict['id']
         if self.uri_replace and not self.uri_replace[1] in metadata['_target']:
