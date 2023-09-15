@@ -12,7 +12,10 @@
   <div class="card-body">
     <p class="card-text">
       {{ citation.authors|join:", " }}. ({{ citation.year_published }})
-      "<span id="item_title">{{ citation.title }}</span>". In <em>{{ citation.part_of_label }}</em>. 
+      "<span id="item_title">{{ citation.title }}</span>".
+      {% if citation.part_of_label %}
+      In <em>{{ citation.part_of_label }}</em>.
+      {%endif%}
       {% if citation.editors %}
         {{ citation.editors|join:", " }}
         {% if citation.editors.length > 1 %}

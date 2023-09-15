@@ -121,6 +121,11 @@ def make_citation_dict(rep_dict):
         }
     }
 
+    if citation_dict.get('id') and '/projects/' in citation_dict.get('id'):
+        # A project does not need to be part of Open Context.
+        if citation_dict.get('part_of_label') == configs.OPEN_CONTEXT_PROJ_LABEL:
+            citation_dict['part_of_label'] = None
+
     # Iterate through contributors and creators to add people
     # in these roles to the citation.
     role_keys = [
@@ -153,10 +158,19 @@ def make_citation_dict(rep_dict):
         p.get('combined_name')
         for p in citation_dict.get('contributor', [{}])
     ]
-    citation_dict['editors'] = [
-        p.get('combined_name')
-        for p in citation_dict.get('creator', [{}])
-    ]
+    if citation_dict.get('id') and '/projects/' in citation_dict.get('id'):
+        # Don't repeat a person as an editor if they're already a project
+        # author.
+        citation_dict['editors'] = [
+            p.get('combined_name')
+            for p in citation_dict.get('creator', [{}])
+            if p.get('combined_name') not in citation_dict['authors']
+        ]
+    else:
+        citation_dict['editors'] = [
+            p.get('combined_name')
+            for p in citation_dict.get('creator', [{}])
+        ]
     # Add persistent IDs to the citation dict.
     for scheme_key, scheme_conf in AllIdentifier.SCHEME_CONFIGS.items():
         citation_dict[scheme_key] = None

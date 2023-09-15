@@ -51,6 +51,21 @@ from django.views.decorators.cache import never_cache
 from django.utils.cache import patch_vary_headers
 
 
+
+# Redirect these item types from the all-items URL request.
+ITEM_TYPE_IN_URL_ITEM_TYPES = [
+    'subjects',
+    'media',
+    'documents',
+    'projects',
+    'types',
+    'predicates',
+    'persons',
+    'tables',
+]
+
+
+
 #----------------------------------------------------------------------
 # NOTE: These are views relating to user interfaces for editing
 # individual items and for handling requests to change individual
@@ -207,6 +222,7 @@ def item_edit_interface_html(request, uuid):
         'BASE_URL': rp.get_baseurl(),
         'PAGE_TITLE': f'Open Context Edit: {man_obj.label}',
         'man_obj': man_obj,
+        'ITEM_TYPE_IN_URL_ITEM_TYPES': json.dumps(ITEM_TYPE_IN_URL_ITEM_TYPES),
         # NOTE: ITEM_PROJECT_UUIDS is the list of parent project uuids for an item
         'ITEM_PROJECT_UUIDS': json.dumps(item_project_uuids),
         'OPEN_CONTEXT_PROJ_UUID': str(configs.OPEN_CONTEXT_PROJ_UUID),

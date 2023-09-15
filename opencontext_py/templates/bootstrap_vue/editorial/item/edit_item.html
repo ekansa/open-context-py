@@ -110,6 +110,7 @@
     const PROJECT_LABEL = '{{ man_obj.project.label }}';
     const PROJECT_UUID = '{{ man_obj.project.uuid }}';
     const ITEM_PROJECT_UUIDS = JSON.parse('{{ ITEM_PROJECT_UUIDS|escapejs }}');
+    const ITEM_TYPE_IN_URL_ITEM_TYPES = JSON.parse('{{ ITEM_TYPE_IN_URL_ITEM_TYPES|escapejs }}');
 
     const routes = [
         // NOTE: The name for the route is in the hash of the path URL. This enables linking directly
@@ -172,6 +173,7 @@
             el: '#app',
             data: {
                 uuid: ITEM_UUID,
+                item_type: ITEM_TYPE,
                 project_uuid: PROJECT_UUID,
                 page_height: page_height,
                 history_key: 1,
@@ -182,6 +184,10 @@
                     return this.$route;
                 },
                 public_url: function() {
+                    if(ITEM_TYPE_IN_URL_ITEM_TYPES.indexOf(this.item_type) >=0 ){
+                        // make a URL that includes the item type.
+                        return '../../' + this.item_type + '/' + this.uuid;
+                    }
                     return '../../all-items/' + this.uuid;
                 }
             },

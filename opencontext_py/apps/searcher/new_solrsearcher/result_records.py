@@ -411,6 +411,12 @@ class ResultRecord():
         # flatten list of an attribute values to single value
         self.flatten_attributes = False
 
+        # prepare and format for iSamples
+        self.do_isamples = False
+
+        # prepare nested-json objects for attributes
+        self.do_nested_json_attributes = False
+
         # Skip out if we don't have a solr_doc
         if not solr_doc:
             return None
@@ -809,6 +815,47 @@ class ResultRecord():
             )
 
 
+    def gets_isamples_sampling_site(self):
+        """Gets a sampling site for iSamples"""
+        if not self.contexts:
+            return None
+        last_region_obj = None
+        for context in self.contexts:
+            context_uuid = get_uuid_from_entity_dict(
+                context,
+                data_type_limit='id',
+                item_type_limit='subjects',
+            )
+            if not context_uuid:
+                continue
+            man_obj = db_entities.get_cache_man_obj_by_any_id(context_uuid)
+            if not man_obj:
+                continue
+            if man_obj.item_class.slug in configs.ISAMPLES_SAMPLING_SITE_ITEM_CLASS_SLUGS:
+                # We found a site, our preferred sampling location.
+                return man_obj
+            if man_obj.item_class.slug == 'oc-gen-cat-region':
+                last_region_obj = man_obj
+            if last_region_obj is not None and man_obj.item_class.slug != 'oc-gen-cat-region':
+                # We didn't find a site, so return the last region object instead.
+                return last_region_obj
+        return None
+
+
+    def prepare_isamples_properties(self, properties):
+        """Adds database fetched attributes needed by iSamples"""
+        if not self.do_isamples:
+            return properties
+        sampling_site_obj = self.gets_isamples_sampling_site()
+        if sampling_site_obj:
+            properties['isam:SamplingSite'] = {
+                'label': sampling_site_obj.label,
+                'identifier': f'https://{sampling_site_obj.uri}',
+                'id': f'https://{sampling_site_obj.uri}',
+            }
+        return properties
+
+
     def add_non_point_geojson_coordinates(self, uuid_geo_dict):
         """Adds non-point geojson coordinates to the result"""
         geo_obj =  uuid_geo_dict.get(self.uuid)
@@ -842,6 +889,30 @@ class ResultRecord():
         # in cases where the values are URI identified entities.
         vals = []
         val_uris = []
+        if self.do_nested_json_attributes:
+            # Do this for (say with iSamples outputs) so that label/id objects
+            # are returned as nested json objects.
+            vals_out = []
+            for val in raw_vals:
+                if isinstance(val, dict):
+                    label = val.get('label')
+                    uri = make_url_from_partial_url(val.get('uri'))
+                    if label and uri:
+                        vals_out.append(
+                            {
+                                'label': label,
+                                'id': uri,
+                            }
+                        )
+                    elif label and not uri:
+                        vals_out.append(label)
+                    else:
+                        continue
+                else:
+                    vals_out.append(val)
+            properties[pred_key] = vals_out
+            return properties
+        # We do the following if we are NOT doing iSamples.
         if add_uris:
             uri_key = '{} [URI]'.format(pred_key)
         for val in raw_vals:
@@ -913,14 +984,31 @@ class ResultRecord():
             properties['slug'] = self.slug
         if feature_type:
             properties['feature-type'] = feature_type
+
+        # Always add these.
+        properties['label'] = self.label
         properties['uri'] = self.uri
         properties['href'] = self.href
         properties['citation uri'] = self.cite_uri
-        properties['label'] = self.label
-        properties['project label'] = self.project_label
-        properties['project href'] = self.project_href
-        properties['context label'] = self.context_label
-        properties['context href'] = self.context_href
+
+        if self.do_nested_json_attributes:
+            # Nested versions
+            properties['id'] = self.uri
+            properties['project'] = {
+                'label': self.project_label,
+                'id': self.project_uri,
+            }
+            properties['context'] = {
+                'label': self.context_label,
+                'id': self.context_uri,
+            }
+        else:
+            # Non nested versions.
+            properties['project label'] = self.project_label
+            properties['project href'] = self.project_href
+            properties['context label'] = self.context_label
+            properties['context href'] = self.context_href
+
         if add_lat_lon:
             properties['latitude'] = self.latitude
             properties['longitude'] = self.longitude
@@ -942,6 +1030,9 @@ class ResultRecord():
             properties['descriptiveness'] = self.descriptiveness
         if self.description:
             properties['description'] = self.description
+
+        # Adds iSamples properties if applicable.
+        properties = self.prepare_isamples_properties(properties)
 
         # Add linked data (standards) attributes if they exist.
         for pred_dict, raw_vals in self.ld_attributes:
@@ -1064,7 +1155,10 @@ class ResultRecords():
         # (attributes specified by the requested_attrib_slugs)
         self.db_limit_string_attributes = 'requested_attrib_slugs'
 
-
+        # prepare and format for iSamples
+        self.do_isamples = False
+        # prepare nested-json objects for attributes
+        self.do_nested_json_attributes = False
 
         # Flatten attributes into single value strings?
         self.flatten_attributes = False
@@ -1134,6 +1228,24 @@ class ResultRecords():
             attrib_list = raw_attributes.split(
                 configs.MULTIVALUE_ATTRIB_CLIENT_DELIM
             )
+
+        if configs.REQUEST_NESTED_JSON_ATTRIBUTES in attrib_list:
+            # The client wants nested JSON objects for named entities
+            # that are in the attribute data.
+            self.do_nested_json_attributes = True
+
+        if configs.REQUEST_ISAMPLES_ATTRIBUTES in attrib_list:
+            # We need to prepare attribute data to be understood by
+            # iSamples
+            self.do_isamples = True
+            self.do_nested_json_attributes = True
+            attrib_list.append(configs.REQUEST_ALL_LD_ATTRIBUTES)
+
+        if self.do_nested_json_attributes:
+            # We do not flatten attributes if we have a request for
+            # nested JSON attributes.
+            self.flatten_attributes = False
+
         # De-duplicate the slugs in the requested_attrib_slugs.
         requested_attrib_slugs = list(
             set(requested_attrib_slugs + attrib_list)
@@ -1330,6 +1442,8 @@ class ResultRecords():
             # solr_doc for the result item.
             rr = ResultRecord(solr_doc)
             rr.flatten_attributes = self.flatten_attributes
+            rr.do_isamples = self.do_isamples
+            rr.do_nested_json_attributes = self.do_nested_json_attributes
             rr.add_snippet_content(highlight_dict)
 
             uuids.append(rr.uuid)

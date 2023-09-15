@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to edit an item's identifier objects
 -->
 
@@ -88,10 +88,10 @@ NOTE: Templates and view components to edit an item's identifier objects
             :value="identifier.rank"
           ></b-form-input>
           <p v-if="web_url">
-            <small>For the most part, a given Open Context item should have 
+            <small>For the most part, a given Open Context item should have
             only 1 identifier of a given scheme. However, Open Context permits
-            an item to have multiple IDs within a given scheme provided these 
-            alternate IDs have different priority rankings. 
+            an item to have multiple IDs within a given scheme provided these
+            alternate IDs have different priority rankings.
             </small>
           </p>
         </div>
@@ -133,7 +133,7 @@ NOTE: Templates and view components to edit an item's identifier objects
       size="lg"
       scrollable
       ref="add-identifier-modal"
-      id="add-identifier-modal" 
+      id="add-identifier-modal"
       title="Add Identifier"
       @shown="on_shown"
     >
@@ -144,6 +144,12 @@ NOTE: Templates and view components to edit an item's identifier objects
           v-bind:identifier="identifier">
         </identifier-obj>
       </b-container>
+
+      <template #modal-footer="{ ok, cancel, hide }">
+        <b-button size="sm" variant="secondary" @click="cancel()">
+          Close
+        </b-button>
+      </template>
     </b-modal>
   </div>
 </template>
@@ -388,7 +394,7 @@ var vc_identifier_obj = Vue.component(
       },
     },
     components: {
-      
+
     },
   }
 );
@@ -423,7 +429,7 @@ var vc_add_identifier_ui = Vue.component(
       },
     },
     components: {
-      
+
     },
   }
 );
@@ -472,7 +478,7 @@ var vc_edit_identifiers = Vue.component(
         this.fetch_api_identifiers();
       },
       toggle_add_new_identifier_ui(){
-        this.$bvModal.show('add-identifier-modal');  
+        this.$bvModal.show('add-identifier-modal');
       }
     },
     components: {
@@ -480,6 +486,6 @@ var vc_edit_identifiers = Vue.component(
       'identifier-obj': vc_identifier_obj,
     },
   }
-); 
-  
+);
+
 </script>

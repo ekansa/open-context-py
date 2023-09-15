@@ -8,6 +8,10 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 
 
+# For "Pre-registered" ARK ids, where there's an expectation of metadata inheritance
+# in the hierarchy implicit in an ID
+PRE_REGISTER_SHOULDER = 'ark:/28722/r2'
+
 class EZID():
     """ Interacts with the EZID
         identifier service to make and manage
@@ -40,11 +44,36 @@ resp = ezid.mint_identifier(url, meta, 'ark')
         self.delay_before_request = self.SLEEP_TIME
         self.username = settings.EZID_USERNAME  # http authentication username
         self.password = settings.EZID_PASSWORD  # http authentication password
+        self.cookie = None
         self.ark_shoulder = settings.EZID_ARK_SHOULDER  # shoulder (first part) for minting ARKs
         self.doi_shoulder = settings.EZID_DOI_SHOULDER  # shoulder (first part) for minting DOIs
         self.request_error = False
         self.request_url = False
         self.new_ids = []
+
+
+    def use_staging_site(self):
+        """Do all requests to the staging site"""
+        self.act_ezid_base_url = self.EZID_STAGING_BASE_URL
+
+    def get_and_set_ezid_cookie(self):
+        """Gets and sets an EZID cookie"""
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        url = f'{self.act_ezid_base_url}/login'
+        try:
+            r = requests.get(
+                url,
+                auth=(self.username, self.password),
+                headers=headers,
+            )
+            r.raise_for_status()
+            print(r.headers)
+        except:
+            self.request_url = r.url
+            print('Error ' + str(r.text))
+        self.cookie = r.headers.get('Set-Cookie')
+        return True
 
     def mint_identifier(self, oc_uri, metadata, id_type='ark'):
         """ mints a stable identifier of a given type, defaulting to ark
@@ -96,7 +125,7 @@ resp = ezid.mint_identifier(url, meta, 'ark')
         return new_id
 
 
-    def create_ark_identifier(self, oc_uri, metadata, id_str, update_if_exists=True):
+    def create_ark_identifier(self, oc_uri, metadata, id_str, update_if_exists=True, show_ezid_resp=False):
         """ Creates a stable identifier, where we (the client) has set
         the identifier. Currently only supporting arks
         """
@@ -116,6 +145,8 @@ resp = ezid.mint_identifier(url, meta, 'ark')
         headers['Content-Type'] = 'text/plain; charset=UTF-8'
         headers['Accept'] = 'text/plain'
         headers['_target'] = oc_uri
+        if self.cookie:
+            headers['Cookie'] = self.cookie
         resp_txt = None
         try:
             r = requests.put(
@@ -133,6 +164,9 @@ resp = ezid.mint_identifier(url, meta, 'ark')
             print('Error ' + str(r.text))
         if not resp_txt:
             return None
+        if show_ezid_resp:
+            print(f'Response from PUT to {url}')
+            print(resp_txt)
         if not 'success:' in resp_txt:
             return None
         text_ex = resp_txt.split('success:')

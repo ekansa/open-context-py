@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to edit an item's manifest object.
 -->
 
@@ -42,7 +42,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 <template id="export-param">
   <b-row v-if="config" class="
     export_field_row
-    border 
+    border
     border-info
     border-top-0
     border-right-0
@@ -85,7 +85,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           @click="add_to_filters"
           :disabled="disable_buttons"
           variant="dark">Add Filter <b-icon-bag-check-fill></b-icon-bag-check-fill></b-button>
-        
+
         <b-button
           sm
           block
@@ -93,7 +93,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           @click="add_to_excludes"
           :disabled="disable_buttons"
           variant="secondary">Add Exclusion <b-icon-bag-x-fill></b-icon-bag-x-fill></b-button>
-        </div>  
+        </div>
       </b-col>
   </b-row>
 </template>
@@ -105,7 +105,7 @@ NOTE: Templates and view components to edit an item's manifest object.
       size="lg"
       scrollable
       ref="add-export-modal"
-      id="add-export-modal" 
+      id="add-export-modal"
       title="Export Tabular Data"
       @shown="on_shown"
     >
@@ -120,14 +120,14 @@ NOTE: Templates and view components to edit an item's manifest object.
               <small>
                 <p>Because Open Context publishes data from many different sources, and each source may
                 have its own unique set of descriptive attributes and relations, Open Context mainly organizes
-                data in "graph" structures. While a graph structure suites heterogenous data, it is 
+                data in "graph" structures. While a graph structure suites heterogenous data, it is
                 unfamiliar and hard for analysis or visualization by typical users. This feature exports
                 data into more convenient and user-friendly tables.</p>
-              
+
                 <p v-if="!export_done && !making_export">Change filter and exclusion criteria below to set limits on data included in the export table.</p>
               </small>
               <p v-if="making_export">
-                Export process started at <strong>[[ export_started_display ]]</strong> 
+                Export process started at <strong>[[ export_started_display ]]</strong>
                 on ongoing after <strong>[[ export_elapsed_time_display ]]</strong>.
               </p>
               <p v-if="export_done">
@@ -150,7 +150,7 @@ NOTE: Templates and view components to edit an item's manifest object.
 
                   </b-col>
                   <b-col>
-                    
+
                     <b-form-checkbox size="sm" v-model="add_object_uris" name="add_object_uris" switch>
                       Add URIs for project-specific attributes, links <b>([[ add_object_uris ]])</b>
                     </b-form-checkbox>
@@ -192,10 +192,10 @@ NOTE: Templates and view components to edit an item's manifest object.
                 </b-row>
                 <b-row>
                   <b-col cols="12">
-                    <small>The export you just made (ID: [[ export_id ]]) is temporary 
-                    and will only be cached for about 5 hours after creation. Use this 
+                    <small>The export you just made (ID: [[ export_id ]]) is temporary
+                    and will only be cached for about 5 hours after creation. Use this
                     opportunity to review the exported table. If you are satisfied with
-                    the results, you can save and publish the export as a "table" item 
+                    the results, you can save and publish the export as a "table" item
                     linked to other published projects and records in Open Context.
                     </small>
                   </b-col>
@@ -223,7 +223,7 @@ NOTE: Templates and view components to edit an item's manifest object.
             <b-alert variant="secondary"show>
               <h5>Existing Exclusions</h5>
               <b-container fluid v-if="exist_excludes">
-                
+
                 <export-existing-arg v-for="(exist_arg, eei) in exist_excludes"
                   :key="'exist-exclude-' + eei"
                   :type="'excludes'"
@@ -248,7 +248,7 @@ NOTE: Templates and view components to edit an item's manifest object.
           </b-col>
         </b-row>
       </b-container>
-    
+
       <b-container v-if="publish_ui_open" fluid>
         <b-row>
           <b-col cols="4">
@@ -258,8 +258,8 @@ NOTE: Templates and view components to edit an item's manifest object.
             </b-button>
           </b-col>
           <b-col cols="8">
-            <small>Use this interface to save and publish your export as an 
-              Open Context "tables" item type. Once saved, you can add additional 
+            <small>Use this interface to save and publish your export as an
+              Open Context "tables" item type. Once saved, you can add additional
               descriptions and link this export table with one or more projects or
               other items.
             </small>
@@ -277,6 +277,11 @@ NOTE: Templates and view components to edit an item's manifest object.
           </b-cols>
         </b-row>
       </b-container>
+      <template #modal-footer="{ ok, cancel, hide }">
+        <b-button size="sm" variant="secondary" @click="cancel()">
+          Close
+        </b-button>
+      </template>
     </b-modal>
 
     <b-button
@@ -334,7 +339,7 @@ var vc_export_existing_arg = Vue.component(
       },
     },
     components: {
-      
+
     },
   }
 );
@@ -355,7 +360,7 @@ var vc_export_param = Vue.component(
     },
     template: '#export-param',
     created() {
-      
+
     },
     computed: {
       is_single_option: function() {
@@ -412,7 +417,7 @@ var vc_export_param = Vue.component(
       'lookup-list': vc_add_export,
     },
   }
-); 
+);
 
 
 var vc_add_export = Vue.component(
@@ -481,7 +486,7 @@ var vc_add_export = Vue.component(
           last_time = this.export_progress_time;
           console.log('progress time');
         }
-        
+
         let time_diff = last_time - this.export_start_time;
         time_diff /= 1000;
         let min_time_diff = Math.floor(time_diff / 60);
@@ -713,6 +718,6 @@ var vc_add_export = Vue.component(
       'edit-manifest-obj': vc_edit_manifest_obj,
     },
   }
-); 
-  
+);
+
 </script>

@@ -1,6 +1,47 @@
 GETTY_AAT_VOCAB_URI = 'https://vocab.getty.edu/aat'
 GETTY_AAT_BASE_URI = 'vocab.getty.edu/aat/'
 
+# These are the top-level hierarchies in the AAT, in Open Context
+# these should all be child vocabularies of the AAT vocabulary.
+GETTY_AAT_FACET_DICT_LIST = [
+    {
+        'id': 'vocab.getty.edu/aat/300264086',
+        'label': 'Associated Concepts Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300264087',
+        'label': 'Physical Attributes Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300264088',
+        'label': 'Styles and Periods Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300264089',
+        'label': 'Agents Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300264090',
+        'label': 'Activities Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300264091',
+        'label': 'Materials Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300264092',
+        'label': 'Objects Facet',
+    },
+    {
+        'id': 'vocab.getty.edu/aat/300343372',
+        'label': 'Brand Names Facet',
+    },
+]
+
+# The list of AAT facet URIs.
+GETTY_AAT_FACET_URI_LIST = [f.get('id') for f in GETTY_AAT_FACET_DICT_LIST]
+
+
 # This are the preferred parent uris that all children should belong to
 AAT_PREFERRED_PARENT_URI_LIST = [
     # Order from most specific to most general and abstract.
@@ -35,7 +76,7 @@ AAT_PREFERRED_PARENT_URI_LIST = [
 ]
 
 AAT_PREFERRED_URI_TO_PARENT_URI_DICT = {
-    # <attributes and properties by specific type> -> 
+    # <attributes and properties by specific type> ->
     'vocab.getty.edu/aat/300226808': 'vocab.getty.edu/aat/300123559',
     # Metalworking process, techique -> Metal
     'vocab.getty.edu/aat/300053900': 'vocab.getty.edu/aat/300010900',

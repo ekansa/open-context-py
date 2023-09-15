@@ -584,6 +584,12 @@ NOTE: Templates and view components to edit an item's identifier objects
 
         </div>
       </b-container>
+
+      <template #modal-footer="{ ok, cancel, hide }">
+        <b-button size="sm" variant="secondary" @click="cancel()">
+          Close
+        </b-button>
+      </template>
     </b-modal>
     <b-button
       sm
@@ -774,6 +780,13 @@ NOTE: Templates and view components to edit an item's identifier objects
 
         </b-container>
       </div>
+
+      <template #modal-footer="{ ok, cancel, hide }">
+        <b-button size="sm" variant="secondary" @click="cancel()">
+          Close
+        </b-button>
+      </template>
+
     </b-modal>
     <b-button
       sm

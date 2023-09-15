@@ -332,6 +332,12 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         </b-row>
 
       </b-container>
+
+      <template #modal-footer="{ ok, cancel, hide }">
+        <b-button size="sm" variant="secondary" @click="cancel()">
+          Close
+        </b-button>
+      </template>
     </b-modal>
   </div>
 </template>

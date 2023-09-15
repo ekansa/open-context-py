@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and view components to edit an item's media file resource objects.
 -->
 
@@ -47,12 +47,12 @@ NOTE: Templates and view components to edit an item's media file resource object
           :value="resource.rank"
         ></b-form-input>
         <small v-if="resource.resourcetype_id" class="text-muted">
-          Ranking is only relevant if there are more than 1 
-          URIs of Resource Type <em>[[resource.resourcetype__label]]</em> 
+          Ranking is only relevant if there are more than 1
+          URIs of Resource Type <em>[[resource.resourcetype__label]]</em>
           associated with <em>[[ resource.item__label ]]</em>
         </small>
         <small v-else class="text-muted">
-          Ranking is only relevant if there are more than 1 
+          Ranking is only relevant if there are more than 1
           URIs of a given Resource Type associated with this item
         </small>
       </b-col>
@@ -198,12 +198,12 @@ NOTE: Templates and view components to edit an item's media file resource object
       size="lg"
       scrollable
       ref="add-resource-modal"
-      id="add-resource-modal" 
+      id="add-resource-modal"
       title="Add Media File Resource"
       @shown="on_shown"
     >
       <b-container fluid v-if="resource_obj_for_add">
-        
+
         <resource-obj
           :key="'resource-obj-add-' + add_form_key"
           @resource_update_done="resource_update_done($event)"
@@ -213,6 +213,13 @@ NOTE: Templates and view components to edit an item's media file resource object
         </resource-obj>
 
       </b-container>
+
+      <template #modal-footer="{ ok, cancel, hide }">
+        <b-button size="sm" variant="secondary" @click="cancel()">
+          Close
+        </b-button>
+      </template>
+
     </b-modal>
   </div>
 </template>
@@ -222,8 +229,8 @@ NOTE: Templates and view components to edit an item's media file resource object
     <b-row>
       <b-col cols="12">
         <div v-for="(resource, index) in resource_objs">
-          <b-card no-body 
-            v-if="resource.expected" 
+          <b-card no-body
+            v-if="resource.expected"
             class="resource-card alert-primary"
             >
             <b-card-header
@@ -243,7 +250,7 @@ NOTE: Templates and view components to edit an item's media file resource object
           </b-card>
           <b-card
             class="resource-card alert-info"
-            v-else no-body 
+            v-else no-body
             >
             <b-card-header
               header-bg-variant="info"
@@ -546,7 +553,7 @@ var vc_resource_obj = Vue.component(
       'lookup-list': vs_look_up_list,
     },
   }
-); 
+);
 
 
 var vc_add_resource_ui = Vue.component(
@@ -624,7 +631,7 @@ var vc_add_resource_ui_button = Vue.component(
       }
     },
     components: {
-     
+
     },
   }
 );
@@ -730,7 +737,7 @@ var vc_edit_resources = Vue.component(
       toggle_add_new_resource_ui(resource_obj){
         this.add_form_key += 1;
         this.resource_obj_for_add  = resource_obj;
-        this.$bvModal.show('add-resource-modal');  
+        this.$bvModal.show('add-resource-modal');
       }
     },
     components: {
@@ -739,6 +746,6 @@ var vc_edit_resources = Vue.component(
       'add-resource-ui': vc_add_resource_ui,
     },
   }
-); 
-  
+);
+
 </script>
