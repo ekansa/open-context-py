@@ -134,7 +134,10 @@ Item Context
 }
 #rel_item_in_context::before {
     content: "\2194";
-	margin-top:-2px;
+	margin-top:1px;
+}
+#rel_item_in_context {
+	margin-top:-3px;
 }
 .card_w_chart {
 	margin-bottom: 24px;
