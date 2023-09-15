@@ -8,6 +8,9 @@
         {% include './editorial_symbols.html' %}
       </div>
       <div class="col-sm-6">
+        {% if is_parent_proj_oc and man_obj.item_type == 'projects' %}
+
+        {%else%}
         <h5>Part of Project</h5>
         <div class="row align-items-center">
           <div class="col-2 item_rel_cell_obj_class_icon">
@@ -23,6 +26,7 @@
             <a href="{% url 'projects_html' man_obj.project.uuid %}">{{ man_obj.project.label }}</a>
           </div>
         </div>
+        {%endif%}
       </div>
     </div>
   </div>

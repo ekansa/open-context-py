@@ -449,8 +449,12 @@ def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
         else:
             rep_dict['category'] = rep_utils.make_web_url(item_man_obj.item_class)
     if for_solr_or_html:
-        rep_dict['item_class__label'] = item_man_obj.item_class.label
-        rep_dict['item_class__slug'] = item_man_obj.item_class.slug
+        if item_man_obj.item_class:
+            rep_dict['item_class__label'] = item_man_obj.item_class.label
+            rep_dict['item_class__slug'] = item_man_obj.item_class.slug
+        else:
+            rep_dict['item_class__label'] = None
+            rep_dict['item_class__slug'] = None
     return rep_dict
 
 
