@@ -153,10 +153,19 @@ def make_citation_dict(rep_dict):
         p.get('combined_name')
         for p in citation_dict.get('contributor', [{}])
     ]
-    citation_dict['editors'] = [
-        p.get('combined_name')
-        for p in citation_dict.get('creator', [{}])
-    ]
+    if citation_dict.get('id') and '/projects/' in citation_dict.get('id'):
+        # Don't repeat a person as an editor if they're already a project
+        # author.
+        citation_dict['editors'] = [
+            p.get('combined_name')
+            for p in citation_dict.get('creator', [{}])
+            if p.get('combined_name') not in citation_dict['authors']
+        ]
+    else:
+        citation_dict['editors'] = [
+            p.get('combined_name')
+            for p in citation_dict.get('creator', [{}])
+        ]
     # Add persistent IDs to the citation dict.
     for scheme_key, scheme_conf in AllIdentifier.SCHEME_CONFIGS.items():
         citation_dict[scheme_key] = None
