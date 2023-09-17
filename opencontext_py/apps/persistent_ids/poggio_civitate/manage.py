@@ -33,6 +33,7 @@ persistent_id, id_obj = pc_ids.create_pre_registered_ezid_and_oc_records(
 )
 
 proj_persistent_id, id_obj = pc_ids.create_update_pre_registered_ezid_and_oc_records_project_prefix()
+id_objs = pc_ids.create_update_pre_registered_ezid_and_oc_records_project_id_types_prefix()
 
 """
 
@@ -59,7 +60,8 @@ ID_PREFIX = f'{PRE_REGISTER_SHOULDER}{PROJECT_PART}/'
 
 PRE_REG_CONFIGS = {
     'pc': {
-        'label': 'Cataloged, Registered Finds for the Poggio Civitate site',
+        'label': 'Cataloged, Registered Finds for the Poggio Civitate Site',
+        'doc_uuid': '42b2a088-4828-4b57-bcba-2bd3071b442f',
         'filter_args': {
             'project_id': PROJECT_UUID,
             'item_type': 'subjects',
@@ -69,7 +71,8 @@ PRE_REG_CONFIGS = {
         },
     },
     'vdm': {
-        'label': 'Cataloged, Registered Finds for the Vescovado di Murlo site',
+        'label': 'Cataloged, Registered Finds for the Vescovado di Murlo Site',
+        'doc_uuid': '0d18afa8-7692-4db1-a083-47484e6e11c4',
         'filter_args': {
             'project_id': PROJECT_UUID,
             'item_type': 'subjects',
@@ -79,7 +82,8 @@ PRE_REG_CONFIGS = {
         },
     },
     'bf': {
-        'label': 'Bulk Finds Registration',
+        'label': 'Bulk Finds Registration for the Murlo Project',
+        'doc_uuid': '7f9f97ff-2e7a-46b2-a540-5b3cf334c556',
         'filter_args': {
             'project_id': PROJECT_UUID,
             'item_type': 'subjects',
@@ -87,7 +91,8 @@ PRE_REG_CONFIGS = {
         },
     },
     'fa': {
-        'label': 'Animal Bone, Zooarchaeological Registration',
+        'label': 'Animal Bone, Zooarchaeological Registration for the Murlo Project',
+        'doc_uuid': '885adbd5-6608-4458-a9cb-fcadd241cb4c',
         'filter_args': {
             'project_id': PROJECT_UUID,
             'item_type': 'subjects',
@@ -121,10 +126,10 @@ BULK_CHAR_REPLACEMENTS = {
 
 def clean_labeling_str_for_ark(label, id_type_key):
     """Converts a (hopefully unique with the context of the project)
-    item label into a pre-registeration ARK ID string.
+    item label into a pre-registration ARK ID string.
 
     :param str label: The Manifest object label
-    :param str id_type_key: The preregidered ID type within the Murlo project
+    :param str id_type_key: The pre-registered ID type within the Murlo project
 
     returns str label (cleaned for use in an ID)
     """
@@ -354,7 +359,7 @@ def create_update_pre_registered_ezid_and_oc_records_project_prefix(
     show_ezid_resp=False,
     ezid_client=None,
 ):
-    """Makes pre-registered ID and records them in EZID and Open Context for the Murlo
+    """Makes pre-registered ID and records it in EZID and Open Context for the Murlo
     project.
 
     :param bool do_staging: Use the staging site for EZID requests
@@ -391,6 +396,55 @@ def create_update_pre_registered_ezid_and_oc_records_project_prefix(
     id_obj = ezid_m.save_man_obj_stable_id(man_obj=man_obj, stable_id=stable_id, scheme='ark',)
     print(f'{man_obj.label} [{str(man_obj.uuid)}] **SAVED** preregistered_id record: {preregistered_id}')
     return preregistered_id, id_obj
+
+
+def create_update_pre_registered_ezid_and_oc_records_project_id_types_prefix(
+    do_staging=False,
+    update_if_exists=True,
+    show_ezid_resp=False,
+    ezid_client=None,
+    id_prefix=ID_PREFIX,
+):
+    """Makes pre-registered ID and records them in EZID and Open Context for different types
+    of identifiers used within the Murlo project.
+
+    :param bool do_staging: Use the staging site for EZID requests
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+    :param EZID ezid_client: An instance of the EZID (ezid_client) class
+
+    returns str, id_obj (a validated and unique pre-registered ID, id object record)
+    """
+    id_objs = []
+    for id_type_key, conf_dict in PRE_REG_CONFIGS.items():
+        man_obj = AllManifest.objects.get(uuid=conf_dict.get('doc_uuid'))
+        ezid_m = EZIDmanage()
+        metadata = ezid_m.make_ark_metadata_by_uuid(man_obj=man_obj)
+        oc_uri = metadata.get('_target', f'https://{man_obj.uri}')
+        if not ezid_client:
+            ezid_client = EZID()
+        if do_staging:
+            # Make requests to the staging server
+            ezid_client.use_staging_site()
+        preregistered_id = f'{id_prefix}{id_type_key}'
+        ezid_client.create_ark_identifier(
+            oc_uri=oc_uri,
+            metadata=metadata,
+            id_str=preregistered_id,
+            update_if_exists=update_if_exists,
+            show_ezid_resp=show_ezid_resp,
+        )
+        # Now save the stable ID.
+        if preregistered_id.startswith('ark:/'):
+            stable_id = preregistered_id.split('ark:/')[-1]
+        else:
+            stable_id  = preregistered_id
+        # Make an ID object to save the record of this pre-registered ID.
+        id_obj = ezid_m.save_man_obj_stable_id(man_obj=man_obj, stable_id=stable_id, scheme='ark',)
+        print(f'{man_obj.label} [{str(man_obj.uuid)}] **SAVED** preregistered_id record: {preregistered_id}')
+        id_objs.append(id_obj)
+    return id_objs
 
 
 def create_pre_registered_ezid_and_oc_records(
