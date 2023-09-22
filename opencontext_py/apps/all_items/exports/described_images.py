@@ -24,10 +24,7 @@ from opencontext_py.libs.models import (
 # Test
 from opencontext_py.apps.all_items.exports.described_images import *
 filter_args = {'subject__item_class__slug__in': ARTIFACT_CLASS_SLUGS}
-df = get_images_related_to_one_subject_df(
-    filter_args=filter_args
-)
-
+df = get_describe_images_related_to_one_subject_df(filter_args=filter_args)
 
 
 """
@@ -104,6 +101,7 @@ def get_images_related_to_subjects_df(
     )
     assert_qs = assert_qs.values(
         'subject_id',
+        'project_id',
         'object_id',
         'object__label',
         'image_uri',
@@ -160,4 +158,40 @@ def get_images_related_to_one_subject_df(
     return df
 
 
+def get_describe_images_related_to_one_subject_df(
+    filter_args=None, 
+    resourcetype_id=configs.OC_RESOURCE_PREVIEW_UUID
+):
+    """Gets a dataframe where each given image object is associated
+    with exactly 1 subject item, filtered by filter_args
+    
+    :param dict filter_args: A dictionary for filtering a queryset of 
+        the AllAssertions model
+    :param str(uuid) resourcetype_id: A uuid identifier for a resourcetype
+        URL to provide for each image object
 
+    returns dataframe df    
+    """
+    assert_df = get_images_related_to_subjects_df(
+        filter_args=filter_args, 
+        resourcetype_id=resourcetype_id
+    )
+    df = df_limit_to_images_with_one_subject(assert_df)
+    if not filter_args:
+        filter_args = {}
+    filter_args['object__item_type'] = 'types'
+    i = 0
+    project_ids = df['project_id'].unique().tolist()
+    for project_id in project_ids:
+        i += 1
+        filter_args['project_id'] = project_id
+        print(f'[{i} of {len(project_ids)}] Get description rows for project {project_id}')
+        df_raw = create_df.make_export_df(
+            filter_args=filter_args,
+            add_entity_ld=True,
+            add_literal_ld=False,
+            add_object_uris=False,
+        )
+        print(f'Found {len(df_raw.index)} description rows for project {project_id}')
+        df = pd.merge(df, df_raw, on='subject_id', how='left')
+    return df
