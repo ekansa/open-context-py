@@ -182,6 +182,7 @@ def get_describe_images_related_to_one_subject_df(
     filter_args['object__item_type'] = 'types'
     i = 0
     project_ids = df['project_id'].unique().tolist()
+    df_raws = []
     for project_id in project_ids:
         i += 1
         filter_args['project_id'] = project_id
@@ -193,5 +194,15 @@ def get_describe_images_related_to_one_subject_df(
             add_object_uris=False,
         )
         print(f'Found {len(df_raw.index)} description rows for project {project_id}')
-        df = pd.merge(df, df_raw, on='subject_id', how='left')
+        df_raws.append(df_raw)
+    # Now combine these description dataframes and merge them into
+    # our dataframe associating subjects items with image objects.
+    df_all_raw = pd.concat(df_raws)
+    for col in df.columns.tolist():
+        if col == 'subject_id' or col not in df_all_raw.columns.tolist():
+            # We want to keep the subject or the column isn't in the
+            # df_all_raw so nothing to do
+            continue
+        df_all_raw.drop(columns=[col], inplace=True)
+    df = pd.merge(df, df_all_raw, on='subject_id', how='left')
     return df
