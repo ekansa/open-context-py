@@ -1,5 +1,7 @@
 import json
 from django.conf import settings
+
+from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 
@@ -26,7 +28,7 @@ from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
 from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 
 from opencontext_py.apps.all_items.models import (
-    AllManifest
+    AllManifest,
 )
 
 from opencontext_py.apps.web_metadata.social import make_social_media_metadata
@@ -57,6 +59,43 @@ def evaluate_update_id(uuid):
     if item_obj:
         return item_obj.uuid, True
     return None, False
+
+
+def get_suffix_passthrough_suggest_obj(unmatched_id):
+    """Get a manifest object for a suggested (semantic) parent
+    resource to provide a more informative 404 error.
+    """
+    suggest_obj = None
+    if not unmatched_id:
+        return None
+    unmatched_id = str(unmatched_id)
+    delims = ['/', '_',]
+    for delim in delims:
+        if not delim in unmatched_id:
+            continue
+        # Check to see if we can resolve a "parent" item.
+        split_id = unmatched_id.split(delim)
+        check_id = split_id[0].strip()
+        item_obj = get_man_obj_by_any_id(check_id)
+        break
+    return suggest_obj
+
+
+def get_suffix_passthrough_suggest_message(unmatched_id):
+    """Get string suggestion message for a suggested (semantic) parent
+    resource to provide a more informative 404 error.
+    """
+    suggest_obj = get_suffix_passthrough_suggest_obj(unmatched_id)
+    if not suggest_obj:
+        return None
+    message = 'The resource you requested could not be found. However, the '
+    if suggest_obj.item_type == 'projects':
+        message += 'Open Context project description '
+    else:
+        message += 'resource '
+    message += f'<strong><a href="https://{suggest_obj.uri}">{suggest_obj.label}</a></strong> '
+    message += 'likely provides related information that may help you find what you need.'
+    return message
 
 
 @never_cache
@@ -184,6 +223,9 @@ def all_items_html(
     else:
         ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'all-items', ok_uuid, extension='')
@@ -291,6 +333,9 @@ def subjects_html(request, uuid):
     """HTML Subjects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'subjects', ok_uuid, extension='')
@@ -311,6 +356,9 @@ def media_html(request, uuid):
     """HTML Media Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'media', ok_uuid, extension='')
@@ -320,6 +368,9 @@ def media_full_html(request, uuid):
     """HTML Media full Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         ok_uuid = str(ok_uuid)
@@ -346,6 +397,9 @@ def documents_html(request, uuid):
     """HTML Documents Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'documents', ok_uuid, extension='')
@@ -365,6 +419,9 @@ def projects_html(request, uuid):
     """HTML Projects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='')
@@ -384,6 +441,9 @@ def persons_html(request, uuid):
     """HTML Persons Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'persons', ok_uuid, extension='')
@@ -403,6 +463,9 @@ def predicates_html(request, uuid):
     """HTML Predicates Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'predicates', ok_uuid, extension='')
@@ -422,6 +485,9 @@ def types_html(request, uuid):
     """HTML Types Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'types', ok_uuid, extension='')
@@ -441,6 +507,9 @@ def tables_html(request, uuid):
     """HTML Tables Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'tables', ok_uuid, extension='')
