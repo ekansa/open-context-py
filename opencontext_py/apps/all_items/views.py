@@ -76,7 +76,7 @@ def get_suffix_passthrough_suggest_obj(unmatched_id):
         # Check to see if we can resolve a "parent" item.
         split_id = unmatched_id.split(delim)
         check_id = split_id[0].strip()
-        item_obj = get_man_obj_by_any_id(check_id)
+        suggest_obj = get_man_obj_by_any_id(check_id)
         break
     return suggest_obj
 
@@ -95,6 +95,7 @@ def get_suffix_passthrough_suggest_message(unmatched_id):
         message += 'resource '
     message += f'<strong><a href="https://{suggest_obj.uri}">{suggest_obj.label}</a></strong> '
     message += 'likely provides related information that may help you find what you need.'
+    # print(f'Message for 404: {message}')
     return message
 
 
@@ -422,7 +423,6 @@ def projects_html(request, uuid):
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
-            return render_to_response("404.html", {'messages': [message]}, status=404)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='')
