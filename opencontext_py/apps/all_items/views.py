@@ -422,6 +422,7 @@ def projects_html(request, uuid):
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
+            return render_to_response("404.html", {'messages': [message]}, status=404)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='')
