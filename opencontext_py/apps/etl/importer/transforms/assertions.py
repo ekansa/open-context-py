@@ -63,9 +63,9 @@ LINKS_EXCLUDE_PREDICATE_IDS = [
 
 
 def update_df_object_column_for_ds_anno(
-    ds_anno, 
-    df, 
-    act_obj_col=None, 
+    ds_anno,
+    df,
+    act_obj_col=None,
     act_obj_dt_col=None,
     filter_index=None,
 ):
@@ -78,10 +78,10 @@ def update_df_object_column_for_ds_anno(
         act_obj_col = f'assertion_object__{ds_anno.data_source.source_id}'
     if not act_obj_dt_col:
         act_obj_dt_col = f'assertion_object_dt__{ds_anno.data_source.source_id}'
-    
+
     # Set the columns with empty values.
-    df.loc[filter_index, act_obj_col] = np.nan
-    df.loc[filter_index, act_obj_dt_col] = np.nan
+    df.loc[filter_index, act_obj_col] = None
+    df.loc[filter_index, act_obj_dt_col] = None
 
     if not ds_anno.object_field:
         # We're trying to assign a preset literal value.
@@ -92,13 +92,13 @@ def update_df_object_column_for_ds_anno(
             df.loc[filter_index, act_obj_col] = literal_val
             df.loc[filter_index, act_obj_dt_col] = data_type
         return df
-    
+
     object_field = ds_anno.object_field
     act_item_obj_col = f'{object_field.field_num}_item'
     act_item_literal_col = f'{object_field.field_num}_col'
     df.loc[filter_index, act_obj_dt_col] = object_field.data_type
     if object_field.data_type != 'id':
-        # Copy literal (non-named entity) values 
+        # Copy literal (non-named entity) values
         df.loc[filter_index, act_obj_col] = df[filter_index][act_item_literal_col]
     else:
         # Copy the already reconciled uuids to named entities
@@ -107,13 +107,13 @@ def update_df_object_column_for_ds_anno(
 
 
 def get_make_note_predicate_for_invalid_literal_db(
-    ds_source, 
-    predicate_uuid, 
+    ds_source,
+    predicate_uuid,
     sort,
     add_assoction_uuid=None
 ):
     """Gets a note predicate for use with a literal value that is not valid"""
-    # Get the manifest object for the literal predicate for which we 
+    # Get the manifest object for the literal predicate for which we
     # have an object value with the wrong data_type.
     man_obj = AllManifest.objects.filter(uuid=predicate_uuid).first()
     if not man_obj:
@@ -147,7 +147,7 @@ def get_make_note_predicate_for_invalid_literal_db(
         pred_note_obj.save()
     except:
         pred_note_obj = None
-    
+
     if not pred_note_obj:
         return None
 
@@ -175,9 +175,9 @@ def get_make_note_predicate_for_invalid_literal_db(
 
 
 def make_descriptive_assertions(
-    ds_anno, 
-    df, 
-    invalid_literal_to_str=True, 
+    ds_anno,
+    df,
+    invalid_literal_to_str=True,
     log_new_assertion=False,
     filter_index=None,
     print_progress=False,
@@ -219,7 +219,7 @@ def make_descriptive_assertions(
         act_obj_dt_col,
     ]
     for assert_col in assert_cols:
-        df[assert_col] = np.nan
+        df[assert_col] = None
 
     # Set up the subjects of the assertions
     subj_item_col = f'{ds_anno.subject_field.field_num}_item'
@@ -240,13 +240,13 @@ def make_descriptive_assertions(
             field_item_col = f'{ds_node_field.field_num}_item'
             df.loc[filter_index, df_node_col] = df[filter_index][field_item_col]
             continue
-        # The simple case, where the node is a single object, not 
-        # multiple objects in a field. 
+        # The simple case, where the node is a single object, not
+        # multiple objects in a field.
         # NOTE: this sets all values in the df_node_col to the same value.
         df.loc[filter_index, df_node_col] = str(ds_node_obj.uuid)
-    
+
     if ds_anno.object_field and ds_anno.object_field.item_type == 'variables':
-        # In this case assertion predicate will come from a 
+        # In this case assertion predicate will come from a
         # ds_field of item_type = 'variables', and the objects will
         # come from an associated item_type = 'values' or 'types' field.
         var_val_anno = DataSourceAnnotation.objects.filter(
@@ -263,9 +263,9 @@ def make_descriptive_assertions(
         df.loc[filter_index, act_pred_col] = df[filter_index][des_pred_col]
         # Get the columns for the assertion objects.
         df = update_df_object_column_for_ds_anno(
-            var_val_anno, 
-            df, 
-            act_obj_col=act_obj_col, 
+            var_val_anno,
+            df,
+            act_obj_col=act_obj_col,
             act_obj_dt_col=act_obj_dt_col,
             filter_index=filter_index,
         )
@@ -274,21 +274,21 @@ def make_descriptive_assertions(
         # context object of the ds_anno object field. The ds_anno object
         # field will have either literal or named entities as objects of
         # assertions.
-        if (ds_anno.object_field 
-            and ds_anno.object_field.context 
+        if (ds_anno.object_field
+            and ds_anno.object_field.context
             and ds_anno.object_field.context.item_type in DataSourceAnnotation.PREDICATE_OK_ITEM_TYPES
         ):
             # NOTE: this sets all values in the act_pred_col to the same value.
             df.loc[filter_index, act_pred_col] = str(ds_anno.object_field.context.uuid)
         # Get the columns for the assertion objects.
         df = update_df_object_column_for_ds_anno(
-            ds_anno, 
-            df, 
-            act_obj_col=act_obj_col, 
+            ds_anno,
+            df,
+            act_obj_col=act_obj_col,
             act_obj_dt_col=act_obj_dt_col,
             filter_index=filter_index,
         )
-    
+
     df_act = df[filter_index][assert_cols].copy()
     # Remove rows with null values, these can't have assertions.
     df_act.dropna(inplace=True)
@@ -324,7 +324,7 @@ def make_descriptive_assertions(
         if not act_data_type:
             # We have a data type that is empty, skip.
             continue
-        
+
         predicate_uuid = str(row[act_pred_col])
         if log_new_assertion:
             logger.info(f'Make assertion on: {predicate_uuid} {raw_object_val}')
@@ -346,7 +346,7 @@ def make_descriptive_assertions(
             # entity.
             assert_dict['object_id'] = raw_object_val
         else:
-            # We're making an assertion where the object is a 
+            # We're making an assertion where the object is a
             # literal of some data_type.
             literal_done = False
             for lit_attrib, data_type in LITERAL_ATTRIBUTE_DATA_TYPES:
@@ -356,7 +356,7 @@ def make_descriptive_assertions(
                 # Convert the raw_object_val to an object value that
                 # conforms to the expected data type.
                 object_val = etl_utils.validate_transform_data_type_value(
-                    raw_object_val, 
+                    raw_object_val,
                     data_type
                 )
                 if object_val is not None:
@@ -374,8 +374,8 @@ def make_descriptive_assertions(
                     # valid for this data type, so make a string
                     # literal assertion instead.
                     pred_note_obj = get_make_note_predicate_for_invalid_literal_db(
-                        ds_source=ds_source, 
-                        predicate_uuid=predicate_uuid, 
+                        ds_source=ds_source,
+                        predicate_uuid=predicate_uuid,
                         sort=ds_anno.object_field.field_num,
                         add_assoction_uuid=configs.PREDICATE_SKOS_RELATED_UUID,
                     )
@@ -389,7 +389,7 @@ def make_descriptive_assertions(
                 assert_dict['predicate_id'] = str(pred_note_obj.uuid)
                 assert_dict['obj_string'] = raw_object_val
                 literal_done = True
-        
+
         # Make a UUID keyword arg dict for making the assertion uuid.
         uuid_kargs = {k:assert_dict.get(k) for k in ASSERT_ID_ATTRIBUTES}
         assert_uuid = AllAssertion().primary_key_create(**uuid_kargs)
@@ -403,7 +403,7 @@ def make_descriptive_assertions(
     # Bulk save these assertions. This does a fallback to saving saving assertion
     # objects individually if something goes wrong, but that's far slower.
     trans_utils.bulk_create_assertions(
-        assert_uuids, 
+        assert_uuids,
         unsaved_assert_objs
     )
 
@@ -413,9 +413,9 @@ def make_descriptive_assertions(
 
 
 def make_all_descriptive_assertions(
-    ds_source, 
-    df=None, 
-    invalid_literal_to_str=True, 
+    ds_source,
+    df=None,
+    invalid_literal_to_str=True,
     log_new_assertion=False,
     filter_index=None,
     ds_anno_index_limit=None,
@@ -426,7 +426,7 @@ def make_all_descriptive_assertions(
             ds_source,
             include_uuid_cols=True,
         )
-    
+
     if filter_index is None:
         # No filter index set, so process the whole dataframe df
         filter_index = df['row_num'] >= 0
@@ -449,13 +449,13 @@ def make_all_descriptive_assertions(
         # Makes descriptive assertions from fields that are related
         # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
         make_descriptive_assertions(
-            ds_anno, 
-            df, 
+            ds_anno,
+            df,
             invalid_literal_to_str=invalid_literal_to_str,
             log_new_assertion=log_new_assertion,
             filter_index=filter_index,
         )
-    
+
     return count_anno_qs
 
 
@@ -486,7 +486,7 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
     ]
 
     for assert_col in assert_cols:
-        df[assert_col] = np.nan
+        df[assert_col] = None
 
     # Set up the subjects of the assertions
     subj_item_col = f'{ds_anno.subject_field.field_num}_item'
@@ -499,8 +499,8 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
         (act_event_col, ds_anno.event_field, ds_anno.event,),
         (act_attrib_group_col, ds_anno.attribute_group_field, ds_anno.attribute_group,),
         (act_lang_col, ds_anno.language_field, ds_anno.language,),
-        (act_pred_col, ds_anno.predicate_field, ds_anno.predicate,), 
-        (act_obj_col, ds_anno.object_field, ds_anno.object,), 
+        (act_pred_col, ds_anno.predicate_field, ds_anno.predicate,),
+        (act_obj_col, ds_anno.object_field, ds_anno.object,),
     ]
 
     for df_col, ds_field, ds_obj in col_attributes:
@@ -513,14 +513,14 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
             field_item_col = f'{ds_field.field_num}_item'
             df.loc[filter_index, df_col] = df[filter_index][field_item_col]
             continue
-        # The simple case, where the node is a single object, not 
-        # multiple objects in a field. 
+        # The simple case, where the node is a single object, not
+        # multiple objects in a field.
         # NOTE: this sets all values in the df_col to the same value.
         if ds_obj and ds_obj.data_type != 'id':
             # Skip out, we're only dealing with named entities, no literals
             return None
         df.loc[filter_index, df_col] = str(ds_obj.uuid)
-    
+
     df_act = df[filter_index][assert_cols].copy()
     # Remove rows with null values, these can't have assertions.
     df_act.dropna(inplace=True)
@@ -555,7 +555,7 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
             'language_id': str(row[act_lang_col]),
             'object_id': object_uuid,
         }
-        
+
         # Make a UUID keyword arg dict for making the assertion uuid.
         uuid_kargs = {k:assert_dict.get(k) for k in ASSERT_ID_ATTRIBUTES}
         ass_obj, _ = AllAssertion.objects.get_or_create(
@@ -564,12 +564,12 @@ def make_link_assertions(ds_anno, df, log_new_assertion=False, filter_index=None
         )
         if log_new_assertion:
             logger.info(ass_obj)
-    
+
 
 def make_all_linking_assertions(
-    ds_source, 
-    df=None, 
-    log_new_assertion=False, 
+    ds_source,
+    df=None,
+    log_new_assertion=False,
     filter_index=None,
     ds_anno_index_limit=None,
 ):
@@ -594,7 +594,7 @@ def make_all_linking_assertions(
         # multiple named entities, in the 'object_field' attribute.)
         Q(object__isnull=False)|Q(object_field__isnull=False)
     ).filter(
-        # Make sure that the data type for the predicate or the 
+        # Make sure that the data type for the predicate or the
         # predicate_field is 'id' for named entities.
         Q(predicate__data_type='id')|Q(predicate_field__data_type='id')
     ).exclude(
@@ -613,10 +613,10 @@ def make_all_linking_assertions(
         # Makes link assertions from fields that are related
         # by the configs.PREDICATE_OC_ETL_DESCRIBED_BY relationship.
         make_link_assertions(
-            ds_anno, 
-            df, 
+            ds_anno,
+            df,
             log_new_assertion=log_new_assertion,
             filter_index=filter_index,
         )
-    
+
     return count_anno_qs
