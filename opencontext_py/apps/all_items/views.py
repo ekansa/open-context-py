@@ -90,10 +90,10 @@ def get_suffix_passthrough_suggest_message(unmatched_id):
         return None
     message = 'The resource you requested could not be found. However, the '
     if suggest_obj.item_type == 'projects':
-        message += 'Open Context project description '
+        message += 'Open Context project '
     else:
         message += 'resource '
-    message += f'<strong><a href="https://{suggest_obj.uri}">{suggest_obj.label}</a></strong> '
+    message += f'<strong>"<u><a href="https://{suggest_obj.uri}">{suggest_obj.label}</a></u>"</strong> '
     message += 'likely provides related information that may help you find what you need.'
     # print(f'Message for 404: {message}')
     return message
