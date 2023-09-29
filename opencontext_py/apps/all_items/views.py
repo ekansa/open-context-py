@@ -225,7 +225,7 @@ def all_items_html(
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'all-items', ok_uuid, extension='')
@@ -335,7 +335,7 @@ def subjects_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'subjects', ok_uuid, extension='')
@@ -358,7 +358,7 @@ def media_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'media', ok_uuid, extension='')
@@ -370,7 +370,7 @@ def media_full_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         ok_uuid = str(ok_uuid)
@@ -399,7 +399,7 @@ def documents_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'documents', ok_uuid, extension='')
@@ -421,7 +421,7 @@ def projects_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='')
@@ -443,7 +443,7 @@ def persons_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'persons', ok_uuid, extension='')
@@ -465,7 +465,7 @@ def predicates_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'predicates', ok_uuid, extension='')
@@ -487,7 +487,7 @@ def types_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'types', ok_uuid, extension='')
@@ -509,7 +509,7 @@ def tables_html(request, uuid):
     if not ok_uuid:
         message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
         if message:
-            raise Http404(message)
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'tables', ok_uuid, extension='')
