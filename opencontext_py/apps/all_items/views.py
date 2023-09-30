@@ -64,7 +64,7 @@ def evaluate_update_id(uuid):
     return None, False
 
 
-def get_suffix_passthrough_suggest_obj(unmatched_id):
+def get_suffix_backoff_suggest_obj(unmatched_id):
     """Get a manifest object for a suggested (semantic) parent
     resource to provide a more informative 404 error.
     """
@@ -116,11 +116,11 @@ def get_suffix_passthrough_suggest_obj(unmatched_id):
     return id_obj.item
 
 
-def get_suffix_passthrough_suggest_message(unmatched_id):
+def get_suffix_backoff_suggest_message(unmatched_id):
     """Get string suggestion message for a suggested (semantic) parent
     resource to provide a more informative 404 error.
     """
-    suggest_obj = get_suffix_passthrough_suggest_obj(unmatched_id)
+    suggest_obj = get_suffix_backoff_suggest_obj(unmatched_id)
     if not suggest_obj:
         return None
     message = 'The resource you requested could not be found. However, the '
@@ -259,7 +259,7 @@ def all_items_html(
     else:
         ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -369,7 +369,7 @@ def subjects_html(request, uuid):
     """HTML Subjects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -392,7 +392,7 @@ def media_html(request, uuid):
     """HTML Media Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -404,7 +404,7 @@ def media_full_html(request, uuid):
     """HTML Media full Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -433,7 +433,7 @@ def documents_html(request, uuid):
     """HTML Documents Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -455,7 +455,7 @@ def projects_html(request, uuid):
     """HTML Projects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -477,7 +477,7 @@ def persons_html(request, uuid):
     """HTML Persons Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -499,7 +499,7 @@ def predicates_html(request, uuid):
     """HTML Predicates Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -521,7 +521,7 @@ def types_html(request, uuid):
     """HTML Types Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
@@ -543,7 +543,7 @@ def tables_html(request, uuid):
     """HTML Tables Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
-        message = get_suffix_passthrough_suggest_message(unmatched_id=uuid)
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
         if message:
             messages.error(request, message)
         raise Http404
