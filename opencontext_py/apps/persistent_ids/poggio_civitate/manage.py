@@ -23,6 +23,12 @@ from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllIdentifier,
 )
+
+persistent_id_list, id_obj_list = pc_ids.create_pre_registered_ids_for_qs(
+    filter_args={'source_id__contains': '2023'},
+)
+
+
 man_obj = AllManifest.objects.get(uuid='0274cd4d-25c9-4e68-9ee7-c2922063d507')
 persistent_id, id_obj = pc_ids.create_pre_registered_ezid_and_oc_records(
     man_obj=man_obj,
@@ -519,3 +525,50 @@ def create_pre_registered_ezid_and_oc_records(
     id_obj = ezid_m.save_man_obj_stable_id(man_obj=man_obj, stable_id=stable_id, scheme='ark',)
     print(f'{man_obj.label} [{str(man_obj.uuid)}] **SAVED** preregistered_id record: {preregistered_id}')
     return preregistered_id, id_obj
+
+
+def create_pre_registered_ids_for_qs(
+        filter_args=None,
+        exclude_args=None,
+        do_staging=False,
+        id_prefix=ID_PREFIX,
+        update_if_exists=True,
+        show_ezid_resp=False,
+    ):
+    """Create pre-registered IDs for items in an AllManifest query-set
+
+    :param dict filter_args: Optional dict of filter args to filter the
+        AllManifest query set
+    :param dict exclude_args: Optional dict of exclude args to use as
+        exclusion criteria in an AllManifest query set
+    :param bool do_staging: Use the staging site for EZID requests
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+
+    returns preregistered_id_list, id_obj_list
+    """
+    preregistered_id_list = []
+    id_obj_list = []
+    for id_type_key, type_conf in PRE_REG_CONFIGS.items():
+        m_qs = AllManifest.objects.filter(
+            **type_conf['filter_args']
+        )
+        if filter_args:
+            m_qs = m_qs.filter(**filter_args)
+        if exclude_args:
+            m_qs = m_qs.exclude(**exclude_args)
+        print(f'Working on {id_type_key}, manifest object count: {m_qs.count()}')
+        for man_obj in m_qs:
+            preregistered_id, id_obj = create_pre_registered_ezid_and_oc_records(
+                man_obj=man_obj,
+                do_staging=do_staging,
+                id_type_key=id_type_key,
+                id_prefix=id_prefix,
+                update_if_exists=update_if_exists,
+                show_ezid_resp=show_ezid_resp,
+            )
+            preregistered_id_list.append(preregistered_id)
+            id_obj_list.append(id_obj)
+    return preregistered_id_list, id_obj_list
