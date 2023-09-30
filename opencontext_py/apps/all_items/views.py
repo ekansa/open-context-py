@@ -128,7 +128,7 @@ def get_suffix_backoff_suggest_message(unmatched_id):
         message += 'Open Context project '
     else:
         message += 'resource '
-    message += f'<strong>"<em><a href="https://{suggest_obj.uri}">{suggest_obj.label}</a></em>"</strong> '
+    message += f'<strong><em>"<a href="https://{suggest_obj.uri}">{suggest_obj.label}</a>"</em></strong> '
     message += 'likely provides related information that may help you find what you need.'
     # print(f'Message for 404: {message}')
     return message
