@@ -117,7 +117,10 @@ def get_suffix_backoff_suggest_obj(unmatched_id):
         '-id_len'
     ).first()
     if not id_obj:
-        return None
+        # We didn't find a more specific item, via "backing off" characters in the
+        # requested identifier suffix. So just return the
+        # root_suggest_obj (for the project)
+        return root_suggest_obj
     return id_obj.item
 
 
