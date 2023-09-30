@@ -98,6 +98,11 @@ def get_suffix_backoff_suggest_obj(unmatched_id):
             act_suffix = id_suffix[:i]
             id_start = f'{proj_ark_id_obj.id}/{act_suffix}'
             query_ids.append(id_start)
+            # Add a lower case version, if not present already
+            lc_id_start = f'{proj_ark_id_obj.id}/{act_suffix.lower()}'
+            if lc_id_start in query_ids:
+                continue
+            query_ids.append(lc_id_start)
     # Do the query, looking up ARKs for items in this project
     # where the id_suffix from the request may start with characters
     # that match a known ARK id.
