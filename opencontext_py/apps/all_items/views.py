@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 
+from django.db.models.functions import Length
+
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
@@ -29,6 +31,7 @@ from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 
 from opencontext_py.apps.all_items.models import (
     AllManifest,
+    AllIdentifier,
 )
 
 from opencontext_py.apps.web_metadata.social import make_social_media_metadata
@@ -69,16 +72,48 @@ def get_suffix_passthrough_suggest_obj(unmatched_id):
     if not unmatched_id:
         return None
     unmatched_id = str(unmatched_id)
-    delims = ['/', '_',]
-    for delim in delims:
-        if not delim in unmatched_id:
-            continue
-        # Check to see if we can resolve a "parent" item.
-        split_id = unmatched_id.split(delim)
+    id_suffix = ''
+    root_suggest_obj = None
+    if '/' in unmatched_id:
+        split_id = unmatched_id.split('/')
         check_id = split_id[0].strip()
-        suggest_obj = get_man_obj_by_any_id(check_id)
-        break
-    return suggest_obj
+        id_suffix = split_id[-1].strip()
+        print(f'check_id: {check_id}  id_suffix: {id_suffix}')
+        root_suggest_obj = get_man_obj_by_any_id(check_id)
+    if not root_suggest_obj:
+        return None
+    if root_suggest_obj.item_type != 'projects':
+        # we have suggested object, but it is not a project.
+        return root_suggest_obj
+    # Make a big OR search for ID strings that start with the
+    # ID suffix and are used for items in the root_suggest_obj
+    # project
+    proj_ark_id_qs = AllIdentifier.objects.filter(
+        item=root_suggest_obj,
+        scheme='ark',
+    )
+    query_ids = []
+    for proj_ark_id_obj in proj_ark_id_qs:
+        for i in range(1, len(id_suffix) + 1):
+            act_suffix = id_suffix[:i]
+            id_start = f'{proj_ark_id_obj.id}/{act_suffix}'
+            query_ids.append(id_start)
+    # Do the query, looking up ARKs for items in this project
+    # where the id_suffix from the request may start with characters
+    # that match a known ARK id.
+    id_obj = AllIdentifier.objects.filter(
+        item__project=root_suggest_obj,
+        scheme='ark',
+    ).filter(
+        id__in=query_ids,
+    ).annotate(
+        id_len=Length('id')
+    ).order_by(
+        '-id_len'
+    ).first()
+    if not id_obj:
+        return None
+    return id_obj.item
 
 
 def get_suffix_passthrough_suggest_message(unmatched_id):
