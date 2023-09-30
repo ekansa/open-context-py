@@ -216,7 +216,7 @@ def get_assert_qs(filter_args, exclude_args=None):
     predicate_equiv_ld_qs = AllAssertion.objects.filter(
         subject=OuterRef('predicate'),
         predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        object__item_type__in=['class', 'property'],
+        object__item_type__in=['class', 'property', 'uri',],
         visible=True,
     ).filter(
         Q(object__meta_json__deprecated__isnull=True)
@@ -480,26 +480,31 @@ def prepare_df_from_assert_df(assert_df):
     :param DataFrame assert_df: The dataframe of raw assertions and
         referenced attributes of foreign key referenced objects
     """
+    act_assert_cols = [
+        'subject_id',
+        'subject__uri',
+        'project_id',
+        'subject__label',
+        'persistent_doi',
+        'persistent_ark',
+        'persistent_orcid',
+        'subject__item_type',
+        'subject__item_class__label',
+        'subject__project_id',
+        'subject__project__label',
+        'subject__project__uri',
+        'subject__path',
+        'subject__sort',
+        'subject__context__uri',
+        'subject__published',
+        'subject__revised',
+    ]
+    for col in act_assert_cols:
+        if col in assert_df.columns.tolist():
+            continue
+        assert_df[col] = None
     df = assert_df[
-        [
-            'subject_id',
-            'subject__uri',
-            'project_id',
-            'subject__label',
-            'persistent_doi',
-            'persistent_ark',
-            'persistent_orcid',
-            'subject__item_type',
-            'subject__item_class__label',
-            'subject__project_id',
-            'subject__project__label',
-            'subject__project__uri',
-            'subject__path',
-            'subject__sort',
-            'subject__context__uri',
-            'subject__published',
-            'subject__revised',
-        ]
+        act_assert_cols
     ].groupby(by=['subject_id']).first().reset_index()
     df.columns = df.columns.get_level_values(0)
     df.sort_values(
@@ -582,7 +587,7 @@ def expand_context_path(
         )
         # Remove the last context value if it is the same as the
         # item label.
-        df.loc[label_last_index, last_col] = np.nan
+        df.loc[label_last_index, last_col] = None
         # Now check if this column is completely empty. Drop if
         # it is.
         col_not_null = ~df[last_col].isnull()
@@ -693,14 +698,14 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
     #    attribute values.
 
     df_levels = get_context_hierarchy_df(uuids)
-    df_levels['item__latitude'] = np.nan
-    df_levels['item__longitude'] = np.nan
-    df_levels['item__geometry_type'] = np.nan
-    df_levels['item__geo_specificity'] = np.nan
-    df_levels['item__geo_source'] = np.nan
-    df_levels['item__earliest'] = np.nan
-    df_levels['item__latest'] = np.nan
-    df_levels['item__chrono_source'] = np.nan
+    df_levels['item__latitude'] = None
+    df_levels['item__longitude'] = None
+    df_levels['item__geometry_type'] = None
+    df_levels['item__geo_specificity'] = None
+    df_levels['item__geo_source'] = None
+    df_levels['item__earliest'] = None
+    df_levels['item__latest'] = None
+    df_levels['item__chrono_source'] = None
     spacetime_done = False
     level_exists = True
     level = -1
@@ -944,7 +949,7 @@ def df_merge_authors_of_role_from_index(df, assert_df, act_index, role):
     """
     if assert_df[act_index].empty:
         # No authors of this role to add.
-        df[f'{role}_label'] = np.nan
+        df[f'{role}_label'] = None
         return df
     df_role = assert_df[act_index][
         [
@@ -1005,6 +1010,10 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
        authors of a given role
     """
 
+    if assert_df.empty or not 'predicate_id' in assert_df.columns.tolist():
+        # Empty, so skip out.
+        return df
+
     pred_roles_tups = [
         (configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID, 'dc_contributor'),
         (configs.PREDICATE_DCTERMS_CREATOR_UUID, 'dc_creator'),
@@ -1034,8 +1043,8 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
             )
             df = df_merge_authors_of_role_from_index(df, assert_df, role_index, role)
         else:
-            df[f'{role}_id'] = np.nan
-            df[f'{role}_label'] = np.nan
+            df[f'{role}_id'] = None
+            df[f'{role}_label'] = None
 
 
     # Get the project authorship roles
@@ -1085,7 +1094,7 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
                     df.at[i, col] = col_values
 
     # Now combine the contributors and the creators into a single author column
-    df['authors'] = np.nan
+    df['authors'] = None
 
     # Make authors for where either the contributor or the creator columns
     # are not null, but not both.
@@ -1180,7 +1189,16 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
         that is filtered to only have rows and columns relevant to linked
         data.
     """
+
     if ld_assert_df is None:
+
+        if assert_df is None:
+            return df
+
+        if assert_df.empty:
+            # Empty, so skip out.
+            return df
+
         ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
 
         # Make a smaller assertion df that's only got linked
@@ -1208,6 +1226,7 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
     if obj_equiv_df is None or obj_equiv_df.empty:
         # There are no equivalent linked data objects to
         # add
+        print(f'No obj_equiv_df')
         return df
 
     ld_assert_df = ld_assert_df.merge(
@@ -1217,6 +1236,9 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
         how='outer',
     )
     obj_index = ~ld_assert_df['object_equiv_ld_uri'].isnull()
+
+    print(f'obj_equiv_df has {len(obj_equiv_df.index)} rows')
+    print(f'Merged into ld_assert_df object equivalents have {len(ld_assert_df[obj_index].index)} rows')
 
     # 1: Add linked data where the object is a linked entity (not a literal)
     id_index = ld_assert_df['predicate__data_type'] == 'id'
@@ -1253,6 +1275,7 @@ def add_df_id_linked_data_from_assert_df(df, assert_df=None, ld_assert_df=None):
         )
         # Sort the dataframe columns.
         act_ld_df = act_ld_df[['subject_id', col_uris, col_labels]]
+        print(f'Merge linked equiv data for {pred_label} ({pred_uri})')
         # Add them to our main, glorious dataframe.
         df = df.merge(
             act_ld_df,
@@ -1282,7 +1305,16 @@ def add_df_literal_linked_data_from_assert_df(
     :param list literal_type_tups: List of tuples that associate a literal
         data type with the object column that has values for that data type
     """
+
     if ld_assert_df is None:
+
+        if assert_df is None:
+            return df
+
+        if assert_df.empty:
+            # Empty, so skip out.
+            return df
+
         ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
 
         # Make a smaller assertion df that's only got linked
@@ -1370,6 +1402,13 @@ def add_df_linked_data_from_assert_df(
         # changing the df
         return df
 
+    if assert_df is None:
+        return df
+
+    if assert_df.empty:
+        # Empty, so skip out.
+        return df
+
     ld_index = ~assert_df['predicate_equiv_ld_uri'].isnull()
 
     # Make a smaller assertion df that's only got linked
@@ -1388,6 +1427,8 @@ def add_df_linked_data_from_assert_df(
             'obj_datetime',
         ]
     ].copy()
+
+    print(f'ld_assert_df has {len(ld_assert_df.index)} rows, do add_entity_ld: {add_entity_ld}')
 
     if add_entity_ld:
         # 1: Add linked data where the object is a linked entity (not a literal)
@@ -1434,23 +1475,36 @@ def get_sort_preds_df(assert_df, node_pred_unique_prefixing=NODE_PRED_UNIQUE_PRE
     :param list node_pred_unique_prefixing: A list configuring what nodes count for
         making a node_prefix
     """
+    preds_cols = [
+        'observation_id',
+        'observation__label',
+        'obs_sort',
+        'event_id',
+        'event__label',
+        'event_sort',
+        'attribute_group_id',
+        'attribute_group__label',
+        'attribute_group_sort',
+        'predicate_id',
+        'predicate__label',
+        'predicate__uri',
+        'predicate__data_type',
+        'sort',
+    ]
+
+    empty_pred_df_data = {
+        col:[] for col in (preds_cols + ['node_prefix'])
+    }
+    if assert_df is None:
+        # Return an empty preds_df
+        return pd.DataFrame(data=empty_pred_df_data)
+
+    if assert_df.empty or not set(preds_cols).issubset(set(assert_df.columns.tolist())):
+        # Return an empty preds_df
+        return pd.DataFrame(data=empty_pred_df_data)
+
     preds_df = assert_df[
-        [
-            'observation_id',
-            'observation__label',
-            'obs_sort',
-            'event_id',
-            'event__label',
-            'event_sort',
-            'attribute_group_id',
-            'attribute_group__label',
-            'attribute_group_sort',
-            'predicate_id',
-            'predicate__label',
-            'predicate__uri',
-            'predicate__data_type',
-            'sort',
-        ]
+        preds_cols
     ].groupby(
         by = [
             'observation_id',
@@ -1543,6 +1597,14 @@ def add_attribute_data_to_df(
     :param dict pred_data_type_cols: A dict keyed by predicate data type
         that identifies object columns.
     """
+
+    if assert_df is None:
+        # Nothing to do here, return df
+        return df
+
+    if assert_df.empty:
+        # Nothing to do here, return df
+        return df
 
     # Get a dataframe of all the predicates, sorted by
     # observation, event, attribute group, and finally by
@@ -1766,11 +1828,15 @@ def make_export_df(
     # a worker/que system.
 
     # Make the AllAssertion queryset based on filter arguments
-    # and optional exclusion critera.
+    # and optional exclusion criteria.
     assert_qs = get_assert_qs(filter_args, exclude_args=exclude_args)
 
     # Turn the AllAssertion queryset into a "tall" dataframe.
     assert_df = get_raw_assertion_df(assert_qs)
+
+    if assert_df is None or assert_df.empty:
+        # Return an empty dataframe.
+        return pd.DataFrame(data={})
 
     # Make the output dataframe, where there's a single row
     # for each "subject" of the assertions.

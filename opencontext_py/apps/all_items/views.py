@@ -1,7 +1,11 @@
 import json
 from django.conf import settings
+
+from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
+
+from django.db.models.functions import Length
 
 from django.template import loader
 from opencontext_py.libs.rootpath import RootPath
@@ -26,7 +30,8 @@ from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
 from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 
 from opencontext_py.apps.all_items.models import (
-    AllManifest
+    AllManifest,
+    AllIdentifier,
 )
 
 from opencontext_py.apps.web_metadata.social import make_social_media_metadata
@@ -57,6 +62,76 @@ def evaluate_update_id(uuid):
     if item_obj:
         return item_obj.uuid, True
     return None, False
+
+
+def get_suffix_backoff_suggest_obj(unmatched_id):
+    """Get a manifest object for a suggested (semantic) parent
+    resource to provide a more informative 404 error.
+    """
+    suggest_obj = None
+    if not unmatched_id:
+        return None
+    unmatched_id = str(unmatched_id)
+    id_suffix = ''
+    root_suggest_obj = None
+    if '/' in unmatched_id:
+        split_id = unmatched_id.split('/')
+        check_id = split_id[0].strip()
+        id_suffix = split_id[-1].strip()
+        print(f'check_id: {check_id}  id_suffix: {id_suffix}')
+        root_suggest_obj = get_man_obj_by_any_id(check_id)
+    if not root_suggest_obj:
+        return None
+    if root_suggest_obj.item_type != 'projects':
+        # we have suggested object, but it is not a project.
+        return root_suggest_obj
+    # Make a big OR search for ID strings that start with the
+    # ID suffix and are used for items in the root_suggest_obj
+    # project
+    proj_ark_id_qs = AllIdentifier.objects.filter(
+        item=root_suggest_obj,
+        scheme='ark',
+    )
+    query_ids = []
+    for proj_ark_id_obj in proj_ark_id_qs:
+        for i in range(1, len(id_suffix) + 1):
+            act_suffix = id_suffix[:i]
+            id_start = f'{proj_ark_id_obj.id}/{act_suffix}'
+            query_ids.append(id_start)
+    # Do the query, looking up ARKs for items in this project
+    # where the id_suffix from the request may start with characters
+    # that match a known ARK id.
+    id_obj = AllIdentifier.objects.filter(
+        item__project=root_suggest_obj,
+        scheme='ark',
+    ).filter(
+        id__in=query_ids,
+    ).annotate(
+        id_len=Length('id')
+    ).order_by(
+        '-id_len'
+    ).first()
+    if not id_obj:
+        return None
+    return id_obj.item
+
+
+def get_suffix_backoff_suggest_message(unmatched_id):
+    """Get string suggestion message for a suggested (semantic) parent
+    resource to provide a more informative 404 error.
+    """
+    suggest_obj = get_suffix_backoff_suggest_obj(unmatched_id)
+    if not suggest_obj:
+        return None
+    message = 'The resource you requested could not be found. However, the '
+    if suggest_obj.item_type == 'projects':
+        message += 'Open Context project '
+    else:
+        message += 'resource '
+    message += f'<strong><em>"<a href="https://{suggest_obj.uri}">{suggest_obj.label}</a>"</em></strong> '
+    message += 'likely provides related information that may help you find what you need.'
+    # print(f'Message for 404: {message}')
+    return message
 
 
 @never_cache
@@ -184,6 +259,9 @@ def all_items_html(
     else:
         ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'all-items', ok_uuid, extension='')
@@ -291,6 +369,9 @@ def subjects_html(request, uuid):
     """HTML Subjects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'subjects', ok_uuid, extension='')
@@ -311,6 +392,9 @@ def media_html(request, uuid):
     """HTML Media Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'media', ok_uuid, extension='')
@@ -320,6 +404,9 @@ def media_full_html(request, uuid):
     """HTML Media full Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         ok_uuid = str(ok_uuid)
@@ -346,6 +433,9 @@ def documents_html(request, uuid):
     """HTML Documents Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'documents', ok_uuid, extension='')
@@ -365,6 +455,9 @@ def projects_html(request, uuid):
     """HTML Projects Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'projects', ok_uuid, extension='')
@@ -384,6 +477,9 @@ def persons_html(request, uuid):
     """HTML Persons Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'persons', ok_uuid, extension='')
@@ -403,6 +499,9 @@ def predicates_html(request, uuid):
     """HTML Predicates Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'predicates', ok_uuid, extension='')
@@ -422,6 +521,9 @@ def types_html(request, uuid):
     """HTML Types Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'types', ok_uuid, extension='')
@@ -441,6 +543,9 @@ def tables_html(request, uuid):
     """HTML Tables Item representation Open Context """
     ok_uuid, do_redirect = evaluate_update_id(uuid)
     if not ok_uuid:
+        message = get_suffix_backoff_suggest_message(unmatched_id=uuid)
+        if message:
+            messages.error(request, message)
         raise Http404
     if do_redirect:
         return make_redirect_url(request, 'tables', ok_uuid, extension='')

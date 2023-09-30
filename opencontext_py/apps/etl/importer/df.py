@@ -83,6 +83,8 @@ def db_make_dataframe_from_etl_data_source(
         data[f'{df_field.field_num}_col'] = []
 
     df = pd.DataFrame(data=data)
+    for col in df.columns.tolist():
+        df[col] = df[col].astype("string")
 
     # Get the queryset of records for this data source.
     ds_recs_qs = DataSourceRecord.objects.filter(data_source=ds_source)

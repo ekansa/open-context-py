@@ -15,11 +15,23 @@
 
                     <div class="jumbotron" id="overview">
                         <div class="container-fluid">
-                            <div class="row">
+                            <div class="row justify-content-md-center">
                                 <div class="col-sm-12">
                                     <h1 class="text-center">Resource Not Found Error (404)</h1>
                                 </div>
                             </div>
+
+                            {% if messages %}
+                            {% for message in messages %}
+                            <div class="row justify-content-md-center">
+                                <div class="col-sm-8">
+                                    <p class="lead">
+                                    {{ message|safe }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
 
                             <div class="row">
                                 <div class="col-sm-2"> </div>
