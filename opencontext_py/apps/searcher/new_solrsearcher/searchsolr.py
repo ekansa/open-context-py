@@ -55,8 +55,9 @@ class SearchSolr():
             # Connect to the default solr server
             self.solr = SolrClient().solr
 
-    def add_initial_facet_fields(self, request_dict):
-        """Adds to initial facet field list based on request_dict"""
+
+    def _check_add_projects_facet(self, request_dict):
+        """Checks to see if we should add the projects facet query"""
         add_projects_facet = False
         if request_dict.get('path', ''):
             add_projects_facet = True
@@ -73,6 +74,14 @@ class SearchSolr():
         if SolrDoc.ROOT_PROJECT_SOLR in self.init_facet_fields:
             # No need to add it again!
             add_projects_facet = False
+        return add_projects_facet
+
+
+    def add_initial_facet_fields(self, request_dict):
+        """Adds to initial facet field list based on request_dict"""
+        add_projects_facet = self._check_add_projects_facet(
+            request_dict
+        )
         if add_projects_facet:
             self.init_facet_fields.append(
                 SolrDoc.ROOT_PROJECT_SOLR
@@ -81,6 +90,60 @@ class SearchSolr():
             self.init_facet_fields.append(
                 SolrDoc.ROOT_PREDICATE_SOLR
             )
+
+    def _remove_unwanted_facet_query(self, request_dict, query):
+        """Removes unwanted (expensive, time consuming)
+        facet queries
+        """
+        add_projects_facet = self._check_add_projects_facet(
+            request_dict
+        )
+        if add_projects_facet:
+            # Don't change anything, the request specifically
+            # needs a projects facet
+            return query
+        raw_client_responses = utilities.get_request_param_value(
+            request_dict,
+            param='response',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if not raw_client_responses:
+            # Don't change anything, the client hasn't specified
+            # response types
+            return query
+
+        # The client specified some response types, which can be
+        # comma seperated for multiple responses. We don't validate
+        # these because if we don't recognize a client specified
+        # response type, nothing will happen.
+        if ',' in raw_client_responses:
+            act_responses = raw_client_responses.split(',')
+        else:
+            act_responses = [raw_client_responses]
+        # Now check to see if the set of client requested response
+        # types includes response types that require facet queries
+        if set(act_responses).intersection(
+            set(configs.RESPONSE_TYPES_WITH_FACET_QUERIES)):
+            # The client asked for a response type that requires
+            # facet queries, so do NOT remove them from the query dict
+            return query
+        # OK now remove the facet related keys
+        print('Ask Solr to skip facet counts')
+        facet_keys = [
+            'facet.field',
+            'facet.pivot',
+        ]
+        for key in facet_keys:
+            if key not in query:
+                continue
+            # Remove this key
+            query.pop(key)
+        # Explicitly ask solr to NOT do faceting
+        query['facet'] = 'false'
+        return query
+
 
     def _associate_facet_field_with_client_request(
         self,
@@ -622,6 +685,10 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
+
+        # Explicitly remove the facet query for client requested
+        # response types that don't need it.
+        query = self._remove_unwanted_facet_query(request_dict, query)
 
         return query
 

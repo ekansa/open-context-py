@@ -696,6 +696,15 @@ FILTER_PARAM_CONFIGS = {
 # Configs for the search/query response JSON
 # ---------------------------------------------------------------------
 
+# Below are response types that require facet queries
+RESPONSE_TYPES_WITH_FACET_QUERIES = [
+    'chrono-facet',
+    'prop-range',
+    'prop-facet',
+    'geo-facet',
+    'geo-project',
+]
+
 # The response to a search can include different types of search
 # results. Below lists the default types included unless otherwise
 # specified.
