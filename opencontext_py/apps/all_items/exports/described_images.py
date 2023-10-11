@@ -29,7 +29,14 @@ from opencontext_py.apps.all_items.exports.described_images import *
 filter_args = {'subject__item_class__slug__in': ARTIFACT_CLASS_SLUGS}
 df = get_describe_images_related_to_one_subject_df(filter_args=filter_args)
 
-
+import pandas as pd
+from opencontext_py.apps.all_items.exports.described_images import *
+path = '/home/ekansa/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
+save_path = '/home/ekansa/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
+df = pd.read_csv()
+df_main = df.copy()
+df_main = make_natural_language_caption_df_for_json_from_main_df(df_main)
+df_main.to_json(save_path, orient='records', indent=4)
 """
 
 
@@ -365,6 +372,7 @@ def make_time_range_str_col(df_main):
     )
     return df_main
 
+
 def make_df_for_json_from_main_df(df_main):
     """Makes a dataframe suitable for JSON expression, maybe for AI training
 
@@ -403,3 +411,135 @@ def make_df_for_json_from_main_df(df_main):
         label_col_renames[col] = new_col.replace(' ', '_').replace('-', '_').replace(',', '_')
     df.rename(columns=label_col_renames, inplace=True)
     return df
+
+
+def add_time_range_sentence_to_caption(df_main):
+    time_index = ~df_main['time_range'].isnull()
+    itself_index = (
+        df_main['item__chrono_source'].str.startswith('Given')
+        & time_index
+    )
+    inferred_index = (
+        df_main['item__chrono_source'].str.startswith('Inferred')
+        & time_index
+    )
+    df_main.loc[itself_index, 'caption'] = (
+        df_main[itself_index]['caption']
+        + 'This ' + df_main[itself_index]['subject__item_class__label'].str.lower()
+        + ' has characteristics suggesting it was made around '
+        + df_main[itself_index]['time_range']
+        + '. '
+    )
+    df_main.loc[inferred_index, 'caption'] = (
+        df_main[inferred_index]['caption']
+        + 'This ' + df_main[inferred_index]['subject__item_class__label'].str.lower()
+        + ' came from a context that likely dates to around '
+        + df_main[inferred_index]['time_range']
+        + ' so it was probably made around then or earlier. '
+    )
+    return df_main
+
+
+def add_cidoc_crm_sentences_to_caption(df_main):
+    type_col = 'Has type (Label) [https://erlangen-crm.org/current/P2_has_type]'
+    consists_col = 'Consists of (Label) [https://erlangen-crm.org/current/P45_consists_of]'
+    df_main[type_col] = df_main[type_col].astype(str)
+    df_main[consists_col] = df_main[consists_col].astype(str)
+    type_index = (
+        ~df_main[type_col].isnull() & (df_main[type_col] != 'nan')
+    )
+    consists_of_index = (
+        ~df_main[consists_col].isnull()  & (df_main[consists_col] != 'nan')
+    )
+    all_crm_index = (
+        type_index & consists_of_index
+    )
+    type_only_index = type_index & ~consists_of_index
+    consists_only_index = ~type_index & consists_of_index
+    df_main.loc[all_crm_index , 'caption'] = (
+        df_main[all_crm_index]['caption']
+        + 'The artifact has a general classification of ' + df_main[all_crm_index][type_col].str.lower()
+        + ' and mainly consists of '
+        + df_main[all_crm_index][consists_col].str.lower()
+        + '. '
+    )
+    df_main.loc[type_only_index , 'caption'] = (
+        df_main[type_only_index]['caption']
+        + 'The artifact has a general classification of ' + df_main[type_only_index][type_col].str.lower()
+        + '. '
+    )
+    df_main.loc[consists_only_index , 'caption'] = (
+        df_main[consists_only_index]['caption']
+        + 'The artifact mainly consists of ' + df_main[consists_only_index][consists_col].str.lower()
+        + '. '
+    )
+    return df_main
+
+
+def add_other_standard_sentences_to_caption(df_main):
+    origin_col = 'Origin place (Label) [https://gawd.atlantides.org/terms/origin]'
+    taxa_col = 'Has taxonomic identifier (Label) [https://purl.obolibrary.org/obo/FOODON_00001303]'
+    body_col = 'Has anatomical identification (Label) [https://opencontext.org/vocabularies/open-context-zooarch/has-anat-id]'
+    df_main[origin_col] = df_main[origin_col].astype(str)
+    df_main[taxa_col] = df_main[taxa_col].astype(str)
+    df_main[body_col] = df_main[body_col].astype(str)
+    origin_place_index = (
+        ~df_main[origin_col].isnull() & (df_main[origin_col] != 'nan')
+    )
+    taxa_body_index = (
+        ~df_main[taxa_col].isnull() 
+        & ~df_main[body_col].isnull()
+        & (df_main[taxa_col] != 'nan')
+        & (df_main[body_col] != 'nan')
+    )
+    df_main.loc[origin_place_index , 'caption'] = (
+        df_main[origin_place_index]['caption']
+        + 'The artifact was probably original made at ' + df_main[origin_place_index][origin_col]
+        + '. '
+    )
+    df_main.loc[taxa_body_index, 'caption'] = (
+        df_main[taxa_body_index]['caption']
+        + 'It has an anatomical identification as a ' + df_main[taxa_body_index][body_col].str.lower()
+        + ' of the taxa ' + df_main[taxa_body_index][taxa_col]
+        + '. '
+    )
+    return df_main
+
+
+def make_natural_language_caption_df_for_json_from_main_df(df_main):
+    """Makes a dataframe suitable for JSON expression, with more 'natural language' captioning
+    that may be better suited for AI training
+
+    :param dataframe df_main: A comprehensive, with lots of likely unwanted columns
+        dataframe of image objects with columns of
+        descriptions from the associated item_type subjects items
+
+    returns dataframe df
+    """
+    df_main = make_time_range_str_col(df_main)
+    df_main['media__uuid'] = df_main['media__uri'].str.replace('https://opencontext.org/media/', '')
+    df_main['caption'] = 'An image of an archaeological artifact found at ' + df_main['context___3']
+    df_main['caption'] = (
+        df_main['caption']
+        + ', a place in ' + df_main['context___2'] 
+        + ' which is more generally located in ' 
+        + df_main['context___1'] + '. '
+    )
+    # Add a sentence about dating.
+    df_main = add_time_range_sentence_to_caption(df_main)
+    # Add sentence(s) relating to CIDOC-CRM related information
+    df_main = add_cidoc_crm_sentences_to_caption(df_main)
+    # Add sentences(s) relating to other standards
+    df_main = add_other_standard_sentences_to_caption(df_main)
+    proj_index = ~df_main['project_specific_descriptions'].isnull()
+    df_main.loc[proj_index , 'caption'] = (
+        df_main[proj_index]['caption']
+        + 'Additional attributes that describe the artifact include: ' + df_main[proj_index]['project_specific_descriptions']
+    )
+    cols = [
+        'image_file__uri',
+        'media__uuid',
+        'media__uri',
+        'caption',
+    ]
+    return df_main[cols]
