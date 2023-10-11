@@ -31,9 +31,9 @@ df = get_describe_images_related_to_one_subject_df(filter_args=filter_args)
 
 import pandas as pd
 from opencontext_py.apps.all_items.exports.described_images import *
-path = '/home/ekansa/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
-save_path = '/home/ekansa/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
-df = pd.read_csv()
+path = '~/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
+save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
+df = pd.read_csv(path)
 df_main = df.copy()
 df_main = make_natural_language_caption_df_for_json_from_main_df(df_main)
 df_main.to_json(save_path, orient='records', indent=4)
