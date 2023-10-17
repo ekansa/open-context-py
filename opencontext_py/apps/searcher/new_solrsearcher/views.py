@@ -23,7 +23,7 @@ from opencontext_py.libs.queue_utilities import make_hash_id_from_args
 
 
 from django.views.decorators.cache import cache_control
-from django.utils.cache import patch_vary_headers
+from django.utils.cache import patch_vary_headers, get_cache_key
 from django.utils.http import urlencode
 
 
@@ -45,7 +45,8 @@ def make_json_response(request, req_neg, response_dict):
         )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
-
+    cache_key = get_cache_key(request)
+    print(f'Cache key: "{cache_key}" for "{request.path}"')
     response = HttpResponse(
         json_output,
         content_type=req_neg.use_response_type + "; charset=utf8"
@@ -119,6 +120,8 @@ def query_html(request, spatial_context=None):
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
 
+    cache_key = get_cache_key(request)
+    # print(f'Cache key: "{cache_key}" for "{request.path}"')
     rp = RootPath()
     # Disable the search template and just use vue with the JSON
     # API.
@@ -133,6 +136,7 @@ def query_html(request, spatial_context=None):
         'SORT_OPTIONS_FRONTEND': json.dumps(configs.SORT_OPTIONS_FRONTEND),
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),
+        'CACHE_KEY': cache_key,
     }
     template = loader.get_template('bootstrap_vue/search/search.html')
     response = HttpResponse(template.render(context, request))
