@@ -55,8 +55,14 @@ def make_project_geojson_features(
     rp = RootPath()
     base_url = rp.get_baseurl()
     project_slugs = [proj_dict.get('slug') for proj_dict in project_dicts]
-    proj_geo_qs = db_entities.get_proj_geo_by_slugs(project_slugs)
-    proj_desc_banner_qs = db_entities.get_project_desc_banner_qs(project_slugs=project_slugs)
+    proj_geo_qs = db_entities.get_proj_geo_by_slugs(
+        project_slugs,
+        reset_cache=reset_cache,
+    )
+    proj_desc_banner_qs = db_entities.get_project_desc_banner_qs(
+        project_slugs=project_slugs,
+        reset_cache=reset_cache,
+    )
     features = []
     for proj_dict in project_dicts:
         description, banner_url = db_entities.get_desc_and_banner_url_by_slug(
