@@ -45,7 +45,8 @@ def make_json_response(request, req_neg, response_dict):
         )
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
-    cache_key = get_cache_key(request)
+    cache = caches['default']
+    cache_key = get_cache_key(request, cache=cache)
     print(f'Cache key: "{cache_key}" for "{request.path}"')
     response = HttpResponse(
         json_output,
@@ -120,7 +121,8 @@ def query_html(request, spatial_context=None):
     if req_neg.use_response_type.endswith('json'):
         return make_json_response(request, req_neg, response_dict)
 
-    cache_key = get_cache_key(request)
+    cache = caches['default']
+    cache_key = get_cache_key(request, cache=cache)
     # print(f'Cache key: "{cache_key}" for "{request.path}"')
     rp = RootPath()
     # Disable the search template and just use vue with the JSON
@@ -184,8 +186,14 @@ def suggest_json(request):
 def projects_geojson(request):
     """Makes a geojson response for mapping all projects"""
     request_dict = {'path': None, 'project-map': True}
+    reset_cache = False
+    if request.GET.get('reset_cache'):
+        request_dict['reset_cache'] = True
     result_json = main_search.process_solr_query(request_dict)
-    proj_geojson = project_index_summary.make_map_project_geojson(result_json)
+    proj_geojson = project_index_summary.make_map_project_geojson(
+        result_json=result_json,
+        reset_cache=reset_cache,
+    )
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = ['application/json']
     request.content_type = req_neg.use_response_type

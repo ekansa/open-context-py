@@ -41,6 +41,7 @@ def get_project_facet_options(result_json):
 
 def make_project_geojson_features(
     result_json,
+    reset_cache=False,
 ):
     """Adds project image overlay JSON
 
@@ -96,6 +97,7 @@ def make_project_geojson_features(
 
 def make_map_project_geojson(
     result_json,
+    reset_cache=False,
 ):
     """Adds project image overlay JSON
 
@@ -111,5 +113,8 @@ def make_map_project_geojson(
     }
     geo_json['id'] = f'{base_url}/map-projects.json'
     geo_json['type'] = 'FeatureCollection'
-    geo_json['features'] = make_project_geojson_features(result_json)
+    geo_json['features'] = make_project_geojson_features(
+        result_json=result_json,
+        reset_cache=reset_cache,
+    )
     return geo_json
