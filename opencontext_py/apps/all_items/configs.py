@@ -400,6 +400,7 @@ LINKED_DATA_URI_PREFIX_TO_SLUGS = {
     'gbif.org/species': 'gbif',
     'foodon.org/': 'foodon',
     'purl.obolibrary.org/obo/FOODON_': 'obo-foodon',
+    'resource.manto.unh.edu': 'manto',
 }
 
 
