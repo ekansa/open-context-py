@@ -8,7 +8,7 @@ and to make the data published by Open Context easier to maintain.
 
 Installation and Deployment
 ===========================
-See the [docs](https://github.com/ekansa/open-context-py/tree/master/docs).
+See the docker deployment repo here: https://github.com/opencontext/oc-docker
 
 Licensing:
 ==================
