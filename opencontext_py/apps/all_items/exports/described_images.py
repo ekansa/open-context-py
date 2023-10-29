@@ -440,7 +440,7 @@ def add_time_range_sentence_to_caption(df_main):
     return df_main
 
 
-def add_cidoc_crm_sentences_to_caption(df_main):
+def add_cidoc_crm_sentences_to_caption(df_main, require_type=True):
     type_col = 'Has type (Label) [https://erlangen-crm.org/current/P2_has_type]'
     consists_col = 'Consists of (Label) [https://erlangen-crm.org/current/P45_consists_of]'
     df_main[type_col] = df_main[type_col].astype(str)
@@ -448,6 +448,9 @@ def add_cidoc_crm_sentences_to_caption(df_main):
     type_index = (
         ~df_main[type_col].isnull() & (df_main[type_col] != 'nan')
     )
+    if require_type:
+        # Make sure the dataset has a type
+        df_main = df_main[type_index].copy()
     consists_of_index = (
         ~df_main[consists_col].isnull()  & (df_main[consists_col] != 'nan')
     )
@@ -487,7 +490,7 @@ def add_other_standard_sentences_to_caption(df_main):
         ~df_main[origin_col].isnull() & (df_main[origin_col] != 'nan')
     )
     taxa_body_index = (
-        ~df_main[taxa_col].isnull() 
+        ~df_main[taxa_col].isnull()
         & ~df_main[body_col].isnull()
         & (df_main[taxa_col] != 'nan')
         & (df_main[body_col] != 'nan')
@@ -519,11 +522,20 @@ def make_natural_language_caption_df_for_json_from_main_df(df_main):
     df_main = make_time_range_str_col(df_main)
     df_main['media__uuid'] = df_main['media__uri'].str.replace('https://opencontext.org/media/', '')
     df_main['caption'] = 'An image of an archaeological artifact found at ' + df_main['context___3']
-    df_main['caption'] = (
-        df_main['caption']
-        + ', a place in ' + df_main['context___2'] 
-        + ' which is more generally located in ' 
-        + df_main['context___1'] + '. '
+    off_world_index = df_main['context___1'] == 'Off World'
+    # For materials on earth
+    df_main.loc[~off_world_index, 'caption'] = (
+        df_main[~off_world_index]['caption']
+        + ', a place in ' + df_main['context___2']
+        + ', within the '
+        + df_main[~off_world_index]['context___1'] + ' world region. '
+    )
+    # Off world
+    df_main.loc[off_world_index, 'caption'] = (
+        df_main[off_world_index]['caption']
+        + ', located at ' + df_main['context___2']
+        + ', which is '
+        + df_main[off_world_index]['context___1'] + ' (in outer space). '
     )
     # Add a sentence about dating.
     df_main = add_time_range_sentence_to_caption(df_main)
@@ -534,7 +546,7 @@ def make_natural_language_caption_df_for_json_from_main_df(df_main):
     proj_index = ~df_main['project_specific_descriptions'].isnull()
     df_main.loc[proj_index , 'caption'] = (
         df_main[proj_index]['caption']
-        + 'Additional attributes that describe the artifact include: ' + df_main[proj_index]['project_specific_descriptions']
+        + 'Additional descriptions for the artifact include: ' + df_main[proj_index]['project_specific_descriptions']
     )
     cols = [
         'image_file__uri',
