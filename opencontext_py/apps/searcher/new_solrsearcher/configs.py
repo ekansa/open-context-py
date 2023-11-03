@@ -47,6 +47,10 @@ ROOT_EVENT_CLASS = SolrDoc.ALL_EVENTS_SOLR
 # ---------------------------------------------------------------------
 SOLR_DEFAULT_ROW_COUNT = 50
 SOLR_MAX_RESULT_ROW_COUNT = 10000
+# This is the threshold for shifting to a cursor to iterate through result
+# sets. At this number and above, a cursor should be used for paging.
+SOLR_RESULT_COUNT_CURSOR_THRESHOLD = 200000
+
 
 DEFAULT_FACET_FIELDS = [
     SolrDoc.ROOT_CONTEXT_SOLR,
@@ -410,7 +414,7 @@ RELATED_ENTITY_ID_PREFIX = SolrDoc.RELATED_SOLR_DOC_PREFIX.replace('_', '-')
 # Configs for making solr result sorting
 # ---------------------------------------------------------------------
 
-SOLR_SORT_DEFAULT = 'interest_score desc'
+SOLR_SORT_DEFAULT = 'interest_score desc, uuid asc'
 
 SORT_NEW_URL_IGNORE_PARAMS = [
     'geodeep',

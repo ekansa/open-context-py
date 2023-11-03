@@ -111,6 +111,17 @@ class SortingOptions():
             # Only append this if we're not already sorting by items
             sole_sort_list.append('sort_score asc')
             sole_sort_list.append('slug_type_uri_label asc')
+        # Add a UUID sort to the sorting list, since this is required by
+        # the solr cursor, and it can be a fine default LAST sort criteria
+        add_uuid_sort = True
+        for sort_item in sole_sort_list:
+            if 'uuid' in sort_item:
+                # we found a UUID sorting item, no need to add it.
+                add_uuid_sort = False
+        if add_uuid_sort:
+            # Add the uuid sorting to the list, since we'll ALWAYS want it
+            # and we NEED it when using the cursor.
+            sole_sort_list.append('uuid asc')
         solr_sort = ', '.join(sole_sort_list)
         return solr_sort
 

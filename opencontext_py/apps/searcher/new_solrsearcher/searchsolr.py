@@ -278,6 +278,27 @@ class SearchSolr():
                 start_pos = 0
             query['start'] = start_pos
 
+        # ------------------------------------------------------------
+        # The cursorMark param cannot be used with the start param
+        # start must be absent or start=0 to allow a cursorMark.
+        # ------------------------------------------------------------
+        if query.get('start', 0) == 0:
+            # We can set a curser param.
+            cursor_val = utilities.get_request_param_value(
+                request_dict,
+                param='cursorMark',
+                default='*',
+                as_list=False,
+                solr_escape=False,
+            )
+            query['cursorMark'] = cursor_val
+
+        if query.get('cursorMark', '*') != '*':
+            # We have a non-default cursor mark specified, so do
+            # NOT pass on a start parameter. We can use only one or the
+            # other.
+            query.pop('start')
+
         rows = utilities.get_request_param_value(
             request_dict,
             param='rows',

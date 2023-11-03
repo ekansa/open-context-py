@@ -61,6 +61,7 @@ class ResultMaker():
         self.total_found = None
         self.start = None
         self.rows = None
+        self.cursor = None # for iterating through large results
         self.min_date = None
         self.max_date = None
         self.sitemap_facets = False
@@ -360,6 +361,29 @@ class ResultMaker():
         return urls
 
 
+    def add_cursor_json(self, solr_json):
+        """ Adds JSON for paging through results using a cursor """
+        self.result['totalResults'] = self.total_found
+        self.result['itemsPerPage'] = self.rows
+        # start off with a the request dict, then
+        # remove 'start' and 'rows' parameters
+        act_request_dict = copy.deepcopy(self.request_dict)
+        if 'start' in act_request_dict:
+            act_request_dict.pop('start', None)
+        if 'rows' in act_request_dict:
+            act_request_dict.pop('rows', None)
+
+        sl = SearchLinks(
+            request_dict=act_request_dict,
+            base_search_url=self.base_search_url
+        )
+        sl.add_param_value('rows', str(self.rows))
+        sl.add_param_value('cursorMark', solr_json.get('nextCursorMark', '*'))
+        urls = sl.make_urls_from_request_dict()
+        self.result['next'] = urls['html']
+        self.result['next-json'] = urls['json']
+
+
     def add_paging_json(self, solr_json):
         """ Adds JSON for paging through results """
 
@@ -369,6 +393,11 @@ class ResultMaker():
             or self.start is None
             or self.rows is None):
             return None
+
+        if self.request_dict.get('cursorMark'):
+            # We haven't specified a start index, but we do have enough
+            # results where a cursor is a REALLY GOOD IDEA.
+            return self.add_cursor_json(solr_json)
 
         self.result['totalResults'] = self.total_found
         self.result['startIndex'] = self.start
