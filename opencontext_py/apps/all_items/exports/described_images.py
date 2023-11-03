@@ -26,11 +26,15 @@ from opencontext_py.libs.models import (
 """
 # Test
 from opencontext_py.apps.all_items.exports.described_images import *
+path = '~/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
 filter_args = {'subject__item_class__slug__in': ARTIFACT_CLASS_SLUGS}
 df = get_describe_images_related_to_one_subject_df(filter_args=filter_args)
+df.to_csv(path, index=False)
 
 import pandas as pd
 from opencontext_py.apps.all_items.exports.described_images import *
+
+
 path = '~/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
 save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
 df = pd.read_csv(path)
@@ -72,6 +76,10 @@ def get_images_related_to_subjects_qs(
         subject__item_type='subjects',
         object__item_type='media',
         object__item_class_id=configs.CLASS_OC_IMAGE_MEDIA,
+    ).exclude(
+        subject__meta_json__has_key='flag_human_remains'
+    ).exclude(
+        object__meta_json__has_key='flag_human_remains'
     ).annotate(
         image_file__uri=Subquery(image_qs)
     ).select_related(
@@ -195,7 +203,7 @@ def consolidate_oc_predicate_cols(df, all_col='project_specific_descriptions'):
             + ': '
             + df[col_index][col]
         )
-        col_val_delim = ' \n '
+        col_val_delim = ' '
         print(f'Consolidated {len(df[col_index].index)} values from {col}')
     df.drop(columns=oc_cols, inplace=True)
     df[all_col] = df[all_col].str.strip()
@@ -426,16 +434,16 @@ def add_time_range_sentence_to_caption(df_main):
     df_main.loc[itself_index, 'caption'] = (
         df_main[itself_index]['caption']
         + 'This ' + df_main[itself_index]['subject__item_class__label'].str.lower()
-        + ' has characteristics suggesting it was made around '
+        + ' looks like it was made around '
         + df_main[itself_index]['time_range']
         + '. '
     )
     df_main.loc[inferred_index, 'caption'] = (
         df_main[inferred_index]['caption']
         + 'This ' + df_main[inferred_index]['subject__item_class__label'].str.lower()
-        + ' came from a context that likely dates to around '
+        + ' came from a context dating to around '
         + df_main[inferred_index]['time_range']
-        + ' so it was probably made around then or earlier. '
+        + ' so it was probably made then or earlier. '
     )
     return df_main
 
@@ -461,14 +469,14 @@ def add_cidoc_crm_sentences_to_caption(df_main, require_type=True):
     consists_only_index = ~type_index & consists_of_index
     df_main.loc[all_crm_index , 'caption'] = (
         df_main[all_crm_index]['caption']
-        + 'The artifact has a general classification of ' + df_main[all_crm_index][type_col].str.lower()
+        + 'It has a general classification of ' + df_main[all_crm_index][type_col].str.lower()
         + ' and mainly consists of '
         + df_main[all_crm_index][consists_col].str.lower()
         + '. '
     )
     df_main.loc[type_only_index , 'caption'] = (
         df_main[type_only_index]['caption']
-        + 'The artifact has a general classification of ' + df_main[type_only_index][type_col].str.lower()
+        + 'It has a general classification of ' + df_main[type_only_index][type_col].str.lower()
         + '. '
     )
     df_main.loc[consists_only_index , 'caption'] = (
@@ -497,12 +505,12 @@ def add_other_standard_sentences_to_caption(df_main):
     )
     df_main.loc[origin_place_index , 'caption'] = (
         df_main[origin_place_index]['caption']
-        + 'The artifact was probably original made at ' + df_main[origin_place_index][origin_col]
+        + 'The artifact was originally made at ' + df_main[origin_place_index][origin_col]
         + '. '
     )
     df_main.loc[taxa_body_index, 'caption'] = (
         df_main[taxa_body_index]['caption']
-        + 'It has an anatomical identification as a ' + df_main[taxa_body_index][body_col].str.lower()
+        + 'The anatomical identification is a ' + df_main[taxa_body_index][body_col].str.lower()
         + ' of the taxa ' + df_main[taxa_body_index][taxa_col]
         + '. '
     )
@@ -546,7 +554,7 @@ def make_natural_language_caption_df_for_json_from_main_df(df_main):
     proj_index = ~df_main['project_specific_descriptions'].isnull()
     df_main.loc[proj_index , 'caption'] = (
         df_main[proj_index]['caption']
-        + 'Additional descriptions for the artifact include: ' + df_main[proj_index]['project_specific_descriptions']
+        + 'More descriptions include: ' + df_main[proj_index]['project_specific_descriptions']
     )
     cols = [
         'image_file__uri',
