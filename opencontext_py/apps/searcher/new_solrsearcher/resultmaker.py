@@ -372,6 +372,8 @@ class ResultMaker():
             act_request_dict.pop('start', None)
         if 'rows' in act_request_dict:
             act_request_dict.pop('rows', None)
+        if 'cursorMark' in act_request_dict:
+            act_request_dict.pop('cursorMark', None)
 
         sl = SearchLinks(
             request_dict=act_request_dict,
