@@ -297,7 +297,7 @@ class SearchSolr():
             # We have a non-default cursor mark specified, so do
             # NOT pass on a start parameter. We can use only one or the
             # other.
-            query.pop('start')
+            query.pop('start', None)
 
         rows = utilities.get_request_param_value(
             request_dict,

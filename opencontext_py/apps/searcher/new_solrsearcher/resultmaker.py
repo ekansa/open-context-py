@@ -318,26 +318,23 @@ class ResultMaker():
             ['response', 'numFound'],
             solr_json
         )
+        if total_found is not None:
+            self.total_found = int(float(total_found))
 
         # Start and rows comes from the responseHeader
         start = utilities.get_dict_path_value(
             ['responseHeader', 'params', 'start'],
             solr_json
         )
+        if start is not None:
+            self.start = int(float(start))
+
         rows = utilities.get_dict_path_value(
             ['responseHeader', 'params', 'rows'],
             solr_json
         )
-        if (total_found is None
-            or start is None
-            or rows is None):
-            return None
-
-        # Add number found, start index, paging
-        # information about this search result.
-        self.total_found = int(float(total_found))
-        self.start = int(float(start))
-        self.rows = int(float(rows))
+        if rows is not None:
+            self.rows = int(float(rows))
 
 
 
@@ -391,15 +388,16 @@ class ResultMaker():
 
         self.set_total_start_rows_attributes(solr_json)
 
+        if self.total_found and self.request_dict.get('cursorMark'):
+            # We haven't specified a start index, but we do have enough
+            # results where a cursor is a REALLY GOOD IDEA.
+            print(f"Current cursor mark: {self.request_dict.get('cursorMark')}")
+            return self.add_cursor_json(solr_json)
+
         if (self.total_found is None
             or self.start is None
             or self.rows is None):
             return None
-
-        if self.request_dict.get('cursorMark'):
-            # We haven't specified a start index, but we do have enough
-            # results where a cursor is a REALLY GOOD IDEA.
-            return self.add_cursor_json(solr_json)
 
         self.result['totalResults'] = self.total_found
         self.result['startIndex'] = self.start
@@ -735,9 +733,7 @@ class ResultMaker():
         """Adds result record attribute metadata dicts to the result"""
         self.set_total_start_rows_attributes(solr_json)
 
-        if (self.total_found is None
-            or self.start is None
-            or self.rows is None):
+        if self.total_found is None:
             return None
 
         r_recs = ResultRecords(
@@ -766,9 +762,7 @@ class ResultMaker():
         """Adds result record geojson features to the result"""
         self.set_total_start_rows_attributes(solr_json)
 
-        if (self.total_found is None
-            or self.start is None
-            or self.rows is None):
+        if self.total_found is None:
             return None
 
         r_recs = ResultRecords(

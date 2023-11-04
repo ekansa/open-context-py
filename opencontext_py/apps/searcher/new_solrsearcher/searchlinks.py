@@ -29,10 +29,10 @@ class SearchLinks():
         self.base_search_url = base_search_url
         self.request_dict = copy.deepcopy(request_dict)
         self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
-    
-    
+
+
     def remove_non_query_params(
-        self, 
+        self,
         remove_params=configs.QUERY_NEW_URL_IGNORE_PARAMS
     ):
         """Removes params that are not relevant to query filters"""
@@ -55,7 +55,7 @@ class SearchLinks():
             url = self.base_url + self.base_search_url
         else:
             url = base_request_url
-    
+
         if request_dict is None:
             request_dict = self.request_dict
 
@@ -64,7 +64,7 @@ class SearchLinks():
             url += path.replace(' ', '+')
         if doc_extention:
             url += doc_extention
-        
+
         # Prepare the query parameters.
         param_list = []
         for param, param_vals in request_dict.items():
@@ -113,14 +113,14 @@ class SearchLinks():
     ):
         """Adds to the new request object a parameter and value """
         if param is None or new_value is None:
-            return None     
+            return None
         if not self.request_dict:
             self.request_dict = {}
         if add_to_value is None or not param in self.request_dict:
             self.request_dict[param] = new_value
             return self.request_dict
         exist_param_values = utilities.get_request_param_value(
-            request_dict=self.request_dict, 
+            request_dict=self.request_dict,
             param=param,
             default=None,
             as_list=True,
@@ -131,10 +131,10 @@ class SearchLinks():
             if exist_param_value.endswith(add_to_value):
                 new_param_values.append(new_value)
                 continue
-            new_param_values.append(exist_param_value) 
+            new_param_values.append(exist_param_value)
         self.request_dict[param] = new_param_values
         return self.request_dict
-    
+
 
     def replace_param_value(
         self,
@@ -160,14 +160,14 @@ class SearchLinks():
         if match_old_value is None and new_value is None:
             self.request_dict.pop(param, None)
             return self.request_dict
-        if (not add_to_param_list 
-            and match_old_value is None 
+        if (not add_to_param_list
+            and match_old_value is None
             and new_value is not None):
             # Replace the entire param with the new value.
             self.request_dict[param] = new_value
             return self.request_dict
-        if (add_to_param_list 
-            and match_old_value is None 
+        if (add_to_param_list
+            and match_old_value is None
             and new_value is not None):
             # Add to the list of existing values for this
             # parameter.
@@ -179,7 +179,7 @@ class SearchLinks():
             self.request_dict[param] = all_param_vals
             return self.request_dict
         exist_param_values = utilities.get_request_param_value(
-            request_dict=self.request_dict, 
+            request_dict=self.request_dict,
             param=param,
             default=None,
             as_list=True,
@@ -188,7 +188,7 @@ class SearchLinks():
         new_param_values = []
         for exist_param_value in exist_param_values:
             hierarchy_old_suffix = (
-                configs.REQUEST_PROP_HIERARCHY_DELIM 
+                configs.REQUEST_PROP_HIERARCHY_DELIM
                 + str(match_old_value)
             )
             if exist_param_value == match_old_value:
@@ -198,7 +198,7 @@ class SearchLinks():
                     # the old value.
                     new_param_values.append(new_value)
                 continue
-            elif exist_param_value.endswith(hierarchy_old_suffix): 
+            elif exist_param_value.endswith(hierarchy_old_suffix):
                 # Case of replacing a ---old_value
                 # with ---new_value
 
@@ -209,13 +209,13 @@ class SearchLinks():
                     # Add the new_value to replace the old
                     # hierarchy ending
                     replace_val += (
-                        configs.REQUEST_PROP_HIERARCHY_DELIM 
+                        configs.REQUEST_PROP_HIERARCHY_DELIM
                         + str(new_value)
                     )
                 new_param_values.append(replace_val)
             else:
                 # No change, this value was not getting
                 # modified.
-                new_param_values.append(exist_param_value) 
+                new_param_values.append(exist_param_value)
         self.request_dict[param] = new_param_values
         return self.request_dict
