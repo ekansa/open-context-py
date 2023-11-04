@@ -428,7 +428,7 @@ def db_get_proj_geo_qs_by_slugs(slugs):
     return act_qs
 
 
-def get_proj_geo_by_slugs(slugs, use_cache=True):
+def get_proj_geo_by_slugs(slugs, use_cache=True, reset_cache=False,):
     """Gets a project geo information objects by their slugs"""
     slugs.sort()
     if not use_cache:
@@ -439,6 +439,8 @@ def get_proj_geo_by_slugs(slugs, use_cache=True):
     hash_obj.update(slug_str.encode('utf-8'))
     cache_key = f'{settings.CACHE_PREFIX_PROJ_META}geo_{str(hash_obj.hexdigest())}'
     cache = caches['redis_search']
+    if reset_cache:
+        cache.delete(cache_key)
     act_qs = cache.get(cache_key)
     if act_qs is not None:
         # We've already cached this, so returned the cached list
@@ -524,6 +526,7 @@ def get_project_desc_banner_qs(
     project_slugs=None,
     use_cache=True,
     all_projects=False,
+    reset_cache=False,
 ):
     """Get get a project (image) banners via the cache"""
     if not project_slugs and projects:
@@ -548,6 +551,8 @@ def get_project_desc_banner_qs(
     hash_obj.update(path_item_str.encode('utf-8'))
     cache_key = f'{settings.CACHE_PREFIX_PROJ_META}hero_{str(hash_obj.hexdigest())}'
     cache = caches['redis_search']
+    if reset_cache:
+        cache.delete(cache_key)
     proj_desc_banner_qs = cache.get(cache_key)
     if proj_desc_banner_qs is not None:
         # We've already cached this, so returned the cached queryset

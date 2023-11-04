@@ -358,6 +358,33 @@ def validate_uri(raw_uri, filter_args=None, exclude_uuid=None):
     return report
 
 
+def validate_published(published_val):
+    errors = []
+    if published_val is None:
+        return {
+            'is_valid': True,
+            'published': published_val,
+            'errors': errors,
+        }
+    validated_value = validate_transform_data_type_value(
+        raw_str_value=str(published_val),
+        data_type='xsd:date',
+    )
+    if validated_value is None:
+        errors.append(f'Published needs to be parsable as datetime, "{published_val}" does not work.')
+        return {
+            'is_valid': False,
+            'published': published_val,
+            'errors': errors,
+        }
+    # The happy scenario that is valid.
+    return {
+        'is_valid': True,
+        'published': published_val,
+        'errors': errors,
+    }
+
+
 def validate_meta_json_key_val(key, val):
     errors = []
     report = {
@@ -401,6 +428,7 @@ def validate_manifest_dict(manifest_dict):
         ('uuid', validate_uuid,),
         ('item_key', validate_item_key,),
         ('uri', validate_uri,),
+        ('published', validate_published,),
         ('meta_json__short_id', validate_project_short_id,),
     ]
     errors = []
@@ -500,6 +528,12 @@ def api_validate_manifest_attributes(request_dict, value_delim=editorial_api.MUL
         return validate_uri(
             uri,
             exclude_uuid=request_dict.get('uuid')
+        )
+
+    if request_dict.get('published'):
+        published_val = request_dict.get('published')
+        return validate_published(
+            published_val,
         )
 
     if request_dict.get('meta_json_key'):

@@ -51,6 +51,7 @@ MANIFEST_ATTRIBUTES_UPDATE_CONFIG = [
     ('publisher_id', 'Changed item publisher',),
     ('item_key', 'Changed item key identifier',),
     ('source_id', 'Changed item data source id',),
+    ('published', 'Changed item publication date',),
     ('meta_json', 'Changed item administrative metadata',),
 ]
 

@@ -5,6 +5,7 @@ import re
 import shutil
 import numpy as np
 import pandas as pd
+import rawpy
 from unidecode import unidecode
 
 from PIL import Image, ImageFile
@@ -408,12 +409,27 @@ def get_image_obj(src_file, new_file):
     if not os.path.exists(src_file):
         raise RuntimeError('Cannot find ' + src_file)
     ImageFile.LOAD_TRUNCATED_IMAGES = True
+    if src_file.lower().endswith('.nef'):
+        print('Special loading process for a .nef file')
+        try:
+            raw = rawpy.imread(src_file)
+            rgb = raw.postprocess()
+            im = Image.fromarray(rgb)
+        except Exception as e:
+            print(e)
+            print('Cannot load .nef image: ' + src_file)
+            im = None
+        return im, False
     try:
         im = Image.open(src_file)
         im.LOAD_TRUNCATED_IMAGES = True
     except:
         print('Cannot use as image: ' + src_file)
         im = None
+    if im.format_description == 'Adobe TIFF':
+        selected_layer = 0
+        im.seek(selected_layer)
+        png = False
     if im is None:
         return None, None
     return im, png
@@ -450,7 +466,7 @@ def make_new_size_file(src_file, new_file, new_width):
         # Make new files a jpg, unless it's a png.
         new_file = replace_extension(new_file, new_extension='jpg')
     if png:
-        im.thumbnail(size, Image.ANTIALIAS)
+        im.thumbnail(size, Image.LANCZOS)
         background = Image.new("RGB", im.size, (255, 255, 255))
         ok = None
         try:
@@ -459,7 +475,8 @@ def make_new_size_file(src_file, new_file, new_width):
             output = new_file
             ok = True
             del background
-        except:
+        except Exception as e:
+            print(e)
             ok = False
         if not ok:
             new_file = replace_extension(new_file, new_extension='jpg')
@@ -467,18 +484,20 @@ def make_new_size_file(src_file, new_file, new_width):
                 im.save(new_file, "JPEG", quality=100)
                 output = new_file
                 ok = True
-            except:
+            except Exception as e:
+                print(e)
                 ok = False
         if not ok:
             png = False
             raise RuntimeWarning(f'Problem with PNG changes from {src_file} to {new_file}')
     else:
-        im.thumbnail(size, Image.ANTIALIAS)
+        im = im.convert("RGB")
+        im.thumbnail(size, Image.LANCZOS)
         try:
             im.save(new_file, "JPEG", quality=100)
             output = new_file
-        except:
-            raise RuntimeWarning(f'Problem with saving changes rom {src_file} to {new_file}')
+        except Exception as e:
+            raise RuntimeWarning(f'Problem with saving changes rom {src_file} to {new_file}. {e}')
     im.close()
     return output
 

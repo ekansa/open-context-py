@@ -41,6 +41,7 @@ def get_project_facet_options(result_json):
 
 def make_project_geojson_features(
     result_json,
+    reset_cache=False,
 ):
     """Adds project image overlay JSON
 
@@ -54,8 +55,14 @@ def make_project_geojson_features(
     rp = RootPath()
     base_url = rp.get_baseurl()
     project_slugs = [proj_dict.get('slug') for proj_dict in project_dicts]
-    proj_geo_qs = db_entities.get_proj_geo_by_slugs(project_slugs)
-    proj_desc_banner_qs = db_entities.get_project_desc_banner_qs(project_slugs=project_slugs)
+    proj_geo_qs = db_entities.get_proj_geo_by_slugs(
+        project_slugs,
+        reset_cache=reset_cache,
+    )
+    proj_desc_banner_qs = db_entities.get_project_desc_banner_qs(
+        project_slugs=project_slugs,
+        reset_cache=reset_cache,
+    )
     features = []
     for proj_dict in project_dicts:
         description, banner_url = db_entities.get_desc_and_banner_url_by_slug(
@@ -96,6 +103,7 @@ def make_project_geojson_features(
 
 def make_map_project_geojson(
     result_json,
+    reset_cache=False,
 ):
     """Adds project image overlay JSON
 
@@ -111,5 +119,8 @@ def make_map_project_geojson(
     }
     geo_json['id'] = f'{base_url}/map-projects.json'
     geo_json['type'] = 'FeatureCollection'
-    geo_json['features'] = make_project_geojson_features(result_json)
+    geo_json['features'] = make_project_geojson_features(
+        result_json=result_json,
+        reset_cache=reset_cache,
+    )
     return geo_json

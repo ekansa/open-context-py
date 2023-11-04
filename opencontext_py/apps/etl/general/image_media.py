@@ -3,6 +3,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+import rawpy
 from unidecode import unidecode
 
 from PIL import Image, ImageFile, ImageFilter
@@ -144,12 +145,27 @@ def get_image_obj(src_file, new_file):
     ImageFile.LOAD_TRUNCATED_IMAGES = True
     if OK_HUGE_IMAGES:
         Image.MAX_IMAGE_PIXELS = None
+    if src_file.lower().endswith('.nef'):
+        print('Special loading process for a .nef file')
+        try:
+            raw = rawpy.imread(src_file)
+            rgb = raw.postprocess()
+            im = Image.fromarray(rgb)
+        except Exception as e:
+            print(e)
+            print('Cannot load .nef image: ' + src_file)
+            im = None
+        return im, False
     try:
         im = Image.open(src_file)
         im.LOAD_TRUNCATED_IMAGES = True
     except:
         print('Cannot use as image: ' + src_file)
         im = None
+    if im.format_description == 'Adobe TIFF':
+        selected_layer = 0
+        im.seek(selected_layer)
+        png = False
     if im is None:
         return None, None
     return im, png

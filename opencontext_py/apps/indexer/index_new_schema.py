@@ -3,6 +3,7 @@ from datetime import timezone
 import logging
 from re import U
 import time
+from time import sleep
 
 from itertools import islice
 
@@ -361,7 +362,17 @@ def make_indexed_solr_documents_in_chunks(
             f' with {act_chunk_size} items.'
         )
         chunk_start = time.time()
-        make_index_solr_documents(act_uuids, solr=solr)
+        done = False
+        attempt = 0
+        while not done and attempt < 5:
+            attempt += 1
+            try:
+                make_index_solr_documents(act_uuids, solr=solr)
+                done = True
+            except:
+                print(f'Problem with solr on attempt {attempt}, wait a minute and try again.')
+                done = False
+                sleep(60)
         if update_index_time:
             now = datetime.datetime.now(timezone.utc)
             _ = AllManifest.objects.filter(
