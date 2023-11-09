@@ -64,7 +64,7 @@ def num_tokens_from_string(string: str, encoding_name: str=ENCODING_NAME) -> int
 
 
 def truncate_to_max_tokens(string: str, max_token_len: int=MAX_TOKEN_LEN, encoding_name: str=ENCODING_NAME) -> str:
-    """Returns a string timed to an allowed number of tokens"""
+    """Returns a string trimmed to an allowed number of tokens"""
     encoding = tiktoken.get_encoding(encoding_name)
     tokens = encoding.encode(string)
     num_tokens = len(encoding.encode(string))
