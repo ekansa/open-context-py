@@ -343,6 +343,13 @@ def get_geo_all_event_source_uuid(solr_doc):
     return uuid
 
 
+class SamplingSite():
+    def __init__(self, label, uri):
+        self.label = label
+        self.uri = uri
+
+
+
 class ResultRecord():
 
     """ Methods to prepare an individual result record """
@@ -819,6 +826,15 @@ class ResultRecord():
         """Gets a sampling site for iSamples"""
         if not self.contexts:
             return None
+        proj_obj = db_entities.get_cache_man_obj_by_any_id(self.project_uri)
+        if proj_obj and proj_obj.meta_json.get('omit_db_sampling_site') and self.context_uri:
+            # Omit a database search for a sampling site, and just return the
+            # last context.
+            sampling_site = SamplingSite(
+                label=self.context_label.split('/')[-1],
+                uri=self.context_uri,
+            )
+            return sampling_site
         last_region_obj = None
         for context in self.contexts:
             context_uuid = get_uuid_from_entity_dict(

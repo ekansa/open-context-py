@@ -176,6 +176,21 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
+        {
+            'key': 'omit_db_sampling_site',
+            'label': 'No not look-up an iSamples sampling-site',
+            'data_type': 'xsd:boolean',
+            'note': (
+                'Do not allow database queries to find sampling sites '
+                'for iSamples harvests of this project. Will default to '
+                'context.'
+            ),
+            'options': [
+                {'value': None, 'text': 'Not set',},
+                {'value': True, 'text': 'OMIT including sampling sites in API results for iSamples',},
+                {'value': False, 'text': 'Un-flag for default, allow sampling sites for iSamples',},
+            ],
+        },
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
