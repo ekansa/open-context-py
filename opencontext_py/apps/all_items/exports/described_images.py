@@ -38,6 +38,7 @@ from opencontext_py.apps.all_items.exports.described_images import *
 
 path = '~/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
 save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
+save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions_plus.json'
 df = pd.read_csv(path)
 df_main = df.copy()
 df_main = make_natural_language_caption_df_for_json_from_main_df(df_main)
@@ -444,7 +445,7 @@ def make_df_for_json_from_main_df(df_main):
     return df
 
 
-def add_cidoc_crm_sentences_and_chronology_to_caption(df_main, require_type=True):
+def add_cidoc_crm_sentences_and_chronology_to_caption(df_main, require_type=True, require_type_or_proj=True):
     type_col = 'Has type (Label) [https://erlangen-crm.org/current/P2_has_type]'
     consists_col = 'Consists of (Label) [https://erlangen-crm.org/current/P45_consists_of]'
     df_main[type_col] = df_main[type_col].astype(str)
@@ -455,6 +456,10 @@ def add_cidoc_crm_sentences_and_chronology_to_caption(df_main, require_type=True
     if require_type:
         # Make sure the dataset has a type
         df_main = df_main[type_index].copy()
+    if require_type_or_proj:
+        proj_index = (~df_main['project_specific_descriptions'].isnull() & (df_main['project_specific_descriptions'] != 'nan'))
+        type_or_proj_index = (type_index | proj_index)
+        df_main = df_main[type_or_proj_index].copy()
     consists_of_index = (
         ~df_main[consists_col].isnull()  & (df_main[consists_col] != 'nan')
     )
@@ -487,7 +492,7 @@ def add_cidoc_crm_sentences_and_chronology_to_caption(df_main, require_type=True
     df_main.loc[consists_only_index , 'caption'] = (
         df_main[consists_only_index]['caption']
         + 'This ' + df_main[consists_only_index]['subject__item_class__label'].str.lower()
-        + 'It mainly consists of ' + df_main[consists_only_index][consists_col].str.lower()
+        + ' mainly consists of ' + df_main[consists_only_index][consists_col].str.lower()
         + '. '
     )
     time_index = ~df_main['time_range'].isnull()
