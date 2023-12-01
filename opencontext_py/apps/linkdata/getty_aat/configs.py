@@ -108,4 +108,6 @@ AAT_PREFERRED_URI_TO_PARENT_URI_DICT = {
     'vocab.getty.edu/aat/300011021': 'vocab.getty.edu/aat/300010900',
     # Food -> Biological material
     'vocab.getty.edu/aat/300254496': 'vocab.getty.edu/aat/300265629',
+    # Rhyta -> ceramic ware
+    'vocab.getty.edu/aat/300198841': 'vocab.getty.edu/aat/300045611',
 }
