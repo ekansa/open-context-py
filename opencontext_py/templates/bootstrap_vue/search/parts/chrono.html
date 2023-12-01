@@ -839,7 +839,6 @@ var vc_chronotiles = Vue.component(
                 this.update_router(url);
             },
             narrow_time_spans: function(){
-                console.log('narrow here');
                 if(this.act_chrono_deep === null){
                     return null;
                 }
@@ -849,15 +848,12 @@ var vc_chronotiles = Vue.component(
                     alter = 1;
                 }
                 let new_chrono_deep = this.act_chrono_deep + alter;
-                console.log('narrow here: ' + new_chrono_deep);
                 if(new_chrono_deep > MAX_CHRONOTILE_ZOOM){
                     return null;
                 }
-                console.log('narrow final: ' + new_chrono_deep);
                 return this.update_chronodeep(new_chrono_deep);
             },
             widen_time_spans: function(){
-                console.log('widen here');
                 if(this.act_chrono_deep === null){
                     return null;
                 }
@@ -867,11 +863,9 @@ var vc_chronotiles = Vue.component(
                     alter = 1;
                 }
                 let new_chrono_deep = this.act_chrono_deep - alter;
-                console.log('widen here: ' + new_chrono_deep);
                 if(new_chrono_deep < MIN_CHRONOTILE_ZOOM){
                     return null;
                 }
-                console.log('widen final: ' + new_chrono_deep);
                 return this.update_chronodeep(new_chrono_deep);
             },
             show_color_ui: function(){
