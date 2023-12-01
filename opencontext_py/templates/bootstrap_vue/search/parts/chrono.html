@@ -844,7 +844,7 @@ var vc_chronotiles = Vue.component(
                     return null;
                 }
                 let current_max_dif = MAX_CHRONOTILE_ZOOM - this.act_chrono_deep;
-                let alter = parseInt((current_max_dif / 5).toFixed(0));
+                let alter = parseInt((current_max_dif / 6).toFixed(0));
                 if(alter < 1){
                     alter = 1;
                 }
@@ -862,7 +862,7 @@ var vc_chronotiles = Vue.component(
                     return null;
                 }
                 let current_max_dif = this.act_chrono_deep - MIN_CHRONOTILE_ZOOM;
-                let alter = parseInt((current_max_dif / 5).toFixed(0));
+                let alter = parseInt((current_max_dif / 6).toFixed(0));
                 if(alter < 1){
                     alter = 1;
                 }
