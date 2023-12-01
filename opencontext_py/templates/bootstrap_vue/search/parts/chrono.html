@@ -723,10 +723,17 @@ var vc_chronotiles = Vue.component(
                     return null;
                 }
                 let chronodeep = getURLParameter(this.result_id, 'chronodeep');
-                if(!chronodeep){
-                    return DEFAULT_CHRONOTILE_ZOOM;
+                if(chronodeep){
+                    // current chronodeep is specified in the URL
+                    return parseInt(chronodeep);
                 }
-                return parseInt(chronodeep);
+                let f_chrono_tile = getURLParameter(this.chrono_facets[0].id, 'allevent-chronotile');
+                if(f_chrono_tile){
+                    // use the length of the first chronotile to get current depth current depth.
+                    return f_chrono_tile.length;
+                }
+                // fall back to the default.
+                return DEFAULT_CHRONOTILE_ZOOM;
             },
             initialize_chart_data: function() {
                 this.data_series = [];
