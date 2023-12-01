@@ -1,3 +1,4 @@
+from opencontext_py.libs.utilities.chronotiles import MAX_TILE_DEPTH
 from opencontext_py.apps.all_items import configs as gen_configs
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 
@@ -1113,9 +1114,14 @@ FACET_OPT_HIDE_URI_PREFIX_MAPS = [
 ]
 
 
-# Levels of tile aggregation supported.
+# Levels of tile aggregation supported for geospatial
 MIN_GEOTILE_ZOOM = SolrDoc.MIN_GEOTILE_ZOOM
 MAX_GEOTILE_ZOOM = SolrDoc.MAX_GEOTILE_ZOOM
+
+# Levels of tile aggregation supported for chronology
+MIN_CHRONOTILE_ZOOM = 12
+DEFAULT_CHRONOTILE_ZOOM = 16
+MAX_CHRONOTILE_ZOOM = MAX_TILE_DEPTH
 
 # Maximum number of project facets to allow for
 # querying for image overlays

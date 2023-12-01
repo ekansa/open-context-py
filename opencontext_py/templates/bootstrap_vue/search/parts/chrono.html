@@ -60,12 +60,26 @@
             </div>
             <b-row class="text-center" align-v="center">
                 <b-col lg="1">
-                    <b-button
-                        title="Change visualization colors"
-                        variant="outline-secondary"
-                        size="sm"
-                        :pressed="color_gradient_select_modal_pressed"
-                        @click="show_color_ui"><span class="material-icons-two-tone">palette</span></b-button>
+                    <b-button-group vertical size="sm">
+                        <b-button
+                            title="Narrow time spans"
+                            variant="outline-secondary"
+                            size="sm"
+                            :disabled="disable_narrow"
+                            @click="narrow_time_spans"><span class="material-icons-two-tone rotate">compress</span></b-button>
+                        <b-button
+                            title="Widen time spans"
+                            variant="outline-secondary"
+                            size="sm"
+                            :disabled="disable_widen"
+                            @click="widen_time_spans"><span class="material-icons-two-tone rotate">expand</span></b-button>
+                        <b-button
+                            title="Change visualization colors"
+                            variant="outline-secondary"
+                            size="sm"
+                            :pressed="color_gradient_select_modal_pressed"
+                            @click="show_color_ui"><span class="material-icons-two-tone">palette</span></b-button>
+                    </b-button-group>
                 </b-col>
                 <b-col lg="4"><small><strong>Filter within time range</strong><br/>(Move markers or type years BCE/CE ranges)</small></b-col>
                 <b-col lg="2">
@@ -237,7 +251,9 @@
 <script type="text/javascript">
 
 const CHRONO_DEFAULT_COLOR_GRADIENT_KEY = 'sunset_dark';
-
+const DEFAULT_CHRONOTILE_ZOOM = {{ configs.DEFAULT_CHRONOTILE_ZOOM }};
+const MIN_CHRONOTILE_ZOOM = {{ configs.MIN_CHRONOTILE_ZOOM }};
+const MAX_CHRONOTILE_ZOOM = {{ configs.MAX_CHRONOTILE_ZOOM }};
 
 var vc_chrono_color_ui = Vue.component(
     'chrono-color-ui',
@@ -279,6 +295,7 @@ var vc_chronotiles = Vue.component(
                 chrono_facets: null,
                 frontend_state_obj: null,
                 selected_gradient_key: CHRONO_DEFAULT_COLOR_GRADIENT_KEY,
+                act_chrono_deep: null,
                 apex_key: 0,
                 data_series: [],
                 data_series_colors: [],
@@ -499,6 +516,24 @@ var vc_chronotiles = Vue.component(
             color_gradient_select_modal_pressed(){
                 return false;
             },
+            disable_narrow() {
+                if(this.act_chrono_deep === null){
+                    return true;
+                }
+                if(this.act_chrono_deep >= MAX_CHRONOTILE_ZOOM){
+                    return true;
+                }
+                return false;
+            },
+            disable_widen() {
+                if(this.act_chrono_deep === null){
+                    return true;
+                }
+                if(this.act_chrono_deep <= MIN_CHRONOTILE_ZOOM){
+                    return true;
+                }
+                return false;
+            },
         },
         methods: {
             round_date(date){
@@ -665,6 +700,19 @@ var vc_chronotiles = Vue.component(
                 chrono.chart_year_x.sort(function(a, b){return a-b});
                 return chrono;
             },
+            get_current_chronodeep: function() {
+                if(!this.chrono_facets || this.chrono_facets.length < 1){
+                    return null;
+                }
+                if(!this.result_id){
+                    return null;
+                }
+                let chronodeep = getURLParameter(this.result_id, 'chronodeep');
+                if(!chronodeep){
+                    return DEFAULT_CHRONOTILE_ZOOM;
+                }
+                return parseInt(chronodeep);
+            },
             initialize_chart_data: function() {
                 this.data_series = [];
                 this.data_series_colors = [];
@@ -679,6 +727,7 @@ var vc_chronotiles = Vue.component(
                 if(!this.chrono_facets || this.chrono_facets.length < 1){
                     return null;
                 }
+                this.act_chrono_deep = this.get_current_chronodeep();
                 console.log('Make chart with color gradient key: ' + this.selected_gradient_key);
                 this.determine_t_span_min();
                 let chrono_counts = [];
@@ -751,9 +800,62 @@ var vc_chronotiles = Vue.component(
                 }
                 // console.log(this.data_series);
             },
+            update_router: function(url){
+                let hash = '';
+                if(window.location.hash) {
+                    hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+                }
+                if(url.indexOf(hash) < 0){
+                    url += hash;
+                }
+                url = abs_to_rel_url(url, BASE_URL);
+                router.push(url);
+            },
+            update_chronodeep: function(chronodeep){
+                let current_url = this.result_id;
+                let url = replaceURLparameter(current_url, 'chronodeep', chronodeep);
+                this.update_router(url);
+            },
+            narrow_time_spans: function(){
+                console.log('narrow here');
+                if(this.act_chrono_deep === null){
+                    return null;
+                }
+                let current_max_dif = MAX_CHRONOTILE_ZOOM - this.act_chrono_deep;
+                let alter = parseInt((current_max_dif / 5).toFixed(0));
+                if(alter < 1){
+                    alter = 1;
+                }
+                let new_chrono_deep = this.act_chrono_deep + alter;
+                console.log('narrow here: ' + new_chrono_deep);
+                if(new_chrono_deep > MAX_CHRONOTILE_ZOOM){
+                    return null;
+                }
+                console.log('narrow final: ' + new_chrono_deep);
+                return this.update_chronodeep(new_chrono_deep);
+            },
+            widen_time_spans: function(){
+                console.log('widen here');
+                if(this.act_chrono_deep === null){
+                    return null;
+                }
+                let current_max_dif = this.act_chrono_deep - MIN_CHRONOTILE_ZOOM;
+                let alter = parseInt((current_max_dif / 5).toFixed(0));
+                if(alter < 1){
+                    alter = 1;
+                }
+                let new_chrono_deep = this.act_chrono_deep - alter;
+                console.log('widen here: ' + new_chrono_deep);
+                if(new_chrono_deep < MIN_CHRONOTILE_ZOOM){
+                    return null;
+                }
+                console.log('widen final: ' + new_chrono_deep);
+                return this.update_chronodeep(new_chrono_deep);
+            },
             show_color_ui: function(){
                 this.$bvModal.show('chrono-color-modal');
             },
+
         },
         components: {
             apexchart: VueApexCharts,

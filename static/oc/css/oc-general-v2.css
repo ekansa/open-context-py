@@ -511,6 +511,20 @@ FROM: https://github.com/consbio/Leaflet.ZoomBox
 .map-overlay-legend-item {
 	margin-bottom: 12px;
 }
+.rotate {
+	transform: rotate(-90deg);
+  /* Legacy vendor prefixes that you probably don't need... */
+  /* Safari */
+  -webkit-transform: rotate(-90deg);
+  /* Firefox */
+  -moz-transform: rotate(-90deg);
+  /* IE */
+  -ms-transform: rotate(-90deg);
+  /* Opera */
+  -o-transform: rotate(-90deg);
+  /* Internet Explorer */
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
 .result-snippet {
 	margin-top: 24px;
 	font-size: small;
