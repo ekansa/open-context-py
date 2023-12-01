@@ -3,7 +3,7 @@ from django.http import HttpResponse
 
 
 from opencontext_py.apps.all_items.editorial import api as editorial_api
-
+from opencontext_py.apps.all_items.editorial.link_annotations import link_types
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -123,6 +123,34 @@ def html_validate(request):
     }
     json_output = json.dumps(
         output,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
+
+
+@cache_control(no_cache=True)
+@never_cache
+def reconcile_term_json(request):
+    """Matches a term to a controlled vocabulary concepts based on existing associations"""
+    limit_project_ids = None
+    exclude_project_ids = None
+    if request.GET.get('limit_project_ids'):
+        limit_project_ids = request.GET.get('limit_project_ids', '').split(',')
+    if request.GET.get('exclude_project_ids'):
+        exclude_project_ids = request.GET.get('exclude_project_ids', '').split(',')
+    api_result = link_types.suggest_linked_data_equiv_for_type_label(
+        match_label=request.GET.get('q'),
+        id_concept_where_type_in_range=request.GET.get('property_id'),
+        id_type_equiv_vocab=request.GET.get('vocabulary_id'),
+        limit_project_ids=limit_project_ids,
+        exclude_project_ids=exclude_project_ids,
+    )
+    json_output = json.dumps(
+        api_result,
         indent=4,
         ensure_ascii=False
     )

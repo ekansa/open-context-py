@@ -18,6 +18,8 @@ from opencontext_py.apps.all_items.representations import rep_utils
 
 from opencontext_py.apps.linkdata.getty_aat import data as aat_data
 
+from opencontext_py.apps.all_items.editorial import api as editorial_api
+
 """
 Example use.
 
@@ -59,7 +61,9 @@ def get_existing_equiv_concepts(
     concept_man_obj,
     equiv_item_type='predicates',
     equiv_item_contexts=None,
-    skip_equiv_obj=None
+    skip_equiv_obj=None,
+    limit_project_ids=None,
+    exclude_project_ids=None,
 ):
     """Makes a list of Manifest objects that are equivalent to the
     concept_man_obj
@@ -71,8 +75,12 @@ def get_existing_equiv_concepts(
         equivalent AllManifest objects
     :param list equiv_item_contexts: A list of AllManifest contexts for
         equivalent AllManifest objects
-    param AllManifest skip_equiv_obj: Do NOT include this AllManifest
+    :param AllManifest skip_equiv_obj: Do NOT include this AllManifest
         object in the equivalent list.
+    :param list(uuid) limit_project_ids: A list of UUIDs for projects to use as a filter
+        to limit query for equivalents
+    :param list(uuid) exclude_project_ids: A list of UUIDs for projects to exclude
+        in query for equivalents
 
     return list (of AllManifest objects)
     """
@@ -83,6 +91,14 @@ def get_existing_equiv_concepts(
     ).select_related(
         'subject'
     )
+    if limit_project_ids:
+        equiv_subj_qs = equiv_subj_qs.filter(
+            subject__project_id__in=limit_project_ids,
+        )
+    if exclude_project_ids:
+        equiv_subj_qs = equiv_subj_qs.exclude(
+            subject__project_id__in=exclude_project_ids,
+        )
     if equiv_item_contexts:
         equiv_subj_qs = equiv_subj_qs.filter(
             subject__context__in=equiv_item_contexts,
@@ -97,6 +113,14 @@ def get_existing_equiv_concepts(
     ).select_related(
         'object'
     )
+    if limit_project_ids:
+        equiv_obj_qs = equiv_obj_qs.filter(
+            object__project_id__in=limit_project_ids,
+        )
+    if exclude_project_ids:
+        equiv_obj_qs = equiv_obj_qs.exclude(
+            object__project_id__in=exclude_project_ids,
+        )
     if equiv_item_contexts:
         equiv_obj_qs = equiv_obj_qs.filter(
             object__context__in=equiv_item_contexts,
@@ -554,3 +578,69 @@ def make_csv_vocab_and_equiv_types(
     df = pd.DataFrame(data=rows)
     df.to_csv(csv_path, index=False)
     return df
+
+
+def suggest_linked_data_equiv_for_type_label(
+    match_label,
+    id_concept_where_type_in_range,
+    id_type_equiv_vocab=None,
+    limit_project_ids=None,
+    exclude_project_ids=None,
+):
+    """Suggests lists of linked data AllManifest object equivalent to AllManifest
+    item_type='types' used with a predicate_obj based on existing data.
+
+    :param str match_label: A label for a data contributor contributed type that
+        we want to associate with suggested linked data equivalents.
+    :param str id_concept_where_type_in_range: A identifier for a concept from an ontology
+        that has standard link data concepts used in the property's "range". We want to
+        search within this range to find matches for the match_label
+    :param str id_type_equiv_vocab: A vocabulary to limit what equivalent linked data objects
+        that will be allowed for matches
+    :param list(uuid) limit_project_ids: A list of UUIDs for projects to use as a filter
+        to limit query for equivalents
+    :param list(uuid) exclude_project_ids: A list of UUIDs for projects to exclude
+        in query for equivalents
+
+    returns list (of dicts conforming to updater_assertions expectations)
+    """
+
+    # Get the identifier for a concept, typically a property from an ontology that has
+    # standard link data concepts used in the property's "range". Essentially, we want to
+    # find a standard linked data concept that closely matches what's expressed in the type_label
+    concept_man_obj = editorial_api.get_man_obj_by_any_id(id_concept_where_type_in_range)
+    if not concept_man_obj:
+        return None
+
+    # Get the vocabulary object where we want to find a closely matching concept to our
+    # type_label
+    types_equiv_vocab_obj = None
+    types_equiv_vocab_objs = []
+    if id_type_equiv_vocab:
+        types_equiv_vocab_obj = editorial_api.get_man_obj_by_any_id(id_type_equiv_vocab)
+    if types_equiv_vocab_obj:
+        types_equiv_vocab_objs.append(types_equiv_vocab_obj)
+
+    preds_equiv_to_concept = get_existing_equiv_concepts(
+        concept_man_obj=concept_man_obj,
+        equiv_item_type='predicates',
+        equiv_item_contexts=None,
+        limit_project_ids=limit_project_ids,
+        exclude_project_ids=exclude_project_ids,
+    )
+    equiv_ld_objs = get_ld_equiv_objs_for_types_in_pred_list_context(
+        match_label=match_label,
+        pred_list_context=preds_equiv_to_concept,
+        types_equiv_vocab_objs=types_equiv_vocab_objs,
+    )
+    if not equiv_ld_objs:
+        return None
+    equiv_ld_obj = most_frequent(equiv_ld_objs)
+    output = {
+        'label': match_label,
+        'concept_label': equiv_ld_obj.label,
+        'concept_uuid': str(equiv_ld_obj.uuid),
+        'concept_uri': f'https://{equiv_ld_obj.uri}',
+        'vocabulary_uri': f'https://{equiv_ld_obj.context.uri}',
+    }
+    return output
