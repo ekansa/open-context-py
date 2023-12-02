@@ -807,8 +807,10 @@ var vc_chronotiles = Vue.component(
                 }
                 // So as to stop memory crashing.
                 this.limit_chrono_all_years();
-                console.log('limited this.chrono_all_years ' + this.chrono_all_years.length);
-                console.log('server count of chrono facets ' + this.chrono_facets.length);
+		if(limit_low_counts){
+                	console.log('limited this.chrono_all_years ' + this.chrono_all_years.length);
+                	console.log('server count of chrono facets ' + this.chrono_facets.length);
+		}
                 this.chrono_all_years.sort(function(a, b){return a-b});
 
                 this.chrono_max_count = Math.max.apply(Math, chrono_counts);
