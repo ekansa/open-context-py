@@ -588,6 +588,14 @@ var vc_common_map = Vue.component(
                 heat: '<span class="cntrl-icons material-icons">thermostat</span>',
                 color: '<span class="cntrl-icons material-icons-two-tone">palette</span>',
             },
+            ios_safari_overlay_icons: {
+                sqr: '<span class="ios-cntrl-icons material-icons">grid_on</span>',
+                sqr_hr: '<span class="ios-cntrl-icons material-icons">grid_on</span>',
+                sqr_lr: '<span class="ios-cntrl-icons material-icons">window</span>',
+                crc: '<span class="ios-cntrl-icons material-icons">circle</span>',
+                heat: '<span class="ios-cntrl-icons material-icons">thermostat</span>',
+                color: '<span class="ios-cntrl-icons material-icons">palette</span>',
+            },
             ios_overlay_icons: {
                 sqr: '<span class="ios-cntrl-icons material-icons-two-tone">grid_on</span>',
                 sqr_hr: '<span class="ios-cntrl-icons material-icons-two-tone">grid_on</span>',
@@ -596,7 +604,7 @@ var vc_common_map = Vue.component(
                 heat: '<span class="ios-cntrl-icons material-icons">thermostat</span>',
                 color: '<span class="ios-cntrl-icons material-icons-two-tone">palette</span>',
             },
-            safar_overlay_icons: {
+            safari_overlay_icons: {
                 sqr: '<span class="cntrl-icons material-icons">grid_on</span>',
                 sqr_hr: '<span class="cntrl-icons material-icons">grid_on</span>',
                 sqr_lr: '<span class="cntrl-icons material-icons">window</span>',
@@ -1012,13 +1020,17 @@ var vc_common_map = Vue.component(
             }
             this.map.update_geodeep = this.update_geodeep;
             this.map.show_map_color_ui = this.show_map_color_ui;
-            if(this.iOS()){
+            if(this.iOS() && this.isSafari()){
+                console.log('Use iOS AND safari class for icons');
+                this.map.overlay_icons = this.ios_safari_overlay_icons;
+            }
+            else if(this.iOS()){
                 console.log('Use iOS class for icons');
                 this.map.overlay_icons = this.ios_overlay_icons;
             }
             else if(this.isSafari()){
                 console.log('Use safari class for icons');
-                this.map.overlay_icons = this.safar_overlay_icons;
+                this.map.overlay_icons = this.safari_overlay_icons;
             }
             else{
                 this.map.overlay_icons = this.overlay_icons;
