@@ -596,6 +596,14 @@ var vc_common_map = Vue.component(
                 heat: '<span class="ios-cntrl-icons material-icons">thermostat</span>',
                 color: '<span class="ios-cntrl-icons material-icons-two-tone">palette</span>',
             },
+            safar_overlay_icons: {
+                sqr: '<span class="cntrl-icons material-icons">grid_on</span>',
+                sqr_hr: '<span class="cntrl-icons material-icons">grid_on</span>',
+                sqr_lr: '<span class="cntrl-icons material-icons">window</span>',
+                crc: '<span class="cntrl-icons material-icons">circle</span>',
+                heat: '<span class="cntrl-icons material-icons">thermostat</span>',
+                color: '<span class="cntrl-icons material-icons">palette</span>',
+            },
             geo_tile_facets_default: {
                 type: "FeatureCollection",
                 label: "Area counts (squares)",
@@ -714,6 +722,10 @@ var vc_common_map = Vue.component(
             ].includes(navigator.platform)
             // iPad on iOS 13 detection
             || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+        },
+        isSafari: function(){
+            var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            return isSafari;
         },
         util_search_map_ok: function(){
             if(this.map_type != 'search'){
@@ -1003,6 +1015,10 @@ var vc_common_map = Vue.component(
             if(this.iOS()){
                 console.log('Use iOS class for icons');
                 this.map.overlay_icons = this.ios_overlay_icons;
+            }
+            else if(this.isSafari()){
+                console.log('Use safari class for icons');
+                this.map.overlay_icons = this.safar_overlay_icons;
             }
             else{
                 this.map.overlay_icons = this.overlay_icons;

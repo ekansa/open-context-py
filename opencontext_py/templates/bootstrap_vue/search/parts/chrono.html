@@ -78,7 +78,8 @@
                             variant="outline-secondary"
                             size="sm"
                             :pressed="color_gradient_select_modal_pressed"
-                            @click="show_color_ui"><span class="material-icons-two-tone">palette</span></b-button>
+                            @click="show_color_ui"><span v-if="is_safari" class="material-icons">palette</span><span v-else class="material-icons-two-tone">palette</span>
+                            </b-button>
                     </b-button-group>
                 </b-col>
                 <b-col lg="4"><small><strong>Filter within time range</strong><br/>(Move markers or type years BCE/CE ranges)</small></b-col>
@@ -548,6 +549,10 @@ var vc_chronotiles = Vue.component(
                     return true;
                 }
                 return false;
+            },
+            is_safari() {
+                var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                return isSafari;
             },
         },
         methods: {
