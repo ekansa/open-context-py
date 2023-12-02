@@ -33,7 +33,7 @@ def get_project_facet_options(result_json):
             if not option.get("slug"):
                 continue
             count = option.get("count", 0)
-            if count < 2:
+            if count < 10:
                 continue
             project_dicts.append(option)
     return project_dicts
