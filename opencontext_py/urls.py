@@ -123,6 +123,7 @@ urlpatterns = [
         name='editorial_item_assert_examples_json'
     ),
     re_path(r'^editorial/item-look-up', EditorialViews.item_look_up_json, name='editorial_item_look_up'),
+    re_path(r'^editorial/reconcile-term', EditorialViews.reconcile_term_json, name='editorial_reconcile_term'),
     re_path(r'^editorial/item-meta-look-up', EditorialViews.item_meta_look_up_json, name='editorial_item_meta_look_up'),
     re_path(r'^editorial/html-validate', EditorialViews.html_validate, name='editorial_html_validate'),
     # New edit_item administrative (for editing) views

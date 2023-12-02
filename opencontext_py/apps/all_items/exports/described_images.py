@@ -1,6 +1,7 @@
 
 import copy
 import pandas as pd
+import tiktoken
 from unidecode import unidecode
 
 from django.db.models import Count, OuterRef, Subquery
@@ -37,6 +38,7 @@ from opencontext_py.apps.all_items.exports.described_images import *
 
 path = '~/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
 save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
+save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions_plus.json'
 df = pd.read_csv(path)
 df_main = df.copy()
 df_main = make_natural_language_caption_df_for_json_from_main_df(df_main)
@@ -50,6 +52,28 @@ ARTIFACT_CLASS_SLUGS = [
     'oc-gen-cat-coin',
     'oc-gen-cat-pottery',
 ]
+
+# Name of the OpenAI encoding tokenizer thing
+ENCODING_NAME = "cl100k_base"
+MAX_TOKEN_LEN = 75 # CLIP is 77, but this adds a little safety margin in CLIP tokenizes differently.
+
+def num_tokens_from_string(string: str, encoding_name: str=ENCODING_NAME) -> int:
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
+
+
+def truncate_to_max_tokens(string: str, max_token_len: int=MAX_TOKEN_LEN, encoding_name: str=ENCODING_NAME) -> str:
+    """Returns a string trimmed to an allowed number of tokens"""
+    encoding = tiktoken.get_encoding(encoding_name)
+    tokens = encoding.encode(string)
+    num_tokens = len(encoding.encode(string))
+    if num_tokens <= max_token_len:
+        # We're OK with the token length, no trimming needed
+        return string
+    tokens = tokens[:max_token_len]
+    return encoding.decode(tokens)
 
 
 def get_images_related_to_subjects_qs(
@@ -421,7 +445,56 @@ def make_df_for_json_from_main_df(df_main):
     return df
 
 
-def add_time_range_sentence_to_caption(df_main):
+def add_cidoc_crm_sentences_and_chronology_to_caption(df_main, require_type=True, require_type_or_proj=True):
+    type_col = 'Has type (Label) [https://erlangen-crm.org/current/P2_has_type]'
+    consists_col = 'Consists of (Label) [https://erlangen-crm.org/current/P45_consists_of]'
+    df_main[type_col] = df_main[type_col].astype(str)
+    df_main[consists_col] = df_main[consists_col].astype(str)
+    type_index = (
+        ~df_main[type_col].isnull() & (df_main[type_col] != 'nan')
+    )
+    if require_type:
+        # Make sure the dataset has a type
+        df_main = df_main[type_index].copy()
+    if require_type_or_proj:
+        proj_index = (~df_main['project_specific_descriptions'].isnull() & (df_main['project_specific_descriptions'] != 'nan'))
+        type_or_proj_index = (type_index | proj_index)
+        df_main = df_main[type_or_proj_index].copy()
+    consists_of_index = (
+        ~df_main[consists_col].isnull()  & (df_main[consists_col] != 'nan')
+    )
+    # fix repeated consists of
+    df_main.loc[consists_of_index, consists_col] = df_main[consists_of_index][consists_col].str.replace('; ', ' ')
+    df_main.loc[consists_of_index, consists_col] = df_main[consists_of_index][consists_col].str.replace(r'\b(\w+)(\s+\1)+\b', r'\1')
+    df_main.loc[consists_of_index, consists_col] = df_main[consists_of_index][consists_col].apply(lambda x: ' '.join(pd.Series(x.split()).unique()))
+    df_main.loc[consists_of_index, consists_col] = df_main[consists_of_index][consists_col].apply(lambda x: ' '.join(pd.Series(x.split()).unique()))
+    df_main.loc[consists_of_index, consists_col] = df_main[consists_of_index][consists_col].str.replace('terracotta terracotta', 'terracotta')
+
+    all_crm_index = (
+        type_index & consists_of_index
+    )
+    type_only_index = type_index & ~consists_of_index
+    consists_only_index = ~type_index & consists_of_index
+    df_main.loc[all_crm_index , 'caption'] = (
+        df_main[all_crm_index]['caption']
+        + 'This ' + df_main[all_crm_index]['subject__item_class__label'].str.lower()
+        + ', ' + df_main[all_crm_index][type_col].str.lower()
+        + ', mainly consists of '
+        + df_main[all_crm_index][consists_col].str.lower()
+        + '. '
+    )
+    df_main.loc[type_only_index , 'caption'] = (
+        df_main[type_only_index]['caption']
+        + 'This ' + df_main[type_only_index]['subject__item_class__label'].str.lower()
+        + ' is classified as ' + df_main[type_only_index][type_col].str.lower()
+        + '. '
+    )
+    df_main.loc[consists_only_index , 'caption'] = (
+        df_main[consists_only_index]['caption']
+        + 'This ' + df_main[consists_only_index]['subject__item_class__label'].str.lower()
+        + ' mainly consists of ' + df_main[consists_only_index][consists_col].str.lower()
+        + '. '
+    )
     time_index = ~df_main['time_range'].isnull()
     itself_index = (
         df_main['item__chrono_source'].str.startswith('Given')
@@ -433,55 +506,14 @@ def add_time_range_sentence_to_caption(df_main):
     )
     df_main.loc[itself_index, 'caption'] = (
         df_main[itself_index]['caption']
-        + 'This ' + df_main[itself_index]['subject__item_class__label'].str.lower()
-        + ' looks like it was made around '
+        + 'It appears made around '
         + df_main[itself_index]['time_range']
         + '. '
     )
     df_main.loc[inferred_index, 'caption'] = (
         df_main[inferred_index]['caption']
-        + 'This ' + df_main[inferred_index]['subject__item_class__label'].str.lower()
-        + ' came from a context dating to around '
+        + 'Context suggests dates of '
         + df_main[inferred_index]['time_range']
-        + ' so it was probably made then or earlier. '
-    )
-    return df_main
-
-
-def add_cidoc_crm_sentences_to_caption(df_main, require_type=True):
-    type_col = 'Has type (Label) [https://erlangen-crm.org/current/P2_has_type]'
-    consists_col = 'Consists of (Label) [https://erlangen-crm.org/current/P45_consists_of]'
-    df_main[type_col] = df_main[type_col].astype(str)
-    df_main[consists_col] = df_main[consists_col].astype(str)
-    type_index = (
-        ~df_main[type_col].isnull() & (df_main[type_col] != 'nan')
-    )
-    if require_type:
-        # Make sure the dataset has a type
-        df_main = df_main[type_index].copy()
-    consists_of_index = (
-        ~df_main[consists_col].isnull()  & (df_main[consists_col] != 'nan')
-    )
-    all_crm_index = (
-        type_index & consists_of_index
-    )
-    type_only_index = type_index & ~consists_of_index
-    consists_only_index = ~type_index & consists_of_index
-    df_main.loc[all_crm_index , 'caption'] = (
-        df_main[all_crm_index]['caption']
-        + 'It has a general classification of ' + df_main[all_crm_index][type_col].str.lower()
-        + ' and mainly consists of '
-        + df_main[all_crm_index][consists_col].str.lower()
-        + '. '
-    )
-    df_main.loc[type_only_index , 'caption'] = (
-        df_main[type_only_index]['caption']
-        + 'It has a general classification of ' + df_main[type_only_index][type_col].str.lower()
-        + '. '
-    )
-    df_main.loc[consists_only_index , 'caption'] = (
-        df_main[consists_only_index]['caption']
-        + 'The artifact mainly consists of ' + df_main[consists_only_index][consists_col].str.lower()
         + '. '
     )
     return df_main
@@ -505,12 +537,12 @@ def add_other_standard_sentences_to_caption(df_main):
     )
     df_main.loc[origin_place_index , 'caption'] = (
         df_main[origin_place_index]['caption']
-        + 'The artifact was originally made at ' + df_main[origin_place_index][origin_col]
+        + 'It was originally made at ' + df_main[origin_place_index][origin_col]
         + '. '
     )
     df_main.loc[taxa_body_index, 'caption'] = (
         df_main[taxa_body_index]['caption']
-        + 'The anatomical identification is a ' + df_main[taxa_body_index][body_col].str.lower()
+        + 'Anatomically, it is a ' + df_main[taxa_body_index][body_col].str.lower()
         + ' of the taxa ' + df_main[taxa_body_index][taxa_col]
         + '. '
     )
@@ -529,37 +561,57 @@ def make_natural_language_caption_df_for_json_from_main_df(df_main):
     """
     df_main = make_time_range_str_col(df_main)
     df_main['media__uuid'] = df_main['media__uri'].str.replace('https://opencontext.org/media/', '')
-    df_main['caption'] = 'An image of an archaeological artifact found at ' + df_main['context___3']
+    df_main['caption'] = 'Image of an archaeological artifact found at ' + df_main['context___3']
     off_world_index = df_main['context___1'] == 'Off World'
     # For materials on earth
     df_main.loc[~off_world_index, 'caption'] = (
         df_main[~off_world_index]['caption']
-        + ', a place in ' + df_main['context___2']
-        + ', within the '
-        + df_main[~off_world_index]['context___1'] + ' world region. '
+        + ', in ' + df_main['context___2']
+        + '. '
     )
     # Off world
     df_main.loc[off_world_index, 'caption'] = (
         df_main[off_world_index]['caption']
-        + ', located at ' + df_main['context___2']
-        + ', which is '
-        + df_main[off_world_index]['context___1'] + ' (in outer space). '
+        + ', ' + df_main['context___2']
+        + '. '
     )
-    # Add a sentence about dating.
-    df_main = add_time_range_sentence_to_caption(df_main)
-    # Add sentence(s) relating to CIDOC-CRM related information
-    df_main = add_cidoc_crm_sentences_to_caption(df_main)
+    # Add a type, consists, and dating sentences
+    df_main = add_cidoc_crm_sentences_and_chronology_to_caption(df_main)
     # Add sentences(s) relating to other standards
     df_main = add_other_standard_sentences_to_caption(df_main)
     proj_index = ~df_main['project_specific_descriptions'].isnull()
     df_main.loc[proj_index , 'caption'] = (
         df_main[proj_index]['caption']
-        + 'More descriptions include: ' + df_main[proj_index]['project_specific_descriptions']
+        + df_main[proj_index]['project_specific_descriptions']
     )
+    # Remove repeating words
+    df_main['caption'] = df_main['caption'].str.replace(r'\b(\w+)(\s+\1)+\b', r'\1')
+    df_main['caption'] = df_main['caption'].str.replace('::', ', ')
+    df_main['caption'] = df_main['caption'].str.replace('  ', ' ')
+    df_main['caption'] = df_main['caption'].str.replace('  ', ' ')
+    # Replace common things that repeat
+    replace_tups = [
+        ('pottery, vessel; pottery (visual works); vessel', 'pottery vessel'),
+        ('terracotta terracotta', 'terracotta'),
+        ('plaque; plaques (flat objects)', 'plaque or flat object'),
+        ('lid; lids (covers),', 'lid or cover,'),
+        ('Fragment Noted: true', ''),
+        ('Fragment Noted: false', ''),
+        ('. This object,', '. This'),
+        ('acroterion; akroterion; acroteria', 'acroterion, acroteria',),
+        ('vessel; pottery (visual works)', 'vessel', ),
+    ]
+    for f, r in replace_tups:
+        df_main['caption'] = df_main['caption'].str.replace(f, r)
+
+    df_main['caption'] = df_main['caption'].apply(truncate_to_max_tokens)
+    df_main['token_count'] = df_main['caption'].apply(num_tokens_from_string)
+
     cols = [
         'image_file__uri',
         'media__uuid',
         'media__uri',
+        'token_count',
         'caption',
     ]
     return df_main[cols]

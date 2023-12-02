@@ -748,14 +748,30 @@ def validate_resourcetype_id(resourcetype_id, raise_on_fail=True):
     )
 
 
+def check_geojson_media_type_obj(uri):
+    """Checks if the extension says geojson"""
+
+     # Import here to avoid circular imports.
+    from opencontext_py.apps.all_items.models import AllManifest
+
+    uri = uri.lower()
+    if not uri.endswith('.geojson'):
+        return None
+    return AllManifest.objects.filter(
+        item_type='media-types',
+        uuid=configs.MEDIA_TYPE_GEO_JSON_UUID,
+    ).first()
+
+
 def get_media_type_obj(uri, raw_media_type):
     """Gets a media-type manifest object"""
 
     # Import here to avoid circular imports.
     from opencontext_py.apps.all_items.models import AllManifest
 
+    media_type_obj = None
     media_type_qs = AllManifest.objects.filter(
-        item_type='media-types'
+        item_type='media-types',
     )
     if raw_media_type:
         media_type_obj = media_type_qs.filter(
@@ -763,6 +779,12 @@ def get_media_type_obj(uri, raw_media_type):
                 |
                 Q(item_key=f'media-type:{raw_media_type}')
             ).first()
+    if media_type_obj:
+        return media_type_obj
+
+    # Now check to see if it matches a geojson extension
+    media_type_obj = check_geojson_media_type_obj(uri)
+    if media_type_obj:
         return media_type_obj
 
     # Guess by file extension. We can add to this as needed,
@@ -771,6 +793,7 @@ def get_media_type_obj(uri, raw_media_type):
     guesses = [
         ('nxs', configs.MEDIA_NEXUS_3D_NXS_UUID, ),
         ('nxz', configs.MEDIA_NEXUS_3D_NXZ_UUID, ),
+        ('geojson', configs.MEDIA_TYPE_GEO_JSON_UUID, ),
     ]
     uri = uri.lower()
     for extension, uuid in guesses:
@@ -781,6 +804,7 @@ def get_media_type_obj(uri, raw_media_type):
             uuid=uuid
         ).first()
     return None
+
 
 
 def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='https://'):

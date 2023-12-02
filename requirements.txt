@@ -52,6 +52,7 @@ shapely>=1.5.15
 six>=1.10.0
 sqlparse>=0.4.4
 titlecase>=0.9.0
+tiktoken>=0.5.1
 ua-parser>=0.8.0
 unidecode>=0.4.19
 urllib3>=1.26.5

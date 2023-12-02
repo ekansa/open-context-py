@@ -31,10 +31,10 @@ class ResultFacetsChronology():
         if current_filters_url is None:
             current_filters_url = self.base_search_url
         self.current_filters_url = current_filters_url
-        self.min_tile_depth = 12
-        self.default_aggregation_depth = 16
+        self.min_tile_depth = configs.MIN_CHRONOTILE_ZOOM
+        self.default_aggregation_depth = configs.DEFAULT_CHRONOTILE_ZOOM
         self.default_max_tile_count = 30
-        self.max_depth = chronotiles.MAX_TILE_DEPTH
+        self.max_depth = configs.MAX_CHRONOTILE_ZOOM
         self.limiting_tile = None
         self.min_date = None  # bce / ce
         self.max_date = None  # bce / ce
