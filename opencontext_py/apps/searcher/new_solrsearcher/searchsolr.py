@@ -194,6 +194,14 @@ class SearchSolr():
         ]
         return query
 
+    def _add_project_map_query_terms(self, query):
+        """Adds project map query terms"""
+        # Get facets for all the object category (item_class) entities
+        if 'obj_all___project_id' not in query['facet.field']:
+            query['facet.field'].append('obj_all___project_id')
+        query['facet.limit'] = -1
+        return query
+
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
 
@@ -669,6 +677,9 @@ class SearchSolr():
         if request_dict.get('proj-summary'):
             # we're making a project summary query.
             query = self._add_project_summary_query_terms(query)
+        if request_dict.get('project-map'):
+            # we're making a project summary query.
+            query = self._add_project_map_query_terms(query)
 
         dinaa_linked = utilities.get_request_param_value(
             request_dict,
