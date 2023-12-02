@@ -1776,7 +1776,12 @@ var vc_common_map = Vue.component(
             legend.geo_json_id = this.get_current_geo_json_id();
 
             if(this.overlay_icons.hasOwnProperty(act_layer.ov_id)){
-                legend.icon = this.overlay_icons[act_layer.ov_id];
+                if(this.iOS()){
+                    legend.icon = this.ios_overlay_icons[act_layer.ov_id];
+                }
+                else{
+                    legend.icon = this.overlay_icons[act_layer.ov_id];
+                }
             }
             legend.min_count = act_layer.min_count;
             legend.max_count = act_layer.max_count;
