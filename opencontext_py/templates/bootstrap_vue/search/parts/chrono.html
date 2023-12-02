@@ -539,6 +539,9 @@ var vc_chronotiles = Vue.component(
                 if(this.act_chrono_deep >= MAX_CHRONOTILE_ZOOM){
                     return true;
                 }
+                if(this.chrono_facets && this.chrono_facets.length >= 50){
+                    return true;
+                }
                 return false;
             },
             disable_widen() {
@@ -595,6 +598,25 @@ var vc_chronotiles = Vue.component(
                 this.apex_key += 1;
                 console.log('color gradient key is now: ' + this.selected_gradient_key);
                 this.make_all_data_series();
+            },
+            get_random_subarray(arr, size) {
+                var shuffled = arr.slice(0), i = arr.length, temp, index;
+                while (i--) {
+                    index = Math.floor((i + 1) * Math.random());
+                    temp = shuffled[index];
+                    shuffled[index] = shuffled[i];
+                    shuffled[i] = temp;
+                }
+                return shuffled.slice(0, size);
+            },
+            limit_chrono_all_years: function(){
+                if(!this.chrono_all_years){
+                    return null;
+                }
+                if(this.chrono_all_years.length <= 6000){
+                    return null;
+                }
+                this.chrono_all_years = this.get_random_subarray(this.chrono_all_years, 6000);
             },
             make_span_data_series(chrono){
                 let c_per_year = chrono.count / chrono.t_span;
@@ -761,6 +783,10 @@ var vc_chronotiles = Vue.component(
                 let chrono_counts_per_year = [];
                 let chrono_id_t_spans = {};
                 let chrono_id_objs = {};
+                let limit_low_counts = false;
+                if (this.chrono_facets.length >= 75){
+                    limit_low_counts = true;
+                }
                 for(let chrono of this.chrono_facets){
                     chrono = this.add_chart_year_x_to_chrono(chrono);
                     this.chrono_total_count += chrono.count;
@@ -779,7 +805,10 @@ var vc_chronotiles = Vue.component(
                 if(this.chrono_total_count < 1){
                     return null;
                 }
-
+                // So as to stop memory crashing.
+                this.limit_chrono_all_years();
+                console.log('limited this.chrono_all_years ' + this.chrono_all_years.length);
+                console.log('server count of chrono facets ' + this.chrono_facets.length);
                 this.chrono_all_years.sort(function(a, b){return a-b});
 
                 this.chrono_max_count = Math.max.apply(Math, chrono_counts);
@@ -806,6 +835,9 @@ var vc_chronotiles = Vue.component(
 
                 for(let id_key of id_keys_sorted){
                     let chrono = chrono_id_objs[id_key];
+                    if(limit_low_counts && chrono.count < (this.chrono_max_count * 0.01)){
+                        continue;
+                    }
                     let chrono_series = this.make_span_data_series(chrono);
                     this.data_series.push(chrono_series);
                     let chrono_color = make_hex_color_in_gradient(
