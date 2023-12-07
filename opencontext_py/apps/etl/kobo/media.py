@@ -426,12 +426,12 @@ def get_image_obj(src_file, new_file):
     except:
         print('Cannot use as image: ' + src_file)
         im = None
+    if im is None:
+        return None, None
     if im.format_description == 'Adobe TIFF':
         selected_layer = 0
         im.seek(selected_layer)
         png = False
-    if im is None:
-        return None, None
     return im, png
 
 def replace_extension(filename, new_extension):
