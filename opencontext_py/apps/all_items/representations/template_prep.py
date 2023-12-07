@@ -51,6 +51,7 @@ NO_NODE_KEYS = TEXT_CONTENT_KEYS + [
 # These are keys that should be treated specially,
 # and lumped into observations.
 SPECIAL_KEYS = [
+    '@context',
     'id',
     'uuid',
     'slug',
