@@ -439,6 +439,10 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
 def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
+    rep_dict["@context"] = [
+        "https://opencontext.org/contexts/item.json",
+        "http://geojson.org/geojson-ld/geojson-context.jsonld",
+    ]
     rep_dict['id'] = rep_utils.make_web_url(item_man_obj)
     rep_dict['uuid'] = str(item_man_obj.uuid)
     rep_dict['slug'] = item_man_obj.slug
