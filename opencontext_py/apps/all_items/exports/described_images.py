@@ -2,9 +2,10 @@
 import copy
 import pandas as pd
 import tiktoken
+import string
 from unidecode import unidecode
 
-from django.db.models import Count, OuterRef, Subquery
+from django.db.models import Count, OuterRef, Subquery, Q
 
 from django.template.defaultfilters import slugify
 
@@ -38,11 +39,12 @@ from opencontext_py.apps.all_items.exports.described_images import *
 
 path = '~/github/archaeology-images-ai/csv_data/artifact_images_w_descriptions.csv'
 save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions.json'
-save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions_plus.json'
+# save_path = '~/github/archaeology-images-ai/json_data/artifact_images_w_sentence_captions_plus.json'
 df = pd.read_csv(path)
 df_main = df.copy()
 df_main = make_natural_language_caption_df_for_json_from_main_df(df_main)
 df_main.to_json(save_path, orient='records', indent=4)
+
 """
 
 
@@ -53,9 +55,15 @@ ARTIFACT_CLASS_SLUGS = [
     'oc-gen-cat-pottery',
 ]
 
+EXCLUDE_IMAGE_SUBQUERY_FILTERS = [
+    # Umayri scanned forms to exclude
+    {'predicate_id': '8bb7b537-6d3f-482f-abdd-8efb0b99a5db', 'object_id': '7d014648-ae74-496f-becb-d00d20c3cd4a',},
+]
+
+
 # Name of the OpenAI encoding tokenizer thing
 ENCODING_NAME = "cl100k_base"
-MAX_TOKEN_LEN = 75 # CLIP is 77, but this adds a little safety margin in CLIP tokenizes differently.
+MAX_TOKEN_LEN = 76 # CLIP is 77, but this adds a little safety margin in CLIP tokenizes differently.
 
 def num_tokens_from_string(string: str, encoding_name: str=ENCODING_NAME) -> int:
     """Returns the number of tokens in a text string."""
@@ -74,6 +82,40 @@ def truncate_to_max_tokens(string: str, max_token_len: int=MAX_TOKEN_LEN, encodi
         return string
     tokens = tokens[:max_token_len]
     return encoding.decode(tokens)
+
+
+def remove_punctuation(input_string):
+    return ''.join(char for char in input_string if char not in string.punctuation)
+
+
+def remove_repeat_tokens(input_string: str) -> str:
+    words = []
+    prior_string = None
+    for str_part in input_string.split(' '):
+        if str_part == prior_string:
+            continue
+        words.append(str_part)
+        prior_string = str_part
+    np_phase_dict = {}
+    last_two_np_phrases = []
+    repeat_phrases = []
+    for i in range(len(words) - 1):
+        phrase = f"{words[i]} {words[i + 1]}"
+        np_phrase = remove_punctuation(phrase)
+        if np_phrase in last_two_np_phrases:
+            prior_phrase = np_phase_dict[np_phrase][0]
+            repeat_phrases.append((prior_phrase, phrase,))
+        if not np_phrase in np_phase_dict:
+            np_phase_dict[np_phrase] = []
+        np_phase_dict[np_phrase].append(phrase)
+        last_two_np_phrases.append(np_phrase)
+        if len(last_two_np_phrases) > 2:
+            last_two_np_phrases.pop(0)
+    new_string = ' '.join(words)
+    for rm_phrase, keep_phrase in repeat_phrases:
+        new_string = new_string.replace(rm_phrase, keep_phrase)
+        new_string = new_string.replace(f'{keep_phrase} {keep_phrase}', keep_phrase)
+    return new_string
 
 
 def get_images_related_to_subjects_qs(
@@ -118,6 +160,24 @@ def get_images_related_to_subjects_qs(
         'sort',
         'object',
     )
+    # This next section is for excluding image resources (the objects in the
+    # main assert_qs query) based on descriptions about the images resources
+    # themselves. It's needed because we sometimes have images that are scanned
+    # forms, not images of the actual artifacts.
+    exclude_sub_qs = {}
+    for exclude_filters in EXCLUDE_IMAGE_SUBQUERY_FILTERS:
+        ex_sub_qs_index = len(exclude_sub_qs)
+        # Make a sub-query where the subject is the object (media item)
+        # from the main query, and the exclude_filters are filters to apply
+        exclude_sub_qs[ex_sub_qs_index] = AllAssertion.objects.filter(
+            subject=OuterRef('object'),
+        ).filter(
+            **exclude_filters
+        ).values('subject_id')[:1]
+        # Now use this sub-query to make the filters.
+        assert_qs = assert_qs.exclude(
+            object_id__in=Subquery(exclude_sub_qs[ex_sub_qs_index])
+        )
     if filter_args:
         assert_qs = assert_qs.filter(**filter_args)
     return assert_qs
@@ -219,6 +279,12 @@ def consolidate_oc_predicate_cols(df, all_col='project_specific_descriptions'):
     for col in oc_cols:
         col_ex = col.split('[https://opencontext.org/predicates/')
         col_label = col_ex[0].strip()
+        if col_label.endswith(' (URI)'):
+            # we don't want URIs in our consolidated descriptions.
+            continue
+        if col_label.endswith(' (Label)'):
+            col_label = col_label[:-(len(' (Label)'))]
+        col_label = col_label.strip()
         col_index = ~df[col].isnull()
         df.loc[col_index, all_col] = (
             df[col_index][all_col]
@@ -227,7 +293,7 @@ def consolidate_oc_predicate_cols(df, all_col='project_specific_descriptions'):
             + ': '
             + df[col_index][col]
         )
-        col_val_delim = ' '
+        col_val_delim = '; '
         print(f'Consolidated {len(df[col_index].index)} values from {col}')
     df.drop(columns=oc_cols, inplace=True)
     df[all_col] = df[all_col].str.strip()
@@ -280,6 +346,35 @@ def rename_reorder_cols(df):
     return df
 
 
+def clean_combine_redundant_columns(df):
+    cols = df.columns.tolist()
+    repeat_cols = {}
+    for act_col in cols:
+        if not '[http' in act_col:
+            continue
+        if not act_col.endswith(']'):
+            continue
+        for check_col in cols:
+            if act_col == check_col:
+                continue
+            if check_col.startswith(act_col):
+                if not act_col in repeat_cols:
+                    repeat_cols[act_col] = []
+                repeat_cols[act_col].append(check_col)
+    for keep_col, rem_cols in repeat_cols.items():
+        for rem_col in rem_cols:
+            rem_index = ~df[rem_col].isnull()
+            rem_keep_index = rem_index & ~df[keep_col].isnull()
+            rem_no_keep_index = rem_index & df[keep_col].isnull()
+            # Add to the keep column that already has stuff.
+            df.loc[rem_keep_index, keep_col] += '; ' + df[rem_keep_index][rem_col].astype(str)
+            # Add move to the keep column where the keep column is empty
+            df.loc[rem_no_keep_index, keep_col] = df[rem_no_keep_index][rem_col].astype(str)
+        df.drop(columns=rem_cols, inplace=True)
+        print(f'Consolidated into {keep_col} {len(rem_cols)} repeat columns')
+    return df
+
+
 def get_describe_images_related_to_one_subject_df(
     filter_args=None,
     resourcetype_id=configs.OC_RESOURCE_PREVIEW_UUID
@@ -304,19 +399,20 @@ def get_describe_images_related_to_one_subject_df(
     if not filter_args:
         filter_args = {}
     filter_args['predicate__data_type'] = 'id'
-    filter_args['object__item_type'] = 'types'
+    filter_args['object__item_type__in'] = ['class', 'uri', 'types',]
     i = 0
     project_ids = df['project_id'].unique().tolist()
     df_raws = []
     for project_id in project_ids:
         i += 1
         filter_args['project_id'] = project_id
-        print(f'[{i} of {len(project_ids)}] Get description rows for project {project_id}')
+        p_obj = AllManifest.objects.get(uuid=project_id)
+        print(f'[{i} of {len(project_ids)}] Get description rows for project {p_obj} [{project_id}]')
         df_raw = create_df.make_export_df(
             filter_args=filter_args,
             add_entity_ld=True,
             add_literal_ld=False,
-            add_object_uris=False,
+            add_object_uris=True,
         )
         print(f'Found {len(df_raw.index)} description rows for project {project_id}')
         df_raws.append(df_raw)
@@ -333,6 +429,7 @@ def get_describe_images_related_to_one_subject_df(
     descriptive_index = ~df['subject__uri'].isnull()
     df = df[descriptive_index].copy()
     df = create_df.merge_lists_in_df_by_delim(df, delim=';  ')
+    df = clean_combine_redundant_columns(df)
     df = consolidate_oc_predicate_cols(df)
     df = remove_unwanted_cols(df)
     df = rename_reorder_cols(df)
@@ -519,6 +616,8 @@ def add_cidoc_crm_sentences_and_chronology_to_caption(df_main, require_type=True
     return df_main
 
 
+
+
 def add_other_standard_sentences_to_caption(df_main):
     origin_col = 'Origin place (Label) [https://gawd.atlantides.org/terms/origin]'
     taxa_col = 'Has taxonomic identifier (Label) [https://purl.obolibrary.org/obo/FOODON_00001303]'
@@ -586,24 +685,42 @@ def make_natural_language_caption_df_for_json_from_main_df(df_main):
     )
     # Remove repeating words
     df_main['caption'] = df_main['caption'].str.replace(r'\b(\w+)(\s+\1)+\b', r'\1')
-    df_main['caption'] = df_main['caption'].str.replace('::', ', ')
-    df_main['caption'] = df_main['caption'].str.replace('  ', ' ')
-    df_main['caption'] = df_main['caption'].str.replace('  ', ' ')
     # Replace common things that repeat
     replace_tups = [
+        ('::', ', ',),
+        ('  ', ' ',),
+        ('  ', ' ',),
+        ('--', '-',),
+        (';  ; ', '; ',),
+        ('; ; ', '; ',),
+        ('. ; ', '. ',),
+        ('. ;', '. ',),
         ('pottery, vessel; pottery (visual works); vessel', 'pottery vessel'),
+        ('pottery, vessel; cooking-vessel; cooking vessels', 'pottery cooking-vessel'),
+        ('antefix; antefix; antefixes', 'antefix',),
         ('terracotta terracotta', 'terracotta'),
         ('plaque; plaques (flat objects)', 'plaque or flat object'),
         ('lid; lids (covers),', 'lid or cover,'),
         ('Fragment Noted: true', ''),
         ('Fragment Noted: false', ''),
-        ('. This object,', '. This'),
+        ('. This object,', '. This example of'),
         ('acroterion; akroterion; acroteria', 'acroterion, acroteria',),
+        ('oinochoai; oinochoe', 'oinochoai',),
         ('vessel; pottery (visual works)', 'vessel', ),
+        ('; Record Type (Object or Artifact): Artifact; ', ''),
+        ('; Record Type (Object or Artifact): Object; ', ''),
+        ('::', ', ',),
+        ('  ', ' ',),
+        ('  ', ' ',),
+        ('--', '-',),
+        (';  ; ', '; ',),
+        ('; ; ', '; ',),
+        ('. ; ', '. ',),
+        ('. ;', '. ',),
     ]
     for f, r in replace_tups:
         df_main['caption'] = df_main['caption'].str.replace(f, r)
-
+    df_main['caption'] = df_main['caption'].apply(remove_repeat_tokens)
     df_main['caption'] = df_main['caption'].apply(truncate_to_max_tokens)
     df_main['token_count'] = df_main['caption'].apply(num_tokens_from_string)
 
