@@ -7,6 +7,10 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import META_JSON_KEY_HTTP_ONLY
 
+from opencontext_py.apps.all_items.models import (
+    AllIdentifier,
+)
+
 # This provides a mappig between a predicate.data_type and
 # the attribute of an assertion object for the object of that
 # assertion.
@@ -86,6 +90,12 @@ def make_predicate_objects_list(predicate, assert_objs, for_edit=False, for_solr
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_thumbnail}'
             if getattr(assert_obj, 'object_geo_overlay_thumb', None):
                 obj['oc-gen:thumbnail-uri'] = f'https://{assert_obj.object_geo_overlay_thumb}'
+            if getattr(assert_obj, 'object_orcid', None):
+                obj['dc-terms:identifier'] = AllIdentifier().make_id_url(
+                    'orcid',
+                    assert_obj.object_orcid,
+                    'https://',
+                )
             if for_edit or for_solr_or_html:
                 obj['object_id'] = str(assert_obj.object.uuid)
                 obj['object__item_type'] = assert_obj.object.item_type
