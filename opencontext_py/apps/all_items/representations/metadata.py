@@ -10,6 +10,7 @@ from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
     AllResource,
+    AllIdentifier,
 )
 from opencontext_py.apps.all_items.representations import rep_utils
 
@@ -103,6 +104,13 @@ def db_get_project_metadata_qs(project_id):
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
     ).values('uri')[:1]
 
+    # ORCID IDs for project creators and contributors
+    orcid_id_qs = AllIdentifier.objects.filter(
+        item=OuterRef('object'),
+        scheme='orcid',
+    ).values('id')[:1]
+
+
     qs = AllAssertion.objects.filter(
         subject_id=project_id,
         predicate__data_type='id',
@@ -144,6 +152,8 @@ def db_get_project_metadata_qs(project_id):
         object_geo_overlay=Subquery(geo_overlay_qs)
     ).annotate(
         object_geo_overlay_thumb=Subquery(geo_overlay_thumb_qs)
+    ).annotate(
+        object_orcid=Subquery(orcid_id_qs)
     )
     return qs
 
@@ -187,6 +197,12 @@ def db_get_vocabulary_metadata_qs(vocab_id):
         resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
     ).values('uri')[:1]
 
+    # ORCID IDs for project creators and contributors
+    orcid_id_qs = AllIdentifier.objects.filter(
+        item=OuterRef('object'),
+        scheme='orcid',
+    ).values('id')[:1]
+
     qs = AllAssertion.objects.filter(
         subject_id=vocab_id,
         predicate__data_type='id',
@@ -223,6 +239,8 @@ def db_get_vocabulary_metadata_qs(vocab_id):
         'object__context'
     ).annotate(
         object_class_icon=Subquery(class_icon_qs)
+    ).annotate(
+        object_orcid=Subquery(orcid_id_qs)
     )
     return qs
 
