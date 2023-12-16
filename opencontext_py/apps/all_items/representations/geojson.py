@@ -84,6 +84,8 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         'event'
     ).select_related(
         'event__item_class'
+    ).order_by(
+        '-item__path'
     )
     if not len(spacetime_qs):
         # We found no spacetime objects at all. Distressing, but possible
@@ -94,9 +96,8 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     act_geos = [] # List of spacetime objects with only geometry
     act_chronos = [] # List of spacetime objects with only chronology
 
-    # Integrate through the list of context_objs. These are ordered from most
-    # specific to most general, all the way up to world regions. This will select
-    # the spacetime objects with the most specific geometries and chronologies
+    # Integrate through the spacetime_qs. This will be ordered from the most specific
+    # context to the most general context.
     for spacetime_obj in spacetime_qs:
         spacetime_obj.inherit_chrono = None
         spacetime_obj.inherit_geometry = None
@@ -126,6 +127,7 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         if len(act_geos) and len(act_chronos):
             # We have everything we need to end this looping.
             break
+
     if require_geo and not len(act_geos):
         # We found no geometries, so return None
         return None
@@ -138,7 +140,13 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     if len(act_chronos):
         # This is the spacetime object that we use for
         # inherited time spans
-        inherit_chrono = act_chronos[0]
+        for act_chrono in act_chronos:
+            if inherit_chrono is not None:
+                break
+            if act_chrono.earliest is None or act_chrono.latest is None:
+                continue
+            inherit_chrono = act_chronos[0]
+            break
 
     if len(act_geos) > len(act_chronos):
         # We have multiple geometries, which means we need
@@ -502,9 +510,13 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
         chrono_spacetime_obj = spacetime_obj
         sp_context_order = getattr(spacetime_obj, 'context_order', None)
         inherit_chrono_obj = getattr(spacetime_obj, 'inherit_chrono', None)
-        if inherit_chrono_obj and inherit_chrono_obj.earliest is not None:
+        if inherit_chrono_obj and inherit_chrono_obj.earliest is not None and inherit_chrono_obj.latest is not None:
             inherit_context_order = getattr(inherit_chrono_obj, 'context_order', None)
-            if inherit_context_order is not None:
+            if spacetime_obj.earliest is None or spacetime_obj.latest is None:
+                # Use the inherit_chrono_obj because it has a time span information where as the
+                # spactime_obj does not.
+                chrono_spacetime_obj = inherit_chrono_obj
+            elif inherit_context_order is not None:
                 if sp_context_order is None or (sp_context_order > inherit_context_order):
                     # The inherit_chrono_obj is more specific, with a lower sort order
                     # so use that.
