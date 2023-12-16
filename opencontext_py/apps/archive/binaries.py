@@ -8,39 +8,43 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.archive.files import ArchiveFiles
 from opencontext_py.apps.archive.metadata import ArchiveMetadata
 from opencontext_py.apps.archive.zenodo import ArchiveZenodo
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.ocitem.generation import OCitem
-from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
+from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items.models import (
+    AllAssertion,
+    AllManifest,
+    AllResource,
+    AllIdentifier,
+)
+
+
+ARCHIVE_FILE_TYPES = [
+    'oc-gen:archive',
+    'oc-gen:fullfile',
+    'oc-gen:preview',
+    'oc-gen:x3dom-model',
+    'oc-gen:x3dom-texture',
+]
+
+ARCHIVE_FILE_PREFIXES = {
+    'oc-gen:archive': 'az---',
+    'oc-gen:fullfile': 'fz---',
+    'oc-gen:preview': 'pz---',
+    'oc-gen:x3dom-model': 'x3m---',
+    'oc-gen:x3dom-texture': 'x3t---
+}
+
+ZENODO_FILE_KEYS = [
+    'filesize',
+    'checksum'
+]
 
 class ArchiveBinaries():
     """
     saves binary media files for deposit into external repositories
-    
+
     """
-    
-    ARCHIVE_FILE_TYPES = [
-        'oc-gen:archive',
-        'oc-gen:fullfile',
-        'oc-gen:preview',
-        'oc-gen:x3dom-model',
-        'oc-gen:x3dom-texture',
-    ]
-    
-    ARCHIVE_FILE_PREFIXES = {
-        'oc-gen:archive': 'az---',
-        'oc-gen:fullfile': 'fz---',
-        'oc-gen:preview': 'pz---',
-        'oc-gen:x3dom-model': 'x3m---',
-        'oc-gen:x3dom-texture': 'x3t---'
-    }
-    
-    ZENODO_FILE_KEYS = [
-        'filesize',
-        'checksum'
-    ]
-    
+
     def __init__(self, do_testing=False):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
         self.working_dir = 'archives'
@@ -58,8 +62,8 @@ class ArchiveBinaries():
         self.arch_files_obj = ArchiveFiles()
         self.bin_file_obj = BinaryFiles()
         self.zenodo = ArchiveZenodo(do_testing)
-        
-    
+
+
     def archive_all_project_binaries(self, project_uuid):
         """ archives project binary files in Zenodo """
         project_dirs = self.get_project_binaries_dirs(project_uuid)
@@ -70,11 +74,11 @@ class ArchiveBinaries():
                 print("Sleep {} of {} seconds...".format(x, self.sleep_first), end="\r")
                 sleep(x * .5)
         for archive_dir in project_dirs:
-            if archive_dir not in self.exclude_archive_dirs: 
+            if archive_dir not in self.exclude_archive_dirs:
                 self.archive_dir_project_binaries(project_uuid, archive_dir)
             else:
                 print('Skipping directory: ' + archive_dir)
-    
+
     def archive_dir_project_binaries(self, project_uuid, archive_dir, deposition_id=None):
         """ archives files in for a project in a specific directory
             known as "act dir"
@@ -95,7 +99,7 @@ class ArchiveBinaries():
             print('Made new deposition with ID: ' + str(deposition_id))
         if not isinstance(bucket_url, str) and deposition_id is not None:
             # get the bucket URL for this deposition
-            bucket_url = self.zenodo.get_remote_deposition_bucket_url(deposition_id) 
+            bucket_url = self.zenodo.get_remote_deposition_bucket_url(deposition_id)
         if files_valid and deposition_id is not None and isinstance(bucket_url, str):
             # we have found all the files to archive, and we have
             # a ready Zenodo deposition and bucket_url
@@ -155,7 +159,7 @@ class ArchiveBinaries():
                                                   archive_dir,
                                                   deposition_id)
         return deposition_id
-    
+
     def add_project_archive_dir_metadata(self, project_uuid, archive_dir, deposition_id):
         """ adds metadata about a project to Zenodo deposition by deposition_id """
         ok = None
@@ -175,7 +179,7 @@ class ArchiveBinaries():
                 ok = True
                 print('Metadata created and updated for: ' + str(deposition_id))
         return ok
-        
+
     def validate_archive_dir_binaries(self, archive_dir, dir_dict):
         """ makes sure the all the archive dir actually has all of the files
             it says it has to archive
@@ -200,13 +204,13 @@ class ArchiveBinaries():
         all_dirs = self.arch_files_obj.get_sub_directories([])
         for act_dir in all_dirs:
             if '---' in act_dir:
-                act_ex = act_dir.split('---') 
+                act_ex = act_dir.split('---')
                 if self.files_prefix in act_ex[0] and project_uuid == act_ex[-1]:
                     # the first part of a the name should be like 'files-1-by'
                     # the second part, after the '---' should be the project_uuid
                     project_dirs.append(act_dir)
         return project_dirs
-    
+
     def sort_project_binaries_dirs(self, project_dirs):
         """ sorts the list of project dirs by their number """
         sorted_dirs = None
@@ -226,7 +230,7 @@ class ArchiveBinaries():
             for tuple_dir in sorted(tuple_dirs, key=lambda x: x[0]):
                 sorted_dirs.append(tuple_dir[1])
         return sorted_dirs
-                
+
     def save_project_binaries(self, project_uuid):
         """ saves data associated with a project """
         self.get_manifest_grouped_by_license(project_uuid)
@@ -244,7 +248,7 @@ class ArchiveBinaries():
                         print('Working on new item: ' + str(i) + ' of ' + str(len_man_list) +  ' ('+ str(len_cached) + ' previously done)')
                         ok = self.save_media_files(man_obj, license_uri)
                         print('----------------------------------------')
-    
+
     def get_manifest_grouped_by_license(self, project_uuid):
         """ gets list of distinct licenses for a project_uuid's
             media files
@@ -267,8 +271,8 @@ class ArchiveBinaries():
         return license_uris
 
     def save_media_files(self, man_obj, license_uri):
-        """ saves media files 
-            
+        """ saves media files
+
         """
         ok = False
         if isinstance(man_obj, Manifest):
@@ -329,7 +333,7 @@ class ArchiveBinaries():
                 # we have saved the expected number of files for this item
                 ok = True
         return ok
-    
+
     def check_file_exists_in_all_project_dirs(self, project_uuid, file_name):
         """ checks if a file already exists in any of the project dirs """
         exists = False
@@ -340,7 +344,7 @@ class ArchiveBinaries():
                 print('Found ' + file_name + ' in ' + archive_dir)
                 break
         return exists
-    
+
     def copy_file_from_temp_cache(self, archive_dir, file_name):
         """ copies a file from a temp cache if it exists into the
             current archive dir
@@ -363,7 +367,7 @@ class ArchiveBinaries():
         if copied_ok:
             print('Copied temp-cache file: ' + file_name)
         return copied_ok
-    
+
     def get_current_part_num(self, license_uri, project_uuid):
         """ gets the current directory number based on
             the total size of the contents
@@ -382,10 +386,10 @@ class ArchiveBinaries():
                         # we succeeded in loading its existing file list dict
                         self.dir_contents[project_uuid][archive_dir] = dir_dict
         for act_dir_key, dir_dict in self.dir_contents[project_uuid].items():
-            if dir_dict['partion-number'] > part_num:
-                part_num = dir_dict['partion-number']
+            if dir_dict['partition-number'] > part_num:
+                part_num = dir_dict['partition-number']
         for act_dir_key, dir_dict in self.dir_contents[project_uuid].items():
-            if dir_dict['partion-number'] == part_num:
+            if dir_dict['partition-number'] == part_num:
                 if dir_dict['size'] >= (self.max_repo_GB * self.GB_to_byte_multiplier):
                     # the highest part_num found has a big size, so increment up to the
                     # next part number
@@ -399,7 +403,7 @@ class ArchiveBinaries():
                                                                           license_uri,
                                                                           project_uuid)
         return part_num
-    
+
     def get_uuids_for_cached_media_items(self, project_uuid):
         """ gets a list of uuids for media items already locally cached """
         uuids = {}
@@ -420,8 +424,8 @@ class ArchiveBinaries():
                                 uuids[uuid].append(archive_dir)
                             if len(uuids[uuid]) > 1:
                                 print('UUID: ' + uuid + ' in directories: ' + str(uuids[uuid]))
-        return uuids           
-        
+        return uuids
+
     def make_dir_dict(self, part_num, license_uri, project_uuid):
         """ """
         act_dir = self.make_act_files_dir_name(part_num, license_uri, project_uuid)
@@ -429,7 +433,7 @@ class ArchiveBinaries():
         dir_dict['dc-terms:isPartOf'] = URImanagement.make_oc_uri(project_uuid,
                                                                   'projects')
         dir_dict['dc-terms:license'] = license_uri
-        dir_dict['partion-number'] = part_num
+        dir_dict['partition-number'] = part_num
         dir_dict['label'] =  act_dir
         dir_dict['size'] = 0
         dir_dict['dc-terms:creator'] = []
@@ -441,8 +445,8 @@ class ArchiveBinaries():
                                                  self.dir_content_file_json,
                                                  dir_dict)
         return dir_dict
-        
-    
+
+
     def record_citation_people(self, dir_dict, item_dict):
         """ gets citation information for the specific media item
         """
@@ -473,7 +477,7 @@ class ArchiveBinaries():
                         all_cites.append(cite_obj)
                 dir_dict[cite_pred] = all_cites
         return dir_dict
-    
+
     def record_associated_categories(self, dir_dict, item_dict):
         """ gets citation information for the specific media item
         """
@@ -504,7 +508,7 @@ class ArchiveBinaries():
                             all_cats.append(cat_obj)
                         dir_dict['category'] = all_cats
         return dir_dict
-    
+
     def get_item_media_files(self, man_obj):
         """ gets media file uris for archiving """
         files_dict = LastUpdatedOrderedDict()
@@ -535,7 +539,7 @@ class ArchiveBinaries():
                             files_dict[file_uri] = act_dict
                         files_dict[file_uri]['type'].append(med_file.file_type)
         return files_dict
-    
+
     def make_archival_file_name(self, file_type, slug, file_uri):
         """ makes an archival file name based on the
             file type, the slug, and the file_uri
@@ -551,7 +555,7 @@ class ArchiveBinaries():
         else:
             file_name = prefix + slug
         return file_name
-    
+
     def make_act_files_dir_name(self, part_num, license_uri, project_uuid):
         """ makes a directory name for a given project, license, and directory_number """
         lic_part = license_uri.replace('http://creativecommons.org/publicdomain/', '')
