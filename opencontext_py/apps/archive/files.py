@@ -9,13 +9,47 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 
 
+
+def prep_directory(act_dirs, make_dir=True):
+    """ Prepares a directory to receive export files """
+    output = False
+    if not isinstance(act_dirs, list):
+        act_dirs = [act_dirs]
+    act_dirs = [self.working_dir] + act_dirs
+    full_path = self.root_export_dir
+    for act_dir in act_dirs:
+        full_path = full_path + '/' + act_dir
+        full_path = full_path.replace('//', '/')
+        if not os.path.exists(full_path) and make_dir:
+            print('Prepared directory: ' + str(full_path))
+            os.makedirs(full_path)
+    if os.path.exists(full_path):
+        output = full_path
+    return output
+
+
+
+def save_serialized_json(act_dirs, file_name, dict_obj):
+    """ saves a data in the appropriate path + file """
+    path = prep_directory(act_dirs)
+    dir_file = os.path.join(path, file_name)
+    json_output = json.dumps(dict_obj,
+                                indent=4,
+                                ensure_ascii=False)
+    file = codecs.open(dir_file, 'w', 'utf-8')
+    file.write(json_output)
+    file.close()
+
+
+
+
 class ArchiveFiles():
     """
     saves JSON and media files for deposit into external repositories
-    
-    
+
+
     """
-    
+
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
         self.working_dir = 'archives'
@@ -27,7 +61,7 @@ class ArchiveFiles():
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
         self.local_filesystem_uri_sub = None  # substitution to get a path to the local file in the file system
         self.bin_file_obj = BinaryFiles()
-    
+
     def save_project_data(self, project_uuid):
         """ saves data associated with a project """
         man_objs = Manifest.objects\
@@ -43,12 +77,12 @@ class ArchiveFiles():
     def save_item_and_rels(self, uuid, archive_proj_uuid, do_rels=True):
         """ saves an item based on its uuid,
             and optionally ALSO saves related items
-            
+
             archive_proj_uuid is the uuid for the project we're
             archiving now. An item in that archive may actuall come
             from another project, but is included in this archive
             because of a dependency through referencing (context, people)
-            
+
         """
         if uuid in self.saved_uuids:
             # we have a memory of this already saved
@@ -91,8 +125,8 @@ class ArchiveFiles():
                             rel_saved = self.save_item_and_rels(rel_uuid,
                                                                 archive_proj_uuid,
                                                                 False)
-        return item_saved   
-    
+        return item_saved
+
     def get_related_uuids(self, item_dict):
         """ gets uuids for the contexts,
             and people associated with an item
@@ -110,7 +144,7 @@ class ArchiveFiles():
         uuids = self.get_predicate_uuids(pred_keys,
                                          item_dict)
         return uuids
-    
+
     def get_predicate_uuids(self, pred_keys, item_dict):
         """ gets uuids for open context items
             for a given LIST of predicate keys for an item dict
@@ -131,7 +165,7 @@ class ArchiveFiles():
                                         if uuid not in uuids:
                                             uuids.append(uuid)
         return uuids
-    
+
     def get_proj_manifest_obj(self, project_uuid):
         """ gets the manifest object for a given project """
         if project_uuid not in self.proj_manifest_objs:
@@ -143,7 +177,7 @@ class ArchiveFiles():
         else:
             man_obj = self.proj_manifest_objs[project_uuid]
         return man_obj
-    
+
     def prep_bin_file_obj(self):
         """ prepares a binary file class object to manage the
             retrieval and caching of binary files
@@ -164,13 +198,13 @@ class ArchiveFiles():
         else:
             output = False
         return output
-    
+
     def make_full_path_filename(self, act_dirs, file_name):
         """ makes a full filepath and file name string """
         path = self.prep_directory(act_dirs, False)
         dir_file = os.path.join(path, file_name)
         return dir_file
-    
+
     def save_serialized_json(self, act_dirs, file_name, dict_obj):
         """ saves a data in the appropriate path + file """
         path = self.prep_directory(act_dirs)
@@ -181,7 +215,7 @@ class ArchiveFiles():
         file = codecs.open(dir_file, 'w', 'utf-8')
         file.write(json_output)
         file.close()
-    
+
     def get_dict_from_file(self, act_dirs, file_name):
         """ gets the file string
             if the file exists,
@@ -199,7 +233,7 @@ class ArchiveFiles():
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False
         return json_obj
-    
+
     def get_directory_size(self, act_dirs):
         """ returns a list of directories contained in a list
             of act_dirs
@@ -207,7 +241,7 @@ class ArchiveFiles():
         src_dir = self.prep_directory(act_dirs, False)
         total_size = self.get_directory_size_path(src_dir)
         return total_size
-    
+
     def get_directory_size_path(self, path):
         """ gets directory size recusively, but from a path
             not from a list of act_dirs
