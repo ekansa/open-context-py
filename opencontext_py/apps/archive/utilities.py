@@ -23,6 +23,14 @@ def make_full_path_filename(path, file_name):
     return os.path.join(path, file_name)
 
 
+def load_serialized_json(path, file_name):
+    dir_file = os.path.join(path, file_name)
+    if not os.path.exists(dir_file):
+        return None
+    file_dict = json.load(open(dir_file))
+    return file_dict
+
+
 def save_serialized_json(path, file_name, dict_obj):
     """ saves a data in the appropriate path + file """
     dir_file = make_full_path_filename(path, file_name)
@@ -160,10 +168,12 @@ def gather_project_dir_file_dict_list(
     all_file_dicts = []
     for act_dir in project_dirs:
         act_path = os.path.join(root_path, act_dir)
-        dir_file = os.path.join(act_path, PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME)
-        if not os.path.exists(dir_file):
+        dir_dict = load_serialized_json(
+            path=act_path, 
+            file_name=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+        )
+        if not dir_dict:
             continue
-        dir_dict = json.load(open(dir_file))
         if not check_binary_files_present:
             all_file_dicts += dir_dict.get('files', [])
             continue
