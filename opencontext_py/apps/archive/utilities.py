@@ -13,6 +13,9 @@ PROJECT_ARCHIVE_LOCAL_DIR_PREFIX = 'files'
 
 PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME = 'zenodo-oc-files.json'
 
+MAX_DEPOSITION_FILE_COUNT = 2500
+MAX_DEPOSITION_FILE_SIZE = 45000000000  # 45 GB
+
 
 def make_full_path_filename(path, file_name):
     """ makes a full filepath and file name string """
@@ -142,10 +145,11 @@ def get_maximum_dir_partition_number_for_project(
     return get_maximum_dir_partition_number_for_project_dirs(project_dirs)
 
 
-def gather_project_dir_file_manifest(
+def gather_project_dir_file_dict_list(
     project_uuid,
     files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
+    check_binary_files_present=False,
 ):
     """ gathers the file manifest for a project """
     project_dirs = get_project_binaries_dirs(
@@ -153,15 +157,46 @@ def gather_project_dir_file_manifest(
         files_prefix=files_prefix,
         root_path=root_path,
     )
-    all_files = []
+    all_file_dicts = []
     for act_dir in project_dirs:
         act_path = os.path.join(root_path, act_dir)
         dir_file = os.path.join(act_path, PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME)
         if not os.path.exists(dir_file):
             continue
         dir_dict = json.load(open(dir_file))
-        all_files += dir_dict.get('files', [])
-    return all_files
+        if not check_binary_files_present:
+            all_file_dicts += dir_dict.get('files', [])
+            continue
+        # Below we will check to make sure the binary files actually
+        # do exist in the directory
+        for f_dict in dir_dict.get('files', []):
+            file_name = f_dict.get('filename')
+            if not file_name:
+                continue
+            filepath = os.path.join(act_path, file_name)
+            if os.path.exists(filepath):
+                # Yes, the file is actually present here.
+                all_file_dicts.append(f_dict)
+    return all_file_dicts
+
+
+def gather_project_dir_file_name_list(
+    project_uuid,
+    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+    check_binary_files_present=False,
+):
+    """ gathers the file manifest for a project """
+    all_file_dicts = gather_project_dir_file_dict_list(
+        project_uuid=project_uuid,
+        files_prefix=files_prefix,
+        root_path=root_path,
+        check_binary_files_present=check_binary_files_present,
+    )
+    if not all_file_dicts:
+        return []
+    file_names = [f_dict.get('filename') for f_dict in all_file_dicts if f_dict.get('filename')]
+    return file_names
 
 
 def make_project_part_license_dir_name(

@@ -254,15 +254,33 @@ def get_manifest_grouped_by_license(project_uuid):
         'media_license_uri',
         'sort',
     )
-    license_dict = {}
+    proj_license_dict = {}
     for media_obj in media_qs:
         license_uri = media_obj.media_license_uri
         if not license_uri:
             license_uri = project_license_uri
-        if not license_uri in license_dict:
-            license_dict[license_uri] = []
-        license_dict[license_uri].append(media_obj)
-    return license_dict
+        if not license_uri in proj_license_dict:
+            proj_license_dict[license_uri] = []
+        proj_license_dict[license_uri].append(media_obj)
+    return proj_license_dict
+
+
+def assemble_depositions_dirs_for_project(project_uuid, check_binary_files_present=False):
+    """Assembles deposition directories for a given project"""
+    project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
+    files_present = zen_utilities.gather_project_dir_file_name_list(
+        project_uuid=project_uuid,
+        check_binary_files_present=check_binary_files_present,
+    )
+    act_partition_number = 0
+    if project_dirs:
+        act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
+            project_uuid
+        )
+    proj_license_dict = get_manifest_grouped_by_license(project_uuid)
+    for license_uri, man_objs in proj_license_dict.items():
+        act_partition_number += 1
+    
 
 
 def update_ressource_obj_zenodo_file_deposit(
