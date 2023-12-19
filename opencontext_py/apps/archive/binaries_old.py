@@ -175,13 +175,15 @@ class ArchiveBinaries():
             self.add_project_archive_dir_metadata(project_uuid,
                                                   archive_dir,
                                                   deposition_id)
-        return deposition_id
+
 
     def add_project_archive_dir_metadata(self, project_uuid, archive_dir, deposition_id):
         """ adds metadata about a project to Zenodo deposition by deposition_id """
         ok = None
-        dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
-                                                          self.dir_content_file_json)
+        dir_dict = self.arch_files_obj.get_dict_from_file(
+            archive_dir,
+            self.dir_content_file_json,
+            )
         oc_item = OCitem(True)  # use cannonical URIs
         exists = oc_item.check_exists(project_uuid)
         if exists and isinstance(dir_dict, dict):
@@ -196,6 +198,7 @@ class ArchiveBinaries():
                 ok = True
                 print('Metadata created and updated for: ' + str(deposition_id))
         return ok
+
 
     def validate_archive_dir_binaries(self, archive_dir, dir_dict):
         """ makes sure the all the archive dir actually has all of the files
@@ -406,10 +409,10 @@ class ArchiveBinaries():
                     if isinstance(dir_dict, dict):
                         # we succeeded in loading its existing file list dict
                         self.dir_contents[project_uuid][archive_dir] = dir_dict
-        for act_dir_key, dir_dict in self.dir_contents[project_uuid].items():
+        for _, dir_dict in self.dir_contents[project_uuid].items():
             if dir_dict['partition-number'] > part_num:
                 part_num = dir_dict['partition-number']
-        for act_dir_key, dir_dict in self.dir_contents[project_uuid].items():
+        for _, dir_dict in self.dir_contents[project_uuid].items():
             if dir_dict['partition-number'] == part_num:
                 if dir_dict['size'] >= (self.max_repo_GB * self.GB_to_byte_multiplier):
                     # the highest part_num found has a big size, so increment up to the
