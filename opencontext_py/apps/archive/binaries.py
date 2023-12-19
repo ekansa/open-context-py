@@ -110,18 +110,19 @@ def get_item_media_files(man_obj):
         if '#' in file_uri:
             file_ex = file_uri.split('#')
             file_uri = file_ex[0]
-        if not file_uri in files_dict:
+        file_name = make_archival_file_name(
+            res_obj.resourcetype.item_key,
+            man_obj.slug,
+            file_uri
+        )
+        if not file_name in files_dict:
             act_dict = {
-                'filename': make_archival_file_name(
-                    res_obj.resourcetype.item_key,
-                    man_obj.slug,
-                    file_uri
-                ),
+                'filename': file_name,
                 'dc-terms:isPartOf': f'https://{man_obj.uri}',
                 'type': [],
             }
-            files_dict[file_uri] = act_dict
-        files_dict[file_uri]['type'].append(res_obj.resourcetype.item_key)
+            files_dict[file_name] = act_dict
+        files_dict[file_name]['type'].append(res_obj.resourcetype.item_key)
     return files_dict
 
 
@@ -178,12 +179,12 @@ def record_citation_people(dir_dict, item_dict):
     return dir_dict
 
 
-def make_save_dir_dict(
-        part_num,
-        license_uri,
-        project_uuid,
-        dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
-    ):
+def get_make_save_dir_dict(
+    part_num,
+    license_uri,
+    project_uuid,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+):
     """Makes a dictionary object with metadata about a directory of files"""
     act_path = zen_utilities.make_project_part_license_dir_path(
         part_num,
@@ -199,7 +200,7 @@ def make_save_dir_dict(
     # We didn't have an existing dir dict, so make one.
     dir_dict = {
         'dc-terms:isPartOf': f'https://opencontext.org/projects/{project_uuid}',
-        'dc-terms:license': license_uri,
+        'dc-terms:license': f'https://{AllManifest().clean_uri(license_uri)}',
         'partition-number': part_num,
         'label': zen_utilities.make_project_part_license_dir_name(
             part_num,
@@ -287,8 +288,20 @@ def assemble_depositions_dirs_for_project(project_uuid, check_binary_files_prese
     proj_license_dict = get_manifest_grouped_by_license(project_uuid)
     for license_uri, man_objs in proj_license_dict.items():
         act_partition_number += 1
-
-    
+        dir_dict = get_make_save_dir_dict(
+            part_num=act_partition_number,
+            license_uri=license_uri,
+            project_uuid=project_uuid,
+        )
+        for man_obj in man_objs:
+            files_dict = get_item_media_files(man_obj)
+            for file_name, file_dict in files_dict.items():
+                if file_name in files_present:
+                    continue
+                pass
+                files_present.append(file_name)
+                # TODO: Add code for actually downloading and saving the file locally
+                # also code to gather metadata related to the file.
 
 
 def update_ressource_obj_zenodo_file_deposit(
