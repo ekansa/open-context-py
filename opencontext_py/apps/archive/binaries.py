@@ -190,6 +190,13 @@ def make_save_dir_dict(
         license_uri,
         project_uuid,
     )
+    dir_dict = zen_utilities.load_serialized_json(
+        path=act_path, 
+        file_name=dir_content_file_json,
+    )
+    if dir_dict:
+        return dir_dict
+    # We didn't have an existing dir dict, so make one.
     dir_dict = {
         'dc-terms:isPartOf': f'https://opencontext.org/projects/{project_uuid}',
         'dc-terms:license': license_uri,
@@ -280,6 +287,7 @@ def assemble_depositions_dirs_for_project(project_uuid, check_binary_files_prese
     proj_license_dict = get_manifest_grouped_by_license(project_uuid)
     for license_uri, man_objs in proj_license_dict.items():
         act_partition_number += 1
+
     
 
 
