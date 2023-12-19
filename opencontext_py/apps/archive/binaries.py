@@ -1,11 +1,13 @@
 import os
 import shutil
 from time import sleep
+
+from django.db.models import OuterRef, Subquery
+
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.binaryfiles import BinaryFiles
 
-from opencontext_py.apps.archive import metadata as zen_files
+from opencontext_py.apps.archive import utilities as zen_utilities
 from opencontext_py.apps.archive import metadata as zen_metadata
 from opencontext_py.apps.archive.zenodo import ArchiveZenodo
 
@@ -70,6 +72,28 @@ def make_archival_file_name(file_type, slug, file_uri):
     return file_name
 
 
+def get_resource_obj_from_archival_file_name(file_name):
+    """ gets a resource object from an archival file name """
+    prefix_to_resource_type = {v:k for k, v in ARCHIVE_FILE_PREFIXES.items()}
+    act_file_type = None
+    slug_part = None
+    for prefix, file_type in prefix_to_resource_type.items():
+        if file_name.startswith(prefix):
+            act_file_type = file_type
+            slug_part = file_name[len(prefix):]
+            break
+    if not act_file_type or not slug_part:
+        return None
+    if '.' in slug_part:
+        id_ex = slug_part.split('.')
+        slug_part = id_ex[0]
+    res_obj = AllResource.objects.filter(
+        item__slug=slug_part,
+        resourcetype__item_key=act_file_type,
+    ).first()
+    return res_obj
+
+
 def get_item_media_files(man_obj):
     """ gets media file uris for archiving """
     files_dict = {}
@@ -99,19 +123,6 @@ def get_item_media_files(man_obj):
             files_dict[file_uri] = act_dict
         files_dict[file_uri]['type'].append(res_obj.resourcetype.item_key)
     return files_dict
-
-
-def make_act_files_dir_name(part_num, license_uri, project_uuid, files_prefix='files',):
-    """ makes a directory name for a given project, license, and directory_number """
-    lic_part = license_uri.replace('http://creativecommons.org/publicdomain/', '')
-    lic_part = lic_part.replace('https://creativecommons.org/publicdomain/', '')
-    lic_part = lic_part.replace('http://creativecommons.org/licenses/', '')
-    lic_part = lic_part.replace('https://creativecommons.org/licenses/', '')
-    if '/' in lic_part:
-        lic_ex = lic_part.split('/')
-        lic_part = lic_ex[0]
-    act_dir = f'{files_prefix}-{str(part_num)}-{lic_part}---{project_uuid}'
-    return act_dir
 
 
 def record_associated_categories(dir_dict, item_dict):
@@ -145,7 +156,7 @@ def record_citation_people(dir_dict, item_dict):
     """
     cite_preds = [
         'dc-terms:creator',
-        'dc-terms:contributor'
+        'dc-terms:contributor',
     ]
     for cite_pred in cite_preds:
         if not item_dict.get(cite_pred):
@@ -171,15 +182,23 @@ def make_save_dir_dict(
         part_num,
         license_uri,
         project_uuid,
-        dir_content_file_json='zenodo-oc-files.json'
+        dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
     ):
     """Makes a dictionary object with metadata about a directory of files"""
-    act_dir = make_act_files_dir_name(part_num, license_uri, project_uuid)
+    act_path = zen_utilities.make_project_part_license_dir_path(
+        part_num,
+        license_uri,
+        project_uuid,
+    )
     dir_dict = {
         'dc-terms:isPartOf': f'https://opencontext.org/projects/{project_uuid}',
         'dc-terms:license': license_uri,
         'partition-number': part_num,
-        'label': act_dir,
+        'label': zen_utilities.make_project_part_license_dir_name(
+            part_num,
+            license_uri,
+            project_uuid,
+        ),
         'size': 0,
         'dc-terms:creator': [],
         'dc-terms:contributor': [],
@@ -187,5 +206,118 @@ def make_save_dir_dict(
         'files': [],
     }
     # Save the directory dictionary to a json file
-    zen_files.save_serialized_json(act_dir, dir_content_file_json, dir_dict)
+    zen_utilities.save_serialized_json(
+        path=act_path,
+        file_name=dir_content_file_json,
+        dict_obj=dir_dict,
+    )
     return dir_dict
+
+
+def get_manifest_grouped_by_license(project_uuid):
+    """ gets a dict keyed by license uri with a list of media objects
+    for a given project.
+    """
+    # The default copyright license, if none is given
+    project_license_uri = AllManifest().clean_uri(
+        configs.CC_DEFAULT_LICENSE_CC_BY_URI
+    )
+    project_license = AllAssertion.objects.filter(
+        subject_id=project_uuid,
+        predicate_id=configs.PREDICATE_DCTERMS_LICENSE_UUID,
+    ).first()
+    if project_license:
+        # The project has it's own license
+        project_license_uri = project_license.object.uri
+
+    media_license_qs = AllAssertion.objects.filter(
+        subject_id=OuterRef('uuid'),
+        predicate_id=configs.PREDICATE_DCTERMS_LICENSE_UUID,
+    ).values('object__uri')[:1]
+
+    file_zenodo_qs = AllResource.objects.filter(
+        item_id=OuterRef('uuid'),
+        meta_json__has_key='zenodo',
+    ).values('meta_json')[:1]
+
+    media_qs = AllManifest.objects.filter(
+        project__uuid=project_uuid,
+        item_type='media',
+    ).annotate(
+        # Add the license uri to each media object
+        media_license_uri=Subquery(media_license_qs)
+    ).annotate(
+        # Add the zenodo metadata to each media object,
+        # if it exists.
+        file_zenodo_meta_json=Subquery(file_zenodo_qs),
+    ).order_by(
+        'media_license_uri',
+        'sort',
+    )
+    license_dict = {}
+    for media_obj in media_qs:
+        license_uri = media_obj.media_license_uri
+        if not license_uri:
+            license_uri = project_license_uri
+        if not license_uri in license_dict:
+            license_dict[license_uri] = []
+        license_dict[license_uri].append(media_obj)
+    return license_dict
+
+
+def update_ressource_obj_zenodo_file_deposit(
+    deposition_id,
+    doi_url,
+    zenodo_file_dict,
+):
+    """Updates the zenodo archive metadata for a resource object"""
+    if not deposition_id or not doi_url or not zenodo_file_dict:
+        return None
+    file_name = zenodo_file_dict.get('filename')
+    if not file_name:
+        return None
+    res_obj = get_resource_obj_from_archival_file_name(file_name)
+    if not res_obj:
+        return None
+    if res_obj.meta_json.get('zenodo'):
+        # We already have a record of this resource record
+        # being deposited in Zenodo
+        return res_obj
+    oc_dict = {
+        'deposition_id': deposition_id,
+        'doi_url': AllManifest().clean_uri(doi_url),
+        'filename': file_name,
+        'filesize': zenodo_file_dict.get('filesize'),
+        'checksum': zenodo_file_dict.get('checksum'),
+        'zenodo_file_id': zenodo_file_dict.get('id'),
+    }
+    res_obj.meta_json['zenodo'] = oc_dict
+    res_obj.save()
+    return res_obj
+
+
+def record_all_zenodo_depositions(params=None):
+    """Records Zenodo depositions for resource instances
+    based on file lists returned from Zenodo API
+    """
+    az = ArchiveZenodo()
+    depositions = az.get_all_depositions_list(params=params)
+    for deposition in depositions:
+        deposition_id = deposition.get('id')
+        doi_url = deposition.get('doi_url')
+        title = deposition.get('title')
+        if not deposition_id or not doi_url:
+            continue
+        files = deposition.get('files', [])
+        print(f'Processing deposition {title} [id: {deposition_id}] with {len(files)} files')
+        res_count = 0
+        for zenodo_file_dict in files:
+            res_obj = update_ressource_obj_zenodo_file_deposit(
+                deposition_id,
+                doi_url,
+                zenodo_file_dict,
+            )
+            if not res_obj:
+                continue
+            res_count += 1
+        print(f'Processed {res_count} resources for deposition {title} [id: {deposition_id}]')

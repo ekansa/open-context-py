@@ -56,6 +56,37 @@ class ArchiveZenodo():
             output = False
         return output
 
+    def get_all_depositions_list(self, params=None):
+        """ Gets a list of depositions for our Zenodo account via a GET
+            request for a JSON object from Zenodo
+        """
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        headers['Content-Type'] = 'application/json'
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        url = f'{self.url_prefix}/api/deposit/depositions'
+        if not params:
+            params = {}
+        params['access_token'] = self.ACCESS_TOKEN
+        try:
+            r = requests.get(
+                url,
+                timeout=240,
+                headers=headers,
+                params=params,
+            )
+            r.raise_for_status()
+            output = r.json()
+        except:
+            output = False
+            print(f'FAIL with Status code: {r.status_code}')
+            print(str(r.json()))
+            print(f'URL: {url}')
+        return output
+
     def get_deposition_meta_by_id(self, deposition_id):
         """ gets a deposition metadata object via a
             request for a JSON object from Zenodo
