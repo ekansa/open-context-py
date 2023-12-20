@@ -117,6 +117,7 @@ def get_item_media_files(man_obj):
         )
         if not file_name in files_dict:
             act_dict = {
+                'short_term_url': f'https://{file_uri}',
                 'filename': file_name,
                 'dc-terms:isPartOf': f'https://{man_obj.uri}',
                 'type': [],
@@ -126,10 +127,10 @@ def get_item_media_files(man_obj):
     return files_dict
 
 
-def record_associated_categories(dir_dict, item_dict):
+def record_associated_categories(dir_dict, rep_dict):
     """ gets citation information for the specific media item
     """
-    path_objs = item_dict.get('oc-gen:has-linked-contexts', [])
+    path_objs = rep_dict.get('oc-gen:has-linked-contexts', [])
     if not len(path_objs):
         return dir_dict
     last_path_obj = path_objs[-1]
@@ -152,7 +153,7 @@ def record_associated_categories(dir_dict, item_dict):
     return dir_dict
 
 
-def record_citation_people(dir_dict, item_dict):
+def record_citation_people(dir_dict, rep_dict):
     """ gets citation information for the specific media item
     """
     cite_preds = [
@@ -160,13 +161,13 @@ def record_citation_people(dir_dict, item_dict):
         'dc-terms:contributor',
     ]
     for cite_pred in cite_preds:
-        if not item_dict.get(cite_pred):
+        if not rep_dict.get(cite_pred):
             continue
         if not dir_dict.get(cite_pred):
             # just in case we don't have this citation predicate
             # in the directory dict
             dir_dict[cite_pred] = []
-        for cite_obj in item_dict.get(cite_pred, []):
+        for cite_obj in rep_dict.get(cite_pred, []):
             cite_obj_found = False
             for old_cite in dir_dict.get(cite_pred, []):
                 if cite_obj['id'] == old_cite['id']:
@@ -192,7 +193,7 @@ def get_make_save_dir_dict(
         project_uuid,
     )
     dir_dict = zen_utilities.load_serialized_json(
-        path=act_path, 
+        path=act_path,
         file_name=dir_content_file_json,
     )
     if dir_dict:
@@ -219,7 +220,7 @@ def get_make_save_dir_dict(
         file_name=dir_content_file_json,
         dict_obj=dir_dict,
     )
-    return dir_dict
+    return dir_dict, act_path
 
 
 def get_manifest_grouped_by_license(project_uuid):
@@ -273,7 +274,11 @@ def get_manifest_grouped_by_license(project_uuid):
     return proj_license_dict
 
 
-def assemble_depositions_dirs_for_project(project_uuid, check_binary_files_present=False):
+def assemble_depositions_dirs_for_project(
+    project_uuid,
+    check_binary_files_present=False,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+):
     """Assembles deposition directories for a given project"""
     project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
     files_present = zen_utilities.gather_project_dir_file_name_list(
@@ -288,23 +293,57 @@ def assemble_depositions_dirs_for_project(project_uuid, check_binary_files_prese
     proj_license_dict = get_manifest_grouped_by_license(project_uuid)
     for license_uri, man_objs in proj_license_dict.items():
         act_partition_number += 1
-        dir_dict = get_make_save_dir_dict(
+        dir_dict, act_path = get_make_save_dir_dict(
             part_num=act_partition_number,
             license_uri=license_uri,
             project_uuid=project_uuid,
+            dir_content_file_json=dir_content_file_json,
         )
         for man_obj in man_objs:
+            dir_full = zen_utilities.check_if_dir_is_full(act_path)
+            if dir_full or len(dir_dict.get('files', [])) >= zen_utilities.MAX_FILES_PER_DIR:
+                # Prepare a new directory for the next set of files
+                act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
+                    project_uuid
+                )
+                act_partition_number += 1
+                dir_dict, act_path = get_make_save_dir_dict(
+                    part_num=act_partition_number,
+                    license_uri=license_uri,
+                    project_uuid=project_uuid,
+                    dir_content_file_json=dir_content_file_json,
+                )
+            rep_dict = None
             files_dict = get_item_media_files(man_obj)
+            dir_updated = False
             for file_name, file_dict in files_dict.items():
                 if file_name in files_present:
+                    # We already have this file, so skip it
                     continue
-                pass
                 files_present.append(file_name)
+                if not rep_dict:
+                    _, rep_dict = item.make_representation_dict(
+                        subject_id=str(man_obj.uuid),
+                        for_solr=False,
+                    )
+                    dir_dict = record_associated_categories(dir_dict, rep_dict)
+                    dir_dict = record_citation_people(dir_dict, rep_dict)
+                if not rep_dict:
+                    # Something went wrong with the representation dict!
+                    continue
+                dir_updated = True
                 # TODO: Add code for actually downloading and saving the file locally
                 # also code to gather metadata related to the file.
+            if dir_updated:
+                # Save the updated directory dictionary to a json file
+                zen_utilities.save_serialized_json(
+                    path=act_path,
+                    file_name=dir_content_file_json,
+                    dict_obj=dir_dict,
+                )
 
 
-def update_ressource_obj_zenodo_file_deposit(
+def update_resource_obj_zenodo_file_deposit(
     deposition_id,
     doi_url,
     zenodo_file_dict,
@@ -351,7 +390,7 @@ def record_all_zenodo_depositions(params=None):
         print(f'Processing deposition {title} [id: {deposition_id}] with {len(files)} files')
         res_count = 0
         for zenodo_file_dict in files:
-            res_obj = update_ressource_obj_zenodo_file_deposit(
+            res_obj = update_resource_obj_zenodo_file_deposit(
                 deposition_id,
                 doi_url,
                 zenodo_file_dict,

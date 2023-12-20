@@ -58,6 +58,18 @@ def get_file_count_and_size(path):
     return file_count, total_size
 
 
+def check_if_dir_is_full(path):
+    """ checks if a directory is full """
+    file_count, total_size = get_file_count_and_size(path)
+    if file_count >= (MAX_DEPOSITION_FILE_COUNT + 1):
+        # we don't count the manifest file, so allow
+        # one more file than the max
+        return True
+    if total_size >= MAX_DEPOSITION_FILE_SIZE:
+        return True
+    return False
+
+
 def get_sub_directories(path):
     """Gets a list of subdirectories in a directory"""
     os.makedirs(path, exist_ok=True)
@@ -169,7 +181,7 @@ def gather_project_dir_file_dict_list(
     for act_dir in project_dirs:
         act_path = os.path.join(root_path, act_dir)
         dir_dict = load_serialized_json(
-            path=act_path, 
+            path=act_path,
             file_name=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
         )
         if not dir_dict:
