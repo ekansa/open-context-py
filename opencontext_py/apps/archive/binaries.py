@@ -19,7 +19,20 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
 )
 
+from opencontext_py.apps.all_items.editorial.archive import file_utilities as fu
+
 from opencontext_py.apps.all_items.representations import item
+
+
+"""
+# Running this:
+import importlib
+from opencontext_py.apps.archive import binaries as zen_binaries
+
+importlib.reload(zen_binaries)
+zen_binaries.assemble_depositions_dirs_for_project('a52bd40a-9ac8-4160-a9b0-bd2795079203')
+
+"""
 
 
 ARCHIVE_FILE_TYPES_KEYS = [
@@ -301,7 +314,7 @@ def assemble_depositions_dirs_for_project(
         )
         for man_obj in man_objs:
             dir_full = zen_utilities.check_if_dir_is_full(act_path)
-            if dir_full or len(dir_dict.get('files', [])) >= zen_utilities.MAX_FILES_PER_DIR:
+            if dir_full or len(dir_dict.get('files', [])) >= zen_utilities.MAX_DEPOSITION_FILE_COUNT:
                 # Prepare a new directory for the next set of files
                 act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
                     project_uuid
@@ -331,9 +344,19 @@ def assemble_depositions_dirs_for_project(
                 if not rep_dict:
                     # Something went wrong with the representation dict!
                     continue
+                # Actually download and saving the file locally
+                cache_file_path = fu.get_cache_file(
+                    file_uri=file_dict.get('short_term_url'),
+                    cache_filename=file_dict.get('filename'),
+                    cache_dir=act_path,
+                    local_file_dir=None,
+                    remote_to_local_path_split=None,
+                )
+                if not cache_file_path:
+                    # We couldn't cache the file locally, so skip it
+                    continue
                 dir_updated = True
-                # TODO: Add code for actually downloading and saving the file locally
-                # also code to gather metadata related to the file.
+                dir_dict['files'].append(file_dict)
             if dir_updated:
                 # Save the updated directory dictionary to a json file
                 zen_utilities.save_serialized_json(

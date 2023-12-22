@@ -84,7 +84,7 @@ def get_project_dir_partition_number(dir_name):
     """Gets the partition number from a directory name"""
     if not isinstance(dir_name, str):
         return None
-    if not dir_ex[0].startswith(PROJECT_ARCHIVE_LOCAL_DIR_PREFIX):
+    if not dir_name.startswith(PROJECT_ARCHIVE_LOCAL_DIR_PREFIX):
         return None
     if not '---' in dir_name:
         return None
@@ -230,11 +230,18 @@ def make_project_part_license_dir_name(
     """ makes a directory name for a given project, license, and directory_number """
     license_uri = AllManifest().clean_uri(license_uri)
     lic_part = license_uri.split('/')[-1]
+    try:
+        lic_num = float(lic_part)
+    except:
+        lic_num = None
+    if lic_num is not None:
+        # we don't want the "4.0" of the "/by/4.0", we want the "by"
+        lic_part = license_uri.split('/')[-2]
     act_dir = f'{files_prefix}-{str(part_num)}-{lic_part}---{project_uuid}'
     return act_dir
 
 
-def make_project_part_license_dir_path_and_name(
+def make_project_part_license_dir_path(
     part_num,
     license_uri,
     project_uuid,
