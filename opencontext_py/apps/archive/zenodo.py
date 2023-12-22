@@ -226,8 +226,8 @@ class ArchiveZenodo():
         return output
 
     def create_empty_deposition(self):
-        """ makes a new empty deposition containter
-            to recieve files and metadata
+        """ makes a new empty deposition container
+            to receive files and metadata
         """
         output = None
         gapi = GeneralAPI()
@@ -240,10 +240,11 @@ class ArchiveZenodo():
             sleep(self.delay_before_request)
         try:
             r = requests.post(url,
-                              timeout=240,
-                              headers=headers,
-                              params={'access_token': self.ACCESS_TOKEN},
-                              json={})
+                timeout=240,
+                headers=headers,
+                params={'access_token': self.ACCESS_TOKEN},
+                json={}
+            )
             r.raise_for_status()
             print('Status code: ' + str(r.status_code))
             output = r.json()
