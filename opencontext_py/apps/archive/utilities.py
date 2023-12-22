@@ -258,3 +258,27 @@ def make_project_part_license_dir_path(
     )
     act_path = os.path.join(root_path, act_dir)
     return act_path
+
+
+def validate_archive_dir_binaries(act_path):
+    """ makes sure the all the archive dir actually has all of the files
+        it says it has to archive
+    """
+    dir_dict = load_serialized_json(
+        path=act_path,
+        file_name=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+    )
+    if not isinstance(dir_dict, dict):
+        print(f'Cannot read an archive contents file in: {act_path}')
+        return False, [f'Cannot read an archive contents file in: {act_path}']
+    errors = []
+    for file_dict in dir_dict.get('files', []):
+        filename = file_dict.get('filename')
+        if not filename:
+            continue
+        file_path = os.path.join(act_path, filename)
+        if not os.path.exists(file_path):
+            errors.append(file_dict)
+            print(f'Cannot find {filename} in: {act_path}')
+    valid = len(errors) == 0
+    return valid, errors
