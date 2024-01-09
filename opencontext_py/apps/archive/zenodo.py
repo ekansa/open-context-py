@@ -125,8 +125,8 @@ class ArchiveZenodo():
     def upload_file_by_put(
             self,
             bucket_url,
+            full_path_file,
             filename,
-            full_path_file
         ):
         """ uploads a file of filename, stored at full_path_file
             into a Zenodo deposit at location bucket_url
@@ -233,6 +233,7 @@ class ArchiveZenodo():
         gapi = GeneralAPI()
         headers = gapi.client_headers
         headers['Content-Type'] = 'application/json'
+        headers['Authorization'] = 'Bearer ' + self.ACCESS_TOKEN
         url = f'{self.url_prefix}/api/deposit/depositions'
         if self.delay_before_request > 0:
             # default to sleep BEFORE a request is sent, to

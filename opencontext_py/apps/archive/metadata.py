@@ -1,6 +1,7 @@
 import datetime
 from opencontext_py.libs.rootpath import RootPath
 
+from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.editorial import api as editorial_api
 
 PROJECT_BINARY_KEYWORDS = [
@@ -30,6 +31,23 @@ DEFAULT_SUBJECTS = [
 ]
 
 
+def make_zenodo_license_abrev_from_uri(lic_uri):
+    """ zenodo wants an abbreviated license, not a full URI
+        this is annoying, but it is what it wants
+    """
+    if 'publicdomain' in lic_uri:
+        return 'cc-zero'
+    if 'licenses/' in lic_uri:
+        lic_ex = lic_uri.split('licenses/')
+        lic_part = lic_ex[-1]
+        if '/' in lic_part:
+            lic_part_ex = lic_part.split('/')
+            return 'cc-' + lic_part_ex[0]
+        else:
+            return 'cc-' + lic_part
+    return None
+
+
 def make_zenodo_license_abrev(meta_dict):
     """ zenodo wants an abbreviated license, not a full URI
         this is annoying, but it is what it wants
@@ -38,16 +56,9 @@ def make_zenodo_license_abrev(meta_dict):
         if not lic_obj.get('id'):
             continue
         lic_uri = lic_obj['id']
-        if 'publicdomain' in lic_uri:
-            return 'cc-zero'
-        if 'licenses/' in lic_uri:
-            lic_ex = lic_uri.split('licenses/')
-            lic_part = lic_ex[-1]
-            if '/' in lic_part:
-                lic_part_ex = lic_part.split('/')
-                return 'cc-' + lic_part_ex[0]
-            else:
-                return 'cc-' + lic_part
+        zen_license = make_zenodo_license_abrev_from_uri(lic_uri)
+        if zen_license:
+            return zen_license
     return None
 
 
@@ -128,6 +139,9 @@ def make_zenodo_related_list(proj_dict):
             zenodo_list.append(zenodo_obj)
     # make relation to a parent Open Context project, if it applicable
     for obj_dict in proj_dict.get('dc-terms:isPartOf', []):
+        if obj_dict.get('id', '').endswith(configs.OPEN_CONTEXT_PROJ_UUID):
+            # Don't make a relation to the parent project
+            continue
         zenodo_obj = {}
         zenodo_obj['relation'] = 'isPartOf'
         zenodo_obj['identifier'] = obj_dict['id']
@@ -188,7 +202,7 @@ def make_zenodo_creator_list(meta_dict):
     ordered_objs = sorted(objs_w_order, key=lambda x: x[1])
     for obj_w_order in ordered_objs:
         obj_dict = obj_w_order[0]
-        obj_dict = self.add_person_names_to_obj(obj_dict)
+        obj_dict = add_person_names_to_obj(obj_dict)
         zenodo_obj = {}
         zenodo_obj['name'] = obj_dict['family_given_name']
         orcid_url = obj_dict.get('dc-terms:identifier', '')
@@ -228,7 +242,7 @@ def make_zenodo_proj_media_files_metadata(
         # default to today
         today = datetime.date.today()
         meta['publication_date'] = today.isoformat()
-    meta['license'] = make_zenodo_license_abrev(dir_dict)
+    meta['license'] = make_zenodo_license_abrev_from_uri(dir_dict.get('dc-terms:license', ''))
     meta['upload_type'] = proj_upload_type
     if meta['upload_type'] == 'publication':
         meta['publication_type'] = proj_binary_pub_type

@@ -32,6 +32,27 @@ from opencontext_py.apps.archive import binaries as zen_binaries
 importlib.reload(zen_binaries)
 zen_binaries.assemble_depositions_dirs_for_project('a52bd40a-9ac8-4160-a9b0-bd2795079203')
 
+zen_binaries.archive_project_binary_dir(
+    project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
+    act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
+    do_testing=True,
+)
+zen_binaries.add_project_archive_dir_metadata(
+    project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
+    act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
+    deposition_id='17832',
+    do_testing=True,
+)
+zen_binaries.archive_all_project_binary_dirs(
+    project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
+    do_testing=False,
+)
+
+zen_binaries.reset_zendodo_metadat_for_files(
+    act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
+)
+
+
 """
 
 
@@ -71,7 +92,7 @@ ZENODO_FILE_KEYS = [
 ]
 
 
-def make_archival_file_name(file_type, slug, file_uri):
+def make_archival_filename(file_type, slug, file_uri):
     """ makes an archival file name based on the
         file type, the slug, and the file_uri
     """
@@ -79,21 +100,21 @@ def make_archival_file_name(file_type, slug, file_uri):
     if '.' in file_uri:
         file_ex = file_uri.split('.')
         extension = file_ex[-1].lower()
-        file_name = prefix + slug + '.' + extension
+        filename = prefix + slug + '.' + extension
     else:
-        file_name = prefix + slug
-    return file_name
+        filename = prefix + slug
+    return filename
 
 
-def get_resource_obj_from_archival_file_name(file_name):
+def get_resource_obj_from_archival_filename(filename):
     """ gets a resource object from an archival file name """
     prefix_to_resource_type = {v:k for k, v in ARCHIVE_FILE_PREFIXES.items()}
     act_file_type = None
     slug_part = None
     for prefix, file_type in prefix_to_resource_type.items():
-        if file_name.startswith(prefix):
+        if filename.startswith(prefix):
             act_file_type = file_type
-            slug_part = file_name[len(prefix):]
+            slug_part = filename[len(prefix):]
             break
     if not act_file_type or not slug_part:
         return None
@@ -123,20 +144,20 @@ def get_item_media_files(man_obj):
         if '#' in file_uri:
             file_ex = file_uri.split('#')
             file_uri = file_ex[0]
-        file_name = make_archival_file_name(
+        filename = make_archival_filename(
             res_obj.resourcetype.item_key,
             man_obj.slug,
             file_uri
         )
-        if not file_name in files_dict:
+        if not filename in files_dict:
             act_dict = {
                 'short_term_url': f'https://{file_uri}',
-                'filename': file_name,
+                'filename': filename,
                 'dc-terms:isPartOf': f'https://{man_obj.uri}',
                 'type': [],
             }
-            files_dict[file_name] = act_dict
-        files_dict[file_name]['type'].append(res_obj.resourcetype.item_key)
+            files_dict[filename] = act_dict
+        files_dict[filename]['type'].append(res_obj.resourcetype.item_key)
     return files_dict
 
 
@@ -207,7 +228,7 @@ def get_make_save_dir_dict(
     )
     dir_dict = zen_utilities.load_serialized_json(
         path=act_path,
-        file_name=dir_content_file_json,
+        filename=dir_content_file_json,
     )
     if dir_dict:
         return dir_dict
@@ -230,7 +251,7 @@ def get_make_save_dir_dict(
     # Save the directory dictionary to a json file
     zen_utilities.save_serialized_json(
         path=act_path,
-        file_name=dir_content_file_json,
+        filename=dir_content_file_json,
         dict_obj=dir_dict,
     )
     return dir_dict, act_path
@@ -294,7 +315,7 @@ def assemble_depositions_dirs_for_project(
 ):
     """Assembles deposition directories for a given project"""
     project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
-    files_present = zen_utilities.gather_project_dir_file_name_list(
+    files_present = zen_utilities.gather_project_dir_filename_list(
         project_uuid=project_uuid,
         check_binary_files_present=check_binary_files_present,
     )
@@ -316,6 +337,7 @@ def assemble_depositions_dirs_for_project(
             dir_full = zen_utilities.check_if_dir_is_full(act_path)
             if dir_full or len(dir_dict.get('files', [])) >= zen_utilities.MAX_DEPOSITION_FILE_COUNT:
                 # Prepare a new directory for the next set of files
+                print(f'{act_partition_number} appears full. Preparing a new directory for {act_path}')
                 act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
                     project_uuid
                 )
@@ -329,11 +351,11 @@ def assemble_depositions_dirs_for_project(
             rep_dict = None
             files_dict = get_item_media_files(man_obj)
             dir_updated = False
-            for file_name, file_dict in files_dict.items():
-                if file_name in files_present:
+            for filename, file_dict in files_dict.items():
+                if filename in files_present:
                     # We already have this file, so skip it
                     continue
-                files_present.append(file_name)
+                files_present.append(filename)
                 if not rep_dict:
                     _, rep_dict = item.make_representation_dict(
                         subject_id=str(man_obj.uuid),
@@ -361,9 +383,189 @@ def assemble_depositions_dirs_for_project(
                 # Save the updated directory dictionary to a json file
                 zen_utilities.save_serialized_json(
                     path=act_path,
-                    file_name=dir_content_file_json,
+                    filename=dir_content_file_json,
                     dict_obj=dir_dict,
                 )
+
+
+def add_project_archive_dir_metadata(
+    project_uuid,
+    act_path,
+    deposition_id,
+    proj_dict=None,
+    dir_dict=None,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+    do_testing=False,
+):
+    """ adds metadata about a project to Zenodo deposition by deposition_id """
+    if not dir_dict:
+        dir_dict = zen_utilities.load_serialized_json(
+            path=act_path,
+            filename=dir_content_file_json,
+        )
+    if not dir_dict:
+        raise ValueError(f'Cannot read an archive contents file in: {act_path}')
+    if not proj_dict:
+        _, proj_dict = item.make_representation_dict(
+            subject_id=project_uuid,
+            for_solr=False,
+        )
+    if not proj_dict:
+        raise ValueError(f'No project dict found for: {project_uuid}')
+
+    meta = zen_metadata.make_zenodo_proj_media_files_metadata(
+        proj_dict=proj_dict,
+        dir_dict=dir_dict,
+        dir_content_file_json=dir_content_file_json,
+    )
+    az = ArchiveZenodo(do_testing=do_testing)
+    output = az.update_metadata(deposition_id, meta)
+    if not output:
+        return False
+    print(f'Added {proj_dict.get("label")} metadata for: {act_path} to deposition: {deposition_id}')
+    return True
+
+
+def reset_zendodo_metadat_for_files(
+    act_path,
+     dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+):
+    """ resets the zenodo metadata for the files manifest in a given directory
+    """
+    dir_dict = zen_utilities.load_serialized_json(
+        path=act_path,
+        filename=dir_content_file_json,
+    )
+    for file_dict in dir_dict.get('files', []):
+        filename = file_dict.get('filename')
+        if not filename:
+            continue
+        for key in ZENODO_FILE_KEYS:
+            if file_dict.get(key):
+                file_dict.pop(key)
+            zen_utilities.save_serialized_json(
+                path=act_path,
+                filename=dir_content_file_json,
+                dict_obj=dir_dict,
+            )
+    print(
+        f'Reset file metadata in {act_path} to remove Zenodo specific keys, values'
+    )
+
+
+def archive_project_binary_dir(
+    project_uuid,
+    act_path,
+    proj_dict=None,
+    deposition_id=None,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+    do_testing=False,
+):
+    """ archives a project binary directory to Zenodo """
+    dir_dict = zen_utilities.load_serialized_json(
+        path=act_path,
+        filename=dir_content_file_json,
+    )
+    valid, errors = zen_utilities.validate_archive_dir_binaries(act_path, dir_dict=dir_dict)
+    if not valid:
+        for error in errors:
+            print(error)
+        raise ValueError(f'Cannot archive an invalid directory: {act_path}')
+    az = ArchiveZenodo(do_testing=do_testing)
+    bucket_url = None
+    if not deposition_id:
+        deposition_dict = az.create_empty_deposition()
+        if not deposition_dict:
+            raise ValueError(f'Cannot create an empty deposition for: {act_path}')
+        deposition_id = az.get_deposition_id_from_metadata(deposition_dict)
+        bucket_url = az.get_bucket_url_from_metadata(deposition_dict)
+    if not bucket_url and deposition_id:
+        bucket_url = az.get_remote_deposition_bucket_url(deposition_id)
+    if not bucket_url:
+        raise ValueError(f'Cannot get bucket url for: {act_path}')
+    if not deposition_id:
+        raise ValueError(f'Cannot get deposition id for: {act_path}')
+    i = 0
+    len_files = len(dir_dict.get('files', []))
+    for file_dict in dir_dict.get('files', []):
+        filename = file_dict.get('filename')
+        if not filename:
+            continue
+        done = False
+        for key in ZENODO_FILE_KEYS:
+            if file_dict.get(key):
+                done = True
+        if done:
+            # This file is already uploaded
+            continue
+        file_path = os.path.join(act_path, filename)
+        if not os.path.exists(file_path):
+            raise ValueError(f'Cannot find: {file_path}')
+        zenodo_resp = az.upload_file_by_put(
+            bucket_url=bucket_url,
+            full_path_file=file_path,
+            filename=filename,
+        )
+        if not zenodo_resp:
+            raise ValueError(f'Cannot upload file to bucket: {file_path}')
+        i += 1
+        for key in ZENODO_FILE_KEYS:
+            if not zenodo_resp.get(key):
+                continue
+            file_dict[key] = zenodo_resp[key]
+        print(
+            f'[{i} of {len_files}] Archived {filename} of {dir_dict.get("label")} to deposition {deposition_id}'
+        )
+        # Save the update with the zenodo file specific key values
+        zen_utilities.save_serialized_json(
+            path=act_path,
+            filename=dir_content_file_json,
+            dict_obj=dir_dict,
+        )
+    # Now upload the Zenodo file manifest JSON
+    manifest_path = os.path.join(act_path, dir_content_file_json)
+    zenodo_resp = az.upload_file_by_put(
+        bucket_url=bucket_url,
+        full_path_file=manifest_path,
+        filename=dir_content_file_json,
+    )
+    if not zenodo_resp:
+        raise ValueError(f'Cannot upload file to bucket: {manifest_path}')
+    # Now make metadata for the deposition.
+    if not proj_dict:
+        _, proj_dict = item.make_representation_dict(
+            subject_id=project_uuid,
+            for_solr=False,
+        )
+    if not proj_dict:
+        raise ValueError(f'No project dict found for: {project_uuid}')
+    dep_meta_dict = zen_metadata.make_zenodo_proj_media_files_metadata(
+        proj_dict=proj_dict,
+        dir_dict=dir_dict,
+        dir_content_file_json=dir_content_file_json,
+    )
+    az.update_metadata(deposition_id, dep_meta_dict)
+    print(
+        f'Archived {len_files} files to deposition {deposition_id}; {dep_meta_dict.get("title")}'
+    )
+
+
+def archive_all_project_binary_dirs(
+    project_uuid,
+    proj_dict=None,
+    do_testing=False,
+):
+    """ archives all project binary directories to Zenodo """
+    project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
+    for act_path in project_dirs:
+        if not act_path.startswith(zen_utilities.ARCHIVE_LOCAL_ROOT_PATH):
+            act_path = os.path.join(zen_utilities.ARCHIVE_LOCAL_ROOT_PATH, act_path)
+        archive_project_binary_dir(
+            project_uuid=project_uuid,
+            act_path=act_path,
+            proj_dict=proj_dict,
+            do_testing=do_testing,
+        )
 
 
 def update_resource_obj_zenodo_file_deposit(
@@ -374,10 +576,10 @@ def update_resource_obj_zenodo_file_deposit(
     """Updates the zenodo archive metadata for a resource object"""
     if not deposition_id or not doi_url or not zenodo_file_dict:
         return None
-    file_name = zenodo_file_dict.get('filename')
-    if not file_name:
+    filename = zenodo_file_dict.get('filename')
+    if not filename:
         return None
-    res_obj = get_resource_obj_from_archival_file_name(file_name)
+    res_obj = get_resource_obj_from_archival_filename(filename)
     if not res_obj:
         return None
     if res_obj.meta_json.get('zenodo'):
@@ -387,7 +589,7 @@ def update_resource_obj_zenodo_file_deposit(
     oc_dict = {
         'deposition_id': deposition_id,
         'doi_url': AllManifest().clean_uri(doi_url),
-        'filename': file_name,
+        'filename': filename,
         'filesize': zenodo_file_dict.get('filesize'),
         'checksum': zenodo_file_dict.get('checksum'),
         'zenodo_file_id': zenodo_file_dict.get('id'),
