@@ -13,27 +13,27 @@ PROJECT_ARCHIVE_LOCAL_DIR_PREFIX = 'files'
 
 PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME = 'zenodo-oc-files.json'
 
-MAX_DEPOSITION_FILE_COUNT = 2500
+MAX_DEPOSITION_FILE_COUNT = 99
 MAX_DEPOSITION_FILE_SIZE = 45000000000  # 45 GB
 
 
-def make_full_path_filename(path, file_name):
+def make_full_path_filename(path, filename):
     """ makes a full filepath and file name string """
     os.makedirs(path, exist_ok=True)
-    return os.path.join(path, file_name)
+    return os.path.join(path, filename)
 
 
-def load_serialized_json(path, file_name):
-    dir_file = os.path.join(path, file_name)
+def load_serialized_json(path, filename):
+    dir_file = os.path.join(path, filename)
     if not os.path.exists(dir_file):
         return None
     file_dict = json.load(open(dir_file))
     return file_dict
 
 
-def save_serialized_json(path, file_name, dict_obj):
+def save_serialized_json(path, filename, dict_obj):
     """ saves a data in the appropriate path + file """
-    dir_file = make_full_path_filename(path, file_name)
+    dir_file = make_full_path_filename(path, filename)
     json_output = json.dumps(
         dict_obj,
         indent=4,
@@ -182,7 +182,7 @@ def gather_project_dir_file_dict_list(
         act_path = os.path.join(root_path, act_dir)
         dir_dict = load_serialized_json(
             path=act_path,
-            file_name=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+            filename=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
         )
         if not dir_dict:
             continue
@@ -192,17 +192,17 @@ def gather_project_dir_file_dict_list(
         # Below we will check to make sure the binary files actually
         # do exist in the directory
         for f_dict in dir_dict.get('files', []):
-            file_name = f_dict.get('filename')
-            if not file_name:
+            filename = f_dict.get('filename')
+            if not filename:
                 continue
-            filepath = os.path.join(act_path, file_name)
+            filepath = os.path.join(act_path, filename)
             if os.path.exists(filepath):
                 # Yes, the file is actually present here.
                 all_file_dicts.append(f_dict)
     return all_file_dicts
 
 
-def gather_project_dir_file_name_list(
+def gather_project_dir_filename_list(
     project_uuid,
     files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
@@ -217,8 +217,8 @@ def gather_project_dir_file_name_list(
     )
     if not all_file_dicts:
         return []
-    file_names = [f_dict.get('filename') for f_dict in all_file_dicts if f_dict.get('filename')]
-    return file_names
+    filenames = [f_dict.get('filename') for f_dict in all_file_dicts if f_dict.get('filename')]
+    return filenames
 
 
 def make_project_part_license_dir_name(
@@ -260,14 +260,15 @@ def make_project_part_license_dir_path(
     return act_path
 
 
-def validate_archive_dir_binaries(act_path):
+def validate_archive_dir_binaries(act_path, dir_dict=None):
     """ makes sure the all the archive dir actually has all of the files
         it says it has to archive
     """
-    dir_dict = load_serialized_json(
-        path=act_path,
-        file_name=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
-    )
+    if not dir_dict:
+        dir_dict = load_serialized_json(
+            path=act_path,
+            filename=PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+        )
     if not isinstance(dir_dict, dict):
         print(f'Cannot read an archive contents file in: {act_path}')
         return False, [f'Cannot read an archive contents file in: {act_path}']
