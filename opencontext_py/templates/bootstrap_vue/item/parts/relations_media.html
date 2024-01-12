@@ -16,7 +16,7 @@
             ></human-remains-image>
 
             {%else%}
-            <b-img-lazy :blank-width="150" :blank-width="75" src="{{ val.oc_gen__thumbnail_uri }}" class="rounded item_thumb" alt="Thumbnail for {{ val.label }}"></b-img-lazy>
+            <b-img-lazy onerror="this.src='https://opencontext.org/static/oc/icons-v2/noun-image-file-1453705.svg';" :blank-width="150" :blank-width="75" src="{{ val.oc_gen__thumbnail_uri }}" class="rounded item_thumb" alt="Thumbnail for {{ val.label }}"></b-img-lazy>
             {%endif%}
           </a>
           <figcaption class="figure-caption text-center">{{ val.label }}
