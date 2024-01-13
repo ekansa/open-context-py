@@ -266,24 +266,20 @@ NOTE: Templates and view components to edit an item's identifier objects
           </small>
       </b-col>
 
-      <b-col v-if="item_type_config.edit_item_key">
-        <label for="input-item-key"><strong>Item Key</strong></label>
-        <b-form-input
-          @change="check_value_change"
+      <b-col v-if="item_type_config.edit_published">
+        <label for="input-item-key"><strong>Published Date</strong></label>
+        <b-form-datepicker
+          @input="check_value_change"
           size="sm"
-          id="input-item-key"
-          :state="is_attribute_valid('item_key')"
-          v-model="man_obj.item_key">[[ man_obj.item_key ]]</b-form-input>
-        <div v-if="validations.item_key">
+          id="input-published"
+          :state="is_attribute_valid('published')"
+          v-model="man_obj.published"></b-form-datepicker>
+        <div v-if="validations.published">
           <alert-invalid
-            v-bind:val_obj="validations.item_key"
+            v-bind:val_obj="validations.published"
           ></alert-invalid>
         </div>
-        <small>This is an abbreviated identifier for an item, that provides a convenient short
-          way of identifying an entity in JSON-LD representations. For example,
-          <code>dc-terms:creator</code> is used as an abbreviated identifier of the full
-          URL <code>http://purl.org/dc/terms/creator</code>. It must be valid and unique
-          without repeated use in Open Context.
+        <small>This is a date to indicate when an item should be considered "published"
         </small>
       </b-col>
 
@@ -1161,6 +1157,7 @@ var vc_edit_manifest_obj = Vue.component(
         if(this.man_obj){
           // Hack to make a deep-copy.
           this.original_man_obj_str = JSON.stringify(this.man_obj);
+
         }
       },
       reset_to_original_man_obj: function () {
@@ -1339,6 +1336,10 @@ var vc_edit_manifest_obj = Vue.component(
               }
               if(key == 'uri'){
                 this.validate_uri(this.man_obj[key]);
+              }
+              if(key == 'published'){
+                console.log('published changed');
+                this.validations.published = {is_valid: true};
               }
             }
             else{
