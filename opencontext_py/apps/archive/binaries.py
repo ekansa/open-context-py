@@ -47,6 +47,15 @@ zen_binaries.archive_all_project_binary_dirs(
     project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
     do_testing=False,
 )
+zen_binaries.assemble_depositions_dirs_for_project(
+    'a2d7b2d2-b5de-4433-8d69-2eaf9456349e',
+    forced_act_partition_number=0,
+)
+zen_binaries.archive_all_project_binary_dirs(
+    project_uuid='a2d7b2d2-b5de-4433-8d69-2eaf9456349e',
+    do_testing=True,
+)
+
 
 zen_binaries.reset_zendodo_metadata_for_files(
     act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
@@ -231,7 +240,7 @@ def get_make_save_dir_dict(
         filename=dir_content_file_json,
     )
     if dir_dict:
-        return dir_dict
+        return dir_dict, act_path
     # We didn't have an existing dir dict, so make one.
     dir_dict = {
         'dc-terms:isPartOf': f'https://opencontext.org/projects/{project_uuid}',
@@ -313,6 +322,7 @@ def assemble_depositions_dirs_for_project(
     check_binary_files_present=False,
     dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
     allow_zip_contents=True,
+    forced_act_partition_number=None,
 ):
     """Assembles deposition directories for a given project"""
     project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
@@ -325,6 +335,8 @@ def assemble_depositions_dirs_for_project(
         act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
             project_uuid
         )
+    if forced_act_partition_number is not None:
+        act_partition_number = forced_act_partition_number
     proj_license_dict = get_manifest_grouped_by_license(project_uuid)
     if allow_zip_contents:
         zip_dir_contents = zen_utilities.recommend_zip_archive(proj_license_dict)
@@ -343,7 +355,10 @@ def assemble_depositions_dirs_for_project(
                 act_path,
                 zip_dir_contents=zip_dir_contents,
             )
-            if dir_full or len(dir_dict.get('files', [])) >= zen_utilities.MAX_DEPOSITION_FILE_COUNT:
+            if (dir_full
+               or
+               (not zip_dir_contents and len(dir_dict.get('files', [])) >= zen_utilities.MAX_DEPOSITION_FILE_COUNT)
+            ):
                 # Prepare a new directory for the next set of files
                 print(f'{act_partition_number} appears full. Preparing a new directory for {act_path}')
                 act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(

@@ -81,7 +81,8 @@ def zip_files(path, file_paths=None, zip_name=PROJECT_ZIP_FILENAME):
         # Iterate over all files in the directory
         for file_path in file_paths:
             # Add the file to the zip archive with its relative path
-            zipf.write(file_path)
+            rel_path = os.path.relpath(file_path, path)
+            zipf.write(file_path, rel_path)
     print(f'Zipped {len(file_paths)} files to: {zip_path}')
     return zip_path, zip_name
 
@@ -316,7 +317,7 @@ def validate_archive_dir_binaries(act_path, dir_dict=None):
 def recommend_zip_archive(proj_license_dict):
     """Recommends whether to zip files described in a project license dict"""
     count = 0
-    for _, man_objs in proj_license_dict:
+    for _, man_objs in proj_license_dict.items():
         count += len(man_objs)
     if count >= ZIP_MEDIA_MANIFEST_THRESHOLD:
         return True
