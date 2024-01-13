@@ -2,6 +2,8 @@ import os
 import json
 import codecs
 
+from zipfile import ZipFile
+
 from django.conf import settings
 
 from opencontext_py.apps.all_items.models import (
@@ -12,9 +14,11 @@ ARCHIVE_LOCAL_ROOT_PATH = settings.STATIC_EXPORTS_ROOT
 PROJECT_ARCHIVE_LOCAL_DIR_PREFIX = 'files'
 
 PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME = 'zenodo-oc-files.json'
+PROJECT_ZIP_FILENAME = 'oc-files.zip'
 
 MAX_DEPOSITION_FILE_COUNT = 99
 MAX_DEPOSITION_FILE_SIZE = 45000000000  # 45 GB
+ZIP_MEDIA_MANIFEST_THRESHOLD = 500 # 500 media items
 
 
 def make_full_path_filename(path, filename):
@@ -58,10 +62,34 @@ def get_file_count_and_size(path):
     return file_count, total_size
 
 
-def check_if_dir_is_full(path):
+def zip_files(path, file_paths=None, zip_name=PROJECT_ZIP_FILENAME):
+    """Create a ZipFile object in write mode and add files to it"""
+    if not file_paths:
+        file_paths = []
+        for root, _, files in os.walk(path):
+            for file in files:
+                if file.endswith('.zip'):
+                    continue
+                if file.endswith('.json'):
+                    continue
+                file_path = os.path.join(root, file)
+                file_paths.append(file_path)
+    if not file_paths:
+        return None
+    zip_path = os.path.join(path, zip_name)
+    with ZipFile(zip_path, 'w') as zipf:
+        # Iterate over all files in the directory
+        for file_path in file_paths:
+            # Add the file to the zip archive with its relative path
+            zipf.write(file_path)
+    print(f'Zipped {len(file_paths)} files to: {zip_path}')
+    return zip_path, zip_name
+
+
+def check_if_dir_is_full(path, zip_dir_contents=False):
     """ checks if a directory is full """
     file_count, total_size = get_file_count_and_size(path)
-    if file_count >= (MAX_DEPOSITION_FILE_COUNT + 1):
+    if not zip_dir_contents and file_count >= (MAX_DEPOSITION_FILE_COUNT + 1):
         # we don't count the manifest file, so allow
         # one more file than the max
         return True
@@ -283,3 +311,13 @@ def validate_archive_dir_binaries(act_path, dir_dict=None):
             print(f'Cannot find {filename} in: {act_path}')
     valid = len(errors) == 0
     return valid, errors
+
+
+def recommend_zip_archive(proj_license_dict):
+    """Recommends whether to zip files described in a project license dict"""
+    count = 0
+    for _, man_objs in proj_license_dict:
+        count += len(man_objs)
+    if count >= ZIP_MEDIA_MANIFEST_THRESHOLD:
+        return True
+    return False

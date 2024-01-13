@@ -262,6 +262,13 @@ def make_zenodo_proj_media_files_metadata(
     if not project_des:
         project_des = '[No additional description provided]'
     meta['communities'] = [{'identifier': com_id,} for com_id in COMMUNITY_IDS]
+    zip_comment = ''
+    zip_name = dir_dict.get('files_in_zip_archive')
+    if zip_name:
+        zip_comment = (
+            f'Because this project includes a large number of files, '
+            f'they are archived here in a ZIP file "{zip_name}".'
+        )
     meta['description'] = (
         '<p>This archives media files associated with the <em>'
         '<a href="' + proj_dict['id'] + '">' + proj_dict['label'] + '</a></em> project published by '
@@ -269,9 +276,10 @@ def make_zenodo_proj_media_files_metadata(
         '<p>The included JSON file "' + dir_content_file_json + '" describes links between the various files '
         'in this archival deposit and their associated Open Context media resources (identified by URI). '
         'These linked Open Context media resource items provide additional context and descriptive metadata '
-        'for the files archived here.</p>'
+        'for the files archived here. ' + zip_comment + '</p>'
         '<br/>'
         '<p><strong>Brief Description of this Project</strong>'
         '<br/>' + project_des + '</p>'
     )
+
     return meta

@@ -48,7 +48,7 @@ zen_binaries.archive_all_project_binary_dirs(
     do_testing=False,
 )
 
-zen_binaries.reset_zendodo_metadat_for_files(
+zen_binaries.reset_zendodo_metadata_for_files(
     act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
 )
 
@@ -88,7 +88,7 @@ ARCHIVE_FILE_PREFIXES = {
 
 ZENODO_FILE_KEYS = [
     'filesize',
-    'checksum'
+    'checksum',
 ]
 
 
@@ -311,7 +311,8 @@ def get_manifest_grouped_by_license(project_uuid):
 def assemble_depositions_dirs_for_project(
     project_uuid,
     check_binary_files_present=False,
-    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+    allow_zip_contents=True,
 ):
     """Assembles deposition directories for a given project"""
     project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
@@ -325,6 +326,10 @@ def assemble_depositions_dirs_for_project(
             project_uuid
         )
     proj_license_dict = get_manifest_grouped_by_license(project_uuid)
+    if allow_zip_contents:
+        zip_dir_contents = zen_utilities.recommend_zip_archive(proj_license_dict)
+    else:
+        zip_dir_contents = False
     for license_uri, man_objs in proj_license_dict.items():
         act_partition_number += 1
         dir_dict, act_path = get_make_save_dir_dict(
@@ -334,7 +339,10 @@ def assemble_depositions_dirs_for_project(
             dir_content_file_json=dir_content_file_json,
         )
         for man_obj in man_objs:
-            dir_full = zen_utilities.check_if_dir_is_full(act_path)
+            dir_full = zen_utilities.check_if_dir_is_full(
+                act_path,
+                zip_dir_contents=zip_dir_contents,
+            )
             if dir_full or len(dir_dict.get('files', [])) >= zen_utilities.MAX_DEPOSITION_FILE_COUNT:
                 # Prepare a new directory for the next set of files
                 print(f'{act_partition_number} appears full. Preparing a new directory for {act_path}')
@@ -348,6 +356,8 @@ def assemble_depositions_dirs_for_project(
                     project_uuid=project_uuid,
                     dir_content_file_json=dir_content_file_json,
                 )
+            if zip_dir_contents:
+                dir_dict['files_in_zip_archive'] = zen_utilities.PROJECT_ZIP_FILENAME
             rep_dict = None
             files_dict = get_item_media_files(man_obj)
             dir_updated = False
@@ -426,9 +436,9 @@ def add_project_archive_dir_metadata(
     return True
 
 
-def reset_zendodo_metadat_for_files(
+def reset_zendodo_metadata_for_files(
     act_path,
-     dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
 ):
     """ resets the zenodo metadata for the files manifest in a given directory
     """
@@ -453,38 +463,71 @@ def reset_zendodo_metadat_for_files(
     )
 
 
-def archive_project_binary_dir(
-    project_uuid,
+def zenodo_archive_in_zip_file(
     act_path,
-    proj_dict=None,
-    deposition_id=None,
+    dir_dict,
+    az,
+    bucket_url,
+    deposition_id,
     dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
-    do_testing=False,
 ):
-    """ archives a project binary directory to Zenodo """
-    dir_dict = zen_utilities.load_serialized_json(
+    """ Archives individual files for a dir_dict to Zenodo """
+    if not dir_dict.get('files_in_zip_archive'):
+        raise ValueError('A zip archive should NOT be made for these files')
+    file_paths = []
+    for file_dict in dir_dict.get('files', []):
+        filename = file_dict.get('filename')
+        if not filename:
+            continue
+        done = False
+        for key in ZENODO_FILE_KEYS:
+            if file_dict.get(key):
+                done = True
+        if done:
+            # This file is already uploaded
+            continue
+        file_path = os.path.join(act_path, filename)
+        if not os.path.exists(file_path):
+            raise ValueError(f'Cannot find: {file_path}')
+        file_paths.append(file_path)
+    if not file_paths:
+        return None
+    zip_path, zip_name = zen_utilities.zip_files(path=act_path, file_paths=file_paths)
+    zenodo_resp = az.upload_file_by_put(
+        bucket_url=bucket_url,
+        full_path_file=zip_path,
+        filename=zip_name,
+    )
+    if not zenodo_resp:
+        raise ValueError(f'Cannot upload zip file to bucket: {zip_path}')
+    print(
+        f'Archived {zip_name} (zipped media files) to deposition {deposition_id}'
+    )
+    # Record zipfile metadata returned from Zenodo in the dir_dict
+    for key in ZENODO_FILE_KEYS:
+        if not zenodo_resp.get(key):
+            continue
+        dir_dict_key = f'zip_archive_{key}'
+        dir_dict[dir_dict_key] = zenodo_resp[key]
+    # Save the update with the zenodo file specific key values
+    zen_utilities.save_serialized_json(
         path=act_path,
         filename=dir_content_file_json,
+        dict_obj=dir_dict,
     )
-    valid, errors = zen_utilities.validate_archive_dir_binaries(act_path, dir_dict=dir_dict)
-    if not valid:
-        for error in errors:
-            print(error)
-        raise ValueError(f'Cannot archive an invalid directory: {act_path}')
-    az = ArchiveZenodo(do_testing=do_testing)
-    bucket_url = None
-    if not deposition_id:
-        deposition_dict = az.create_empty_deposition()
-        if not deposition_dict:
-            raise ValueError(f'Cannot create an empty deposition for: {act_path}')
-        deposition_id = az.get_deposition_id_from_metadata(deposition_dict)
-        bucket_url = az.get_bucket_url_from_metadata(deposition_dict)
-    if not bucket_url and deposition_id:
-        bucket_url = az.get_remote_deposition_bucket_url(deposition_id)
-    if not bucket_url:
-        raise ValueError(f'Cannot get bucket url for: {act_path}')
-    if not deposition_id:
-        raise ValueError(f'Cannot get deposition id for: {act_path}')
+
+
+def zenodo_archive_individual_files(
+    act_path,
+    dir_dict,
+    az,
+    bucket_url,
+    deposition_id,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+):
+    """ Archives individual files for a dir_dict to Zenodo """
+    if dir_dict.get('files_in_zip_archive'):
+        raise ValueError('These files should be put into a zip archive')
     i = 0
     len_files = len(dir_dict.get('files', []))
     for file_dict in dir_dict.get('files', []):
@@ -521,6 +564,61 @@ def archive_project_binary_dir(
             path=act_path,
             filename=dir_content_file_json,
             dict_obj=dir_dict,
+        )
+
+
+def archive_project_binary_dir(
+    project_uuid,
+    act_path,
+    proj_dict=None,
+    deposition_id=None,
+    dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
+    do_testing=False,
+):
+    """ archives a project binary directory to Zenodo """
+    dir_dict = zen_utilities.load_serialized_json(
+        path=act_path,
+        filename=dir_content_file_json,
+    )
+    valid, errors = zen_utilities.validate_archive_dir_binaries(act_path, dir_dict=dir_dict)
+    if not valid:
+        for error in errors:
+            print(error)
+        raise ValueError(f'Cannot archive an invalid directory: {act_path}')
+    az = ArchiveZenodo(do_testing=do_testing)
+    bucket_url = None
+    if not deposition_id:
+        deposition_dict = az.create_empty_deposition()
+        if not deposition_dict:
+            raise ValueError(f'Cannot create an empty deposition for: {act_path}')
+        deposition_id = az.get_deposition_id_from_metadata(deposition_dict)
+        bucket_url = az.get_bucket_url_from_metadata(deposition_dict)
+    if not bucket_url and deposition_id:
+        bucket_url = az.get_remote_deposition_bucket_url(deposition_id)
+    if not bucket_url:
+        raise ValueError(f'Cannot get bucket url for: {act_path}')
+    if not deposition_id:
+        raise ValueError(f'Cannot get deposition id for: {act_path}')
+    len_files = len(dir_dict.get('files', []))
+    if dir_dict.get('files_in_zip_archive'):
+        # Upload and archive the files consolidated within a single zip file
+        zenodo_archive_in_zip_file(
+            act_path=act_path,
+            dir_dict=dir_dict,
+            az=az,
+            bucket_url=bucket_url,
+            deposition_id=deposition_id,
+            dir_content_file_json=dir_content_file_json,
+        )
+    else:
+        # Upload and archive the files individually
+        zenodo_archive_individual_files(
+            act_path=act_path,
+            dir_dict=dir_dict,
+            az=az,
+            bucket_url=bucket_url,
+            deposition_id=deposition_id,
+            dir_content_file_json=dir_content_file_json,
         )
     # Now upload the Zenodo file manifest JSON
     manifest_path = os.path.join(act_path, dir_content_file_json)
