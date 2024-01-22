@@ -248,7 +248,7 @@
                     </template>
 
                     <template #cell(published)="data">
-                        <p class="text-center"><strong>[[ data.item.published ]] </strong></p>
+                        <p class="text-center"><strong v-if="data.item.published == '2007-01-01' ">In prep</strong><strong v-else>[[ data.item.published ]]</strong></p>
                         <p class="text-center text-muted"><small>Last updated:<br/>[[ data.item.updated ]]</small></p>
                     </template>
 
