@@ -42,7 +42,8 @@ IA_COLLECTION = 'opencontext'
 IA_ID_PREFIX = 'opencontext'
 
 IA_ITEM_BASE_URI = 'archive.org/download'
-IA_IIIF_BASE_URI = 'iiif.archivelab.org/iiif'
+IA_IIIF_BASE_URI = 'iiif.archive.org/iiif'
+OLD_IA_IIIF_BASE_URI = 'iiif.archivelab.org/iiif'
 
 SOURCE_ID = 'ia-archive-script'
 
