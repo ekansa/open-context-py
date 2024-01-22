@@ -158,7 +158,7 @@ def db_get_project_metadata_qs(project_id):
     return qs
 
 
-def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
+def get_project_metadata_qs(project=None, project_id=None, use_cache=True, reset_cache=False):
     """Get Dublin Core project metadata via the cache"""
     if not project and project_id:
         project = AllManifest.objects.filter(uuid=project_id).first()
@@ -172,7 +172,12 @@ def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
     cache_key = f'proj-dc-meta-{project.slug}'
     cache = caches['redis']
 
-    proj_meta_qs = cache.get(cache_key)
+    if reset_cache:
+        # We're resetting the cache, so don't bother checking it.
+        proj_meta_qs = None
+    else:
+        # Check from the cache first.
+        proj_meta_qs = cache.get(cache_key)
     if proj_meta_qs is not None:
         # We've already cached this, so returned the cached queryset
         return proj_meta_qs
