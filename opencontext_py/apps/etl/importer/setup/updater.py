@@ -22,6 +22,37 @@ DS_FIELDS_UPDATE_ALLOWED = [
 ]
 
 
+def field_label_auto_format(field_name):
+    """Autofixes the case of a field name"""
+    if not field_name:
+        return field_name
+    field_name = str(field_name).strip()
+    field_name = field_name.replace('_', ' ')
+    field_name = field_name.title()
+    replaces = [
+        ('Url', 'URL'),
+        ('Uri', 'URI'),
+        ('Uuid', 'UUID'),
+        (' Id ', ' ID '),
+        (' To ', ' to '),
+        (' By ', ' by '),
+        (' From ', ' from '),
+    ]
+    for replace in replaces:
+        field_name = field_name.replace(replace[0], replace[1])
+    end_replaces = [
+        ('Id', 'ID'),
+        ('By', 'by'),
+        ('To', 'to'),
+        ('From', 'from'),
+    ]
+    for replace in end_replaces:
+        if field_name.endswith(replace[0]):
+            field_name = field_name[0:-len(replace[0])] + replace[1]
+    return field_name
+
+
+
 def update_fields(request_json):
     """Updates ds_fields based on listed attributes in client request JSON"""
     updated = []
@@ -41,9 +72,13 @@ def update_fields(request_json):
 
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
-            k:item_update.get(k) 
+            k:item_update.get(k)
             for k in DS_FIELDS_UPDATE_ALLOWED if item_update.get(k) is not None
         }
+
+        if item_update.get('label_auto_format'):
+            # Autofix the field name
+            update_dict['label'] = field_label_auto_format(ds_field.label)
 
         if not update_dict:
             errors.append(f'Field {uuid}: no attribute allowed for update specified.')
@@ -57,7 +92,7 @@ def update_fields(request_json):
                 # We're removing a context, so set it to None.
                 value = None
             setattr(ds_field, attr, value)
-        
+
         if orig_item_type != ds_field.item_type:
             # We're changing item_types, which means we should reset other attributes.
             ds_field.data_type = None
@@ -98,7 +133,7 @@ def add_single_annotation(request_item_dict, errors=None):
     if not ds_subj_field:
         errors.append(f'Cannot find field {ds_subj_field}')
         return None, errors
-    
+
     object_field_id = request_item_dict.get('object_field_id')
     predicate_id = request_item_dict.get('predicate_id')
     if object_field_id and predicate_id == configs.PREDICATE_OC_ETL_DESCRIBED_BY:
@@ -118,7 +153,7 @@ def add_single_annotation(request_item_dict, errors=None):
         if key in skip_keys:
             continue
         create_dict[key] = value
-    
+
     ds_anno = DataSourceAnnotation(**create_dict)
     try:
         ds_anno.save()
@@ -137,17 +172,13 @@ def add_annotations(request_json):
     """Adds annotation items from a request_json list"""
     if not request_json:
         return [], ['Empty request']
-    
+
     all_created = []
     errors = None
     for request_item_dict in request_json:
         created, errors = add_single_annotation(request_item_dict, errors=errors)
         print(f'NEW created: {created}, errors: {errors}')
         all_created.append(created)
-    
+
     print(f'Created: {all_created}, errors: {errors}')
     return all_created,  errors
-
-
-
-
