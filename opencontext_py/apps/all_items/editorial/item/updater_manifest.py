@@ -37,6 +37,7 @@ from opencontext_py.libs.models import (
 )
 
 from opencontext_py.apps.indexer import index_new_schema as new_ind
+from opencontext_py.apps.etl.importer import utilities as import_utilities
 
 #----------------------------------------------------------------------
 # NOTE: These are methods for handling requests to change individual
@@ -228,6 +229,15 @@ def update_manifest_objs(request_json, request=None):
                 errors.append(f'URI "{update_dict["uri"]}" invalid.')
                 continue
 
+        if update_dict.get('published'):
+            update_dict['published'] = import_utilities.validate_transform_data_type_value(
+                update_dict['published'],
+                'xsd:date'
+            )
+            if not update_dict['published']:
+                errors.append(f'Published datetime invalid.')
+                continue
+
         # Keep a copy of the old state before saving it.
         prior_to_edit_model_dict = updater_general.make_models_dict(item_obj=man_obj)
 
@@ -306,6 +316,10 @@ def update_manifest_objs(request_json, request=None):
                     models_dict=prior_to_edit_model_dict,
                     item_obj=old_contain
                 )
+
+        if update_dict.get('published'):
+            # convert the published datetime to a string for JSON response.
+            update_dict['published'] = update_dict['published'].date().isoformat()
 
         edit_note = "; ".join(edits)
 

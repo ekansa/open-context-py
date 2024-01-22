@@ -121,6 +121,12 @@ def make_citation_dict(rep_dict):
         }
     }
 
+    if citation_dict.get('date_published') == '2007-01-01':
+        citation_dict['date_published'] = 'In prep'
+
+    if citation_dict.get('date_published') == current_date.isoformat():
+        citation_dict['date_published'] = 'In prep'
+
     if citation_dict.get('id') and '/projects/' in citation_dict.get('id'):
         # A project does not need to be part of Open Context.
         if citation_dict.get('part_of_label') == configs.OPEN_CONTEXT_PROJ_LABEL:

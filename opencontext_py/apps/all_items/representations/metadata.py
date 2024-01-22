@@ -10,6 +10,7 @@ from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
     AllResource,
+    AllIdentifier,
 )
 from opencontext_py.apps.all_items.representations import rep_utils
 
@@ -103,6 +104,13 @@ def db_get_project_metadata_qs(project_id):
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
     ).values('uri')[:1]
 
+    # ORCID IDs for project creators and contributors
+    orcid_id_qs = AllIdentifier.objects.filter(
+        item=OuterRef('object'),
+        scheme='orcid',
+    ).values('id')[:1]
+
+
     qs = AllAssertion.objects.filter(
         subject_id=project_id,
         predicate__data_type='id',
@@ -144,11 +152,13 @@ def db_get_project_metadata_qs(project_id):
         object_geo_overlay=Subquery(geo_overlay_qs)
     ).annotate(
         object_geo_overlay_thumb=Subquery(geo_overlay_thumb_qs)
+    ).annotate(
+        object_orcid=Subquery(orcid_id_qs)
     )
     return qs
 
 
-def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
+def get_project_metadata_qs(project=None, project_id=None, use_cache=True, reset_cache=False):
     """Get Dublin Core project metadata via the cache"""
     if not project and project_id:
         project = AllManifest.objects.filter(uuid=project_id).first()
@@ -162,7 +172,12 @@ def get_project_metadata_qs(project=None, project_id=None, use_cache=True):
     cache_key = f'proj-dc-meta-{project.slug}'
     cache = caches['redis']
 
-    proj_meta_qs = cache.get(cache_key)
+    if reset_cache:
+        # We're resetting the cache, so don't bother checking it.
+        proj_meta_qs = None
+    else:
+        # Check from the cache first.
+        proj_meta_qs = cache.get(cache_key)
     if proj_meta_qs is not None:
         # We've already cached this, so returned the cached queryset
         return proj_meta_qs
@@ -186,6 +201,12 @@ def db_get_vocabulary_metadata_qs(vocab_id):
         item=OuterRef('object__item_class'),
         resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
     ).values('uri')[:1]
+
+    # ORCID IDs for project creators and contributors
+    orcid_id_qs = AllIdentifier.objects.filter(
+        item=OuterRef('object'),
+        scheme='orcid',
+    ).values('id')[:1]
 
     qs = AllAssertion.objects.filter(
         subject_id=vocab_id,
@@ -223,6 +244,8 @@ def db_get_vocabulary_metadata_qs(vocab_id):
         'object__context'
     ).annotate(
         object_class_icon=Subquery(class_icon_qs)
+    ).annotate(
+        object_orcid=Subquery(orcid_id_qs)
     )
     return qs
 

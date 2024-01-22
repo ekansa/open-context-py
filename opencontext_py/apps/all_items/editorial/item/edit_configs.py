@@ -69,6 +69,7 @@ FLAG_DO_INDEX = {
     ],
 }
 
+
 # Item types allowed to be reindexed by members of an editing group (non-super users)
 EDIT_GROUP_USER_ALLOWED_REINDEX_TYPES = [
     'subjects',
@@ -621,6 +622,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_DCTERMS_DESCRIPTION_UUID,
                     configs.PREDICATE_DCTERMS_ABSTRACT_UUID,
@@ -655,6 +657,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -697,6 +700,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [
                     configs.OC_RESOURCE_FULLFILE_UUID,
@@ -733,6 +737,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SCHEMA_ORG_TEXT_UUID,
                 ],
@@ -764,6 +769,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -795,6 +801,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
@@ -829,6 +836,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
@@ -874,6 +882,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
@@ -905,6 +914,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
@@ -936,6 +946,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': False,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
@@ -974,6 +985,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -999,6 +1011,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -1031,6 +1044,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': None,
@@ -1068,6 +1082,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -1100,6 +1115,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -1132,6 +1148,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': True,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [],
                 'expected_resource_types_ids': [],
                 'data_type': 'id',
@@ -1174,6 +1191,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],
@@ -1200,6 +1218,7 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 'edit_slug': True,
                 'edit_item_key': False,
                 'edit_uri': True,
+                'edit_published': True,
                 'expected_assert_pred_ids': [
                     configs.PREDICATE_SKOS_NOTE_UUID,
                 ],

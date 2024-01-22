@@ -157,6 +157,12 @@ def get_item_assertions(
         resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
     ).values('uri')[:1]
 
+    # ORCID IDs for project creators and contributors
+    orcid_id_qs = AllIdentifier.objects.filter(
+        item=OuterRef('object'),
+        scheme='orcid',
+    ).values('id')[:1]
+
     # DC-Creator equivalent predicate
     dc_creator_qs = AllAssertion.objects.filter(
         subject=OuterRef('predicate'),
@@ -216,6 +222,8 @@ def get_item_assertions(
         object_thumbnail=Subquery(thumbs_qs)
     ).annotate(
         object_class_icon=Subquery(class_icon_qs)
+    ).annotate(
+        object_orcid=Subquery(orcid_id_qs)
     ).annotate(
         # This will indicate if a predicate is equivalent to a
         # dublin core creator.

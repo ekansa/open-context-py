@@ -67,6 +67,12 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
             context_objs.append(act_man_obj.context)
             act_man_obj = act_man_obj.context
 
+    context_order_dict = {}
+    context_order = 0
+    for context_obj in context_objs:
+        context_order += 1
+        context_order_dict[context_obj.uuid] = context_order
+
     # Now use these context objects to query for space time objects
     spacetime_qs = AllSpaceTime.objects.filter(
         item__in=context_objs,
@@ -78,6 +84,8 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
         'event'
     ).select_related(
         'event__item_class'
+    ).order_by(
+        '-item__path'
     )
     if not len(spacetime_qs):
         # We found no spacetime objects at all. Distressing, but possible
@@ -88,31 +96,28 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     act_geos = [] # List of spacetime objects with only geometry
     act_chronos = [] # List of spacetime objects with only chronology
 
-    # Integrate through the list of context_objs. These are ordered from most
-    # specific to most general, all the way up to world regions. This will select
-    # the spacetime objects with the most specific geometries and chronologies
-    for context_obj in context_objs:
-        for spacetime_obj in spacetime_qs:
-            spacetime_obj.inherit_chrono = None
-            spacetime_obj.inherit_geometry = None
-            if context_obj != spacetime_obj.item:
-                continue
-            if (
-                context_obj == rel_subjects_man_obj
-                and spacetime_obj.geometry_type
-                and spacetime_obj.start is not None and spacetime_obj.stop is not None
-            ):
-                # We have both geometry and chronology for the specific
-                # item specified in rel_subjects_man_obj
-                act_spacetime_features.append(spacetime_obj)
-            if spacetime_obj.geometry_type:
-                # This spacetime obj contains a geometry
-                if context_obj == rel_subjects_man_obj or len(act_geos) == 0:
-                    act_geos.append(spacetime_obj)
-            if spacetime_obj.start is not None and spacetime_obj.stop is not None:
-                # This spacetime obj contains a time span
-                if context_obj == rel_subjects_man_obj or len(act_chronos) == 0:
-                    act_chronos.append(spacetime_obj)
+    # Integrate through the spacetime_qs. This will be ordered from the most specific
+    # context to the most general context.
+    for spacetime_obj in spacetime_qs:
+        spacetime_obj.inherit_chrono = None
+        spacetime_obj.inherit_geometry = None
+        spacetime_obj.context_order = context_order_dict.get(spacetime_obj.item.uuid)
+        if (
+            spacetime_obj.item == rel_subjects_man_obj
+            and spacetime_obj.geometry_type
+            and spacetime_obj.start is not None and spacetime_obj.stop is not None
+        ):
+            # We have both geometry and chronology for the specific
+            # item specified in rel_subjects_man_obj
+            act_spacetime_features.append(spacetime_obj)
+        if spacetime_obj.geometry_type:
+            # This spacetime obj contains a geometry
+            if spacetime_obj.item == rel_subjects_man_obj or len(act_geos) == 0:
+                act_geos.append(spacetime_obj)
+        if spacetime_obj.start is not None and spacetime_obj.stop is not None:
+            # This spacetime obj contains a time span
+            if spacetime_obj.item == rel_subjects_man_obj or len(act_chronos) == 0:
+                act_chronos.append(spacetime_obj)
         if len(act_spacetime_features):
             # Our work is done here, the rel_subjects_man_obj has specific
             # geometry and chronology spacetime features. So skip out
@@ -135,7 +140,13 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
     if len(act_chronos):
         # This is the spacetime object that we use for
         # inherited time spans
-        inherit_chrono = act_chronos[0]
+        for act_chrono in act_chronos:
+            if inherit_chrono is not None:
+                break
+            if act_chrono.earliest is None or act_chrono.latest is None:
+                continue
+            inherit_chrono = act_chronos[0]
+            break
 
     if len(act_geos) > len(act_chronos):
         # We have multiple geometries, which means we need
@@ -151,7 +162,6 @@ def get_spacetime_geo_and_chronos(rel_subjects_man_obj, require_geo=True):
             spacetime_obj.inherit_geometry = act_geos[0]
             act_spacetime_features.append(spacetime_obj)
         return  act_spacetime_features
-
     # A case where there's only 1 geometry and we need
     # to add an inherited chronology spacetime object.
     spacetime_obj = act_geos[0]
@@ -498,12 +508,21 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
 
         # Now check if we have chronology to add.
         chrono_spacetime_obj = spacetime_obj
-        if chrono_spacetime_obj.earliest is None:
-            chrono_spacetime_obj = getattr(spacetime_obj, 'inherit_chrono', None)
-            if chrono_spacetime_obj is not None and chrono_spacetime_obj.earliest is None:
-                chrono_spacetime_obj = None
+        sp_context_order = getattr(spacetime_obj, 'context_order', None)
+        inherit_chrono_obj = getattr(spacetime_obj, 'inherit_chrono', None)
+        if inherit_chrono_obj and inherit_chrono_obj.earliest is not None and inherit_chrono_obj.latest is not None:
+            inherit_context_order = getattr(inherit_chrono_obj, 'context_order', None)
+            if spacetime_obj.earliest is None or spacetime_obj.latest is None:
+                # Use the inherit_chrono_obj because it has a time span information where as the
+                # spactime_obj does not.
+                chrono_spacetime_obj = inherit_chrono_obj
+            elif inherit_context_order is not None:
+                if sp_context_order is None or (sp_context_order > inherit_context_order):
+                    # The inherit_chrono_obj is more specific, with a lower sort order
+                    # so use that.
+                    chrono_spacetime_obj = inherit_chrono_obj
 
-        if not chrono_spacetime_obj:
+        if not chrono_spacetime_obj or chrono_spacetime_obj.earliest is None or chrono_spacetime_obj.latest is None:
             # We don't have any chronology to add, so skip that part
             features.append(feature)
             continue

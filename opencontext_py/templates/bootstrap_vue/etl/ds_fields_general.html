@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<!-- 
+<!--
 NOTE: Templates and Vue Components for general editing of data source fields.
 -->
 
@@ -28,10 +28,16 @@ NOTE: Templates and Vue Components for general editing of data source fields.
   </b-button>
 </template>
 
+<template id="ds-field-auto-format-button">
+  <b-button block variant="light" @click="updateAutoFormatLabel">
+    Autoformat Label
+  </b-button>
+</template>
+
 <template id="ds-fields-general">
     <b-row v-if="ds_fields" >
       <b-col cols="9">
-    
+
         <b-table
           ref="dsFieldsGeneralTable"
           :sticky-header="ds_fields_table_height"
@@ -66,13 +72,13 @@ NOTE: Templates and Vue Components for general editing of data source fields.
             </ds-fields-label>
           </template>
 
-          
+
           <template #cell()="data">
             [[ data.value ]]
           </template>
 
         </b-table>
-        
+
       </b-col>
       <b-col cols="3">
           <h5 style="text-align: center;">Item Types for Fields</h5>
@@ -105,6 +111,12 @@ NOTE: Templates and Vue Components for general editing of data source fields.
             <b-button size="sm" @click="selectAllRows">Select all</b-button>
             <b-button size="sm" @click="clearSelected">Clear selected</b-button>
           </p>
+          <br/>
+          <br/>
+          <ds-field-auto-format-button
+              @updating_labels="add_alert_update_uuid_list($event)"
+              @refresh_ds_fields="fetch_api_ds_fields($event)"
+              v-bind:selected="selected"></ds-field-data-type-button>
       </b-col>
     </b-row>
   </template>
@@ -236,7 +248,64 @@ NOTE: Templates and Vue Components for general editing of data source fields.
       },
     );
 
+    var vs_ds_field_auto_format_button =  Vue.component(
+      'ds-field-auto-format-button',
+      {
+        delimiters: ['[[', ']]'],
+        props: ['selected',],
+        data() {
+          return {
+            selected: [],
+          };
+        },
+        template: '#ds-field-auto-format-button',
+        methods: {
+          updateAutoFormatLabel() {
+            if(typeof(this.selected.length) == 'undefined' || this.selected.length < 1){
+              console.log("None selected, don't update item_type");
+              return null;
+            }
+            let update_list = [];
+            let alert_uuids = [];
+            for (let item of this.selected){
+              let update_item = {
+                uuid: item.uuid,
+                label_auto_format: true,
+              }
+              update_list.push(update_item);
+              alert_uuids.push(item.uuid);
+            }
 
+            const requestOptions = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify(update_list)
+            };
+            // Make the update alerts light up.
+            this.$emit('updating_labels', alert_uuids);
+            fetch('/etl-importer-setup/update-fields', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Reload the whole table. Kinda drastic.
+                this.$emit('refresh_ds_fields');
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+          },
+        }
+      },
+    );
     // From the backend.
     const DS_FIELDS_ITEM_TYPES = JSON.parse('{{ DS_FIELDS_ITEM_TYPES|escapejs }}');
     const DS_FIELDS_DATA_TYPES = JSON.parse('{{ DS_FIELDS_DATA_TYPES|escapejs }}');
@@ -334,9 +403,10 @@ NOTE: Templates and Vue Components for general editing of data source fields.
               'ds-field-label': vs_ds_field_label,
               'ds-field-item-type-button': vs_ds_field_item_type_button,
               'ds-field-data-type-button': vs_ds_field_data_type_button,
+              'ds-field-auto-format-button': vs_ds_field_auto_format_button,
               'root-item-tree': vs_root_item_tree,
             },
         }
-    ); 
+    );
 
   </script>
