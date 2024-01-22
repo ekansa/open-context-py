@@ -30,30 +30,14 @@ import importlib
 from opencontext_py.apps.archive import binaries as zen_binaries
 
 importlib.reload(zen_binaries)
-zen_binaries.assemble_depositions_dirs_for_project('a52bd40a-9ac8-4160-a9b0-bd2795079203')
 
-zen_binaries.archive_project_binary_dir(
-    project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
-    act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
-    do_testing=True,
-)
-zen_binaries.add_project_archive_dir_metadata(
-    project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
-    act_path='/home/ekansa/github/open-context-py/static/exports/files-1-by---a52bd40a-9ac8-4160-a9b0-bd2795079203',
-    deposition_id='17832',
-    do_testing=True,
-)
-zen_binaries.archive_all_project_binary_dirs(
-    project_uuid='a52bd40a-9ac8-4160-a9b0-bd2795079203',
-    do_testing=False,
-)
 zen_binaries.assemble_depositions_dirs_for_project(
-    'a2d7b2d2-b5de-4433-8d69-2eaf9456349e',
+    '02b55e8c-e9b1-49e5-8edf-0afeea10e2be',
     forced_act_partition_number=0,
 )
 zen_binaries.archive_all_project_binary_dirs(
-    project_uuid='a2d7b2d2-b5de-4433-8d69-2eaf9456349e',
-    do_testing=True,
+    '02b55e8c-e9b1-49e5-8edf-0afeea10e2be',
+    do_testing=False,
 )
 
 
