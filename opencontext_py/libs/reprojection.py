@@ -112,7 +112,7 @@ class ReprojectUtilities():
         return [x_list[0], y_list[0]]
 
     def reproject_coordinate_ring(self, ring_list):
-        """Reprojects a ring of coorindates"""
+        """Reprojects a ring of coordinates"""
         new_ring_list = []
         for c_pair in ring_list:
             new_c_pair = self.reproject_coordinate_pair(c_pair)
@@ -123,6 +123,23 @@ class ReprojectUtilities():
             # be the same as the first.
             new_ring_list.append(new_ring_list[0])
         return new_ring_list
+
+    def reproject_line_list(self, line_list):
+        """Reprojects a line of coordinates"""
+        new_line_list = []
+        for c_pair in line_list:
+            new_c_pair = self.reproject_coordinate_pair(c_pair)
+            if new_c_pair is not None:
+                new_line_list.append(new_c_pair)
+        return new_line_list
+
+    def reproject_multiline_string(self, coordinates):
+        """Reprojects coordinates for a GeoJSON MultiLineString geometry"""
+        new_coordinates = []
+        for line_list in coordinates:
+            new_line_list = self.reproject_line_list(line_list)
+            new_coordinates.append(new_line_list)
+        return new_coordinates
 
     def reproject_mulipolygon(self, coordinates, geometry_type='MultiPolygon'):
         """Reprojects coordinates for a GeoJSON MultiPolygon geometry"""
@@ -161,4 +178,12 @@ class ReprojectUtilities():
             return self.reproject_polygon(coordinates, geometry_type)
         elif geometry_type == 'MultiPolygon':
             return self.reproject_mulipolygon(coordinates, geometry_type)
+        return None
+
+    def reproject_line_or_multiline(self, coordinates, geometry_type):
+        """Reprojects GeoJSON Polygon or MultiPolygon coordinates"""
+        if geometry_type == 'LineString':
+            return self.reproject_line_list(coordinates)
+        elif geometry_type == 'MultiLineString':
+            return self.reproject_multiline_string(coordinates)
         return None
