@@ -118,11 +118,13 @@ var vc_projects_item_type = Vue.component(
         'base_search_url',
         'project_label',
         'project_slug',
+        'query_context_path',
       ],
       data() {
         return {
           loading: true,
           base_search_url: '/query',
+          query_context_path: '',
           project_label: null,
           project_slug: null,
           route_key_index: 0,
@@ -150,7 +152,8 @@ var vc_projects_item_type = Vue.component(
           let params = {
             proj: this.project_slug,
           };
-          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          let url_parts = [this.base_search_url, this.query_context_path];
+          let url = url_parts.join('/') + ('?' + new URLSearchParams(params));
           return url;
         }
       },
@@ -177,7 +180,8 @@ var vc_projects_item_type = Vue.component(
             rows: 1,
             'proj-summary': 1,
           };
-          let url = this.base_search_url + '/?' + new URLSearchParams(params);
+          let url_parts = [this.base_search_url, this.query_context_path];
+          let url = url_parts.join('/') + ('?' + new URLSearchParams(params));
           fetch(
             url,
             {

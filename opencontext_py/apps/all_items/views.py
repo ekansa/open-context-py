@@ -348,6 +348,7 @@ def all_items_html(
         'citation':citation.make_citation_dict(rep_dict),
         'man_obj': man_obj,
         'edit_status': edit_status,
+        'query_context_path': man_obj.meta_json.get('query_context_path', ''),
         'item': item_dict,
         'item_json': json_output,
         'full_media': full_media,

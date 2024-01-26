@@ -137,6 +137,21 @@ def update_subjects_context_containment_assertion(man_obj):
     return assert_obj, None
 
 
+def clean_meta_json_update(man_obj, update_meta_json):
+    """Cleans up values in the update_mata_json dict before using it to update the manifest object"""
+    for key, new_key_value in update_meta_json.items():
+        old_key_value = man_obj.meta_json.get(key)
+        if old_key_value == new_key_value:
+            continue
+        if key == 'query_context_path':
+            if new_key_value.startswith('/'):
+                new_key_value = new_key_value[1:].strip()
+            if new_key_value.endswith('/'):
+                new_key_value = new_key_value[:-1].strip()
+            update_meta_json[key] = new_key_value
+    return update_meta_json
+
+
 def update_manifest_objs(request_json, request=None):
     """Updates AllManifest fields based on listed attributes in client request JSON"""
     errors = []
@@ -263,6 +278,7 @@ def update_manifest_objs(request_json, request=None):
                 attribute_edit_note += f' from "{old_edited_obj.label}" to "{new_edited_obj.label}"'
 
             if attr == 'meta_json' and isinstance(value, dict):
+                value = clean_meta_json_update(man_obj, update_meta_json=value)
                 for key, new_key_value in value.items():
                     old_key_value = man_obj.meta_json.get(key)
                     if old_key_value == new_key_value:
