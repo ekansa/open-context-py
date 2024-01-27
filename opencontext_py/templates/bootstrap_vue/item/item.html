@@ -226,7 +226,7 @@
                         :base_search_url="'/query'"
                         v-bind:project_label="item_obj.label"
                         v-bind:project_slug="'{{ man_obj.slug|safe }}'"
-                        v-bind:query_context_path="'{{ query_context_path|safe }}'"
+                        v-bind:query_context_path="'{{ query_context_path }}'"
                     ></vc-projects>
 
                 {%endif%}
