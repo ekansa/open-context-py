@@ -316,6 +316,8 @@ def all_items_html(
     if man_obj.item_class and str(man_obj.item_class.uuid) == configs.CLASS_OC_IMAGE_MEDIA and rep_dict.get('media_iiif'):
         # Use the media full url for as the canonical uri for this item.
         canonical_uri = f'https://{man_obj.uri}/full'
+    query_context_path = man_obj.meta_json.get('query_context_path', '')
+    query_context_path = query_context_path.replace(' ', '+')
     rp = RootPath()
     context = {
         'NAV_ITEMS': settings.NAV_ITEMS,
@@ -348,6 +350,7 @@ def all_items_html(
         'citation':citation.make_citation_dict(rep_dict),
         'man_obj': man_obj,
         'edit_status': edit_status,
+        'query_context_path': query_context_path,
         'item': item_dict,
         'item_json': json_output,
         'full_media': full_media,

@@ -192,6 +192,17 @@ ITEM_TYPE_META_JSON_CONFIGS = {
                 {'value': False, 'text': 'Un-flag for default, allow sampling sites for iSamples',},
             ],
         },
+        {
+            'key': 'query_context_path',
+            'label': 'Context path for project page queries',
+            'data_type': 'xsd:string',
+            'note': (
+                'Slash separated path for the spatial context to use as a filter for '
+                'queries from the project page. For example, for the Murlo project, the '
+                'context path is: "Europe/Italy".'
+            ),
+            'options': None,
+        },
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),
