@@ -145,6 +145,8 @@ class AllManifest(models.Model):
 
     def clean_label(self, label, item_type='subjects'):
         label = label.strip()
+        # So as not to screw up use in javascript
+        label = label.replace("'", "`")
         if item_type == 'subjects':
             # So as not to screw up depth of contexts.
             label = label.replace('/', '--')
@@ -450,6 +452,7 @@ class AllManifest(models.Model):
                 f'Context must have item_type="subjects" not {self.context.item_type}'
             )
         self.path = self.context.path + '/' + self.label
+        self.path = self.path.replace("'", "`")
         return self.path
 
     def save(self, *args, **kwargs):
