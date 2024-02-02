@@ -1,7 +1,12 @@
 import copy
 
+
+from nltk.corpus import stopwords
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
+
+from opencontext_py.apps.etl.importer.utilities import validate_transform_data_type_value
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
@@ -293,3 +298,83 @@ class ResultFacetsNonPath():
                 item_type_dict["oc-api:has-id-options"] = pivot_options
             options.append(item_type_dict)
         return options
+
+
+    def download_stopwords_if_not_present(self):
+        """Downloads the NLTK stopwords if not present"""
+        try:
+            stopwords.words('english')
+        except Exception as e:
+            import nltk
+            nltk.download('stopwords')
+
+
+    def make_keywords_facets(self, solr_json):
+        """Makes item_type facets from a solr_json response"""
+        keywords_path_keys = (
+            configs.FACETS_SOLR_ROOT_PATH_KEYS
+            + ['keywords']
+        )
+        keywords_val_count_list = utilities.get_dict_path_value(
+            keywords_path_keys,
+            solr_json,
+            default=[]
+        )
+        if not keywords_val_count_list:
+            return None
+        if not len(keywords_val_count_list):
+            return None
+        options_tuples = utilities.get_facet_value_count_tuples(
+            keywords_val_count_list
+        )
+        if not len(options_tuples):
+            return None
+        # Iterate through tuples of item_type counts
+        self.download_stopwords_if_not_present()
+        options = []
+        for facet_value, count in options_tuples:
+            # The get_item_type_dict should return the
+            # type_dict for slugs, full uris, prefixed URIs
+            # or lower-case item types.
+            if validate_transform_data_type_value(facet_value, data_type='xsd:double'):
+                # We don't want to allow numbers as keywords,
+                continue
+            if facet_value in configs.KEYWORDS_TO_SKIP:
+                # No Open Context specific terms that are not informative
+                continue
+            if facet_value in stopwords.words('english'):
+                # Skip common English stopwords
+                continue
+
+            sl = SearchLinks(
+                request_dict=copy.deepcopy(self.request_dict),
+                base_search_url=self.base_search_url
+            )
+            # Remove non search related params.
+            sl.remove_non_query_params()
+
+            # Update the request dict for this facet option.
+            sl.replace_param_value(
+                'q',
+                match_old_value=None,
+                new_value=facet_value,
+            )
+            urls = sl.make_urls_from_request_dict()
+            if urls['html'] == self.current_filters_url:
+                # The new URL matches our current filter
+                # url, so don't add this facet option.
+                continue
+
+            option = LastUpdatedOrderedDict()
+            option['id'] = urls['html']
+            option['json'] = urls['json']
+            option['label'] = facet_value
+            option['count'] = count
+            options.append(option)
+
+        if not len(options):
+            return None
+
+        facet = configs.FACETS_KEYWORDS.copy()
+        facet['oc-api:has-keyword-options'] = options
+        return facet

@@ -207,9 +207,9 @@ class SearchSolr():
         # Get facets for all the object category (item_class) entities
         if not query.get('facet.field'):
             query['facet.field'] = []
-        query['facet.field'].append()
-        query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.limit'] = -1
-        query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.mincount'] = 2
+        query['facet.field'].append('keywords')
+        query[f'f.keywords.facet.limit'] = configs.KEYWORDS_FACET_LIMIT
+        query[f'f.keywords.facet.mincount'] = configs.KEYWORDS_FACET_MINCOUNT
         # query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.sort'] = 'index'
         return query
 
@@ -694,6 +694,9 @@ class SearchSolr():
         if request_dict.get('project-map'):
             # we're making a project summary query.
             query = self._add_project_map_query_terms(query)
+        if request_dict.get('keywords'):
+            # we want to get common keyword facets for this query
+            query = self._add_keyword_query_terms(query)
 
         dinaa_linked = utilities.get_request_param_value(
             request_dict,
