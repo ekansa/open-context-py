@@ -514,15 +514,25 @@ def compose_filter_query_on_literal(raw_literal, attribute_item_obj, field_fq):
         # Case for querying string literals. This is the most
         # complicated type of literal to query.
         query_dict['hl-queries'] = []
-        string_terms = utilities.prep_string_search_term_list(
+        string_terms, string_op = utilities.prep_string_search_term_list(
             raw_literal
         )
+        if string_op == 'OR':
+            # We're doing an OR query for the string terms
+            or_terms = [f'({field_fq}:{qterm})' for qterm in string_terms]
+            or_query = ' OR '.join(or_terms)
+            or_query = f'({or_query})'
+            query_dict['fq'].append(or_query)
+
         for qterm in string_terms:
-            query_dict['fq'].append('{field_fq}:{field_val}'.format(
-                    field_fq=field_fq,
-                    field_val=qterm
+            if string_op != 'OR':
+                # Skip this for OR queries, because we've already made or
+                # fq term.
+                query_dict['fq'].append('{field_fq}:{field_val}'.format(
+                        field_fq=field_fq,
+                        field_val=qterm
+                    )
                 )
-            )
             query_dict['hl-queries'].append(
                 '{field_label}: {field_val}'.format(
                     field_label=attribute_item_obj.label,

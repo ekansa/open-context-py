@@ -441,7 +441,7 @@ def get_request_param_value(
     return outputs
 
 
-def prep_string_search_term_list(raw_fulltext_search):
+def prep_string_search_term_list(raw_fulltext_search, operator='&&'):
     """ Prepares a list of quoted, solr escaped search terms.
 
     :param str raw_term: The raw search term requested by the client.
@@ -449,29 +449,15 @@ def prep_string_search_term_list(raw_fulltext_search):
     # Make a temporary list of search terms.
     act_terms = []
     # Extract quoted parts of the raw search term
-    act_terms += re.findall(r'"([^"]*)"', raw_fulltext_search)
-
-    # Remove the quoted parts to get unquoted parts.
-    not_quoted_part = raw_fulltext_search
-    for quoted_part in act_terms:
-        not_quoted_part = not_quoted_part.replace(
-            '"{}"'.format(quoted_part), ''
-        ).strip()
-
-    # Use the space character to split the non-quoted parts into
-    # different token/works
-    act_terms += not_quoted_part.split(' ')
-
-    # Now we can make the final list of quoted, escaped search
-    # terms.
+    pattern = re.compile(r'".+?"|\S+')
+    act_terms = pattern.findall(raw_fulltext_search)
     terms = []
-    for act_term in act_terms:
-        act_term = act_term.strip()
-        if not act_term:
+    for term in act_terms:
+        if term in ['OR', '||']:
+            operator = 'OR'
             continue
-        term = '"{}"'.format(escape_solr_arg(act_term))
-        terms.append(term)
-    return terms
+        terms.append(escape_solr_arg(term))
+    return terms, operator
 
 
 
