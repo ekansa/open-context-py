@@ -266,13 +266,11 @@ class SearchSolr():
             escaped_terms, string_op = utilities.prep_string_search_term_list(
                 raw_fulltext_search
             )
-            solr_fulltext = f' {string_op} '.join(escaped_terms)
-            if string_op == 'OR':
-                query['q.op'] = 'OR'
-            else:
-                query['q.op'] = 'AND'
+            grouped_terms = [f'(text:{term})' for term in escaped_terms]
+            solr_fulltext = f' {string_op} '.join(grouped_terms)
+            query['q.op'] = 'AND'
             print(f'solr escaped fulltext: {solr_fulltext}')
-            query['q'] = f'text: ({solr_fulltext})'
+            query['q'] = solr_fulltext
             query['hl'] = 'true'  # search term highlighting
             query['hl.fl'] = 'text' # highlight the text field
             query['hl.fragsize'] = 200
