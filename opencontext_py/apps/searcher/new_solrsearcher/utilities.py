@@ -456,6 +456,10 @@ def prep_string_search_term_list(raw_fulltext_search, operator='&&'):
         if term in ['OR', '||']:
             operator = 'OR'
             continue
+        if term in ['AND', '&&']:
+            # skip a naked AND operator, since that's the default
+            # anyway. Also, we don't reset back to AND if we had an OR
+            continue
         terms.append(escape_solr_arg(term))
     return terms, operator
 
