@@ -574,7 +574,8 @@ var vc_common_map = Vue.component(
                 position: 'bottomleft',
             },
             geojson_record_layers: null,
-            default_tilelayer_name: 'Google Aerial',
+            default_tilelayer_name: 'MapBox Satellite',
+            // default_tilelayer_name: 'Google Aerial',
             geo_tile_facets: null,
             geo_region_facets: null,
             geo_page_records: null,
@@ -1599,7 +1600,7 @@ var vc_common_map = Vue.component(
                 }
                 let gtile = L.gridLayer.googleMutant(gtile_config);
                 this.base_layers[gtile.options.name] = gtile;
-                if(gtile_config.type == 'satellite'){
+                if(gtile_config.type == 'satellite' && this.default_tilelayer_name == 'Google Aerial'){
                     // Add support for over-zooming satellite.
                     this.map.addLayer(gtile);
                 }
