@@ -827,6 +827,8 @@ def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='htt
         ):
             if r.headers.get('Content-Length'):
                 output['filesize'] = int(r.headers['Content-Length'])
+            if r.headers.get('location'):
+                output['location'] = r.headers['location']
             if r.headers.get('Content-Type'):
                 raw_media_type = r.headers['Content-Type']
                 if ':' in raw_media_type:

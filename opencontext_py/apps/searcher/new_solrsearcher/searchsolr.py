@@ -115,7 +115,7 @@ class SearchSolr():
             return query
 
         # The client specified some response types, which can be
-        # comma seperated for multiple responses. We don't validate
+        # comma separated for multiple responses. We don't validate
         # these because if we don't recognize a client specified
         # response type, nothing will happen.
         if ',' in raw_client_responses:
@@ -202,6 +202,17 @@ class SearchSolr():
         query['facet.limit'] = -1
         return query
 
+    def _add_keyword_query_terms(self, query):
+        """Adds facet query terms to get keywords"""
+        # Get facets for all the object category (item_class) entities
+        if not query.get('facet.field'):
+            query['facet.field'] = []
+        query['facet.field'].append('keywords')
+        query[f'f.keywords.facet.limit'] = configs.KEYWORDS_FACET_LIMIT
+        query[f'f.keywords.facet.mincount'] = configs.KEYWORDS_FACET_MINCOUNT
+        # query[f'f.{configs.SITEMAP_FACET_FIELD}.facet.sort'] = 'index'
+        return query
+
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
 
@@ -252,13 +263,14 @@ class SearchSolr():
             # of solr escaped and quoted terms.
             #
             # This method has unit tests.
-            escaped_terms = utilities.prep_string_search_term_list(
+            escaped_terms, string_op = utilities.prep_string_search_term_list(
                 raw_fulltext_search
             )
-            solr_fulltext = ' && '.join(escaped_terms)
-            print(f'solr escaped fulltext: {solr_fulltext}')
-            query['q'] = f'text: ({solr_fulltext})'
+            grouped_terms = [f'(text:{term})' for term in escaped_terms]
+            solr_fulltext = f' {string_op} '.join(grouped_terms)
             query['q.op'] = 'AND'
+            print(f'solr escaped fulltext: {solr_fulltext}')
+            query['q'] = solr_fulltext
             query['hl'] = 'true'  # search term highlighting
             query['hl.fl'] = 'text' # highlight the text field
             query['hl.fragsize'] = 200
@@ -680,6 +692,9 @@ class SearchSolr():
         if request_dict.get('project-map'):
             # we're making a project summary query.
             query = self._add_project_map_query_terms(query)
+        if request_dict.get('keywords'):
+            # we want to get common keyword facets for this query
+            query = self._add_keyword_query_terms(query)
 
         dinaa_linked = utilities.get_request_param_value(
             request_dict,

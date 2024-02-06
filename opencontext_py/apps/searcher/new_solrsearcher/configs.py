@@ -270,6 +270,8 @@ LITERAL_DATA_TYPES = [
 ]
 
 
+
+
 # Tags to use before and after the highlighted term to clearly set the
 # term off from surrounding text. These are for the internal solr query
 # and solr response
@@ -1136,3 +1138,42 @@ HTTP_ONLY_URL_PARTS = [
 # Site documentation pages need some special handling on the front end
 # view options
 CLASS_OC_SITE_DOCUMENTATION_LABEL = gen_configs.CLASS_OC_SITE_DOCUMENTATION_LABEL
+
+
+# ---------------------------------------------------------------------
+# Keywords configs
+# Facet congifurations for keywords, which are strings that are
+# used in named enities that describe Open Context records and power
+# the search suggestions. Exposing key words in factes can help
+# users understand the main themes of the data in Open Context.
+# ---------------------------------------------------------------------
+KEYWORDS_FACET_LIMIT = 1000
+KEYWORDS_FACET_MINCOUNT = 100
+
+KEYWORDS_TO_SKIP = [
+    "license",
+    "context",
+    "open",
+    "items",
+    "creator",
+    "4.0",
+    "attribution",
+    "cc",
+    "international",
+    "commons",
+    "creative",
+    "licenses",
+    "subjects",
+    "bce",
+    "ce",
+]
+
+# Facets for item_type
+FACETS_KEYWORDS = {
+    'id': '#facet-keywords',
+    'rdfs:isDefinedBy': 'oc-api:keywords',
+    'label': 'Keywords',
+    'data-type': 'xsd:string',
+    'type': 'oc-api:facet-keywords',
+    'oc-api:has-id-options': [],
+}

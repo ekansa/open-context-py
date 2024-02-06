@@ -707,6 +707,23 @@ class ResultMaker():
         )
 
 
+    def add_keyword_facets(self, solr_json):
+        """Adds facets that indicated records with links to media"""
+        facets_nonpath = ResultFacetsNonPath(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        )
+        keyword_facet_dict = facets_nonpath.make_keywords_facets(
+            solr_json
+        )
+        self._add_facet_dict_to_facets_list(
+            keyword_facet_dict,
+            facet_type_key="oc-api:has-facets"
+        )
+
+
+
     def add_uuid_records(self, solr_json):
         """Adds a simple list of uuids to the result"""
         uuids = get_record_uuids_from_solr(solr_json)
@@ -848,6 +865,8 @@ class ResultMaker():
             self.add_item_type_facets(solr_json)
             # Add related media facet options
             self.add_rel_media_facets(solr_json)
+            # Add keyword facet options (if keywords are present)
+            self.add_keyword_facets(solr_json)
             # Adds overlay images, associated with project facet options.
             self.add_project_image_overlays()
 
