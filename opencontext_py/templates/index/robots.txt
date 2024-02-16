@@ -255,6 +255,7 @@ User-agent: *
 Disallow: /api.mapbox.com/*
 Disallow: /tile.googleapis.com/*
 Disallow: /*tile.openstreetmap.org/*
+Disallow: /iiif.archive.org/
 Disallow: /*?prop=*
 Disallow: /*?proj=*
 Disallow: /*?type=*
