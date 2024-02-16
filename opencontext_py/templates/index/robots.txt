@@ -234,6 +234,9 @@ Disallow: /
 
 
 User-agent: *
+Disallow: /*mapbox.com/*
+Disallow: /*google.com/*
+Disallow: /*openstreetmap.org/*
 Disallow: /*?prop=*
 Disallow: /*?proj=*
 Disallow: /*?type=*
