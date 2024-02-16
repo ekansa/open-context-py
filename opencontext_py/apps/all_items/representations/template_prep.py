@@ -82,8 +82,8 @@ DEFAULT_LICENSE_ICONS = {
     'creativecommons.org/licenses/by-nc/': '../../static/oc/cc-icons/cc-by-nc.svg',
     'creativecommons.org/licenses/by-nc-nd/': '../../static/oc/cc-icons/cc-by-nc-nd.svg',
     'creativecommons.org/licenses/by-nc-sa/': '../../static/oc/cc-icons/cc-by-nc-sa.svg',
-    'creativecommons.org/licenses/by-nd/': '../../static/oc/cc-icons/by-nd.svg',
-    'creativecommons.org/licenses/by-sa/': '../../static/oc/cc-icons/by-sa.svg',
+    'creativecommons.org/licenses/by-nd/': '../../static/oc/cc-icons/cc-by-nd.svg',
+    'creativecommons.org/licenses/by-sa/': '../../static/oc/cc-icons/cc-by-sa.svg',
     'creativecommons.org/publicdomain/mark/': '../../static/oc/cc-icons/cc-publicdomain.svg',
     'creativecommons.org/publicdomain/zero/': '../../static/oc/cc-icons/cc-zero.svg',
 }
