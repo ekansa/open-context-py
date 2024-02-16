@@ -41,7 +41,7 @@ from opencontext_py.apps.indexer import index_new_schema as new_ind
 importlib.reload(new_ind)
 
 
-new_ind.make_indexed_solr_documents_in_chunks(fix_uuids, start_clear_caches=False)
+new_ind.make_indexed_solr_documents_in_chunks(uuids, start_clear_caches=False)
 suggest.get_rebuild_solr_suggest()
 
 d_slugs = [

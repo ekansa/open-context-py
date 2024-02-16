@@ -80,7 +80,7 @@ def make_file_uri_from_cache_path(cache_path, check_exists=True):
 
 
 def get_ia_full_file_qs():
-    """Gets a queryset of resourc objects for Internet archive full or archive files"""
+    """Gets a queryset of resource objects for Internet archive full or archive files"""
     file_qs = AllResource.objects.filter(
         uri__startswith=ia.IA_ITEM_BASE_URI,
         resourcetype_id__in=[
@@ -88,6 +88,7 @@ def get_ia_full_file_qs():
             configs.OC_RESOURCE_ARCHIVE_UUID,
             configs.OC_RESOURCE_FULLFILE_UUID,
         ],
+        uri__contains='.JPG',
     ).exclude(
         uri__endswith='.pdf',
     ).exclude(
@@ -213,6 +214,13 @@ def make_preview_thumb_versions_of_ia_full_obj(file_obj, processed_count=0, all_
     ).exclude(
         uri__startswith=MERRITT_ROOT_URL,
     ).first()
+    if thumb_obj:
+        head_obj = models_utils.get_web_resource_head_info(uri=thumb_obj.uri, redirect_ok=True)
+        if head_obj.get('filesize'):
+            pass
+        else:
+            print(f'Bad thumb: {thumb_obj.uri}')
+            thumb_obj = None
     preview_obj = AllResource.objects.filter(
         item=file_obj.item,
         resourcetype_id=configs.OC_RESOURCE_PREVIEW_UUID,
@@ -221,6 +229,13 @@ def make_preview_thumb_versions_of_ia_full_obj(file_obj, processed_count=0, all_
     ).exclude(
         uri__startswith=MERRITT_ROOT_URL,
     ).first()
+    if preview_obj:
+        head_obj = models_utils.get_web_resource_head_info(uri=preview_obj.uri, redirect_ok=True)
+        if head_obj.get('filesize'):
+            pass
+        else:
+            print(f'Bad preview: {preview_obj.uri}')
+            preview_obj = None
     if thumb_obj and preview_obj:
         # we already have a thumb and preview, so return them
         return thumb_obj, preview_obj
