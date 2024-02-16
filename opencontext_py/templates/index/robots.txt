@@ -252,8 +252,9 @@ Disallow: /
 
 
 User-agent: *
-Disallow: /*mapbox.com/*
-Disallow: /*google.com/*
+Disallow: /api.mapbox.com/*
+Disallow: /tile.googleapis.com/*
+Disallow: /*tile.openstreetmap.org/*
 Disallow: /*?prop=*
 Disallow: /*?proj=*
 Disallow: /*?type=*
