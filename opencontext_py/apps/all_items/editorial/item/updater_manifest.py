@@ -116,6 +116,7 @@ def update_subjects_context_containment_assertion(man_obj):
         new_contain.subject = parent_context
         old_contain.delete()
         new_contain.save()
+        print(f'Updated containment assertion {new_contain.__str__}')
         return new_contain, old_contain
 
     assert_dict = {
@@ -134,6 +135,7 @@ def update_subjects_context_containment_assertion(man_obj):
     }
     assert_obj = AllAssertion(**assert_dict)
     assert_obj.save()
+    print(f'Added containment assertion {assert_obj.__str__}')
     return assert_obj, None
 
 
@@ -535,6 +537,22 @@ def add_manifest_objs(request_json, source_id=DEFAULT_SOURCE_ID):
         edit_note = (
             f'Added: {man_obj}'
         )
+
+        if man_obj.item_type == 'subjects':
+            # We added a subjects item, so now update the path for all the
+            # item children recursively.
+            new_contain, old_contain = update_subjects_context_containment_assertion(man_obj)
+            recursive_subjects_path_update(man_obj)
+            if new_contain:
+                after_edit_model_dict = updater_general.make_models_dict(
+                    models_dict=after_edit_model_dict,
+                    item_obj=new_contain
+                )
+            if old_contain:
+                prior_to_edit_model_dict = updater_general.make_models_dict(
+                    models_dict=prior_to_edit_model_dict,
+                    item_obj=old_contain
+                )
 
         history_obj = updater_general.record_edit_history(
             edited_obj,
