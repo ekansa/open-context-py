@@ -252,6 +252,8 @@ Disallow: /
 
 
 User-agent: *
+Disallow: /*mapbox.com/*
+Disallow: /*google.com/*
 Disallow: /*?prop=*
 Disallow: /*?proj=*
 Disallow: /*?type=*
