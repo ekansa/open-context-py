@@ -210,6 +210,24 @@ Allow: /query/?start=*
 Crawl-delay: 20
 
 
+User-agent: Diffbot
+Disallow: /*?prop=*
+Disallow: /*?proj=*
+Disallow: /*?type=*
+Disallow: /*?images=*
+Disallow: /*?other-media=*
+Disallow: /*?documents=*
+Disallow: /query/*
+Disallow: /query/?prop=*
+Disallow: /query/?proj=*
+Disallow: /query/?type=*
+Disallow: /query/?images=*
+Disallow: /query/?other-media=*
+Disallow: /query/?documents=*
+Allow: /query/
+Allow: /query/?start=*
+Crawl-delay: 20
+
 
 User-agent: turnitinbot
 Disallow: /oai/*
@@ -234,6 +252,10 @@ Disallow: /
 
 
 User-agent: *
+Disallow: /api.mapbox.com/*
+Disallow: /tile.googleapis.com/*
+Disallow: /*tile.openstreetmap.org/*
+Disallow: /iiif.archive.org/*
 Disallow: /*?prop=*
 Disallow: /*?proj=*
 Disallow: /*?type=*
