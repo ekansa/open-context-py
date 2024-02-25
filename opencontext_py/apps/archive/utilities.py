@@ -394,3 +394,57 @@ def make_project_data_csv_model_export_path(
     os.makedirs(act_path, exist_ok=True)
     csv_file_path = os.path.join(act_path, f'{model_db_table}.csv')
     return csv_file_path
+
+
+def count_files(directory):
+    count = 0
+    for root, _, files in os.walk(directory):
+        count += len(files)
+    return count
+
+
+def zip_directory(act_path,  zip_path):
+    """Create a ZipFile object in write mode and add files to it"""
+    print(f'Compress files to {zip_path} from {act_path}')
+    file_count = count_files(act_path)
+    if not file_count:
+        print(f'No files to compress in {act_path}')
+        return None
+    i = 0
+    with ZipFile(zip_path, 'w') as zipf:
+        for root, _, files in os.walk(act_path):
+            for file in files:
+                i += 1
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, act_path)
+                zipf.write(file_path, arcname=arcname)
+                print(f'Compressed {file} ({i} of {file_count})', end="\r",)
+    print('\n')
+    print(f'FINISHED compressing {file_count} files')
+
+
+def zip_structured_data_files(
+    project_uuid=None,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Crete a zip file of project exported CSV files and another zip file of JSON files"""
+    act_path = make_project_data_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    csv_path = make_project_data_csv_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    json_path = make_project_data_json_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    csv_zip_path = os.path.join(act_path, 'csv_files.zip')
+    json_zip_path = os.path.join(act_path, 'json_files.zip')
+    zip_directory(csv_path, csv_zip_path)
+    zip_directory(json_path, json_zip_path)

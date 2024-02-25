@@ -16,6 +16,7 @@ PROJECT_KEYWORDS = [
     'Structured Data',
     'GeoJSON',
     'JSON-LD',
+    'CSV',
 ]
 
 COMMUNITY_IDS = [
@@ -29,6 +30,19 @@ DEFAULT_SUBJECTS = [
         'identifier': 'http://id.loc.gov/authorities/subjects/sh85006507',
     },
 ]
+
+TOS_STATEMENT = (
+    '<p><strong>Terms of Use, Intellectual Property, and Ethics</strong></p>'
+    '<p>Open Context publishes research materials important to many different public communities '
+    'all with different histories, cultures, and expectations. We expect uses of these data to '
+    'respect civil, lawful, and ethical standards. To learn more about these expectations, '
+    'please review:</p>'
+    '<ul>'
+    '<li><a href="https://opencontext.org/about/intellectual-property">Open Context Intellectual Property Policies</a>.</li>'
+    '<li><a href="https://opencontext.org/about/terms">Open Context Terms of Use</a>.</li>'
+    '<li><a href="https://opencontext.org/about/fair-care">Data Governance Principles</a>.</li>'
+    '</ul>'
+)
 
 
 def make_zenodo_license_abrev_from_uri(lic_uri):
@@ -280,6 +294,100 @@ def make_zenodo_proj_media_files_metadata(
         '<br/>'
         '<p><strong>Brief Description of this Project</strong>'
         '<br/>' + project_des + '</p>'
+        + TOS_STATEMENT
+    )
+
+    return meta
+
+
+
+
+def make_zenodo_proj_stuctured_data_files_metadata(
+    proj_dict,
+    proj_upload_type = 'publication',
+    proj_pub_type = 'other',
+    proj_binary_pub_type = 'other',
+    access_right = 'open',
+):
+    """ makes a zendo metadata object for a deposition
+        of structured data files from an Open Context project
+    """
+    if not isinstance(proj_dict, dict):
+        return None
+    rp = RootPath()
+    meta = {}
+    meta['title'] = (
+        proj_dict['dc-terms:title'] + ' '
+        '[Structured Data from Open Context]'
+    )
+    if 'dc-terms:modified' in proj_dict
+        # date of last modification
+        meta['publication_date'] = proj_dict['dc-terms:modified']
+    else:
+        # default to today
+        today = datetime.date.today()
+        meta['publication_date'] = today.isoformat()
+    meta['license'] = make_zenodo_license_abrev_from_uri(
+        proj_dict.get('dc-terms:license', [{}])[0].get('id')
+    )
+    meta['upload_type'] = proj_upload_type
+    meta['creators'] = make_zenodo_creator_list(proj_dict)
+    meta['keywords'] = PROJECT_KEYWORDS
+    meta['subjects'] = make_zenodo_subjects_list(proj_dict)
+    meta['related_identifiers'] = make_zenodo_related_list(proj_dict)
+    project_des = ''
+    proj_des_sep = ''
+    for desc_obj in proj_dict.get('dc-terms:description', []):
+        for _, val in desc_obj.items():
+            project_des += proj_des_sep + val
+            proj_des_sep = ' '
+    if not project_des:
+        project_des = '[No additional description provided]'
+    meta['communities'] = [{'identifier': com_id,} for com_id in COMMUNITY_IDS]
+    meta['description'] = (
+        '<p>This archives structured data files associated with the <em>'
+        '<a href="' + proj_dict['id'] + '">' + proj_dict['label'] + '</a></em> project published by '
+        '<a href="' + rp.cannonical_host + '">Open Context</a>.</p>'
+        '<br/>'
+        '<p><strong>Brief Description of this Project</strong>'
+        '<br/>' + project_des + '</p>'
+        '<p>The same information are provided in two formats: </p>'
+        '<ol>'
+        '<li><strong>CSV</strong>: The ZIP compressed "csv_files.zip" contains '
+        'records related to this project exported from Open Context\'s Postgres relational database. '
+        'The records in this CSV files will include records from other projects that are dependencies to this project. '
+        '</li>'
+        '<li><strong>JSON</strong>: The ZIP compressed "json_files.zip" contains '
+        'records related to this project expressed as JSON-LD. This is a more verbose and semantically expressive format than '
+        'the CSV exports. Geo-spatial information is expressed in the GeoJSON format. The JSON-LD files included here are the same '
+        'as those that are publicly available via the Open Context API. '
+        '</li>'
+        '</ol>'
+        '<p>Open Context is a Python application built with the Django framework (see '
+        '<a href="https://github.com/ekansa/open-context-py" >source code</a>). '
+        'To manage a wide variety of archaeological and related data, Open Contexts organizes information '
+        'using a very abstract, graph-based schema. Open Context implements this schema using a Postgres '
+        'relational database and the Django "Object Relational Model" (ORM). '
+        'The CSV files here provide records relevant to this project and its dependencies '
+        'exported from tables in this database.</p>'
+        '<p>The CSV expression of this project\'s information is very terse. '
+        'To promote interoperability and understanding, The JSON-LD files provide the same information in a more '
+        'semantically expressive format. '
+        'A considerable amount of application logic '
+        'in Open Context generates this more expressive representation of these data. The JSON-LD files included here '
+        'result from these "terse" data records (from the Postgres database tables) processed with this application logic. '
+        '</p>'
+        '<p>The data contained in this project mainly came from one or more tabular data sources provided by '
+        'the project contributors and data creators. Open Context editors imported these tabular data sources '
+        'via an ETL (Extract, Transform, Load) process after review and editing using '
+        '<a href="https://openrefine.org/">Open Refine</a>. '
+        'Some data records may have been manually entered or modified into the Open Context database. '
+        'The column "source_id" will indicate the original provenance of the data. Open Context editors work with '
+        'contributors to verify ETL outcomes, add data documentation, verify attribution and '
+        'licensing information, and make other revisions. Because editorial processes may involve data '
+        'sensitivity concerns, the history of changes and revisions prior to publication are <em>not</em> '
+        'publicly recorded. </p>'
+        + TOS_STATEMENT
     )
 
     return meta

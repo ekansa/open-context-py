@@ -28,6 +28,7 @@ from opencontext_py.apps.all_items.editorial.synchronize import safe_model_save
 from opencontext_py.apps.all_items.editorial.tables import create_df
 
 from opencontext_py.apps.all_items.representations import item
+from opencontext_py.apps.indexer import index_new_schema as new_ind
 
 
 """
@@ -496,10 +497,39 @@ def save_df_to_csv(model_db_table, project_id, df):
     df.to_csv(csv_path, index=False)
 
 
-def export_project_structured_data(project_id):
+def refresh_project_metadata_caches(project_id):
+    """Refreshes the metadata caches for a project
+    """
+    new_ind.reset_project_context_and_metadata_cache(project_id)
+
+
+def save_project_json_ld(project_id, man_df):
+    """Saves JSON-LD representations of project items to files
+    """
+    act_path = zen_utilities.make_project_data_json_dir_path(project_id)
+    index = man_df['item_type'].isin(JSON_LD_ITEM_TYPES)
+    # Make sure we have refreshed the caches associated with generating
+    # JSON-LD representations for items in each project represented
+    # in this export (the main project, and projects for any dependencies).
+    for act_project_id in man_df[index]['project_id'].unique().tolist():
+        print(f'Refreshing metadata caches for {act_project_id}')
+        new_ind.reset_project_context_and_metadata_cache(act_project_id)
+    uuids = man_df[index]['uuid'].unique().tolist()
+    uuid_count = len(uuids)
+    i = 0
+    print(f'Save {uuid_count} items')
+    for uuid in man_df[index]['uuid'].unique().tolist():
+        i += 1
+        create_save_rep_dict(act_path, uuid)
+        print(f'Saved JSON-LD for {uuid} ({i} of {uuid_count})', end="\r",)
+    print('\n')
+    print('\n')
+    print(f'FINISHED saving JSON-LD for {uuid_count} items')
+
+
+def export_project_structured_data_files(project_id):
     """Exports all structured data for a project to files in a project export directory.
     """
-    proj_obj = AllManifest.objects.get(uuid=project_id)
     # 1. Make a dataframe of all the manifest data for the project and its dependencies
     man_df = create_project_and_dependency_manifest_df(project_id)
     save_df_to_csv(AllManifest._meta.db_table, project_id, man_df)
@@ -518,3 +548,16 @@ def export_project_structured_data(project_id):
     # 6. Generate the history dataframe and save it to a CSV file
     history_df = create_project_history_df(project_id)
     save_df_to_csv(AllHistory._meta.db_table, project_id, history_df)
+    # 7. Now save generation of the JSON-LD documents
+    save_project_json_ld(project_id, man_df)
+
+
+def export_project_structured_data(project_id):
+    proj_obj, proj_dict = item.make_representation_dict(
+        subject_id=project_id,
+        for_solr=False,
+    )
+    # 1. Export the structured data files
+    export_project_structured_data_files(project_id)
+    # 2. Compress the exported data files into two zip files
+    zen_utilities.zip_structured_data_files(project_id)
