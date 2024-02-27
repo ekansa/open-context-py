@@ -320,7 +320,7 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         proj_dict['dc-terms:title'] + ' '
         '[Structured Data from Open Context]'
     )
-    if 'dc-terms:modified' in proj_dict
+    if 'dc-terms:modified' in proj_dict:
         # date of last modification
         meta['publication_date'] = proj_dict['dc-terms:modified']
     else:
@@ -355,7 +355,7 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         '<ol>'
         '<li><strong>CSV</strong>: The ZIP compressed "csv_files.zip" contains '
         'records related to this project exported from Open Context\'s Postgres relational database. '
-        'The records in this CSV files will include records from other projects that are dependencies to this project. '
+        'The records in this CSV files will include records from other projects that are dependencies of this project. '
         '</li>'
         '<li><strong>JSON</strong>: The ZIP compressed "json_files.zip" contains '
         'records related to this project expressed as JSON-LD. This is a more verbose and semantically expressive format than '

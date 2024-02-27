@@ -548,7 +548,7 @@ def export_project_structured_data_files(project_id):
     # 6. Generate the history dataframe and save it to a CSV file
     history_df = create_project_history_df(project_id)
     save_df_to_csv(AllHistory._meta.db_table, project_id, history_df)
-    # 7. Now save generation of the JSON-LD documents
+    # 7. Now make and save JSON-LD documents
     save_project_json_ld(project_id, man_df)
 
 

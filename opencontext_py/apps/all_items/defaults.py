@@ -3411,6 +3411,20 @@ DEFAULT_MANIFESTS = [
         'uri': 'en.wiktionary.org',
         'context_id': OPEN_CONTEXT_PROJ_UUID,
     },
+    # Zenodo, for repository / preservation
+    {
+        'uuid': ZENODO_VOCAB_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'vocabularies',
+        'data_type': 'id',
+        'slug': 'zenodo',
+        'label': 'Zenodo Repository',
+        'uri': 'zenodo.org',
+        'context_id': OPEN_CONTEXT_PROJ_UUID,
+    },
     # Add a bunch of languages with Wikidata URIs
     # We're using Wikidata URIs because they seem the most useful.
     {

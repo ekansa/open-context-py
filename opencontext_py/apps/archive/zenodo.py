@@ -8,6 +8,8 @@ from opencontext_py.libs.generalapi import GeneralAPI
 SANDBOX_ZENODO_URL = 'https://sandbox.zenodo.org'
 PRODUCTION_ZENODO_URL = 'https://zenodo.org'
 
+OC_COMMUNITY_UUID = 'e16d1141-54be-4ec5-82ab-c576234868be'
+
 
 class ArchiveZenodo():
     """

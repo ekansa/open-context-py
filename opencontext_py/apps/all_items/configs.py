@@ -901,6 +901,9 @@ LOC_PERIODO_VOCAB_UUID = '00000000-7bc4-40c8-1466-37a5d076c902'
 GETTY_PUB_UUID = 'bd1a0bf8-3b4b-488a-b9ac-b3814dc36798'
 GETTY_AAT_VOCAB_UUID = '00000000-53ae-3cda-d835-ec8864e26956'
 
+# Zenodo (CERN) repository
+ZENODO_VOCAB_UUID = '00000000-ae0e-898d-cb9f-5c32c88355fe'
+
 
 
 # --------------------------------------------------------------------
