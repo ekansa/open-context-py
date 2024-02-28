@@ -38,8 +38,8 @@ TOS_STATEMENT = (
     'respect civil, lawful, and ethical standards. To learn more about these expectations, '
     'please review:</p>'
     '<ul>'
-    '<li><a href="https://opencontext.org/about/intellectual-property">Open Context Intellectual Property Policies</a>.</li>'
-    '<li><a href="https://opencontext.org/about/terms">Open Context Terms of Use</a>.</li>'
+    '<li><a href="https://opencontext.org/about/intellectual-property">Intellectual Property Policies</a>.</li>'
+    '<li><a href="https://opencontext.org/about/terms">Terms of Use</a>.</li>'
     '<li><a href="https://opencontext.org/about/fair-care">Data Governance Principles</a>.</li>'
     '</ul>'
 )
@@ -210,7 +210,7 @@ def make_zenodo_creator_list(meta_dict):
             if not identifier:
                 continue
             obj_count = obj_dict.get('count', 1)
-            all_order = list_order + (max_count - obj_dict['count'])
+            all_order = list_order + (max_count - obj_count )
             obj_w_order = (obj_dict, all_order,)
             objs_w_order.append(obj_w_order)
     ordered_objs = sorted(objs_w_order, key=lambda x: x[1])
@@ -305,9 +305,6 @@ def make_zenodo_proj_media_files_metadata(
 def make_zenodo_proj_stuctured_data_files_metadata(
     proj_dict,
     proj_upload_type = 'publication',
-    proj_pub_type = 'other',
-    proj_binary_pub_type = 'other',
-    access_right = 'open',
 ):
     """ makes a zendo metadata object for a deposition
         of structured data files from an Open Context project
@@ -351,7 +348,7 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         '<br/>'
         '<p><strong>Brief Description of this Project</strong>'
         '<br/>' + project_des + '</p>'
-        '<p>The same information are provided in two formats: </p>'
+        '<p>This archival deposit provides the same information in two formats: </p>'
         '<ol>'
         '<li><strong>CSV</strong>: The ZIP compressed "csv_files.zip" contains '
         'records related to this project exported from Open Context\'s Postgres relational database. '
@@ -383,9 +380,9 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         '<a href="https://openrefine.org/">Open Refine</a>. '
         'Some data records may have been manually entered or modified into the Open Context database. '
         'The column "source_id" will indicate the original provenance of the data. Open Context editors work with '
-        'contributors to verify ETL outcomes, add data documentation, verify attribution and '
+        'contributors to review ETL outcomes, add data documentation, verify attribution and '
         'licensing information, and make other revisions. Because editorial processes may involve data '
-        'sensitivity concerns, the history of changes and revisions prior to publication are <em>not</em> '
+        'sensitivity concerns, the history of changes and revisions made prior to publication are <em>not</em> '
         'publicly recorded. </p>'
         + TOS_STATEMENT
     )
