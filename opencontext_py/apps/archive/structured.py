@@ -561,3 +561,7 @@ def export_project_structured_data(project_id):
     export_project_structured_data_files(project_id)
     # 2. Compress the exported data files into two zip files
     zen_utilities.zip_structured_data_files(project_id)
+    # Make metadata for the the Zenodo deposition
+    dep_meta_dict = zen_metadata.make_zenodo_proj_stuctured_data_files_metadata(
+        proj_dict,
+    )
