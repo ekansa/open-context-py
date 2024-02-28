@@ -126,7 +126,7 @@ def validate_proj_obj_deposition_relation(proj_obj, deposition):
         if AllManifest().clean_uri(rel_id) == proj_obj.uri:
             rel_found = True
             break
-        if legacy_id and rel_id.endswith(legacy_id):
+        if legacy_id and rel_id.endswith(f'/projects/{legacy_id}'):
             print(f'Legacy ID match: {rel_id} has {legacy_id}')
             rel_found = True
             break
@@ -147,6 +147,14 @@ def record_zenodo_deposition_for_project(proj_obj, deposition):
     dep_obj = AllManifest.objects.filter(
         uri=dep_uri
     ).first()
+    # Get the type of deposition from the keywords
+    keywords = deposition.get('metadata', {}).get('keywords', [])
+    deposition_type = None
+    if 'Structured Data' in keywords:
+        deposition_type = 'structured_data'
+    if 'Media Files' in keywords:
+        deposition_type = 'media'
+    # Create the deposition object if it doesn't exist in the database
     if not dep_obj:
         dep_man_dict = {
             'publisher_id': str(proj_obj.publisher.uuid),
@@ -166,6 +174,10 @@ def record_zenodo_deposition_for_project(proj_obj, deposition):
     if not dep_obj:
         # We failed to get or create a new deposition object
         return None, None
+    if deposition_type:
+        # Make sure we have the deposition type recorded
+        dep_obj.meta_json['deposition_type'] = deposition_type
+        dep_obj.save()
     # Now record the assertion linking the project object to the
     # record of the Zenodo deposition
     assert_dict = {
