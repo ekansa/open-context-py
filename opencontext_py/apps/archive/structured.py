@@ -7,6 +7,7 @@ import pandas as pd
 from django.conf import settings
 
 
+from opencontext_py.apps.archive import db_update as zen_db
 from opencontext_py.apps.archive import utilities as zen_utilities
 from opencontext_py.apps.archive import metadata as zen_metadata
 from opencontext_py.apps.archive.zenodo import ArchiveZenodo
@@ -552,16 +553,80 @@ def export_project_structured_data_files(project_id):
     save_project_json_ld(project_id, man_df)
 
 
-def export_project_structured_data(project_id):
-    proj_obj, proj_dict = item.make_representation_dict(
-        subject_id=project_id,
-        for_solr=False,
-    )
+def export_and_zip_project_structured_data_files(project_id):
+    """Exports all structured data for a project to files in a
+    project export directory, and then zip them up.
+    """
     # 1. Export the structured data files
     export_project_structured_data_files(project_id)
     # 2. Compress the exported data files into two zip files
     zen_utilities.zip_structured_data_files(project_id)
-    # Make metadata for the the Zenodo deposition
+
+
+def export_project_structured_data(
+    project_id,
+    deposition_id=None,
+    do_testing=False,
+):
+    """Exports and compresses structured data files for a project and uploads them
+    to Zenodo.
+    """
+    proj_obj, proj_dict = item.make_representation_dict(
+        subject_id=project_id,
+        for_solr=False,
+    )
+    exist_dep_qs = AllAssertion.objects.filter(
+        subject_id=project_id,
+        object__context_id=configs.ZENODO_VOCAB_UUID,
+        meta_json__deposition_type='structured_data',
+    ).first()
+    if exist_dep_qs:
+        print(f'Project "{proj_obj.label}" [{project_id}] already has a structured data deposition.')
+        return None
+    # 1. Set up the Zenodo deposition
+    az = ArchiveZenodo(do_testing=do_testing)
+    bucket_url = None
+    if not deposition_id:
+        deposition_dict = az.create_empty_deposition()
+        if not deposition_dict:
+            raise ValueError(f'Cannot create an empty deposition for: "{proj_obj.label}" [{project_id}]')
+        deposition_id = az.get_deposition_id_from_metadata(deposition_dict)
+        bucket_url = az.get_bucket_url_from_metadata(deposition_dict)
+    if not bucket_url and deposition_id:
+        bucket_url = az.get_remote_deposition_bucket_url(deposition_id)
+    if not bucket_url:
+        raise ValueError(f'Cannot get bucket url for: "{proj_obj.label}" [{project_id}]')
+    if not deposition_id:
+        raise ValueError(f'Cannot get deposition id for: "{proj_obj.label}" [{project_id}]')
+    # 2. Save the deposition object to the database, that way we can include the
+    # relationship between the project and the deposition in the database and archive it!
+    if not do_testing:
+        dep_obj, ass_obj = zen_db.record_zenodo_deposition_for_project(
+            proj_obj=proj_obj,
+            deposition=None,
+            proj_dict=proj_dict,
+            deposition_id=deposition_id,
+        )
+    # 3. Export and compress the structured data files
+    export_and_zip_project_structured_data_files(project_id)
+    # 4. Upload the compressed files
+    act_path = zen_utilities.make_project_data_dir_path(
+        project_uuid=project_id
+    )
+    for filename in ['csv_files.zip', 'json_files.zip',]:
+        zip_path = os.path.join(act_path, filename)
+        zenodo_resp = az.upload_file_by_put(
+            bucket_url=bucket_url,
+            full_path_file=zip_path,
+            filename=filename,
+        )
+        if not zenodo_resp:
+            raise ValueError(f'Cannot upload file to bucket: {zip_path}')
+    # 5. Make metadata for the the Zenodo deposition
     dep_meta_dict = zen_metadata.make_zenodo_proj_stuctured_data_files_metadata(
         proj_dict,
+    )
+    az.update_metadata(deposition_id, dep_meta_dict)
+    print(
+        f'Archived structured data to deposition {deposition_id}; {dep_meta_dict.get("title")}'
     )

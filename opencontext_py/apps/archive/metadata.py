@@ -38,11 +38,18 @@ TOS_STATEMENT = (
     'respect civil, lawful, and ethical standards. To learn more about these expectations, '
     'please review:</p>'
     '<ul>'
-    '<li><a href="https://opencontext.org/about/intellectual-property">Intellectual Property Policies</a>.</li>'
-    '<li><a href="https://opencontext.org/about/terms">Terms of Use</a>.</li>'
-    '<li><a href="https://opencontext.org/about/fair-care">Data Governance Principles</a>.</li>'
+    '<li><a href="https://opencontext.org/about/intellectual-property">Intellectual Property Policies</a></li>'
+    '<li><a href="https://opencontext.org/about/terms">Terms of Use</a></li>'
+    '<li><a href="https://opencontext.org/about/fair-care">Data Governance Principles</a></li>'
     '</ul>'
 )
+
+ZENODO_DOI_DATACITE_PREFIX = '10.5281'
+
+
+def make_zenodo_doi_url(deposition_id):
+    """ makes a Zenodo DOI URL from a deposition ID """
+    return f'https://doi.org/{ZENODO_DOI_DATACITE_PREFIX}/zenodo.{deposition_id}'
 
 
 def make_zenodo_license_abrev_from_uri(lic_uri):
@@ -300,6 +307,11 @@ def make_zenodo_proj_media_files_metadata(
     return meta
 
 
+def make_zenodo_structured_data_deposition_title(
+    project_dc_title
+):
+    """Makes a title for a Zenodo deposition of structured data files"""
+    return f'{project_dc_title} [Structured Data from Open Context]'
 
 
 def make_zenodo_proj_stuctured_data_files_metadata(
@@ -313,9 +325,8 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         return None
     rp = RootPath()
     meta = {}
-    meta['title'] = (
-        proj_dict['dc-terms:title'] + ' '
-        '[Structured Data from Open Context]'
+    meta['title'] = make_zenodo_structured_data_deposition_title(
+        proj_dict.get('dc-terms:title', proj_dict.get('label', ''))
     )
     if 'dc-terms:modified' in proj_dict:
         # date of last modification
@@ -348,19 +359,21 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         '<br/>'
         '<p><strong>Brief Description of this Project</strong>'
         '<br/>' + project_des + '</p>'
+        '<br/>'
+        '<p><strong>Deposition Data File Overview</strong></p>'
         '<p>This archival deposit provides the same information in two formats: </p>'
         '<ol>'
-        '<li><strong>CSV</strong>: The ZIP compressed "csv_files.zip" contains '
+        '<li><strong>CSV</strong>: The ZIP compressed <code>csv_files.zip</code> contains '
         'records related to this project exported from Open Context\'s Postgres relational database. '
         'The records in this CSV files will include records from other projects that are dependencies of this project. '
         '</li>'
-        '<li><strong>JSON</strong>: The ZIP compressed "json_files.zip" contains '
+        '<li><strong>JSON</strong>: The ZIP compressed <code>json_files.zip</code> contains '
         'records related to this project expressed as JSON-LD. This is a more verbose and semantically expressive format than '
         'the CSV exports. Geo-spatial information is expressed in the GeoJSON format. The JSON-LD files included here are the same '
         'as those that are publicly available via the Open Context API. '
         '</li>'
         '</ol>'
-        '<p>Open Context is a Python application built with the Django framework (see '
+        '<p>Open Context is an open-source Python application built with the Django framework (see '
         '<a href="https://github.com/ekansa/open-context-py" >source code</a>). '
         'To manage a wide variety of archaeological and related data, Open Contexts organizes information '
         'using a very abstract, graph-based schema. Open Context implements this schema using a Postgres '
@@ -379,7 +392,7 @@ def make_zenodo_proj_stuctured_data_files_metadata(
         'via an ETL (Extract, Transform, Load) process after review and editing using '
         '<a href="https://openrefine.org/">Open Refine</a>. '
         'Some data records may have been manually entered or modified into the Open Context database. '
-        'The column "source_id" will indicate the original provenance of the data. Open Context editors work with '
+        'The column <code>source_id</code> will indicate the original provenance of the data. Open Context editors work with '
         'contributors to review ETL outcomes, add data documentation, verify attribution and '
         'licensing information, and make other revisions. Because editorial processes may involve data '
         'sensitivity concerns, the history of changes and revisions made prior to publication are <em>not</em> '
