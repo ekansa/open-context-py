@@ -42,7 +42,7 @@ importlib.reload(zen_struct)
 project_id = '7232a02f-a861-4860-af20-a905b5b3ae0b'
 dep_uuids = zen_struct.gather_external_manifest_dependency_entity_uuids(project_id)
 
-zen_struct.export_project_structured_data(project_id)
+zen_struct.export_project_structured_data(project_id, do_testing=True)
 """
 
 
