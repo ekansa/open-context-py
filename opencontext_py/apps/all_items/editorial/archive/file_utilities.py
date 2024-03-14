@@ -12,6 +12,7 @@ from opencontext_py.apps.all_items.models import (
     AllResource,
 )
 
+from opencontext_py.libs.generalapi import GeneralAPI
 
 """
 test
@@ -89,7 +90,8 @@ def get_cache_file(
     cache_filename,
     cache_dir,
     local_file_dir=None,
-    remote_to_local_path_split=None
+    remote_to_local_path_split=None,
+    redirect_ok=True
 ):
     """Locally caches a file to a cache directory
 
@@ -132,9 +134,13 @@ def get_cache_file(
     if '127.0.0.1' not in file_uri:
         # Delay if we're not requesting from the local host
         sleep(DELAY_BEFORE_REQUEST)
-
-    r = requests.get(file_uri, stream=True)
-    if r.status_code == 200:
+    gapi = GeneralAPI()
+    r = requests.get(file_uri, stream=True, headers=gapi.client_headers)
+    if (
+        (r.status_code == requests.codes.ok)
+        or
+        (redirect_ok and r.status_code >= 300 and r.status_code <= 310)
+    ):
         with open(cache_file_path, 'wb') as f:
             for chunk in r.iter_content(1024):
                 f.write(chunk)

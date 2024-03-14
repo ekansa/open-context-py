@@ -20,6 +20,8 @@ from opencontext_py.apps.all_items.editorial.archive import internet_archive as 
 from opencontext_py.apps.etl.general import image_media as imm
 from opencontext_py.apps.etl.kobo import media
 
+from opencontext_py.libs.generalapi import GeneralAPI
+
 """
 test
 
@@ -304,3 +306,64 @@ def make_preview_thumb_versions_of_ia_full_qs():
             pass
         else:
             print(f'[{processed_count} of {all_count}] Pending: {file_obj.uri}')
+
+
+def get_iiif_info_width(iiif_obj):
+    """Uses the IIIF image info service to get a width allowable for a preview image"""
+    if not iiif_obj:
+        return None
+    gapi = GeneralAPI()
+    iiif_uri = f'https://{iiif_obj.uri}'
+    r = requests.get(iiif_uri, headers=gapi.client_headers)
+    if (
+        (r.status_code == requests.codes.ok)
+        or
+        (r.status_code >= 300 and r.status_code <= 310)
+    ):
+        iiif_info = r.json()
+        if iiif_info.get('width'):
+            return iiif_info.get('width')
+    return None
+
+
+def change_iiif_uri_size_uri(uri, max_width):
+    """Changes the IIIF uri to a new width"""
+    if not ',/' in uri or not '/full/' in uri:
+        # Not a good URI
+        return None
+    uri_ex = uri.split(',/')
+    suffix = uri_ex[-1]
+    uri_ex_1 = uri_ex[0].split('/full/')
+    prefix = uri_ex_1[0]
+    old_width = None
+    try:
+        old_width = int(float(uri_ex_1[-1]))
+    except:
+        return None
+    if old_width <= max_width:
+        # No change needed. The old width is already less than the max_width
+        return uri
+    return f'{prefix}/full/{max_width},/{suffix}'
+
+
+def fix_iiif_uri_width_scale_ia(file_obj, update_prod=False):
+    """Uses the IIIF image info service to get a width allowable for a preview image"""
+    iiif_obj = AllResource.objects.filter(
+        item=file_obj.item,
+        resourcetype_id=configs.OC_RESOURCE_IIIF_UUID,
+    ).first()
+    width = get_iiif_info_width(iiif_obj)
+    if not width:
+        return file_obj
+    new_uri = change_iiif_uri_size_uri(uri=file_obj.uri, max_width=width)
+    if not new_uri:
+        # We failed to make a new uri
+        return file_obj
+    if new_uri == file_obj.uri:
+        return file_obj
+    print(f'Fixed IIIF uri width: {new_uri}')
+    file_obj.uri = new_uri
+    file_obj.save()
+    if update_prod:
+        file_obj.save(using='prod')
+    return file_obj

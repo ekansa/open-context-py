@@ -42,7 +42,16 @@ importlib.reload(zen_struct)
 project_id = '7232a02f-a861-4860-af20-a905b5b3ae0b'
 dep_uuids = zen_struct.gather_external_manifest_dependency_entity_uuids(project_id)
 
-zen_struct.export_project_structured_data(project_id, do_testing=True)
+zen_struct.export_archive_project_structured_data(project_id, do_testing=True)
+
+# Now test archiving all valid, reviewed projects.
+zen_struct.export_archive_all_valid_projects_structured_data(limit=2, do_testing=True)
+
+table_uuid = '0c14c4ad-fce9-4291-a605-8c065d347c5d'
+zen_struct.export_archive_table_csv_and_json(table_uuid, do_testing=True)
+
+# Now test archiving all valid, reviewed tables.
+zen_struct.export_archive_all_valid_table_csv_and_json(limit=2, do_testing=True)
 """
 
 
@@ -198,7 +207,8 @@ HISTORY_CSV_FIELDS = [
     'meta_json',
 ]
 
-def create_save_rep_dict(act_path, uuid):
+
+def create_save_rep_dict(act_path, uuid, save_in_item_type_dir=True):
     """Creates a JSON-LD dictionary representation of an Open Context
     item to save in a file
     """
@@ -208,12 +218,16 @@ def create_save_rep_dict(act_path, uuid):
     )
     if man_obj is None:
         return None
-    item_type_path = os.path.join(act_path, man_obj.item_type)
+    if save_in_item_type_dir:
+        save_path = os.path.join(act_path, man_obj.item_type)
+    else:
+        save_path = act_path
     zen_utilities.save_serialized_json(
-        path=item_type_path,
+        path=save_path,
         filename=f'{str(man_obj.uuid)}.json',
         dict_obj=rep_dict,
     )
+    return save_path
 
 
 def make_dep_uuid_set_from_proj_entity_uuids(entity_uuids, project_id):
@@ -563,7 +577,75 @@ def export_and_zip_project_structured_data_files(project_id):
     zen_utilities.zip_structured_data_files(project_id)
 
 
-def export_project_structured_data(
+def validate_item_ok_for_archive(
+    man_obj,
+    default_edit_status=0,
+    check_published_date=True,
+    require_doi=True,
+    deposition_type='structured_data',
+    require_media_files_count=None,
+):
+    """Validates that an item is OK to export structured data
+    """
+    if check_published_date and man_obj.published is None:
+        print(f'Item "{man_obj.label}" [{man_obj.uuid}] has no publication date, so do NOT archive.')
+        return False
+    if man_obj.meta_json.get('edit_status', default_edit_status) < 2:
+        print(f'Item "{man_obj.label}" [{man_obj.uuid}] lacks sufficient editorial review, so do NOT archive.')
+        return False
+    if man_obj.meta_json.get('flag_do_not_index'):
+        print(f'Item "{man_obj.label}" [{man_obj.uuid}] flagged for no indexing, so do NOT archive.')
+        return False
+    if man_obj.meta_json.get('view_group_id'):
+        print(f'Item "{man_obj.label}" [{man_obj.uuid}] has private views configured, so do NOT archive.')
+        return False
+    # Check to see if the item has a DOI (which is required for structured data deposition)
+    doi_obj = AllIdentifier.objects.filter(
+        item_id=man_obj.uuid,
+        scheme='doi',
+    ).first()
+    if require_doi and not doi_obj:
+        print(f'Item "{man_obj.label}" [{man_obj.uuid}] lacks a DOI, so do NOT archive.')
+        return False
+    if not require_doi and not doi_obj:
+        # Check if this has an ARK. If it does, that's and OK substitute for a DOI.
+        ark_obj = AllIdentifier.objects.filter(
+            item_id=man_obj.uuid,
+            scheme='ark',
+        ).first()
+        if not ark_obj:
+            print(f'Item "{man_obj.label}" [{man_obj.uuid}] lacks a DOI and lacks an ARK, so do NOT archive.')
+            return False
+    # Check to see if the item already has a structured data deposition
+    exist_dep_assert = None
+    exist_dep_qs = AllAssertion.objects.filter(
+        subject_id=man_obj.uuid,
+        object__context_id=configs.ZENODO_VOCAB_UUID,
+    )
+    if deposition_type:
+        exist_dep_qs = exist_dep_qs.filter(
+            object__meta_json__deposition_type=deposition_type,
+        )
+    exist_dep_assert = exist_dep_qs.first()
+    if exist_dep_assert:
+        print(f'Item "{man_obj.label}" [{man_obj.uuid}] already has a {deposition_type} deposition.')
+        return False
+    if require_media_files_count and require_media_files_count > 0:
+        if man_obj.item_type == 'projects':
+            media_count = AllResource.objects.filter(
+                item__project=man_obj,
+            ).count()
+        else:
+            media_count = AllResource.objects.filter(
+                item=man_obj,
+            ).count()
+        if media_count < require_media_files_count:
+            print(f'Item "{man_obj.label}" [{man_obj.uuid}] only has {media_count} media files -> do not archive.')
+            return False
+    return True
+
+
+def export_archive_project_structured_data(
     project_id,
     deposition_id=None,
     do_testing=False,
@@ -575,14 +657,16 @@ def export_project_structured_data(
         subject_id=project_id,
         for_solr=False,
     )
-    exist_dep_qs = AllAssertion.objects.filter(
-        subject_id=project_id,
-        object__context_id=configs.ZENODO_VOCAB_UUID,
-        meta_json__deposition_type='structured_data',
-    ).first()
-    if exist_dep_qs:
-        print(f'Project "{proj_obj.label}" [{project_id}] already has a structured data deposition.')
+    if proj_obj is None:
+        raise ValueError(f'Cannot find project: {project_id}')
+    # Check to make sure the project is OK to archive structured data in Zenodo
+    if not validate_item_ok_for_archive(
+        man_obj=proj_obj,
+        default_edit_status=0,
+        check_published_date=True,
+    ):
         return None
+    print(f'Project "{proj_obj.label}" [{project_id}] is OK to archive structured data.')
     # 1. Set up the Zenodo deposition
     az = ArchiveZenodo(do_testing=do_testing)
     bucket_url = None
@@ -601,11 +685,12 @@ def export_project_structured_data(
     # 2. Save the deposition object to the database, that way we can include the
     # relationship between the project and the deposition in the database and archive it!
     if not do_testing:
-        dep_obj, ass_obj = zen_db.record_zenodo_deposition_for_project(
-            proj_obj=proj_obj,
+        _, _ = zen_db.record_zenodo_deposition_for_item(
+            man_obj=proj_obj,
             deposition=None,
-            proj_dict=proj_dict,
+            rep_dict=proj_dict,
             deposition_id=deposition_id,
+            deposition_type='structured_data',
         )
     # 3. Export and compress the structured data files
     export_and_zip_project_structured_data_files(project_id)
@@ -630,3 +715,148 @@ def export_project_structured_data(
     print(
         f'Archived structured data to deposition {deposition_id}; {dep_meta_dict.get("title")}'
     )
+    return dep_meta_dict
+
+
+def export_archive_all_valid_projects_structured_data(limit=None, do_testing=False):
+    """Exports structured data for all reviewed projects
+    """
+    proj_qs = AllManifest.objects.filter(
+        item_type='projects',
+    ).order_by(
+        'published',
+        'label',
+    )
+    deposit_count = 0
+    for proj_obj in proj_qs:
+        project_id = proj_obj.uuid
+        dep_meta_dict = export_archive_project_structured_data(
+            project_id,
+            do_testing=do_testing
+        )
+        if dep_meta_dict:
+            deposit_count += 1
+        if limit and deposit_count >= limit:
+            break
+
+
+def download_cache_table_csv(table_obj, act_path):
+    """Downloads a CSV file of a table from the project cache
+    """
+    filename = f'{table_obj.slug}.csv'
+    csv_path = fu.get_cache_file(
+        file_uri=f'https://{table_obj.uri}.csv',
+        cache_filename=filename,
+        cache_dir=act_path,
+    )
+    if not csv_path:
+        raise ValueError(f'Cannot download CSV file for: {table_obj.uri}')
+    return csv_path
+
+
+def export_archive_table_csv_and_json(
+    table_uuid,
+    deposition_id=None,
+    do_testing=False,
+):
+    """Creates a JSON-LD dictionary representation of an Open Context
+    item to save in a file
+    """
+    table_obj, rep_dict = item.make_representation_dict(
+        subject_id=table_uuid,
+        for_solr=False,
+    )
+    if table_obj is None:
+        return None
+    # Check to make sure the table is OK to archive structured data in Zenodo
+    if not validate_item_ok_for_archive(
+        man_obj=table_obj,
+        default_edit_status=2,
+        check_published_date=False,
+        require_doi=False,
+    ):
+        return None
+    # Prepare the directory for the table structured data files
+    act_path = zen_utilities.make_table_data_dir_path(
+        table_uuid=str(table_obj.uuid),
+    )
+    os.makedirs(act_path, exist_ok=True)
+    # 1. Download the CSV file
+    csv_path = download_cache_table_csv(table_obj, act_path)
+    # We have the CSV file, so we can now make a Zenodo deposition
+    az = ArchiveZenodo(do_testing=do_testing)
+    bucket_url = None
+    if not deposition_id:
+        deposition_dict = az.create_empty_deposition()
+        if not deposition_dict:
+            raise ValueError(f'Cannot create an empty deposition for: "{table_obj.label}" [{table_obj.uuid}]')
+        deposition_id = az.get_deposition_id_from_metadata(deposition_dict)
+        bucket_url = az.get_bucket_url_from_metadata(deposition_dict)
+    if not bucket_url and deposition_id:
+        bucket_url = az.get_remote_deposition_bucket_url(deposition_id)
+    if not bucket_url:
+        raise ValueError(f'Cannot get bucket url for: "{table_obj.label}" [{table_obj.uuid}]')
+    if not deposition_id:
+        raise ValueError(f'Cannot get deposition id for: "{table_obj.label}" [{table_obj.uuid}]')
+    # 2. Save the deposition object to the database, that way we can include the
+    # relationship between the project and the deposition in the database and archive it!
+    if not do_testing:
+        _, _ = zen_db.record_zenodo_deposition_for_item(
+            man_obj=table_obj,
+            deposition=None,
+            rep_dict=rep_dict,
+            deposition_id=deposition_id,
+            deposition_type='structured_data',
+        )
+        # Update rep_dict, because not it has a relatonship to the deposition
+        _, rep_dict = item.make_representation_dict(
+            subject_id=table_uuid,
+            for_solr=False,
+        )
+    # 3. Save the JSON-LD representation of the table
+    json_path = os.path.join(act_path, f'{table_obj.slug}.json')
+    zen_utilities.save_serialized_json(
+        path=act_path,
+        filename=f'{table_obj.slug}.json',
+        dict_obj=rep_dict,
+    )
+    for filename in [f'{str(table_obj.slug)}.csv', f'{table_obj.slug}.json',]:
+        file_path = os.path.join(act_path, filename)
+        zenodo_resp = az.upload_file_by_put(
+            bucket_url=bucket_url,
+            full_path_file=file_path,
+            filename=filename,
+        )
+        if not zenodo_resp:
+            raise ValueError(f'Cannot upload file to bucket: {file_path}')
+    # 5. Make metadata for the the Zenodo deposition
+    dep_meta_dict = zen_metadata.make_zenodo_table_stuctured_data_files_metadata(
+        rep_dict,
+    )
+    az.update_metadata(deposition_id, dep_meta_dict)
+    print(
+        f'Archived structured data to deposition {deposition_id}; {dep_meta_dict.get("title")}'
+    )
+    return dep_meta_dict
+
+
+def export_archive_all_valid_table_csv_and_json(limit=None, do_testing=False):
+    """Exports structured data for all reviewed projects
+    """
+    tables_qs = AllManifest.objects.filter(
+        item_type='tables',
+    ).order_by(
+        'published',
+        'label',
+    )
+    deposit_count = 0
+    for table_obj in tables_qs:
+        table_uuid = table_obj.uuid
+        dep_meta_dict = export_archive_table_csv_and_json(
+            table_uuid,
+            do_testing=do_testing
+        )
+        if dep_meta_dict:
+            deposit_count += 1
+        if limit and deposit_count >= limit:
+            break

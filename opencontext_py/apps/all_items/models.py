@@ -1756,7 +1756,7 @@ class AllIdentifier(models.Model):
             # the url_roots saved.
             if id.startswith('http://') or id.startswith('https://'):
                 # We're getting a Web URI as an identifier
-                id = AllManifest().object_uri(id)
+                id = AllManifest().clean_uri(id)
             if not scheme:
                 scheme = scheme_key
             elif scheme and scheme != scheme_key:

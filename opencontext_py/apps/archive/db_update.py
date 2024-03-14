@@ -114,101 +114,85 @@ def record_all_zenodo_depositions(params=None):
         print(f'Processed {res_count} resources for deposition {title} [id: {deposition_id}]')
 
 
-def validate_proj_obj_deposition_relation(proj_obj, deposition):
+def validate_man_obj_deposition_relation(man_obj, deposition):
     """Verifies that a project manifest object relates to a Zenodo deposition object"""
-    if not proj_obj or not deposition:
+    if not man_obj or not deposition:
         return False
     rel_found = False
-    legacy_id = proj_obj.meta_json.get('legacy_id')
+    legacy_id = man_obj.meta_json.get('legacy_id')
     for rel_obj in deposition.get('metadata', {}).get('related_identifiers', []):
         rel_id = rel_obj.get('identifier')
         if not rel_id:
             continue
         if not rel_obj.get('relation') in ['isPartOf', 'compiles',]:
             continue
-        if AllManifest().clean_uri(rel_id) == proj_obj.uri:
+        if AllManifest().clean_uri(rel_id) == man_obj.uri:
             rel_found = True
             break
-        if legacy_id and rel_id.endswith(f'/projects/{legacy_id}'):
+        if legacy_id and rel_id.endswith(f'/{man_obj.item_type}/{legacy_id}'):
             print(f'Legacy ID match: {rel_id} has {legacy_id}')
             rel_found = True
             break
     return rel_found
 
 
-def record_zenodo_deposition_for_project(
-    proj_obj,
-    deposition=None,
-    proj_dict=None,
-    deposition_id=None
+def get_or_create_zenodo_deposition_man_obj(
+    dep_title,
+    dep_uri,
+    source_id,
+    publisher_id,
+    project_id,
+    deposition_type=None,
 ):
-    """Records a project manifest object relationship to a Zenodo deposition object"""
-    dep_title = None
-    dep_uri = None
-    keywords = []
-    if proj_obj and deposition:
-        # Case where we got a deposition object from the Zenodo API list
-        # request.
-        relation_valid = validate_proj_obj_deposition_relation(proj_obj, deposition)
-        if not relation_valid:
-            return None, None
-        dep_title = deposition.get('metadata', {}).get('title')
-        dep_uri = get_deposition_doi_url(deposition)
-        keywords = deposition.get('metadata', {}).get('keywords', [])
-        source_id = 'zenodo-api-list'
-    if proj_obj and proj_dict and deposition_id:
-        # Case where we just made a new deposition and want to record it.
-        dep_title = zen_metadata.make_zenodo_structured_data_deposition_title(
-            proj_dict.get('dc-terms:title', proj_obj.label),
-        )
-        dep_uri = zen_metadata.make_zenodo_doi_url(deposition_id)
-        source_id = 'zenodo-api-create'
-    if not dep_title or not dep_uri:
-        return None, None
+    """Gets or creates a manifest object for a Zenodo deposition"""
     dep_uri = AllManifest().clean_uri(dep_uri)
-    # Check if we already have a record of this deposition
     dep_obj = AllManifest.objects.filter(
         uri=dep_uri
     ).first()
-    # Get the type of deposition from the keywords
-    deposition_type = None
-    if 'Structured Data' in keywords:
-        deposition_type = 'structured_data'
-    if 'Media Files' in keywords:
-        deposition_type = 'media'
-    # Create the deposition object if it doesn't exist in the database
-    if not dep_obj:
-        dep_man_dict = {
-            'publisher_id': str(proj_obj.publisher.uuid),
-            'project_id': str(proj_obj.uuid),
-            'item_class_id': configs.DEFAULT_CLASS_UUID,
-            'source_id': source_id,
-            'item_type': 'uri',
-            'data_type': 'id',
-            'label': dep_title,
-            'uri': dep_uri,
-            'context_id': configs.ZENODO_VOCAB_UUID,
-        }
-        dep_obj, _ = AllManifest.objects.get_or_create(
-            uri=dep_uri,
-            defaults=dep_man_dict,
-        )
-    if not dep_obj:
-        # We failed to get or create a new deposition object
-        return None, None
-    if deposition_type:
+    if dep_obj and deposition_type:
         # Make sure we have the deposition type recorded
         dep_obj.meta_json['deposition_type'] = deposition_type
         dep_obj.save()
+        return dep_obj
+    # OK. Now make it.
+    dep_man_dict = {
+        'publisher_id': publisher_id,
+        'project_id': project_id,
+        'item_class_id': configs.DEFAULT_CLASS_UUID,
+        'source_id': source_id,
+        'item_type': 'uri',
+        'data_type': 'id',
+        'label': dep_title,
+        'uri': dep_uri,
+        'context_id': configs.ZENODO_VOCAB_UUID,
+        'meta_json': {
+            'deposition_type': deposition_type,
+        },
+    }
+    dep_obj, _ = AllManifest.objects.get_or_create(
+        uri=dep_uri,
+        defaults=dep_man_dict,
+    )
+    return dep_obj
+
+
+def get_or_create_zenodo_deposition_relation_assertion(
+    subject_id,
+    object_id,
+    publisher_id,
+    project_id,
+    source_id,
+    predicate_id=configs.PREDICATE_DCTERMS_HAS_PART_UUID,
+):
     # Now record the assertion linking the project object to the
     # record of the Zenodo deposition
     assert_dict = {
-        'project_id': str(proj_obj.uuid),
-        'publisher_id': str(proj_obj.publisher.uuid),
-        'source_id': 'zenodo-api-list',
-        'subject_id': proj_obj.uuid,
-        'predicate_id': configs.PREDICATE_DCTERMS_HAS_PART_UUID,
-        'object_id': dep_obj.uuid,
+        'project_id': project_id,
+        'publisher_id': publisher_id,
+        'source_id': source_id,
+        'subject_id': subject_id,
+        'predicate_id': predicate_id,
+        'object_id': object_id, # This is the zenodo deposition object
     }
     ass_obj, _ = AllAssertion.objects.get_or_create(
         uuid=AllAssertion().primary_key_create(
@@ -223,6 +207,75 @@ def record_zenodo_deposition_for_project(
         f'is {ass_obj.subject.label} [{ass_obj.subject.uuid}]'
         f'-> {ass_obj.predicate.label} [{ass_obj.predicate.uuid}]'
         f'-> {ass_obj.object.label} [{ass_obj.object.uuid}]'
+    )
+    return ass_obj
+
+
+def record_zenodo_deposition_for_item(
+    man_obj,
+    deposition=None,
+    rep_dict=None,
+    deposition_id=None,
+    deposition_type=None,
+    dep_title=None,
+):
+    """Records a project manifest object relationship to a Zenodo deposition object"""
+    dep_uri = None
+    keywords = []
+    if man_obj and deposition:
+        # Case where we got a deposition object from the Zenodo API list
+        # request.
+        relation_valid = validate_man_obj_deposition_relation(man_obj, deposition)
+        if not relation_valid:
+            return None, None
+        if not dep_title:
+            dep_title = deposition.get('metadata', {}).get('title')
+        dep_uri = get_deposition_doi_url(deposition)
+        keywords = deposition.get('metadata', {}).get('keywords', [])
+        source_id = 'zenodo-api-list'
+    if man_obj and rep_dict and deposition_id:
+        # Case where we just made a new deposition and want to record it.
+        if not dep_title and deposition_type == 'structured_data':
+            dep_title = zen_metadata.make_zenodo_structured_data_deposition_title(
+                rep_dict.get('dc-terms:title', man_obj.label),
+            )
+        dep_uri = zen_metadata.make_zenodo_doi_url(deposition_id)
+        source_id = 'zenodo-api-create'
+        print(f'New {deposition_type} deposition URI: {dep_uri}')
+    # We're missing some critical information needing to record a Zenodo
+    # deposition as a Manifest object.
+    if not dep_title or not dep_uri:
+        return None, None
+    # Get the type of deposition from the keywords
+    if not deposition_type and 'Structured Data' in keywords:
+        deposition_type = 'structured_data'
+    if not deposition_type and 'Media Files' in keywords:
+        deposition_type = 'media'
+    # Get the appropriate project ID for different item_types
+    if man_obj.item_type == 'projects':
+        project_id = man_obj.uuid
+    else:
+        project_id = man_obj.project.uuid
+    # Create the deposition object if it doesn't exist in the database
+    dep_obj = get_or_create_zenodo_deposition_man_obj(
+        dep_title=dep_title,
+        dep_uri=dep_uri,
+        source_id=source_id,
+        publisher_id=man_obj.publisher.uuid,
+        project_id=project_id,
+        deposition_type=deposition_type,
+    )
+    if not dep_obj:
+        # We failed to get or create a new deposition object
+        return None, None
+    # Now record the assertion linking the project object to the
+    # record of the Zenodo deposition
+    ass_obj = get_or_create_zenodo_deposition_relation_assertion(
+        subject_id=man_obj.uuid,
+        object_id=dep_obj.uuid,
+        publisher_id=man_obj.publisher.uuid,
+        project_id=project_id,
+        source_id=source_id,
     )
     return dep_obj, ass_obj
 
@@ -257,9 +310,11 @@ def record_proj_obj_zenodo_depositions(proj_obj, params=None):
     print(f'Search found {len(depositions)} deposits likely related to {proj_obj.label} [{proj_obj.uuid}]')
     related_deposits = []
     for deposition in depositions:
-        dep_obj, ass_obj = record_zenodo_deposition_for_project(
-            proj_obj,
+        dep_obj, ass_obj = record_zenodo_deposition_for_item(
+            man_obj=proj_obj,
             deposition=deposition,
+            rep_dict=None,
+            deposition_id=None
         )
         if not dep_obj or not ass_obj:
             continue

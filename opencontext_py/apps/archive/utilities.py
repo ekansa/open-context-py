@@ -13,6 +13,7 @@ from opencontext_py.apps.all_items.models import (
 ARCHIVE_LOCAL_ROOT_PATH = settings.STATIC_EXPORTS_ROOT
 PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX = 'files'
 PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX = 'structured-data'
+TABLE_DATA_ARCHIVE_LOCAL_DIR_PREFIX = 'table-data'
 
 PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME = 'zenodo-oc-files.json'
 PROJECT_ZIP_FILENAME = 'oc-files.zip'
@@ -448,3 +449,25 @@ def zip_structured_data_files(
     json_zip_path = os.path.join(act_path, 'json_files.zip')
     zip_directory(csv_path, csv_zip_path)
     zip_directory(json_path, json_zip_path)
+
+
+def make_table_data_dir_name(
+    table_uuid,
+    data_prefix=TABLE_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+):
+    """Makes a directory name for a data export of a given table item"""
+    return f'{data_prefix}---{table_uuid}'
+
+
+def make_table_data_dir_path(
+    table_uuid,
+    data_prefix=TABLE_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Makes a directory path for a (structured) data export for a given project"""
+    act_dir = make_table_data_dir_name(
+        table_uuid=table_uuid,
+        data_prefix=data_prefix,
+    )
+    act_path = os.path.join(root_path, act_dir)
+    return act_path
