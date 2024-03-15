@@ -395,9 +395,11 @@ def assemble_depositions_dirs_for_project(
             ):
                 # Prepare a new directory for the next set of files
                 print(f'{act_partition_number} appears full. Preparing a new directory for {act_path}')
-                act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
+                dir_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
                     project_uuid
                 )
+                if dir_partition_number:
+                    act_partition_number = dir_partition_number
                 act_partition_number += 1
                 dir_dict, act_path = get_make_save_dir_dict(
                     part_num=act_partition_number,
