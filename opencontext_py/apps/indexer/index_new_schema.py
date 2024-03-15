@@ -17,6 +17,7 @@ from opencontext_py.apps.all_items.models import AllAssertion, AllManifest
 from opencontext_py.apps.all_items.project_contexts.context import (
     clear_project_context_df_from_cache
 )
+from opencontext_py.apps.all_items.representations import metadata as rep_metadata
 
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
@@ -293,6 +294,15 @@ def make_index_solr_documents(uuids, solr=None):
     print(f'Indexed committing {str(uuids)}')
 
 
+def reset_project_context_and_metadata_cache(project_id):
+    """Resets the project context and metadata cache for a project."""
+    clear_project_context_df_from_cache(project_id)
+    rep_metadata.get_project_metadata_qs(
+        project_id=project_id,
+        reset_cache=True,
+    )
+
+
 def clear_new_project_context(act_uuids, cleared_project_ids):
     proj_id_qs = AllManifest.objects.filter(
         uuid__in=act_uuids
@@ -310,7 +320,7 @@ def clear_new_project_context(act_uuids, cleared_project_ids):
         if project_id in cleared_project_ids:
             continue
         print(f'First clear context_df cache for new project: {project_id}')
-        clear_project_context_df_from_cache(project_id)
+        reset_project_context_and_metadata_cache(project_id)
         cleared_project_ids.append(project_id)
     return cleared_project_ids
 

@@ -567,6 +567,6 @@ def add_default_ld_equivalent_assertions(item_man_obj, equiv_assertions, for_sol
         obj_obj = make_nested_not_stored_man_obj(default_obj_dict)
         ns_ass.predicate = pred_obj
         ns_ass.object = obj_obj
-        print(f'Adding default assertion for predicate {default_pred_slug}')
+        # print(f'Adding default assertion for predicate {default_pred_slug}')
         equiv_assertions.append(ns_ass)
     return equiv_assertions

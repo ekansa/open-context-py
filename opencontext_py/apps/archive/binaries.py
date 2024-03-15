@@ -7,8 +7,10 @@ from django.db.models import OuterRef, Subquery
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
-from opencontext_py.apps.archive import utilities as zen_utilities
+from opencontext_py.apps.archive import db_update as zen_db
 from opencontext_py.apps.archive import metadata as zen_metadata
+from opencontext_py.apps.archive import structured as zen_struct
+from opencontext_py.apps.archive import utilities as zen_utilities
 from opencontext_py.apps.archive.zenodo import ArchiveZenodo
 
 from opencontext_py.apps.all_items import configs
@@ -20,6 +22,7 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.all_items.editorial.archive import file_utilities as fu
+from opencontext_py.apps.all_items.editorial.archive import internet_archive_thumbnails as ia_thumbs
 
 from opencontext_py.apps.all_items.representations import item
 
@@ -46,11 +49,14 @@ zen_binaries.reset_zendodo_metadata_for_files(
 )
 
 
+zen_binaries.export_archive_all_valid_projects_media_files(limit=2, do_testing=False, update_prod=True)
+
 """
 
 
 ARCHIVE_FILE_TYPES_KEYS = [
     'oc-gen:archive',
+    'oc-gen:ia-fullfile',
     'oc-gen:fullfile',
     'oc-gen:preview',
     'oc-gen:x3dom-model',
@@ -61,6 +67,7 @@ ARCHIVE_FILE_TYPES_KEYS = [
 
 ARCHIVE_FILE_TYPES_SLUGS = [
     'oc-gen-archive',
+    'oc-gen-ia-fullfille',
     'oc-gen-fullfile',
     'oc-gen-preview',
     'oc-gen-x3dom-model',
@@ -72,6 +79,7 @@ ARCHIVE_FILE_TYPES_SLUGS = [
 ARCHIVE_FILE_PREFIXES = {
     'oc-gen:archive': 'az---',
     'oc-gen:fullfile': 'fz---',
+    'oc-gen:ia-fullfille': 'fia---',
     'oc-gen:preview': 'pz---',
     'oc-gen:x3dom-model': 'x3m---',
     'oc-gen:x3dom-texture': 'x3t---',
@@ -83,6 +91,8 @@ ZENODO_FILE_KEYS = [
     'filesize',
     'checksum',
 ]
+
+
 
 
 def make_archival_filename(file_type, slug, file_uri):
@@ -121,6 +131,34 @@ def get_resource_obj_from_archival_filename(filename):
     return res_obj
 
 
+def update_iiif_size_uri(man_obj, file_dict, update_prod=False):
+    """ updates the iiif size uri for a given file """
+    old_url = file_dict.get('short_term_url', '')
+    if not 'iiif.archive.org' in old_url:
+        # No change, not a iiif.archive.org file
+        return file_dict
+    old_uri = AllManifest().clean_uri(old_url)
+    # now get the file_obj for this file_dict item
+    file_obj = AllResource.objects.filter(
+        uri=old_uri,
+        item=man_obj,
+    ).first()
+    if not file_obj:
+        # Something went wrong, we don't have a file object
+        return file_dict
+    # This will update the IIIF width and save the changes to the database.
+    file_obj = ia_thumbs.fix_iiif_uri_width_scale_ia(
+        file_obj,
+        update_prod=update_prod,
+    )
+    if file_obj.uri == old_uri:
+        # We didn't update the file_obj
+        return file_dict
+    # We did update the file_obj, so update the file_dict
+    file_dict['short_term_url'] = f'https://{file_obj.uri}'
+    return file_dict
+
+
 def get_item_media_files(man_obj):
     """ gets media file uris for archiving """
     files_dict = {}
@@ -132,8 +170,10 @@ def get_item_media_files(man_obj):
     ).select_related(
         'resourcetype'
     )
+    found_file_type_slugs = []
     for res_obj in res_qs:
         file_uri = res_obj.uri
+        found_file_type_slugs.append(res_obj.resourcetype.slug)
         if '#' in file_uri:
             file_ex = file_uri.split('#')
             file_uri = file_ex[0]
@@ -151,6 +191,15 @@ def get_item_media_files(man_obj):
             }
             files_dict[filename] = act_dict
         files_dict[filename]['type'].append(res_obj.resourcetype.item_key)
+    # Cleanup the files dict in cases where we have IA fullfiles and files in Merritt
+    remove_filename_key = None
+    if set(['oc-gen-ia-fullfille','oc-gen-fullfile',]).issubset(set(found_file_type_slugs)):
+        for filename, file_dict in files_dict.items():
+            if 'oc-gen:fullfile' in file_dict['type'] and 'merritt.cdlib.org' in file_dict['short_term_url']:
+                remove_filename_key = filename
+                break
+    if remove_filename_key:
+        files_dict.pop(remove_filename_key)
     return files_dict
 
 
@@ -307,6 +356,7 @@ def assemble_depositions_dirs_for_project(
     dir_content_file_json=zen_utilities.PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME,
     allow_zip_contents=True,
     forced_act_partition_number=None,
+    update_prod=False,
 ):
     """Assembles deposition directories for a given project"""
     project_dirs = zen_utilities.get_project_binaries_dirs(project_uuid)
@@ -345,9 +395,11 @@ def assemble_depositions_dirs_for_project(
             ):
                 # Prepare a new directory for the next set of files
                 print(f'{act_partition_number} appears full. Preparing a new directory for {act_path}')
-                act_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
+                dir_partition_number = zen_utilities.get_maximum_dir_partition_number_for_project(
                     project_uuid
                 )
+                if dir_partition_number:
+                    act_partition_number = dir_partition_number
                 act_partition_number += 1
                 dir_dict, act_path = get_make_save_dir_dict(
                     part_num=act_partition_number,
@@ -383,6 +435,20 @@ def assemble_depositions_dirs_for_project(
                     local_file_dir=None,
                     remote_to_local_path_split=None,
                 )
+                if not cache_file_path and 'iiif.archive.org' in file_dict.get('short_term_url', ''):
+                    file_dict = update_iiif_size_uri(
+                        man_obj,
+                        file_dict=file_dict,
+                        update_prod=update_prod,
+                    )
+                    # Now try to download and save the file locally again.
+                    cache_file_path = fu.get_cache_file(
+                        file_uri=file_dict.get('short_term_url'),
+                        cache_filename=file_dict.get('filename'),
+                        cache_dir=act_path,
+                        local_file_dir=None,
+                        remote_to_local_path_split=None,
+                    )
                 if not cache_file_path:
                     # We couldn't cache the file locally, so skip it
                     continue
@@ -575,6 +641,23 @@ def archive_project_binary_dir(
     do_testing=False,
 ):
     """ archives a project binary directory to Zenodo """
+    proj_obj = AllManifest.objects.filter(
+        uuid=project_uuid,
+        item_type='projects',
+    ).first()
+    if not proj_obj:
+        print(f'No project found for: {project_uuid}')
+        return None
+    ok = zen_struct.validate_item_ok_for_archive(
+        man_obj=proj_obj,
+        default_edit_status=0,
+        check_published_date=True,
+        require_doi=True,
+        deposition_type='media',
+    )
+    if not ok:
+        print(f'Item "{proj_obj.label}" [{proj_obj.uuid}] is not ready to archive.')
+        return None
     dir_dict = zen_utilities.load_serialized_json(
         path=act_path,
         filename=dir_content_file_json,
@@ -645,6 +728,16 @@ def archive_project_binary_dir(
     print(
         f'Archived {len_files} files to deposition {deposition_id}; {dep_meta_dict.get("title")}'
     )
+    if not do_testing:
+        _, _ = zen_db.record_zenodo_deposition_for_item(
+            man_obj=proj_obj,
+            deposition=None,
+            rep_dict=proj_dict,
+            deposition_id=deposition_id,
+            deposition_type='media',
+            dep_title=dep_meta_dict.get('title'),
+        )
+
 
 
 def archive_all_project_binary_dirs(
@@ -665,59 +758,45 @@ def archive_all_project_binary_dirs(
         )
 
 
-def update_resource_obj_zenodo_file_deposit(
-    deposition_id,
-    doi_url,
-    zenodo_file_dict,
-):
-    """Updates the zenodo archive metadata for a resource object"""
-    if not deposition_id or not doi_url or not zenodo_file_dict:
-        return None
-    filename = zenodo_file_dict.get('filename')
-    if not filename:
-        return None
-    res_obj = get_resource_obj_from_archival_filename(filename)
-    if not res_obj:
-        return None
-    if res_obj.meta_json.get('zenodo'):
-        # We already have a record of this resource record
-        # being deposited in Zenodo
-        return res_obj
-    oc_dict = {
-        'deposition_id': deposition_id,
-        'doi_url': AllManifest().clean_uri(doi_url),
-        'filename': filename,
-        'filesize': zenodo_file_dict.get('filesize'),
-        'checksum': zenodo_file_dict.get('checksum'),
-        'zenodo_file_id': zenodo_file_dict.get('id'),
-    }
-    res_obj.meta_json['zenodo'] = oc_dict
-    res_obj.save()
-    return res_obj
-
-
-def record_all_zenodo_depositions(params=None):
-    """Records Zenodo depositions for resource instances
-    based on file lists returned from Zenodo API
+def export_archive_all_valid_projects_media_files(limit=None, do_testing=False, update_prod=False):
+    """Exports media files for all reviewed projects
     """
-    az = ArchiveZenodo()
-    depositions = az.get_all_depositions_list(params=params)
-    for deposition in depositions:
-        deposition_id = deposition.get('id')
-        doi_url = deposition.get('doi_url')
-        title = deposition.get('title')
-        if not deposition_id or not doi_url:
+    proj_qs = AllManifest.objects.filter(
+        item_type='projects',
+    ).order_by(
+        'published',
+        'label',
+    )
+    deposit_count = 0
+    i = 0
+    proj_count = proj_qs.count()
+    for proj_obj in proj_qs:
+        i += 1
+        print(f'[{i} of {proj_count}] Checking media archiving for {proj_obj.label} [{proj_obj.uuid}]')
+        ok = zen_struct.validate_item_ok_for_archive(
+            man_obj=proj_obj,
+            default_edit_status=0,
+            check_published_date=True,
+            require_doi=True,
+            deposition_type='media',
+        )
+        if not ok:
             continue
-        files = deposition.get('files', [])
-        print(f'Processing deposition {title} [id: {deposition_id}] with {len(files)} files')
-        res_count = 0
-        for zenodo_file_dict in files:
-            res_obj = update_resource_obj_zenodo_file_deposit(
-                deposition_id,
-                doi_url,
-                zenodo_file_dict,
-            )
-            if not res_obj:
-                continue
-            res_count += 1
-        print(f'Processed {res_count} resources for deposition {title} [id: {deposition_id}]')
+        project_uuid = proj_obj.uuid
+        print(f'[{i} of {proj_count}] Assemble files to archive for {proj_obj.label} [{proj_obj.uuid}]')
+        assemble_depositions_dirs_for_project(
+            project_uuid,
+            check_binary_files_present=False,
+            allow_zip_contents=True,
+            forced_act_partition_number=0,
+            update_prod=update_prod,
+        )
+        print(f'[{i} of {proj_count}] Archive files for {proj_obj.label} [{proj_obj.uuid}]')
+        archive_all_project_binary_dirs(
+            project_uuid,
+            proj_dict=None,
+            do_testing=do_testing,
+        )
+        deposit_count += 1
+        if limit and deposit_count >= limit:
+            break

@@ -11,12 +11,14 @@ from opencontext_py.apps.all_items.models import (
 )
 
 ARCHIVE_LOCAL_ROOT_PATH = settings.STATIC_EXPORTS_ROOT
-PROJECT_ARCHIVE_LOCAL_DIR_PREFIX = 'files'
+PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX = 'files'
+PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX = 'structured-data'
+TABLE_DATA_ARCHIVE_LOCAL_DIR_PREFIX = 'table-data'
 
 PROJECT_DIR_FILE_MANIFEST_JSON_FILENAME = 'zenodo-oc-files.json'
 PROJECT_ZIP_FILENAME = 'oc-files.zip'
 
-MAX_DEPOSITION_FILE_COUNT = 99
+MAX_DEPOSITION_FILE_COUNT = 98
 MAX_DEPOSITION_FILE_SIZE = 45000000000  # 45 GB
 ZIP_MEDIA_MANIFEST_THRESHOLD = 500 # 500 media items
 
@@ -113,7 +115,7 @@ def get_project_dir_partition_number(dir_name):
     """Gets the partition number from a directory name"""
     if not isinstance(dir_name, str):
         return None
-    if not dir_name.startswith(PROJECT_ARCHIVE_LOCAL_DIR_PREFIX):
+    if not dir_name.startswith(PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX):
         return None
     if not '---' in dir_name:
         return None
@@ -161,7 +163,7 @@ def sort_project_dirs(raw_project_dirs):
 
 def get_project_binaries_dirs(
     project_uuid,
-    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    files_prefix=PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
 ):
     """ gets directories associated with a project id """
@@ -182,7 +184,7 @@ def get_project_binaries_dirs(
 
 def get_maximum_dir_partition_number_for_project(
     project_uuid,
-    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    files_prefix=PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
 ):
     """Gets the maximum partition number from a list of project directories"""
@@ -196,7 +198,7 @@ def get_maximum_dir_partition_number_for_project(
 
 def gather_project_dir_file_dict_list(
     project_uuid,
-    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    files_prefix=PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
     check_binary_files_present=False,
 ):
@@ -233,7 +235,7 @@ def gather_project_dir_file_dict_list(
 
 def gather_project_dir_filename_list(
     project_uuid,
-    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    files_prefix=PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
     check_binary_files_present=False,
 ):
@@ -254,7 +256,7 @@ def make_project_part_license_dir_name(
     part_num,
     license_uri,
     project_uuid,
-    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    files_prefix=PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX,
 ):
     """ makes a directory name for a given project, license, and directory_number """
     license_uri = AllManifest().clean_uri(license_uri)
@@ -274,7 +276,7 @@ def make_project_part_license_dir_path(
     part_num,
     license_uri,
     project_uuid,
-    files_prefix=PROJECT_ARCHIVE_LOCAL_DIR_PREFIX,
+    files_prefix=PROJECT_FILES_ARCHIVE_LOCAL_DIR_PREFIX,
     root_path=ARCHIVE_LOCAL_ROOT_PATH,
 ):
     """ makes a directory name for a given project, license, and directory_number """
@@ -322,3 +324,150 @@ def recommend_zip_archive(proj_license_dict):
     if count >= ZIP_MEDIA_MANIFEST_THRESHOLD:
         return True
     return False
+
+
+def make_project_data_dir_name(
+    project_uuid,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+):
+    """Makes a directory name for a (structured) data export for a given project"""
+    return f'{data_prefix}---{project_uuid}'
+
+
+def make_project_data_dir_path(
+    project_uuid,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Makes a directory path for a (structured) data export for a given project"""
+    act_dir = make_project_data_dir_name(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+    )
+    act_path = os.path.join(root_path, act_dir)
+    return act_path
+
+
+def make_project_data_csv_dir_path(
+    project_uuid,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Makes a directory path for a (structured) data export for a given project"""
+    act_dir = make_project_data_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    act_path = os.path.join(act_dir, "csv_files")
+    return act_path
+
+
+def make_project_data_json_dir_path(
+    project_uuid,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Makes a directory path for a (structured) data export for a given project"""
+    act_dir = make_project_data_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    act_path = os.path.join(act_dir, "json_files")
+    return act_path
+
+
+def make_project_data_csv_model_export_path(
+    model_db_table,
+    act_path=None,
+    project_uuid=None,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Makes a directory path for a (structured) data export for a given project"""
+    if not act_path and project_uuid:
+        act_path = make_project_data_csv_dir_path(
+            project_uuid=project_uuid,
+            data_prefix=data_prefix,
+            root_path=root_path,
+        )
+    os.makedirs(act_path, exist_ok=True)
+    csv_file_path = os.path.join(act_path, f'{model_db_table}.csv')
+    return csv_file_path
+
+
+def count_files(directory):
+    count = 0
+    for root, _, files in os.walk(directory):
+        count += len(files)
+    return count
+
+
+def zip_directory(act_path,  zip_path):
+    """Create a ZipFile object in write mode and add files to it"""
+    print(f'Compress files to {zip_path} from {act_path}')
+    file_count = count_files(act_path)
+    if not file_count:
+        print(f'No files to compress in {act_path}')
+        return None
+    i = 0
+    with ZipFile(zip_path, 'w') as zipf:
+        for root, _, files in os.walk(act_path):
+            for file in files:
+                i += 1
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, act_path)
+                zipf.write(file_path, arcname=arcname)
+                print(f'Compressed {file} ({i} of {file_count})', end="\r",)
+    print('\n')
+    print(f'FINISHED compressing {file_count} files')
+
+
+def zip_structured_data_files(
+    project_uuid=None,
+    data_prefix=PROJECT_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Crete a zip file of project exported CSV files and another zip file of JSON files"""
+    act_path = make_project_data_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    csv_path = make_project_data_csv_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    json_path = make_project_data_json_dir_path(
+        project_uuid=project_uuid,
+        data_prefix=data_prefix,
+        root_path=root_path,
+    )
+    csv_zip_path = os.path.join(act_path, 'csv_files.zip')
+    json_zip_path = os.path.join(act_path, 'json_files.zip')
+    zip_directory(csv_path, csv_zip_path)
+    zip_directory(json_path, json_zip_path)
+
+
+def make_table_data_dir_name(
+    table_uuid,
+    data_prefix=TABLE_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+):
+    """Makes a directory name for a data export of a given table item"""
+    return f'{data_prefix}---{table_uuid}'
+
+
+def make_table_data_dir_path(
+    table_uuid,
+    data_prefix=TABLE_DATA_ARCHIVE_LOCAL_DIR_PREFIX,
+    root_path=ARCHIVE_LOCAL_ROOT_PATH,
+):
+    """Makes a directory path for a (structured) data export for a given project"""
+    act_dir = make_table_data_dir_name(
+        table_uuid=table_uuid,
+        data_prefix=data_prefix,
+    )
+    act_path = os.path.join(root_path, act_dir)
+    return act_path
