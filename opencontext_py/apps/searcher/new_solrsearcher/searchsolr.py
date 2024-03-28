@@ -805,6 +805,7 @@ class SearchSolr():
         query = self.update_query_with_stats_prequery(query)
         query = self._set_solr_field_facet_limits(query)
         query['wt'] = 'json'
+        query['cache'] = 'true'
         return query
 
 
