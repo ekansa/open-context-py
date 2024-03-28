@@ -1,5 +1,6 @@
 import copy
 import logging
+import time
 
 from django.conf import settings
 from django.core.cache import caches
@@ -35,6 +36,7 @@ def process_solr_query_via_solr_and_db(request_dict, base_search_url='/query/'):
     :param dict request_dict: Dictionary derived from a solr
         request object with client GET request parameters.
     """
+    start_time = time.time()
     search_solr = SearchSolr()
     search_solr.add_initial_facet_fields(request_dict)
     search_solr.init_facet_fields.append('item_type')
@@ -42,7 +44,9 @@ def process_solr_query_via_solr_and_db(request_dict, base_search_url='/query/'):
     query = search_solr.update_query_with_stats_prequery(
         query
     )
+    prep_solr_query_time = time.time()
     solr_response = search_solr.query_solr(query)
+    solr_response_time = time.time()
     result_maker = ResultMaker(
         request_dict=request_dict,
         facet_fields_to_client_request=copy.deepcopy(search_solr.facet_fields_to_client_request),
@@ -52,15 +56,22 @@ def process_solr_query_via_solr_and_db(request_dict, base_search_url='/query/'):
     result_maker.create_result(
         solr_json=solr_response
     )
-    if isinstance(result_maker.result, dict):
-        result_maker.result['query'] = query
+    solr_end_time = time.time()
+    if not isinstance(result_maker.result, dict):
+        return {}
+    result_maker.result['query'] = query
     if 'no-docs' in request_dict.get('solr', []):
         solr_response['response'].pop('docs')
         result_maker.result = solr_response
-    if False and not settings.DEBUG and not request_dict.get('solr') and result_maker.result.get('query'):
+    if settings.DEBUG:
+        result_maker.result['prep_solr_query_time'] = (prep_solr_query_time - start_time) * 10**3
+        result_maker.result['solr_response_time'] = (solr_response_time - prep_solr_query_time) * 10**3
+        result_maker.result['process_solr_result_time'] = (solr_end_time - solr_response_time) * 10**3
+    if not settings.DEBUG and not request_dict.get('solr') and result_maker.result.get('query'):
         # Get rid of the solr query if we're not in debug mode and did not specifically
         # ask for it.
         result_maker.result.pop('query')
+    result_maker.result['Qtime'] = solr_response.get('responseHeader', {}).get('QTime')
     return result_maker.result
 
 
