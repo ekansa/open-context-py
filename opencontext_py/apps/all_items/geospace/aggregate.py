@@ -1,12 +1,14 @@
 
 
 
+import json
 import numpy as np
 import pandas as pd
 
 from sklearn.cluster import KMeans, AffinityPropagation, SpectralClustering
-from shapely.geometry import mapping, shape
-
+from shapely.geometry import mapping, shape, JOIN_STYLE
+from shapely.ops import unary_union
+from shapely import get_precision, set_precision, to_geojson
 
 from django.db.models import Q
 
@@ -68,6 +70,7 @@ CLUSTER_METHODS = [
     DEFAULT_CLUSTER_METHOD,
     'AffinityPropagation',
     'SpectralClustering',
+    'unary_union',
 ]
 
 DEFAULT_SOURCE_ID = 'geospace-aggregate'
@@ -532,6 +535,36 @@ def make_table_geo_df(man_obj):
     return df
 
 
+def make_unary_union_polygon_for_contained_geo(man_obj, eps=0.0000001):
+    space_time_qs = AllSpaceTime.objects.filter(
+        item__path__startswith=man_obj.path
+    ).exclude(
+        item=man_obj,
+    ).exclude(
+        geometry_type__isnull=True
+    )
+    sptime_count = space_time_qs.count()
+    if not sptime_count:
+        return None, None
+    raw_shapes = [shape(sp_obj.geometry) for sp_obj in space_time_qs]
+    shapes = []
+    for shp in raw_shapes:
+        if shp.is_valid:
+            shapes.append(shp)
+            continue
+        shp_2 = shp.buffer(eps)
+        if not shp_2.is_valid:
+            # We skip it.
+            continue
+        shapes.append(shp_2)
+    raw_boundary = unary_union(shapes)
+    boundary = raw_boundary.convex_hull
+    boundary = boundary.buffer(eps, 1, join_style=JOIN_STYLE.mitre).buffer(-eps, 1, join_style=JOIN_STYLE.mitre)
+    geo_json = to_geojson(boundary)
+    geometry = json.loads(geo_json)
+    return geometry, sptime_count
+
+
 def make_geo_json_of_regions_for_man_obj(
     man_obj,
     max_clusters=MAX_CLUSTERS,
@@ -549,6 +582,11 @@ def make_geo_json_of_regions_for_man_obj(
     :param str cluster_method: A string that names the sklearn
         clustering method to use on these data.
     """
+    if man_obj.item_type == 'subjects' and cluster_method == 'unary_union':
+        # A somewhat different approach to making a geometry by combining
+        # multiple geometries together.
+        geometry, sptime_count = make_unary_union_polygon_for_contained_geo(man_obj)
+        return geometry, sptime_count
     df = None
     space_time_qs = None
     if man_obj.item_type == 'projects':
