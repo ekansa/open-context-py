@@ -44,6 +44,9 @@ def process_solr_query_via_solr_and_db(request_dict, base_search_url='/query/'):
     query = search_solr.update_query_with_stats_prequery(
         query
     )
+    if request_dict.get('oai-pmh'):
+        # Empty this!
+        query['facet.field'] = []
     prep_solr_query_time = time.time()
     solr_response = search_solr.query_solr(query)
     solr_response_time = time.time()

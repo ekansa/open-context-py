@@ -360,7 +360,8 @@ class SolrOAIpmh():
             the facets, metadata
         """
         request_dict = {
-            'response': 'metadata,facet'
+            'response': 'metadata,facet',
+            'oai-pmh': True,
         }
         request_dict = self.add_set_params_to_solr_request(request_dict)
         solr_json = None
