@@ -157,6 +157,9 @@ class SolrOAIpmh():
             },
             "label": "Data tables",
         },
+    }
+
+    DEPRECATED_BASE_SETS = {
         "types": {
             "params": {
                 "type": "types",
@@ -1233,7 +1236,7 @@ class SolrOAIpmh():
         else:
             # first request, so we're not passing a resumption object
             # but need to make one
-            resumption_token_dict = self.make_update_resumption_token_dictect(
+            resumption_token_dict = self.make_update_resumption_object(
                 None,
                 {}
             )
