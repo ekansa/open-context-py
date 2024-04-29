@@ -817,15 +817,18 @@ class SolrOAIpmh():
             for act_file in media_files:
                 if act_file.get('type') != 'oc-gen:fullfile':
                     continue
-                mime_type_uri = 'dc-terms:hasFormat'
+                mime_type_uri = act_file.get('dc-terms:hasFormat')
                 if not mime_type_uri:
                     continue
-                format_list.append(
-                    mime_type_uri.replace(
-                        'http://purl.org/NET/mediatypes/',
-                        ''
-                    )
+                mime_type = mime_type_uri.replace(
+                    'https://www.iana.org/assignments/media-types/media-types.xhtml#',
+                    '',
                 )
+                mime_type = mime_type.replace(
+                    'http://purl.org/NET/mediatypes/',
+                    '',
+                )
+                format_list.append(mime_type)
     
         for mime in format_list:
             act_xml = etree.SubElement(format_xml, '{' + dc + '}format')
@@ -954,15 +957,18 @@ class SolrOAIpmh():
             for act_file in media_files:
                 if act_file.get('type') != 'oc-gen:fullfile':
                     continue
-                mime_type_uri = 'dc-terms:hasFormat'
+                mime_type_uri = act_file.get('dc-terms:hasFormat')
                 if not mime_type_uri:
                     continue
-                format_list.append(
-                    mime_type_uri.replace(
-                        'http://purl.org/NET/mediatypes/',
-                        ''
-                    )
+                mime_type = mime_type_uri.replace(
+                    'https://www.iana.org/assignments/media-types/media-types.xhtml#',
+                    '',
                 )
+                mime_type = mime_type.replace(
+                    'http://purl.org/NET/mediatypes/',
+                    '',
+                )
+                format_list.append(mime_type)
         # add the found mime-types to the xml formats
         act_node = etree.SubElement(resource_xml, 'formats')
         for mime in format_list:
