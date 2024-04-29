@@ -34,6 +34,9 @@ from opencontext_py.apps.etl.importer.transforms import views as etlTransformsVi
 # Testing new ETL views. These are for GET requests
 from opencontext_py.apps.etl.kobo import views as koboViews
 
+# OAI PMH views
+from opencontext_py.apps.oai import views as oaiViews
+
 # Site map related
 from opencontext_py.apps.all_items.sitemaps import views as oc_sitemap_views
 from django.views.decorators.cache import cache_page
@@ -50,6 +53,10 @@ urlpatterns = [
     re_path(r'^all/.atom', ManifestViews.all_atom, name='manifest_all_atom'),
     re_path(r'^all.atom', ManifestViews.all_atom, name='manifest_all_ns_atom'),
     re_path(r'^manifest/', ManifestViews.index, name='manifest_index_view'),
+
+    # Endpoint for the open archives initiative protocol for metadata harvesting
+    re_path(r'^oai/', oaiViews.index, name='oai_pmh_index_view'),
+
     # About pages
     re_path(r'^about/uses', AboutViews.uses_view, name='about_uses'),
     re_path(r'^about/publishing', AboutViews.pub_view, name='about_publishing'),

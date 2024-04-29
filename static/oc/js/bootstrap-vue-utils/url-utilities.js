@@ -102,6 +102,9 @@ function removeURLParameter(url, parameter) {
 
 function getURLParameter(url, param) {
     //prefer to use l.search if you have a location/link object
+    if(!url){
+        return null;
+    }
     var vars = {};
 	url.replace(
 		/[?&]+([^=&]+)=?([^&]*)?/gi, // regexp

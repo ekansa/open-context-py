@@ -122,7 +122,7 @@ def make_image_schema_org_json_ld(
         'isPartOf': citation_dict.get('part_of_uri'),
         'creditText': citation_txt,
         'acquireLicensePage': f'https://{configs.OC_URI_ROOT}/about/terms',
-        'copyrightNotice': f'Copyright owned by the creator(s)/contributors(s): {creator_txt}',
+        'copyrightNotice': f'Copyright owned by the creator(s)/contributor(s): {creator_txt}',
     }
     if about_link:
         schema['about'] = about_link

@@ -134,6 +134,7 @@ def update_subjects_context_containment_assertion(man_obj):
         'meta_json': {},
     }
     assert_obj = AllAssertion(**assert_dict)
+    assert_obj.created = timezone.now()
     assert_obj.save()
     print(f'Added containment assertion {assert_obj.__str__}')
     return assert_obj, None

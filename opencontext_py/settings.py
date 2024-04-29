@@ -342,28 +342,19 @@ if DEBUG:
             }
         },
         'redis': {
-            'BACKEND': 'redis_cache.RedisCache',
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 100000
-            }
         },
         'redis_search': {
-            'BACKEND': 'redis_cache.RedisCache',
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 100000
-            }
         },
         'redis_context': {
-            'BACKEND': 'redis_cache.RedisCache',
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 100000
-            }
         },
         'file': {
             'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
@@ -393,31 +384,19 @@ else:
             }
         },
         'redis': {
-            'BACKEND': 'redis_cache.cache.RedisCache',
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 500000,
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient'
-            }
         },
         'redis_search': {
-            'BACKEND': 'redis_cache.cache.RedisCache',
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 500000,
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient'
-            }
         },
         'redis_context': {
-            'BACKEND': 'redis_cache.cache.RedisCache',
+           "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 500000,
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient'
-            }
         },
         'file': {
             'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
@@ -444,10 +423,13 @@ USER_AGENTS_CACHE = 'redis'
 
 RQ_QUEUES = {
     'high': {
-        'USE_REDIS_CACHE': 'redis',
+        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0'),
+
+        # 'USE_REDIS_CACHE': 'redis',
     },
     'low': {
-        'USE_REDIS_CACHE': 'redis',
+        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0'),
+        # 'USE_REDIS_CACHE': 'redis',
     },
 }
 

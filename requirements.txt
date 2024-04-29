@@ -7,7 +7,6 @@ coverage>=4.5.3
 coveralls>=1.8.1
 django-debug-toolbar>=2.2.1
 django-extensions>=3.1.5
-django-redis-cache>=2.0.0
 django-reversion>=3.0.4
 django-user-agents>=0.4.0
 django-rq>=2.3
