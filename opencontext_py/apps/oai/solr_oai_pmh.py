@@ -127,12 +127,6 @@ class SolrOAIpmh():
     }
 
     BASE_SETS = {
-        "subjects": {
-            "params": {
-                "type": "subjects"
-            }, 
-            "label": "Data Records",
-        },
         "media": {
             "params": {
                 "type": "media",
@@ -160,6 +154,12 @@ class SolrOAIpmh():
     }
 
     DEPRECATED_BASE_SETS = {
+        "subjects": {
+            "params": {
+                "type": "subjects"
+            }, 
+            "label": "Data Records",
+        },
         "types": {
             "params": {
                 "type": "types",
@@ -547,7 +547,7 @@ class SolrOAIpmh():
         if not until_date:
             return None
         until_solr = self.make_solr_date(until_date)
-        if until_solr is not False:
+        if until_solr:
             self.until_date = until_date
             self.until_date_solr = until_solr
         else:
