@@ -817,7 +817,7 @@ class SolrOAIpmh():
             for act_file in media_files:
                 if act_file.get('type') != 'oc-gen:fullfile':
                     continue
-                mime_type_uri = 'dc-terms:hasFormat'
+                mime_type_uri = act_file.get('dc-terms:hasFormat')
                 if not mime_type_uri:
                     continue
                 format_list.append(
@@ -954,7 +954,7 @@ class SolrOAIpmh():
             for act_file in media_files:
                 if act_file.get('type') != 'oc-gen:fullfile':
                     continue
-                mime_type_uri = 'dc-terms:hasFormat'
+                mime_type_uri = act_file.get('dc-terms:hasFormat')
                 if not mime_type_uri:
                     continue
                 format_list.append(
