@@ -589,13 +589,14 @@ class SolrOAIpmh():
             self.errors.append('noRecordsMatch')
 
 
-    def get_item_json_ld(self, item):
+    def get_item_json_ld(self, solr_resp_item):
         """ gets metadata and uris
         """
-        if not item:
+        if not solr_resp_item:
             return None
-        if isinstance(item, str):
-            man_obj = get_man_obj_by_any_id(item)
+        rep_dict = None
+        if isinstance(solr_resp_item, str):
+            man_obj = get_man_obj_by_any_id(solr_resp_item)
             if not man_obj:
                 return None
             _, rep_dict = item.make_representation_dict(
@@ -603,17 +604,14 @@ class SolrOAIpmh():
                 for_solr=False,
             )
             return rep_dict
-        if not isinstance(item, dict):
-            return None
-        rep_dict = None
         id_keys = ['uri', 'id', 'uuid', '@id',]
         for id_key in id_keys:
             if rep_dict:
                 continue
-            act_id = item.get(id_key)
+            act_id = solr_resp_item.get(id_key)
             if not act_id:
                 continue
-            act_id = item.get(id_key)
+            act_id = solr_resp_item.get(id_key)
             man_obj = get_man_obj_by_any_id(act_id)
             if not man_obj:
                 continue
