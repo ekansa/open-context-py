@@ -1,8 +1,9 @@
 import copy
-import time
 import datetime
+import html
 import json
-import requests
+import time
+
 from lxml import etree
 
 from django.db.models import Min
@@ -491,10 +492,13 @@ class SolrOAIpmh():
 
     def check_identifier(self, request):
         """ Checks and validates the verb in the request """
-        self.identifier = self.check_request_param(
+        identifier = self.check_request_param(
             'identifier',
             request,
         )
+        if not identifier:
+            return None
+        self.identifier = html.escape(identifier)
         return self.identifier
 
 
