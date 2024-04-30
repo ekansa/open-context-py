@@ -60,6 +60,9 @@ def process_solr_query_via_solr_and_db(request_dict, base_search_url='/query/'):
         solr_json=solr_response
     )
     solr_end_time = time.time()
+    if isinstance(result_maker.result, list):
+        # Case of a list response.
+        return result_maker.result
     if not isinstance(result_maker.result, dict):
         return {}
     result_maker.result['query'] = query
