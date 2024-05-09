@@ -323,8 +323,8 @@ MANAGERS = [
 ]
 
 DEFAULT_REDIS_HOST_PORT = '127.0.0.1:6379'
-REDIS_HOST_PORT = secrets.get('REDIS_HOST_PORT', DEFAULT_REDIS_HOST_PORT)
-REDIS_HOST_PORT = os.getenv('REDIS_HOST_PORT', DEFAULT_REDIS_HOST_PORT)
+env_redis_host_port = os.getenv('REDIS_HOST_PORT', DEFAULT_REDIS_HOST_PORT)
+REDIS_HOST_PORT = secrets.get('REDIS_HOST_PORT', env_redis_host_port)
 if not ':' in REDIS_HOST_PORT:
     # Add the default Redis host port if not present.
     REDIS_HOST_PORT += ':6379'
