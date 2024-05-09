@@ -322,12 +322,15 @@ MANAGERS = [
     (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'),)
 ]
 
-DEFAULT_REDIS_HOST = '127.0.0.1:6379'
-REDIS_HOST = secrets.get('REDIS_HOST', DEFAULT_REDIS_HOST)
-REDIS_HOST = os.getenv('REDIS_HOST', DEFAULT_REDIS_HOST)
-if not ':' in REDIS_HOST:
+DEFAULT_REDIS_HOST_PORT = '127.0.0.1:6379'
+REDIS_HOST_PORT = secrets.get('REDIS_HOST_PORT', DEFAULT_REDIS_HOST_PORT)
+REDIS_HOST_PORT = os.getenv('REDIS_HOST_PORT', DEFAULT_REDIS_HOST_PORT)
+if not ':' in REDIS_HOST_PORT:
     # Add the default Redis host port if not present.
-    REDIS_HOST += ':6379'
+    REDIS_HOST_PORT += ':6379'
+redis_split = REDIS_HOST_PORT.split(':')
+REDIS_HOST = redis_split[0]
+REDIS_PORT = redis_split[1]
 
 if DEBUG:
     # Short caching for debugging
@@ -343,17 +346,17 @@ if DEBUG:
         },
         'redis': {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
         },
         'redis_search': {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
         },
         'redis_context': {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 5),  # 2 minute for cache
         },
         'file': {
@@ -385,17 +388,17 @@ else:
         },
         'redis': {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
         },
         'redis_search': {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
         },
         'redis_context': {
            "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            'LOCATION': f'redis://{REDIS_HOST}/1',
+            'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
         },
         'file': {
@@ -422,13 +425,26 @@ else:
 USER_AGENTS_CACHE = 'redis'
 
 RQ_QUEUES = {
+    'default': {
+        "HOST": REDIS_HOST,
+        "PORT": f'{REDIS_PORT}',
+        "URL": os.getenv("REDISTOGO_URL", f'redis://{REDIS_HOST_PORT}'),  # If you're
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 480,
+    },
     'high': {
-        'URL': os.getenv('REDISTOGO_URL', f'redis://{REDIS_HOST}/0'),
-        # 'USE_REDIS_CACHE': 'redis',
+        "HOST": REDIS_HOST,
+        "PORT": f'{REDIS_PORT}',
+        "URL": os.getenv("REDISTOGO_URL", f'redis://{REDIS_HOST_PORT}'),  # If you're
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 480,
     },
     'low': {
-        'URL': os.getenv('REDISTOGO_URL', f'redis://{REDIS_HOST}/0'),
-        # 'USE_REDIS_CACHE': 'redis',
+        "HOST": REDIS_HOST,
+        "PORT": f'{REDIS_PORT}',
+        "URL": os.getenv("REDISTOGO_URL", f'redis://{REDIS_HOST_PORT}'),  # If you're
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 480,
     },
 }
 
