@@ -423,12 +423,12 @@ USER_AGENTS_CACHE = 'redis'
 
 RQ_QUEUES = {
     'high': {
-        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0'),
+        'URL': os.getenv('REDISTOGO_URL', f'redis://{REDIS_HOST}/0'),
 
         # 'USE_REDIS_CACHE': 'redis',
     },
     'low': {
-        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0'),
+        'URL': os.getenv('REDISTOGO_URL', f'redis://{REDIS_HOST}/0'),
         # 'USE_REDIS_CACHE': 'redis',
     },
 }
