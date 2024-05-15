@@ -90,6 +90,17 @@ class SearchSolr():
             self.init_facet_fields.append(
                 SolrDoc.ROOT_PREDICATE_SOLR
             )
+        requested_facets = utilities.get_request_param_value(
+            request_dict,
+            param='facets',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if requested_facets:
+            facets = requested_facets.split(configs.MULTIVALUE_ATTRIB_CLIENT_DELIM)
+            self.init_facet_fields += facets
+            
 
     def _remove_unwanted_facet_query(self, request_dict, query):
         """Removes unwanted (expensive, time consuming)
