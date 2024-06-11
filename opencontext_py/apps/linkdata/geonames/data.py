@@ -164,6 +164,54 @@ def make_ewns_coordinates_list(east, west, north, south):
     return coordinates
 
 
+def convert_geonames_bbox_to_geo_json(json_data, do_multi=False):
+    """Converts a geonames bbox to geo_json"""
+    if not 'bbox' in json_data.get('bbox'):
+        return None
+    
+    geometry_type = None
+    lat = None
+    lon = None
+    east = json_data['bbox']['east']
+    south = json_data['bbox']['south']
+    west = json_data['bbox']['west']
+    north = json_data['bbox']['north']
+    if (do_multi
+        and(
+            (east >= -90 and east <= 0 and west >= 160) # US
+        or
+            (east < 160 and west > 0) # Russia
+        )
+    ):
+        # We need a multipolygon here, because we're spanning
+        # hemispheres.
+        lat = float(json_data['lat'])
+        lon = float(json_data['lng'])
+        if (east >= -90 and east <= 0 and west >= 160):
+            east_a = east
+            west_a = -179.99999
+            east_b = west
+            west_b = 179.999999
+        if (east < 160 and west > 0):
+            east_a = west
+            west_a = 179.999999
+            east_b = -179.99999
+            west_b = east
+        coords_a = make_ewns_coordinates_list(east_a, west_a, north, south)
+        coords_b = make_ewns_coordinates_list(east_b, west_b, north, south)
+        coordinates = [coords_a, coords_b]
+        geometry_type = 'MultiPolygon'
+    else:
+        coordinates = make_ewns_coordinates_list(east, west, north, south)
+        geometry_type = 'Polygon'
+
+    geometry = {
+        'type': geometry_type,
+        'coordinates': coordinates,
+    }
+    return geometry
+
+
 def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False, do_multi=False):
     """Saves a spacetime object for a geonames object"""
     spacetime_qs = AllSpaceTime.objects.filter(
@@ -187,57 +235,18 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False, do_m
     geometry_type = None
     lat = None
     lon = None
-    if 'bbox' in json_data:
-        east = json_data['bbox']['east']
-        south = json_data['bbox']['south']
-        west = json_data['bbox']['west']
-        north = json_data['bbox']['north']
+    if json_data.get('lat'):
+        lat = float(json_data['lat'])
+    if json_data.get('lng'):
+        lon= float(json_data['lng'])
 
-        if (do_multi
-            and(
-                (east >= -90 and east <= 0 and west >= 160) # US
-            or
-                (east < 160 and west > 0) # Russia
-            )
-        ):
-            # We need a multipolygon here, because we're spanning
-            # hemispheres.
-            lat = float(json_data['lat'])
-            lon = float(json_data['lng'])
-            if (east >= -90 and east <= 0 and west >= 160):
-                east_a = east
-                west_a = -179.99999
-                east_b = west
-                west_b = 179.999999
-            if (east < 160 and west > 0):
-                east_a = west
-                west_a = 179.999999
-                east_b = -179.99999
-                west_b = east
-            coords_a = make_ewns_coordinates_list(east_a, west_a, north, south)
-            coords_b = make_ewns_coordinates_list(east_b, west_b, north, south)
-            coordinates = [coords_a, coords_b]
-            geometry_type = 'MultiPolygon'
-        else:
-            coordinates = make_ewns_coordinates_list(east, west, north, south)
-            geometry_type = 'Polygon'
-
-        geometry = {
-            'type': geometry_type,
-            'coordinates': coordinates,
-        }
+    geometry = convert_geonames_bbox_to_geo_json(json_data, do_multi=do_multi)
+    if geometry:
+        geometry_type = geometry.get('geometry_type')
     else:
         geometry_type = 'Point'
         geometry = None
-        if 'lat' in json_data:
-            lat = float(json_data['lat'])
-        else:
-            # Missing data, we can't make a spacetime obj.
-            geometry_type = None
-        if 'lng' in json_data:
-            lon = float(json_data['lng'])
-        else:
-            # Missing data, we can't make a spacetime obj.
+        if not lat or not lon:
             geometry_type = None
 
     if not geometry_type:

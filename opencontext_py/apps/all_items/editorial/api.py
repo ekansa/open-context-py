@@ -82,6 +82,11 @@ REQUEST_PARAMS_TO_MANIFEST_ATTRIBUTES = [
     'meta_json__combined_name__endswith',
     'meta_json__combined_name__contains',
     'meta_json__combined_name__icontains',
+
+    # for common gazetteer lookups
+    'meta_json__geonames_id',
+    'meta_json__pleiades_id',
+    'meta_json__wikidata_id',
 ]
 
 UUID_ATTRIBUTES = [
@@ -265,6 +270,7 @@ def manifest_obj_to_json_safe_dict(
         'uri': manifest_obj.uri,
         'source_id': manifest_obj.source_id,
         'alt_label': manifest_obj.meta_json.get('alt_label'),
+        'meta_json': manifest_obj.meta_json,
     }
     if for_edit:
         output['meta_json'] = manifest_obj.meta_json

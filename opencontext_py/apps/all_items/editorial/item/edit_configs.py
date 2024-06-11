@@ -250,6 +250,36 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ),
             'options': None,
         },
+        {
+            'key': 'geonames_id',
+            'label': 'Geonames ID',
+            'data_type': 'xsd:string',
+            'note': (
+                'A numeric (not a full Web URI) '
+                'Geonames identifier.'
+            ),
+            'options': None,
+        },
+        {
+            'key': 'pleiades_id',
+            'label': 'Pleiades ID',
+            'data_type': 'xsd:string',
+            'note': (
+                'A numeric (not a full Web URI) '
+                'Pleiades gazetteer identifier.'
+            ),
+            'options': None,
+        },
+        {
+            'key': 'wikidata_id',
+            'label': 'Wikidata ID',
+            'data_type': 'xsd:string',
+            'note': (
+                'An ID (not a full Web URI) '
+                'Wikidata concept identifier.'
+            ),
+            'options': None,
+        },
         GEO_ZOOM.copy(),
         FLAG_HUMAN_REMAINS.copy(),
         LOGIN_TO_VIEW.copy(),

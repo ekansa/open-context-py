@@ -10,12 +10,61 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 from opencontext_py.apps.etl.importer import utilities as etl_utils
 
+from opencontext_py.apps.utilities import geospace_contains
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 
 
 API_MAX_ZOOM = 25
+
+@cache_control(no_cache=True)
+@never_cache
+def check_geospace_contains(request):
+    """Checks if contain relationships for spatial geometries of manifest objects"""
+    lat = request.GET.get('lat')
+    lon = request.GET.get('lon')
+    big_item_id = request.GET.get('big_item_id')
+    small_item_id = request.GET.get('small_item_id')
+    if request.GET.get('centroid'):
+        centroid = True
+    else:
+        centroid = False
+    output = {}
+    if big_item_id and lat and lon:
+        output = geospace_contains.check_lat_lon_within_item_geometries(
+            latitude=lat,
+            longitude=lon,
+            item_id=big_item_id,
+        )
+    elif small_item_id and big_item_id:
+        output = geospace_contains.check_item_geometries_within_other_item_geometries(
+            small_item_id=small_item_id,
+            big_item_id=big_item_id,
+            centroid=centroid,
+        )
+    else:
+        output = {'errors': ['Must have a big_item_id and either a small_item_id or lat/lon params']}
+        return HttpResponse(
+            json.dumps(
+                output,
+                ensure_ascii=False,
+                indent=4,
+            ),
+            content_type='application/json; charset=utf8',
+            status=400,
+        )
+    return HttpResponse(
+        json.dumps(
+            output,
+            ensure_ascii=False,
+            indent=4,
+        ),
+        content_type='application/json; charset=utf8',
+    )
+
+
+
 
 @cache_control(no_cache=True)
 @never_cache

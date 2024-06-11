@@ -13,7 +13,9 @@ from opencontext_py.apps.all_items.models import (
 
 SEARCH_BASE_URL = 'http://api.geonames.org/searchJSON'
 JSON_BASE_URL = 'http://www.geonames.org/getJSON?username=ekansa&id='
+FALLBACK_JSON_URL = 'https://www.geonames.org/getJSON?id='
 SLEEP_TIME = 0.5
+USE_CACHE = True
 
 
 class GeonamesAPI():
@@ -23,6 +25,7 @@ class GeonamesAPI():
 
     def __init__(self):
         self.json_base_url = JSON_BASE_URL
+        self.json_base_fallback_url = FALLBACK_JSON_URL
         self.search_base_url = SEARCH_BASE_URL
         self.delay_before_request = SLEEP_TIME
 
@@ -50,10 +53,27 @@ class GeonamesAPI():
             json_r = r.json()
         except:
             json_r = None
+        if not json_r:
+            url = self.json_base_url + str(geonames_id)
+            if self.delay_before_request > 0:
+                # default to sleep BEFORE a request is sent, to
+                # give the remote service a break.
+                sleep(self.delay_before_request)
+            try:
+                gapi = GeneralAPI()
+                r = requests.get(
+                    url,
+                    timeout=240,
+                    headers=gapi.client_headers
+                )
+                r.raise_for_status()
+                json_r = r.json()
+            except:
+                json_r = None
         return json_r
 
 
-    def get_json_for_geonames_uri(self, geonames_uri, use_cache=True):
+    def get_json_for_geonames_uri(self, geonames_uri, use_cache=USE_CACHE):
         """Get json data from a geonames_uri, from cache or Web."""
         # Strip off any cruft in the URI
         geonames_uri = AllManifest().clean_uri(geonames_uri)
@@ -63,7 +83,7 @@ class GeonamesAPI():
         hash_obj.update(str(geonames_uri).encode('utf-8'))
         hash_id = hash_obj.hexdigest()
         cache_key = f'geonames_api_{hash_id}'
-        cache = caches['memory']
+        cache = caches['redis']
         json_r = cache.get(cache_key)
         if json_r is not None:
             # We've already cached this, so returned the cached object
@@ -76,7 +96,7 @@ class GeonamesAPI():
         return json_r
 
 
-    def get_labels_for_uri(self, geonames_uri, use_cache=True):
+    def get_labels_for_uri(self, geonames_uri, use_cache=USE_CACHE):
         """
         gets the label for the URI referenced entity
         """
