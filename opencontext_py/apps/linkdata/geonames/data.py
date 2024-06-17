@@ -166,12 +166,11 @@ def make_ewns_coordinates_list(east, west, north, south):
 
 def convert_geonames_bbox_to_geo_json(json_data, do_multi=False):
     """Converts a geonames bbox to geo_json"""
-    if not 'bbox' in json_data.get('bbox'):
+    if not json_data.get('bbox'):
+        print('NO BOUNDING BOX!')
         return None
     
-    geometry_type = None
-    lat = None
-    lon = None
+    geometry_type = 'Polygon'
     east = json_data['bbox']['east']
     south = json_data['bbox']['south']
     west = json_data['bbox']['west']
@@ -185,8 +184,6 @@ def convert_geonames_bbox_to_geo_json(json_data, do_multi=False):
     ):
         # We need a multipolygon here, because we're spanning
         # hemispheres.
-        lat = float(json_data['lat'])
-        lon = float(json_data['lng'])
         if (east >= -90 and east <= 0 and west >= 160):
             east_a = east
             west_a = -179.99999
@@ -203,7 +200,6 @@ def convert_geonames_bbox_to_geo_json(json_data, do_multi=False):
         geometry_type = 'MultiPolygon'
     else:
         coordinates = make_ewns_coordinates_list(east, west, north, south)
-        geometry_type = 'Polygon'
 
     geometry = {
         'type': geometry_type,
@@ -225,6 +221,7 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False, do_m
         # for this geonames object.
         return spacetime_obj
 
+    print(f'Get fresh json data for {geonames_obj.uri}')
     api = GeonamesAPI()
     json_data = api.get_json_for_geonames_uri(geonames_obj.uri)
     if not json_data:
@@ -238,16 +235,18 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False, do_m
     if json_data.get('lat'):
         lat = float(json_data['lat'])
     if json_data.get('lng'):
-        lon= float(json_data['lng'])
+        lon = float(json_data['lng'])
 
     geometry = convert_geonames_bbox_to_geo_json(json_data, do_multi=do_multi)
     if geometry:
-        geometry_type = geometry.get('geometry_type')
+        geometry_type = geometry.get('type')
     else:
         geometry_type = 'Point'
         geometry = None
         if not lat or not lon:
             geometry_type = None
+
+    print(f'Made new {geometry_type} geometry for {geonames_obj.uri}')
 
     if not geometry_type:
         # We couldn't put together enough
@@ -295,6 +294,15 @@ def save_spacetime_obj_for_geonames_obj(geonames_obj, fetch_if_point=False, do_m
         feature_id = 1
     sp_tm_dict['feature_id'] = feature_id
     sp_tm_dict['source_id'] = ENTITY_SOURCE,
+    ev_qs = AllSpaceTime.objects.filter(
+        item_id=geonames_obj.uuid,
+        event_id=configs.DEFAULT_EVENT_UUID
+    ).exclude(
+        uuid=spacetime_uuid
+    )
+    if ev_qs.count():
+        print(f'Delete {ev_qs.count()} spacetime items because of same event uuid')
+        ev_qs.delete()
     spacetime_obj, _ = AllSpaceTime.objects.get_or_create(
         uuid=spacetime_uuid,
         defaults=sp_tm_dict
