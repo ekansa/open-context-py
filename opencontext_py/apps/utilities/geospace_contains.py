@@ -35,6 +35,9 @@ def check_lat_lon_within_item_geometries(
         'big_item_uuid': str(item_obj.uuid),
         'big_item_label': item_obj.label,
         'big_item_path': item_obj.path,
+        'big_item_geonames_id': item_obj.meta_json.get('geonames_id'),
+        'big_item_pleiades_id': item_obj.meta_json.get('pleiades_id'),
+        'big_item_wikidata_id': item_obj.meta_json.get('wikidata_id'),
         'latitude': latitude,
         'longitude': longitude,
         'contains': [],
@@ -64,7 +67,10 @@ def check_item_geometries_within_other_item_geometries(
     small_item_obj = AllManifest.objects.filter(uuid=small_item_id).first()
     if not small_item_obj:
         errors.append(f'Cannot find small_item_id: {small_item_id}')
-    big_item_obj = AllManifest.objects.filter(uuid=big_item_id).first()
+    if big_item_id:
+        big_item_obj = AllManifest.objects.filter(uuid=big_item_id).first()
+    else:
+        big_item_obj = small_item_obj.context
     if not big_item_obj:
         errors.append(f'Cannot find big_item_id: {big_item_id}')
     if errors:
@@ -98,9 +104,15 @@ def check_item_geometries_within_other_item_geometries(
         'big_item_uuid': str(big_item_obj.uuid),
         'big_item_label': big_item_obj.label,
         'big_item_path': big_item_obj.path,
+        'big_item_geonames_id': big_item_obj.meta_json.get('geonames_id'),
+        'big_item_pleiades_id': big_item_obj.meta_json.get('pleiades_id'),
+        'big_item_wikidata_id': big_item_obj.meta_json.get('wikidata_id'),
         'small_item_uuid': str(small_item_obj.uuid),
         'small_item_label': small_item_obj.label,
         'small_item_path': small_item_obj.path,
+        'small_item_geonames_id': small_item_obj.meta_json.get('geonames_id'),
+        'small_item_pleiades_id': small_item_obj.meta_json.get('pleiades_id'),
+        'small_item_wikidata_id': small_item_obj.meta_json.get('wikidata_id'),
         'centroid_only': centroid,
         'contains': [],
         'not_contains': [],

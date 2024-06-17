@@ -37,7 +37,7 @@ def check_geospace_contains(request):
             longitude=lon,
             item_id=big_item_id,
         )
-    elif small_item_id and big_item_id:
+    elif small_item_id:
         output = geospace_contains.check_item_geometries_within_other_item_geometries(
             small_item_id=small_item_id,
             big_item_id=big_item_id,
