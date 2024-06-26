@@ -157,11 +157,11 @@ resp = ezid.mint_identifier(url, meta, 'ark')
                 headers=headers,
             )
             r.raise_for_status()
-            self.request_url = r.url
+            self.request_url = url
             resp_txt = r.text
         except:
-            self.request_url = r.url
-            print('Error ' + str(r.text))
+            self.request_url = url
+            print('Error ' + str(url))
         if not resp_txt:
             return None
         if show_ezid_resp:
