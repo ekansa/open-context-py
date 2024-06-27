@@ -81,6 +81,14 @@ class ResultFacetsGeoFromDF():
             & ~facets_df['facet_value'].str.startswith(NULL_ISLAND_TILE_ROOT, na=False)
         )
         tiles_df = facets_df[valid_index].copy()
+        return tiles_df
+
+
+    def _distance_determine_aggregation_depth(self, tiles_df):
+        """Uses distance between to recalibrate aggregation depth in tiles"""
+        if len(tiles_df.index) < 2:
+            return self.default_aggregation_depth
+        
         tiles_df['lon_lat'] = tiles_df['facet_value'].apply(
             get_tile_lon_lat_coordinates
         )
@@ -92,13 +100,6 @@ class ResultFacetsGeoFromDF():
             columns=['lon_lat'],
             inplace=True
         )
-        return tiles_df
-
-
-    def _distance_determine_aggregation_depth(self, tiles_df):
-        """Uses distance between to recalibrate aggregation depth in tiles"""
-        if len(tiles_df.index) < 2:
-            return self.default_aggregation_depth
         
         gm = GlobalMercator()
         max_distance = gm.distance_on_unit_sphere(
