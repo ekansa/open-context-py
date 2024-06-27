@@ -22,6 +22,7 @@ class gbifAPI():
         self.json_data = None
         self.request_url = None
 
+
     def get_gbif_species_json_via_http(self, gbif_id):
         """Gets species JSON data for a GBIF id"""
         sleep(self.delay_before_request)
@@ -30,6 +31,7 @@ class gbifAPI():
         r = requests.get(url)
         r.raise_for_status()
         return r.json()
+
 
     def get_gbif_species_json(self, gbif_id, use_cache=True):
         """Gets species JSON data for a GBIF id"""
@@ -71,7 +73,7 @@ class gbifAPI():
         return json_r.get('parentKey', no_parent_default)
 
     
-    def get_gbif_vernacular_name(self, gbif_id, lang_code='eng'):
+    def get_gbif_vernacular_name(self, gbif_id, lang_codes=['eng', 'en',]):
         """Get the first vernacular name from the GBIF API for an ID"""
         sleep(self.delay_before_request)
         url = self.vern_json_base_url.format(int(gbif_id))
@@ -80,10 +82,13 @@ class gbifAPI():
         json_r = r.json()
         vern_name = None
         for result in json_r.get('results', []):
-            if result.get('language') != lang_code:
-                continue
-            vern_name = result.get("vernacularName")
             if vern_name is not None:
                 break
+            for lang_code in lang_codes:
+                if result.get('language') != lang_code:
+                    continue
+                vern_name = result.get("vernacularName")
+                if vern_name is not None:
+                    break
         return vern_name
 

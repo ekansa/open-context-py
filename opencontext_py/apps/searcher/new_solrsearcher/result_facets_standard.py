@@ -242,7 +242,8 @@ class ResultFacetsStandard():
         param_key,
         delim,
         options_tuples,
-        add_to_existing_opts=False
+        add_to_existing_opts=False,
+        obj_all_facet=False,
     ):
         """Adds options lists for different data types to a facet"""
         # Look up the client's request parameter and reqest
@@ -250,6 +251,12 @@ class ResultFacetsStandard():
             solr_facet_field_key,
             (param_key, None,) # default parameter key with no matching value.
         )
+
+        if not match_old_value and obj_all_facet:
+            # We have an obj_all facet, and there's no existing match_old_value.
+            # To keep the hierarchy OK, use the slug for this facet as the match_old_value.
+            match_old_value = facet.get('slug')
+
         for data_type, options_list_key in configs.FACETS_DATA_TYPE_OPTIONS_LISTS.items():
             options = self.add_options_list_for_data_type(
                 param_key,
@@ -454,6 +461,13 @@ class ResultFacetsStandard():
                     # Skip, because we don't have any facet options
                     continue
 
+                obj_all_facet = False
+                if solr_facet_field_key.startswith(f'obj_all{SolrDoc.SOLR_VALUE_DELIM}'):
+                    # Remove the 'obj_all___' prefix. We're doing a special request
+                    # facet for counts of everything within a facet attribute, regardless of hierarchy.
+                    solr_facet_field_key = solr_facet_field_key[len(f'obj_all{SolrDoc.SOLR_VALUE_DELIM}'):]
+                    obj_all_facet = True
+
                 facet = self.make_facet_dict_from_solr_field(
                     solr_facet_field_key,
                     facet_type,
@@ -472,7 +486,8 @@ class ResultFacetsStandard():
                     solr_facet_field_key,
                     param_key,
                     delim,
-                    options_tuples
+                    options_tuples,
+                    obj_all_facet=obj_all_facet
                 )
                 normal_facets.append(facet)
 

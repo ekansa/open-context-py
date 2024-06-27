@@ -146,7 +146,7 @@ class AllManifest(models.Model):
     def clean_label(self, label, item_type='subjects'):
         label = label.strip()
         # So as not to screw up use in javascript
-        label = label.replace("'", "`")
+        label = label.replace("'", "’")
         if item_type == 'subjects':
             # So as not to screw up depth of contexts.
             label = label.replace('/', '--')
@@ -709,13 +709,13 @@ class AllSpaceTime(models.Model):
         hash_id = self.make_hash_id(
             item_id=item_id,
             event_id=event_id,
-            earliest=None,
-            start=None,
-            stop=None,
-            latest=None,
-            latitude=None,
-            longitude=None,
-            geometry=None,
+            earliest=earliest,
+            start=start,
+            stop=stop,
+            latest=latest,
+            latitude=latitude,
+            longitude=longitude,
+            geometry=geometry,
         )
         uuid_from_hash_id = str(
             GenUUID.UUID(hex=hash_id[:32])

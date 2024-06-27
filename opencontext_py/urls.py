@@ -424,6 +424,7 @@ urlpatterns = [
     #----------------------------
     # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)
     #----------------------------
+    re_path(r'^utilities/check-geospace-contains', UtilitiesViews.check_geospace_contains, name='utilities_check_geospace_contains'),
     re_path(r'^utilities/meters-to-lat-lon', UtilitiesViews.meters_to_lat_lon, name='meters_to_lat_lon'),
     re_path(r'^utilities/lat-lon-to-quadtree', UtilitiesViews.lat_lon_to_quadtree, name='lat_lon_to_quadtree'),
     re_path(r'^utilities/quadtree-to-lat-lon', UtilitiesViews.quadtree_to_lat_lon, name='quadtree_to_lat_lon'),

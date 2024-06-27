@@ -1,5 +1,6 @@
 
 import re
+import traceback
 from unidecode import unidecode
 
 from django.template.defaultfilters import slugify
@@ -42,6 +43,8 @@ proj_persistent_id, id_obj = pc_ids.create_update_pre_registered_ezid_and_oc_rec
 id_objs = pc_ids.create_update_pre_registered_ezid_and_oc_records_project_id_types_prefix()
 
 """
+
+NON_UNIQUE_PID_HANDLING = 'db_store'  # or 'raise'
 
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
 PROJ_SLUG_PREFIX = '24-'
@@ -315,6 +318,7 @@ def get_or_make_preregistered_id_for_man_obj(
     man_obj,
     id_type_key=None,
     id_prefix=ID_PREFIX,
+    non_unique_pid_handling=NON_UNIQUE_PID_HANDLING,
 ):
     """Makes a valid pre-registered ID for a Manifest object of a given id_type_key
 
@@ -351,10 +355,28 @@ def get_or_make_preregistered_id_for_man_obj(
     # Now check to see if we have a clashing use of the preregistered_id
     clashing_obj = get_manifest_obj_using_ark_id(man_obj, preregistered_id)
     if clashing_obj:
-        raise ValueError(
-            f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
-            f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
-        )
+        if non_unique_pid_handling == 'db_store':
+            man_obj.meta_json['clashing_pid'] = preregistered_id
+            man_obj.meta_json['clashing_pid_item_id'] = str(clashing_obj.uuid)
+            man_obj.save()
+            print(
+                f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
+                f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
+            )
+            print('Database saved flag of conflicting PID to item meta_json')
+            # The item would have a pre-registered id that's already in use with another
+            # item. So return None, None.
+            return None, None
+        elif non_unique_pid_handling == 'raise':
+            raise ValueError(
+                f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
+                f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
+            )
+        else:
+            raise ValueError(
+                f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
+                f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
+            )
     # Return the valid preregistered_id, and id_obj=None
     return preregistered_id, None
 
@@ -490,6 +512,8 @@ def create_pre_registered_ezid_and_oc_records(
         id_type_key=id_type_key,
         id_prefix=id_prefix,
     )
+    if not preregistered_id:
+        return None, None
     if id_obj and not update_if_exists:
         print(f'{man_obj.label} [{str(man_obj.uuid)}] already has a preregistered_id record: {preregistered_id}')
         return preregistered_id, id_obj
@@ -506,13 +530,18 @@ def create_pre_registered_ezid_and_oc_records(
         ezid_client.use_staging_site()
     # The oc_uri should be in the _target, with a fallback of our manifest object uri attribute
     oc_uri = metadata.get('_target', f'https://{man_obj.uri}')
-    ezid_client.create_ark_identifier(
-        oc_uri=oc_uri,
-        metadata=metadata,
-        id_str=preregistered_id,
-        update_if_exists=update_if_exists,
-        show_ezid_resp=show_ezid_resp,
-    )
+    try:
+        ezid_client.create_ark_identifier(
+            oc_uri=oc_uri,
+            metadata=metadata,
+            id_str=preregistered_id,
+            update_if_exists=update_if_exists,
+            show_ezid_resp=show_ezid_resp,
+        )
+    except Exception as err:
+        print(f'{man_obj.label} [{str(man_obj.uuid)}] has EZID problem!')
+        traceback.print_tb(err.__traceback__)
+        raise ValueError('EZID fail')
     if do_staging:
         print(f'{man_obj.label} [{str(man_obj.uuid)}], no ID object saved in Open Context; using EZID staging site for preregistered_id: {preregistered_id}')
         return preregistered_id, None
@@ -528,13 +557,13 @@ def create_pre_registered_ezid_and_oc_records(
 
 
 def create_pre_registered_ids_for_qs(
-        filter_args=None,
-        exclude_args=None,
-        do_staging=False,
-        id_prefix=ID_PREFIX,
-        update_if_exists=True,
-        show_ezid_resp=False,
-    ):
+    filter_args=None,
+    exclude_args=None,
+    do_staging=False,
+    id_prefix=ID_PREFIX,
+    update_if_exists=True,
+    show_ezid_resp=False,
+):
     """Create pre-registered IDs for items in an AllManifest query-set
 
     :param dict filter_args: Optional dict of filter args to filter the
@@ -572,3 +601,115 @@ def create_pre_registered_ids_for_qs(
             preregistered_id_list.append(preregistered_id)
             id_obj_list.append(id_obj)
     return preregistered_id_list, id_obj_list
+
+
+def prioritize_pre_registered_id_obj_for_item(
+    uuid=None,
+    man_obj=None,
+    pre_reg_id_obj=None,
+    pre_reg_id_scheme='ark',
+    id_prefix=ID_PREFIX,
+):
+    """Updates AllIdentifier records for a given AllManifest object so the pre-registered 
+    id_obj will have the highest rank.
+
+    :param str/uuid uuid: UUID identifier for the item that will get a valid preregistered ID.
+    :param AllManifest man_obj: The item that will get a valid preregistered ID.
+    :param AllIdentifier pre_reg_id_obj: An identifier object with a pre-registered ID for an item.
+    :param str pre_reg_id_scheme: Identifier scheme (type) for the pre-registered ID
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+
+    returns int (i, number of re-ranked updated identifier records)
+    """
+    if pre_reg_id_obj and not man_obj:
+        man_obj = pre_reg_id_obj.item
+        uuid = man_obj.uuid
+    elif not uuid and man_obj:
+        # We have a manifest object
+        uuid = man_obj.uuid
+    elif not man_obj and uuid:
+        man_obj = AllManifest.objects.get(uuid=uuid)
+    else:
+        raise ValueError('Must provide either an AllManifest uuid or an AllManifest object')
+    # Open Context currently doesn't store the 'ark:/' part as part of the
+    # ID in the database. So remove it if present.
+    if id_prefix.startswith('ark:/'):
+        check_id_part = id_prefix.split('ark:/')[-1]
+    else:
+        check_id_part = id_prefix
+    if not pre_reg_id_obj:
+        pre_reg_id_obj = AllIdentifier.objects.filter(
+            item=man_obj,
+            scheme=pre_reg_id_scheme,
+            id__contains=check_id_part,
+        ).first()
+    if not pre_reg_id_obj:
+        # we don't have a pre-registered ID for this item.
+        return 0
+    other_scheme_item_id_qs = AllIdentifier.objects.filter(
+        item=man_obj,
+        scheme=pre_reg_id_obj.scheme,
+    ).exclude(
+        uuid=pre_reg_id_obj.uuid
+    ).order_by(
+        'rank'
+    )
+    # Now save the other IDs to an absurdly high rank so they
+    # don't clash with anything
+    i = 0
+    for other_item_id_obj in other_scheme_item_id_qs:
+        i += 1
+        other_item_id_obj.rank = 1000 + i
+        other_item_id_obj.save()
+    # Save the pre_reg_id to rank 0, the top
+    pre_reg_id_obj.rank = 0
+    pre_reg_id_obj.save()
+    # Save the other IDs to a more normal rank now that it is
+    # safe to do so.
+    i = 0
+    for other_item_id_obj in other_scheme_item_id_qs:
+        i += 1
+        other_item_id_obj.rank = i
+        other_item_id_obj.save()
+    return i
+
+
+def prioritize_pre_reg_ids_for_qs(
+    filter_args=None,
+    exclude_args=None,
+    pre_reg_id_scheme='ark',
+    id_prefix=ID_PREFIX,
+):
+    """Create pre-registered IDs for items in an AllManifest query-set
+
+    :param dict filter_args: Optional dict of filter args to filter the
+        AllIdentifier query set
+    :param dict exclude_args: Optional dict of exclude args to use as
+        exclusion criteria in an AllIdentifier query set
+    :param str pre_reg_id_scheme: Identifier scheme (type) for the pre-registered ID
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+
+    returns int (i, number of re-ranked updated identifier records)
+    """
+    # Open Context currently doesn't store the 'ark:/' part as part of the
+    # ID in the database. So remove it if present.
+    if id_prefix.startswith('ark:/'):
+        check_id_part = id_prefix.split('ark:/')[-1]
+    else:
+        check_id_part = id_prefix
+    pre_reg_id_qs = AllIdentifier.objects.filter(
+        scheme=pre_reg_id_scheme,
+        id__contains=check_id_part,
+    )
+    if filter_args:
+        pre_reg_id_qs = pre_reg_id_qs.filter(**filter_args)
+    if exclude_args:
+        pre_reg_id_qs = pre_reg_id_qs.exclude(**exclude_args)
+    updated_count = 0
+    for pre_reg_id_obj in pre_reg_id_qs:
+        updated_count += prioritize_pre_registered_id_obj_for_item(
+            pre_reg_id_obj=pre_reg_id_obj,
+            pre_reg_id_scheme=pre_reg_id_scheme,
+            id_prefix=id_prefix,
+        )
+    return updated_count

@@ -791,10 +791,10 @@ def get_aggregation_depth_to_group_paths(
     max_depth=None
 ):
     """Gets the number of characters needed to group a list
-    of hiearchic path strings.
+    of hierarchic path strings.
 
     :param int max_groups: The maximum number of groups wanted.
-    :param list paths: A list of hiearchically encoded string values
+    :param list paths: A list of hierarchically encoded string values
         that we want to group together.
     :param int max_depth: The default depth (the max)
     """
@@ -823,6 +823,48 @@ def get_aggregation_depth_to_group_paths(
             keep_looping = False
             return agg_depth
     return agg_depth
+
+
+def get_aggregation_depth_to_group_paths_from_tiles_df(
+    max_groups,
+    tiles_df,
+    max_depth=None,
+    min_depth=1,
+):
+    """Gets the number of characters needed to group a list
+    of hierarchic path strings.
+
+    :param int max_groups: The maximum number of groups wanted.
+    :param DataFrame tiles_df: A dataframe where the facet_value column stores 
+        hierarchically encoded string values that we want to group together.
+    :param int max_depth: The default depth (the max)
+    """
+
+    # NOTE: Geospatial points and chronological time-spans
+    # can be represented as hierarchic paths of strings. This
+    # function is used to help determine the level depth of
+    # aggregation needed to group these stings into a max number
+    # of groups or less.
+    tiles_df['agg_tile'] = tiles_df['facet_value']
+
+    if max_depth is None:
+        # Use the minimum length of the string to be sure
+        # we don't over aggregate.
+        max_depth = tiles_df['facet_value'].str.len().min()
+
+    if len(tiles_df.index) <= max_groups:
+        return max_depth, tiles_df
+
+    keep_looping = True
+    agg_depth = max_depth
+    while keep_looping and agg_depth >= min_depth:
+        agg_depth -= 1
+        tiles_df['agg_tile'] = tiles_df['facet_value'].str[:agg_depth]
+        agg_count = tiles_df['agg_tile'].nunique()
+        if agg_count <= max_groups:
+            keep_looping = False
+            return agg_depth, tiles_df
+    return agg_depth, tiles_df
 
 
 def validate_geo_coordinate(coordinate, coord_type):
