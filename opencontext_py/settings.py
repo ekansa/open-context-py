@@ -797,6 +797,7 @@ LOGGING = {
 
 # These are common prefixes used in caching.
 CACHE_PREFIX_SEARCH = 'search_'
+CACHE_PREFIX_FACET_DF = 'fctdf_'
 CACHE_PREFIX_VIEW = 'view_'
 CACHE_PREFIX_PROJ_CONTEXT = 'pcntx_' # For project context dataframe caching
 CACHE_PREFIX_PROJ_META = 'prj_meta_' # For project image overlay and other metadata
