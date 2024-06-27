@@ -10,8 +10,11 @@ from opencontext_py.apps.contexts.models import SearchContext
 
 # Imports directly related to Solr search and response prep.
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher.solr_agg_via_pandas import make_cache_df_of_solr_facets
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_chronology import ResultFacetsChronology
+from opencontext_py.apps.searcher.new_solrsearcher.result_facets_chronology_from_df import ResultFacetsChronologyFromDF
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_geo import ResultFacetsGeo
+from opencontext_py.apps.searcher.new_solrsearcher.result_facets_geo_from_df import ResultFacetsGeoFromDF
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_nonpath import ResultFacetsNonPath
 from opencontext_py.apps.searcher.new_solrsearcher.result_facets_standard import ResultFacetsStandard
 from opencontext_py.apps.searcher.new_solrsearcher import project_overlays
@@ -65,7 +68,7 @@ class ResultMaker():
         self.min_date = None
         self.max_date = None
         self.sitemap_facets = False
-
+        self.facets_df = None
 
     def _set_client_response_types(self):
         """Sets the response type if specified by the client"""
@@ -256,7 +259,7 @@ class ResultMaker():
         self.max_date = max(all_dates)
 
 
-    def add_geo_chrono_counts(self, solr_json):
+    def _add_geo_chrono_counts_json(self, solr_json):
         meta_configs = [
             (
                 # Facets with counts of geo-spatial features per record (document)
@@ -300,6 +303,95 @@ class ResultMaker():
                     }
                 )
         return None
+
+
+    def _add_geo_chrono_counts_from_json(self, solr_json):
+        meta_configs = [
+            (
+                # Facets with counts of geo-spatial features per record (document)
+                "oc-api:all-geospatial-feature-counts",
+                (
+                    configs.FACETS_SOLR_ROOT_PATH_KEYS + [
+                        f'{configs.ROOT_EVENT_CLASS}___geo_count',
+                    ]
+                ),
+            ),
+            (
+                # Facets with counts of chronological ranges per record (document)
+                "oc-api:all-chronology-range-counts",
+                (
+                    configs.FACETS_SOLR_ROOT_PATH_KEYS + [
+                        f'{configs.ROOT_EVENT_CLASS}___chrono_count',
+                    ]
+                )
+            ),
+        ]
+        for result_key, facets_path in meta_configs:
+            val_count_list = utilities.get_dict_path_value(
+                facets_path,
+                solr_json,
+                default=[]
+            )
+            print(f'{result_key} from {facets_path} to {val_count_list}')
+            if not val_count_list:
+                continue
+            val_tuples = utilities.get_facet_value_count_tuples(
+                val_count_list
+            )
+            if not val_tuples:
+                continue
+            self.result[result_key] = []
+            for num_feat, count in val_tuples:
+                self.result[result_key].append(
+                    {
+                        'total_events_count': int(float(num_feat)),
+                        'count': count,
+                    }
+                )
+        return None
+
+
+# from_facets_df
+    def _add_geo_chrono_counts_from_facets_df(self):
+        meta_configs = [
+            (
+                # Facets with counts of geo-spatial features per record (document)
+                "oc-api:all-geospatial-feature-counts",
+                f'{configs.ROOT_EVENT_CLASS}___geo_count',
+            ),
+            (
+                # Facets with counts of chronological ranges per record (document)
+                "oc-api:all-chronology-range-counts",
+                f'{configs.ROOT_EVENT_CLASS}___chrono_count',
+                
+            ),
+        ]
+        for result_key, facet_key in meta_configs:
+            index = self.facets_df['facet_field_key'] == facet_key
+            df = self.facets_df[index].copy()
+            if not len(df.index):
+                continue
+            self.result[result_key] = []
+            for _, row in df.iterrows():
+                num_feat = row['facet_value']
+                count = row['facet_count']
+                self.result[result_key].append(
+                    {
+                        'total_events_count': int(float(num_feat)),
+                        'count': count,
+                    }
+                )
+        return None
+
+
+    def add_geo_chrono_counts(self, solr_json):
+        if self.facets_df is not None:
+            # Use the new way via pandas
+            return self._add_geo_chrono_counts_from_facets_df()
+        else:
+            # Use the old, slow way of processing the
+            # solr_json.
+            return self._add_geo_chrono_counts_from_json(solr_json)
 
     # -----------------------------------------------------------------
     # Methods to make links for paging + sorting navigation
@@ -576,7 +668,7 @@ class ResultMaker():
         self.result["oc-api:has-range-facets"] += facet_ranges
 
 
-    def add_chronology_facets(self, solr_json):
+    def _add_chronology_facets_from_json(self, solr_json):
         """Adds facets for chronological tiles"""
         facets_chrono = ResultFacetsChronology(
             request_dict=self.request_dict,
@@ -590,6 +682,36 @@ class ResultMaker():
             # Skip out, we found no chronological options
             return None
         self.result["oc-api:has-event-time-ranges"] = chrono_options
+    
+
+    def _add_chronology_facets_df(self):
+        """Adds facets for chronological tiles"""
+        facets_chrono = ResultFacetsChronologyFromDF(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        )
+        tiles_df = facets_chrono.get_valid_tiles_df(
+            self.facets_df
+        )
+        chrono_options = facets_chrono.make_chronology_facet_options(
+            tiles_df
+        )
+        if chrono_options is None or not len(chrono_options):
+            # Skip out, we found no chronological options
+            return None
+        self.result["oc-api:has-event-time-ranges"] = chrono_options
+
+
+    def add_chronology_facets(self, solr_json):
+        """Adds facets for chronological tiles"""
+        if self.facets_df is not None:
+            # Use the new way via pandas
+            self._add_chronology_facets_df()
+        else:
+            # Use the old, slow way of processing the
+            # solr_json.
+            self._add_chronology_facets_from_json(solr_json)
 
 
     def _add_geojson_features_to_result(self, geo_features_list):
@@ -605,7 +727,7 @@ class ResultMaker():
         self.result["features"] += geo_features_list
 
 
-    def add_geotile_facets(self, solr_json):
+    def _add_geotile_facets_from_json(self, solr_json):
         """Adds facets for geographic tiles"""
         facets_geo = ResultFacetsGeo(
             request_dict=self.request_dict,
@@ -622,6 +744,36 @@ class ResultMaker():
         self._add_geojson_features_to_result(
             geo_options
         )
+
+
+    def _add_geotile_facets_from_facets_df(self):
+        """Adds facets for geographic tiles"""
+        facets_geo = ResultFacetsGeoFromDF(
+            request_dict=self.request_dict,
+            current_filters_url=self.current_filters_url,
+            base_search_url=self.base_search_url,
+        )
+        facets_geo.min_date = self.min_date
+        facets_geo.max_date = self.max_date
+        tiles_df = facets_geo.get_valid_tiles_df(self.facets_df)
+        # Make the tile facet options
+        geo_options = facets_geo.make_geotile_facet_options(
+            tiles_df
+        )
+        self._add_geojson_features_to_result(
+            geo_options
+        )
+
+
+    def add_geotile_facets(self, solr_json):
+        """Adds facets for geographic tiles"""
+        if self.facets_df is not None:
+            # Use the new way via pandas
+            self._add_geotile_facets_from_facets_df()
+        else:
+            # Use the old, slow way of processing the
+            # solr_json.
+            self._add_geotile_facets_from_json(solr_json)
 
 
     def add_geo_contained_in_facets(self, solr_json):
@@ -723,7 +875,6 @@ class ResultMaker():
         )
 
 
-
     def add_uuid_records(self, solr_json):
         """Adds a simple list of uuids to the result"""
         uuids = get_record_uuids_from_solr(solr_json)
@@ -814,6 +965,28 @@ class ResultMaker():
         self.result["oc-api:oc-gen-has-geo-overlays"] = overlay_dicts
 
 
+    def prepare_facets_df(self, solr_json):
+        facet_resp_keys = [
+            'chrono-facet',
+            'prop-facet',
+            'prop-range',
+            'geo-facet',
+            'geo-feature',
+        ]
+        make_facet_df = False
+        for key in facet_resp_keys:
+            if not key in self.act_responses:
+                continue
+            make_facet_df = True
+            break
+        if not make_facet_df:
+            return None
+        self.facets_df  = make_cache_df_of_solr_facets(
+            request_dict=self.request_dict,
+            solr_json=solr_json, 
+            reset_cache=False
+        )
+
     # -----------------------------------------------------------------
     # The main method to make the client response result from a
     # solr response json dict.
@@ -835,6 +1008,10 @@ class ResultMaker():
                 search_context_obj.id,
                 search_context_obj.geo_json_context
             ]
+        
+        # Make the facets dataframe to speed processing
+        # of facet results.
+        self.prepare_facets_df(solr_json)
 
         if 'metadata' in self.act_responses:
             # Add search metadata to the response to the client.
