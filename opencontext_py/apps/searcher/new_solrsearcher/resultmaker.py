@@ -390,7 +390,7 @@ class ResultMaker():
             return False
         if not len(self.facets_df.index):
             return False
-        if not set('facet_field_key', 'facet_value', 'facet_count').issubset(set(self.facets_df.columns.tolist())):
+        if not set(['facet_field_key', 'facet_value', 'facet_count']).issubset(set(self.facets_df.columns.tolist())):
             return False
         return True
     
