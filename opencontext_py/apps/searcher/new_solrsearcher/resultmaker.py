@@ -384,8 +384,19 @@ class ResultMaker():
         return None
 
 
+    def _facets_df_ok(self):
+        """Checks if self.facets_df is OK"""
+        if self.facets_df is None:
+            return False
+        if not len(self.facets_df.index):
+            return False
+        if not set('facet_field_key', 'facet_value', 'facet_count').issubset(set(self.facets_df.columns.tolist())):
+            return False
+        return True
+    
+
     def add_geo_chrono_counts(self, solr_json):
-        if self.facets_df is not None:
+        if self._facets_df_ok():
             # Use the new way via pandas
             return self._add_geo_chrono_counts_from_facets_df()
         else:
@@ -705,7 +716,7 @@ class ResultMaker():
 
     def add_chronology_facets(self, solr_json):
         """Adds facets for chronological tiles"""
-        if self.facets_df is not None:
+        if self._facets_df_ok():
             # Use the new way via pandas
             self._add_chronology_facets_df()
         else:
@@ -767,7 +778,7 @@ class ResultMaker():
 
     def add_geotile_facets(self, solr_json):
         """Adds facets for geographic tiles"""
-        if self.facets_df is not None:
+        if self._facets_df_ok():
             # Use the new way via pandas
             self._add_geotile_facets_from_facets_df()
         else:
