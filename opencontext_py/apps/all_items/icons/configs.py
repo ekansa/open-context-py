@@ -264,6 +264,14 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "icon": "../../static/oc/icons-v2/noun-trowl-foundation-4804020.svg",
         },
         {
+            "item_class__uuid": "00000000-6e24-b278-5945-bc7a0fd3c20c",
+            "item_class__label": "Radiocarbon Sample",
+            "item_class__item_key": "oc-gen:cat-c14-sample",
+            "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-c14-sample",
+            "item_class__slug": "oc-gen-cat-c14-sample",
+            "icon": "../../static/oc/icons-v2/noun-atomic-6823535.svg",
+        },
+        {
             "item_class__uuid": "00000000-6e24-0b70-0230-0cc0398d6184",
             "item_class__label": "Sample",
             "item_class__item_key": "oc-gen:cat-sample",
