@@ -158,7 +158,8 @@ def db_make_dataframe_from_etl_data_source(
 
     # Fill na with empty strings for missing records.
     for df_field in ds_fields_qs:
-        df[f'{df_field.field_num}_col'].fillna('', inplace=True)
+        # df[f'{df_field.field_num}_col'].fillna('', inplace=True)
+        df.fillna({f'{df_field.field_num}_col': ''}, inplace=True)
 
     # We want to replace the numeric column names with corresponding
     # field labels.
