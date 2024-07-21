@@ -215,6 +215,7 @@ def recursive_query_url_fetch(
     else:
         check['ok'] = False
         check['text_len'] = None
+        return prior_urls, rows
     resp_dict = r.json()
     check['totalResults'] = resp_dict.get('totalResults', 0)
     urls = get_query_urls_from_response_dict(resp_dict, url_min_facet_count=url_min_facet_count)
