@@ -25,6 +25,9 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
 )
 
+from opencontext_py.apps.persistent_ids.radiocarbon import manage as c14_ids
+fixed_uuid, preregistered_id_list, id_obj_list = c14_ids.fix_pre_registered_radiocarbon_ids_for_qs()
+
 uuids = [
     '07d7085a-6704-4d8d-886e-42117fdbbd4a',
     '1145bd9c-9d7d-4114-b41d-9e29f8dcfaf5',
@@ -79,12 +82,15 @@ def clean_labeling_str_for_ark(label):
         if not id_part and not s.isnumeric():
             # We're at the begining where the Lab Code belongs
             lab_code += s
+            continue
         if not suffix and s.isnumeric():
             # We're now adding to the integer ID for the lab
             id_part += s
+            continue
         if id_part and not suffix and not s.isnumeric():
             # We're at the end of the identifier and adding a suffix
             suffix += s
+            continue
         if suffix:
             suffix += s
     lab_code = re.sub(r'[^A-Za-z]+', '', lab_code)
@@ -414,4 +420,102 @@ def create_pre_registered_radiocarbon_ids_for_qs(
         preregistered_id_list.append(preregistered_id)
         id_obj_list.append(id_obj)
     return preregistered_id_list, id_obj_list
+
+
+
+def fix_pre_registered_radiocarbon_ids_for_qs(
+    filter_args=None,
+    exclude_args=None,
+    do_staging=False,
+    id_prefix=ID_PREFIX,
+    update_if_exists=True,
+    show_ezid_resp=False,
+    optional_sort=None,
+):
+    """Fixes pre-registered IDs for items in an AllManifest query-set
+
+    :param dict filter_args: Optional dict of filter args to filter the
+        AllManifest query set
+    :param dict exclude_args: Optional dict of exclude args to use as
+        exclusion criteria in an AllManifest query set
+    :param bool do_staging: Use the staging site for EZID requests
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+
+    returns preregistered_id_list, id_obj_list
+    """
+    m_qs = AllManifest.objects.filter(
+        project_id=PROJECT_UUID,
+        item_class__slug='oc-gen-cat-c14-sample'
+    )
+    if filter_args:
+        m_qs = m_qs.filter(**filter_args)
+    if exclude_args:
+        m_qs = m_qs.exclude(**exclude_args)
+    if optional_sort:
+        m_qs = m_qs.order_by(optional_sort)
+    print(f'Working on manifest object count: {m_qs.count()}')
+    fixed_uuid = []
+    preregistered_id_list = []
+    id_obj_list = []
+    # Make the EZID client
+    ezid_client = EZID()
+    if do_staging:
+        # Make requests to the staging server
+        ezid_client.use_staging_site()
+    for man_obj in m_qs:
+        good_pre_reg_id = create_preregistered_id_from_label(man_obj.label)
+        # Now save the stable ID.
+        if good_pre_reg_id.startswith('ark:/'):
+            good_id = good_pre_reg_id.split('ark:/')[-1]
+        else:
+            good_id = good_pre_reg_id
+        old_id_obj = AllIdentifier.objects.filter(
+            item=man_obj,
+            scheme='ark',
+        ).first()
+        if not old_id_obj:
+            preregistered_id, id_obj = create_pre_registered_ezid_and_oc_records(
+                        man_obj=man_obj,
+                        do_staging=do_staging,
+                        id_prefix=id_prefix,
+                        update_if_exists=update_if_exists,
+                        show_ezid_resp=show_ezid_resp,
+                    )
+            fixed_uuid.append(str(man_obj.uuid))
+            if not id_obj:
+                continue
+            preregistered_id_list.append(preregistered_id)
+            id_obj_list.append(id_obj)
+            continue
+        if old_id_obj.id == good_id:
+            continue
+        print(f'Need to fix {old_id_obj.id} to make {good_id} for {man_obj.label} [{man_obj.uuid}]')
+        fixed_uuid.append(str(man_obj.uuid))
+        # delete the bad ID in EZID
+        ok = ezid_client.delete_ark_identifier(id_str=f'ark:/{old_id_obj.id}')
+        if not ok:
+            print(f'Could not delete old bad identifer in EZID {old_id_obj.id}')
+            continue
+        # Delete the old_id_obj in production
+        AllIdentifier.objects.using('prod').filter(uuid=old_id_obj.uuid).delete()
+        AllIdentifier.objects.filter(uuid=old_id_obj.uuid).delete()
+        # Now make the good IDs
+        preregistered_id, id_obj = create_pre_registered_ezid_and_oc_records(
+            man_obj=man_obj,
+            do_staging=do_staging,
+            id_prefix=id_prefix,
+            update_if_exists=update_if_exists,
+            show_ezid_resp=show_ezid_resp,
+        )
+        if not id_obj:
+            continue
+        preregistered_id_list.append(preregistered_id)
+        id_obj_list.append(id_obj)
+        # Save the new one to production too.
+        id_obj.save(using='prod')
+    return fixed_uuid, preregistered_id_list, id_obj_list
+
 

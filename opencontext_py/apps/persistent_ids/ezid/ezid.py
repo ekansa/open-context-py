@@ -182,6 +182,53 @@ resp = ezid.mint_identifier(url, meta, 'ark')
             self.new_ids.append(new_id_dict)
         return new_id
 
+
+    def delete_ark_identifier(self, id_str, show_ezid_resp=False):
+        """ Deletes an ARK identifier minted in error
+        """
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        metadata = {
+            '_status': 'unavailable',
+        }
+        anvl = self.make_anvl_metadata_str(metadata)
+        path = '/id/' + self.encode(id_str)
+        url = self.act_ezid_base_url + path
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        headers['Content-Type'] = 'text/plain; charset=UTF-8'
+        headers['Accept'] = 'text/plain'
+        if self.cookie:
+            headers['Cookie'] = self.cookie
+        resp_txt = None
+        ok = None
+        try:
+            r = requests.post(
+                url,
+                auth=(self.username, self.password),
+                timeout=240,
+                data=anvl,
+                headers=headers,
+            )
+            r.raise_for_status()
+            self.request_url = url
+            resp_txt = r.text
+            ok = True
+        except Exception as e:
+            self.request_url = url
+            print('Error ' + str(url))
+            print(e)
+            ok = False
+        if not resp_txt:
+            return None
+        if show_ezid_resp:
+            print(f'Response from DELETE to {url}')
+            print(resp_txt)
+        return ok
+
+
     def encode(self, id_str):
         return urllib.parse.quote(id_str, ":/")
 
