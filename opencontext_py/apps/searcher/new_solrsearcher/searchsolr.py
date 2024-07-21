@@ -833,4 +833,8 @@ class SearchSolr():
                 f'{settings.TIME_ZONE}] Error: '
                 f'{str(error)} => Query: {query}'
             )
+            if settings.DEBUG:
+                # Print the query problem if in debug mode
+                print(query)
+                print(str(error))
         return self.solr_response
