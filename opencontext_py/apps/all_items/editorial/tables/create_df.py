@@ -668,6 +668,15 @@ def get_spacetime_df(uuids):
     return spacetime_df
 
 
+def is_null(df_value):
+    """Checks if a dataframe value is null"""
+    if df_value is np.nan:
+        return True
+    if df_value is None:
+        return True
+    return False
+
+
 def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
     """Make a dataframe of spacetime columns found in a context hierarchy for
     a list of uuids
@@ -753,18 +762,21 @@ def get_spacetime_from_context_levels(uuids, main_item_id_col='subject_id'):
             l_time_index = (
                 l_uuid_index & missing_time
             )
-            sp_index = spacetime_df['item_id'] == uuid
+            sp_uuid_index = spacetime_df['item_id'] == uuid
             process_tups = [
                 (l_geo_index, 'latitude', 'longitude', True, 'geo'),
                 (l_time_index, 'earliest', 'latest', False, 'chrono'),
             ]
             for l_index, x, y, geo_sp, t in process_tups:
                 sp_index = (
-                    sp_index
+                    sp_uuid_index
                     & ~spacetime_df[x].isnull()
                     & ~spacetime_df[y].isnull()
                 )
                 if spacetime_df[sp_index].empty:
+                    continue
+                if is_null(spacetime_df[sp_index][x].values[0]) or is_null(spacetime_df[sp_index][y].values[0]):
+                    # Only make updates if we have non-null values to update with.
                     continue
                 df_levels.loc[l_index, f'item__{x}'] = spacetime_df[sp_index][x].values[0]
                 df_levels.loc[l_index, f'item__{y}'] = spacetime_df[sp_index][y].values[0]

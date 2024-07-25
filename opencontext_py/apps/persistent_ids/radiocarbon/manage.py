@@ -1,0 +1,521 @@
+
+import re
+import traceback
+from unidecode import unidecode
+
+from django.template.defaultfilters import slugify
+
+
+from opencontext_py.apps.persistent_ids.ezid.ezid import EZID, PRE_REGISTER_SHOULDER
+from opencontext_py.apps.persistent_ids.ezid.metaark import metaARK
+from opencontext_py.apps.persistent_ids.ezid.metadoi import metaDOI
+from opencontext_py.apps.persistent_ids.ezid.manage import EZIDmanage
+
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllIdentifier,
+)
+from opencontext_py.apps.all_items.representations import item
+
+"""
+Test:
+from opencontext_py.apps.persistent_ids.radiocarbon import manage as c14_ids
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+    AllIdentifier,
+)
+
+from opencontext_py.apps.persistent_ids.radiocarbon import manage as c14_ids
+fixed_uuid, preregistered_id_list, id_obj_list = c14_ids.fix_pre_registered_radiocarbon_ids_for_qs()
+
+uuids = [
+    '07d7085a-6704-4d8d-886e-42117fdbbd4a',
+    '1145bd9c-9d7d-4114-b41d-9e29f8dcfaf5',
+    '14c9fe69-94b0-4f94-9d10-43992c6cf4ac',
+]
+persistent_id_list, id_obj_list = c14_ids.create_pre_registered_radiocarbon_ids_for_qs(
+    do_staging=True,
+    show_ezid_resp=True,
+    filter_args={'uuid__in': uuids},
+)
+
+
+man_obj = AllManifest.objects.get(uuid='0274cd4d-25c9-4e68-9ee7-c2922063d507')
+persistent_id, id_obj = pc_ids.create_pre_registered_ezid_and_oc_records(
+    man_obj=man_obj,
+    do_staging=False,
+    id_type_key='pc',
+    update_if_exists=True,
+    show_ezid_resp=True,
+)
+
+proj_persistent_id, id_obj = pc_ids.create_update_pre_registered_ezid_and_oc_records_project_prefix()
+id_objs = pc_ids.create_update_pre_registered_ezid_and_oc_records_project_id_types_prefix()
+
+"""
+
+NON_UNIQUE_PID_HANDLING = 'db_store'  # or 'raise'
+
+PROJECT_UUID = 'cdd78c10-e6da-42ef-9829-e792ce55bdd6'
+
+PROJECT_PART = 'p3k14c' # For the project part
+
+
+# The ARK pre-registered prefix for this project. Will be:
+# 'ark:/28722/r2p24/' it is defined with EZID
+ID_PREFIX = f'{PRE_REGISTER_SHOULDER}{PROJECT_PART}/'
+
+
+def clean_labeling_str_for_ark(label):
+    """Converts a (hopefully unique with the context of the project)
+    item label into a pre-registration ARK ID string.
+
+    :param str label: The Manifest object label
+
+    returns str label (cleaned for use in an ID)
+    """
+    label = str(label).lower().strip()
+    lab_code = ''
+    id_part = ''
+    suffix = ''
+    for s in label:
+        if not id_part and not s.isnumeric():
+            # We're at the begining where the Lab Code belongs
+            lab_code += s
+            continue
+        if not suffix and s.isnumeric():
+            # We're now adding to the integer ID for the lab
+            id_part += s
+            continue
+        if id_part and not suffix and not s.isnumeric():
+            # We're at the end of the identifier and adding a suffix
+            suffix += s
+            continue
+        if suffix:
+            suffix += s
+    lab_code = re.sub(r'[^A-Za-z]+', '', lab_code)
+    id_part = re.sub(r'[^\d]+', '', id_part)
+    suffix = re.sub(r'\W+', '', suffix)
+    for_ark = lab_code + '_' + id_part + suffix
+    for_ark = for_ark.lower()
+    return for_ark 
+
+
+
+def create_preregistered_id_from_label(label, id_prefix=ID_PREFIX):
+    """Uses a Manifest object label to make a pre-registered ID of a given
+    id_type_key.
+
+    :param str label: The Manifest object label
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+
+    returns str pre-registered ID
+    """
+    if not label:
+        return None
+    for_ark = clean_labeling_str_for_ark(label)
+    if not for_ark:
+        return None
+    return f'{id_prefix}{for_ark}'
+
+
+def is_valid_preregistered_id(check_id):
+    """Validates allowed characters and patterns for a pre-registered ID
+
+    :param str check_id: An ARK identifier that we want to check to see if
+        it is a string with valid characters
+
+    returns bool (True if valid, False if not valid)
+    """
+    if not check_id:
+        return False
+    if not isinstance(check_id, str):
+        return False
+    if check_id.startswith('ark:/'):
+        check_id = check_id.split('ark:/')[-1]
+    return re.match(r"^[a-z0-9_]+(?:/[a-z0-9_]+)*\.?[a-z0-9_]+$", check_id) is not None
+
+
+def get_manifest_obj_using_ark_id(check_man_obj, check_id):
+    """Checks to see if the check_id is already in use with a manifest record
+    other than the check_man_obj
+
+    :param AllManifest check_man_obj: The item that we want to check to see
+        if we can use check_id without clashing with other manifest records
+    :param str check_id: An ARK identifier that we want to check to see if
+        it is in use with a manifest record OTHER than check_man_obj
+
+    returns AllManifest that clashes (or None, if no clash)
+    """
+    # Open Context currently doesn't store the 'ark:/' part as part of the
+    # ID in the database. So remove it if present.
+    if check_id.startswith('ark:/'):
+        query_id = check_id.split('ark:/')[-1]
+    else:
+        query_id = check_id
+    # This should return None, if it returns a record, then we've
+    # got a clashing ID problem.
+    clashing_id = AllIdentifier.objects.filter(
+        scheme='ark',
+        id=query_id,
+    ).exclude(
+        item=check_man_obj,
+    ).first()
+    if not clashing_id:
+        # The happy, expected scenario where there is record of this
+        # check_id identifier in use with a different manifest
+        # object.
+        return None
+    # The sad, unexpected scenario where we already have a different
+    # manifest record that has the same check_id
+    return clashing_id.item
+
+
+def get_existing_preregistered_id_obj_for_man_obj(man_obj, id_prefix=ID_PREFIX,):
+    """Gets and existing (if present) pre-registered ID for a Manifest object with a
+    given id_prefix
+
+    :param AllManifest man_obj: The item that may have a preregistered ID.
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+
+    returns str a validated, unique pre-registered ID
+    """
+    if id_prefix.startswith('ark:/'):
+        query_id = id_prefix.split('ark:/')[-1]
+    else:
+        query_id = id_prefix
+    id_obj = AllIdentifier.objects.filter(
+        item=man_obj,
+        scheme='ark',
+        id__startswith=query_id,
+    ).first()
+    return id_obj
+
+
+def get_or_make_preregistered_id_for_man_obj(
+    man_obj,
+    id_prefix=ID_PREFIX,
+    non_unique_pid_handling=NON_UNIQUE_PID_HANDLING,
+):
+    """Makes a valid pre-registered ID for a Manifest object of a given id_type_key
+
+    :param AllManifest man_obj: The item that will get a valid preregistered ID.
+    :param str id_type_key: The preregistered ID type within the Murlo project
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+
+    returns str, id_obj (a validated and unique pre-registered ID, existing id object record)
+    """
+    id_obj = get_existing_preregistered_id_obj_for_man_obj(
+        man_obj,
+        id_prefix=id_prefix,
+    )
+    if id_obj:
+        # Return the existing pre-registered ID, and is_new=False
+        return f'ark:/{id_obj.id}', id_obj
+    # OK, we don't already have a pre-registered ID object for this
+    # manifest item, so go make one.
+    preregistered_id = create_preregistered_id_from_label(
+        label=man_obj.label,
+        id_prefix=id_prefix,
+    )
+    if not is_valid_preregistered_id(preregistered_id):
+        # We failed to make a valid pre-registered ID
+        raise ValueError(f'{man_obj.label} [{str(man_obj.uuid)}] led to invalid ark: {preregistered_id}')
+    # Now check to see if we have a clashing use of the preregistered_id
+    clashing_obj = get_manifest_obj_using_ark_id(man_obj, preregistered_id)
+    if clashing_obj:
+        if non_unique_pid_handling == 'db_store':
+            man_obj.meta_json['clashing_pid'] = preregistered_id
+            man_obj.meta_json['clashing_pid_item_id'] = str(clashing_obj.uuid)
+            man_obj.save()
+            print(
+                f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
+                f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
+            )
+            print('Database saved flag of conflicting PID to item meta_json')
+            # The item would have a pre-registered id that's already in use with another
+            # item. So return None, None.
+            return None, None
+        elif non_unique_pid_handling == 'raise':
+            raise ValueError(
+                f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
+                f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
+            )
+        else:
+            raise ValueError(
+                f'Cannot use {preregistered_id} for item: {man_obj.label} [{str(man_obj.uuid)}], '
+                f'ID already used by item: {clashing_obj.label} [{str(clashing_obj.uuid)}] '
+            )
+    # Return the valid preregistered_id, and id_obj=None
+    return preregistered_id, None
+
+
+def create_update_pre_registered_ezid_and_oc_records_project_prefix(
+    do_staging=False,
+    update_if_exists=True,
+    show_ezid_resp=False,
+    ezid_client=None,
+):
+    """Makes pre-registered ID and records it in EZID and Open Context for the Murlo
+    project.
+
+    :param bool do_staging: Use the staging site for EZID requests
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+    :param EZID ezid_client: An instance of the EZID (ezid_client) class
+
+    returns str, id_obj (a validated and unique pre-registered ID, id object record)
+    """
+    man_obj = AllManifest.objects.get(uuid=PROJECT_UUID)
+    ezid_m = EZIDmanage()
+    metadata = ezid_m.make_ark_metadata_by_uuid(man_obj=man_obj)
+    oc_uri = metadata.get('_target', f'https://{man_obj.uri}')
+    if not ezid_client:
+        ezid_client = EZID()
+    if do_staging:
+        # Make requests to the staging server
+        ezid_client.use_staging_site()
+    preregistered_id = f'{PRE_REGISTER_SHOULDER}{PROJECT_PART}'
+    ezid_client.create_ark_identifier(
+        oc_uri=oc_uri,
+        metadata=metadata,
+        id_str=preregistered_id,
+        update_if_exists=update_if_exists,
+        show_ezid_resp=show_ezid_resp,
+    )
+    # Now save the stable ID.
+    if preregistered_id.startswith('ark:/'):
+        stable_id = preregistered_id.split('ark:/')[-1]
+    else:
+        stable_id  = preregistered_id
+    # Make an ID object to save the record of this pre-registered ID.
+    id_obj = ezid_m.save_man_obj_stable_id(man_obj=man_obj, stable_id=stable_id, scheme='ark',)
+    print(f'{man_obj.label} [{str(man_obj.uuid)}] **SAVED** preregistered_id record: {preregistered_id}')
+    return preregistered_id, id_obj
+
+
+def create_pre_registered_ezid_and_oc_records(
+    uuid=None,
+    man_obj=None,
+    do_staging=False,
+    id_prefix=ID_PREFIX,
+    update_if_exists=True,
+    show_ezid_resp=False,
+    ezid_client=None,
+):
+    """Makes a valid pre-registered ID and records them in EZID and Open Context
+
+    :param str/uuid uuid: UUID identifier for the item that will get a valid preregistered ID.
+    :param AllManifest man_obj: The item that will get a valid preregistered ID.
+    :param bool do_staging: Use the staging site for EZID requests
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+    :param EZID ezid_client: An instance of the EZID (ezid_client) class
+
+    returns str, id_obj (a validated and unique pre-registered ID, id object record)
+    """
+    if not uuid and man_obj:
+        # We have a manifest object
+        uuid = man_obj.uuid
+    elif not man_obj and uuid:
+        man_obj = AllManifest.objects.get(uuid=uuid)
+    else:
+        raise ValueError('Must provide either an AllManifest uuid or an AllManifest object')
+    # Make a preregistered id for the man_obj
+    preregistered_id, id_obj = get_or_make_preregistered_id_for_man_obj(
+        man_obj=man_obj,
+        id_prefix=id_prefix,
+    )
+    if not preregistered_id:
+        return None, None
+    if id_obj and not update_if_exists:
+        print(f'{man_obj.label} [{str(man_obj.uuid)}] already has a preregistered_id record: {preregistered_id}')
+        return preregistered_id, id_obj
+    # Make the ARK metadata for this record.
+    ezid_m = EZIDmanage()
+    metadata = ezid_m.make_ark_metadata_by_uuid(man_obj=man_obj, verbatim_id=man_obj.label)
+    if not metadata:
+        raise ValueError(f'Could not generate ARK metadata for {man_obj.label} [{str(man_obj.uuid)}]')
+    # Set up the EZID client
+    if not ezid_client:
+        ezid_client = EZID()
+    if do_staging:
+        # Make requests to the staging server
+        ezid_client.use_staging_site()
+    # The oc_uri should be in the _target, with a fallback of our manifest object uri attribute
+    oc_uri = metadata.get('_target', f'https://{man_obj.uri}')
+    try:
+        ezid_client.create_ark_identifier(
+            oc_uri=oc_uri,
+            metadata=metadata,
+            id_str=preregistered_id,
+            update_if_exists=update_if_exists,
+            show_ezid_resp=show_ezid_resp,
+        )
+    except Exception as err:
+        print(f'{man_obj.label} [{str(man_obj.uuid)}] has EZID problem!')
+        traceback.print_tb(err.__traceback__)
+        raise ValueError('EZID fail')
+    if do_staging:
+        print(f'{man_obj.label} [{str(man_obj.uuid)}], no ID object saved in Open Context; using EZID staging site for preregistered_id: {preregistered_id}')
+        return preregistered_id, None
+    # Now save the stable ID.
+    if preregistered_id.startswith('ark:/'):
+        stable_id = preregistered_id.split('ark:/')[-1]
+    else:
+        stable_id  = preregistered_id
+    # Make an ID object to save the record of this pre-registered ID.
+    id_obj = ezid_m.save_man_obj_stable_id(man_obj=man_obj, stable_id=stable_id, scheme='ark',)
+    print(f'{man_obj.label} [{str(man_obj.uuid)}] **SAVED** preregistered_id record: {preregistered_id}')
+    return preregistered_id, id_obj
+
+
+def create_pre_registered_radiocarbon_ids_for_qs(
+    filter_args=None,
+    exclude_args=None,
+    do_staging=False,
+    id_prefix=ID_PREFIX,
+    update_if_exists=True,
+    show_ezid_resp=False,
+    optional_sort=None,
+):
+    """Create pre-registered IDs for items in an AllManifest query-set
+
+    :param dict filter_args: Optional dict of filter args to filter the
+        AllManifest query set
+    :param dict exclude_args: Optional dict of exclude args to use as
+        exclusion criteria in an AllManifest query set
+    :param bool do_staging: Use the staging site for EZID requests
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+
+    returns preregistered_id_list, id_obj_list
+    """
+    preregistered_id_list = []
+    id_obj_list = []
+    m_qs = AllManifest.objects.filter(
+        project_id=PROJECT_UUID,
+        item_class__slug='oc-gen-cat-c14-sample'
+    )
+    if filter_args:
+        m_qs = m_qs.filter(**filter_args)
+    if exclude_args:
+        m_qs = m_qs.exclude(**exclude_args)
+    if optional_sort:
+        m_qs = m_qs.order_by(optional_sort)
+    print(f'Working on manifest object count: {m_qs.count()}')
+    for man_obj in m_qs:
+        preregistered_id, id_obj = create_pre_registered_ezid_and_oc_records(
+            man_obj=man_obj,
+            do_staging=do_staging,
+            id_prefix=id_prefix,
+            update_if_exists=update_if_exists,
+            show_ezid_resp=show_ezid_resp,
+        )
+        preregistered_id_list.append(preregistered_id)
+        id_obj_list.append(id_obj)
+    return preregistered_id_list, id_obj_list
+
+
+
+def fix_pre_registered_radiocarbon_ids_for_qs(
+    filter_args=None,
+    exclude_args=None,
+    do_staging=False,
+    id_prefix=ID_PREFIX,
+    update_if_exists=True,
+    show_ezid_resp=False,
+    optional_sort=None,
+):
+    """Fixes pre-registered IDs for items in an AllManifest query-set
+
+    :param dict filter_args: Optional dict of filter args to filter the
+        AllManifest query set
+    :param dict exclude_args: Optional dict of exclude args to use as
+        exclusion criteria in an AllManifest query set
+    :param bool do_staging: Use the staging site for EZID requests
+    :param str id_prefix: The prefix (scheme, shoulder part, project part)
+    :param bool update_if_exists: Update EZID metadata if we already have a record for a
+        pre-registered ID
+    :param bool show_ezid_resp: Show raw request response text from EZID
+
+    returns preregistered_id_list, id_obj_list
+    """
+    m_qs = AllManifest.objects.filter(
+        project_id=PROJECT_UUID,
+        item_class__slug='oc-gen-cat-c14-sample'
+    )
+    if filter_args:
+        m_qs = m_qs.filter(**filter_args)
+    if exclude_args:
+        m_qs = m_qs.exclude(**exclude_args)
+    if optional_sort:
+        m_qs = m_qs.order_by(optional_sort)
+    print(f'Working on manifest object count: {m_qs.count()}')
+    fixed_uuid = []
+    preregistered_id_list = []
+    id_obj_list = []
+    # Make the EZID client
+    ezid_client = EZID()
+    if do_staging:
+        # Make requests to the staging server
+        ezid_client.use_staging_site()
+    for man_obj in m_qs:
+        good_pre_reg_id = create_preregistered_id_from_label(man_obj.label)
+        # Now save the stable ID.
+        if good_pre_reg_id.startswith('ark:/'):
+            good_id = good_pre_reg_id.split('ark:/')[-1]
+        else:
+            good_id = good_pre_reg_id
+        old_id_obj = AllIdentifier.objects.filter(
+            item=man_obj,
+            scheme='ark',
+        ).first()
+        if not old_id_obj:
+            preregistered_id, id_obj = create_pre_registered_ezid_and_oc_records(
+                        man_obj=man_obj,
+                        do_staging=do_staging,
+                        id_prefix=id_prefix,
+                        update_if_exists=update_if_exists,
+                        show_ezid_resp=show_ezid_resp,
+                    )
+            fixed_uuid.append(str(man_obj.uuid))
+            if not id_obj:
+                continue
+            preregistered_id_list.append(preregistered_id)
+            id_obj_list.append(id_obj)
+            continue
+        if old_id_obj.id == good_id:
+            continue
+        print(f'Need to fix {old_id_obj.id} to make {good_id} for {man_obj.label} [{man_obj.uuid}]')
+        fixed_uuid.append(str(man_obj.uuid))
+        # delete the bad ID in EZID
+        ok = ezid_client.delete_ark_identifier(id_str=f'ark:/{old_id_obj.id}')
+        if not ok:
+            print(f'Could not delete old bad identifer in EZID {old_id_obj.id}')
+            continue
+        # Delete the old_id_obj in production
+        AllIdentifier.objects.using('prod').filter(uuid=old_id_obj.uuid).delete()
+        AllIdentifier.objects.filter(uuid=old_id_obj.uuid).delete()
+        # Now make the good IDs
+        preregistered_id, id_obj = create_pre_registered_ezid_and_oc_records(
+            man_obj=man_obj,
+            do_staging=do_staging,
+            id_prefix=id_prefix,
+            update_if_exists=update_if_exists,
+            show_ezid_resp=show_ezid_resp,
+        )
+        if not id_obj:
+            continue
+        preregistered_id_list.append(preregistered_id)
+        id_obj_list.append(id_obj)
+        # Save the new one to production too.
+        id_obj.save(using='prod')
+    return fixed_uuid, preregistered_id_list, id_obj_list
+
+

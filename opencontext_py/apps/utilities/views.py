@@ -191,42 +191,74 @@ def lat_lon_to_quadtree(request):
 def quadtree_to_lat_lon(request):
     """ Converts a quadtree tile to WGS-84 lat / lon coordinates in different formats """
     lat_lon = None
+    poly_coords = None
     gm = GlobalMercator()
     gm.MAX_ZOOM = API_MAX_ZOOM
-    if request.GET.get('tile') is not None:
-        tile = request.GET['tile']
-        try:
-            lat_lon = gm.quadtree_to_lat_lon(tile)
-        except:
-            lat_lon = None
-    if lat_lon is not None:
-        # default to json format with lat, lon dictionary object
-        lat_lon_dict = LastUpdatedOrderedDict()
-        lat_lon_dict['lat'] = lat_lon[0]
-        lat_lon_dict['lon'] = lat_lon[1]
-        output = json.dumps(lat_lon_dict,
-                            ensure_ascii=False,
-                            indent=4)
-        content_type='application/json; charset=utf8'
-        if request.GET.get('format') is not None:
-            # client requested another format, give it if recognized
-            if request.GET['format'] == 'geojson':
-                # geojson format, with longitude then latitude
-                output = json.dumps(([lat_lon[1], lat_lon[0]]),
-                                    ensure_ascii=False,
-                                    indent=4)
-                content_type='application/json; charset=utf8'
-            elif request.GET['format'] == 'lat,lon':
-                # text format, with lat, comma lon coordinates
-                output = str(lat_lon[0]) + ',' + str(lat_lon[1])
-                content_type='text/plain; charset=utf8'
-        return HttpResponse(output,
-                            content_type=content_type)
-    else:
+    tile = request.GET.get('tile')
+    if tile:
+        if request.GET.get('type') == 'Polygon':
+            try:
+                poly_coords = gm.quadtree_to_geojson_poly_coords(tile)
+            except:
+                poly_coords = None
+        else:
+            try:
+                lat_lon = gm.quadtree_to_lat_lon(tile)
+            except:
+                lat_lon = None
+    if not lat_lon and not poly_coords:
         message = 'ERROR: "tile" must be a valid quadtree geospatial tile (string composed of digits ranging from 0-3)'
-        return HttpResponse(message,
-                            content_type='text/plain; charset=utf8',
-                            status=406)
+        return HttpResponse(
+            message,
+            content_type='text/plain; charset=utf8',
+            status=406
+        )
+    content_type='application/json; charset=utf8'
+
+    if poly_coords:
+        # Special case where we want polygon coordinates.
+        geometry = {
+            'type': 'Polygon',
+            'coordinates': poly_coords,
+        }
+        output = json.dumps(
+            geometry,
+            ensure_ascii=False,
+            indent=4,
+        )
+        return HttpResponse(
+            output,
+            content_type=content_type,
+        )
+
+    # default to json format with lat, lon dictionary object
+    lat_lon_dict = LastUpdatedOrderedDict()
+    lat_lon_dict['lat'] = lat_lon[0]
+    lat_lon_dict['lon'] = lat_lon[1]
+    output = json.dumps(
+        lat_lon_dict,
+        ensure_ascii=False,
+        indent=4,
+    )
+    content_type='application/json; charset=utf8'
+    # client requested another format, give it if recognized
+    if request.GET.get('format') == 'geojson':
+        # geojson format, with longitude then latitude
+        output = json.dumps(
+            ([lat_lon[1], lat_lon[0]]),
+            ensure_ascii=False,
+            indent=4,
+        )
+        content_type='application/json; charset=utf8'
+    elif request.GET.get('format') == 'lat,lon':
+        # text format, with lat, comma lon coordinates
+        output = str(lat_lon[0]) + ',' + str(lat_lon[1])
+        content_type='text/plain; charset=utf8'
+    return HttpResponse(
+        output,
+        content_type=content_type,
+    )
+    
 
 
 def reproject(request):
