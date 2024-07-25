@@ -521,7 +521,7 @@
     </div>
 
     <script type="text/javascript">
-        var csrftoken = $.cookie('csrftoken');
+        var csrftoken =  Vue.$cookies.get('csrftoken');
         var base_url = '{{ base_url }}';
     </script>
     <script type="text/javascript">
@@ -532,6 +532,6 @@
             }
             -->
     </script>
-    <script src="{{ base_url }}/static/oc/js/about/estimation.js" onload="start_estimator();"></script>
+    <script src="{{ BASE_URL }}/static/oc/js/about/estimation.js" onload="start_estimator();"></script>
 
 {% endblock %}
