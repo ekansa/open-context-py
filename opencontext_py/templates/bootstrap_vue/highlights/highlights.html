@@ -213,6 +213,21 @@
 
         <b-container style="margin-bottom:24px;" fluid>
             <b-card-group deck>
+                <b-card title="Radiocarbon" img-src="../../static/oc/images/highlights/radiocarbon-wikipedia-met.jpg" img-alt="Image: grain sample from Neolithic-Predynastic Merimda" img-top>
+                    <b-card-text>
+                      Open Context hosts the <a href="{{ BASE_URL }}/projects/cdd78c10-e6da-42ef-9829-e792ce55bdd6" target="_blank">Cross-referenced p3k14c</a> project. This collaboration of 20 researchers, led by Darcy Bird, compiled one of the most comprehensive sets of archaeological radiocarbon dates yet assembled from dozens of sources. This dataset is also <a href="https://core.tdar.org/collection/70213/p3k14c-data">archived by our colleages at tDAR</a>.
+                      <br/>
+                      <small class="text-muted">Image credit: <a href="https://commons.wikimedia.org/wiki/File:Sample_of_Grain_from_Merimda_MET_33.4.59_EGDP013178.jpg" target="_blank">Metropolitan Museum of Art via Wikipedia (CC-Zero Public Domain)</a></small>
+
+                    </b-card-text>
+                    <template #footer>
+                        <small class="text-muted">
+                            <a href="{{ BASE_URL }}/query/?cat=oc-gen-cat-c14-sample&proj=197-p3k14c&type=subjects&geodeep=8"
+                            title="Query for p3k14c radiocarbon dated samples"><b-icon-search></b-icon-search> Explore radiocarbon data</a>
+                        </small>
+                    </template>
+                </b-card>
+
                 <b-card title="Images" img-src="../../static/oc/images/highlights/image.jpg" img-alt="Image: image media" img-top>
                     <b-card-text>
                       Open Context publishes images, including photographs and drawings of material collections, features,
@@ -226,6 +241,12 @@
                     </template>
                 </b-card>
 
+            </b-card-group>
+        </b-container>
+
+        <b-container style="margin-bottom:24px;" fluid>
+            <b-card-group deck>
+
                 <b-card title="Field Notes and Documents" img-src="../../static/oc/images/highlights/notes.jpg" img-alt="Image: field notes" img-top>
                     <b-card-text>
                       Open Context publishes narrative field notes and other documents that inform field work and other
@@ -235,26 +256,6 @@
                         <small class="text-muted">
                             <a href="{{ BASE_URL }}/query/?type=documents"
                             title="Query for text documents and notes"><b-icon-search></b-icon-search> Explore notes and documentation</a>
-                        </small>
-                    </template>
-                </b-card>
-
-            </b-card-group>
-        </b-container>
-
-        <b-container style="margin-bottom:24px;" fluid>
-            <b-card-group deck>
-                <b-card title="Geospatial" img-src="../../static/oc/images/highlights/geospatial.png" img-alt="Image: geospatial" img-top>
-                    <b-card-text>
-                    Geospatial feature data helps to describe much of the information published by Open Context. This
-                    geospatial data can be downloaded and used in desktop GIS or other applications.
-                    <br/>
-                    <small class="text-muted">Image credit: <a href="../../media/52bf4905-d03d-4997-b54b-eb287f0c91c9" target="_blank">Benjamin Carter (2020)</a></small>
-                    </b-card-text>
-                    <template #footer>
-                        <small class="text-muted">
-                            <a href="{{ BASE_URL }}/about/recipes"
-                            title="Using Open Context with GIS"><b-icon-info-circle-fill></b-icon-info-circle-fill> Learn More about Open Context and GIS</a>
                         </small>
                     </template>
                 </b-card>
@@ -300,6 +301,7 @@
         "oc-gen-cat-object",
         "oc-gen-cat-context",
         "oc-gen-cat-plant-remains",
+        "oc-gen-cat-c14-sample",
     ];
 
     const DEFAULT_ITEM_TYPE_ICONS = JSON.parse('{{ DEFAULT_ITEM_TYPE_ICONS_JS|escapejs }}');
