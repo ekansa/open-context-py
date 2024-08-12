@@ -1,6 +1,269 @@
 {% extends '../page.html' %}
 
 {% block content %}
+
+
+
+
+
+
+
+<script type="text/x-template" id="estimate-form">
+
+    <b-container fluid>
+        <b-form @submit="on_submit" @reset="on_reset" class="form-horizontal" >
+            <!-- General project related fields -->
+            <b-card title="Project Information">
+                <b-card-text>
+                    <b-form-group id="is_early_career_fg" v-slot="{ ariaDescribedby }" label="Is this project led by an early career researcher?">
+                                    
+                        <b-form-radio-group
+                            id="is_early_career_radio_slots"
+                            :aria-describedby="ariaDescribedby"
+                            name="is_early_career"
+                        >
+                            <b-form-radio value="1">Yes</b-form-radio>
+                            <b-form-radio value="1">No</b-form-radio>
+            
+                        </b-form-radio-group>
+                    </b-form-group>
+                    <small class="text-muted">Graduate student, postdoctoral, and other non-tenure track researchers leading 
+                        nonprofit or academic projects receive a 50% discount.
+                    </small>
+                </b-card-text>
+            </b-card>
+
+
+            <b-card title="Project Database Size and Complexity">
+                <b-card-text>
+                    <b-container fluid>
+
+                        <b-row>
+                            <b-col sm="4">
+                                <label for="input-duration">Duration of project (years)</label>
+                            </b-col>
+                            <b-col sm="8">
+                                <div class="w-50">
+                                    <b-form-input 
+                                        name="duration" 
+                                        id="input-duration" 
+                                        type="number" 
+                                        min="1"
+                                        size="sm"
+                                        placeholder="Enter 1 or more years"></b-form-input>
+                                </div>
+                                <small class="text-muted">
+                                    The number of years this project created database records
+                                </small>
+                            </b-col>
+
+                        </b-row>
+
+                        <b-row style="margin-top: 24px;">
+                            <b-col sm="4">
+                                <label for="input-duration">Number of specialist datasets</label>
+                            </b-col>
+                            <b-col sm="8">
+                                <div class="w-50">
+                                    <b-form-input 
+                                        name="count_spec_datasets" 
+                                        id="input-count_spec_datasets" 
+                                        type="number" 
+                                        min="1"
+                                        size="sm"
+                                        placeholder="Enter 1 or more"></b-form-input>
+                                </div>
+                                <small class="text-muted">
+                                    The number of different specialists making datasets (zooarchaeology, lithic analysis, etc.)
+                                </small>
+                            </b-col>
+                        </b-row>
+
+                        <b-row style="margin-top: 24px;">
+                            <b-col sm="4">
+                                <label for="input-duration">Number of data tables</label>
+                            </b-col>
+                            <b-col sm="8">
+                                <div class="w-50">
+                                    <b-form-input 
+                                        name="count_tables" 
+                                        id="input-count_tables" 
+                                        type="number" 
+                                        min="1"
+                                        size="sm"
+                                        placeholder="Enter 1 or more"></b-form-input>
+                                </div>
+                                <small class="text-muted">
+                                    Estimated number of tables in all of the project's relational databases and spreadsheets (including separate spreadsheet "sheets")
+                                </small>
+                            </b-col>
+                        </b-row>
+                    </b-container>
+                </b-card-text>
+            </b-card>
+
+            <b-card title="Project Media Size and Complexity">
+                <b-card-text>
+                    <b-container fluid>
+
+                        <b-row>
+                            <b-col sm="12">
+
+                                <b-form-group id="count_images_fg" v-slot="{ ariaDescribedby }" label="Number of Image Files">
+                                    
+                                    <b-form-radio-group
+                                        id="count_images_radio_slots"
+                                        :aria-describedby="ariaDescribedby"
+                                        name="count_images"
+                                        stacked
+                                    >
+                                        <b-form-radio value="0">0 (No iamges)</b-form-radio>
+                                        <b-form-radio value="1">1-100</b-form-radio>
+                                        <b-form-radio value="100">100-1000</b-form-radio>
+                                        <b-form-radio value="1000">1000-10000</b-form-radio>
+                                        <b-form-radio value="10000">10000 or more</b-form-radio>
+                                    </b-form-radio-group>
+                                </b-form-group>
+
+                            </b-col>
+                        </b-row>
+
+                        <b-row style="margin-top: 24px;">
+                            <b-col sm="12">
+
+                                <b-form-group id="count_docs_fg" v-slot="{ ariaDescribedby }" label="Number of Documents (HTML, text, PDF)">
+                                    
+                                    <b-form-radio-group
+                                        id="count_docs_radio_slots"
+                                        :aria-describedby="ariaDescribedby"
+                                        name="count_docs"
+                                        stacked
+                                    >
+                                        <b-form-radio value="0">0 (No documents)</b-form-radio>
+                                        <b-form-radio value="1">1-10</b-form-radio>
+                                        <b-form-radio value="10">10-100</b-form-radio>
+                                        <b-form-radio value="100">100-1000</b-form-radio>
+                                        <b-form-radio value="1000">1000 or more</b-form-radio>
+                                    </b-form-radio-group>
+                                </b-form-group>
+
+                            </b-col>
+                        </b-row>
+
+                        <b-row style="margin-top: 24px;">
+                            <b-col sm="12">
+
+                                <b-form-group id="count_gis_fg" v-slot="{ ariaDescribedby }" label="Number of GIS layers">
+                                    
+                                    <b-form-radio-group
+                                        id="count_gis_radio_slots"
+                                        :aria-describedby="ariaDescribedby"
+                                        name="count_gis"
+                                        stacked
+                                    >
+                                        <b-form-radio value="0">0 (No documents)</b-form-radio>
+                                        <b-form-radio value="1">1-5</b-form-radio>
+                                        <b-form-radio value="5">5-25</b-form-radio>
+                                        <b-form-radio value="25">25-100</b-form-radio>
+                                        <b-form-radio value="100">100 or more</b-form-radio>
+                                    </b-form-radio-group>
+                                </b-form-group>
+
+                            </b-col>
+                        </b-row>
+
+                        <b-row style="margin-top: 24px;">
+                            <b-col sm="12">
+
+                                <b-form-group id="count_other_fg" v-slot="{ ariaDescribedby }" label="Number of Other Media Files (Video files, 3D model files, VR files, CAD files, etc)">
+                                    
+                                    <b-form-radio-group
+                                        id="count_other_radio_slots"
+                                        :aria-describedby="ariaDescribedby"
+                                        name="count_other"
+                                        stacked
+                                    >
+                                        <b-form-radio value="0">0 (No documents)</b-form-radio>
+                                        <b-form-radio value="1">1-5</b-form-radio>
+                                        <b-form-radio value="5">5-25</b-form-radio>
+                                        <b-form-radio value="25">25-100</b-form-radio>
+                                        <b-form-radio value="100">100 or more</b-form-radio>
+                                    </b-form-radio-group>
+                                </b-form-group>
+
+                            </b-col>
+                        </b-row>
+
+                    </b-container>
+                </b-card-text>
+            </b-card>
+        </form>
+    </b-container>
+
+
+</script>
+
+<script type="text/javascript">
+
+var vc_estimate_form = Vue.component(
+    'estimate-form',
+    {
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                is_early_career: null,
+                duration: null,
+                count_spec_datasets: null,
+                count_tables: null,
+                count_images: null,
+                count_docs: null,
+                count_gis: null,
+                count_other: null,
+            };
+        },
+        template: '#estimate-form',
+        created() {
+        
+        },
+        computed: {
+        },
+        methods: {
+            on_submit: function(){
+                console.log('on_submit');
+            },
+            on_reset: function(){
+                console.log('on_reset');
+            }
+        },
+    }
+);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <style type="text/css">
         div.about-tab-all {
             min-height: 600px;
@@ -56,457 +319,10 @@
             <div class="col-sm-12">
                 <h3>Data Management Plan Cost Estimates for Publishing and Archiving</h3>
                 <p>The form provided below will help you prepare and estimate a ball-park budget for your grant "Data Management Plan" (DMP). Use of this form is anonymous. We will shortly update this form to provide more specific guidance on steps you can take to improve your project's data management workflows, including specific language to add to your Data Management Plan. This language will include a description of interoperability, access, and archiving issues that help determine the research value of shared data. Please note, completing this form does not imply or constitute a binding agreement.</p>
-                <div class="well">
-                    <form action="{{ base_url }}/about/process-estimate" method="post" class="form-horizontal" >
-                        <!-- General project related fields -->
-                        <h5><strong>Project Contact Information</strong></h5>
-                        <div class="well well-sm" style="padding-top: 3%;">
-                            <!--
-                            <div class="form-group">
-                                <label for="input-name" class="col-sm-3 control-label">Researcher Name</label>
-                                <div class="col-sm-8">
-                                    <input name="user_name"
-                                           type="text"
-                                           class="form-control"
-                                           id="input-name"
-                                           placeholder="Name" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="input-email" class="col-sm-3 control-label">Email</label>
-                                <div class="col-sm-8">
-                                    <div class="input-group">
-                                    <span class="input-group-addon">@</span>
-                                    <input name="user_email"
-                                           type="email"
-                                           class="form-control"
-                                           id="input-email"
-                                           placeholder="Email" />
-                                    </div>
-                                </div>
-                            </div>
-                            -->
-                            <!--
-                            <div class="form-group">
-                                <label for="input-phone" class="col-sm-3 control-label">Phone</label>
-                                <div class="col-sm-8">
-                                    <input name="user_phone"
-                                           type="text"
-                                           class="form-control"
-                                           id="input-phone"
-                                           placeholder="Telephone Number (Optional)" />
-                                </div>
-                            </div>
-                            -->
-                            <!--
-                            <div class="form-group">
-                                <label for="input-proj-name" class="col-sm-3 control-label">Project Name</label>
-                                <div class="col-sm-8">
-                                    <input name="project_name"
-                                           type="text"
-                                           class="form-control"
-                                           id="input-proj-name"
-                                           placeholder="Project Name" />
-                                </div>
-                            </div>
-                            -->
-                            <div class="form-group">
-                                <label for="input-diss-proj-yes" class="col-sm-3 control-label">Dissertation Project</label>
-                                <div class="col-sm-8">
-                                    <label class="radio-inline">
-                                        <input type="radio"
-                                               class="input-diss-proj"
-                                               name="is_grad_student"
-                                               id="input-diss-proj-yes"
-                                               aria-describedby="input-diss-proj-help"
-                                               value="1"/> Yes
-                                    </label>
-                                    <label class="radio-inline">
-                                        <input type="radio"
-                                               class="input-diss-proj"
-                                               name="is_grad_student"
-                                               id="input-diss-proj-no"
-                                               checked="checked"
-                                               value="0" /> No
-                                    </label>
-                                    <span id="input-diss-proj-help" class="help-block">Graduate student projects, including Data Management Plan costs for doctoral dissertation grants, receive a 25% discount</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- General project complexity -->
-                        <h5><strong>Project Database Size and Complexity</strong></h5>
-                        <div class="well well-sm" style="padding-top: 3%;">
-                            <div class="form-group">
-                                <label for="input-proj-years" class="col-sm-4 control-label">Duration of Project (Years)</label>
-                                <div class="col-sm-2">
-                                    <input name="duration"
-                                           type="text"
-                                           class="form-control"
-                                           id="input-proj-years"
-                                           placeholder="" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="input-spec-datasets" class="col-sm-4 control-label">Number of specialist datasets</label>
-                                <div class="col-sm-2">
-                                    <input name="count_spec_datasets"
-                                           type="text"
-                                           class="form-control"
-                                           id="input-spec-datasets"
-                                           aria-describedby="input-spec-datasets-help"
-                                           placeholder="" />
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-4"> </div>
-                                <div class="col-sm-8" style="margin-top: -10px;">
-                                <span id="input-spec-datasets-help" class="help-block">The number of different specialists making datasets (zooarchaeology, lithic analysis, etc.)</span>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="input-count-tables" class="col-sm-4 control-label">Number of tables</label>
-                                <div class="col-sm-2">
-                                    <input name="count_tables"
-                                           type="text"
-                                           class="form-control"
-                                           id="input-count-tables"
-                                           aria-describedby="input-count-tables-help"
-                                           placeholder="" />
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-4"> </div>
-                                <div class="col-sm-8" style="margin-top: -10px;">
-                                <span id="input-count-tables-help" class="help-block">Estimated number of tables in all of the project's relational databases and spreadsheets</span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Media numbers -->
-                        <h5><strong>Project Media Size and Complexity</strong></h5>
-                        <div class="well well-sm" style="padding-top: 3%;">
-                            <div class="row">
-                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
-                                    <label>Number of Image Files</label>
-                                </div>
-                                <div class="col-sm-6 count_radio_outer">
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-images"
-                                               name="count_images"
-                                               id="input-count-images-0"
-                                               value="0"
-                                               checked="checked" /> None
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-images"
-                                               name="count_images"
-                                               id="input-count-images-100"
-                                               value="100"
-                                               /> 1 - 100
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-images"
-                                               name="count_images"
-                                               id="input-count-images-1000"
-                                               value="1000"
-                                               /> 100 - 1000
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-images"
-                                               name="count_images"
-                                               id="input-count-images-10000"
-                                               value="1000"
-                                               /> 1000 - 10000
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-images"
-                                               name="count_images"
-                                               id="input-count-images-100000"
-                                               value="10000"
-                                               /> more than 10000
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
-                                    <label>Number of Documents (<em>HTML, text, PDF</em>)</label>
-                                </div>
-                                <div class="col-sm-6 count_radio_outer">
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-docs"
-                                               name="count_docs"
-                                               id="input-count-docs-0"
-                                               value="0"
-                                               checked="checked" /> None
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-docs"
-                                               name="count_docs"
-                                               id="input-count-docs-10"
-                                               value="10"
-                                               /> 1 - 10
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-docs"
-                                               name="count_docs"
-                                               id="input-count-docs-100"
-                                               value="100"
-                                               /> 10 - 100
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-docs"
-                                               name="count_docs"
-                                               id="input-count-images-1000"
-                                               value="1000"
-                                               /> 100 - 1000
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-docs"
-                                               name="count_docs"
-                                               id="input-count-images-10000"
-                                               value="10000"
-                                               /> more than 1000
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
-                                    <label>Number of GIS "Layers" (<em>Point, line, polygon feature types and rasters</em>)</label>
-                                </div>
-                                <div class="col-sm-6 count_radio_outer">
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-gis"
-                                               name="count_gis"
-                                               id="input-count-gis-0"
-                                               value="0"
-                                               checked="checked" /> None
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-gis"
-                                               name="count_gis"
-                                               id="input-count-gis-1"
-                                               value="1"
-                                               /> 1
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-gis"
-                                               name="count_gis"
-                                               id="input-count-gis-5"
-                                               value="100"
-                                               /> 1 - 5
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-gis"
-                                               name="count_gis"
-                                               id="input-count-gis-10"
-                                               value="10"
-                                               /> 5 - 10
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-gis"
-                                               name="count_gis"
-                                               id="input-count-gis-100"
-                                               value="100"
-                                               /> More than 10
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
-                                    <label>Number of Other Media Files (<em>Videos, 3D models, VR, CAD, etc.</em>)</label>
-                                </div>
-                                <div class="col-sm-6 count_radio_outer">
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-other"
-                                               name="count_other"
-                                               id="input-count-other-0"
-                                               value="0"
-                                               checked="checked" /> None
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-other"
-                                               name="count_other"
-                                               id="input-count-other-10"
-                                               value="10"
-                                               /> 1 - 10
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-other"
-                                               name="count_other"
-                                               id="input-count-other-100"
-                                               value="100"
-                                               /> 10 - 100
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-other"
-                                               name="count_other"
-                                               id="input-count-other-1000"
-                                               value="1000"
-                                               /> 100 - 1000
-                                    </div>
-                                    <div class="radio">
-                                        <input type="radio"
-                                               class="input-count-other"
-                                               name="count_other"
-                                               id="input-count-other-10000"
-                                               value="10000"
-                                               /> more than 1000
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Comments and Submit -->
-                        <!--
-                        <h5><strong>Comment and Copyright Licensing</strong></h5>
-                        <div class="well well-sm" style="padding-top: 3%;">
-                            <div class="form-group">
-                                <label for="input-name" class="col-sm-3 control-label">Comments</label>
-                                <div class="col-sm-8">
-                                    <textarea
-                                        class="form-control"
-                                        style="width: 100%;"
-                                        name="comment"
-                                        id="input-comment"
-                                        placeholder="Additional comments to help Open Context editors understand your project"
-                                        rows="4"></textarea>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-sm-3" style="text-align: right; padding-top: 10px;">
-                                    <label>Copyright License</label>
-                                </div>
-                                <div class="col-sm-7 count_radio_outer">
-                                    <div class="row">
-                                        <div class="col-sm-2">
-                                            <div class="radio">
-                                                <input type="radio"
-                                                       class="input-license"
-                                                       name="license_uri"
-                                                       id="input-license-0"
-                                                       value="https://creativecommons.org/publicdomain/zero/1.0"
-                                                       aria-describedby="input-license-0-help"
-                                                       checked="checked" /> CC-Zero
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-10 small lic_help_outer">
-                                            <label>Creative Commons Zero (Public Domain)</label>
-                                            <span id="input-license-0-help" class="help-block">If I choose to publish with Open Context, I plan to waive all copyright and other intellectual property rights on my content and dedicate my content to the public domain by using the Creative Commons-Zero (public domain) declaration. Legal experts believe that this choice maximizes scientific interoperability and potential for reuse. While not legally required, citation is expected through norms of professional conduct.</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-sm-2">
-                                            <div class="radio">
-                                                <input type="radio"
-                                                       class="input-license"
-                                                       name="license_uri"
-                                                       id="input-license-by"
-                                                       value="https://creativecommons.org/licenses/by/4.0"
-                                                       aria-describedby="input-license-by-help"
-                                                       /> CC-By
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-10 small lic_help_outer">
-                                            <label>Creative Commons Attribution License</label>
-                                            <span id="input-license-by-help" class="help-block">If I choose to publish with Open Context,
-                                            I plan to license my content under a Creative Commons-Attribution License.
-                                            This license allows others to:
-                                            <ul>
-                                                <li>to copy, distribute and transmit the work</li>
-                                                <li>to adapt the work</li>
-                                            </ul>
-                                            These permissions apply under the condition that others attribute your work in the
-                                            manner specified by Open Context (which is proper citation). The above permissions
-                                            help promote reuse and interoperability of your data, and give explicit permission
-                                            for digital archives to preserve content.</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-sm-2">
-                                            <div class="radio">
-                                                <input type="radio"
-                                                       class="input-license"
-                                                       name="license_uri"
-                                                       id="input-license-other"
-                                                       value="other"
-                                                       aria-describedby="input-license-other-help"
-                                                       /> Other
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-10 small lic_help_outer">
-                                            <label>Other Controls and Licenses</label>
-                                            <span id="input-license-other-help" class="help-block">Open Context is an open access
-                                            and open data publisher. While open and nonproprietary data can offer wide research,
-                                            instruction, and public benefits, open data is not universally appropriate.
-                                            Open Context is not a suitable venue for the management of content that requires
-                                            stricter security or intellectual property controls,
-                                            access restrictions, or other restrictions. You can work with
-                                            Open Context editors to develop sound strategies to mix open data publishing and curation
-                                            of more restricted information in other systems.</span>
-                                            <textarea
-                                                class="form-control"
-                                                style="width: 100%;"
-                                                name="license_note"
-                                                id="input-license-note"
-                                                placeholder="Brief explanation of areas where additional restrictions may be required"
-                                                rows="4"></textarea>
-                                        </div>
-
-                                    </div>
-
-                                </div>
-                            </div>
-
-                           -->
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <button
-                                 onclick="estimator.submit();"
-                                 type="button"
-                                 class="btn btn-primary btn-lg btn-block">Submit</button>
-                            </div>
-                            <div class="col-sm-6">
-
-                            </div>
-                            <div class="col-sm-3">
-
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-12" id="estimation-results">
-
-                            </div>
-                        </div>
-                    </form>
+                <div id="item-app">
+                    <estimate-form></estimate-form>
                 </div>
+                
             </div>
         </div>
 
@@ -522,16 +338,44 @@
 
     <script type="text/javascript">
         var csrftoken =  Vue.$cookies.get('csrftoken');
-        var base_url = '{{ base_url }}';
-    </script>
-    <script type="text/javascript">
-            <!--
-            var estimator = false;
-            function start_estimator(){
-                estimator = new estimation();
-            }
-            -->
-    </script>
-    <script src="{{ BASE_URL }}/static/oc/js/about/estimation.js" onload="start_estimator();"></script>
+        
 
+
+        
+    var vm = new Vue(
+      {
+        delimiters: ['[[', ']]'],
+        ref: 'item_app',
+        el: '#item-app',
+        data: {
+
+        },
+        computed: {
+        },
+        created() {
+
+        },
+        mounted() {
+            document.onreadystatechange = () => {
+                // wait for everything to load before starting specialized viewers
+                if (document.readyState == "complete") {
+                    this.page_ready();
+                }
+            };
+        },
+        methods: {
+            page_ready: function(){
+                return null;
+            },
+        },
+        components: {
+            'estimate-form': vc_estimate_form,
+        },
+      },
+    ).$mount('#item-app');
+
+
+
+    </script>
+    
 {% endblock %}
