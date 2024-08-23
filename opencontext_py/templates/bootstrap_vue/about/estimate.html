@@ -28,7 +28,7 @@
                         </b-form-radio-group>
                     </b-form-group>
                     <small class="text-muted">Graduate student, postdoctoral, and other non-tenure track researchers leading 
-                        nonprofit or academic projects receive a 50% discount.
+                        nonprofit or academic projects receive a {{ EARLY_CAREER_DISCOUNT_PERCENT }} discount.
                     </small>
                 </b-card-text>
             </b-card>
@@ -229,6 +229,35 @@ var vc_estimate_form = Vue.component(
         computed: {
         },
         methods: {
+            api_make_estimate_request() {
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify(export_args),
+                };
+                fetch('/about/process-estimate', requestOptions)
+                .then(response => response.json())
+                .then(json => {
+                    this.export_id = json.export_id;
+                    if(json.complete){
+                        this.export_done_time = new Date();
+                        this.making_export = false;
+                        this.export_done = true;
+                        return true;
+                    }
+                    else {
+                        // Wait 500 milliseconds before doing this again.
+                        this.export_progress_time = new Date();
+                        setTimeout(() => {  this.check_make_export(); }, 500);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+            },
             on_submit: function(){
                 console.log('on_submit');
             },
@@ -337,11 +366,9 @@ var vc_estimate_form = Vue.component(
         </div>
     </div>
 
-    <script type="text/javascript">
-        var csrftoken =  Vue.$cookies.get('csrftoken');
-        
 
-
+<script type="text/javascript">
+    var csrftoken =  Vue.$cookies.get('csrftoken');
         
     var vm = new Vue(
       {

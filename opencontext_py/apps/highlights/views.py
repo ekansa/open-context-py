@@ -6,12 +6,6 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.utilities.git_history import get_template_file_git_updated_datetime_str
 
-from opencontext_py.apps.about.estimator import CostEstimator
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.cache import cache_control
-from django.views.decorators.cache import never_cache
-
-from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.icons.configs import DEFAULT_ITEM_TYPE_ICONS
 
 
