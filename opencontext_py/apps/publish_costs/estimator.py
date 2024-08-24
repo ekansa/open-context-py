@@ -101,12 +101,17 @@ def estimate_cost_json(session_key, input_json, record_estimate=True):
         input_json['raw_cost'] = raw_cost
         input_json['max_cost_more'] = max_cost_more
         # Get or create based on the inputs. Ths avoids needing special checks for uniqueness.
-        pub_est, _ = PublishEstimate.objects.get_or_create(
-            session_id=session_key,
-            estimated_cost=cost,
-            input_json=input_json,
-        )
-        
+        hash_id = PublishEstimate().make_hash_id(session_key, input_json)
+        # Just to be extra safe.
+        try:
+            pub_est, _ = PublishEstimate.objects.get_or_create(
+                hash_id=hash_id,
+                session_id=session_key,
+                estimated_cost=cost,
+                input_json=input_json,
+            )
+        except:
+            pub_est = None
     output = {
         'estimate_id': '(not recorded)',
         'cost': cost,
