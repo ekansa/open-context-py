@@ -101,7 +101,7 @@
                                         placeholder="Enter 1 or more"></b-form-input>
                                 </div>
                                 <small class="text-muted">
-                                    Estimated number of tables in all of the project's relational databases and spreadsheets (including separate spreadsheet "sheets")
+                                    Estimated number of tables in all of the project's relational databases and spreadsheets (including distinct spreadsheet "sheets")
                                 </small>
                             </b-col>
                         </b-row>
@@ -109,7 +109,7 @@
                 </b-card-text>
             </b-card>
             <br/>
-            <b-container fluid>
+            <div>
                 <b-row>
                     <b-col sm="6">
                         <b-card title="Project Media Size and Complexity">
@@ -191,7 +191,7 @@
                                     <b-row style="margin-top: 24px;">
                                         <b-col sm="12">
 
-                                            <b-form-group id="count_other_fg" v-slot="{ ariaDescribedby }" label="Number of Other Media Files (Video files, 3D model files, VR files, CAD files, etc)">
+                                            <b-form-group id="count_other_fg" v-slot="{ ariaDescribedby }" label="Number of Other Media Files (Video files, 3D model files, RTI models, CAD files, etc.)">
                                                 
                                                 <b-form-radio-group
                                                     id="count_other_radio_slots"
@@ -218,10 +218,10 @@
                     </b-col>
                     <b-col sm="6">
 
-                        <b-container fluid>
+                        <b-container fluid style="margin-top: 24px;">
 
                             <b-row v-if="submit_ready">
-                                <b-col sm="8">
+                                <b-col sm="9">
                                     <b-button 
                                         @click="on_estimate_click" 
                                         block 
@@ -230,12 +230,12 @@
                                         title="Press button to get or update the cost estimate"
                                     >Estimate Cost</b-button>
                                 </b-col>
-                                <b-col sm="4">
+                                <b-col sm="3">
                                     <b-button type="reset" variant="light">Reset Form</b-button>
                                 </b-col>
                             </b-row>
                             <b-row v-else>
-                                <b-col sm="8">
+                                <b-col sm="9">
                                     <div id="disabled-estimate-button-wrapper" tabindex="0">
                                         <b-button 
                                             block 
@@ -245,13 +245,13 @@
                                     </div>
                                     <b-tooltip target="disabled-estimate-button-wrapper">Fill out form, press button to get cost estimate</b-tooltip>
                                 </b-col>
-                                <b-col sm="4">
+                                <b-col sm="3">
                                     <b-button type="reset" variant="light">Reset Form</b-button>
                                 </b-col>
                             </b-row>
 
                             <b-row style="margin-top: 48px;">
-                                <b-col sm="8" >
+                                <b-col sm="9" >
                                     <b-alert v-if="(cost > 0)" variant="success" show>
                                         <h5 class="text-center">Estimated Publishing Cost</h5>
                                         <p class="text-center">US [[ dollar_cost ]] <span v-if="with_discount"> (with discount)</span></p>
@@ -262,7 +262,7 @@
                         </b-container>
                     </b-col>
                 </b-row>
-            </b-container>
+            </div>
         </form>
     </b-container>
 
