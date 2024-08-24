@@ -377,10 +377,11 @@ class SolrDocumentNS:
         self._add_unique_keyword(self.man_obj.label)
         self.fields['project_uuid'] =  str(self.man_obj.project_id)
         self.fields['project_label'] =  str(self.man_obj.project.label)
-        if not self.man_obj.published:
+        published_datetime = self.man_obj.published
+        if not published_datetime:
+            published_datetime = self.man_obj.project.published
+        if not published_datetime:
             published_datetime = DEFAULT_PUBLISHED_DATETIME
-        else:
-            published_datetime = self.man_obj.published
         self.fields['published'] = published_datetime.strftime(
             '%Y-%m-%dT%H:%M:%SZ'
         )

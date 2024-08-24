@@ -148,7 +148,7 @@ SECURE_SSL_REDIRECT = False
 DEFAULT_HTTPS = False
 if 'SECURE_SSL_REDIRECT' in secrets:
     secrets_https = get_secret('SECURE_SSL_REDIRECT')
-    if secrets_https == 1:
+    if secrets_https == 1 or secrets_https == '1':
         SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
         SECURE_SSL_REDIRECT = True
         DEFAULT_HTTPS = True
@@ -187,20 +187,26 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.humanize',
     'reversion',
-    'opencontext_py.apps.entities.uri',
-    'opencontext_py.apps.entities.entity',
-    'opencontext_py.apps.entities.redirects',
-    # 'opencontext_py.apps.entities.httpmetrics',
-    'opencontext_py.apps.ocitems.namespaces',
-    'opencontext_py.apps.ocitems.subjects',
-    'opencontext_py.apps.ocitems.ocitem',
-    'opencontext_py.apps.ocitems.manifest',
 
-    # Save this for later. This is for experimental
-    # work refactoring the postgres schema
+    # These asre now the cannonical source of
+    # data published by Open Context\
     'opencontext_py.apps.all_items',
     'opencontext_py.apps.etl.importer',
 
+    # This is for estimating publishing costs
+    'opencontext_py.apps.publish_costs',
+
+    'opencontext_py.apps.entities.redirects',
+
+    # These are being deprecated
+    'opencontext_py.apps.entities.uri',
+    'opencontext_py.apps.entities.entity',
+    'opencontext_py.apps.ocitems.namespaces',
+
+    # These are beind deprecated.
+    'opencontext_py.apps.ocitems.subjects',
+    'opencontext_py.apps.ocitems.ocitem',
+    'opencontext_py.apps.ocitems.manifest',
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.events',
     'opencontext_py.apps.ocitems.geospace',
@@ -216,7 +222,6 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.identifiers',
     'opencontext_py.apps.ocitems.obsmetadata',
     'opencontext_py.apps.ocitems.editorials',
-
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
 

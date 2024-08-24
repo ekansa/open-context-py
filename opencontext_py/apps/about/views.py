@@ -1,4 +1,7 @@
+
+import datetime
 import json
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
@@ -6,7 +9,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.utilities.git_history import get_template_file_git_updated_datetime_str
 
-from opencontext_py.apps.about.estimator import CostEstimator
+from opencontext_py.apps.publish_costs.estimator import EARLY_CAREER_DISCOUNT, estimate_cost_json
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -128,8 +131,6 @@ def people_view(request):
 
 
 @ensure_csrf_cookie
-# @cache_control(no_cache=True)
-# @never_cache
 def estimate_view(request):
     """ Get page with publication project cost estimation """
     rp = RootPath()
@@ -148,6 +149,7 @@ def estimate_view(request):
             'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
                 'bootstrap_vue/about/estimate.html'
             ),
+            'EARLY_CAREER_DISCOUNT_PERCENT': f"{EARLY_CAREER_DISCOUNT:.0%}",
         }
         return HttpResponse(template.render(context, request))
     else:
@@ -161,21 +163,30 @@ def estimate_view(request):
 def process_estimate(request):
     """ process an estimate """
     if request.method == 'POST':
-        cost = CostEstimator()
-        output = cost.process_estimate(request.POST)
-        json_output = json.dumps(output,
-                                 indent=4,
-                                 ensure_ascii=False)
-        return HttpResponse(json_output,
-                            content_type='application/json; charset=utf8')
-    elif request.method == 'GET':
-        cost = CostEstimator()
-        output = cost.process_estimate(request.GET)
-        json_output = json.dumps(output,
-                                 indent=4,
-                                 ensure_ascii=False)
-        return HttpResponse(json_output,
-                            content_type='application/json; charset=utf8')
+        input_json = json.loads(request.body)
+        session_key = request.session.session_key
+        ip_addr = None
+        if not session_key:
+            # Use the IP address
+            ip_addr = request.META.get('REMOTE_ADDR')
+        if not session_key and ip_addr and '.' in ip_addr:
+            # Non-exact IP address so we don't loose privacy
+            session_key = '_'.join(ip_addr.split('.')[:3])
+        if not session_key:
+            session_key = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M")
+        output = estimate_cost_json(
+            session_key,
+            input_json,
+        )
+        json_output = json.dumps(
+            output,
+            indent=4,
+            ensure_ascii=False
+        )
+        return HttpResponse(
+            json_output,
+            content_type='application/json; charset=utf8'
+        )
     else:
         return HttpResponseForbidden
 
