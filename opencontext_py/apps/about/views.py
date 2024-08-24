@@ -1,4 +1,7 @@
+
+import datetime
 import json
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
@@ -161,7 +164,20 @@ def process_estimate(request):
     """ process an estimate """
     if request.method == 'POST':
         input_json = json.loads(request.body)
-        output = estimate_cost_json(input_json)
+        session_key = request.session.session_key
+        ip_addr = None
+        if not session_key:
+            # Use the IP address
+            ip_addr = request.META.get('REMOTE_ADDR')
+        if not session_key and ip_addr and '.' in ip_addr:
+            # Non-exact IP address so we don't loose privacy
+            session_key = '_'.join(ip_addr.split('.')[:3])
+        if not session_key:
+            session_key = datetime.datetime.now().strftime("%Y-%m-%d:%H:%M")
+        output = estimate_cost_json(
+            session_key,
+            input_json,
+        )
         json_output = json.dumps(
             output,
             indent=4,

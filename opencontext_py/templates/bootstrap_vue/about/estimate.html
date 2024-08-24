@@ -11,7 +11,7 @@
 <script type="text/x-template" id="estimate-form">
 
     <b-container fluid>
-        <b-form @submit="on_submit" @reset="on_reset" class="form-horizontal" >
+        <b-form @reset="on_reset" class="form-horizontal" >
             <!-- General project related fields -->
             <b-card title="Project Information">
                 <b-card-text>
@@ -21,9 +21,10 @@
                             id="is_early_career_radio_slots"
                             :aria-describedby="ariaDescribedby"
                             name="is_early_career"
+                            v-model="is_early_career"
                         >
                             <b-form-radio value="1">Yes</b-form-radio>
-                            <b-form-radio value="1">No</b-form-radio>
+                            <b-form-radio value="0">No</b-form-radio>
             
                         </b-form-radio-group>
                     </b-form-group>
@@ -45,11 +46,13 @@
                             <b-col sm="8">
                                 <div class="w-50">
                                     <b-form-input 
-                                        name="duration" 
+                                        name="duration"
+                                        v-model="duration"
                                         id="input-duration" 
                                         type="number" 
                                         min="1"
                                         size="sm"
+                                        :formatter="to_number"
                                         placeholder="Enter 1 or more years"></b-form-input>
                                 </div>
                                 <small class="text-muted">
@@ -61,36 +64,40 @@
 
                         <b-row style="margin-top: 24px;">
                             <b-col sm="4">
-                                <label for="input-duration">Number of specialist datasets</label>
+                                <label for="input-count_spec_datasets">Number of specialist datasets</label>
                             </b-col>
                             <b-col sm="8">
                                 <div class="w-50">
                                     <b-form-input 
-                                        name="count_spec_datasets" 
+                                        name="count_spec_datasets"
+                                        v-model="count_spec_datasets"
                                         id="input-count_spec_datasets" 
                                         type="number" 
                                         min="1"
                                         size="sm"
+                                        :formatter="to_number"
                                         placeholder="Enter 1 or more"></b-form-input>
                                 </div>
                                 <small class="text-muted">
-                                    The number of different specialists making datasets (zooarchaeology, lithic analysis, etc.)
+                                    The number of different specialists making datasets (stratigraphy, zooarchaeology, lithic analysis, etc.)
                                 </small>
                             </b-col>
                         </b-row>
 
                         <b-row style="margin-top: 24px;">
                             <b-col sm="4">
-                                <label for="input-duration">Number of data tables</label>
+                                <label for="input-count_tables">Number of data tables</label>
                             </b-col>
                             <b-col sm="8">
                                 <div class="w-50">
                                     <b-form-input 
-                                        name="count_tables" 
+                                        name="count_tables"
+                                        v-model="count_tables"
                                         id="input-count_tables" 
                                         type="number" 
                                         min="1"
                                         size="sm"
+                                        :formatter="to_number"
                                         placeholder="Enter 1 or more"></b-form-input>
                                 </div>
                                 <small class="text-muted">
@@ -101,103 +108,161 @@
                     </b-container>
                 </b-card-text>
             </b-card>
-
             <br/>
-            <b-card title="Project Media Size and Complexity">
-                <b-card-text>
-                    <b-container fluid>
+            <b-container fluid>
+                <b-row>
+                    <b-col sm="6">
+                        <b-card title="Project Media Size and Complexity">
+                            <b-card-text>
+                                <b-container fluid>
 
-                        <b-row>
-                            <b-col sm="12">
+                                    <b-row>
+                                        <b-col sm="12">
 
-                                <b-form-group id="count_images_fg" v-slot="{ ariaDescribedby }" label="Number of Image Files">
-                                    
-                                    <b-form-radio-group
-                                        id="count_images_radio_slots"
-                                        :aria-describedby="ariaDescribedby"
-                                        name="count_images"
-                                        stacked
-                                    >
-                                        <b-form-radio value="0">0 (No iamges)</b-form-radio>
-                                        <b-form-radio value="1">1-100</b-form-radio>
-                                        <b-form-radio value="100">100-1000</b-form-radio>
-                                        <b-form-radio value="1000">1000-10000</b-form-radio>
-                                        <b-form-radio value="10000">10000 or more</b-form-radio>
-                                    </b-form-radio-group>
-                                </b-form-group>
+                                            <b-form-group id="count_images_fg" v-slot="{ ariaDescribedby }" label="Number of Image Files">
+                                                
+                                                <b-form-radio-group
+                                                    id="count_images_radio_slots"
+                                                    :aria-describedby="ariaDescribedby"
+                                                    name="count_images"
+                                                    v-model="count_images"
+                                                    stacked
+                                                    :formatter="to_number"
+                                                >
+                                                    <b-form-radio value="0">0 (No images)</b-form-radio>
+                                                    <b-form-radio value="1">1-100</b-form-radio>
+                                                    <b-form-radio value="100">100-1000</b-form-radio>
+                                                    <b-form-radio value="1000">1000-10000</b-form-radio>
+                                                    <b-form-radio value="10000">10000 or more</b-form-radio>
+                                                </b-form-radio-group>
+                                            </b-form-group>
 
-                            </b-col>
-                        </b-row>
+                                        </b-col>
+                                    </b-row>
 
-                        <b-row style="margin-top: 24px;">
-                            <b-col sm="12">
+                                    <b-row style="margin-top: 24px;">
+                                        <b-col sm="12">
 
-                                <b-form-group id="count_docs_fg" v-slot="{ ariaDescribedby }" label="Number of Documents (HTML, text, PDF)">
-                                    
-                                    <b-form-radio-group
-                                        id="count_docs_radio_slots"
-                                        :aria-describedby="ariaDescribedby"
-                                        name="count_docs"
-                                        stacked
-                                    >
-                                        <b-form-radio value="0">0 (No documents)</b-form-radio>
-                                        <b-form-radio value="1">1-10</b-form-radio>
-                                        <b-form-radio value="10">10-100</b-form-radio>
-                                        <b-form-radio value="100">100-1000</b-form-radio>
-                                        <b-form-radio value="1000">1000 or more</b-form-radio>
-                                    </b-form-radio-group>
-                                </b-form-group>
+                                            <b-form-group id="count_docs_fg" v-slot="{ ariaDescribedby }" label="Number of Documents (HTML, text, PDF)">
+                                                
+                                                <b-form-radio-group
+                                                    id="count_docs_radio_slots"
+                                                    :aria-describedby="ariaDescribedby"
+                                                    name="count_docs"
+                                                    v-model="count_docs"
+                                                    stacked
+                                                    :formatter="to_number"
+                                                >
+                                                    <b-form-radio value="0">0 (No documents)</b-form-radio>
+                                                    <b-form-radio value="1">1-10</b-form-radio>
+                                                    <b-form-radio value="10">10-100</b-form-radio>
+                                                    <b-form-radio value="100">100-1000</b-form-radio>
+                                                    <b-form-radio value="1000">1000 or more</b-form-radio>
+                                                </b-form-radio-group>
+                                            </b-form-group>
 
-                            </b-col>
-                        </b-row>
+                                        </b-col>
+                                    </b-row>
 
-                        <b-row style="margin-top: 24px;">
-                            <b-col sm="12">
+                                    <b-row style="margin-top: 24px;">
+                                        <b-col sm="12">
 
-                                <b-form-group id="count_gis_fg" v-slot="{ ariaDescribedby }" label="Number of GIS layers">
-                                    
-                                    <b-form-radio-group
-                                        id="count_gis_radio_slots"
-                                        :aria-describedby="ariaDescribedby"
-                                        name="count_gis"
-                                        stacked
-                                    >
-                                        <b-form-radio value="0">0 (No documents)</b-form-radio>
-                                        <b-form-radio value="1">1-5</b-form-radio>
-                                        <b-form-radio value="5">5-25</b-form-radio>
-                                        <b-form-radio value="25">25-100</b-form-radio>
-                                        <b-form-radio value="100">100 or more</b-form-radio>
-                                    </b-form-radio-group>
-                                </b-form-group>
+                                            <b-form-group id="count_gis_fg" v-slot="{ ariaDescribedby }" label="Number of GIS layers">
+                                                
+                                                <b-form-radio-group
+                                                    id="count_gis_radio_slots"
+                                                    :aria-describedby="ariaDescribedby"
+                                                    name="count_gis"
+                                                    v-model="count_gis"
+                                                    stacked
+                                                    :formatter="to_number"
+                                                >
+                                                    <b-form-radio value="0">0 (No GIS layers)</b-form-radio>
+                                                    <b-form-radio value="1">1-5</b-form-radio>
+                                                    <b-form-radio value="5">5-25</b-form-radio>
+                                                    <b-form-radio value="25">25-100</b-form-radio>
+                                                    <b-form-radio value="100">100 or more</b-form-radio>
+                                                </b-form-radio-group>
+                                            </b-form-group>
 
-                            </b-col>
-                        </b-row>
+                                        </b-col>
+                                    </b-row>
 
-                        <b-row style="margin-top: 24px;">
-                            <b-col sm="12">
+                                    <b-row style="margin-top: 24px;">
+                                        <b-col sm="12">
 
-                                <b-form-group id="count_other_fg" v-slot="{ ariaDescribedby }" label="Number of Other Media Files (Video files, 3D model files, VR files, CAD files, etc)">
-                                    
-                                    <b-form-radio-group
-                                        id="count_other_radio_slots"
-                                        :aria-describedby="ariaDescribedby"
-                                        name="count_other"
-                                        stacked
-                                    >
-                                        <b-form-radio value="0">0 (No documents)</b-form-radio>
-                                        <b-form-radio value="1">1-5</b-form-radio>
-                                        <b-form-radio value="5">5-25</b-form-radio>
-                                        <b-form-radio value="25">25-100</b-form-radio>
-                                        <b-form-radio value="100">100 or more</b-form-radio>
-                                    </b-form-radio-group>
-                                </b-form-group>
+                                            <b-form-group id="count_other_fg" v-slot="{ ariaDescribedby }" label="Number of Other Media Files (Video files, 3D model files, VR files, CAD files, etc)">
+                                                
+                                                <b-form-radio-group
+                                                    id="count_other_radio_slots"
+                                                    :aria-describedby="ariaDescribedby"
+                                                    name="count_other"
+                                                    v-model="count_other"
+                                                    stacked
+                                                    :formatter="to_number"
+                                                >
+                                                    <b-form-radio value="0">0 (No other files)</b-form-radio>
+                                                    <b-form-radio value="1">1-5</b-form-radio>
+                                                    <b-form-radio value="5">5-25</b-form-radio>
+                                                    <b-form-radio value="25">25-100</b-form-radio>
+                                                    <b-form-radio value="100">100 or more</b-form-radio>
+                                                </b-form-radio-group>
+                                            </b-form-group>
 
-                            </b-col>
-                        </b-row>
+                                        </b-col>
+                                    </b-row>
 
-                    </b-container>
-                </b-card-text>
-            </b-card>
+                                </b-container>
+                            </b-card-text>
+                        </b-card>
+                    </b-col>
+                    <b-col sm="6">
+
+                        <b-container fluid>
+
+                            <b-row v-if="submit_ready">
+                                <b-col sm="8">
+                                    <b-button 
+                                        @click="on_estimate_click" 
+                                        block 
+                                        variant="info"
+                                        v-b-tooltip.hover 
+                                        title="Press button to get or update the cost estimate"
+                                    >Estimate Cost</b-button>
+                                </b-col>
+                                <b-col sm="4">
+                                    <b-button type="reset" variant="light">Reset Form</b-button>
+                                </b-col>
+                            </b-row>
+                            <b-row v-else>
+                                <b-col sm="8">
+                                    <div id="disabled-estimate-button-wrapper" tabindex="0">
+                                        <b-button 
+                                            block 
+                                            disabled 
+                                            variant="info" 
+                                        >Estimate Cost</b-button>
+                                    </div>
+                                    <b-tooltip target="disabled-estimate-button-wrapper">Fill out form, press button to get cost estimate</b-tooltip>
+                                </b-col>
+                                <b-col sm="4">
+                                    <b-button type="reset" variant="light">Reset Form</b-button>
+                                </b-col>
+                            </b-row>
+
+                            <b-row style="margin-top: 48px;">
+                                <b-col sm="8" >
+                                    <b-alert v-if="(cost > 0)" variant="success" show>
+                                        <h5 class="text-center">Estimated Publishing Cost</h5>
+                                        <p class="text-center">US [[ dollar_cost ]] <span v-if="with_discount"> (with discount)</span></p>
+                                    </b-alert>
+                                </b-col>
+                            <b-row>
+
+                        </b-container>
+                    </b-col>
+                </b-row>
+            </b-container>
         </form>
     </b-container>
 
@@ -220,6 +285,10 @@ var vc_estimate_form = Vue.component(
                 count_docs: null,
                 count_gis: null,
                 count_other: null,
+                estimate_id: null,
+                dollar_cost: null,
+                cost: null,
+                with_discount: null,
             };
         },
         template: '#estimate-form',
@@ -227,42 +296,72 @@ var vc_estimate_form = Vue.component(
         
         },
         computed: {
+            submit_ready: function(){
+                if(this.duration == null){
+                    return false;
+                }
+                if(this.count_spec_datasets == null){
+                    return false;
+                }
+                if(this.count_tables == null){
+                    return false;
+                }
+                return true;
+            },
         },
         methods: {
+            to_number(value) {
+                return parseInt(value, 10);
+            },
             api_make_estimate_request() {
+                let input_json = {
+                    is_early_career: this.is_early_career,
+                    duration: this.duration,
+                    count_spec_datasets: this.count_spec_datasets,
+                    count_tables: this.count_tables,
+                    count_images: this.count_images,
+                    count_docs: this.count_docs,
+                    count_gis: this.count_gis,
+                    count_other: this.count_other,
+                };
                 const requestOptions = {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrftoken,
                     },
-                    body: JSON.stringify(export_args),
+                    body: JSON.stringify(input_json),
                 };
                 fetch('/about/process-estimate', requestOptions)
                 .then(response => response.json())
                 .then(json => {
-                    this.export_id = json.export_id;
-                    if(json.complete){
-                        this.export_done_time = new Date();
-                        this.making_export = false;
-                        this.export_done = true;
-                        return true;
-                    }
-                    else {
-                        // Wait 500 milliseconds before doing this again.
-                        this.export_progress_time = new Date();
-                        setTimeout(() => {  this.check_make_export(); }, 500);
-                    }
+                    this.estimate_id = json.estimate_id;
+                    this.dollar_cost = json.dollar_cost;
+                    this.cost = json.cost;
+                    this.with_discount = json.with_discount;
                 })
                 .catch(error => {
                     console.log(error);
                 });
             },
-            on_submit: function(){
-                console.log('on_submit');
+            on_estimate_click: function(){
+                console.log('on_estimate_click');
+                this.api_make_estimate_request();
             },
             on_reset: function(){
                 console.log('on_reset');
+                this.is_early_career = null;
+                this.duration = null;
+                this.count_spec_datasets = null;
+                this.count_tables = null;
+                this.count_images = null;
+                this.count_docs = null;
+                this.count_gis = null;
+                this.count_other = null;
+                this.estimate_id = null;
+                this.dollar_cost = null;
+                this.cost = null;
+                this.with_discount = null;
             }
         },
     }

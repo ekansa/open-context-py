@@ -20,7 +20,7 @@ class PublishEstimate(models.Model):
     only to administrative users, but no personally identifiable data will be kept here
     so this should not be considered sensitive.
     '''
-    uuid = models.UUIDField(primary_key=True, editable=True, default=GenUUID.uuid4())
+    uuid = models.UUIDField(primary_key=True, editable=True)
     session_id = models.TextField()
     hash_id = models.TextField()
     estimated_cost = models.FloatField(null=True)
@@ -58,7 +58,10 @@ class PublishEstimate(models.Model):
         """
         Saves with validation checks.
         """
-        self.hash_id = self.make_hash_id()
+        if not self.uuid:
+            self.uuid = GenUUID.uuid4()
+        if not self.hash_id:
+            self.hash_id = self.make_hash_id(self.session_id, self.input_json)
         super(PublishEstimate, self).save(*args, **kwargs)
 
 
