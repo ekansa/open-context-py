@@ -15,7 +15,7 @@ class SortingOptions():
         self.current_sorting = []
         self.solr_sort_default = configs.SOLR_SORT_DEFAULT
         self.request_sort_dir_delim = configs.REQUEST_SORT_DIR_DELIM
-        self.field_sep = configs.REQUEST_SORT_FIELD_DELIM
+        self.field_sep = configs.REQUEST_PROP_HIERARCHY_DELIM
         self.request_solr_sort_mappings = configs.REQUEST_SOLR_SORT_MAPPINGS
         self.sort_links = []
         self.base_search_url = base_search_url
