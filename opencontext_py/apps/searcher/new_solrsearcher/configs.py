@@ -977,6 +977,16 @@ REQUEST_ISAMPLES_ATTRIBUTES = 'iSamples'
 # Attribute shape, for Nested JSON objects
 REQUEST_NESTED_JSON_ATTRIBUTES = 'JSON-NESTED'
 
+
+ISAMPLES_DEFAULT_CLASS_SLUG_RAW_PATH = REQUEST_OR_OPERATOR.join(
+        [
+        'oc-gen-cat-sample-col',
+        'oc-gen-cat-bio-subj-ecofact',
+        'oc-gen-cat-object',
+        'oc-gen-cat-c14-sample',
+    ]
+)
+
 # Sampling site OK item_classes for a given specimen's context
 ISAMPLES_SAMPLING_SITE_ITEM_CLASS_SLUGS = [
     'oc-gen-cat-site',
