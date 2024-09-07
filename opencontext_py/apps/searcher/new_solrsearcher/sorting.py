@@ -79,6 +79,7 @@ class SortingOptions():
 
         # Iterate through a list of sorting arguments.
         for cur_field_raw in self.make_sort_args_list(requested_sort):
+            print(f'sort: {cur_field_raw}')
             order = 'asc'  # the default sort order
             if self.request_sort_dir_delim in cur_field_raw:
                 cur_field_ex = cur_field_raw.split(self.request_sort_dir_delim)

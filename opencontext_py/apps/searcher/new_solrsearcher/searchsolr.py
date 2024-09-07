@@ -610,6 +610,10 @@ class SearchSolr():
                 # resolution map tiles.
                 do_lr_geotile_facet = False
                 do_lr_chronotile_facet = False
+            if param == 'cat' and raw_paths == [configs.REQUEST_ISAMPLES_ATTRIBUTES]:
+                # Replace the raw-paths with the category slugs relevant to 
+                # iSamples
+                raw_paths = [configs.ISAMPLES_DEFAULT_CLASS_SLUG_RAW_PATH]
             for raw_path in raw_paths:
                 query_dict = querymaker.get_general_hierarchic_paths_query_dict(
                     raw_path=raw_path, **param_args
@@ -654,7 +658,6 @@ class SearchSolr():
                     part_query_dict=query_dict,
                     main_query_dict=query,
                 )
-
 
 
         # -------------------------------------------------------------
@@ -743,6 +746,7 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
+
 
         # Explicitly remove the facet query for client requested
         # response types that don't need it.
