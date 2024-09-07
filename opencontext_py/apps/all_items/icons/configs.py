@@ -484,6 +484,14 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__slug": "oc-gen-cat-animal-bone",
             "icon": "../../static/oc/icons-v2/noun-camel-4109324.svg",
         },
+        {
+            "item_class__uuid": "00000000-6e24-d192-dee7-bbbbf881612b",
+            "item_class__label": "Arbitrary Grouping",
+            "item_class__item_key": "oc-gen:cat-arbitrary-grouping",
+            "item_class__uri": "opencontext.org/vocabularies/oc-general/oc-gen-cat-arbitrary-grouping",
+            "item_class__slug": "'oc-gen-cat-arbitrary-grouping",
+            "icon": "../../static/oc/icons-v2/noun-particles-5777121.svg",
+        },
     ],
     "tables": [
         {
