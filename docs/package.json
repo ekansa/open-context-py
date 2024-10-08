@@ -15,7 +15,7 @@
     "@popperjs/core": "^2.11.2",
     "@types/leaflet": "^1.5.7",
     "apexcharts": "^3.33.1",
-    "bootstrap": "4.5.3",
+    "bootstrap": "5.0.0",
     "bootstrap-vue": "^2.21.2",
     "heatmapjs": "^2.0.2",
     "jquery": "3.5.0",
