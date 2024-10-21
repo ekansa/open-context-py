@@ -1,0 +1,122 @@
+{% load humanize %}
+
+
+<script type="text/x-template" id="all-facets-sort-template">
+    <b-card id="facets-sort-card">
+
+            <b-row align-v="center" align-h="center">
+                <b-col cols="2">
+                    <b-button
+                        data-toggle="tooltip"
+                        data-placement="top"
+                        title="Use alphabetic sorting of filter options below"
+                        @click="change_fsort_state"
+                        class="float-left"
+                        pill
+                        variant="secondary"
+                        :disabled="deactivate_fsort_index"
+                        size="sm">
+                        <b-icon icon="sort-alpha-down"></b-icon>
+                    </b-button>
+                </b-col>
+                <b-col cols="8" class="text-center">
+                    <small class="text-muted text-center" v-if="fsort == FACET_SORT_DEFAULT">
+                        Filter options below sorted by count
+                    </small>
+                    <small class="text-muted text-center" v-else>
+                        Filter options below sorted alphabetically
+                    <small>
+                </b-col>
+                <b-col cols="2">
+                    <b-button
+                        data-toggle="tooltip"
+                        data-placement="top"
+                        title="Organize filter options below by count of records"
+                        @click="change_fsort_state"
+                        class="float-right"
+                        pill
+                        variant="secondary"
+                        :disabled="deactivate_fsort_count"
+                        size="sm">
+                        <b-icon icon="sort-numeric-down-alt"></b-icon>
+                    </b-button>
+                </b-col>
+            </b-row>
+
+    </b-card>
+</script>
+
+
+<script type="text/javascript">
+
+// Passed from the Django template
+const FACET_SORT_DEFAULT = '{{ configs.FACET_SORT_DEFAULT|safe }}';
+
+var vc_facets_sort = Vue.component(
+    'facets_sort',
+    {
+        delimiters: ['[[', ']]'],
+        props: [
+            'result_id', 
+            'result_count',  
+            'frontend_state_obj',
+        ],
+        data() {
+            return {
+                result_id: null,
+                result_count: 0,
+                frontend_state_obj: {},
+                fsort: FACET_SORT_DEFAULT,
+            };
+        },
+        template: '#all-facets-sort-template',
+        computed: {
+            deactivate_fsort_index: function() {
+                let act_fsort = this.get_fsort_state();
+                if(act_fsort == 'index'){
+                    return true;
+                }
+                return false;
+            },
+            deactivate_fsort_count: function(){
+                let act_fsort = this.get_fsort_state();
+                if(act_fsort == FACET_SORT_DEFAULT){
+                    return true;
+                }
+                return false;
+            },
+        },
+        mounted() {
+            this.set_initial_fsort_state();
+        },
+        methods: {
+            get_fsort_state: function(){
+                let act_fsort = getURLParameter(this.result_id, 'fsort');
+                if(act_fsort == 'index'){
+                    return act_fsort;
+                }
+                return FACET_SORT_DEFAULT;
+            },
+            set_initial_fsort_state: function(){
+                this.fsort = this.get_fsort_state();
+            },
+            change_fsort_state: function(){
+                let new_fsort = FACET_SORT_DEFAULT;
+                if(this.fsort == FACET_SORT_DEFAULT){
+                    new_fsort = 'index';
+                }
+                let url = replaceURLparameter(this.result_id, 'fsort', new_fsort);
+                url = abs_to_rel_url_with_frag_obj(url, BASE_URL, this.frontend_state_obj);
+                console.log(`Change facet sort to ${new_fsort}`);
+                this.fsort = new_fsort;
+                router.push(url);
+            },
+        },
+        components: {
+
+        }
+    }
+);
+
+
+</script>

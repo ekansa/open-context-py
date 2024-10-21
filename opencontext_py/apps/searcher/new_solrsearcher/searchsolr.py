@@ -240,6 +240,8 @@ class SearchSolr():
         # Starts with an initial facet field list
         query['facet.field'] = self.init_facet_fields
 
+        # Default facet value sorting
+        query['facet.sort'] = configs.FACET_SORT_DEFAULT
 
         query['facet.range'] = []
         query['stats'] = self.solr_stats_query
@@ -256,6 +258,24 @@ class SearchSolr():
         query['sort'] = sort_opts.make_solr_sort_param_from_request_dict(
             request_dict
         )
+
+
+        # -------------------------------------------------------------
+        # FACET OPTION SORTING
+        # Set solr sorting, either to a default or by translating the
+        # client request_dict.
+        # -------------------------------------------------------------
+        facet_sort = utilities.get_request_param_value(
+            request_dict,
+            param='fsort',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if facet_sort == 'index':
+            # we want to sort by the index (the terms in the facet options)
+            query['facet.sort'] = 'index'
+
 
         # -------------------------------------------------------------
         # FULLTEXT (Keyword)
