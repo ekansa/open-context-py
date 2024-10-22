@@ -13,7 +13,7 @@
                         @click="change_fsort_state"
                         class="float-left"
                         pill
-                        variant="secondary"
+                        :variant="varient_fsort_index"
                         :disabled="deactivate_fsort_index"
                         size="sm">
                         <b-icon icon="sort-alpha-down"></b-icon>
@@ -35,7 +35,7 @@
                         @click="change_fsort_state"
                         class="float-right"
                         pill
-                        variant="secondary"
+                        :variant="varient_fsort_count"
                         :disabled="deactivate_fsort_count"
                         size="sm">
                         <b-icon icon="sort-numeric-down-alt"></b-icon>
@@ -78,12 +78,26 @@ var vc_facets_sort = Vue.component(
                 }
                 return false;
             },
+            varient_fsort_index: function() {
+                let act_fsort = this.get_fsort_state();
+                if(act_fsort == 'index'){
+                    return 'outline-secondary';
+                }
+                return 'info';
+            },
             deactivate_fsort_count: function(){
                 let act_fsort = this.get_fsort_state();
                 if(act_fsort == FACET_SORT_DEFAULT){
                     return true;
                 }
                 return false;
+            },
+            varient_fsort_count: function(){
+                let act_fsort = this.get_fsort_state();
+                if(act_fsort == FACET_SORT_DEFAULT){
+                    return 'outline-secondary';
+                }
+                return 'info';
             },
         },
         mounted() {
