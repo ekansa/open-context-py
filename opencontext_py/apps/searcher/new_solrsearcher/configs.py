@@ -422,7 +422,8 @@ SOLR_SORT_DEFAULT = 'interest_score desc, uuid asc'
 SORT_NEW_URL_IGNORE_PARAMS = [
     'geodeep',
     'chronodeep',
-    'start'
+    'start',
+    'fsort',
 ]
 
 SORT_DEFAULT_TYPE = 'oc-api:sort-interest'
@@ -485,6 +486,14 @@ SORT_OPTIONS_FRONTEND = {
     'context': 'context',
     'project': 'project',
 }
+
+
+# ---------------------------------------------------------------------
+# Configs for making solr facet sorting
+# ---------------------------------------------------------------------
+FACET_SORT_DEFAULT = 'count'
+
+
 
 ALL_ATTRIBUTE_GROUPS_SLUG = SolrDoc.ALL_ATTRIBUTE_GROUPS_SLUG
 
@@ -573,6 +582,7 @@ FILTER_IGNORE_PARAMS = [
     'start',
     'proj-summary',
     'download',
+    'fsort',
 ]
 
 # Request parameters that describe different search or

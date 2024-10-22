@@ -16,6 +16,7 @@
 {% include '../search/parts/facets.html' %}
 {% include '../search/parts/fields_charts.html' %}
 {% include '../search/parts/facets_numeric.html' %}
+{% include '../search/parts/facets_sort.html' %}
 {% include '../search/parts/records_tab.html' %}
 {% include '../search/parts/tabs.html' %}
 {% include '../search/parts/exports.html' %}
@@ -75,6 +76,12 @@
                                 v-bind:frontend_state_obj="frontend_state_obj"
                                 v-bind:base_search_url="result.id"
                             ></filter-search-typeahead>
+
+                            <facets-sort
+                                v-bind:frontend_state_obj="frontend_state_obj"
+                                v-bind:result_count="geo_json_record_layer_count"
+                                v-bind:result_id="result.id"
+                            ></facets-sort>
 
                             <all-facets
                                 v-bind:facets_group_dtype_id="'main_facets'"
@@ -333,6 +340,7 @@
             'all-search-tabs': vc_all_search_tabs,
             'all-filters': vc_all_filters,
             'filter-search-typeahead': vc_filter_seach_typeahead,
+            'facets-sort': vc_facets_sort,
             'all-facets': vc_all_facets,
         },
     }).$mount('#app');

@@ -416,8 +416,12 @@ Search
 #search_filters {
 	margin-top: 36px;
 }
-#main_facets_all {
+#facets-sort-card {
 	margin-top: 36px;
+	border-bottom: none;
+} 
+#main_facets_all {
+	margin-top: -6px;
 }
 .filter_heading_button {
 	text-decoration: none;

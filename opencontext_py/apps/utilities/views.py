@@ -2,15 +2,27 @@ import json
 import pyproj
 import uuid as GenUUID
 
+from django.conf import settings
 from django.http import HttpResponse
+
 from opencontext_py.libs.reprojection import ReprojectUtilities
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 from opencontext_py.apps.all_items.legacy_all import update_old_id
+from opencontext_py.apps.all_items.models import (
+    AllManifest,
+)
+
 from opencontext_py.apps.etl.importer import utilities as etl_utils
 
 from opencontext_py.apps.utilities import geospace_contains
+
+from opencontext_py.apps.linkdata.geonames.api import GeonamesAPI
+from opencontext_py.apps.linkdata.geonames.data import (
+    validate_normalize_geonames_url,
+    convert_geonames_bbox_to_geo_json,
+)
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -323,13 +335,70 @@ http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-pr
             # always make a Point for single coordinate pairs
             geo['type'] = 'Point'
         geo['coordinates'] = coords
-        output = json.dumps(geo,
-                            ensure_ascii=False,
-                            indent=4)
+        output = json.dumps(
+            geo,
+            ensure_ascii=False,
+            indent=4,
+        )
     else:
-        output = json.dumps(coords,
-                            ensure_ascii=False,
-                            indent=4)
+        output = json.dumps(
+            coords,
+            ensure_ascii=False,
+            indent=4,
+        )
     content_type='application/json; charset=utf8'
-    return HttpResponse(output,
-                        content_type=content_type)
+    return HttpResponse(
+        output,
+        content_type=content_type,
+    )
+
+
+def geonames_geojson(request, geonames_uri):
+    """Get a geojson object for a geonames item"""
+    if not settings.DEBUG:
+        return HttpResponse(
+            f'Unauthorized, only allow {settings.DEBUG}',
+            status=401,
+        )
+    if 'http' in geonames_uri:
+        geonames_uri = validate_normalize_geonames_url(geonames_uri)
+    api = GeonamesAPI()
+    json_data = api.get_json_for_geonames_uri(geonames_uri)
+    geometry = convert_geonames_bbox_to_geo_json(json_data)
+    content_type='application/json; charset=utf8'
+    if not geometry:
+        lat = None
+        lon = None
+        if json_data.get('lat'):
+            lat = float(json_data['lat'])
+        if json_data.get('lng'):
+            lon = float(json_data['lng'])
+        if lat is None or lon is None:
+            json_data['oc_note'] = 'bad'
+            output = json.dumps(
+                json_data,
+                ensure_ascii=False,
+                indent=4,
+            )
+            return HttpResponse(
+                output,
+                status=400,
+                content_type=content_type,
+            ) 
+        geometry = {
+            'type': 'Point',
+            'coordinates': [
+                lon,
+                lat,
+            ],
+        }
+    output = json.dumps(
+        geometry,
+        ensure_ascii=False,
+        indent=4,
+    )
+    content_type='application/json; charset=utf8'
+    return HttpResponse(
+        output,
+        content_type=content_type,
+    )
