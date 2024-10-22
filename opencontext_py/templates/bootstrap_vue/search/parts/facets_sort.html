@@ -120,6 +120,9 @@ var vc_facets_sort = Vue.component(
                     new_fsort = 'index';
                 }
                 let url = replaceURLparameter(this.result_id, 'fsort', new_fsort);
+                if(new_fsort == FACET_SORT_DEFAULT){
+                    url = removeURLParameter(this.result_id, 'fsort');
+                }
                 url = abs_to_rel_url_with_frag_obj(url, BASE_URL, this.frontend_state_obj);
                 console.log(`Change facet sort to ${new_fsort}`);
                 this.fsort = new_fsort;
