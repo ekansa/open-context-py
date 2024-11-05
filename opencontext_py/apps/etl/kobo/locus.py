@@ -64,6 +64,7 @@ def make_locus_grid_df(dfs, subjects_df):
     )
     if df_grid is None:
         return None
+    df_grid = utilities.fix_df_col_underscores(df_grid)
     cols = [c for c,_ in pc_configs.LOCUS_GRID_COLS if c in df_grid.columns]
     df_grid = df_grid[cols].copy()
     renames = {c:r for c, r in pc_configs.LOCUS_GRID_COLS if c in df_grid.columns}
@@ -87,6 +88,15 @@ def make_locus_grid_df(dfs, subjects_df):
 
 def make_locus_geo_df(df_grid):
     """Makes a dataframe of geospatial information from the locus df_grid"""
+    missing_cols = [
+        ('Elevation_Type', 'Elevation Type',),
+        ('Grid_X', 'Grid X',),
+        ('Grid_Y', 'Grid Y',),
+    ]
+    print(df_grid.columns.tolist())
+    for f, r in missing_cols:
+        if not r in df_grid.columns and f in df_grid.columns:
+            df_grid[r] = df_grid[f]
     recs = []
     act_indx = ~df_grid['subject_uuid'].isnull()
     for uuid in df_grid[act_indx]['subject_uuid'].unique().tolist():
@@ -134,8 +144,15 @@ def add_trench_cols_to_df_link(df_link, dfs):
     )
     if df is None:
         return df_link
+    missing_cols = [
+        ('Trench_ID', 'Trench ID',),
+        ('Season', 'Field Season',),
+    ]
+    for f, r in missing_cols:
+        if not r in df.columns and f in df.columns:
+            df[r] = df[f]
     if not 'trench_id' in df_link:
-        df_link['trench_id'] = np.nan
+        df_link['trench_id'] = ''
     if not 'trench_year' in df_link:
         df_link['trench_year'] = np.nan
     for _, row in df.iterrows():
@@ -171,6 +188,14 @@ def make_locus_tb_links_df(dfs, subjects_df):
     df_link['object_label'] = np.nan
     df_link['object_uuid'] = np.nan
     df_link['object_uuid_source'] = np.nan
+    rename_cols = {
+        'Date_Trench_Book': 'Trench Book Entry Date',
+        'TB_Start_Page': 'Trench Book Start Page',
+        'TB_End_Page': 'Trench Book End Page',
+    }
+    r_c = {c:r for c, r in rename_cols.items() if c in df_link.columns.tolist()}
+    if r_c:
+        df_link.rename(columns=r_c, inplace=True)
     for i, row in df_link.iterrows():
         object_label = None
         object_uuid = None

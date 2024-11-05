@@ -369,6 +369,8 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+    # Fixes underscore columns in df
+    df_f = utilities.fix_df_col_underscores(df_f)
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
@@ -380,17 +382,19 @@ def prep_attributes_df(
     # normalized to normal Open Context slugs
     df_f = utilities.make_oc_normal_slug_values(df_f)
     # import pdb; pdb.set_trace()
-    if 'Catalog ID (PC)' in df_f.columns:
-        # 2022 variant
-        df_f['catalog_name'] = df_f['Catalog ID (PC)'].apply(
+    cat_cols = [
+        'Catalog ID (PC)',
+        'Catalog ID (PC/VdM)',
+        'Catalog ID PC',
+        'Catalog ID',
+    ]
+    for cat_col in cat_cols:
+        if not cat_col in df_f.columns:
+            continue
+        df_f['catalog_name'] = df_f[cat_col].apply(
             lambda x: utilities.normalize_catalog_label(x),
         )
-    elif 'Catalog ID (PC/VdM)' in df_f.columns:
-        # 2023 variant
-        df_f['catalog_name'] = df_f['Catalog ID (PC/VdM)'].apply(
-            lambda x: utilities.normalize_catalog_label(x),
-        )
-    else:
+    if not 'catalog_name' in df_f.columns:
         raise ValueError('We do not have a known ID/name field in the catalog data')
 
     # Redact catalog items that we already have!

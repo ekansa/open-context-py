@@ -31,6 +31,37 @@ UUID_SOURCE_OC_LOOKUP = 'open-context' # UUID existing in Open Context
 
 LINK_RELATION_TYPE_COL = 'relation_type'
 
+SKIP_UNDERSCORE_FIX_COLS = [
+    'subject_label',
+    'subject_uuid',
+    'subject_uuid_source',
+    'trench_id',
+    'trench_year',
+    '_id',
+    '_uuid',
+    '_submission_time',
+    '_validation_status',
+    '_notes',
+    '_status',
+    '_submitted_by',
+    '__version__',
+    '_tags',
+    '_index',
+]
+
+
+
+def fix_df_col_underscores(df):
+    """Fixes underscores introduced in the 2024 data export, because of course"""
+    if pc_configs.DEFAULT_IMPORT_YEAR != 2024:
+        return df
+    r_cols = {c:c.replace('_', ' ') for c in df.columns.tolist() if c not in SKIP_UNDERSCORE_FIX_COLS}
+    df.rename(columns=r_cols, inplace=True)
+    # print(f'Removed underscores from {len(r_cols)} columns')
+    return df
+
+
+
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
     file_data = []
@@ -88,7 +119,9 @@ def move_to_prefix(all_list, prefix_list):
 def drop_empty_cols(df):
     """Drops columns with empty or null values."""
     for col in df.columns:
-        df[col].replace('', np.nan, inplace=True)
+        indx = ~df[col].isnull()
+        if len(df[indx].index) < 1:
+            df[col] = np.nan
     df_output = df.dropna(axis=1,how='all').copy()
     df_output.reset_index(drop=True, inplace=True)
     return df_output
@@ -286,6 +319,7 @@ def parse_opencontext_type(s):
 
 def get_trench_unit_mapping_dict(trench_id):
     """Gets mapping information for a trench_id based on prefix string"""
+    trench_id = str(trench_id)
     for prefix, map_dict in pc_configs.TRENCH_CONTEXT_MAPPINGS.items():
         if not trench_id.startswith(prefix):
             continue
@@ -438,7 +472,7 @@ def add_final_subjects_uuid_label_cols(
     for col in final_cols:
         if col in df.columns:
             continue
-        df[col] = np.nan
+        df[col] = ''
     if orig_uuid_col not in df.columns:
         return df
     s_label, s_uuid = pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(

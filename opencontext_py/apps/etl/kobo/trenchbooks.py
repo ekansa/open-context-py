@@ -18,6 +18,12 @@ from opencontext_py.apps.etl.kobo import utilities
 
 """
 
+TB_JSON_COL_RENAMES = {
+    "Season": 'Entry Year',
+    "OC_Label": "Open Context Label",
+    "OC Label": "Open Context Label",
+}
+
 TB_ATTRIBUTE_COLS = [
     'subject_label',
     'subject_uuid',
@@ -115,7 +121,9 @@ def make_paging_links_df(dfs):
     for trench_id in df['trench_id'].unique().tolist():
         for rel_type, index_dif in rel_configs:
             trench_indx = (df['trench_id'] == trench_id)
-            df_l = df_sub[trench_indx].copy().reset_index(drop=True)
+            # df_l = df_sub[trench_indx].copy().reset_index(drop=True)
+            df_l = df_sub.loc[trench_indx].copy()
+            df_l.reset_index(drop=True, inplace=True)
             df_l.sort_values(by=sort_cols, inplace=True)
             df_l.reset_index(drop=True, inplace=True)
             len_df_l = len(df_l.index)
@@ -443,6 +451,10 @@ def add_tb_json_entries(df_f, json_path=pc_configs.KOBO_TB_JSON_PATH):
     # The JSON file of Trenchbook attributes has the expected data, and
     # will merge this in via a join.
     df_j = pd.read_json(json_path)
+    # Fixes underscore columns in df_f
+    df_j = utilities.fix_df_col_underscores(df_j)
+    r_cols = {c:r for c, r in TB_JSON_COL_RENAMES.items() if c in df_j.columns}
+    df_j.rename(columns=r_cols, inplace=True)
     if 'Entry Text' in df_j.columns:
         pass
     elif 'Entry_Text' in df_j.columns:
@@ -453,6 +465,7 @@ def add_tb_json_entries(df_f, json_path=pc_configs.KOBO_TB_JSON_PATH):
     df_f = pd.merge(df_f, df_j, on='_uuid', how='left')
     # import pdb; pdb.set_trace()
     return df_f
+
 
 def prep_attributes_df(
     dfs,
@@ -465,6 +478,10 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+    # Fixes underscore columns in df_f
+    df_f = utilities.fix_df_col_underscores(df_f)
+    r_cols = {c:r for c, r in TB_JSON_COL_RENAMES.items() if c in df_f.columns}
+    df_f.rename(columns=r_cols, inplace=True)
     df_f = add_tb_json_entries(df_f)
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)

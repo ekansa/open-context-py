@@ -56,35 +56,61 @@ SUBJECTS_SHEET_COLS = {
     f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
+        ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('_uuid', 'locus_uuid',),
     ],
     f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
+        ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('OC Find ID', 'find_name',),
+        ('OC_Find_ID', 'find_name',),
         ('_uuid', 'find_uuid',),
     ],
     f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
+        ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('OC Bulk', 'bulk_name',),
+        ('OC_Bulk', 'bulk_name',),
+        ('OC Bulk ID', 'bulk_name',),
+        ('OC_Bulk_ID', 'bulk_name',),
         ('_uuid', 'bulk_uuid',),
     ],
     f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Year', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('Catalog ID (PC)', 'catalog_name',),
+        ('Catalog ID PC', 'catalog_name',),
+        ('Catalog_ID_PC', 'catalog_name',),
         ('Catalog ID (PC/VdM)', 'catalog_name',),
         ('_uuid', 'catalog_uuid',),
         ('Object General Type', 'object_general_type'),
+        ('Object_General_Type', 'object_general_type'),
     ],
 }
 
@@ -176,6 +202,8 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             if not sheet_config:
                 continue
             sheet_config += copy.deepcopy(SUBJECTS_GENERAL_KOBO_COLS)
+            # Fixes underscore columns in df
+            df = utilities.fix_df_col_underscores(df)
             df['kobo_form'] = utilities.get_general_form_type_from_sheet_name(
                 sheet_name
             )
@@ -184,6 +212,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
                 df,
                 sheet_config,
             )
+            print(f'Sheet {sheet_name} has {len(df.index)} rows')
             df = merge_trench_df(df, trench_df)
             if df is None:
                 continue
@@ -203,7 +232,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             subj_dfs.append(df)
     # import pdb; pdb.set_trace()
     # df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True, how='outer'), subj_dfs)
-    df = pd.concat(subj_dfs, axis=0)
+    df = pd.concat(subj_dfs, axis=0, ignore_index=True)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
     all_cols = start_cols + locus_cols + mid_cols + last_cols
     final_cols = [c for c in all_cols if c in df.columns]

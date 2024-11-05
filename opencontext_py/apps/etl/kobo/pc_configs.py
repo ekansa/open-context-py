@@ -10,11 +10,11 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 KOBO_API_URL = 'https://kform.opencontext.org'
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-DEFAULT_IMPORT_YEAR = 2023
+DEFAULT_IMPORT_YEAR = 2024
 IMPORT_SOURCE_ID_SUFFIX = '-v1'
 
 HOME = str(Path.home())
-ALL_IMPORTS_PATH = f'{HOME}/data-dumps/pc-{DEFAULT_IMPORT_YEAR}'
+ALL_IMPORTS_PATH = f'{HOME}/pc-data-{DEFAULT_IMPORT_YEAR}'
 KOBO_EXCEL_FILES_PATH = f'{ALL_IMPORTS_PATH}/kobo-data'
 KOBO_JSON_DATA_PATH = f'{ALL_IMPORTS_PATH}/kobo-json-data'
 KOBO_CSV_FROM_JSON_DATA_PATH = f'{ALL_IMPORTS_PATH}/kobo-csv-from-json-data'
@@ -52,6 +52,16 @@ TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
 UNIT_GEO_QUALITY_REPORT = f'{ALL_IMPORTS_PATH}/geo-quality-{DEFAULT_IMPORT_YEAR}.csv'
 
 # API config
+API_FORM_ID_FORM_LABELS_2024 = [
+    ('aRoYQKJ6M4SSewgJJ2GhAV', 'locus', 2024,),
+    ('aTKQPZxVJzHfehk4XD6rL5', 'bulk-finds', 2024,),
+    ('aTTy9G2EZobS4Yj5MLrh8b', 'small-finds', 2024,),
+    ('aLMFzxvXmbSat8XMcjUcjq', 'trench', 2024,),
+    ('a6aorrDfWR8TA8CMAsZmAP', 'catalog', 2024,),
+    ('aQqfNMGNQTiZkcVZ8j5hyr', 'media', 2024,),
+]
+
+
 API_FORM_ID_FORM_LABELS_2023 = [
     ('aRoYQKJ6M4SSewgJJ2GhAV', 'locus', 2023,),
     ('aTKQPZxVJzHfehk4XD6rL5', 'bulk-finds', 2023,),
@@ -76,6 +86,7 @@ API_FORM_ID_FORM_LABELS_ALL = (
 
 # The column in the Kobo exports with the trench identifier
 KOBO_TRENCH_COL = 'Trench ID'
+
 
 SOURCE_ID_PREFIX = f'pc{DEFAULT_IMPORT_YEAR}{IMPORT_SOURCE_ID_SUFFIX}'
 SOURCE_ID_SUBJECTS = f'{SOURCE_ID_PREFIX}-subjects'
@@ -230,6 +241,16 @@ REL_SUBJECTS_PREFIXES = {
             'oc-gen-cat-pottery',
         ],
     ),
+    'Object': (
+        ALL_CATALOG_PREFIXES,
+        [
+            'oc-gen-cat-object',
+            'oc-gen-cat-arch-element',
+            'oc-gen-cat-coin',
+            'oc-gen-cat-bio-subj-ecofact',
+            'oc-gen-cat-pottery',
+        ],
+    ),
     'Supplemental Find': (
         [
             'Bulk Architecture-',
@@ -286,6 +307,19 @@ LOCUS_GRID_COLS = [
     ('Elevations/Elevation Location', 'Elevation Location',),
     ('Elevations/Elevation Other Location', 'Elevation Other Location',),
     ('Elevations/Elevation Note', 'Elevation Note',),
+
+    # Added for 2024
+    ('Elevation', 'Elevation', ),
+    ('Grid X', 'Grid X',),
+    ('Grid Y', 'Grid Y',),
+    ('Elevation Uncertainty', 'Elevation Uncertainty (+/- cm)',),
+    ('Grid X Uncertainty', 'Grid X Uncertainty (+/- cm)',),
+    ('Grid Y Uncertainty', 'Grid Y Uncertainty (+/- cm)',),
+    ('Elevation Type', 'Elevation Type', ),
+    ('Elevation Location', 'Elevation Location',),
+    ('Elevation Other Location', 'Elevation Other Location',),
+    ('Elevation Note', 'Elevation Note',),
+
     ('_submission__uuid', '_uuid',),
 ]
 
@@ -1441,7 +1475,9 @@ RELS_RENAME_COLS = {
     '_submission__uuid': 'subject_uuid',
     'Type of Relationship': LINK_RELATION_TYPE_COL,
     'Related ID': 'object_related_id',
+    'Related_ID': 'object_related_id',
     'Type of Related ID': 'object_related_type',
+    'Rel_ID_Type': 'object_related_type',
     'Note about Relationship': 'object_related_note',
 }
 
@@ -1511,6 +1547,16 @@ MAIN_TRENCH_BOOKS = {
         'ca98_2023': ('Trench Book CA98 2023', 'bdd75b3a-740b-40df-9edd-4b4919188fc1',),
         'ca99_2023': ('Trench Book CA99 2023', '743dd0df-3842-4a81-985f-1a6f5c7a2342',),
         'ca100_2023': ('Trench Book CA100 2023', 'df6fc670-750c-4267-86dc-924cb745b922',),
+    },
+    2024:{
+        'T26_2024': ('Trench Book T26 2024', '78bde3fd-44ec-4325-8a41-7ec11cfb0768',),
+        'T104_2024': ('Trench Book T104 2024', 'e7daa25d-e255-4839-a6e6-90db71fbdbdd',),
+        'T105_2024': ('Trench Book T105 2024', '28b8c221-071b-497d-a367-f1c9a7dac892',),
+        'T106_2024': ('Trench Book T106 2024', '22bc4a8a-cb1d-4e4b-a77c-38f1c2a67d3f',),
+        'T107_2024': ('Trench Book T107 2024', '6bf6e6e9-60c8-4176-bbb5-55cd7d6fb61b',),
+        'T108_2024': ('Trench Book T108 2024', '0dad4b9f-034b-4ee8-8563-8581d06f9b05',),
+        'T109_2024': ('Trench Book T109 2024', '5ce30dd6-7f1a-4aff-b701-100880b0615d',),
+        'T110_2024': ('Trench Book T110 2024', '27b76eed-e05f-4deb-8597-95546b160cbf',),
     },
 }
 

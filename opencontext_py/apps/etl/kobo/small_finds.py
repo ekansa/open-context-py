@@ -43,6 +43,17 @@ DF_REL_ALL_COLS = (
 )
 
 
+def ensure_catalog_id(df):
+    """Make sure we have a catalog ID in the dataframe"""
+    if 'Catalog ID' in df.columns.tolist():
+        return df
+    if 'PC ID' in df.columns.tolist():
+        df['Catalog ID'] = df['PC ID']
+    if not 'Catalog ID' in df.columns.tolist():
+        raise ValueError('We do not have a Catalog ID field in the small_finds data')
+    return df
+
+
 def get_links_from_rel_ids(dfs):
     """Gets links from the related links sheet"""
     # import pdb; pdb.set_trace()
@@ -171,6 +182,9 @@ def prep_links_df(
     return df_all_links
 
 
+
+
+
 def prep_attributes_df(
     dfs,
     subjects_df,
@@ -183,6 +197,9 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+    # Fixes underscore columns in df
+    df_f = utilities.fix_df_col_underscores(df_f)
+    df_f = ensure_catalog_id(df_f)
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
