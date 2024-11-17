@@ -395,25 +395,16 @@ else:
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 5000,
-            },
         },
         'redis_search': {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 1500,
-            },
         },
         'redis_context': {
            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
             'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
-            'OPTIONS': {
-                'MAX_ENTRIES': 1500,
-            },
         },
         'file': {
             'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
