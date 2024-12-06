@@ -57,7 +57,7 @@ def web_protocol_check(uri):
     # Import here to avoid circular imports.
     from opencontext_py.apps.all_items.models import AllManifest
 
-    sleep(0.25)
+    sleep(0.1)
     protocols = ['https://', 'http://',]
     for protocol in protocols:
         check_uri = protocol + AllManifest().clean_uri(uri)
@@ -813,7 +813,7 @@ def get_web_resource_head_info(uri, redirect_ok=False, retry=True, protocol='htt
     # Import here to avoid circular imports.
     from opencontext_py.apps.all_items.models import AllManifest
 
-    sleep(0.3)
+    sleep(0.1)
     output = {}
     try:
         raw_media_type = None
