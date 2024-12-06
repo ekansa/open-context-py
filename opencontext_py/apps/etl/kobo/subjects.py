@@ -13,7 +13,7 @@ from opencontext_py.apps.etl.kobo import db_lookups
 from opencontext_py.apps.etl.kobo import pc_configs
 from opencontext_py.apps.etl.kobo import utilities
 
-
+from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
@@ -56,35 +56,61 @@ SUBJECTS_SHEET_COLS = {
     f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
+        ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('_uuid', 'locus_uuid',),
     ],
     f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
+        ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('OC Find ID', 'find_name',),
+        ('OC_Find_ID', 'find_name',),
         ('_uuid', 'find_uuid',),
     ],
     f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
+        ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('OC Bulk', 'bulk_name',),
+        ('OC_Bulk', 'bulk_name',),
+        ('OC Bulk ID', 'bulk_name',),
+        ('OC_Bulk_ID', 'bulk_name',),
         ('_uuid', 'bulk_uuid',),
     ],
     f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
         ('Year', 'trench_year',),
         ('Locus ID', 'locus_number',),
+        ('Locus_ID', 'locus_number',),
         ('OC Locus', 'locus_name',),
+        ('OC_Locus', 'locus_name',),
+        ('OC Locus ID', 'locus_name',),
+        ('OC_Locus_ID', 'locus_name',),
         ('Catalog ID (PC)', 'catalog_name',),
+        ('Catalog ID PC', 'catalog_name',),
+        ('Catalog_ID_PC', 'catalog_name',),
         ('Catalog ID (PC/VdM)', 'catalog_name',),
         ('_uuid', 'catalog_uuid',),
         ('Object General Type', 'object_general_type'),
+        ('Object_General_Type', 'object_general_type'),
     ],
 }
 
@@ -176,6 +202,8 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             if not sheet_config:
                 continue
             sheet_config += copy.deepcopy(SUBJECTS_GENERAL_KOBO_COLS)
+            # Fixes underscore columns in df
+            df = utilities.fix_df_col_underscores(df)
             df['kobo_form'] = utilities.get_general_form_type_from_sheet_name(
                 sheet_name
             )
@@ -184,6 +212,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
                 df,
                 sheet_config,
             )
+            print(f'Sheet {sheet_name} has {len(df.index)} rows')
             df = merge_trench_df(df, trench_df)
             if df is None:
                 continue
@@ -203,7 +232,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             subj_dfs.append(df)
     # import pdb; pdb.set_trace()
     # df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True, how='outer'), subj_dfs)
-    df = pd.concat(subj_dfs, axis=0)
+    df = pd.concat(subj_dfs, axis=0, ignore_index=True)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
     all_cols = start_cols + locus_cols + mid_cols + last_cols
     final_cols = [c for c in all_cols if c in df.columns]
@@ -362,7 +391,7 @@ def add_item_class_slugs(df):
         new_cols.append(item_classs_slug_col)
         # Add8 the default item_c2lass_slug value for this
         # uuid column
-        df[item_classs_slug_col] = np.nan
+        df[item_classs_slug_col] = ''
         not_null_indx = ~df[c].isnull()
         df.loc[not_null_indx, item_classs_slug_col] = DEFAULT_ITEM_CLASS_SLUGS.get(c)
     # Update the item_class_slugs for any catalog records
@@ -372,6 +401,7 @@ def add_item_class_slugs(df):
     # follow the corresponding uuid columns
     df = df[new_cols].copy()
     return df
+
 
 def normalize_catalog_labels(df):
     """Makes catalog labels fit Poggio Civitate conventions"""
@@ -383,6 +413,51 @@ def normalize_catalog_labels(df):
     )
     return df
 
+
+def update_db_existing_catalog_object_uuids(df):
+    """Updates uuids for cataloged objects already existing in the database"""
+    if not 'catalog_name' in df.columns:
+        return df
+    if not 'catalog_uuid' in df.columns:
+        return df
+    up_indx = ~df['catalog_name'].isnull() & ~df['catalog_uuid'].isnull()
+    df.loc[up_indx, 'kobo_catalog_uuid'] = df[up_indx]['catalog_uuid']
+    for _, row in df[up_indx].iterrows():
+        act_label = row['catalog_name']
+        act_uuid = row['catalog_uuid']
+        man_obj, num_matching = db_lookups.db_reconcile_manifest_obj(
+            item_type='subjects',
+            item_label=act_label,
+            item_class_obj=None,
+        )
+        if not man_obj or num_matching > 1:
+            # No matching object
+            continue
+        if str(man_obj.uuid) == act_uuid:
+            # Our UUIDs already match, so we're OK
+            continue
+        # We need to update uuids. Store the uuid from the found
+        # manifest object in the catalog_uuid column.
+        act_index = (
+            (df['catalog_name'] == act_label)
+            & (df['catalog_uuid'] == act_uuid)
+        )
+        df.loc[act_index, 'catalog_uuid'] = str(man_obj.uuid)
+    return df
+
+
+def add_locus_zero_uuids(df):
+    index = (df['locus_name'] == 'Locus 0') & df['locus_uuid'].isnull()
+    if df[index].empty:
+        return df
+    for _, row in df[index].iterrows():
+        _, new_uuid = update_old_id(row['unit_uuid'] + 'Locus 0')
+        act_index = index & (df['unit_uuid'] == row['unit_uuid'])
+        df.loc[act_index, 'locus_uuid'] = new_uuid
+        df.loc[act_index, 'locus_item_class_slug'] = 'oc-gen-cat-locus'
+    return df
+
+
 def make_and_classify_subjects_df(
     excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     trench_csv_path=pc_configs.TRENCH_CSV_PATH,
@@ -393,6 +468,8 @@ def make_and_classify_subjects_df(
     df = add_missing_contexts(df)
     df = add_item_class_slugs(df)
     df = normalize_catalog_labels(df)
+    df = update_db_existing_catalog_object_uuids(df)
+    df = add_locus_zero_uuids(df)
     if save_path:
         df.to_csv(save_path, index=False)
     return df

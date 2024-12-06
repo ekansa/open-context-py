@@ -1479,9 +1479,9 @@ class AllResource(models.Model):
             head = models_utils.get_web_resource_head_info(
                 self.uri
             )
-        if head is not None and not self.filesize:
+        if head and not self.filesize:
             self.filesize = head.get('filesize')
-        if head is not None and not self.mediatype:
+        if head and not self.mediatype:
             self.mediatype = head.get('mediatype')
 
         # If given, make sure the item mimetype

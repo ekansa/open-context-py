@@ -23,6 +23,10 @@ MULTI_VALUE_COL_PREFIXES = [
     'Vessel Part Present/',
     'Modification/',
     'Type of Composition Subject/',
+    'Object General Type Alternatives/',
+    'Object Type/',
+    'Recovery Techniques/',
+    'Locus Period/',
 ]
 
 UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox' # UUID minted by kobotoolbox
@@ -30,6 +34,40 @@ UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl' # UUID minted by this ETL process
 UUID_SOURCE_OC_LOOKUP = 'open-context' # UUID existing in Open Context
 
 LINK_RELATION_TYPE_COL = 'relation_type'
+
+SKIP_UNDERSCORE_FIX_COLS = [
+    'subject_label',
+    'subject_uuid',
+    'subject_uuid_source',
+    'trench_id',
+    'trench_year',
+    '_id',
+    '_uuid',
+    '_submission_time',
+    '_validation_status',
+    '_notes',
+    '_status',
+    '_submitted_by',
+    '__version__',
+    '_tags',
+    '_index',
+    '_submission__uuid',
+    '_orig_uuid',
+    '_orig_submission__uuid',
+]
+
+
+
+def fix_df_col_underscores(df):
+    """Fixes underscores introduced in the 2024 data export, because of course"""
+    if pc_configs.DEFAULT_IMPORT_YEAR != 2024:
+        return df
+    r_cols = {c:c.replace('_', ' ') for c in df.columns.tolist() if c not in SKIP_UNDERSCORE_FIX_COLS}
+    df.rename(columns=r_cols, inplace=True)
+    # print(f'Removed underscores from {len(r_cols)} columns')
+    return df
+
+
 
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
@@ -88,7 +126,9 @@ def move_to_prefix(all_list, prefix_list):
 def drop_empty_cols(df):
     """Drops columns with empty or null values."""
     for col in df.columns:
-        df[col].replace('', np.nan, inplace=True)
+        indx = ~df[col].isnull()
+        if len(df[indx].index) < 1:
+            df[col] = np.nan
     df_output = df.dropna(axis=1,how='all').copy()
     df_output.reset_index(drop=True, inplace=True)
     return df_output
@@ -286,6 +326,7 @@ def parse_opencontext_type(s):
 
 def get_trench_unit_mapping_dict(trench_id):
     """Gets mapping information for a trench_id based on prefix string"""
+    trench_id = str(trench_id)
     for prefix, map_dict in pc_configs.TRENCH_CONTEXT_MAPPINGS.items():
         if not trench_id.startswith(prefix):
             continue
@@ -302,6 +343,7 @@ def normalize_catalog_label(raw_label):
             num_part += c
         else:
             prefix += c
+    prefix = prefix.strip()
     return f'{prefix} {num_part}'
 
 
@@ -438,7 +480,7 @@ def add_final_subjects_uuid_label_cols(
     for col in final_cols:
         if col in df.columns:
             continue
-        df[col] = np.nan
+        df[col] = ''
     if orig_uuid_col not in df.columns:
         return df
     s_label, s_uuid = pc_configs.SUBJECTS_SHEET_PRIMARY_IDs.get(
@@ -680,6 +722,7 @@ def get_trenchbook_item_from_trench_books_json(
     object_label = None
     object_uuid = None
     object_uuid_source = None
+    year = int(float(year))
     if year != pc_configs.DEFAULT_IMPORT_YEAR:
         # This will only work for the correct import year
         return object_label, object_uuid, object_uuid_source
@@ -689,6 +732,7 @@ def get_trenchbook_item_from_trench_books_json(
     trench_ids = [
         trench_id,
         trench_id.replace('_', '-'),
+        trench_id.replace('_', ' '),
         trench_id.lower(),
         trench_id.lower().replace('_', '-'),
         f'{trench_id}_{year}',
@@ -696,15 +740,27 @@ def get_trenchbook_item_from_trench_books_json(
         f'{trench_id}-{year}',
         f'{trench_id}-{year}'.lower(),
     ]
+    if entry_date and not isinstance(entry_date, str):
+        entry_date = str(entry_date)
+        entry_date = entry_date.split(' ')[0]
     index = (
         (
             df_tb['Trench_ID'].isin(trench_ids)
-            & (df_tb['Start_Page'] <= start_page)
-            & (df_tb['End_Page'] >= end_page)
+            & (df_tb['Start_Page'] >= start_page)
+            & (df_tb['End_Page'] <= end_page)
             & (df_tb['OC_Label'].str.contains(str(entry_date)))
         )
     )
     object_uuids = df_tb[index]['_uuid'].unique().tolist()
+    if len(object_uuids) < 1:
+        # Just try to match the entry date, not the page
+        index = (
+            (
+                df_tb['Trench_ID'].isin(trench_ids)
+                & (df_tb['OC_Label'].str.contains(str(entry_date)))
+            )
+        )
+        object_uuids = df_tb[index]['_uuid'].unique().tolist()
     if len(object_uuids) < 1:
         return object_label, object_uuid, object_uuid_source
     use_index = index
@@ -929,4 +985,13 @@ def redact_suggested_deletions(df, uuid_col, delete_suggestions):
         )
         df = df[~drop_index].copy()
         df.reset_index(drop=True, inplace=True)
+    return df
+
+
+def remove_col_value_underscores(df, col='Trench'):
+    """Removes the underscore from a Trench column"""
+    if not col in df.columns.tolist():
+        return df
+    index = ~df[col].isnull()
+    df.loc[index, col] = df[index][col].str.replace('_', ' ')
     return df

@@ -683,7 +683,7 @@ class DataSourceAnnotation(models.Model):
                 f'For links, object field "{self.object_field}" '
                 f'must be of an item_type {ok_object_types} .'
             )
-        if self.object and self.object.item_type not in sok_object_types:
+        if self.object and self.object.item_type not in ok_object_types:
             raise ValueError(
                 f'For links, the object "{self.object.label}" '
                 f'must be of an item_type {ok_object_types} .'

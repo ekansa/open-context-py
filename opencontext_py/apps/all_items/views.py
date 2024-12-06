@@ -74,14 +74,19 @@ def get_suffix_backoff_suggest_obj(unmatched_id):
     unmatched_id = str(unmatched_id)
     id_suffix = ''
     root_suggest_obj = None
-    if '/' in unmatched_id:
-        split_id = unmatched_id.split('/')
+    for id_delim in ['/', '_']:
+        if root_suggest_obj:
+            continue
+        if not id_delim in unmatched_id:
+            continue
+        split_id = unmatched_id.split(id_delim)
         check_id = split_id[0].strip()
         id_suffix = split_id[-1].strip()
         print(f'check_id: {check_id}  id_suffix: {id_suffix}')
         root_suggest_obj = get_man_obj_by_any_id(check_id)
     if not root_suggest_obj:
         return None
+    print(f'Found suggested item {root_suggest_obj.label} [{root_suggest_obj.uuid}]')
     if root_suggest_obj.item_type != 'projects':
         # we have suggested object, but it is not a project.
         return root_suggest_obj

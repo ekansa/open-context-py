@@ -23,10 +23,10 @@ importlib.reload(imm)
 
 imm.OK_HUGE_IMAGES = True
 df = imm.inventory_make_oc_files(
-    orig_media_dir_path='/home/ekansa/github/open-context-py/static/imports/obea-photos-raw',
-    media_inventory_csv_path='/home/ekansa/github/open-context-py/static/imports/obea-photos.csv',
-    oc_media_root_dir='/home/ekansa/github/open-context-py/static/imports/obea-photos',
-    media_base_url='https://artiraq.org/static/opencontext/oracle-bones-china/obea-photos',
+    orig_media_dir_path='/home/ekansa/oc-images/madaba-loci-raw',
+    media_inventory_csv_path='/home/ekansa/oc-images/madaba-loci.csv',
+    oc_media_root_dir='/home/ekansa/oc-images/madaba-loci',
+    media_base_url='https://storage.googleapis.com/opencontext-media/umayri-madaba-plains-project',
 )
 
 """
@@ -236,7 +236,7 @@ def make_new_size_file(src_file, new_file, new_width):
             )
             im = blurred_image
             blurred_image = None
-        im.thumbnail(size, Image.ANTIALIAS)
+        im.thumbnail(size, Image.LANCZOS)
         try:
             im.save(new_file, "JPEG", quality=100)
             output = new_file

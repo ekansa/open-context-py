@@ -44,12 +44,20 @@ SMALL_FIND_OBJ_COLS = [
     'Field Given Find ID',
 ]
 
+RAW_TO_TRENCH_OBJ_COLS = [
+    ('Trench_ID', 'Trench ID',),
+    ('Year', 'Year',),
+    ('TB_Date', 'Trench Book Entry Date',),
+    ('TB_Start_Page', 'Trench Book Start Page',),
+    ('TB_End_Page', 'Trench Book End Page',),
+]
+
 TRENCH_OBJ_COLS = [
     'Trench ID',
     'Year',
     'Trench Book Entry Date',
     'Trench Book Start Page',
-    'Trench Book End Page'
+    'Trench Book End Page',
 ]
 
 DF_REL_ALL_COLS = (
@@ -60,6 +68,7 @@ DF_REL_ALL_COLS = (
 )
 
 
+
 def prep_df_link_from_attrib_sheet(dfs):
     df_link, _ = utilities.get_df_by_sheet_name_part(
         dfs,
@@ -68,6 +77,21 @@ def prep_df_link_from_attrib_sheet(dfs):
     if df_link is None:
         return None
     df_link = df_link.copy().reset_index(drop=True)
+    # Copy over the columns we need (with the correct name)
+    # for matching trench book entries.
+    for raw_col, tb_col in RAW_TO_TRENCH_OBJ_COLS:
+        if tb_col in df_link.columns:
+            # We already have this, no need to copy it.
+            continue
+        act_raw_cols = [raw_col, raw_col.replace('_', ' '),]
+        for act_raw_col in act_raw_cols:
+            if tb_col in df_link.columns:
+                # We already have this, no need to copy it.
+                continue
+            if not act_raw_col in df_link.columns:
+                # this act_raw_col doesn't exist, so skip
+                continue
+            df_link[tb_col] = df_link[act_raw_col]
     df_link['subject_uuid'] = df_link['_uuid']
     df_link['subject_label'] = df_link['catalog_name']
     df_link['object_label'] = np.nan
@@ -276,6 +300,42 @@ def get_links_from_rel_ids(dfs):
     return df_link
 
 
+def update_uuids_for_db_uuids(df, subjects_df):
+    """Updates UUIDs to use the database uuids for existing items"""
+    if not 'subject_uuid' in df.columns:
+        # We're missing the column to change. skip out.
+        return df
+    if not 'kobo_catalog_uuid' in subjects_df.columns:
+        # We're missing the column to check. skip out.
+        return df
+    need_update_index = (
+        ~subjects_df['catalog_name'].isnull() 
+        & ~subjects_df['catalog_uuid'].isnull()
+        & (
+            subjects_df['catalog_uuid'] != subjects_df['kobo_catalog_uuid']
+        )
+    )
+    if subjects_df[need_update_index].empty:
+        # Nothing needs changing.
+        return df
+    for _, row in subjects_df[need_update_index].iterrows():
+        kobo_uuid = row['kobo_catalog_uuid']
+        good_uuid = row['catalog_uuid']
+        sub_index = df['subject_uuid'] == kobo_uuid
+        sub_update_count = len(df[sub_index].index)
+        if sub_update_count:
+            print(f'Update {sub_update_count} subject_uuid from {kobo_uuid} to {good_uuid}')
+            df.loc[sub_index, 'subject_uuid'] = good_uuid
+        if not 'object_uuid' in df.columns:
+            continue
+        obj_index = df['object_uuid'] == kobo_uuid
+        obj_update_count = len(df[obj_index].index)
+        if obj_update_count:
+            print(f'Update {obj_update_count} object_uuids from {kobo_uuid} to {good_uuid}')
+            df.loc[sub_index, 'object_uuid'] = good_uuid
+    return df
+
+
 def prep_links_df(
     dfs,
     subjects_df,
@@ -319,6 +379,7 @@ def prep_links_df(
         col_to_fill='subject_label',
         id_cols=['subject_uuid'],
     )
+    df_all_links = update_uuids_for_db_uuids(df_all_links, subjects_df)
     if links_csv_path:
         df_all_links.to_csv(links_csv_path, index=False)
     return df_all_links
@@ -369,6 +430,8 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+    # Fixes underscore columns in df
+    df_f = utilities.fix_df_col_underscores(df_f)
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
@@ -380,17 +443,19 @@ def prep_attributes_df(
     # normalized to normal Open Context slugs
     df_f = utilities.make_oc_normal_slug_values(df_f)
     # import pdb; pdb.set_trace()
-    if 'Catalog ID (PC)' in df_f.columns:
-        # 2022 variant
-        df_f['catalog_name'] = df_f['Catalog ID (PC)'].apply(
+    cat_cols = [
+        'Catalog ID (PC)',
+        'Catalog ID (PC/VdM)',
+        'Catalog ID PC',
+        'Catalog ID',
+    ]
+    for cat_col in cat_cols:
+        if not cat_col in df_f.columns:
+            continue
+        df_f['catalog_name'] = df_f[cat_col].apply(
             lambda x: utilities.normalize_catalog_label(x),
         )
-    elif 'Catalog ID (PC/VdM)' in df_f.columns:
-        # 2023 variant
-        df_f['catalog_name'] = df_f['Catalog ID (PC/VdM)'].apply(
-            lambda x: utilities.normalize_catalog_label(x),
-        )
-    else:
+    if not 'catalog_name' in df_f.columns:
         raise ValueError('We do not have a known ID/name field in the catalog data')
 
     # Redact catalog items that we already have!
@@ -399,6 +464,9 @@ def prep_attributes_df(
         cat_label_col='catalog_name',
         cat_uuid_col='_uuid',
     )
+
+    # Make sure the trench doesn't have an underscore
+    df_f = utilities.remove_col_value_underscores(df_f, col='Trench')
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(
@@ -412,6 +480,8 @@ def prep_attributes_df(
     )
     # Add geospatial coordinates
     df_f = grid_geo.create_global_lat_lon_columns(df_f)
+    # Make uuids consistent with the database
+    df_f = update_uuids_for_db_uuids(df_f, subjects_df)
     # Make sure everything has a uuid.
     df_f = utilities.not_null_subject_uuid(df_f)
     if attrib_csv_path:

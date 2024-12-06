@@ -44,6 +44,8 @@ def prep_links_df(
     )
     if df is None:
         return None
+    # Fixes underscore columns in df
+    df = utilities.fix_df_col_underscores(df)
     # Update the buk find entry uuids based on the
     # subjects_df uuids.
     df = utilities.add_final_subjects_uuid_label_cols(
@@ -75,9 +77,13 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+    # Fixes underscore columns in df
+    # import pdb; pdb.set_trace()
+    df_f = utilities.fix_df_col_underscores(df_f)
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
+    df_f = utilities.remove_col_value_underscores(df_f, col='Trench')
     # Update the buk find entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(

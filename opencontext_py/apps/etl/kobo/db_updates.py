@@ -370,7 +370,11 @@ def add_event_field_for_geometry(dsa, ds_source):
     dsa.save()
 
 
-def prepare_ds_source_attribute_cols(form_type, ds_source):
+def prepare_ds_source_attribute_cols(
+    form_type, 
+    ds_source,
+    attribute_configs=pc_configs.DF_ATTRIBUTE_CONFIGS,
+):
     """Assigns attributes to the columns for a data source"""
     # Make sure we have the original field names recorded
     # properly.
@@ -393,7 +397,7 @@ def prepare_ds_source_attribute_cols(form_type, ds_source):
     uuid_field = prep_subject_uuid_field(ds_source, sub_field)
     if not uuid_field:
         return None
-    for config in pc_configs.DF_ATTRIBUTE_CONFIGS:
+    for config in attribute_configs:
         if not form_type in config.get('form_type', []):
             continue
         dsf_qs = DataSourceField.objects.filter(
@@ -484,6 +488,71 @@ def load_media_files_and_attributes(
     print(f'Prepared ds_source {ds_source.__dict__}')
     import_from_ds_source(ds_source)
     return ds_source
+
+
+def add_node_fields_for_locus_grid(ds_source):
+    """Adds observation, event, and attribute-group node fields to the locus grid import"""
+    project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
+    predicate_field_anno_qs = DataSourceAnnotation.objects.filter(
+        data_source=ds_source,
+        subject_field__item_type='subjects',
+        object_field__item_type='predicates',
+    )
+    obs_field = DataSourceField.objects.filter(
+        data_source=ds_source,
+        item_type='observations',
+    ).first()
+    event_field = DataSourceField.objects.filter(
+        data_source=ds_source,
+        item_type='events'
+    ).first()
+    attrib_group_field = DataSourceField.objects.filter(
+        data_source=ds_source,
+        item_type='attribute-groups'
+    ).first()
+    for dsa in predicate_field_anno_qs:
+        if obs_field is not None:
+            obs_field.context = project
+            obs_field.save()
+            dsa.observation = None
+            dsa.observation_field = obs_field
+        if event_field is not None:
+            event_field.context = project
+            event_field.save()
+            dsa.event = None
+            dsa.event_field = event_field
+        if attrib_group_field is not None:
+            attrib_group_field.context = project
+            attrib_group_field.save()
+            dsa.attribute_group = None
+            dsa.attribute_group_field = attrib_group_field
+        dsa.save()
+    
+
+def load_locus_grid_attributes(
+    form_type='locus',
+    source_id=pc_configs.SOURCE_ID_LOCUS_GRID,
+    attrib_csv_path=pc_configs.LOCUS_GRID_CSV_PATH,
+):
+    """Loads/creates media items, associate resource files and attributes"""
+    project = AllManifest.objects.get(uuid=pc_configs.PROJECT_UUID)
+    ds_source = etl_df.load_csv_for_etl(
+        project=project,
+        file_path=attrib_csv_path,
+        data_source_label=source_id,
+        prelim_source_id=source_id,
+        source_exists="replace"
+    )
+    prepare_ds_source_attribute_cols(
+        form_type, 
+        ds_source,
+        attribute_configs=pc_configs.LOCUS_GRID_ATTRIBUTE_CONFIGS,
+    )
+    add_node_fields_for_locus_grid(ds_source)
+    print(f'Prepared ds_source {ds_source.__dict__}')
+    import_from_ds_source(ds_source)
+    return ds_source
+
 
 
 def load_general_subjects_attributes(
@@ -726,3 +795,90 @@ def fix_trench_book_main_links():
                 predicate_obj=tb_to_page_link_pred,
                 inv_predicate_obj=page_to_tb_link_pred,
             )
+
+
+def add_trench_book_media_main_links():
+    """Add links to image media that lack links to subjects items """
+    link_pred_obj = AllManifest.objects.get(uuid=configs.PREDICATE_LINK_UUID)
+    media_qs = AllManifest.objects.filter(
+        source_id__startswith=pc_configs.SOURCE_ID_PREFIX,
+        item_type='media',
+    )
+    for media_obj in media_qs:
+        sub_assert_obj = AllAssertion.objects.filter(
+            subject__item_type='subjects',
+            object=media_obj
+        ).first()
+        if sub_assert_obj:
+            continue
+        doc_assert_obj = AllAssertion.objects.filter(
+            subject__item_type='documents',
+            object=media_obj
+        ).first()
+        if not doc_assert_obj:
+            # We also don't have a document!
+            print(f'Cannot find a connection for {media_obj.label} [{media_obj.uuid}]')
+            continue
+        sub_doc_assert_qs = AllAssertion.objects.filter(
+            subject__item_type='subjects',
+            object=doc_assert_obj.subject,
+        ).order_by(
+            '-subject__path',
+        )
+        if sub_doc_assert_qs.count() < 1:
+            print(
+                f'Cannot find a connection for {media_obj.label} [{media_obj.uuid}] '
+                f'via document {doc_assert_obj.subject.label} [{doc_assert_obj.subject.uuid}]'
+            )
+            continue
+        print(
+            f'Made a subjects connection for {media_obj.label} [{media_obj.uuid}] '
+        )
+        act_sub_doc_assert = None
+        if sub_doc_assert_qs.count() > 2:
+            # We have multiple things linking to this, choose the one with the shortest path
+            # which will be the more general thing.
+            act_sub_doc_assert = sub_doc_assert_qs.last()
+        else:
+            # Choose the first thing, since there's few things linking.
+            act_sub_doc_assert = sub_doc_assert_qs.first()
+        make_link_assertion_and_inverse(
+            source_id=f'{pc_configs.SOURCE_ID_MEDIA_LINKS}-via-tb',
+            subject_obj=media_obj,
+            object_obj=act_sub_doc_assert.subject,
+            predicate_obj=link_pred_obj,
+            inv_predicate_obj=link_pred_obj,
+        )
+
+
+def add_persons():
+    person_class_obj = AllManifest.objects.get(
+        uuid=configs.CLASS_FOAF_PERSON_UUID,
+    )
+    project_obj = AllManifest.objects.get(
+        uuid=pc_configs.PROJECT_UUID,
+    )
+    df = pd.read_csv(pc_configs.PEOPLE_CSV_PATH)
+    for _, row in df.iterrows():
+        uuid = row['uuid']
+        man_obj = AllManifest.objects.filter(
+            uuid=uuid,
+            item_type='persons',
+        ).first()
+        if man_obj:
+            continue
+        man_obj, made_new = get_or_create_manifest_obj(
+            item_label=row['label_oc'],
+            item_class_obj=person_class_obj,
+            item_uuid=uuid,
+            item_type='persons',
+            item_data_type='id',
+            context=project_obj,
+            source_id=pc_configs.SOURCE_ID_PERSONS,
+            meta_json={
+                'combined_name': row['label_oc'],
+                'surname': row.get('surname'),
+                'initials': row.get('name'),
+            }
+        )
+    return df

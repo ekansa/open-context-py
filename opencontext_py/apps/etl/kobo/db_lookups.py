@@ -153,6 +153,7 @@ def db_reconcile_manifest_obj(
 
 def db_reconcile_trench_unit(trench_id, trench_year):
     """Database reconciliation of a trench unit"""
+    trench_year = int(float(trench_year))
     map_dict = utilities.get_trench_unit_mapping_dict(trench_id)
     if not map_dict:
         return None
