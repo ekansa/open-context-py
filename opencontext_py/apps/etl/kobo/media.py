@@ -947,7 +947,7 @@ def fill_in_missing_catalog_links(df_all_links):
         return df_all_links
     if df_all_links.empty:
         return df_all_links
-    req_cols = ['subject_label', 'subject_uuid', 'object_label', 'object_uuid', 'object_uuid_source']
+    req_cols = ['subject_label', 'subject_uuid', 'object_label', 'object_uuid', 'object_uuid_source', 'object_related_id']
     if not set(req_cols).issubset(set(df_all_links.columns.tolist())):
         return df_all_links
     df_subjects = pd.read_csv(pc_configs.SUBJECTS_CSV_PATH)
@@ -962,6 +962,7 @@ def fill_in_missing_catalog_links(df_all_links):
         object_uuid_source = None
         subject_label = row['subject_label']
         subject_uuid = row['subject_uuid']
+        object_related_id = row['object_related_id']
         man_obj = db_lookups.get_related_object_from_item_label(
             item_label=subject_label
         )
@@ -972,6 +973,11 @@ def fill_in_missing_catalog_links(df_all_links):
         if not object_uuid:
             object_label, object_uuid, object_uuid_source = utilities.get_missing_catalog_item_from_df_subjects(
                 item_label=subject_label,
+                df_subjects=df_subjects,
+            )
+        if not object_uuid and object_related_id:
+            object_label, object_uuid, object_uuid_source = utilities.get_missing_catalog_item_from_df_subjects(
+                item_label=object_related_id,
                 df_subjects=df_subjects,
             )
         if not object_uuid:

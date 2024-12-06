@@ -203,6 +203,8 @@ def prep_attributes_df(
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
+     # Make sure the trench doesn't have an underscore
+    df_f = utilities.remove_col_value_underscores(df_f, col='Trench')
     # Update the catalog entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(
@@ -214,6 +216,9 @@ def prep_attributes_df(
         final_uuid_source_col='subject_uuid_source',
         orig_uuid_col='_uuid',
     )
+    # small find data has lots of Kobo expressed slugs that need to be
+    # normalized to normal Open Context slugs
+    df_f = utilities.make_oc_normal_slug_values(df_f)
     # Add geospatial coordinates
     df_f = grid_geo.create_global_lat_lon_columns(df_f)
     # Make sure everything has a uuid.

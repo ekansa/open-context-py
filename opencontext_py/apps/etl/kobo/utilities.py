@@ -23,6 +23,10 @@ MULTI_VALUE_COL_PREFIXES = [
     'Vessel Part Present/',
     'Modification/',
     'Type of Composition Subject/',
+    'Object General Type Alternatives/',
+    'Object Type/',
+    'Recovery Techniques/',
+    'Locus Period/',
 ]
 
 UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox' # UUID minted by kobotoolbox
@@ -47,6 +51,9 @@ SKIP_UNDERSCORE_FIX_COLS = [
     '__version__',
     '_tags',
     '_index',
+    '_submission__uuid',
+    '_orig_uuid',
+    '_orig_submission__uuid',
 ]
 
 
@@ -336,6 +343,7 @@ def normalize_catalog_label(raw_label):
             num_part += c
         else:
             prefix += c
+    prefix = prefix.strip()
     return f'{prefix} {num_part}'
 
 
@@ -714,6 +722,7 @@ def get_trenchbook_item_from_trench_books_json(
     object_label = None
     object_uuid = None
     object_uuid_source = None
+    year = int(float(year))
     if year != pc_configs.DEFAULT_IMPORT_YEAR:
         # This will only work for the correct import year
         return object_label, object_uuid, object_uuid_source
@@ -723,6 +732,7 @@ def get_trenchbook_item_from_trench_books_json(
     trench_ids = [
         trench_id,
         trench_id.replace('_', '-'),
+        trench_id.replace('_', ' '),
         trench_id.lower(),
         trench_id.lower().replace('_', '-'),
         f'{trench_id}_{year}',
@@ -730,15 +740,27 @@ def get_trenchbook_item_from_trench_books_json(
         f'{trench_id}-{year}',
         f'{trench_id}-{year}'.lower(),
     ]
+    if entry_date and not isinstance(entry_date, str):
+        entry_date = str(entry_date)
+        entry_date = entry_date.split(' ')[0]
     index = (
         (
             df_tb['Trench_ID'].isin(trench_ids)
-            & (df_tb['Start_Page'] <= start_page)
-            & (df_tb['End_Page'] >= end_page)
+            & (df_tb['Start_Page'] >= start_page)
+            & (df_tb['End_Page'] <= end_page)
             & (df_tb['OC_Label'].str.contains(str(entry_date)))
         )
     )
     object_uuids = df_tb[index]['_uuid'].unique().tolist()
+    if len(object_uuids) < 1:
+        # Just try to match the entry date, not the page
+        index = (
+            (
+                df_tb['Trench_ID'].isin(trench_ids)
+                & (df_tb['OC_Label'].str.contains(str(entry_date)))
+            )
+        )
+        object_uuids = df_tb[index]['_uuid'].unique().tolist()
     if len(object_uuids) < 1:
         return object_label, object_uuid, object_uuid_source
     use_index = index
@@ -963,4 +985,13 @@ def redact_suggested_deletions(df, uuid_col, delete_suggestions):
         )
         df = df[~drop_index].copy()
         df.reset_index(drop=True, inplace=True)
+    return df
+
+
+def remove_col_value_underscores(df, col='Trench'):
+    """Removes the underscore from a Trench column"""
+    if not col in df.columns.tolist():
+        return df
+    index = ~df[col].isnull()
+    df.loc[index, col] = df[index][col].str.replace('_', ' ')
     return df

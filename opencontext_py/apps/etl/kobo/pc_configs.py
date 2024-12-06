@@ -45,6 +45,7 @@ BULK_FINDS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/bulk-finds-links.csv'
 LOCUS_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-attribs.csv'
 LOCUS_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-links.csv'
 LOCUS_GEO_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-geo.csv'
+LOCUS_GRID_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/locus-grid.csv'
 
 TB_ATTRIB_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-attribs.csv'
 TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
@@ -102,9 +103,11 @@ SOURCE_ID_BULK_FINDS_LINKS = f'{SOURCE_ID_PREFIX}-bulk-link'
 SOURCE_ID_LOCUS_ATTRIB = f'{SOURCE_ID_PREFIX}-locus-attrib'
 SOURCE_ID_LOCUS_LINKS = f'{SOURCE_ID_PREFIX}-locus-link'
 SOURCE_ID_LOCUS_GEO = f'{SOURCE_ID_PREFIX}-locus-geo'
+SOURCE_ID_LOCUS_GRID = f'{SOURCE_ID_PREFIX}-locus-grid'
 SOURCE_ID_TB_ATTRIB = f'{SOURCE_ID_PREFIX}-tb-attrib'
 SOURCE_ID_TB_LINKS = f'{SOURCE_ID_PREFIX}-tb-link'
 SOURCE_ID_UNIT_AGG_GEO = f'{SOURCE_ID_PREFIX}-unit-agg-geo'
+SOURCE_ID_PERSONS = f'{SOURCE_ID_PREFIX}-persons'
 
 ALL_SOURCE_IDS = [
     SOURCE_ID_SUBJECTS,
@@ -120,6 +123,7 @@ ALL_SOURCE_IDS = [
     SOURCE_ID_LOCUS_ATTRIB,
     SOURCE_ID_LOCUS_LINKS,
     SOURCE_ID_LOCUS_GEO,
+    SOURCE_ID_LOCUS_GRID,
     SOURCE_ID_TB_ATTRIB,
     SOURCE_ID_TB_LINKS,
     SOURCE_ID_UNIT_AGG_GEO,
@@ -208,7 +212,7 @@ TRENCH_CONTEXT_MAPPINGS = {
     },
 }
 
-PC_LABEL_PREFIXES = ['PC', 'PC ', 'pc', 'pc ']
+PC_LABEL_PREFIXES = ['PC', 'PC ', 'PC  ', 'pc', 'pc ']
 VDM_LABEL_PREFIXES = ['VDM', 'VDM ', 'VdM', 'VdM ', 'vdm', 'vdm ']
 ALL_CATALOG_PREFIXES = PC_LABEL_PREFIXES + VDM_LABEL_PREFIXES
 
@@ -394,6 +398,136 @@ GEO_ATTRIBUTE_CONFIGS = [
 ]
 
 
+LOCUS_GRID_ATTRIBUTE_CONFIGS = [
+    {
+        'source_col': 'subject_label',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'subject_label',
+            'item_type': 'subjects',
+            'data_type': 'id',
+            'item_class_id': '00000000-6e24-600d-a274-f02367a32c33',
+        },
+        'subject_pk': True,
+    },
+    {
+        'source_col': 'Observation',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Observation',
+            'item_type': 'observations',
+            'data_type': 'id',
+        },
+    },
+    {
+        'source_col': 'Elevation Type',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation Type',
+            'item_type': 'events',
+            'data_type': 'id',
+        },
+    },
+    {
+        'source_col': 'Elevation Location',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation Location',
+            'item_type': 'attribute-groups',
+            'data_type': 'id',
+        },
+    },
+    {
+        'source_col': 'Elevation',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation',
+            'context_id': 'aaa910a0-51c1-472e-9bd6-67e333e63bbd',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Grid X',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid (X)',
+            'context_id': 'b428ff04-670b-4912-a237-ad8ff9635f5a',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Grid Y',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid (Y)',
+            'context_id': '3e0c2eb3-266b-4fa4-ba59-c5c793a1e96d',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Elevation Uncertainty (+/- cm)',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation Uncertainty (+/- cm)',
+            'context_id': '529e931c-51ed-4d85-9759-5c9d4069dbb6',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Grid X Uncertainty (+/- cm)',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid X Uncertainty (+/- cm)',
+            'context_id': '074574a6-43bd-4bc4-9bd2-001d44512cc3',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Grid Y Uncertainty (+/- cm)',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid Y Uncertainty (+/- cm)',
+            'context_id': '1bb7b997-c572-4fe5-ac89-c372c322ed78',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Elevation Note',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation (Note)',
+            'context_id': '03ec1dcf-e0d6-44fc-a7aa-498e7b3f04a6',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+]
+
+
 MEDIA_IMAGE_FIELD_ARGS = {
     'label': 'subject_label',
     'item_type': 'media',
@@ -518,7 +652,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
 
     {
         'source_col': 'Description',
-        'form_type': ['catalog', 'media',],
+        'form_type': ['catalog', 'media', 'bulk find', 'small find', 'locus'],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -661,6 +795,20 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
+        'source_col': 'Object General Type Alternatives',
+        'form_type': ['catalog',],
+        'match_type': 'startswith',
+        'field_args': {
+            # NOTE: This is also mapped to the 'Object Type' predicate.
+            'label': 'Object Type',  # Note the difference from the source-column!
+            'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
+            'item_type': 'types',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
         'source_col': 'Object Type (General)',
         'form_type': ['catalog',],
         'match_type': 'exact',
@@ -688,6 +836,19 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
+        'source_col': 'Object Type Notes',
+        'form_type': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Catalog ID Note',
+            'context_id': '46c4ea6d-232f-45ec-97f8-3dd2762bcb56',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
         'source_col': 'Object Type',
         'form_type': ['catalog', 'small find',],
         'match_type': 'startswith',
@@ -696,6 +857,19 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
             'context_id': '7db79382-7432-42a4-fbc5-ef760691905a',
             'item_type': 'types',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Object Type Notes',
+        'form_type': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Catalog ID Note',
+            'context_id': '46c4ea6d-232f-45ec-97f8-3dd2762bcb56',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
@@ -1156,6 +1330,19 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
+        'source_col': 'Season',
+        'form_type': ['small find', 'bulk find', 'locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Year',
+            'context_id': '2c7fe888-c431-4fbd-39f4-38b7d969a811',
+            'item_type': 'predicates',
+            'data_type': 'xsd:integer',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
         'source_col': 'Entry Type',
         'form_type': ['trench book',],
         'match_type': 'exact',
@@ -1299,6 +1486,32 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
+        'source_col': 'Image Sup Note',
+        'form_type': ['media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Image Note',
+            'context_id': '12cc9a67-f902-4319-91b0-ef22f8dca380',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Image Note',
+        'form_type': ['media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Image Note',
+            'context_id': '12cc9a67-f902-4319-91b0-ef22f8dca380',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
         'source_col': 'File Title',
         'form_type': ['media',],
         'match_type': 'exact',
@@ -1402,6 +1615,166 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
         },
     },
 
+
+    # Added for additonal locus descriptions starting in 2024
+    {
+        'source_col': 'Recovery Techniques Other',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Interpretation',
+            'context_id': 'e16c3104-cc6b-4db3-9813-61d1f15d6423',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Mode of Formation',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Mode of Formation',
+            'context_id': '590c3369-8888-4f3d-92c5-d4ef42e05b55',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Inorganic Components',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Inorganic Components',
+            'context_id': '7dbd0dac-8fcc-4122-82fb-72d02d9fa6bf',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Organic Components',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Organic Components',
+            'context_id': '0057c76d-eda4-43fc-964b-0d5e1f24e3a2',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Definition and Position',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Definition and Position',
+            'context_id': '2e3c8948-cfbd-42a5-84de-87387d13b0fa',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'State of Conservation',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'State of Conservation',
+            'context_id': '3ff9ed87-8f6f-4375-9d9f-7a510e00f3c2',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Observations',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Observations',
+            'context_id': '3764b728-950a-4206-8951-cb535d423702',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Interpretation',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Interpretation',
+            'context_id': 'bb4730f5-9c0f-4501-a4e1-dc418fece57c',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Length m',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Length (m)',
+            'context_id': '40898a63-6ebd-4c08-bece-863e87bf90d4',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Width m',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Width (m)',
+            'context_id': '5a7225be-a815-49f9-9ac1-223fa708d33c',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Depth cm',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Depth (cm)',
+            'context_id': '6562bf69-21e0-4db2-ad1e-d3dd621bbd5c',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+    {
+        'source_col': 'Area m sq',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Area (m sq)',
+            'context_id': '30c3d741-f10d-40a4-a3da-25b7269b197b',
+            'item_type': 'predicates',
+            'data_type': 'xsd:double',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Locus Period',
+        'form_type': ['locus',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Locus Period',
+            'context_id': '13399317-94d9-49e7-ab3a-b2114c2e1972',
+            'item_type': 'types',
+            'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
 ]
 
 LINK_REL_PRED_MAPPINGS = {
@@ -1445,6 +1818,45 @@ LINK_REL_PRED_MAPPINGS = {
     'Other relation': (configs.PREDICATE_LINK_UUID, configs.PREDICATE_LINK_UUID),
     'Comparanda, based on form': ('46037eb4-c4b7-432b-bebb-500aff0e4fe6', '46037eb4-c4b7-432b-bebb-500aff0e4fe6'),
     'Comparanda, based on motif': ('1c5a1fca-0853-4612-9663-f908d9c081b2', '1c5a1fca-0853-4612-9663-f908d9c081b2'),
+
+    # Added for PC 2024, new stratigraphy relations
+    'Overlies Locus': (
+        '316b8a61-a439-4f6b-abbb-138f103296e0', 
+        '7bd95ff4-eab2-41c8-a8ce-779bd83f3f20', # Underlies Locus
+    ),
+    'Anterior To Locus': (
+        '72e24968-90bd-48fd-a242-d25073bc35ce', 
+        '5a97fda9-2dd9-45b3-b113-881b68077d0c', # Posterior To Locus
+    ),
+    'Underlies Locus': (
+        '7bd95ff4-eab2-41c8-a8ce-779bd83f3f20', 
+        '316b8a61-a439-4f6b-abbb-138f103296e0', # Overlies Locus
+    ),
+    'Posterior To Locus': (
+        '5a97fda9-2dd9-45b3-b113-881b68077d0c', 
+        '72e24968-90bd-48fd-a242-d25073bc35ce', # Anterior To Locus
+    ),
+    'Is Bound To Locus': (
+        '8211f9ef-3def-4e2c-8bf3-eee3f2345be0', 
+        None,
+    ),
+    'Above Locus': (
+        '321d7448-91b9-4e1d-88bc-120ef916a118', 
+        'ebc93594-a9c9-4e36-b720-1da3d644be25',  # Below Locus
+    ),
+    'Below Locus': (
+        'ebc93594-a9c9-4e36-b720-1da3d644be25', 
+        '321d7448-91b9-4e1d-88bc-120ef916a118', # Above Locus
+    ),
+    'Is Cut By Locus': (
+        '53ecfa29-c58e-4227-bc2c-c64d858aaa70', 
+        '974de24e-a454-4fb1-9422-eaaeee103ba1', # Cuts Locus
+    ),
+    'Cuts Locus': (
+        '974de24e-a454-4fb1-9422-eaaeee103ba1', 
+        '53ecfa29-c58e-4227-bc2c-c64d858aaa70', # Is Cut By Locus
+    ),
+
 }
 
 
@@ -1568,6 +1980,7 @@ FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS = [
     ('catalog', 'Vessel Part Present', ' '),
     ('catalog', 'Motif', ' '),
     ('catalog', 'Decorative Technique', ' '),
+    ('catalog', 'Object General Type Alternatives', ' '),
 ]
 
 

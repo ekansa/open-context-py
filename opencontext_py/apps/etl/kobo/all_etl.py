@@ -140,6 +140,8 @@ def extract_transform_load_kobo_data():
     db_updates.make_all_link_assertion()
     # Now make sure the page order is resonable.
     db_updates.sort_page_order()
+    # Finally make sure that images actually link to something
+    db_updates.add_trench_book_media_main_links()
 
 
 def db_update_only():
@@ -152,6 +154,8 @@ def db_update_only():
     db_updates.load_trench_books_and_attributes()
     db_updates.load_media_files_and_attributes()
     db_updates.load_general_subjects_attributes()
+    db_updates.load_locus_grid_attributes()
+    db_updates.add_persons()
     db_updates.make_all_link_assertion()
     db_updates.fix_trench_book_main_links()
     db_updates.sort_page_order()
@@ -234,9 +238,9 @@ def add_aggregate_unit_geospatial_data():
         source_id=pc_configs.SOURCE_ID_UNIT_AGG_GEO,
     )
 
+
 def check_aggregate_unit_geospatial_data():
     trench_df = pd.read_csv(pc_configs.TRENCH_CSV_PATH)
-    unit_uuids = trench_df['uuid'].unique().tolist()
     dfs = []
     for parent_uuid in trench_df['uuid'].unique().tolist():
         df = geo_quality.check_points_within_spatial_context(
@@ -250,3 +254,4 @@ def check_aggregate_unit_geospatial_data():
     df_all.reset_index(drop=True, inplace=True)
     df_all.to_csv(pc_configs.UNIT_GEO_QUALITY_REPORT, index=False)
     return df_all
+

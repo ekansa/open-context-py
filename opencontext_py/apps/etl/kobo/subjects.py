@@ -13,7 +13,7 @@ from opencontext_py.apps.etl.kobo import db_lookups
 from opencontext_py.apps.etl.kobo import pc_configs
 from opencontext_py.apps.etl.kobo import utilities
 
-
+from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
@@ -391,7 +391,7 @@ def add_item_class_slugs(df):
         new_cols.append(item_classs_slug_col)
         # Add8 the default item_c2lass_slug value for this
         # uuid column
-        df[item_classs_slug_col] = np.nan
+        df[item_classs_slug_col] = ''
         not_null_indx = ~df[c].isnull()
         df.loc[not_null_indx, item_classs_slug_col] = DEFAULT_ITEM_CLASS_SLUGS.get(c)
     # Update the item_class_slugs for any catalog records
@@ -401,6 +401,7 @@ def add_item_class_slugs(df):
     # follow the corresponding uuid columns
     df = df[new_cols].copy()
     return df
+
 
 def normalize_catalog_labels(df):
     """Makes catalog labels fit Poggio Civitate conventions"""
@@ -412,6 +413,51 @@ def normalize_catalog_labels(df):
     )
     return df
 
+
+def update_db_existing_catalog_object_uuids(df):
+    """Updates uuids for cataloged objects already existing in the database"""
+    if not 'catalog_name' in df.columns:
+        return df
+    if not 'catalog_uuid' in df.columns:
+        return df
+    up_indx = ~df['catalog_name'].isnull() & ~df['catalog_uuid'].isnull()
+    df.loc[up_indx, 'kobo_catalog_uuid'] = df[up_indx]['catalog_uuid']
+    for _, row in df[up_indx].iterrows():
+        act_label = row['catalog_name']
+        act_uuid = row['catalog_uuid']
+        man_obj, num_matching = db_lookups.db_reconcile_manifest_obj(
+            item_type='subjects',
+            item_label=act_label,
+            item_class_obj=None,
+        )
+        if not man_obj or num_matching > 1:
+            # No matching object
+            continue
+        if str(man_obj.uuid) == act_uuid:
+            # Our UUIDs already match, so we're OK
+            continue
+        # We need to update uuids. Store the uuid from the found
+        # manifest object in the catalog_uuid column.
+        act_index = (
+            (df['catalog_name'] == act_label)
+            & (df['catalog_uuid'] == act_uuid)
+        )
+        df.loc[act_index, 'catalog_uuid'] = str(man_obj.uuid)
+    return df
+
+
+def add_locus_zero_uuids(df):
+    index = (df['locus_name'] == 'Locus 0') & df['locus_uuid'].isnull()
+    if df[index].empty:
+        return df
+    for _, row in df[index].iterrows():
+        _, new_uuid = update_old_id(row['unit_uuid'] + 'Locus 0')
+        act_index = index & (df['unit_uuid'] == row['unit_uuid'])
+        df.loc[act_index, 'locus_uuid'] = new_uuid
+        df.loc[act_index, 'locus_item_class_slug'] = 'oc-gen-cat-locus'
+    return df
+
+
 def make_and_classify_subjects_df(
     excel_dirpath=pc_configs.KOBO_EXCEL_FILES_PATH,
     trench_csv_path=pc_configs.TRENCH_CSV_PATH,
@@ -422,6 +468,8 @@ def make_and_classify_subjects_df(
     df = add_missing_contexts(df)
     df = add_item_class_slugs(df)
     df = normalize_catalog_labels(df)
+    df = update_db_existing_catalog_object_uuids(df)
+    df = add_locus_zero_uuids(df)
     if save_path:
         df.to_csv(save_path, index=False)
     return df

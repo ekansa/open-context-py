@@ -83,6 +83,7 @@ def prep_attributes_df(
     df_f = utilities.drop_empty_cols(df_f)
     df_f = utilities.update_multivalue_columns(df_f)
     df_f = utilities.clean_up_multivalue_cols(df_f)
+    df_f = utilities.remove_col_value_underscores(df_f, col='Trench')
     # Update the buk find entry uuids based on the
     # subjects_df uuids.
     df_f = utilities.add_final_subjects_uuid_label_cols(

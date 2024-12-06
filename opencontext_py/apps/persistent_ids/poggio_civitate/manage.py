@@ -26,7 +26,7 @@ from opencontext_py.apps.all_items.models import (
 )
 
 persistent_id_list, id_obj_list = pc_ids.create_pre_registered_ids_for_qs(
-    filter_args={'source_id__contains': '2023'},
+    filter_args={'source_id__contains': '2024'},
 )
 
 

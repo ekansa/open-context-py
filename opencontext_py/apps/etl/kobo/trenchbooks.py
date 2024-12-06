@@ -153,7 +153,7 @@ def add_trench_unit_uuids(
     for col in [unit_label_col, unit_uuid_col, unit_uuid_source_col]:
         if col in df.columns:
             continue
-        df[col] = np.nan
+        df[col] = ''
     t_index = (
         ~df['trench_id'].isnull()
         & ~df['trench_year'].isnull()
@@ -303,6 +303,7 @@ def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, relat
     )
     if df is None:
         return None
+    df = utilities.fix_df_col_underscores(df)
     cols = df.columns.tolist()
     if related_orig_col not in cols:
         partial_match_col = None
@@ -353,15 +354,20 @@ def make_locus_links_df(df_sub, subjects_df, dfs):
         if not req_col in subjects_df.columns:
             return None
     for _, row in df_loci.iterrows():
+        try:
+            locus_number = int(float(row['locus_number']))
+        except:
+            locus_number = row['locus_number']
         lookup_indx = (
             (subjects_df['unit_uuid'] == row['unit_uuid'])
-            & (subjects_df['locus_number'] == row['locus_number'])
+            & (subjects_df['locus_number'] == locus_number)
         )
         if subjects_df[lookup_indx].empty:
+            print(f"Cannot find locus {locus_number} in unit_uuid {row['unit_uuid']}")
             continue
         act_index = (
             (df_loci['unit_uuid'] == row['unit_uuid'])
-            & (df_loci['locus_number'] == row['locus_number'])
+            & (df_loci['locus_number'] == str(locus_number))
         )
         df_loci.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Open Locus'
         df_loci.loc[act_index, 'object_label'] = subjects_df[lookup_indx]['locus_name'].iloc[0]
@@ -387,9 +393,16 @@ def make_small_find_links_df(df_sub, subjects_df, dfs):
         if not req_col in subjects_df.columns:
             return None
     for _, row in df_sf.iterrows():
+        find_rel = 'Related Small Find'
+        find_name = row['rel_find']
+        alt_find_name = find_name.replace('sf-', 'sf ').replace('bf-', 'bf ').replace('SF-', 'SF ')
         lookup_indx = (
             (subjects_df['unit_uuid'] == row['unit_uuid'])
-            & (subjects_df['find_name'].str.endswith(f"-{row['rel_find']}"))
+            & (
+                (subjects_df['find_name'].str.endswith(f"-{find_name}"))
+                | (subjects_df['find_name'].str.contains(find_name, na=False, case=False))
+                | (subjects_df['find_name'].str.contains(alt_find_name, na=False, case=False))
+            )
         )
         if subjects_df[lookup_indx].empty:
             continue
@@ -397,7 +410,7 @@ def make_small_find_links_df(df_sub, subjects_df, dfs):
             (df_sf['unit_uuid'] == row['unit_uuid'])
             & (df_sf['rel_find'] == row['rel_find'])
         )
-        df_sf.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = 'Related Small Find'
+        df_sf.loc[act_index, pc_configs.LINK_RELATION_TYPE_COL] = find_rel
         df_sf.loc[act_index, 'object_label'] = subjects_df[lookup_indx]['find_name'].iloc[0]
         df_sf.loc[act_index, 'object_uuid'] = subjects_df[lookup_indx]['find_uuid'].iloc[0]
         df_sf.loc[act_index, 'object_uuid_source'] = 'subjects_df'
@@ -415,18 +428,23 @@ def prep_links_df(
     if df_sub is None:
         return dfs
     df_list.append(df_sub)
+    print('Make trenchbook main links...')
     df_main = make_tb_main_links_df(df_sub)
     df_list.append(df_main)
+    print('Make trenchbook paging links...')
     df_all_paging = make_paging_links_df(dfs)
     if df_all_paging is not None:
         df_list.append(df_all_paging)
+    print('Make trenchbook locus links...')
     df_loci = make_locus_links_df(df_sub, subjects_df, dfs)
     if df_loci is not None:
         df_list.append(df_loci)
+    print('Make trenchbook small finds links...')
     df_sf = make_small_find_links_df(df_sub, subjects_df, dfs)
     if df_sf is not None:
         df_list.append(df_sf)
     # Make a dataframe of trench supervisors
+    print('Make trenchbook locus links...')
     df_super = make_trench_super_link_df(dfs)
     if df_super is not None:
         df_list.append(df_super)
@@ -526,6 +544,9 @@ def prepare_attributes_links(
             dfs,
             attrib_csv_path=attrib_csv_path
         )
+    print('-'*50)
+    print('Now prepare trenchbook links!')
+    print('-'*50)
     _ = prep_links_df(
         dfs,
         subjects_df,
