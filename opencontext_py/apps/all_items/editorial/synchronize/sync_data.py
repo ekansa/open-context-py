@@ -19,7 +19,7 @@ import datetime
 from opencontext_py.apps.all_items.editorial.synchronize import sync_data
 importlib.reload(sync_data)
 
-sync_data.update_prod_from_default(after_date='2024-06-23', prod_only_insert=False)
+sync_data.update_prod_from_default(after_date='2024-12-23', prod_only_insert=False)
 
 
 
