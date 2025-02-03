@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 
 from django.db.models import Q, OuterRef, Subquery
+from django.core.paginator import Paginator
+
 
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.defaults import (
@@ -177,7 +179,80 @@ def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
         yield list_name[i:i + n]
 
 
-def get_assert_qs(filter_args, exclude_args=None):
+def get_manifest_qs(
+    filter_args, 
+    exclude_args=None):
+    """Creates an manifest queryset. We may want to use this to
+    add records of manifest items that otherwise lack description in
+    the assertions table.
+
+    :param dict filter_args: A dictionary of filter arguments
+        needed to filter the AllAssertion model to make
+        the AllAssertion queryset used to generate the
+        output dataframe.
+    :param dict exclude_args: An optional dict of exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
+    """
+    # Get the 3 major ID schemes we would want to
+    # export.
+    doi_qs = AllIdentifier.objects.filter(
+        item_id=OuterRef('uuid'),
+        scheme='doi',
+    ).values('id')[:1]
+
+    ark_qs = AllIdentifier.objects.filter(
+        item_id=OuterRef('uuid'),
+        scheme='ark',
+    ).values('id')[:1]
+
+    orcid_qs = AllIdentifier.objects.filter(
+        item_id=OuterRef('uuid'),
+        scheme='orcid',
+    ).values('id')[:1]
+
+    qs = AllManifest.objects.all().filter(**filter_args)
+
+    if exclude_args:
+        if isinstance(exclude_args, dict):
+            # Add optional exclude args
+            qs = qs.exclude(**exclude_args)
+        else:
+            qs = qs.exclude(exclude_args)
+
+    # Add lots of select related objects so we don't
+    # need to do many, many, many future queries.
+    qs = qs.select_related(
+        'item_class'
+    ).select_related(
+        'project'
+    ).select_related(
+        'context'
+    )
+
+    # Now add annotations to the query set.
+    qs = qs.annotate(
+        # Add DOI identifiers to subject items, if they exist
+        persistent_doi=Subquery(doi_qs)
+    ).annotate(
+        # Add ARK identifiers to subject items, if they exist
+        persistent_ark=Subquery(ark_qs)
+    ).annotate(
+        # Add ORCID identifiers to subject items, if they exist
+        persistent_orcid=Subquery(orcid_qs)
+    )
+    qs = qs.order_by(
+        'sort',
+        'path',
+        'label',
+    )
+    return qs
+
+
+def get_assert_qs(
+    filter_args, 
+    exclude_args=None):
     """Creates an assertion queryset
 
     :param dict filter_args: A dictionary of filter arguments
@@ -249,8 +324,11 @@ def get_assert_qs(filter_args, exclude_args=None):
     ).filter(**filter_args)
 
     if exclude_args:
-        # Add optional exclude args
-        qs = qs.exclude(**exclude_args)
+        if isinstance(exclude_args, dict):
+            # Add optional exclude args
+            qs = qs.exclude(**exclude_args)
+        else:
+            qs = qs.exclude(exclude_args)
 
     # Add lots of select related objects so we don't
     # need to do many, many, many future queries.
@@ -383,7 +461,46 @@ def make_urls_from_persistent_ids(act_df, prefix_uris='https://'):
     return act_df
 
 
-def get_raw_assertion_df(assert_qs, prefix_uris='https://'):
+def get_raw_manifest_df(man_qs, prefix_uris='https://', chunk_size=10000):
+    """Makes a dataframe from a manifest queryset"""
+    man_qs = man_qs.values(
+        'uuid',
+        '_uri',
+        'label',
+        'persistent_doi',
+        'persistent_ark',
+        'persistent_orcid',
+        'item_type',
+        'item_class__label',
+        'project_id',
+        'project__label',
+        'project__uri',
+        'path',
+        'sort',
+        'context__uri',
+        'published',
+        'revised',
+    )
+    paginator = Paginator(man_qs, chunk_size)
+    man_df = pd.DataFrame(data={})
+    for page_number in paginator.page_range:
+        page = paginator.page(page_number)
+        act_df = pd.DataFrame.from_records(page)
+        man_df = pd.concat([man_df, act_df], ignore_index=True)
+
+    man_df = add_prefix_to_uri_col_values(
+        man_df,
+        prefix_uris=prefix_uris,
+    )
+    man_df = make_urls_from_persistent_ids(
+        man_df,
+        prefix_uris=prefix_uris,
+    )
+    return man_df
+
+
+def get_raw_assertion_df(assert_qs, prefix_uris='https://', chunk_size=10000):
+    """Makes a dataframe from an assertion queryset"""
     assert_qs = assert_qs.values(
         'subject_id',
         'subject__uri',
@@ -433,7 +550,13 @@ def get_raw_assertion_df(assert_qs, prefix_uris='https://'):
         'predicate_equiv_ld_uri',
         'updated',
     )
-    assert_df = pd.DataFrame.from_records(assert_qs)
+    paginator = Paginator(assert_qs, chunk_size)
+    assert_df = pd.DataFrame(data={})
+    for page_number in paginator.page_range:
+        page = paginator.page(page_number)
+        act_df = pd.DataFrame.from_records(page)
+        assert_df = pd.concat([assert_df, act_df], ignore_index=True)
+
     assert_df = add_prefix_to_uri_col_values(
         assert_df,
         prefix_uris=prefix_uris,
@@ -474,7 +597,52 @@ def get_raw_assert_df_by_making_query(
     return get_raw_assertion_df(assert_qs, prefix_uris=prefix_uris)
 
 
-def prepare_df_from_assert_df(assert_df):
+def combine_man_df_to_df_from_assert_df(df, man_df):
+    """Combines a manifest dataframe with a dataframe of assertions
+
+    :param DataFrame df: The dataframe of individual subject entities
+    derived from the assert_df
+
+    :param DataFrame man_df: The dataframe of individual manifest entities
+    that must be included in the final result, even if they totally lack
+    assertions
+    """
+    if man_df is None or man_df.empty:
+        # Nothing to do here.
+        return df
+    col_rename_dict = {
+        'uuid': 'subject_id',
+        '_uri': 'subject__uri',
+        'label': 'subject__label',
+        'persistent_doi': 'persistent_doi',
+        'persistent_ark': 'persistent_ark',
+        'persistent_orcid': 'persistent_orcid',
+        'item_type': 'subject__item_type',
+        'item_class__label': 'subject__item_class__label',
+        'project_id': 'subject__project_id',
+        'project__label': 'subject__project__label',
+        'project__uri': 'subject__project__uri',
+        'path': 'subject__path',
+        'sort': 'subject__sort',
+        'context__uri': 'subject__context__uri',
+        'published': 'subject__published',
+        'revised': 'subject__revised',    
+    }
+    man_df.rename(columns=col_rename_dict, inplace=True)
+    man_df['project_id'] = man_df['subject__project_id']
+    ordered_cols = df.columns.tolist()
+    reordered_cols = [c for c in ordered_cols if c in man_df.columns.tolist()]
+    man_df = man_df[reordered_cols].copy()
+    # Make an index of the subject_id column of rows that are not already
+    # in the dataframe df.
+    new_uuid_index = ~man_df['subject_id'].isin(df['subject_id'])
+    print(f'Adding {len(man_df[new_uuid_index].index)} manifest records that lack assertions')
+    df = pd.concat([df, man_df[new_uuid_index]], ignore_index=True)
+    return df
+
+
+
+def prepare_df_from_assert_df(assert_df, man_df=None):
     """Prepares a (final) dataframe from the assert df
 
     :param DataFrame assert_df: The dataframe of raw assertions and
@@ -507,6 +675,7 @@ def prepare_df_from_assert_df(assert_df):
         act_assert_cols
     ].groupby(by=['subject_id']).first().reset_index()
     df.columns = df.columns.get_level_values(0)
+    df = combine_man_df_to_df_from_assert_df(df, man_df)
     df.sort_values(
         by=['subject__sort', 'subject__path', 'subject__label'],
         inplace=True,
@@ -1813,6 +1982,10 @@ def make_export_df(
     add_object_uris=True,
     node_pred_unique_prefixing=NODE_PRED_UNIQUE_PREDFIXING,
     resource_type_ids=configs.OC_RESOURCE_TYPES_MAIN_UUIDS,
+    more_exclude_args=None,
+    add_manifest_without_asserts=False,
+    add_manifest_filter_args=None,
+    add_manifest_exclude_args=None,
 ):
     """Makes a dataframe prepared for exports
 
@@ -1832,6 +2005,20 @@ def make_export_df(
         named entities.
     :param list node_pred_unique_prefixing: A list configuring what nodes count for
         making a node_prefix
+    :param dict more_exclude_args: An optional dict of more exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
+    :param bool add_manifest_without_asserts: If true, add manifest
+        items that do not have any assertions.
+    :param dict add_manifest_filter_args: An optional dict of more exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
+    :param dict add_manifest_exclude_args: An optional dict of more exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
     """
 
     # NOTE: This function can take lots of time to execute.
@@ -1843,8 +2030,20 @@ def make_export_df(
     # and optional exclusion criteria.
     assert_qs = get_assert_qs(filter_args, exclude_args=exclude_args)
 
+    if more_exclude_args:
+        # Apply more exclusion criteria to the queryset
+        assert_qs = assert_qs.exclude(**more_exclude_args)
+
     # Turn the AllAssertion queryset into a "tall" dataframe.
     assert_df = get_raw_assertion_df(assert_qs)
+
+    man_df = None
+    if add_manifest_without_asserts:
+        man_qs = get_manifest_qs(
+            filter_args=add_manifest_filter_args,
+            exclude_args=add_manifest_exclude_args,
+        )
+        man_df = get_raw_manifest_df(man_qs)
 
     if assert_df is None or assert_df.empty:
         # Return an empty dataframe.
@@ -1852,7 +2051,7 @@ def make_export_df(
 
     # Make the output dataframe, where there's a single row
     # for each "subject" of the assertions.
-    df = prepare_df_from_assert_df(assert_df)
+    df = prepare_df_from_assert_df(assert_df, man_df=man_df)
 
     # Add geometry and chronology information to the output dataframe,
     # either directly added to the subject item, or inferred by
@@ -2044,6 +2243,10 @@ def make_clean_export_df(
     drop_cols=DEFAULT_DROP_COLS,
     context_col_renames=CONTEXT_COL_RENAMES,
     col_renames=DEFAULT_COL_RENAMES,
+    more_exclude_args=None,
+    add_manifest_without_asserts=False,
+    add_manifest_filter_args=None,
+    add_manifest_exclude_args=None,
 ):
     """Makes a dataframe prepared for exports
 
@@ -2073,6 +2276,20 @@ def make_clean_export_df(
         renaming context columns (or any other)
     :param dict col_renames: A dictionary for other
         column renaming
+    :param dict more_exclude_args: An optional dict of more exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
+    :param bool add_manifest_without_asserts: If true, add manifest
+        items that do not have any assertions.
+    :param dict add_manifest_filter_args: An optional dict of more exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
+    :param dict add_manifest_exclude_args: An optional dict of more exclude
+        arguments to with exclusion criteria for the
+        AllAssertion model to make the AllAssertion queryset
+        used to generate the output dataframe.
     """
 
     # Do the hard, complicated job of making the export
@@ -2085,6 +2302,7 @@ def make_clean_export_df(
         add_object_uris=add_object_uris,
         node_pred_unique_prefixing=node_pred_unique_prefixing,
         resource_type_ids=resource_type_ids,
+        more_exclude_args=more_exclude_args,
     )
 
     df_no_style = df.copy()
