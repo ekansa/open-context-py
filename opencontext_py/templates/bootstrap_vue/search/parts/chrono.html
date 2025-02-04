@@ -50,12 +50,13 @@
                 type="area"
                 :key="'chrono-chart-apex-' + apex_key"
                 :options="options"
+                @on_zoomed="on_zoomed"
                 :series="data_series">
             </apexchart>
             <div id="chrono-slider-outer">
                 <div id="range-slider-outer" class="range-slider">
-                    <b-form-input @change="slider_time_range_change" v-model="input_min" :min="chart_min_year" :max="chart_max_year" type="range"></b-form-input>
-                    <b-form-input @change="slider_time_range_change" v-model="input_max" :min="chart_min_year" :max="chart_max_year" type="range"></b-form-input>
+                    <b-form-input @change="slider_time_range_change" v-model="input_min" :min="act_chart_min_year" :max="act_chart_max_year" type="range"></b-form-input>
+                    <b-form-input @change="slider_time_range_change" v-model="input_max" :min="act_chart_min_year" :max="act_chart_max_year" type="range"></b-form-input>
                 </div>
             </div>
             <b-row class="text-center" align-v="center">
@@ -327,6 +328,8 @@ var vc_chronotiles = Vue.component(
                 chart_count_per_year: null,
                 chart_min_year: null,
                 chart_max_year: 2000,
+                act_chart_min_year: null,
+                act_chart_max_year: 2000,
                 t_span_min_proportion: 0.03,
                 t_span_default_min: 10,
                 t_span_min: 25,
@@ -355,6 +358,8 @@ var vc_chronotiles = Vue.component(
                 ],
                 input_min: null,
                 input_max: null,
+                zoom_x_min: null,
+                zoom_x_max: null,
                 default_sigma_factor: 0.25,
                 default_x_interval_count: 100,
                 default_y_no_value: 0,
@@ -373,6 +378,19 @@ var vc_chronotiles = Vue.component(
                                 delay: 50,
                             },
                         },
+                        zoom: {
+                            enabled: true,
+                            type: 'x',
+                            allowMouseWheelZoom: true,
+                        },
+                        events: {
+                            zoomed: function(chartContext, { xaxis, yaxis }) {
+                                console.log('Current zoom range:', {
+                                    xaxis
+                                });
+                                this.on_zoomed(xaxis);
+                            }
+                        },
                         toolbar: {
                             show: true,
                             offsetX: 0,
@@ -380,11 +398,11 @@ var vc_chronotiles = Vue.component(
                             tools: {
                                 download: true,
                                 selection: false,
-                                zoom: false,
+                                zoom: true,
                                 zoomin: false,
                                 zoomout: false,
                                 pan: false,
-                                reset: false | '<img src="/static/icons/reset.png" width="20">',
+                                reset: true | '<img src="/static/icons/reset.png" width="20">',
                                 customIcons: [],
                             },
                             export: {
@@ -559,6 +577,29 @@ var vc_chronotiles = Vue.component(
             },
         },
         methods: {
+            on_zoomed(xaxis) {
+                this.zoom_x_min = xaxis.min;
+                this.zoom_x_max= xaxis.max;
+                if(!this.zoom_x_min || !this.zoom_x_max){
+                    this.act_chart_min_year = this.chart_min_year;
+                    this.act_chart_max_year = this.chart_max_year;
+                    return null;
+                }
+                let zoom_range = this.zoom_x_max - this.zoom_x_min;
+                let no_zoom_range = this.chart_max_year - this.chart_min_year;
+                if(no_zoom_range > 0){
+                    let zoom_proportion = zoom_range / no_zoom_range;
+                    // this.act_chart_min_year = this.round_date(this.zoom_x_min - (this.t_span_min * 2.5));
+                    this.act_chart_min_year = this.round_date(this.zoom_x_min);
+                    this.act_chart_max_year = this.round_date(this.zoom_x_max + (this.t_span_min * 2.5));
+                    if(this.act_chart_min_year > this.input_min){
+                        this.input_min = this.act_chart_min_year;
+                    }
+                    if(this.act_chart_max_year < this.input_max){
+                        this.input_max = this.act_chart_max_year;
+                    }
+                }
+            },
             round_date(date){
                 let n_date = parseFloat(date);
                 let rounded = n_date + this.t_span_min/2 - (n_date + this.t_span_min/2) % this.t_span_min;
@@ -573,6 +614,7 @@ var vc_chronotiles = Vue.component(
             input_time_range_change: function() {
                 this.input_min = parseInt(this.input_min);
                 this.input_max = parseInt(this.input_max);
+                console.log('zoom min: ' + this.zoom_x_min + ' zoom max: ' + this.zoom_x_max);
                 if (this.input_min > this.input_max) {
                     console.log('Fix input range ' + this.input_min + ' to ' + this.input_max);
                     let tmp =  this.input_max;
@@ -818,6 +860,8 @@ var vc_chronotiles = Vue.component(
                 this.chrono_min_year = Math.min.apply(Math, this.chrono_all_years);
                 this.chart_min_year = this.round_date(this.chrono_min_year - (this.t_span_min * 2.5));
                 this.chrono_max_year = Math.max.apply(Math, this.chrono_all_years);
+                this.act_chart_min_year = this.chart_min_year;
+                this.act_chart_max_year = this.chrono_max_year;
                 this.chrono_all_years = [this.chart_min_year].concat(this.chrono_all_years);
                 this.chrono_all_years.sort(function(a, b){return a-b});
                 this.chart_count_per_year = (this.chart_max_year - this.chrono_min_year) / this.chrono_total_count;
