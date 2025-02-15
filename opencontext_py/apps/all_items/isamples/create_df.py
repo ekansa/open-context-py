@@ -143,6 +143,7 @@ def add_isamples_sampling_sites_cols(df):
         group_by_cols = ['subject__project_id'] + act_context_cols
         df_g = df[(cols_for_df_g + group_by_cols)].groupby(group_by_cols, as_index=False).first()
         df_g.reset_index(drop=True, inplace=True)
+        print(f'Finding sampling sites on {len(df_g.index)} rows based on {group_by_cols}')
         for _, row in df_g.iterrows():
             proj_obj = db_entities.get_cache_man_obj_by_any_id(str(row['subject__project_id']))
             if not proj_obj:
@@ -167,6 +168,8 @@ def add_isamples_sampling_sites_cols(df):
             if check_path_in_path_list(check_path, paths_to_skip):
                 continue
             man_obj = db_entities.get_cache_manifest_item_by_path(check_path)
+            if not man_obj or not man_obj.item_class:
+                paths_to_skip.append(check_path)
             if man_obj.item_class.slug in search_configs.ISAMPLES_SAMPLING_SITE_ITEM_CLASS_SLUGS:
                 # We found a site, our preferred sampling location.
                 df.loc[act_index, 'isam_sampling_site_label'] = man_obj.label
