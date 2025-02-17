@@ -29,9 +29,24 @@ from opencontext_py.apps.searcher.new_solrsearcher import configs as search_conf
 
 from opencontext_py.apps.all_items.isamples import duckdb_con
 from opencontext_py.apps.all_items.isamples import utilities as duck_utils
+from opencontext_py.apps.all_items.isamples import sample_sites
 
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
+
+ADDED_FIELFS_DATA_TYPES = [
+    ('isam_sampling_site_label', 'VARCHAR'),
+    ('isam_sampling_site_uri', 'VARCHAR'),
+    ('item__geo_source', 'VARCHAR'),
+    ('item__geometry_type', 'VARCHAR'),
+    ('item__geo_specificity', 'BIGINT'),
+    ('item__latitude', 'DOUBLE'),
+    ('item__longitude', 'DOUBLE'),
+    ('item__earliest', 'DOUBLE'),
+    ('item__latest', 'DOUBLE'),
+    ('item__chrono_source', 'VARCHAR'),
+]
+
 
 
 def get_isamples_item_classes():
@@ -103,6 +118,11 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
     else:
         path_level_fields_sql = ''
 
+    # Add fields populated with null values
+    null_fields = [f'NULL AS {field}' for field, _ in ADDED_FIELFS_DATA_TYPES]
+    null_fields_sql = ', \n'.join(null_fields)
+
+
     where_conditions = ' AND '.join(where_clauses)
 
     sql = f"""
@@ -156,8 +176,8 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
     -- Path upto levels
     {path_level_fields_sql}
 
-    NULL as isam_sampling_site_label,
-    NULL as isam_sampling_site_uri
+    -- Null fields for added fields needed for iSamples export
+    {null_fields_sql}
 
 
     FROM {db_schema}.oc_all_manifest AS m
@@ -300,11 +320,10 @@ def get_isamples_raw_manifest(more_where_clauses=None, con=DB_CON, alias='man'):
     con.execute(f"DROP TABLE IF EXISTS {alias}")
     temp_table_sql = f'CREATE TEMPORARY TABLE {alias} AS {sql}'
     con.execute(temp_table_sql)
-    # Make sure the sampling site columns are VARCHAR
-    sql = f"ALTER TABLE {alias} ALTER isam_sampling_site_label TYPE VARCHAR;"
-    con.execute(sql)
-    sql = f"ALTER TABLE {alias} ALTER isam_sampling_site_uri TYPE VARCHAR;"
-    con.execute(sql)
+    # Make sure the added fields are the right data type
+    for field, data_type in ADDED_FIELFS_DATA_TYPES:
+        sql = f"ALTER TABLE {alias} ALTER {field} TYPE {data_type};"
+        con.execute(sql)
 
 
 def get_isamples_raw_asserts(more_where_clauses=None, con=DB_CON, alias='asserts'):

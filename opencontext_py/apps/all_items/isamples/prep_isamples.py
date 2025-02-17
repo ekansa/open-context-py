@@ -31,6 +31,7 @@ from opencontext_py.apps.all_items.isamples import duckdb_con
 from opencontext_py.apps.all_items.isamples import utilities as duck_utils
 from opencontext_py.apps.all_items.isamples import raw_samples
 from opencontext_py.apps.all_items.isamples import sample_sites
+from opencontext_py.apps.all_items.isamples import space_time
 
 """
 # Testing
@@ -57,6 +58,8 @@ def prepare_sample_manifest(alias='man', con=DB_CON):
     raw_samples.get_isamples_raw_manifest(con=con, alias=alias)
     # Populate the sampling site columns
     sample_sites.get_isamples_sampling_sites(con=con)
+    # Populate the space-time columns
+    space_time.get_isamples_spacetime_values(con=con)
     # Get an object with the samples manifest.
     db_m = con.sql(f'SELECT * FROM {alias}').set_alias(alias)
     db_m.show()

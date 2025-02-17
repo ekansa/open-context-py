@@ -195,6 +195,13 @@ def update_region_sites_for_path_level(path_level, con=DB_CON, db_schema=duckdb_
     update_regions_for_path_level(path_level, con=con, db_schema=db_schema)
     
 
+def cleanup_temporary_tables(con=DB_CON):
+    """Cleanup temporary tables"""
+    # Save a little memory!
+    temp_tables = ['proj_path_level', 'sites', 'regions']
+    for table in temp_tables:
+        con.execute(f"DROP TABLE IF EXISTS {table}")
+
 
 def get_isamples_sampling_sites(con=DB_CON, show_progress=True):
     """Add sampling site information to the iSamples manifest dataframe"""
@@ -214,4 +221,5 @@ def get_isamples_sampling_sites(con=DB_CON, show_progress=True):
             """
             prog = con.sql(sql).fetchone()
             print(f'Records with sampling sites at level {act_path_level}: {prog[0]}') 
-        
+    # Tidy up our temporary tables...
+    cleanup_temporary_tables(con=con)
