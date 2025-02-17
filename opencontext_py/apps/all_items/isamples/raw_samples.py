@@ -134,7 +134,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
         m.published,
         m.revised,
         m.updated,
-        m.uri,
+        concat('https://', m.uri) AS uri,
         m.path,
         m.hash_id,
         m.context_uuid,
@@ -144,7 +144,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
 
     -- Subquery for object_thumbnail
     (
-        SELECT r.uri 
+        SELECT concat('https://', r.uri)
         FROM {db_schema}.oc_all_resources r 
         WHERE r.item_uuid = m.uuid 
         AND r.resourcetype_uuid = {duck_thumb_uuid} 
@@ -154,7 +154,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
 
     -- Subqueries for persistent identifiers
     (
-        SELECT i.id 
+        SELECT concat('doi:', i.id) 
         FROM {db_schema}.oc_all_identifiers i 
         WHERE i.item_uuid = m.uuid 
         AND i.scheme = 'doi' 
@@ -163,7 +163,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
     ) AS persistent_doi,
 
     (
-        SELECT i.id 
+        SELECT concat('ark:/', i.id) 
         FROM {db_schema}.oc_all_identifiers i 
         WHERE i.item_uuid = m.uuid 
         AND i.scheme = 'ark' 
