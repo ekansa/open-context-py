@@ -136,10 +136,12 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
         m.updated,
         concat('https://', m.uri) AS uri,
         m.path,
-        m.hash_id,
         m.context_uuid,
         m.item_class_uuid,
+        ic.label AS item_class_label,
         m.project_uuid,
+        proj.label AS project_label,
+        concat('https://', proj.uri) AS project_uri,
         m.meta_json,
 
     -- Subquery for object_thumbnail
@@ -171,6 +173,25 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
         LIMIT 1
     ) AS persistent_ark,
 
+    -- Subqueries for persistent identifiers
+    (
+        SELECT concat('doi:', i.id) 
+        FROM {db_schema}.oc_all_identifiers i 
+        WHERE i.item_uuid = proj.uuid 
+        AND i.scheme = 'doi' 
+        ORDER BY i.item_uuid ASC, i.rank ASC, i.scheme ASC 
+        LIMIT 1
+    ) AS project_persistent_doi,
+
+    (
+        SELECT concat('ark:/', i.id) 
+        FROM {db_schema}.oc_all_identifiers i 
+         WHERE i.item_uuid = proj.uuid
+        AND i.scheme = 'ark' 
+        ORDER BY i.item_uuid ASC, i.rank ASC, i.scheme ASC 
+        LIMIT 1
+    ) AS project_persistent_ark,
+
     NULL AS persistent_orcid,
 
     -- Path upto levels
@@ -182,6 +203,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
 
     FROM {db_schema}.oc_all_manifest AS m
     INNER JOIN {db_schema}.oc_all_manifest proj ON m.project_uuid = proj.uuid
+    INNER JOIN {db_schema}.oc_all_manifest ic ON m.item_class_uuid = ic.uuid
     WHERE {where_conditions}
     """
     return sql
