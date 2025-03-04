@@ -45,13 +45,18 @@ SITE_CLASS_MAN_OBJS = AllManifest.objects.filter(
 SAMPLE_SITE_MAX_PATH_LEVEL = 7
 
 
-def make_project_path_level_temp_table(path_level, con=DB_CON, alias='proj_path_level'):
+def make_project_path_level_temp_table(
+    path_level, 
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    alias='proj_path_level',
+    con=DB_CON,
+):
     """Create a temporary table with project path levels"""
     sql = f"""
     SELECT DISTINCT 
         project_uuid, 
         man.path_to___{path_level} AS act_path
-    FROM man
+    FROM {man_table} AS man
     WHERE man.isam_sampling_site_uri IS NULL
     """
     con.execute(f"DROP TABLE IF EXISTS {alias}")
@@ -59,7 +64,12 @@ def make_project_path_level_temp_table(path_level, con=DB_CON, alias='proj_path_
     con.execute(temp_table_sql)
 
 
-def make_temp_region_table(more_where_clauses=None, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA, alias='regions'):
+def make_temp_region_table(
+    more_where_clauses=None,
+    alias='regions',
+    con=DB_CON, 
+    db_schema=duckdb_con.DUCKDB_SCHEMA,
+):
     """Create a temporary table with iSamples regions"""
     where_clauses = []
     if isinstance(more_where_clauses, list):
@@ -96,7 +106,12 @@ def make_temp_region_table(more_where_clauses=None, con=DB_CON, db_schema=duckdb
     con.execute(temp_table_sql)
 
 
-def make_temp_site_table(more_where_clauses=None, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA, alias='sites'):
+def make_temp_site_table(
+    more_where_clauses=None, 
+    alias='sites',
+    con=DB_CON, 
+    db_schema=duckdb_con.DUCKDB_SCHEMA, 
+):
     """Create a temporary table with iSamples sampling sites"""
 
     where_clauses = []
@@ -140,37 +155,45 @@ def make_temp_site_table(more_where_clauses=None, con=DB_CON, db_schema=duckdb_c
     con.execute(temp_table_sql)
 
 
-def update_regions_for_path_level(path_level, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA):
+def update_regions_for_path_level(
+    path_level, 
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    con=DB_CON
+):
     """Update the sampling site with a region item for a specific path level"""
     path_field = f'path_to___{path_level}'
     
     # Update the manifest table with the region information
     sql = f"""
-    UPDATE man
+    UPDATE {man_table}
     SET isam_sampling_site_label = regions.label,
-        isam_sampling_site_uri = regions.uri
+        isam_sampling_site_uri = concat('https://', regions.uri)
     FROM regions
-    WHERE man.isam_sampling_site_uri IS NULL
-    AND man.{path_field} = regions.act_path
-    AND man.project_uuid = regions.project_uuid
+    WHERE {man_table}.isam_sampling_site_uri IS NULL
+    AND {man_table}.{path_field} = regions.act_path
+    AND {man_table}.project_uuid = regions.project_uuid
     AND regions.uri IS NOT NULL
     """
     con.execute(sql)
 
 
-def update_sites_for_path_level(path_level, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA):
+def update_sites_for_path_level(
+    path_level, 
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    con=DB_CON
+):
     """Update the sampling site with a site item a specific path level"""
     path_field = f'path_to___{path_level}'
     
     # Update the manifest table with the site information
     sql = f"""
-    UPDATE man
+    UPDATE {man_table}
     SET isam_sampling_site_label = sites.label,
-        isam_sampling_site_uri = sites.uri
+        isam_sampling_site_uri = concat('https://', sites.uri)
     FROM sites
-    WHERE man.isam_sampling_site_uri IS NULL
-    AND man.{path_field} = sites.act_path
-    AND man.project_uuid = sites.project_uuid
+    WHERE {man_table}.isam_sampling_site_uri IS NULL
+    AND {man_table}.{path_field} = sites.act_path
+    AND {man_table}.project_uuid = sites.project_uuid
     AND sites.uri IS NOT NULL
     """
     con.execute(sql)
@@ -189,10 +212,10 @@ def update_region_sites_for_path_level(path_level, con=DB_CON, db_schema=duckdb_
     make_temp_region_table(con=con, db_schema=db_schema)
 
     # Update sites first, since those are preferred over regions.
-    update_sites_for_path_level(path_level, con=con, db_schema=db_schema)
+    update_sites_for_path_level(path_level, con=con)
 
     # Where we don't have a site found yet, update to use regions at this path level
-    update_regions_for_path_level(path_level, con=con, db_schema=db_schema)
+    update_regions_for_path_level(path_level, con=con)
     
 
 def cleanup_temporary_tables(con=DB_CON):
@@ -203,7 +226,11 @@ def cleanup_temporary_tables(con=DB_CON):
         con.execute(f"DROP TABLE IF EXISTS {table}")
 
 
-def get_isamples_sampling_sites(con=DB_CON, show_progress=True):
+def get_isamples_sampling_sites(
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE, 
+    con=DB_CON, 
+    show_progress=True,
+):
     """Add sampling site information to the iSamples manifest dataframe"""
 
     act_path_level = SAMPLE_SITE_MAX_PATH_LEVEL + 1
@@ -216,7 +243,7 @@ def get_isamples_sampling_sites(con=DB_CON, show_progress=True):
         if show_progress:
             sql = f"""
             SELECT COUNT(uuid) AS count
-            FROM man
+            FROM {man_table}
             WHERE isam_sampling_site_uri IS NOT NULL
             """
             prog = con.sql(sql).fetchone()

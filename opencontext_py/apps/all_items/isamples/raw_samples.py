@@ -38,6 +38,7 @@ ADDED_FIELFS_DATA_TYPES = [
     ('isam_sampling_site_label', 'VARCHAR'),
     ('isam_sampling_site_uri', 'VARCHAR'),
     ('item__geo_source', 'VARCHAR'),
+    ('item__geo_source_uri', 'VARCHAR'),
     ('item__geometry_type', 'VARCHAR'),
     ('item__geo_specificity', 'BIGINT'),
     ('item__latitude', 'DOUBLE'),
@@ -45,6 +46,7 @@ ADDED_FIELFS_DATA_TYPES = [
     ('item__earliest', 'DOUBLE'),
     ('item__latest', 'DOUBLE'),
     ('item__chrono_source', 'VARCHAR'),
+    ('item__chrono_source_uri', 'VARCHAR'),
 ]
 
 
@@ -64,25 +66,6 @@ def get_isamples_item_classes():
             if child_obj not in isamples_item_classes:
                 isamples_item_classes.append(child_obj)
     return isamples_item_classes
-
-
-def get_path_level_item(path: str, level: int) -> str:
-    if not path:
-        return None
-    path_list = path.split('/')
-    if level >= len(path_list):
-        return None
-    return path_list[level]
-
-
-def get_path_upto_level(path: str, level: int) -> str:
-    if not path:
-        return None
-    path_list = path.split('/')
-    level += 1
-    if level > len(path_list):
-        return None
-    return '/'.join(path_list[:level])
 
 
 def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_con.DUCKDB_SCHEMA):
@@ -134,15 +117,26 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
         m.published,
         m.revised,
         m.updated,
+        m.indexed,
         concat('https://', m.uri) AS uri,
         m.path,
         m.context_uuid,
         m.item_class_uuid,
         ic.label AS item_class_label,
+        concat('https://', ic.uri) AS item_class_uri,
         m.project_uuid,
         proj.label AS project_label,
         concat('https://', proj.uri) AS project_uri,
         m.meta_json,
+    
+    -- Subquery for assertion updated
+    (
+        SELECT a.updated
+        FROM {db_schema}.oc_all_assertions AS a 
+        WHERE a.subject_uuid = m.uuid 
+        ORDER BY a.updated DESC 
+        LIMIT 1
+    ) AS assertion_updated,
 
     -- Subquery for object_thumbnail
     (
@@ -209,14 +203,17 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
     return sql
 
 
-def make_isamples_assertion_query_sql(more_where_clauses=None, db_schema=duckdb_con.DUCKDB_SCHEMA):
+def make_isamples_assertion_query_sql(
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    more_where_clauses=None, 
+    db_schema=duckdb_con.DUCKDB_SCHEMA,
+):
     """Create a SQL query string to get iSamples assertions"""
     where_clauses = []
     if isinstance(more_where_clauses, list):
         where_clauses.extend(more_where_clauses)
 
     where_clauses.append("a.visible = TRUE")
-    where_clauses.append("subj.item_type = 'subjects'")
 
     # No containment assertions
     duck_contain_pred = duck_utils.cast_duckdb_uuid(configs.PREDICATE_CONTAINS_UUID)
@@ -225,46 +222,24 @@ def make_isamples_assertion_query_sql(more_where_clauses=None, db_schema=duckdb_
     # Limit to query results referencing named entities
     where_clauses.append(f"a.object_uuid IS NOT NULL")
 
-    # Add the where clause for the iSamples item classes
-    isamples_item_classes = get_isamples_item_classes()
-    duck_class_uuids = [duck_utils.cast_man_obj_duckdb_uuid(m) for m in isamples_item_classes]
-    class_list = ', '.join(duck_class_uuids)
-    class_clause = f"subj.item_class_uuid IN ({class_list})"
-    where_clauses.append(class_clause)
-
-    # No results for items flagged as 'do not index'
-    no_index_subj_clause = "subj.meta_json::text NOT LIKE '%\"flag_do_not_index\": true,%'"
-    no_index_proj_clause = "proj.meta_json::text NOT LIKE '%\"flag_do_not_index\": true,%'"
-    where_clauses.append(no_index_subj_clause)
-    where_clauses.append(no_index_proj_clause)
 
     where_conditions = ' AND '.join(where_clauses)
 
     sql = f"""
     SELECT
-        a.uuid, 
-        a.publisher_uuid, 
-        a.project_uuid, 
-        a.source_id, 
+        a.uuid,  
         a.subject_uuid, 
-        a.observation_uuid, 
         a.obs_sort, 
-        a.event_uuid, 
         a.event_sort, 
-        a.attribute_group_uuid, 
         a.attribute_group_sort, 
         a.predicate_uuid, 
         a.sort, 
-        a.visible, 
-        a.certainty, 
-        a.object_uuid, 
-        a.language_uuid, 
-        a.obj_string_hash, 
-        a.obj_string, 
-        a.obj_boolean, 
-        a.obj_integer, 
-        a.obj_double, 
-        a.obj_datetime, 
+        a.object_uuid,
+        pred.label AS predicate_label,
+        concat('https://', pred.uri) AS predicate_uri,
+        obj.label AS object_label,
+        concat('https://', obj.uri) AS object_uri,
+        obj.item_type AS object_item_type, 
         a.created, 
         a.updated, 
         a.meta_json,
@@ -294,7 +269,7 @@ def make_isamples_assertion_query_sql(more_where_clauses=None, db_schema=duckdb_
     ) AS predicate_equiv_ld_label,
 
     (
-        SELECT m.uri 
+        SELECT concat('https://', m.uri)
         FROM {db_schema}.oc_all_assertions asr 
         INNER JOIN {db_schema}.oc_all_manifest m ON asr.object_uuid = m.uuid 
         INNER JOIN {db_schema}.oc_all_manifest ctx ON m.context_uuid = ctx.uuid 
@@ -314,31 +289,69 @@ def make_isamples_assertion_query_sql(more_where_clauses=None, db_schema=duckdb_
         ) 
         ORDER BY asr.sort ASC 
         LIMIT 1
-    ) AS predicate_equiv_ld_uri
+    ) AS predicate_equiv_ld_uri,
+
+    -- Object Equivalent Label and URI
+    (
+        SELECT m.label 
+        FROM {db_schema}.oc_all_assertions asr 
+        INNER JOIN {db_schema}.oc_all_manifest m ON asr.object_uuid = m.uuid 
+        INNER JOIN {db_schema}.oc_all_manifest ctx ON m.context_uuid = ctx.uuid 
+        WHERE m.item_type IN ('class', 'property', 'uri') 
+        AND asr.predicate_uuid IN (
+            CAST('00000000-2470-aa02-9342-e9d5b2ed3149' AS UUID), 
+            CAST('00000000-081a-dc93-af22-4cbcca550517' AS UUID), 
+            CAST('00000000-081a-1d47-f617-1699079819cf' AS UUID)
+        ) 
+        AND asr.subject_uuid = a.object_uuid 
+        AND asr.visible 
+        AND (m.meta_json::text NOT LIKE '%\"deprecated\": true,%') 
+        AND (ctx.meta_json::text NOT LIKE '%\"deprecated\": true,%') 
+        AND asr.object_uuid NOT IN (
+            CAST('00000000-ed50-3cf1-c266-683c89afdac4' AS UUID), 
+            CAST('00000000-ed50-8ee5-c7a2-21a012593f25' AS UUID)
+        ) 
+        ORDER BY asr.sort ASC 
+        LIMIT 1
+    ) AS object_equiv_ld_label,
+
+    (
+        SELECT concat('https://', m.uri)
+        FROM {db_schema}.oc_all_assertions asr 
+        INNER JOIN {db_schema}.oc_all_manifest m ON asr.object_uuid = m.uuid 
+        INNER JOIN {db_schema}.oc_all_manifest ctx ON m.context_uuid = ctx.uuid 
+        WHERE m.item_type IN ('class', 'property', 'uri') 
+        AND asr.predicate_uuid IN (
+            CAST('00000000-2470-aa02-9342-e9d5b2ed3149' AS UUID), 
+            CAST('00000000-081a-dc93-af22-4cbcca550517' AS UUID), 
+            CAST('00000000-081a-1d47-f617-1699079819cf' AS UUID)
+        ) 
+        AND asr.subject_uuid = a.object_uuid 
+        AND asr.visible 
+        AND (m.meta_json::text NOT LIKE '%\"deprecated\": true,%') 
+        AND (ctx.meta_json::text NOT LIKE '%\"deprecated\": true,%')  
+        AND asr.object_uuid NOT IN (
+            CAST('00000000-ed50-3cf1-c266-683c89afdac4' AS UUID), 
+            CAST('00000000-ed50-8ee5-c7a2-21a012593f25' AS UUID)
+        ) 
+        ORDER BY asr.sort ASC 
+        LIMIT 1
+    ) AS object_equiv_ld_uri
 
     FROM {db_schema}.oc_all_assertions AS a
-    INNER JOIN {db_schema}.oc_all_manifest subj ON a.subject_uuid = subj.uuid
-    INNER JOIN {db_schema}.oc_all_manifest proj ON a.project_uuid = proj.uuid
+    -- Use man table generated from the manifest query to 
+    -- as a filter for assertion query.
+    INNER JOIN {man_table} ON a.subject_uuid = {man_table}.uuid
+    INNER JOIN {db_schema}.oc_all_manifest pred ON a.predicate_uuid = pred.uuid
+    INNER JOIN {db_schema}.oc_all_manifest obj ON a.object_uuid = obj.uuid
     WHERE {where_conditions};
     """
     return sql
 
 
-def get_isamples_raw_manifest(more_where_clauses=None, con=DB_CON, alias='man'):
+def get_isamples_raw_manifest(more_where_clauses=None, alias=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE, con=DB_CON):
     """Create a DuckDB connection to a PostgreSQL database"""
     sql = make_isamples_manifest_query_sql(more_where_clauses=more_where_clauses)
-    con.create_function(
-        "get_path_level_item", 
-        get_path_level_item, 
-        [VARCHAR, BIGINT], VARCHAR, 
-        null_handling="special"
-    )
-    con.create_function(
-        "get_path_upto_level", 
-        get_path_upto_level, 
-        [VARCHAR, BIGINT], VARCHAR, 
-        null_handling="special"
-    )
     con.execute(f"DROP TABLE IF EXISTS {alias}")
     temp_table_sql = f'CREATE TEMPORARY TABLE {alias} AS {sql}'
     con.execute(temp_table_sql)
@@ -348,12 +361,12 @@ def get_isamples_raw_manifest(more_where_clauses=None, con=DB_CON, alias='man'):
         con.execute(sql)
 
 
-def get_isamples_raw_asserts(more_where_clauses=None, con=DB_CON, alias='asserts'):
+def get_isamples_raw_asserts(more_where_clauses=None, alias=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE, con=DB_CON):
     """Create a DuckDB connection to a PostgreSQL database"""
     sql = make_isamples_assertion_query_sql(more_where_clauses=more_where_clauses)
-    db_r = con.sql(sql).set_alias(alias)
-    db_r.show()
-    return db_r
+    con.execute(f"DROP TABLE IF EXISTS {alias}")
+    temp_table_sql = f'CREATE TEMPORARY TABLE {alias} AS {sql}'
+    con.execute(temp_table_sql)
 
 
 def get_distinct_subject_uuids(db_r, con=DB_CON, alias='subjects'):
