@@ -453,6 +453,7 @@ def add_keyword_edges_to_pqg(
     assert_table=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE,
     p_val='keywords',
     o_col='object_equiv_ld_uri',
+    where_clause='',
     con=DB_CON,
 ):
     sql = "DROP TABLE IF EXISTS spo"
@@ -468,6 +469,7 @@ def add_keyword_edges_to_pqg(
             INNER JOIN {man_table} AS man ON man.uuid = asserts.subject_uuid
             WHERE man.PID_SAMP IS NOT NULL
             AND asserts.{o_col} IS NOT NULL
+            {where_clause}
             GROUP BY man.PID_SAMP, asserts.{o_col}
         """
     # Now do the SQL to make the temporary table
@@ -622,6 +624,7 @@ def add_edge_rows_to_pq(con=DB_CON):
         assert_table=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE,
         p_val='keywords',
         o_col='object_uri',
+        where_clause=" AND object_item_type IN ['types', 'uri', 'class']",
         con=con,
     )
     # Relate the material samples to the direct agents
