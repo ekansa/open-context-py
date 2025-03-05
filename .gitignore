@@ -4,6 +4,7 @@
 *.py[cod]
 *.djcache
 *Zone.Identifier
+*.tmp
 __pycache__/
 testing.txt
 db-logs/
