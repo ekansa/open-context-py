@@ -430,12 +430,14 @@ def add_object_identified_concepts_to_pqg(
         label,
         scheme_name,
         scheme_uri,
+        description,
         otype
     ) SELECT
         object_uri, 
-        ANY_VALUE(object_label), 
+        concat(ANY_VALUE(predicate_label), ' :: ', ANY_VALUE(object_label)), 
         ANY_VALUE(con_man.label),
         concat('https://', ANY_VALUE(con_man.uri)),
+        concat_ws(' ', 'A classification concept used with the attribute', concat('"',  ANY_VALUE(predicate_label),'"'), 'and defined by the project:', ANY_VALUE(con_man.label)),
         'IdentifiedConcept'
         FROM {assert_table}
         INNER JOIN {db_schema}.oc_all_manifest AS oc_man ON object_uri = concat('https://', oc_man.uri)
