@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS pqg (
     otype                   VARCHAR,
     s                       VARCHAR,
     p                       VARCHAR,
-    o                       VARCHAR,
+    o                       VARCHAR[],
     n                       VARCHAR,
     altids                  VARCHAR[], 
     geometry                BLOB,
@@ -79,6 +79,8 @@ NEW_KEY_TUPS = {
     ]
 }
 
+MIN_NUMBER_OBJECT_COUNT_FOR_IDENTIFIED_CONCEPTS = 4
+
 
 def create_pqg_table(con=DB_CON, schema_sql=ISAMPLES_PQG_SCHEMA_SQL):
     """Create the pqg table"""
@@ -96,6 +98,34 @@ def add_new_keys_to_tables(
             con.sql(sql)
             sql = f"UPDATE {table} SET {col} = {t_col}"
             con.sql(sql)
+
+
+def do_spo_to_pqg_inserts(con=DB_CON):
+    """Inserts s, p, o rows from a (temp) spo table into the pqg table"""
+    sql = """
+    INSERT OR IGNORE INTO  pqg  (
+        pid,
+        s,
+        p,
+        o,
+        otype
+    ) SELECT
+        get_deterministic_id(concat(s, p), 'edge_') AS pid,
+        s,
+        p,
+        array_agg(o) AS o,
+        otype
+        FROM spo
+        WHERE s IS NOT NULL
+        AND s IN (SELECT pid FROM pqg)
+        AND p IS NOT NULL
+        AND o IS NOT NULL
+        AND o IN (SELECT pid FROM pqg)
+        AND get_deterministic_id(concat(s, p, o), 'edge_') NOT IN
+        (SELECT pid FROM pqg)
+        GROUP BY s , p, otype
+    """
+    con.sql(sql)
 
 
 def make_s_p_o_edge_rows(
@@ -149,32 +179,8 @@ def make_s_p_o_edge_rows(
         """
     # Now do the SQL to make the temporary table
     con.sql(sql)
-
     # Use the temporary table to make the insert to the output
-    sql = """
-    INSERT OR IGNORE INTO  pqg  (
-        pid,
-        s,
-        p,
-        o,
-        otype
-    ) SELECT
-        get_deterministic_id(concat(s, p, o), 'edge_') AS pid,
-        s,
-        p,
-        o,
-        otype
-        FROM spo
-        WHERE s IS NOT NULL
-        AND s IN (SELECT pid FROM pqg)
-        AND p IS NOT NULL
-        AND o IS NOT NULL
-        AND o IN (SELECT pid FROM pqg)
-        AND get_deterministic_id(concat(s, p, o), 'edge_') NOT IN
-        (SELECT pid FROM pqg)
-        GROUP BY s , p, o, otype
-    """
-    con.sql(sql)
+    do_spo_to_pqg_inserts(con=con)
 
 
 
@@ -443,7 +449,15 @@ def add_object_identified_concepts_to_pqg(
         INNER JOIN {db_schema}.oc_all_manifest AS oc_man ON object_uri = concat('https://', oc_man.uri)
         INNER JOIN {db_schema}.oc_all_manifest AS con_man ON oc_man.project_uuid = con_man.uuid
         WHERE object_uri IS NOT NULL
+        AND object_label IS NOT NULL
+        AND oc_man.project_uuid IS NOT NULL
         AND object_item_type = 'types'
+        -- Only include identified concepts with a minimum number uses, or where they
+        -- have an equivalent linked data URI
+        AND (
+            obj_count >= {MIN_NUMBER_OBJECT_COUNT_FOR_IDENTIFIED_CONCEPTS}
+            OR object_equiv_ld_uri IS NOT NULL
+        ) 
         AND object_uri NOT IN (SELECT pid FROM pqg)
         GROUP BY object_uri
     """
@@ -476,31 +490,8 @@ def add_keyword_edges_to_pqg(
         """
     # Now do the SQL to make the temporary table
     con.sql(sql)
-     # Use the temporary table to make the insert to the output
-    sql = """
-    INSERT OR IGNORE INTO  pqg  (
-        pid,
-        s,
-        p,
-        o,
-        otype
-    ) SELECT
-        get_deterministic_id(concat(s, p, o), 'edge_') AS pid,
-        s,
-        p,
-        o,
-        otype
-        FROM spo
-        WHERE s IS NOT NULL
-        AND s IN (SELECT pid FROM pqg)
-        AND p IS NOT NULL
-        AND o IS NOT NULL
-        AND o IN (SELECT pid FROM pqg)
-        AND get_deterministic_id(concat(s, p, o), 'edge_') NOT IN
-        (SELECT pid FROM pqg)
-        GROUP BY s , p, o, otype
-    """
-    con.sql(sql)
+    # Use the temporary table to make the insert to the output
+    do_spo_to_pqg_inserts(con=con)
 
 
 def add_agent_edges_to_pqg(
@@ -529,32 +520,8 @@ def add_agent_edges_to_pqg(
         """
     # Now do the SQL to make the temporary table
     con.sql(sql)
-     # Use the temporary table to make the insert to the output
-    sql = """
-    INSERT OR IGNORE INTO  pqg  (
-        pid,
-        s,
-        p,
-        o,
-        otype
-    ) SELECT
-        get_deterministic_id(concat(s, p, o), 'edge_') AS pid,
-        s,
-        p,
-        o,
-        otype
-        FROM spo
-        WHERE s IS NOT NULL
-        AND s IN (SELECT pid FROM pqg)
-        AND p IS NOT NULL
-        AND o IS NOT NULL
-        AND o IN (SELECT pid FROM pqg)
-        AND get_deterministic_id(concat(s, p, o), 'edge_') NOT IN
-        (SELECT pid FROM pqg)
-        GROUP BY s , p, o, otype
-    """
-    con.sql(sql)
-
+    # Use the temporary table to make the insert to the output
+    do_spo_to_pqg_inserts(con=con)
 
 
 def add_isamples_entities_to_pqg(con=DB_CON):
@@ -626,7 +593,13 @@ def add_edge_rows_to_pq(con=DB_CON):
         assert_table=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE,
         p_val='keywords',
         o_col='object_uri',
-        where_clause=" AND object_item_type IN ['types', 'uri', 'class']",
+        # Only include identified concepts with a minimum number uses, or where they
+        # have an equivalent linked data URI
+        where_clause=(
+            " AND object_item_type IN ['types', 'uri', 'class'] "
+            f"AND (obj_count >= {MIN_NUMBER_OBJECT_COUNT_FOR_IDENTIFIED_CONCEPTS} "
+            "OR object_equiv_ld_uri IS NOT NULL) "
+        ),
         con=con,
     )
     # Relate the material samples to the direct agents
@@ -666,4 +639,6 @@ def summarize_pqg(con=DB_CON):
         sql = f"SELECT COUNT(pid), '{e_check}' AS predicate FROM pqg WHERE p = '{e_check}'"
         con.sql(sql).show(max_rows=100)
     sql = "SELECT COUNT(pid), otype FROM pqg GROUP BY otype"
+    con.sql(sql).show(max_rows=100)
+    sql = "SELECT label, description FROM pqg WHERE otype = 'IdentifiedConcept' ORDER BY RANDOM() LIMIT 5; "
     con.sql(sql).show(max_rows=100)
