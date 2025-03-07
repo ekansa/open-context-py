@@ -239,7 +239,8 @@ def make_isamples_assertion_query_sql(
         concat('https://', pred.uri) AS predicate_uri,
         obj.label AS object_label,
         concat('https://', obj.uri) AS object_uri,
-        obj.item_type AS object_item_type, 
+        obj.item_type AS object_item_type,
+        0 AS obj_count, 
         a.created, 
         a.updated, 
         a.meta_json,
@@ -361,12 +362,27 @@ def get_isamples_raw_manifest(more_where_clauses=None, alias=duckdb_con.ISAMPLES
         con.execute(sql)
 
 
+def get_object_assertion_counts(alias=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE, con=DB_CON):
+    """Get the number of assertions for each unique object UUID. This number is used to
+    limit the insertion of IdentifiedConcepts to the iSamples PQG table so that only those with
+    some frequency are included. 
+    """
+    sql = f"""
+    UPDATE {alias}
+    SET obj_count = (SELECT COUNT(uuid) FROM {alias} AS ac WHERE ac.object_uuid = {alias}.object_uuid)
+    WHERE object_item_type IN ('types', 'class', 'uri')
+    """
+    con.execute(sql)
+
+
 def get_isamples_raw_asserts(more_where_clauses=None, alias=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE, con=DB_CON):
     """Create a DuckDB connection to a PostgreSQL database"""
     sql = make_isamples_assertion_query_sql(more_where_clauses=more_where_clauses)
     con.execute(f"DROP TABLE IF EXISTS {alias}")
     temp_table_sql = f'CREATE TEMPORARY TABLE {alias} AS {sql}'
     con.execute(temp_table_sql)
+    print(f"Getting counts the use of different project specific objects (types) for {alias}")
+    get_object_assertion_counts(alias=alias, con=con)
 
 
 def get_distinct_subject_uuids(db_r, con=DB_CON, alias='subjects'):
