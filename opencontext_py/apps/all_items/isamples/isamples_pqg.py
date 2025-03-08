@@ -121,7 +121,7 @@ def do_spo_to_pqg_inserts(con=DB_CON):
         AND p IS NOT NULL
         AND o IS NOT NULL
         AND o IN (SELECT pid FROM pqg)
-        AND get_deterministic_id(concat(s, p, o), 'edge_') NOT IN
+        AND get_deterministic_id(concat(s, p), 'edge_') NOT IN
         (SELECT pid FROM pqg)
         GROUP BY s , p, otype
     """
