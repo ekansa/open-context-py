@@ -62,16 +62,9 @@ def use_for_pid(best_id: str, fallback_id:str) -> str:
 
 
 def make_alt_id_list(id_1:str='', id_2:str='', id_3:str='', id_4:str='') -> list:
-    id_list = []
-    if id_1:
-        id_list.append(id_1)
-    if id_2:
-        id_list.append(id_2)
-    if id_3:
-        id_list.append(id_3)
-    if id_4:
-        id_list.append(id_4)
+    id_list = [id for id in [id_1, id_2, id_3, id_4] if id is not None and id != '']
     return id_list
+
 
 def most_recent_to_str(
     val1:datetime.datetime=None,

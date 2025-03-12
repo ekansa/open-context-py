@@ -361,8 +361,8 @@ def add_material_sample_records_to_pqg(man_table=duckdb_con.ISAMPLES_PREP_MANIFE
         otype
     ) SELECT 
         PID_SAMP,
-        [ANY_VALUE(uri), ANY_VALUE(persistent_ark), ANY_VALUE(persistent_doi)] AS altids_1,
-        [ANY_VALUE(uri), ANY_VALUE(persistent_ark), ANY_VALUE(persistent_doi)] AS altids_2,
+        make_alt_id_list(ANY_VALUE(uri), ANY_VALUE(persistent_ark), ANY_VALUE(persistent_doi), NULL) AS altids_1,
+        make_alt_id_list(ANY_VALUE(uri), ANY_VALUE(persistent_ark), ANY_VALUE(persistent_doi), NULL) AS altids_2,
         NULL,
         NULL,
         concat_ws(
