@@ -212,6 +212,12 @@ def make_export_config_dict(
     exclude_hr_list = make_human_readable_query_args(exclude_args)
     if filter_args or exclude_args:
         qs = AllAssertion.objects.all()
+        # So we don't use a filter for project id's that's empty
+        if filter_args and len(filter_args) == 1 and len(filter_args.get('project_id__in', [])) == 0:
+            filter_args.pop('project_id__in')
+            filter_args = {
+                'subject__item_type__in': ['projects'],
+            }
         if filter_args:
             qs = qs.filter(
                 **filter_args

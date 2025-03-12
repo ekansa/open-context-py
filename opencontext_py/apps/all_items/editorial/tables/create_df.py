@@ -1974,6 +1974,63 @@ def add_media_resource_files_to_df(
     return df
 
 
+
+def add_project_editorial_status_and_short_id_to_df(df):
+    """Adds the editorial status of the project to the export
+
+    :param DataFrame df: The dataframe that will get the attribute data.
+    """
+    proj_uuids = []
+    subj_proj_index = df['subject__item_type'] == 'projects'
+    proj_uuids += df[subj_proj_index]['subject_id'].unique().tolist()
+    proj_uuids += df['project_id'].unique().tolist()
+    proj_qs = AllManifest.objects.filter(
+        uuid__in=proj_uuids,
+        item_type='projects',
+    ).values(
+        'uuid',
+        'meta_json__edit_status',
+        'meta_json__short_id',
+    )
+    df_proj = pd.DataFrame.from_records(proj_qs)
+    df = df.merge(
+        df_proj,
+        how='left',
+        left_on='subject_id',
+        right_on='uuid',
+    )
+    df.rename(
+        columns={
+            'meta_json__edit_status': 's_project_edit_status',
+            'meta_json__short_id': 's_project_short_id',
+        }, 
+        inplace=True,
+    )
+    df = df.merge(
+        df_proj,
+        how='left',
+        left_on='project_id',
+        right_on='uuid',
+    )
+    df.rename(
+        columns={
+            'meta_json__edit_status': 'p_project_edit_status',
+            'meta_json__short_id': 'p_project_short_id',
+        }, 
+        inplace=True,
+    )
+    # First use the editoria status directly assigned to the subject_id.
+    df['Project Editorial Status'] = df['s_project_edit_status']
+    df['Project Short ID'] = df['s_project_short_id']
+    df.drop(columns=['s_project_edit_status', 's_project_short_id'], inplace=True)
+    # Use the editorial status for the project if the subject_id does not have an editorial status.
+    null_index = df['Project Editorial Status'].isnull()
+    df.loc[null_index, 'Project Editorial Status'] = df[null_index]['p_project_edit_status']
+    df.loc[null_index, 'Project Short ID'] = df[null_index]['p_project_short_id']
+    df.drop(columns=['p_project_edit_status', 'p_project_short_id'], inplace=True)
+    return df
+
+
 def make_export_df(
     filter_args,
     exclude_args=None,
@@ -1986,6 +2043,7 @@ def make_export_df(
     add_manifest_without_asserts=False,
     add_manifest_filter_args=None,
     add_manifest_exclude_args=None,
+    add_proj_editorial_status_short_id=False,
 ):
     """Makes a dataframe prepared for exports
 
@@ -2019,6 +2077,8 @@ def make_export_df(
         arguments to with exclusion criteria for the
         AllAssertion model to make the AllAssertion queryset
         used to generate the output dataframe.
+    :param add_proj_editorial_status_short_id: If true, add the editorial status
+        and the short ID of the project to the export 
     """
 
     # NOTE: This function can take lots of time to execute.
@@ -2091,6 +2151,9 @@ def make_export_df(
         add_object_uris=add_object_uris,
         node_pred_unique_prefixing=node_pred_unique_prefixing,
     )
+
+    if add_proj_editorial_status_short_id:
+        df = add_project_editorial_status_and_short_id_to_df(df)
 
     # Now drop all the empty columns.
     df.dropna(how='all', axis=1, inplace=True)
@@ -2247,6 +2310,7 @@ def make_clean_export_df(
     add_manifest_without_asserts=False,
     add_manifest_filter_args=None,
     add_manifest_exclude_args=None,
+    add_proj_editorial_status_short_id=False,
 ):
     """Makes a dataframe prepared for exports
 
@@ -2290,7 +2354,12 @@ def make_clean_export_df(
         arguments to with exclusion criteria for the
         AllAssertion model to make the AllAssertion queryset
         used to generate the output dataframe.
+    :param add_proj_editorial_status_short_id: If true, add the editorial status
+        and the short ID of the project to the export 
     """
+
+
+
 
     # Do the hard, complicated job of making the export
     # dataframe. This is not styled at all yet.
@@ -2303,6 +2372,7 @@ def make_clean_export_df(
         node_pred_unique_prefixing=node_pred_unique_prefixing,
         resource_type_ids=resource_type_ids,
         more_exclude_args=more_exclude_args,
+        add_proj_editorial_status_short_id=add_proj_editorial_status_short_id,
     )
 
     df_no_style = df.copy()
