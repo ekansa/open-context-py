@@ -23,6 +23,8 @@ from opencontext_py.apps.all_items.representations.item import (
     add_select_related_contexts_to_qs
 )
 
+from opencontext_py.apps.all_items.editorial.tables.ui_utilities import check_set_project_inventory
+
 # ---------------------------------------------------------------------
 # NOTE: These functions provide a means to export tabular data from
 # Open Context. Open Context data is mainly organized in a graph,
@@ -170,7 +172,7 @@ DEFAULT_COL_RENAMES = {
     'item__chrono_source': 'Chronology Inference',
 }
 
-
+MAX_CELL_STRING_LENGTH = 2400
 
 
 def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
@@ -556,6 +558,10 @@ def get_raw_assertion_df(assert_qs, prefix_uris='https://', chunk_size=10000):
         page = paginator.page(page_number)
         act_df = pd.DataFrame.from_records(page)
         assert_df = pd.concat([assert_df, act_df], ignore_index=True)
+
+    if 'obj_string' in assert_df:
+        long_index = assert_df['obj_string'].str.len() > MAX_CELL_STRING_LENGTH 
+        assert_df.loc[long_index, 'obj_string'] = assert_df[long_index]['obj_string'].str.slice(0, MAX_CELL_STRING_LENGTH)
 
     assert_df = add_prefix_to_uri_col_values(
         assert_df,
@@ -2358,8 +2364,11 @@ def make_clean_export_df(
         and the short ID of the project to the export 
     """
 
-
-
+    filter_args, do_project_inventory = check_set_project_inventory(filter_args)
+    if do_project_inventory:
+        # Add some extra metadata to a table specific to project inventories
+        add_proj_editorial_status_short_id = True
+        
 
     # Do the hard, complicated job of making the export
     # dataframe. This is not styled at all yet.
