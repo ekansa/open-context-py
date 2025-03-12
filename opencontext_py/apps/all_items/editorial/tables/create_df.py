@@ -172,7 +172,7 @@ DEFAULT_COL_RENAMES = {
     'item__chrono_source': 'Chronology Inference',
 }
 
-MAX_CELL_STRING_LENGTH = 2400
+MAX_CELL_STRING_LENGTH = 1500
 
 
 def chunk_list(list_name, n=DB_QS_CHUNK_SIZE):
@@ -501,8 +501,17 @@ def get_raw_manifest_df(man_qs, prefix_uris='https://', chunk_size=10000):
     return man_df
 
 
-def get_raw_assertion_df(assert_qs, prefix_uris='https://', chunk_size=10000):
-    """Makes a dataframe from an assertion queryset"""
+def get_raw_assertion_df(
+    assert_qs, 
+    truncate_long_text=False, 
+    prefix_uris='https://', 
+    chunk_size=10000,
+):
+    """Makes a dataframe from an assertion queryset
+    
+    :param bool truncate_long_text: If true, truncate long strings of text
+
+    """
     assert_qs = assert_qs.values(
         'subject_id',
         'subject__uri',
@@ -559,7 +568,7 @@ def get_raw_assertion_df(assert_qs, prefix_uris='https://', chunk_size=10000):
         act_df = pd.DataFrame.from_records(page)
         assert_df = pd.concat([assert_df, act_df], ignore_index=True)
 
-    if 'obj_string' in assert_df:
+    if 'obj_string' in assert_df.columns.tolist() and truncate_long_text:
         long_index = assert_df['obj_string'].str.len() > MAX_CELL_STRING_LENGTH 
         assert_df.loc[long_index, 'obj_string'] = assert_df[long_index]['obj_string'].str.slice(0, MAX_CELL_STRING_LENGTH)
 
@@ -2050,6 +2059,7 @@ def make_export_df(
     add_manifest_filter_args=None,
     add_manifest_exclude_args=None,
     add_proj_editorial_status_short_id=False,
+    truncate_long_text=False,
 ):
     """Makes a dataframe prepared for exports
 
@@ -2083,8 +2093,9 @@ def make_export_df(
         arguments to with exclusion criteria for the
         AllAssertion model to make the AllAssertion queryset
         used to generate the output dataframe.
-    :param add_proj_editorial_status_short_id: If true, add the editorial status
-        and the short ID of the project to the export 
+    :param bool add_proj_editorial_status_short_id: If true, add the editorial status
+        and the short ID of the project to the export
+    :param bool truncate_long_text: If true, truncate long strings of text
     """
 
     # NOTE: This function can take lots of time to execute.
@@ -2101,7 +2112,10 @@ def make_export_df(
         assert_qs = assert_qs.exclude(**more_exclude_args)
 
     # Turn the AllAssertion queryset into a "tall" dataframe.
-    assert_df = get_raw_assertion_df(assert_qs)
+    assert_df = get_raw_assertion_df(
+        assert_qs, 
+        truncate_long_text=truncate_long_text,
+    )
 
     man_df = None
     if add_manifest_without_asserts:
@@ -2317,6 +2331,7 @@ def make_clean_export_df(
     add_manifest_filter_args=None,
     add_manifest_exclude_args=None,
     add_proj_editorial_status_short_id=False,
+    truncate_long_text=False,
 ):
     """Makes a dataframe prepared for exports
 
@@ -2360,14 +2375,16 @@ def make_clean_export_df(
         arguments to with exclusion criteria for the
         AllAssertion model to make the AllAssertion queryset
         used to generate the output dataframe.
-    :param add_proj_editorial_status_short_id: If true, add the editorial status
-        and the short ID of the project to the export 
+    :param bool add_proj_editorial_status_short_id: If true, add the editorial status
+        and the short ID of the project to the export
+    :param bool truncate_long_text: If True, truncate long strings of text
     """
 
     filter_args, do_project_inventory = check_set_project_inventory(filter_args)
     if do_project_inventory:
         # Add some extra metadata to a table specific to project inventories
         add_proj_editorial_status_short_id = True
+        truncate_long_text = True
         
 
     # Do the hard, complicated job of making the export
@@ -2382,6 +2399,7 @@ def make_clean_export_df(
         resource_type_ids=resource_type_ids,
         more_exclude_args=more_exclude_args,
         add_proj_editorial_status_short_id=add_proj_editorial_status_short_id,
+        truncate_long_text=truncate_long_text,
     )
 
     df_no_style = df.copy()
