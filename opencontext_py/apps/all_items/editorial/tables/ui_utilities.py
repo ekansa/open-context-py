@@ -57,10 +57,10 @@ def check_set_project_inventory(filter_args):
         return filter_args, do_project_inventory
     # We're likely doing a project inventory filter
     do_project_inventory = True
-    filter_args.pop('project_id__in')
+    if filter_args.get('project_id__in') == []:
+        filter_args.pop('project_id__in')
     if not filter_args.get('subject__item_type__in'):
-        filter_args['subject__item_type__in'] = []    
-    filter_args['subject__item_type__in'].append('projects')
+        filter_args['subject__item_type__in'] = ['projects']
     return filter_args, do_project_inventory
 
 
