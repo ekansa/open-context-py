@@ -2043,6 +2043,11 @@ def add_project_editorial_status_and_short_id_to_df(df):
     df.loc[null_index, 'Project Editorial Status'] = df[null_index]['p_project_edit_status']
     df.loc[null_index, 'Project Short ID'] = df[null_index]['p_project_short_id']
     df.drop(columns=['p_project_edit_status', 'p_project_short_id'], inplace=True)
+    # Some more cleanup
+    for col in ['uuid_x', 'uuid_y']:
+        if not col in df.columns.tolist():
+            continue
+        df.drop(columns=[col], inplace=True)
     return df
 
 
