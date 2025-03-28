@@ -46,7 +46,11 @@ def get_or_create_single_predicate_manifest_entity(
 
     # Limit the projects in which we will search for matching spatial items
     # for this col_record
-    reconcile_project_ids = [configs.OPEN_CONTEXT_PROJ_UUID, str(ds_source.project.uuid)]
+    reconcile_project_ids = [
+        configs.OPEN_CONTEXT_PROJ_UUID, 
+        str(ds_source.project.uuid), 
+        str(ds_source.project.project.uuid),
+    ]
 
     label = AllManifest().clean_label(label)
 
@@ -176,7 +180,11 @@ def get_or_create_manifest_entity(
     # for this col_record
     reconcile_project_ids = ds_field.meta_json.get(
         'reconcile_project_ids',
-        [configs.OPEN_CONTEXT_PROJ_UUID, str(ds_field.data_source.project.uuid)]
+        [
+            configs.OPEN_CONTEXT_PROJ_UUID, 
+            str(ds_field.data_source.project.uuid), 
+            str(ds_field.data_source.project.project.uuid),
+        ]
     )
     context = get_ds_field_context(ds_field, context)
     if ds_field.item_type == 'subjects' and context.item_type == 'projects':
