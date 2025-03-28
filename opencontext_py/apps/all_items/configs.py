@@ -218,6 +218,11 @@ PREDICATE_OC_ETL_DESCRIBED_BY = 'c1745101-16a7-87e0-25ce-00f52da37f60'  # 'oc-ge
 PREDICATE_OC_ETL_MEDIA_HAS_FILES = '931c8f69-e7ab-7a3f-109c-80f5322846f9' # 'oc-gen:etl-media-has-files'
 PREDICATE_OC_ETL_HAS_METADATA = '739a6d12-fdf7-6976-babd-962818b4a4cc' # 'oc-gen:etl-has-metadata'
 
+# Predicated used for mapping for interoperability purposes, introduced
+# to relate controlled vocabulary concepts to iSamples in a manner that does not
+# impact hierarchy modeling for faceted search
+PREDICATE_OC_INTEROP_MAP_UUID = '00000000-6e24-f6f5-16dd-fe38c82ce521'
+
 
 # OC-General Resource Classes:
 OC_RESOURCE_FULLFILE_UUID = '00000000-6e24-dbd6-3608-9961b99c331b'

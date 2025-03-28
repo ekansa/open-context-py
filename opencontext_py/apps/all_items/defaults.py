@@ -959,6 +959,21 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/category',
         'context_id': OC_GEN_VOCAB_UUID,
     },
+    # Open Context hard-coded, for use with interoperability mapping
+    {
+        'uuid': PREDICATE_OC_INTEROP_MAP_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'property',
+        'data_type': 'id',
+        'slug': 'oc-gen-interoperability-mapping',
+        'label': 'Has interoperability mapping',
+        'item_key': 'oc-gen:interoperability-mapping',
+        'uri': 'opencontext.org/vocabularies/oc-general/interoperability-mapping',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
     {
         'uuid': PREDICATE_PROJ_ROOT_UUID,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
