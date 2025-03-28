@@ -1183,17 +1183,28 @@ def clean_lists(col):
     return output
 
 
-def combine_author_lists(x):
+def combine_author_lists(contribs, creators):
     """Combine weird numpy series of lists, adding creators to contribs"""
-    contribs = x['dc_contributor_label']
-    creators = x['dc_creator_label']
-    output = [
-        x for x in contribs if isinstance(auth, str)
-    ]
-    output += [
-        auth
-        for auth in creators if isinstance(auth, str) and auth not in contribs
-    ]
+    if is_null(contribs):
+        contribs = []
+    if is_null(creators):
+        creators = []
+    output = []
+    for auth in (contribs + creators):
+        if not isinstance(auth, str):
+            continue
+        if auth in output:
+            # Don't add duplicates to the contributor list
+            continue
+        output.append(auth)
+    return output
+
+
+def combine_author_lists_by_row(row):
+    """Combine weird numpy series of lists, adding creators to contribs, by a dataframe row"""
+    contribs = row['dc_contributor_label']
+    creators = row['dc_creator_label']
+    output = combine_author_lists(contribs, creators)
     return output
 
 
@@ -1290,7 +1301,7 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
                     df.at[i, col] = col_values
 
     # Now combine the contributors and the creators into a single author column
-    df['authors'] = None
+    df['authors'] = ''
 
     # Make authors for where either the contributor or the creator columns
     # are not null, but not both.
@@ -1302,13 +1313,21 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
         act_index = ~df[not_null].isnull() & df[is_null].isnull()
         df.loc[act_index, 'authors'] = df[act_index][not_null]
 
+    if False:
+        print('Example contributors: ' + str(df[df['dc_contributor_label'].notnull()]['dc_contributor_label'].head(5)))
+        print('Example creators: ' + str(df[df['dc_creator_label'].notnull()]['dc_creator_label'].head(5)))
+        print('Example authors: ' + str(df[df['authors'] != '']['authors'].head(5)))
     # Now, for where there are both contributors and creators, combine them together.
     act_index = (
         ~df['dc_contributor_label'].isnull()
         & ~df['dc_creator_label'].isnull()
-        & df['authors'].isnull()
+        & (df['authors'].isnull() | (df['authors'] == ''))
     )
-    df.loc[act_index, 'authors'] = df[act_index].apply(lambda x: combine_author_lists, axis=1)
+    print(f'Combining authors where both dc_contributor and dc_creator are not null. Index count: {len(df[act_index])}')
+    df.loc[act_index, 'authors'] = df.loc[act_index].apply(
+        lambda row: combine_author_lists_by_row(row),
+        axis=1
+    )
 
     if drop_roles:
         # Remove the columns for the roles that fed our author information.
