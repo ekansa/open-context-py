@@ -221,6 +221,10 @@ def get_add_aat_parent(child_uri, child_obj=None):
         print(f'COULD NOT FIND OR ADD DB record for parent: {pref_parent_uri}')
         return None, False
 
+    if parent_obj.uuid == child_obj.uuid:
+        # We're trying to make a parent-child relationship with the same object.
+        return parent_obj, False
+
     ass_obj, _ = AllAssertion.objects.get_or_create(
         uuid=AllAssertion().primary_key_create(
             subject_id=child_obj.uuid,
