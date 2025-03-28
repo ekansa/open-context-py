@@ -34,8 +34,9 @@ from opencontext_py.apps.all_items.isamples import sample_sites
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
 
-ADDED_FIELFS_DATA_TYPES = [
+ADDED_FIELDS_DATA_TYPES = [
     ('isam_sampling_site_label', 'VARCHAR'),
+    ('isam_sampling_site_type', 'VARCHAR'),
     ('isam_sampling_site_uri', 'VARCHAR'),
     ('item__geo_source', 'VARCHAR'),
     ('item__geo_source_uri', 'VARCHAR'),
@@ -47,8 +48,12 @@ ADDED_FIELFS_DATA_TYPES = [
     ('item__latest', 'DOUBLE'),
     ('item__chrono_source', 'VARCHAR'),
     ('item__chrono_source_uri', 'VARCHAR'),
+    # For iSamples vocabularies
+    ('isam_msamp_object_type', 'VARCHAR'),
+    ('isam_msamp_material_type', 'VARCHAR'),
 ]
 
+HUMAN_SUBJECT_CLASS_UUID = '00000000-6e24-babc-3eb9-95e716e400e6'
 
 
 def get_isamples_item_classes():
@@ -60,9 +65,11 @@ def get_isamples_item_classes():
     isamples_item_classes = []
     for man_obj in m_qs:
         m_children = hierarchy.get_list_concept_children_recursive(man_obj)
-        if man_obj not in isamples_item_classes:
+        if str(man_obj.uuid) != HUMAN_SUBJECT_CLASS_UUID and man_obj not in isamples_item_classes:
             isamples_item_classes.append(man_obj)
         for child_obj in m_children:
+            if str(child_obj.uuid) == HUMAN_SUBJECT_CLASS_UUID:
+                continue
             if child_obj not in isamples_item_classes:
                 isamples_item_classes.append(child_obj)
     return isamples_item_classes
@@ -78,6 +85,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
         where_clauses.extend(more_where_clauses)
 
     where_clauses.append("m.item_type = 'subjects'")
+    where_clauses.append(f"m.item_class_uuid <> '{HUMAN_SUBJECT_CLASS_UUID}'")
 
     # No results for items flagged as 'do not index'
     no_index_subj_clause = "m.meta_json::text NOT LIKE '%\"flag_do_not_index\": true,%'"
@@ -102,7 +110,7 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
         path_level_fields_sql = ''
 
     # Add fields populated with null values
-    null_fields = [f'NULL AS {field}' for field, _ in ADDED_FIELFS_DATA_TYPES]
+    null_fields = [f'NULL AS {field}' for field, _ in ADDED_FIELDS_DATA_TYPES]
     null_fields_sql = ', \n'.join(null_fields)
 
 
@@ -141,10 +149,13 @@ def make_isamples_manifest_query_sql(more_where_clauses=None, db_schema=duckdb_c
     -- Subquery for object_thumbnail
     (
         SELECT concat('https://', r.uri)
-        FROM {db_schema}.oc_all_resources r 
-        WHERE r.item_uuid = m.uuid 
+        FROM {db_schema}.oc_all_assertions AS a
+        INNER JOIN {db_schema}.oc_all_resources r ON (
+            a.object_uuid = r.item_uuid
+        )
+        WHERE a.subject_uuid = m.uuid 
         AND r.resourcetype_uuid = {duck_thumb_uuid} 
-        ORDER BY r.item_uuid ASC, r.rank ASC, r.resourcetype_uuid ASC 
+        ORDER BY a.sort ASC, r.rank ASC, r.resourcetype_uuid ASC 
         LIMIT 1
     ) AS object_thumbnail,
 
@@ -357,7 +368,7 @@ def get_isamples_raw_manifest(more_where_clauses=None, alias=duckdb_con.ISAMPLES
     temp_table_sql = f'CREATE TEMPORARY TABLE {alias} AS {sql}'
     con.execute(temp_table_sql)
     # Make sure the added fields are the right data type
-    for field, data_type in ADDED_FIELFS_DATA_TYPES:
+    for field, data_type in ADDED_FIELDS_DATA_TYPES:
         sql = f"ALTER TABLE {alias} ALTER {field} TYPE {data_type};"
         con.execute(sql)
 

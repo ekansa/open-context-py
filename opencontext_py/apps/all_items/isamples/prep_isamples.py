@@ -51,15 +51,18 @@ import time
 con = prep_isamples.DB_CON
 start = time.time()
 db_m = prep_isamples.prepare_sample_manifest_and_metadata()
-end = time.time()
-print(end-start)
+prep_end = time.time()
+print('Time to prepare sample manifest and related assertions:')
+print(prep_end - start)
 
 # Now we can move the extracted data to iSamples PQG table.
 prep_isamples.prepare_isamples_pqg()
 
 output_dir_path = '/home/ekansa/oc-data/parquet'
 parquet.dump_isamples_tables_to_parquet(output_dir_path=output_dir_path, con=con)
-
+end = time.time()
+print('Time to complete and save all iSamples preparation:')
+print(end - start)
 """
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
@@ -87,6 +90,8 @@ def prepare_isamples_pqg(con=DB_CON):
     """Prepare the iSamples PQG"""
     isamples_pqg.create_pqg_table(con=con)
     isamples_pqg.add_new_keys_to_tables(con=con)
+    isamples_pqg.add_preliminary_material_types_to_man_table(con=con)
+    isamples_pqg.update_material_types_in_man_tab_via_assertions(con=con)
     isamples_pqg.add_isamples_entities_to_pqg(con=con)
     isamples_pqg.add_edge_rows_to_pq(con=con)
     isamples_pqg.summarize_pqg(con=con)

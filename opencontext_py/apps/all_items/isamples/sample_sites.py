@@ -96,6 +96,7 @@ def make_temp_region_table(
         proj_path_level.act_path,
         m.label,
         m.uri,
+        'region' AS item_class_label,
         m.uuid
     FROM proj_path_level
     INNER JOIN {db_schema}.oc_all_manifest AS m ON proj_path_level.act_path = m.path 
@@ -144,10 +145,11 @@ def make_temp_site_table(
         proj_path_level.act_path,
         m.label,
         m.uri,
+        'site' AS item_class_label,
         m.uuid
     FROM proj_path_level
     INNER JOIN {db_schema}.oc_all_manifest AS m ON proj_path_level.act_path = m.path 
-    INNER JOIN {db_schema}.oc_all_manifest AS proj ON proj_path_level.project_uuid = proj.uuid 
+    INNER JOIN {db_schema}.oc_all_manifest AS proj ON proj_path_level.project_uuid = proj.uuid
     WHERE {where_conditions}
     """
     con.execute(f"DROP TABLE IF EXISTS {alias}")
@@ -167,6 +169,7 @@ def update_regions_for_path_level(
     sql = f"""
     UPDATE {man_table}
     SET isam_sampling_site_label = regions.label,
+        isam_sampling_site_type = regions.item_class_label,
         isam_sampling_site_uri = concat('https://', regions.uri)
     FROM regions
     WHERE {man_table}.isam_sampling_site_uri IS NULL
@@ -189,6 +192,7 @@ def update_sites_for_path_level(
     sql = f"""
     UPDATE {man_table}
     SET isam_sampling_site_label = sites.label,
+        isam_sampling_site_type = sites.item_class_label,
         isam_sampling_site_uri = concat('https://', sites.uri)
     FROM sites
     WHERE {man_table}.isam_sampling_site_uri IS NULL

@@ -4,9 +4,10 @@ from duckdb.typing import *
 
 from django.conf import settings
 
-
+from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.isamples import duckdb_con
-
+from opencontext_py.apps.all_items.isamples import vocab_mappings
+from opencontext_py.apps.all_items.isamples import utilities as duck_utils
 
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
@@ -51,7 +52,8 @@ CREATE TABLE IF NOT EXISTS pqg (
     access_constraints      VARCHAR[],
     place_name              VARCHAR[],
     description             VARCHAR,
-    label                   VARCHAR
+    label                   VARCHAR,
+    thumbnail_url            VARCHAR
 );
 
 """
@@ -79,7 +81,11 @@ NEW_KEY_TUPS = {
     ]
 }
 
+# Mimimum number of uses Open Context "types" to be included 
+# as iSamples identified concepts
 MIN_NUMBER_OBJECT_COUNT_FOR_IDENTIFIED_CONCEPTS = 4
+
+
 
 
 def create_pqg_table(con=DB_CON, schema_sql=ISAMPLES_PQG_SCHEMA_SQL):
@@ -98,6 +104,68 @@ def add_new_keys_to_tables(
             con.sql(sql)
             sql = f"UPDATE {table} SET {col} = {t_col}"
             con.sql(sql)
+
+
+def add_preliminary_material_types_to_man_table(
+    vocab_concepts_dict=vocab_mappings.MAP_ITEM_CLASS_LABEL_MATERIAL_TYPES,
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE, 
+    con=DB_CON,
+):
+    """Updates the isam_manifest table with preliminary material types, as
+    configured for different item_class_labels. This is considered a
+    default material type, which can be updated later with more specific
+    information from assertions.
+    """
+    for item_class_label, type_dict in vocab_concepts_dict.items():
+        mtype_pid = type_dict['pid']
+        sql = f"""
+        UPDATE {man_table}
+        SET isam_msamp_material_type = '{mtype_pid}'
+        WHERE item_class_label = '{item_class_label}'
+        """
+        con.sql(sql)
+    sql = f"""
+    SELECT item_class_label, isam_msamp_material_type, COUNT(uuid) AS count
+    FROM {man_table}
+    GROUP BY item_class_label, isam_msamp_material_type
+    ORDER BY count DESC
+    """
+    print('Preliminary material types in the manifest table:')
+    con.sql(sql).show(max_rows=100)
+
+
+def update_material_types_in_man_tab_via_assertions(
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    assert_table=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE, 
+    con=DB_CON,
+    db_schema=duckdb_con.DUCKDB_SCHEMA
+):
+    """Update the material types in the manifest table via assertions. We need to use
+    'Consists of' assertions to get the material types by association from controlled
+    vocabulary concepts that have 'interoperability mappings' to iSamples material types.
+    """
+    pred_interop_uuid = duck_utils.cast_duckdb_uuid(configs.PREDICATE_OC_INTEROP_MAP_UUID)
+    
+    sql = f"""
+    UPDATE {man_table}
+    SET isam_msamp_material_type = concat('https://', oc_isam_man.uri)
+    FROM {assert_table} AS asserts
+    INNER JOIN {db_schema}.oc_all_manifest AS oc_man ON asserts.object_equiv_ld_uri = concat('https://', oc_man.uri)
+    INNER JOIN {db_schema}.oc_all_assertions AS oc_a ON oc_man.uuid = oc_a.subject_uuid
+    INNER JOIN {db_schema}.oc_all_manifest AS oc_isam_man ON oc_a.object_uuid = oc_isam_man.uuid
+    WHERE asserts.subject_uuid = {man_table}.uuid
+    AND asserts.predicate_equiv_ld_label = 'Consists of'
+    AND oc_a.predicate_uuid = {pred_interop_uuid}
+    """
+    con.sql(sql)
+    sql = f"""
+    SELECT item_class_label, isam_msamp_material_type, COUNT(uuid) AS count
+    FROM {man_table}
+    GROUP BY item_class_label, isam_msamp_material_type
+    ORDER BY count DESC
+    """
+    print('Final material types in the manifest table:')
+    con.sql(sql).show(max_rows=100)
 
 
 def do_spo_to_pqg_inserts(con=DB_CON):
@@ -358,6 +426,7 @@ def add_material_sample_records_to_pqg(man_table=duckdb_con.ISAMPLES_PREP_MANIFE
         label,
         sample_identifier,
         last_modified_time,
+        thumbnail_url,
         otype
     ) SELECT 
         PID_SAMP,
@@ -382,6 +451,7 @@ def add_material_sample_records_to_pqg(man_table=duckdb_con.ISAMPLES_PREP_MANIFE
             NULL,
             NULL
         )::VARCHAR AS last_modified_time,
+        ANY_VALUE(object_thumbnail) AS thumbnail_url,
         'MaterialSampleRecord'
         FROM {man_table}
         WHERE PID_SAMP NOT IN (SELECT pid FROM pqg)
@@ -389,7 +459,6 @@ def add_material_sample_records_to_pqg(man_table=duckdb_con.ISAMPLES_PREP_MANIFE
         GROUP BY PID_SAMP, PATH
     """
     con.sql(sql)
-
 
 
 def add_equiv_identified_concepts_to_pqg(
@@ -464,6 +533,31 @@ def add_object_identified_concepts_to_pqg(
     con.sql(sql)
 
 
+def add_vocab_concepts_to_pqg(vocab_concepts_dict, con=DB_CON):
+    for _, type_dict in vocab_concepts_dict.items():
+        if not type_dict.get('label'):
+            continue
+        print(f'Adding {type_dict["label"]} to pqg')
+        sql = f"""
+        INSERT OR IGNORE INTO pqg (
+            pid,
+            label,
+            scheme_name,
+            scheme_uri,
+            description,
+            otype
+        ) VALUES (
+            '{type_dict['pid']}', 
+            '{type_dict['label']}',
+            '{type_dict['scheme_name']}',
+            '{type_dict['scheme_uri']}',
+            '{type_dict['description']}',
+            '{type_dict['otype']}'
+        )
+        """
+        con.sql(sql)
+
+
 def add_keyword_edges_to_pqg(
     man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
     assert_table=duckdb_con.ISAMPLES_PREP_ASSERTION_TABLE,
@@ -524,6 +618,114 @@ def add_agent_edges_to_pqg(
     do_spo_to_pqg_inserts(con=con)
 
 
+def add_material_sample_object_type_edges_to_pqg(
+    vocab_concepts_dict=vocab_mappings.MAP_ITEM_CLASS_LABEL_MATERIAL_SAMPLE_OBJECT_TYPES,
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    p_val='has_sample_object_type',
+    con=DB_CON,
+):
+    for item_class_label, type_dict in vocab_concepts_dict.items():
+        object_pid = type_dict['pid']
+        # First do the SQL for the material sample record.
+        sql = "DROP TABLE IF EXISTS spo"
+        con.sql(sql)
+        sql = f"""
+            CREATE TABLE spo AS
+            SELECT 
+                man.PID_SAMP AS s,
+                '{p_val}' AS p,
+                '{object_pid}' AS o,
+                '_edge_' AS otype
+                FROM {man_table} AS man
+                WHERE man.PID_SAMP IS NOT NULL
+                AND man.item_class_label = '{item_class_label}'
+                GROUP BY man.PID_SAMP
+            """
+        # Now do the SQL to make the temporary table
+        con.sql(sql)
+        # Use the temporary table to make the insert to the output
+        do_spo_to_pqg_inserts(con=con)
+
+
+def add_material_type_edges_to_pqg(
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    p_val='has_material_category',
+    con=DB_CON,
+):
+    """Add material type edges to the pqg table from data in the
+    isam_msamp_material_type column of the iSamples manifest table.
+    """
+    sql = "DROP TABLE IF EXISTS spo"
+    con.sql(sql)
+    sql = f"""
+        CREATE TABLE spo AS
+        SELECT 
+            man.PID_SAMP AS s,
+            '{p_val}' AS p,
+            man.isam_msamp_material_type AS o,
+            '_edge_' AS otype
+            FROM {man_table} AS man
+            WHERE man.PID_SAMP IS NOT NULL
+            AND man.isam_msamp_material_type IS NOT NULL
+            GROUP BY man.PID_SAMP, man.isam_msamp_material_type
+        """
+    # Now do the SQL to make the temporary table
+    con.sql(sql)
+    # Use the temporary table to make the insert to the output
+    do_spo_to_pqg_inserts(con=con)
+
+
+def add_sampling_site_edges_to_pqg(
+    vocab_concepts_dict=vocab_mappings.MAP_SITE_TYPE_SAMPLED_SITE_TYPES,
+    man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+    p_val='has_context_category',
+    con=DB_CON,
+):
+    for site_type, type_dict in vocab_concepts_dict.items():
+        object_pid = type_dict['pid']
+        # First do the SQL for the sample event.
+        if False:
+            # Skip this, since it seems redundant.
+            sql = "DROP TABLE IF EXISTS spo"
+            con.sql(sql)
+            sql = f"""
+                CREATE TABLE spo AS
+                SELECT 
+                    man.PID_SAMPEVENT AS s,
+                    '{p_val}' AS p,
+                    '{object_pid}' AS o,
+                    '_edge_' AS otype
+                    FROM {man_table} AS man
+                    WHERE man.PID_SAMPEVENT IS NOT NULL
+                    AND man.isam_sampling_site_type = '{site_type}'
+                    GROUP BY man.PID_SAMPEVENT
+                """
+            # Now do the SQL to make the temporary table
+            con.sql(sql)
+            do_spo_to_pqg_inserts(con=con)
+        # Now do the SQL for the MaterialSampleRecord
+        sql = "DROP TABLE IF EXISTS spo"
+        con.sql(sql)
+        sql = f"""
+            CREATE TABLE spo AS
+            SELECT 
+                man.PID_SAMP AS s,
+                '{p_val}' AS p,
+                '{object_pid}' AS o,
+                '_edge_' AS otype
+                FROM {man_table} AS man
+                WHERE man.PID_SAMP IS NOT NULL
+                AND man.isam_sampling_site_type = '{site_type}'
+                GROUP BY man.PID_SAMP
+            """
+        # Now do the SQL to make the temporary table
+        con.sql(sql)
+        # Use the temporary table to make the insert to the output
+        do_spo_to_pqg_inserts(con=con)
+
+
+
+
 def add_isamples_entities_to_pqg(con=DB_CON):
     """Add iSamples entities to the pqg table"""
     add_direct_geospatial_locations_to_pqg(con=con)
@@ -535,6 +737,19 @@ def add_isamples_entities_to_pqg(con=DB_CON):
     add_object_identified_concepts_to_pqg(con=con)
     add_direct_agents_to_pqg(con=con)
     add_indirect_agents_to_pqg(con=con)
+    add_vocab_concepts_to_pqg(
+        vocab_concepts_dict=vocab_mappings.MAP_ITEM_CLASS_LABEL_MATERIAL_SAMPLE_OBJECT_TYPES, 
+        con=con,
+    )
+    add_vocab_concepts_to_pqg(
+        vocab_concepts_dict=vocab_mappings.MAP_ITEM_CLASS_LABEL_MATERIAL_TYPES, 
+        con=con,
+    )
+    add_vocab_concepts_to_pqg(
+        vocab_concepts_dict=vocab_mappings.MAP_SITE_TYPE_SAMPLED_SITE_TYPES, 
+        con=con,
+    )
+
 
 
 def add_edge_rows_to_pq(con=DB_CON):
@@ -622,6 +837,26 @@ def add_edge_rows_to_pq(con=DB_CON):
         group_by_cols='man.PID_SAMPEVENT, agents.PID_INDIRECT_AGENT',
         con=con,
     )
+    # Relate the Material Sample Records to the object types
+    add_material_sample_object_type_edges_to_pqg(
+        vocab_concepts_dict=vocab_mappings.MAP_ITEM_CLASS_LABEL_MATERIAL_SAMPLE_OBJECT_TYPES,
+        man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+        p_val='has_sample_object_type',
+        con=con,
+    )
+    # Add the edges for the material types
+    add_material_type_edges_to_pqg(
+        man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+        p_val='has_material_category',
+        con=con,
+    )
+    # Relate the Sampling sites to the sampling site types
+    add_sampling_site_edges_to_pqg(
+        vocab_concepts_dict=vocab_mappings.MAP_SITE_TYPE_SAMPLED_SITE_TYPES,
+        man_table=duckdb_con.ISAMPLES_PREP_MANIFEST_TABLE,
+        p_val='has_context_category',
+        con=con,
+    )
 
 
 def summarize_pqg(con=DB_CON):
@@ -634,6 +869,9 @@ def summarize_pqg(con=DB_CON):
         'keywords',
         'registrant',
         'responsibility',
+        'has_sample_object_type',
+        'has_material_category',
+        'has_context_category',
     ]
     for e_check in edge_checks:
         sql = f"SELECT COUNT(pid), '{e_check}' AS predicate FROM pqg WHERE p = '{e_check}'"
@@ -642,3 +880,18 @@ def summarize_pqg(con=DB_CON):
     con.sql(sql).show(max_rows=100)
     sql = "SELECT label, description FROM pqg WHERE otype = 'IdentifiedConcept' ORDER BY RANDOM() LIMIT 5; "
     con.sql(sql).show(max_rows=100)
+    sql = """
+    SELECT pqg.label,
+    pqg.description,
+    opqg.label
+    FROM pqg
+    INNER JOIN pqg AS ppqg ON (
+        pqg.pid = ppqg.s
+        AND ppqg.p = 'has_context_category'
+    )
+    INNER JOIN pqg AS opqg ON opqg.pid = list_any_value(ppqg.o)
+    WHERE pqg.otype = 'MaterialSampleRecord'
+    ORDER BY RANDOM()
+    LIMIT 10
+    """
+    con.sql(sql).show(max_rows=10)
