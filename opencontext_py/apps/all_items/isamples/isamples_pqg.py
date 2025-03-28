@@ -12,16 +12,18 @@ from opencontext_py.apps.all_items.isamples import utilities as duck_utils
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
 
+ISAMPLES_ROW_ID_SEQUENCE_SQL = 'CREATE SEQUENCE row_id_sequence START 1;'
 
 ISAMPLES_PQG_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS pqg (
-    pid                     VARCHAR PRIMARY KEY,
+    row_id                  INTEGER PRIMARY KEY DEFAULT nextval('row_id_sequence'),
+    pid                     VARCHAR UNIQUE NOT NULL,
     tcreated                INTEGER,
     tmodified               INTEGER,
     otype                   VARCHAR,
-    s                       VARCHAR,
+    s                       INTEGER,
     p                       VARCHAR,
-    o                       VARCHAR[],
+    o                       INTEGER[],
     n                       VARCHAR,
     altids                  VARCHAR[], 
     geometry                BLOB,
@@ -53,7 +55,7 @@ CREATE TABLE IF NOT EXISTS pqg (
     place_name              VARCHAR[],
     description             VARCHAR,
     label                   VARCHAR,
-    thumbnail_url            VARCHAR
+    thumbnail_url           VARCHAR
 );
 
 """
@@ -88,8 +90,9 @@ MIN_NUMBER_OBJECT_COUNT_FOR_IDENTIFIED_CONCEPTS = 4
 
 
 
-def create_pqg_table(con=DB_CON, schema_sql=ISAMPLES_PQG_SCHEMA_SQL):
+def create_pqg_table(con=DB_CON, sequence_sql=ISAMPLES_ROW_ID_SEQUENCE_SQL, schema_sql=ISAMPLES_PQG_SCHEMA_SQL):
     """Create the pqg table"""
+    con.execute(sequence_sql)
     con.execute(schema_sql)
 
 
@@ -178,20 +181,20 @@ def do_spo_to_pqg_inserts(con=DB_CON):
         o,
         otype
     ) SELECT
-        get_deterministic_id(concat(s, p), 'edge_') AS pid,
-        s,
-        p,
-        array_agg(o) AS o,
-        otype
+        get_deterministic_id(concat(spo.s_pid, spo.p), 'edge_') AS pid,
+        s_pqg.row_id AS s,
+        spo.p,
+        array_agg(o_pqg.row_id) AS o,
+        spo.otype
         FROM spo
-        WHERE s IS NOT NULL
-        AND s IN (SELECT pid FROM pqg)
-        AND p IS NOT NULL
-        AND o IS NOT NULL
-        AND o IN (SELECT pid FROM pqg)
-        AND get_deterministic_id(concat(s, p), 'edge_') NOT IN
+        INNER JOIN pqg AS s_pqg ON spo.s_pid = s_pqg.pid
+        INNER JOIN pqg AS o_pqg ON spo.o_pid = o_pqg.pid
+        WHERE spo.s_pid IS NOT NULL
+        AND spo.p IS NOT NULL
+        AND spo.o_pid IS NOT NULL
+        AND get_deterministic_id(concat(spo.s_pid, spo.p), 'edge_') NOT IN
         (SELECT pid FROM pqg)
-        GROUP BY s , p, otype
+        GROUP BY s_pid, s_pqg.row_id, spo.p, spo.otype, 
     """
     con.sql(sql)
 
@@ -218,9 +221,9 @@ def make_s_p_o_edge_rows(
         sql = f"""
         CREATE TABLE spo AS
         SELECT 
-            {s_col} AS s,
+            {s_col} AS s_pid,
             {p_col} AS p,
-            {o_col} AS o,
+            {o_col} AS o_pid,
             '_edge_' AS otype
             FROM {source_table}
             WHERE {s_col} IS NOT NULL
@@ -236,9 +239,9 @@ def make_s_p_o_edge_rows(
         sql = f"""
         CREATE TABLE spo AS
         SELECT 
-            {s_col} AS s,
+            {s_col} AS s_pid,
             '{p_val}' AS p,
-            {o_col} AS o,
+            {o_col} AS o_pid,
             '_edge_' AS otype
             FROM {source_table}
             WHERE {s_col} IS NOT NULL
@@ -571,9 +574,9 @@ def add_keyword_edges_to_pqg(
     sql = f"""
         CREATE TABLE spo AS
         SELECT 
-            man.PID_SAMP AS s,
+            man.PID_SAMP AS s_pid,
             '{p_val}' AS p,
-            asserts.{o_col} AS o,
+            asserts.{o_col} AS o_pid,
             '_edge_' AS otype
             FROM {assert_table} AS asserts
             INNER JOIN {man_table} AS man ON man.uuid = asserts.subject_uuid
@@ -602,9 +605,9 @@ def add_agent_edges_to_pqg(
     sql = f"""
         CREATE TABLE spo AS
         SELECT 
-            man.{s_col} AS s,
+            man.{s_col} AS s_pid,
             '{p_val}' AS p,
-            agents.{o_col} AS o,
+            agents.{o_col} AS o_pid,
             '_edge_' AS otype
             FROM {agent_table} AS agents
             INNER JOIN {man_table} AS man ON man.uuid = agents.uuid
@@ -632,9 +635,9 @@ def add_material_sample_object_type_edges_to_pqg(
         sql = f"""
             CREATE TABLE spo AS
             SELECT 
-                man.PID_SAMP AS s,
+                man.PID_SAMP AS s_pid,
                 '{p_val}' AS p,
-                '{object_pid}' AS o,
+                '{object_pid}' AS o_pid,
                 '_edge_' AS otype
                 FROM {man_table} AS man
                 WHERE man.PID_SAMP IS NOT NULL
@@ -660,9 +663,9 @@ def add_material_type_edges_to_pqg(
     sql = f"""
         CREATE TABLE spo AS
         SELECT 
-            man.PID_SAMP AS s,
+            man.PID_SAMP AS s_pid,
             '{p_val}' AS p,
-            man.isam_msamp_material_type AS o,
+            man.isam_msamp_material_type AS o_pid,
             '_edge_' AS otype
             FROM {man_table} AS man
             WHERE man.PID_SAMP IS NOT NULL
@@ -691,9 +694,9 @@ def add_sampling_site_edges_to_pqg(
             sql = f"""
                 CREATE TABLE spo AS
                 SELECT 
-                    man.PID_SAMPEVENT AS s,
+                    man.PID_SAMPEVENT AS s_pid,
                     '{p_val}' AS p,
-                    '{object_pid}' AS o,
+                    '{object_pid}' AS o_pid,
                     '_edge_' AS otype
                     FROM {man_table} AS man
                     WHERE man.PID_SAMPEVENT IS NOT NULL
@@ -709,9 +712,9 @@ def add_sampling_site_edges_to_pqg(
         sql = f"""
             CREATE TABLE spo AS
             SELECT 
-                man.PID_SAMP AS s,
+                man.PID_SAMP AS s_pid,
                 '{p_val}' AS p,
-                '{object_pid}' AS o,
+                '{object_pid}' AS o_pid,
                 '_edge_' AS otype
                 FROM {man_table} AS man
                 WHERE man.PID_SAMP IS NOT NULL
@@ -886,10 +889,10 @@ def summarize_pqg(con=DB_CON):
     opqg.label
     FROM pqg
     INNER JOIN pqg AS ppqg ON (
-        pqg.pid = ppqg.s
+        pqg.row_id = ppqg.s
         AND ppqg.p = 'has_context_category'
     )
-    INNER JOIN pqg AS opqg ON opqg.pid = list_any_value(ppqg.o)
+    INNER JOIN pqg AS opqg ON opqg.row_id = list_any_value(ppqg.o)
     WHERE pqg.otype = 'MaterialSampleRecord'
     ORDER BY RANDOM()
     LIMIT 10
