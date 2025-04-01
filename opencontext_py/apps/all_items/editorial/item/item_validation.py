@@ -223,7 +223,7 @@ def validate_label(check_label, filter_args=None, exclude_uuid=None):
     return report
 
 
-def validate_project_short_id(raw_short_id, exclude_uuid=None):
+def validate_project_short_id(raw_short_id, filter_args=None, exclude_uuid=None):
     """Validates a (project) short integer id"""
     try:
         short_id = int(float(raw_short_id))
@@ -358,7 +358,7 @@ def validate_uri(raw_uri, filter_args=None, exclude_uuid=None):
     return report
 
 
-def validate_published(published_val):
+def validate_published(published_val, filter_args=None, exclude_uuid=None):
     errors = []
     if published_val is None:
         return {
@@ -385,7 +385,7 @@ def validate_published(published_val):
     }
 
 
-def validate_meta_json_key_val(key, val):
+def validate_meta_json_key_val(key, val, filter_args=None, exclude_uuid=None):
     errors = []
     report = {
         'is_valid': False,

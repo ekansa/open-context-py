@@ -46,6 +46,25 @@ HUMAN_READABLE_ATTRIBUTE_DICT = {
 }
 
 
+def check_set_project_inventory(filter_args):
+    """Checks filter_args to see if we're querying for a project inventory
+    updates the filter arg to do so.
+    """
+    do_project_inventory = False
+    if not isinstance(filter_args, dict):
+        return filter_args, do_project_inventory    
+    if len(filter_args.get('project_id__in', [])) > 0:
+        return filter_args, do_project_inventory
+    # We're likely doing a project inventory filter
+    do_project_inventory = True
+    if filter_args.get('project_id__in') == []:
+        filter_args.pop('project_id__in')
+    if not filter_args.get('subject__item_type__in'):
+        filter_args['subject__item_type__in'] = ['projects']
+    return filter_args, do_project_inventory
+
+
+
 def make_human_readable_query_args(query_arg_dict):
     """Makes a human readable list of args from a query_arg_dict"""
     arg_list = []
@@ -212,6 +231,9 @@ def make_export_config_dict(
     exclude_hr_list = make_human_readable_query_args(exclude_args)
     if filter_args or exclude_args:
         qs = AllAssertion.objects.all()
+        # Update the filter_args in case we're doing a project inventory
+        filter_args, _ = check_set_project_inventory(filter_args)
+
         if filter_args:
             qs = qs.filter(
                 **filter_args

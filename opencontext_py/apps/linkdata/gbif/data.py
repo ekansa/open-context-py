@@ -249,3 +249,4 @@ def contextualize_items_without_parents():
             continue
         print(f'Needs a parent: {gbif_obj.label} ({gbif_obj.uri})')
         get_add_gbif_parent(gbif_obj.uri, child_obj=gbif_obj)
+        add_gbif_vernacular_name(gbif_obj)

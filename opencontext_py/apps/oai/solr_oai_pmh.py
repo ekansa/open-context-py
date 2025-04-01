@@ -828,7 +828,8 @@ class SolrOAIpmh():
                     'http://purl.org/NET/mediatypes/',
                     '',
                 )
-                format_list.append(mime_type)
+                if mime_type not in format_list:
+                    format_list.append(mime_type)
     
         for mime in format_list:
             act_xml = etree.SubElement(format_xml, '{' + dc + '}format')

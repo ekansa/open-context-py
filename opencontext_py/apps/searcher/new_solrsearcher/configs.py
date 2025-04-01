@@ -988,14 +988,14 @@ REQUEST_ISAMPLES_ATTRIBUTES = 'iSamples'
 REQUEST_NESTED_JSON_ATTRIBUTES = 'JSON-NESTED'
 
 
-ISAMPLES_DEFAULT_CLASS_SLUG_RAW_PATH = REQUEST_OR_OPERATOR.join(
-        [
-        'oc-gen-cat-sample-col',
-        'oc-gen-cat-bio-subj-ecofact',
-        'oc-gen-cat-object',
-        'oc-gen-cat-c14-sample',
-    ]
-)
+ISAMPLES_DEFAULT_CLASS_SLUGS = [
+    'oc-gen-cat-sample-col',
+    'oc-gen-cat-bio-subj-ecofact',
+    'oc-gen-cat-object',
+    'oc-gen-cat-c14-sample',
+]
+
+ISAMPLES_DEFAULT_CLASS_SLUG_RAW_PATH = REQUEST_OR_OPERATOR.join(ISAMPLES_DEFAULT_CLASS_SLUGS)
 
 # Sampling site OK item_classes for a given specimen's context
 ISAMPLES_SAMPLING_SITE_ITEM_CLASS_SLUGS = [

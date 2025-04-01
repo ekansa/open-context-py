@@ -175,7 +175,8 @@ def make_oc_filename(filename):
     filename = filename.lower()
     ext = ''
     if '.' in filename:
-        f_explode = filename.split('.')
+        f_explode_raw = filename.split('.')
+        f_explode = [p for p in f_explode_raw if p != '']
         ext = f'.{f_explode[-1]}'
         filename = '-'.join(f_explode[0:-1])
     ext = ext.replace('.jpeg', '.jpg')
