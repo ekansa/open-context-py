@@ -168,6 +168,9 @@ def reconcile_space_time_event(
         if not subject_uuid:
             continue
         subject_index = df[subj_uuid_col] == subject_uuid
+        if df[subject_index].empty:
+            # We have no data for this subject, so skip out.
+            continue
         row_num = df[subject_index]['row_num'].iloc[0]
         if event_uuid_col:
             # Get the event uuid from this already reconciled event field.
