@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS pqg (
     o                       INTEGER[],
     n                       VARCHAR,
     altids                  VARCHAR[], 
-    geometry                BLOB,
+    geometry                GEOMETRY,
     authorized_by           VARCHAR[],
     has_feature_of_interest VARCHAR,
     affiliation             VARCHAR,
