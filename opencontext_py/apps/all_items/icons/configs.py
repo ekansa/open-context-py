@@ -233,6 +233,22 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "item_class__slug": "oc-default-class",
             "icon": "../../static/oc/icons-v2/noun-research-project-2341022.svg",
         },
+        {
+            "item_class__uuid": "00000000-6e24-956a-2395-8be4933d4d27",
+            "item_class__label": "Collection",
+            "item_class__item_key": "oc-gen:cat-collection",
+            "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-collection",
+            "item_class__slug": "oc-gen-cat-collection",
+            "icon": "../../static/oc/icons-v2/noun-archive-boxes-6666382.svg",
+        },
+        {
+            "item_class__uuid": "00000000-6e24-de9d-3040-a85d9f2cbc6d",
+            "item_class__label": "Data Publication",
+            "item_class__item_key": "oc-gen:cat-data-publication",
+            "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-data-publication",
+            "item_class__slug": "oc-gen-cat-data-publication",
+            "icon": "../../static/oc/icons-v2/noun-research-project-2341022.svg",
+        },
     ],
     "property": [
         {
