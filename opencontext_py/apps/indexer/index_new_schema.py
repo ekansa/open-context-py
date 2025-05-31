@@ -45,6 +45,13 @@ importlib.reload(new_ind)
 new_ind.make_indexed_solr_documents_in_chunks(uuids, start_clear_caches=False)
 suggest.get_rebuild_solr_suggest()
 
+
+m_qs = AllManifest.objects.filter(item_type__in=['projects', 'subjects', 'media', 'documents', 'tables'])
+m_qs = m_qs.order_by('project', 'item_type', 'item_class', 'sort')
+uuids = m_qs.values_list('uuid', flat=True)[1325800:]
+
+
+
 d_slugs = [
     '52-georgia-archaeological-site-file-gasf',
     '52-florida-site-files',

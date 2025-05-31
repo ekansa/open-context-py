@@ -70,10 +70,12 @@ MAX_THUMBNAIL_WIDTH = 150
 GAUSSIAN_BLUR_RADIUS = 2
 
 
-def make_oc_filename(filename):
+def make_oc_filename(filename, replace_all_dots=False):
     """Makes an Open Context filename to be URL friendly."""
     filename = filename.lower()
     ext = ''
+    if replace_all_dots and '.' in filename:
+        filename = filename.replace('.', '-')
     if '.' in filename:
         f_explode = filename.split('.')
         ext = f'.{f_explode[-1]}'
@@ -95,6 +97,9 @@ def make_directory_files_df(orig_media_dir_path):
                 continue
             if filename.endswith('.ini'):
                 # Skip .ini files probably from a MacOS
+                continue
+            if filename.endswith('.DS_Store'):
+                # Skip .DS_Store files probably from a MacOS
                 continue
             file_path = os.path.join(dirpath, filename)
             rec = {
@@ -162,6 +167,8 @@ def get_image_obj(src_file, new_file):
     except:
         print('Cannot use as image: ' + src_file)
         im = None
+    if im is None:
+        return None, None
     if im.format_description == 'Adobe TIFF':
         selected_layer = 0
         im.seek(selected_layer)
@@ -183,6 +190,7 @@ def make_new_size_file(src_file, new_file, new_width):
     output = None
     im, png = get_image_obj(src_file, new_file)
     if im is None:
+        print(f'Cannot make new size file: {new_file}')
         return None
     ratio = 1  # default to same size
     if im.width > new_width:
@@ -257,7 +265,7 @@ def make_oc_media_path_in_sub_dirs(orig_media_dir_path, src_file, oc_dir, new_fi
             at_root = True
             break
         orig_sub_dir = os.path.basename(act_orig_path)
-        new_sub_dir = make_oc_filename(orig_sub_dir)
+        new_sub_dir = make_oc_filename(orig_sub_dir, replace_all_dots=True)
         new_sub_dirs.append(new_sub_dir)
         act_orig_path = os.path.dirname(act_orig_path)
     if new_sub_dirs:

@@ -82,6 +82,30 @@ DEFAULT_ASSERTIONS = [
     },
 ]
 
+DEFAULT_CLASS_HIERARCHY = [
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': CLASS_OC_DATA_PUB_UUID,
+        'predicate_id': PREDICATE_RDFS_SUB_CLASS_OF_UUID,
+        # the object_id is the uuid for the "Projects or Collections" class
+        # manifest item.
+        'object_id': '00000000-6e24-bebe-5b32-6457936d22ff',
+    },
+    {
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'subject_id': CLASS_OC_COLLECTION_UUID,
+        'predicate_id': PREDICATE_RDFS_SUB_CLASS_OF_UUID,
+        # the object_id is the uuid for the "Projects or Collections" class
+        # manifest item.
+        'object_id': '00000000-6e24-bebe-5b32-6457936d22ff',
+    },
+]
+
+
 DATA_TABLE_RELATED_MANIFESTS = [
     {
         'uuid': CSVW_VOCAB_UUID,
@@ -850,6 +874,34 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/cat-region',
         'context_id': OC_GEN_VOCAB_UUID,
     },
+    {
+        'uuid': CLASS_OC_DATA_PUB_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-cat-data-publication',
+        'label': 'Data Publication',
+        'item_key': 'oc-gen:cat-data-publication',
+        'uri': 'opencontext.org/vocabularies/oc-general/cat-data-publication',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    {
+        'uuid': CLASS_OC_COLLECTION_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-cat-collection',
+        'label': 'Collection',
+        'item_key': 'oc-gen:cat-collection',
+        'uri': 'opencontext.org/vocabularies/oc-general/cat-collection',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
     # Add the default (World) root subject item.
     # Below is a simple hierarchy of world regions as defined by
     # the United Nations, see: https://en.wikipedia.org/wiki/United_Nations_geoscheme
@@ -1406,7 +1458,7 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/gis-vector-file',
         'context_id': OC_GEN_VOCAB_UUID,
     },
-    # Documents, especially incuding Open Context site page content
+    # Documents, especially including Open Context site page content
     {
         'uuid': CLASS_OC_SITE_DOCUMENTATION,
         'publisher_id': OPEN_CONTEXT_PUB_UUID,
@@ -1419,6 +1471,21 @@ DEFAULT_MANIFESTS = [
         'label': CLASS_OC_SITE_DOCUMENTATION_LABEL,
         'item_key': 'oc-gen:site-documentation',
         'uri': 'opencontext.org/vocabularies/oc-general/site-documentation',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
+    # For the Chendgu survey project
+    {
+        'uuid': None,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-sampling-site',
+        'label': 'Sampling site',
+        'item_key': 'oc-gen:sampling-site',
+        'uri': 'opencontext.org/vocabularies/oc-general/sampling-site',
         'context_id': OC_GEN_VOCAB_UUID,
     },
     # Event types.

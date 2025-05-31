@@ -524,7 +524,7 @@ ITEM_TYPE_MAPPINGS = {
     },
     'projects': {
         'rdfs:isDefinedBy': 'oc-gen:projects',
-        'label': 'Projects',
+        'label': 'Projects or collections',
         'slug': 'oc-gen-projects',
     },
     'types': {
@@ -595,7 +595,7 @@ FILTER_PARAM_CONFIGS = {
         'split_hierarchy': None,
     },
     'proj': {
-        'oc-api:filter': 'Project',
+        'oc-api:filter': 'Project or Collection',
         'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
         'is_spatial_context': False,
     },
@@ -864,7 +864,7 @@ FACETS_STANDARD = [
         'proj',
         REQUEST_PROP_HIERARCHY_DELIM,
         'oc-api:facet-project',
-        'Project',
+        'Project or Collection',
     ),
 ]
 
@@ -906,7 +906,7 @@ FACET_STANDARD_ROOT_FIELDS = {
     SolrDoc.ROOT_PROJECT_SOLR: {
         "id": "#facet-project",
         "rdfs:isDefinedBy": "oc-api:facet-project",
-        "label": "Project",
+        "label": "Project or Collection",
         "type": "oc-api:facet-project",
     },
     (
@@ -1000,6 +1000,7 @@ ISAMPLES_DEFAULT_CLASS_SLUG_RAW_PATH = REQUEST_OR_OPERATOR.join(ISAMPLES_DEFAULT
 # Sampling site OK item_classes for a given specimen's context
 ISAMPLES_SAMPLING_SITE_ITEM_CLASS_SLUGS = [
     'oc-gen-cat-site',
+    'oc-gen-cat-sampling-site',
 ]
 
 # ---------------------------------------------------------------------

@@ -137,7 +137,20 @@ LITERAL_FIELDS = [
 
 
 def dump_oc_raw_tables_to_parquet(output_dir_path, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA):
-    """Dump Open Context raw tables to parquet files"""
+    """Dump Open Context raw tables to parquet files.
+    
+    Args:
+        output_dir_path (str): Directory path where parquet files will be saved
+        con (duckdb.DuckDBPyConnection, optional): DuckDB connection object. Defaults to DB_CON
+        db_schema (str, optional): Database schema name. Defaults to duckdb_con.DUCKDB_SCHEMA
+    
+    The function dumps the following tables to parquet format:
+    - oc_all_manifest
+    - oc_all_assertions
+    - oc_all_resources
+    - oc_all_identifiers
+    - oc_all_spacetime
+    """
     for table_name in OC_RAW_TABLES:
         filepath = os.path.join(output_dir_path, f"{table_name}.parquet")
         print(f'Dumping {table_name} to {filepath}')
@@ -145,6 +158,19 @@ def dump_oc_raw_tables_to_parquet(output_dir_path, con=DB_CON, db_schema=duckdb_
 
 
 def dump_oc_pqg_table_to_parquet(output_dir_path, con=DB_CON):
+    """Dump Open Context PQG (Property Graph) table to parquet format with metadata.
+    
+    Args:
+        output_dir_path (str): Directory path where parquet file will be saved
+        con (duckdb.DuckDBPyConnection, optional): DuckDB connection object. Defaults to DB_CON
+    
+    The function creates a parquet file with the following metadata:
+    - pqg_version: Version of the PQG format
+    - pqg_primary_key: Primary key field name
+    - pqg_node_types: JSON string of node type definitions
+    - pqg_edge_fields: JSON string of edge field definitions
+    - pqg_literal_fields: JSON string of literal field definitions
+    """
     outpath = os.path.join(output_dir_path, 'oc_isamples_pqg.parquet')
     sql = f"COPY (SELECT * FROM pqg ) TO '{outpath}' "
     sql += "(FORMAT PARQUET, KV_METADATA {"
@@ -158,7 +184,22 @@ def dump_oc_pqg_table_to_parquet(output_dir_path, con=DB_CON):
 
 
 def dump_isamples_tables_to_parquet(output_dir_path, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA):
-    """iSamples tables to parquet files"""
+    """Dump iSamples related tables to parquet files.
+    
+    Args:
+        output_dir_path (str): Directory path where parquet files will be saved
+        con (duckdb.DuckDBPyConnection, optional): DuckDB connection object. Defaults to DB_CON
+        db_schema (str, optional): Database schema name. Defaults to duckdb_con.DUCKDB_SCHEMA
+    
+    The function dumps the following tables to parquet format:
+    1. iSamples preparation manifest table
+    2. iSamples preparation assertion table (joined with manifest)
+    3. iSamples preparation person table
+    4. Open Context PQG table (via dump_oc_pqg_table_to_parquet)
+    
+    The assertion table dump includes joined data from both manifest and assertion tables
+    with specific fields related to predicates and objects.
+    """
     tables_sql_files = [
         (
             f"""

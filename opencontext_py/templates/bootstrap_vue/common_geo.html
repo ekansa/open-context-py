@@ -2040,6 +2040,54 @@ var vc_common_map = Vue.component(
             let bounds = act_layer.getBounds();
             this.map.fitBounds(bounds);
         },
+        make_tile_facets_from_result_feature: function(cp_feature){
+            // Use a result feature to make a tile feature in cases where there
+            // are not tile facet features available.
+            cp_feature.count = this.geo_json.totalResults;
+            cp_feature.category = 'oc-api:geo-facet';
+            cp_feature.geometry.type = 'Polygon';
+            // Set up counts for styling
+            cp_feature.max_count = cp_feature.count;
+            cp_feature.gradient_key = this.selected_gradient_key;
+            cp_feature.percentile = this.get_percentile_of_val([cp_feature.count], cp_feature.count);
+
+            let act_zoom = 11;
+            let req_geotile = getURLParameter(this.geo_json.id, 'allevent-geotile');
+            if(req_geotile && req_geotile.length > 1){
+                act_zoom = req_geotile.length - 1;
+            }
+            const [lon, lat] = cp_feature.geometry.coordinates;
+            const tileDeg = 360 / Math.pow(2, act_zoom);
+
+            // We want a square with ~1/8 the area of a tile
+            // Area = side², so side = tileWidth / sqrt(8)
+            const squareSide = tileDeg / Math.sqrt(8);
+            const halfSide = squareSide / 1.75;
+            // Construct square around the center point
+            const squareCoords = [
+                [lon - (halfSide * 1.25), lat - halfSide],
+                [lon + (halfSide * 1.25), lat - halfSide],
+                [lon + (halfSide * 1.25), lat + halfSide],
+                [lon - (halfSide * 1.25), lat + halfSide],
+                [lon - (halfSide * 1.25), lat - halfSide]  // Close the polygon
+            ];
+            cp_feature.geometry.coordinates = [squareCoords];
+
+            // Make a feature collection for the tile facet.
+            let cp_feature_data = {
+                id: this.geo_json.id,
+                ov_id: 'sqr',
+                label: 'Area counts (squares)',
+                ref: 'map-tile-geojson-search-map',
+                type: "FeatureCollection",
+                category: 'oc-api:geo-facet',
+                min_count: cp_feature.count,
+                max_count: cp_feature.count,
+                all_counts: [cp_feature.count],
+                features: [cp_feature],
+            }
+            return cp_feature_data;
+        },
         add_overlay_layers: function() {
             if(!this.geo_json){
                 return null;
@@ -2089,6 +2137,19 @@ var vc_common_map = Vue.component(
                 'oc-api:geo-record',
                 JSON.parse(JSON.stringify(this.geo_page_records_default))
             );
+            if((!this.geo_tile_facets || this.geo_tile_facets.features.length < 1) && this.geo_page_records && this.geo_page_records.features.length > 0){
+                // We need to make a tile feature from the first record of the result features
+                console.log(
+                    'No tile facets, but page records available, so make a tile feature from the first record.'
+                );
+                let cp_feature = JSON.parse(JSON.stringify(this.geo_page_records.features[0]));
+                this.geo_tile_facets = this.make_tile_facets_from_result_feature(cp_feature);
+                console.log(
+                    'updated geo_tile_facets to have ' + this.geo_tile_facets.features.length + ' features.'
+                );
+                // Reset this so no endless recursion.
+                this.geo_tile_facets_default = JSON.parse(JSON.stringify(this.geo_tile_facets));
+            }
 
             // Removes prior geojson overlay layers from prior routing.
             this.remove_prior_overlays();
@@ -2096,12 +2157,18 @@ var vc_common_map = Vue.component(
             // Gather all the types of 'raw' geojson used to build overlay layers.
             let overlays_geojson = [];
             if(this.geo_tile_facets && this.geo_tile_facets.features.length > 0){
+                console.log(
+                    'adding overlays_geojson: geo_tile_facets has ' + this.geo_tile_facets.features.length + ' features.'
+                );
                 overlays_geojson.push(this.geo_tile_facets);
             }
             if(this.geo_region_facets && this.geo_region_facets.features.length > 0){
                 overlays_geojson.push(this.geo_region_facets);
             }
             if(this.geo_page_records && this.geo_page_records.features.length > 0){
+                console.log(
+                    'adding overlays_geojson: geo_page_records has ' + this.geo_page_records.features.length + ' features.'
+                );
                 overlays_geojson.push(this.geo_page_records);
             }
             if(this.geo_all_records && this.geo_all_records.features.length > 0){
@@ -2113,6 +2180,7 @@ var vc_common_map = Vue.component(
                     overlays_geojson.push(geo_rec_layer);
                 }
             }
+
             if(overlays_geojson.length < 1){
                 return null;
             }
@@ -2133,7 +2201,7 @@ var vc_common_map = Vue.component(
                     act_layer.max_count = act_geojson.max_count;
                     act_layer.all_counts = act_geojson.all_counts;
                     act_layer.id = act_geojson.id;
-                    // console.log('act_layer id is now: ' + act_layer.id);
+                    console.log('act_layer id is now:' + act_layer.id);
                 }
                 else{
                     act_layer = L.geoJson(
