@@ -638,9 +638,16 @@ else:
 
 if 'CORS_OK_DOMAINS' in secrets:
     # password for the internet archive
-    CORS_OK_DOMAINS = get_secret('CORS_OK_DOMAINS')
+    CORS_OK_DOMAINS = [get_secret('CORS_OK_DOMAINS')]
 else:
     CORS_OK_DOMAINS = []
+
+if not DEBUG:
+    # Add these for CORS support of storage buckets in production settings.
+    CORS_OK_DOMAINS += [
+        'storage.googleapis.com/opencontext-media',
+        'storage.googleapis.com/opencontext-parquet',
+    ]
 
 # Added to fix
 if not DEBUG:
