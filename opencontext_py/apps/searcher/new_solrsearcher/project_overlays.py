@@ -20,7 +20,7 @@ def get_project_slugs_from_facets(result_json):
     """
     project_slugs = []
     for filter in result_json.get("oc-api:active-filters", []):
-        if filter.get("oc-api:filter") != 'Project':
+        if not 'Project' in filter.get("oc-api:filter", ""):
             continue
         project_slugs.append(filter.get("oc-api:filter-slug"))
     for facet in result_json.get("oc-api:has-facets", []):
