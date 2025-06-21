@@ -58,6 +58,8 @@ def get_project_context_predicates(project_id):
     pred_ids_qs = AllAssertion.objects.filter(
         subject__project_id=project_id,
         visible=True,
+    ).only(
+        'predicate_id',
     )
 
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
@@ -95,6 +97,8 @@ def get_project_context_object_types(project_id):
         subject__project_id=project_id,
         object__item_type='types',
         visible=True,
+    ).only(
+        'object_id',
     )
 
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
