@@ -33,7 +33,7 @@ SLEEP_TIME = 0.25
 NUM_PROJECT_ITEM_FETCH = 15 # Fetch 15 records per project
 URL_MIN_FACET_COUNT = 150000
 MAX_PARAM_VALS = 3
-ALLOWED_DEPTH = 6
+ALLOWED_DEPTH = 5
 
 def get_elapsed_time_in_seconds(start_time):
     return str(round((time.time() - start_time), 3))
