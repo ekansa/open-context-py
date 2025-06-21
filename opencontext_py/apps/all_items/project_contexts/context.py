@@ -1,4 +1,3 @@
-
 import logging
 
 import numpy as np
@@ -10,6 +9,7 @@ from django.core.cache import caches
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.all_items.models import (
     AllAssertion,
+    AllManifest,
 )
 
 
@@ -55,65 +55,68 @@ else:
 def get_project_context_predicates(project_id):
     """Gets an assertion queryset for a project context"""
 
-    pred_qs = AllAssertion.objects.filter(
+    pred_ids_qs = AllAssertion.objects.filter(
         subject__project_id=project_id,
         visible=True,
     )
 
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
-        # Exclude predicates from the Open Context
-        # project.
-        pred_qs = pred_qs.exclude(
+        # Exclude predicates from the Open Context project.
+        pred_ids_qs = pred_ids_qs.exclude(
             predicate__project_id=configs.OPEN_CONTEXT_PROJ_UUID,
         )
 
-    pred_qs = pred_qs.distinct(
-        'predicate'
-    ).order_by(
-        'predicate'
-    ).select_related(
-        'predicate'
-    ).values(
-        'predicate_id',
-        'predicate__uri',
-        'predicate__slug',
-        'predicate__item_type',
-        'predicate__data_type',
-        'predicate__label',
-        'predicate__item_class_id',
+    # Get the distinct predicate IDs first, which is more efficient.
+    predicate_ids = pred_ids_qs.values_list('predicate_id', flat=True).distinct()
+
+    # Now, fetch the predicate objects.
+    pred_qs = AllManifest.objects.filter(
+        uuid__in=list(predicate_ids)
+    ).order_by('uuid').values(
+        'uuid',
+        'uri',
+        'slug',
+        'item_type',
+        'data_type',
+        'label',
+        'item_class_id',
     )
+    # The original function expected specific column names.
+    # We'll need to prepare the data for the dataframe conversion later.
+    # The renaming will happen when creating the pandas DataFrame.
+    # For the purpose of the queryset, this is sufficient.
+    # We will adjust the dataframe creation part.
     return pred_qs
 
 
 def get_project_context_object_types(project_id):
     """Gets an assertion queryset for a project context"""
-    obj_qs = AllAssertion.objects.filter(
+    obj_ids_qs = AllAssertion.objects.filter(
         subject__project_id=project_id,
         object__item_type='types',
         visible=True,
     )
 
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
-        # Exclude predicates from the Open Context
-        # project.
-        obj_qs = obj_qs.exclude(
+        # Exclude objects from the Open Context project.
+        obj_ids_qs = obj_ids_qs.exclude(
             object__project_id=configs.OPEN_CONTEXT_PROJ_UUID,
         )
+    
+    # Get the distinct object IDs first.
+    object_ids = obj_ids_qs.values_list('object_id', flat=True).distinct()
 
-    obj_qs = obj_qs.distinct(
-        'object'
-    ).order_by(
-        'object'
-    ).select_related(
-        'object'
-    ).values(
-        'object_id',
-        'object__uri',
-        'object__slug',
-        'object__item_type',
-        'object__data_type',
-        'object__label',
-        'object__item_class_id',
+    # Then fetch the actual objects.
+    obj_qs = AllManifest.objects.filter(
+        uuid__in=list(object_ids)
+    ).order_by('uuid').values(
+        'uuid',
+        'uri',
+        'slug',
+        'item_type',
+        'data_type',
+        'label',
+        'item_class_id',
     )
     return obj_qs
 
@@ -145,7 +148,7 @@ def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
         'object'
     ).select_related(
         'object__context',
-    ).values(
+    ).order_by('subject_id').values(
         'subject_id',
         'subject__uri',
         'subject__slug',
@@ -185,6 +188,29 @@ def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
 
 def rename_pred_obj_df_cols(df, df_type):
     """Renames pred_df and obj_df columns to be consistent"""
+    if df_type == 'predicate':
+        rename_dict = {
+            'uuid': 'predicate_id',
+            'uri': 'predicate__uri',
+            'slug': 'predicate__slug',
+            'item_type': 'predicate__item_type',
+            'data_type': 'predicate__data_type',
+            'label': 'predicate__label',
+            'item_class_id': 'predicate__item_class_id',
+        }
+        df.rename(columns=rename_dict, inplace=True)
+    elif df_type == 'object':
+        rename_dict = {
+            'uuid': 'object_id',
+            'uri': 'object__uri',
+            'slug': 'object__slug',
+            'item_type': 'object__item_type',
+            'data_type': 'object__data_type',
+            'label': 'object__label',
+            'item_class_id': 'object__item_class_id',
+        }
+        df.rename(columns=rename_dict, inplace=True)
+
     rename_dict = {
        c: ('subject__' + c.split(f'{df_type}__')[-1])
        for c in df.columns if c.startswith(f'{df_type}__')
