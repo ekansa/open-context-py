@@ -193,6 +193,33 @@ def get_cache_manifest_items_by_path(
     return output
 
 
+def get_cache_item_key_list():
+    """Gets a list of item_keys that are actually in use."""
+    # This should limit expensive queries on a field that is rarely used.
+    cache = caches['redis_search']
+    cache_key = 'manifest_item_keys_list'
+    item_key_list = cache.get(cache_key)
+    if item_key_list:
+        # Item is already in the cache, so return it
+        return item_key_list
+    m_qs = AllManifest.objects.filter(
+        item_key__isnull=False,
+    ).distinct(
+        'item_key'
+    ).order_by(
+        'item_key'
+    ).values_list(
+        'item_key', 
+        flat=True
+    )
+    item_key_list = list(m_qs) 
+    try:
+        cache.set(cache_key, item_key_list)
+    except:
+        pass
+    return item_key_list
+
+
 def get_cache_man_obj_by_any_id(identifier, use_cache=True):
     """Gets and caches a manifest object by any type of unique id"""
     if not use_cache:
@@ -204,9 +231,13 @@ def get_cache_man_obj_by_any_id(identifier, use_cache=True):
     if man_obj:
         # Found it in the cache, the fastest, happiest scenario
         return man_obj
-
+    # This should reduce the number of some long queries
+    item_key_list = get_cache_item_key_list()
     # Do a database lookup to get the item.
-    man_obj = editorial_api.get_man_obj_by_any_id(identifier)
+    man_obj = editorial_api.get_man_obj_by_any_id(
+        identifier=identifier,
+        item_key_list=item_key_list,
+    )
     if not man_obj:
         return None
     try:

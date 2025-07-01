@@ -309,7 +309,6 @@ def get_man_qs_by_any_id(identifier, man_qs=None):
         Q(uuid=new_uuid)
         |Q(slug=identifier)
         |Q(uri=AllManifest().clean_uri(identifier))
-        |Q(item_key=identifier)
     ).select_related(
         'item_class'
     ).select_related(
@@ -320,10 +319,28 @@ def get_man_qs_by_any_id(identifier, man_qs=None):
     return man_obj
 
 
-def get_man_obj_by_any_id(identifier):
+def get_man_obj_by_any_id(identifier, item_key_list=None):
     """Gets a manifest object by an type of unique identifier"""
     man_qs = get_man_qs_by_any_id(identifier)
-    return man_qs.first()
+    man_obj = man_qs.first()
+    if not man_obj and item_key_list:
+        if not identifier in item_key_list:
+            # The identifier is NOT the item_key_list
+            # so there's no need to do any more queries
+            return None
+    if not man_obj:
+        # Do an expensive lookup on item_key which will
+        # which is allowed to be null.
+        man_obj = AllManifest.objects.filter(
+            item_key=identifier
+        ).select_related(
+            'item_class'
+        ).select_related(
+            'context'
+        ).select_related(
+            'project'
+        ).first()
+    return man_obj
 
 
 def get_item_children(identifier, man_obj=None, output_child_objs=False):
