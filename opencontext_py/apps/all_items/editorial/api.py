@@ -323,23 +323,26 @@ def get_man_obj_by_any_id(identifier, item_key_list=None):
     """Gets a manifest object by an type of unique identifier"""
     man_qs = get_man_qs_by_any_id(identifier)
     man_obj = man_qs.first()
-    if not man_obj and item_key_list:
+    if man_obj:
+        # We found the item with no need to bother
+        # with the item_key
+        return man_obj
+    if item_key_list:
         if not identifier in item_key_list:
             # The identifier is NOT the item_key_list
             # so there's no need to do any more queries
             return None
-    if not man_obj:
-        # Do an expensive lookup on item_key which will
-        # which is allowed to be null.
-        man_obj = AllManifest.objects.filter(
-            item_key=identifier
-        ).select_related(
-            'item_class'
-        ).select_related(
-            'context'
-        ).select_related(
-            'project'
-        ).first()
+    # Do an expensive lookup on item_key which will
+    # which is allowed to be null.
+    man_obj = AllManifest.objects.filter(
+        item_key=identifier
+    ).select_related(
+        'item_class'
+    ).select_related(
+        'context'
+    ).select_related(
+        'project'
+    ).first()
     return man_obj
 
 
