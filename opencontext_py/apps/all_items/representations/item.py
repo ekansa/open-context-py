@@ -150,18 +150,18 @@ def get_item_assertions(
     thumbs_qs = AllResource.objects.filter(
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     class_icon_qs = AllResource.objects.filter(
         item=OuterRef('object__item_class'),
         resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     # ORCID IDs for project creators and contributors
     orcid_id_qs = AllIdentifier.objects.filter(
         item=OuterRef('object'),
         scheme='orcid',
-    ).values('id')[:1]
+    ).order_by().values('id')[:1]
 
     # DC-Creator equivalent predicate
     dc_creator_qs = AllAssertion.objects.filter(
@@ -169,7 +169,7 @@ def get_item_assertions(
         predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
         object_id=configs.PREDICATE_DCTERMS_CREATOR_UUID,
         visible=True,
-    ).values('object')[:1]
+    ).order_by().values('object')[:1]
 
     # DC-Contributor equivalent predicate
     dc_contributor_qs = AllAssertion.objects.filter(
@@ -177,7 +177,7 @@ def get_item_assertions(
         predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
         object_id=configs.PREDICATE_DCTERMS_CONTRIBUTOR_UUID,
         visible=True,
-    ).values('object')[:1]
+    ).order_by().values('object')[:1]
 
     qs = AllAssertion.objects.filter(
         subject_id=subject_id,
