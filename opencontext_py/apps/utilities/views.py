@@ -30,6 +30,33 @@ from django.views.decorators.cache import never_cache
 
 API_MAX_ZOOM = 25
 
+
+
+@cache_control(no_cache=True)
+@never_cache
+def geospace_outliers_within(request):
+    """Checks if contain relationships for spatial geometries of manifest objects"""
+    item_id = request.GET.get('item_id')
+    path = request.GET.get('path')
+    output = geospace_contains.report_child_coordinate_outliers(
+        item_id=item_id,
+        path=path,
+    )
+    if not output:
+        return HttpResponse(
+            f'Cannot find item_id: "{item_id}" or path: "{path}"',
+            status=404,
+        )
+    return HttpResponse(
+        json.dumps(
+            output,
+            ensure_ascii=False,
+            indent=4,
+        ),
+        content_type='application/json; charset=utf8',
+    )
+
+
 @cache_control(no_cache=True)
 @never_cache
 def check_geospace_contains(request):
