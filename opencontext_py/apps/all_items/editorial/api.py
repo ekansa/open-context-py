@@ -305,7 +305,7 @@ def get_man_qs_by_any_id(identifier, man_qs=None):
 
     if not man_qs:
         man_qs = AllManifest.objects.all()
-    man_obj = AllManifest.objects.filter(
+    man_qs = AllManifest.objects.filter(
         Q(uuid=new_uuid)
         |Q(slug=identifier)
         |Q(uri=AllManifest().clean_uri(identifier))
@@ -315,23 +315,30 @@ def get_man_qs_by_any_id(identifier, man_qs=None):
         'context'
     ).select_related(
         'project'
-    )
-    return man_obj
+    ).order_by()
+    return man_qs
 
 
-def get_man_obj_by_any_id(identifier, item_key_list=None):
+def get_man_obj_by_any_id(identifier, item_key_dict=None):
     """Gets a manifest object by an type of unique identifier"""
+    if item_key_dict:
+        # check to see if the item is in our 
+        # item_key_dict (used in the faceted search)
+        man_obj = item_key_dict.get(identifier)
+    if man_obj:
+        # We found the item with no need to bother
+        # further queries
+        return man_obj
     man_qs = get_man_qs_by_any_id(identifier)
     man_obj = man_qs.first()
     if man_obj:
         # We found the item with no need to bother
         # with the item_key
         return man_obj
-    if item_key_list:
-        if not identifier in item_key_list:
-            # The identifier is NOT the item_key_list
-            # so there's no need to do any more queries
-            return None
+    if item_key_dict and not man_obj:
+        # We already checked by item_key_dict
+        # so there's no need to redo the query below
+        return None
     # Do an expensive lookup on item_key which will
     # which is allowed to be null.
     man_obj = AllManifest.objects.filter(
@@ -342,7 +349,7 @@ def get_man_obj_by_any_id(identifier, item_key_list=None):
         'context'
     ).select_related(
         'project'
-    ).first()
+    ).order_by().first()
     return man_obj
 
 
