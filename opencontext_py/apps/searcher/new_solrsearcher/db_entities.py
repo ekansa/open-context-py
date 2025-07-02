@@ -48,7 +48,7 @@ def db_get_manifest_item_by_path(path, filter_args):
         man_obj_qs = AllManifest.objects.filter(path=path)
     if filter_args:
         man_obj_qs = man_obj_qs.filter(**filter_args)
-    return man_obj_qs.first()
+    return man_obj_qs.order_by().first()
 
 
 def db_get_manifest_items_by_path(paths_list, filter_args):
@@ -76,7 +76,7 @@ def db_get_manifest_items_by_path(paths_list, filter_args):
     if filter_args:
         man_obj_qs = man_obj_qs.filter(**filter_args)
     man_obj_qs = man_obj_qs.select_related('context')
-    return man_obj_qs
+    return man_obj_qs.order_by()
 
 
 def make_path_manifest_item_cache_key(path, filter_args):
@@ -193,31 +193,24 @@ def get_cache_manifest_items_by_path(
     return output
 
 
-def get_cache_item_key_list():
+def get_cache_item_key_dict():
     """Gets a list of item_keys that are actually in use."""
     # This should limit expensive queries on a field that is rarely used.
     cache = caches['redis_search']
-    cache_key = 'manifest_item_keys_list'
-    item_key_list = cache.get(cache_key)
-    if item_key_list:
+    cache_key = 'manifest_item_keys_dict'
+    item_key_dict = cache.get(cache_key)
+    if item_key_dict:
         # Item is already in the cache, so return it
-        return item_key_list
+        return item_key_dict
     m_qs = AllManifest.objects.filter(
         item_key__isnull=False,
-    ).distinct(
-        'item_key'
-    ).order_by(
-        'item_key'
-    ).values_list(
-        'item_key', 
-        flat=True
-    )
-    item_key_list = list(m_qs) 
+    ).order_by()
+    item_key_dict = {m.item_key:m for m in m_qs} 
     try:
-        cache.set(cache_key, item_key_list)
+        cache.set(cache_key, item_key_dict)
     except:
         pass
-    return item_key_list
+    return item_key_dict
 
 
 def get_cache_man_obj_by_any_id(identifier, use_cache=True):
@@ -232,11 +225,11 @@ def get_cache_man_obj_by_any_id(identifier, use_cache=True):
         # Found it in the cache, the fastest, happiest scenario
         return man_obj
     # This should reduce the number of some long queries
-    item_key_list = get_cache_item_key_list()
+    item_key_dict = get_cache_item_key_dict()
     # Do a database lookup to get the item.
     man_obj = editorial_api.get_man_obj_by_any_id(
         identifier=identifier,
-        item_key_list=item_key_list,
+        item_key_dict=item_key_dict,
     )
     if not man_obj:
         return None
@@ -314,7 +307,7 @@ def db_get_projects_overlay_qs(project_slugs):
     geo_overlay_qs = AllResource.objects.filter(
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     qs = AllAssertion.objects.filter(
         subject__slug__in=project_slugs,
@@ -517,17 +510,17 @@ def db_get_project_desc_banner_qs(project_slugs, all_projects=False):
     item_hero_qs = AllResource.objects.filter(
         item_id=OuterRef('uuid'),
         resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     proj_hero_qs = AllResource.objects.filter(
         item_id=OuterRef('project'),
         resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     proj_proj_hero_qs = AllResource.objects.filter(
         item_id=OuterRef('project__project'),
         resourcetype_id=configs.OC_RESOURCE_HERO_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     proj_hero_qs = AllManifest.objects.all(
     ).select_related(
@@ -544,7 +537,7 @@ def db_get_project_desc_banner_qs(project_slugs, all_projects=False):
         proj_hero=Subquery(proj_hero_qs)
     ).annotate(
         proj_proj_hero=Subquery(proj_proj_hero_qs)
-    )
+    ).order_by()
     if project_slugs:
         proj_hero_qs = proj_hero_qs.filter(slug__in=project_slugs,)
     if all_projects:

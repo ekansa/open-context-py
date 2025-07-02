@@ -91,18 +91,18 @@ def db_get_project_metadata_qs(project_id):
     class_icon_qs = AllResource.objects.filter(
         item=OuterRef('object__item_class'),
         resourcetype_id=configs.OC_RESOURCE_ICON_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     # NOTE: Some projects have digitized raster images
     # georeference and used as an overlay.
     geo_overlay_qs = AllResource.objects.filter(
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_FULLFILE_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
     geo_overlay_thumb_qs = AllResource.objects.filter(
         item=OuterRef('object'),
         resourcetype_id=configs.OC_RESOURCE_THUMBNAIL_UUID,
-    ).values('uri')[:1]
+    ).order_by().values('uri')[:1]
 
     # ORCID IDs for project creators and contributors
     orcid_id_qs = AllIdentifier.objects.filter(

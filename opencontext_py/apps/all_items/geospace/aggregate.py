@@ -28,6 +28,7 @@ from opencontext_py.apps.all_items.editorial.item import updater_spacetime
 from opencontext_py.apps.etl.importer.utilities import validate_transform_data_type_value
 
 from opencontext_py.apps.all_items.geospace import utilities as geo_utils
+from opencontext_py.apps.all_items.geospace import geo_quality
 
 """
 # testing
@@ -297,9 +298,34 @@ def cluster_geo_centroids(
                 ],
             },
         ]
-
+    
     # Throw out everything missing coordinates.
     df = df[ok_index].copy()
+
+    if max_clusters == 1:
+        # Nothing fancy to do, we just want 1 polygon
+        region_dict = {}
+        region_dict['id'] = 1
+        region_dict['count_points'] = len(df.index)
+        region_dict['max_lon'] = df['longitude'].max()
+        region_dict['max_lat'] = df['latitude'].max()
+        region_dict['min_lon'] = df['longitude'].min()
+        region_dict['min_lat'] = df['latitude'].min()
+        # ensure a minimum sized region
+        region_dict = make_min_size_region(
+            region_dict,
+            min_distance=min_cluster_size_km
+        )
+        region_dict['coordinates'] = geo_utils.make_geojson_coord_box(
+            region_dict['min_lon'],
+            region_dict['min_lat'],
+            region_dict['max_lon'],
+            region_dict['max_lat'],
+        )
+        region_dict['cent_lon'], region_dict['cent_lat'] = (
+            geo_utils.get_centroid_of_coord_box(region_dict['coordinates'])
+        )
+        return [region_dict]
 
     gm = GlobalMercator()
     max_dataset_distance = gm.distance_on_unit_sphere(
@@ -535,14 +561,32 @@ def make_table_geo_df(man_obj):
     return df
 
 
-def make_unary_union_polygon_for_contained_geo(man_obj, eps=0.0000001):
+def make_subjects_space_time_qs(man_obj):
+    """Makes a space_time_qs for subjects items that has logic to limit by paths
+    that are actually children of the man_obj.
+    """
+    child_man_objs_qs = AllManifest.objects.filter(
+        context=man_obj,
+        item_type='subjects',
+    )
+    if child_man_objs_qs.count() < 1:
+        return None
+    q_term = Q(item__path__startswith=child_man_objs_qs[0].path)
+    if child_man_objs_qs.count() > 1:
+        for child_man_obj in child_man_objs_qs[1:]:
+            q_term |= Q(item__path__startswith=child_man_obj.path)
     space_time_qs = AllSpaceTime.objects.filter(
-        item__path__startswith=man_obj.path
+        q_term
+    ).filter(
+        geometry__isnull=False,
     ).exclude(
         item=man_obj,
-    ).exclude(
-        geometry_type__isnull=True
     )
+    return space_time_qs
+
+
+def make_unary_union_polygon_for_contained_geo(man_obj, eps=0.0000001):
+    space_time_qs = make_subjects_space_time_qs(man_obj)
     sptime_count = space_time_qs.count()
     if not sptime_count:
         return None, None
@@ -570,6 +614,7 @@ def make_geo_json_of_regions_for_man_obj(
     max_clusters=MAX_CLUSTERS,
     min_cluster_size_km=MIN_CLUSTER_SIZE_KM,
     cluster_method=DEFAULT_CLUSTER_METHOD,
+    exclude_outliers=False,
 ):
     """Make aggregate geospatial regions for an entity
 
@@ -581,6 +626,8 @@ def make_geo_json_of_regions_for_man_obj(
         length in KM between min(lat/lon) and max(lat/lon)
     :param str cluster_method: A string that names the sklearn
         clustering method to use on these data.
+    :param bool exclude_outliers: A boolean value, if true to a
+        spatial aggregation that excludes outlier values.
     """
     if man_obj.item_type == 'subjects' and cluster_method == 'unary_union':
         # A somewhat different approach to making a geometry by combining
@@ -592,11 +639,7 @@ def make_geo_json_of_regions_for_man_obj(
     if man_obj.item_type == 'projects':
         space_time_qs = make_project_space_time_qs(man_obj)
     elif man_obj.item_type == 'subjects':
-        space_time_qs = AllSpaceTime.objects.filter(
-           item__path__startswith=man_obj.path
-        ).exclude(
-            item=man_obj,
-        )
+        space_time_qs = make_subjects_space_time_qs(man_obj)
     elif man_obj.item_type == 'tables':
         df = make_table_geo_df(man_obj)
     elif man_obj.item_type == 'predicates':
@@ -638,6 +681,13 @@ def make_geo_json_of_regions_for_man_obj(
         df = make_df_from_space_time_qs(space_time_qs)
 
     if df is None:
+        return None, None
+    
+    if exclude_outliers:
+        # we want to exclude outlier values.
+        df = geo_quality.remove_outlier_points_in_df_geo(df)
+
+    if df is None or df.empty:
         return None, None
     # Do the fancy math of clustering.
     region_dicts = cluster_geo_centroids(
@@ -707,11 +757,16 @@ def add_agg_spacetime_objs(request_list, request=None, source_id=DEFAULT_SOURCE_
             errors.append(f'Min cluster size must be a number, not {min_cluster_size_km}')
             continue
 
+        exclude_outliers = item_add.get('exclude_outliers', False)
+        if exclude_outliers:
+            exclude_outliers = True
+
         geometry, count_points = make_geo_json_of_regions_for_man_obj(
             man_obj,
             max_clusters=max_clusters,
             min_cluster_size_km=min_cluster_size_km,
             cluster_method=item_add.get('cluster_method', DEFAULT_CLUSTER_METHOD),
+            exclude_outliers=exclude_outliers,
         )
         if geometry is None:
             errors.append(f'Could not make aggregate geometry for manifest object {man_obj}')

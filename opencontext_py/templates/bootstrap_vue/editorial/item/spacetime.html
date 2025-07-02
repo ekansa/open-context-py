@@ -142,6 +142,33 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
         </b-col>
       </b-row>
 
+      <b-row>
+        <b-col>
+          
+          <b-form-group label="Exclude Outliers?" v-slot="{ ariaDescribedby }">
+            <b-form-radio 
+              v-model="spacetime.exclude_outliers" 
+              :aria-describedby="ariaDescribedby" 
+              name="spacetime.exclude_outliers"
+              @change="value_change"
+              value="0">No</b-form-radio>
+
+              <b-form-radio 
+              v-model="spacetime.exclude_outliers" 
+              :aria-describedby="ariaDescribedby" 
+              name="spacetime.exclude_outliers"
+              @change="value_change"
+              value="1">Yes</b-form-radio>
+              
+          </b-form-group>
+          
+          <small class="text-muted">
+            If this is set, exclude outlier points from consideration in generating the 
+            aggregation polygon.
+          </small>
+        </b-col>
+      </b-row>
+
     </div>
     <div v-else>
       <b-row>
@@ -977,6 +1004,7 @@ NOTE: Templates and view components to edit an item's space-time (event) object.
             longitude: null,
             geo_specificity: null,
             geometry: null,
+            exclude_outliers: false,
           },
           map_key: 1,
           form_key: 1,

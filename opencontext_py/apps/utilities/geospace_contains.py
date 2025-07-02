@@ -9,6 +9,10 @@ from opencontext_py.apps.all_items.models import (
     AllSpaceTime,
 )
 
+from opencontext_py.apps.all_items.editorial import api as editorial_api
+from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
+from opencontext_py.apps.all_items.geospace import geo_quality
+
 
 
 def check_lat_lon_within_item_geometries(
@@ -139,3 +143,36 @@ def check_item_geometries_within_other_item_geometries(
                 report_dict['not_contains'].append(area_dict)
     report_dict['all_contains'] = len(report_dict['not_contains']) == 0
     return report_dict
+
+
+def report_child_coordinate_outliers(item_id=None, path=None):
+    """Reports outlier coordinates for children of a given item"""
+    if item_id:
+        parent_man_obj = AllManifest.objects.filter(uuid=item_id).first()
+    if path:
+        parent_man_obj = AllManifest.objects.filter(path=path).first()
+    if not parent_man_obj:
+        return None
+    space_time_qs = geo_agg.make_subjects_space_time_qs(parent_man_obj)
+    df_geo = geo_agg.make_df_from_space_time_qs(space_time_qs, add_item_cols=True)
+    df = geo_quality.flag_outlier_points_in_df(df_geo)
+    if df is None or df.empty:
+        return None
+    flag_index = (
+        (df['flag__longitude'] == True)
+        | (df['flag__latitude'] == True)
+    )
+    df_flag = df[flag_index].copy()
+    df_flag['uri'] = ''
+    for i, row in df_flag.iterrows():
+        bad_obj = AllManifest.objects.get(uuid=row['item_id'])
+        df_flag.at[i, 'uri'] = f'https://{bad_obj.uri}'
+    bad_json = df_flag.to_json(orient='records')
+    bad_list = json.loads(bad_json)
+    output = editorial_api.manifest_obj_to_json_safe_dict(
+        parent_man_obj ,
+        do_minimal=True,
+    )
+    output['uri'] = 'https://' + output.get('uri')
+    output['child_geo_outliers'] = bad_list
+    return output

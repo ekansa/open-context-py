@@ -1,6 +1,7 @@
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from sklearn.cluster import KMeans, AffinityPropagation, SpectralClustering
 from shapely.geometry import mapping, shape
@@ -21,46 +22,39 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
 
 
-
-def find_outliers_irq(df):
-   q1=df.quantile(0.25)
-   q3=df.quantile(0.75)
-   IQR=q3-q1
-   outliers = df[((df<(q1-1.5*IQR)) | (df>(q3+1.5*IQR)))]
-   return outliers
-
-
-
-def check_points_within_spatial_context(
-    parent_man_obj=None,
-    parent_uuid=None,
-    difference_factor_to_flag=10,
-):
-    """Checks points contained within an item to find outliers"""
-    if not parent_man_obj and parent_uuid:
-        parent_man_obj = AllManifest.objects.filter(uuid=parent_uuid).first()
-    if not parent_man_obj:
-        return None
-    space_time_qs = AllSpaceTime.objects.filter(
-        item__path__startswith=parent_man_obj.path,
-        geometry__isnull=False,
-    ).exclude(
-        item=parent_man_obj
-    )
-    df = geo_agg.make_df_from_space_time_qs(space_time_qs, add_item_cols=True)
-    dd = df.describe()[['longitude', 'latitude']]
+def flag_outlier_points_in_df(df_geo, z_threshold=2.5):
+    """Finds latitude, longitude outliers within a df_geo dataframe"""
+    df_z = df_geo[['longitude', 'latitude']].apply(stats.zscore)
     for c_col in ['longitude', 'latitude']:
-        flag_col = f'flag__{c_col }'
-        df[flag_col] = False
-        mid_val =  dd.loc['50%', c_col]
-        # get the maximum range between the middle 50% and the 25% and 75% values
-        mid_range = max([abs(mid_val - dd.loc['25%', c_col]), abs(mid_val - dd.loc['75%', c_col])])
-        extreme_low_val = mid_val - (mid_range * difference_factor_to_flag)
-        extreme_high_val = mid_val + (mid_range * difference_factor_to_flag)
-        extreme_index = (
-            (df[c_col] <= extreme_low_val)
-            | (df[c_col] >= extreme_high_val)
-        )
-        print(f'Found {len(df[extreme_index])} with extreme {c_col}')
-        df.loc[extreme_index, flag_col] = True
+        flag_col = f'flag__{c_col}'
+        df_geo[flag_col] = False
+        zscore_col = f'zscore__{c_col}'
+        df_z.rename(columns={c_col: zscore_col}, inplace=True)
+    df_eval = pd.merge(df_geo, df_z, left_index=True, right_index=True)
+    for c_col in ['longitude', 'latitude']:
+        flag_col = f'flag__{c_col}'
+        zscore_col = f'zscore__{c_col}'
+        extreme_index = (df_eval[zscore_col] > z_threshold) | (df_eval[zscore_col] < (z_threshold * -1))
+        print(f'Found {len(df_eval[extreme_index])} with extreme {c_col}')
+        df_eval.loc[extreme_index, flag_col] = True
+    return df_eval
+
+
+def remove_outlier_points_in_df_geo(df_geo, z_threshold=2.5):
+    """Removes outlier points in a df_geo dataframe"""
+    df_eval = flag_outlier_points_in_df(
+        df_geo=df_geo, 
+        z_threshold=z_threshold
+    )
+    flag_index = (
+        (df_eval['flag__longitude'] == True)
+        | (df_eval['flag__latitude'] == True)
+    )
+    # Keep only those rows that are not flagged
+    df = df_eval[~flag_index].copy()
+    drop_cols = []
+    for c_col in ['longitude', 'latitude']:
+        drop_cols.append(f'flag__{c_col}')
+        drop_cols.append(f'zscore__{c_col}')
+    df.drop(columns=drop_cols, inplace=True)
     return df
