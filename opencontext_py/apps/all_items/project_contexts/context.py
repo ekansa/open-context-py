@@ -60,7 +60,7 @@ def get_project_context_predicates(project_id):
         visible=True,
     ).only(
         'predicate_id',
-    )
+    ).order_by()
 
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
         # Exclude predicates from the Open Context project.
@@ -99,7 +99,7 @@ def get_project_context_object_types(project_id):
         visible=True,
     ).only(
         'object_id',
-    )
+    ).order_by()
 
     if str(project_id) != configs.OPEN_CONTEXT_PROJ_UUID:
         # Exclude objects from the Open Context project.
