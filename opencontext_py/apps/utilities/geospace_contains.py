@@ -173,5 +173,6 @@ def report_child_coordinate_outliers(item_id=None, path=None):
         parent_man_obj ,
         do_minimal=True,
     )
+    output['uri'] = 'https://' + output.get('uri')
     output['child_geo_outliers'] = bad_list
     return output
