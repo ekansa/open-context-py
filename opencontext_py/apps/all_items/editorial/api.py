@@ -321,6 +321,7 @@ def get_man_qs_by_any_id(identifier, man_qs=None):
 
 def get_man_obj_by_any_id(identifier, item_key_dict=None):
     """Gets a manifest object by an type of unique identifier"""
+    man_obj = None
     if item_key_dict:
         # check to see if the item is in our 
         # item_key_dict (used in the faceted search)
