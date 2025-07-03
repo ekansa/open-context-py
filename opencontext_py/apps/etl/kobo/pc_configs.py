@@ -638,6 +638,19 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
+        'source_col': 'Size',
+        'form_type': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Size',
+            'context_id': 'b6d48580-af49-409c-1172-e27cba31f235',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
         'source_col': 'Condition (Notes)',
         'form_type': ['catalog',],
         'match_type': 'exact',
