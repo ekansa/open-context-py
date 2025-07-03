@@ -404,7 +404,7 @@ else:
         'redis_context': {
            "BACKEND": "django.core.cache.backends.redis.RedisCache",
             'LOCATION': f'redis://{REDIS_HOST_PORT}/1',
-            'TIMEOUT': (60 * 60 * 4),  # 4 hours for cache
+            'TIMEOUT': (7 * 24 * 60 * 60),  # 7 days for cache
         },
         'file': {
             'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
