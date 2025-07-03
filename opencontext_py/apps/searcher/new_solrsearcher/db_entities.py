@@ -659,9 +659,16 @@ def get_string_attribute_data_for_uuids_qs(
     qs = AllAssertion.objects.filter(
         subject_id__in=uuids,
         predicate__data_type='xsd:string',
+        visible=True,
+    ).select_related(
+        'subject'
     ).select_related(
         'predicate'
-    )
+    ).only(
+        'subject',
+        'predicate',
+        'obj_string',
+    ).order_by()
     if not db_limit_string_attributes:
         # No further limits on the queryset.
         return qs

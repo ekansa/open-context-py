@@ -1360,8 +1360,8 @@ class AllAssertion(models.Model):
         """
         indexes = [
             models.Index(fields=["subject", "visible"], name="subject_visible_idx"),
-            models.Index(fields=["subject", "predicate"], name="subject_predicate_idx"),
-            models.Index(fields=["subject", "predicate", "object"], name="subject_predicate_object_idx"),
+            models.Index(fields=["subject", "predicate", "visible"], name="subject_predicate_visible_idx"),
+            models.Index(fields=["subject", "object", "visible"], name="subject_object_visible_idx"),
         ]
         """
 

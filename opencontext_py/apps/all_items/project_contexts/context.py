@@ -136,6 +136,7 @@ def get_ld_assertions_on_item_qs(subject_id_list, project_id=None):
     ld_qs = AllAssertion.objects.filter(
         subject_id__in=subject_id_list,
         predicate__context__item_type='vocabularies',
+        visible=True,
     )
     if project_id and project_id != configs.OPEN_CONTEXT_PROJ_UUID:
         ld_qs = ld_qs.exclude(
