@@ -1356,7 +1356,14 @@ class AllAssertion(models.Model):
         )
         ordering = ["subject", "obs_sort", "event_sort", "attribute_group_sort", "sort"]
         default_related_name = 'assertions'
-
+        # Custom additional indexes to make search faster
+        """
+        indexes = [
+            models.Index(fields=["subject", "visible"], name="subject_visible_idx"),
+            models.Index(fields=["subject", "predicate"], name="subject_predicate_idx"),
+            models.Index(fields=["subject", "predicate", "object"], name="subject_predicate_object_idx"),
+        ]
+        """
 
 
 
