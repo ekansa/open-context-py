@@ -300,16 +300,26 @@ def get_manifest_item_dict_by_uuid(uuid, do_minimal=False):
 
 
 def get_man_qs_by_any_id(identifier, man_qs=None):
-    """Gets a manifest object by an type of unique identifier"""
+    """Gets a manifest object by an type of unique identifier"""      
+    id_is_uuid = is_valid_uuid(identifier)
     _, new_uuid = update_old_id(identifier)
-
     if not man_qs:
         man_qs = AllManifest.objects.all()
-    man_qs = AllManifest.objects.filter(
-        Q(uuid=new_uuid)
-        |Q(slug=identifier)
-        |Q(uri=AllManifest().clean_uri(identifier))
-    ).select_related(
+    if id_is_uuid:
+        # Don't bother with looking at slugs or URIs,
+        # this is a UUID
+        man_qs = AllManifest.objects.filter(
+            uuid=new_uuid
+        )
+    else:
+        # The original ID isn't a valid UUID,
+        # so be more expansive 
+        man_qs = AllManifest.objects.filter(
+            Q(uuid=new_uuid)
+            |Q(slug=identifier)
+            |Q(uri=AllManifest().clean_uri(identifier))
+        )
+    man_qs = man_qs.select_related(
         'item_class'
     ).select_related(
         'context'
