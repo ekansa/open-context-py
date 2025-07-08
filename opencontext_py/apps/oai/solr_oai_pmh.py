@@ -289,7 +289,11 @@ class SolrOAIpmh():
         if not item:
             return None
         if isinstance(item, str):
-            man_obj = get_man_obj_by_any_id(item)
+            item_key_dict = db_entities.get_cache_item_key_dict()
+            man_obj = get_man_obj_by_any_id(
+                identifier=item,
+                item_key_dict=item_key_dict,
+            )
             if not man_obj:
                 return None
             _, rep_dict = item.make_representation_dict(
@@ -299,6 +303,7 @@ class SolrOAIpmh():
             return rep_dict
         if not isinstance(item, dict):
             return None
+        item_key_dict = db_entities.get_cache_item_key_dict()
         rep_dict = None
         id_keys = ['uri', 'id', 'uuid', '@id',]
         for id_key in id_keys:
@@ -308,7 +313,10 @@ class SolrOAIpmh():
             if not act_id:
                 continue
             act_id = item.get(id_key)
-            man_obj = get_man_obj_by_any_id(act_id)
+            man_obj = get_man_obj_by_any_id(
+                identifier=act_id,
+                item_key_dict=item_key_dict,
+            )
             if not man_obj:
                 continue
             _, rep_dict = item.make_representation_dict(
@@ -600,7 +608,11 @@ class SolrOAIpmh():
             return None
         rep_dict = None
         if isinstance(solr_resp_item, str):
-            man_obj = get_man_obj_by_any_id(solr_resp_item)
+            item_key_dict = db_entities.get_cache_item_key_dict()
+            man_obj = get_man_obj_by_any_id(
+                identifier=solr_resp_item,
+                item_key_dict=item_key_dict,
+            )
             if not man_obj:
                 return None
             _, rep_dict = item.make_representation_dict(
@@ -608,6 +620,7 @@ class SolrOAIpmh():
                 for_solr=False,
             )
             return rep_dict
+        item_key_dict = db_entities.get_cache_item_key_dict()
         id_keys = ['uri', 'id', 'uuid', '@id',]
         for id_key in id_keys:
             if rep_dict:
@@ -616,7 +629,10 @@ class SolrOAIpmh():
             if not act_id:
                 continue
             act_id = solr_resp_item.get(id_key)
-            man_obj = get_man_obj_by_any_id(act_id)
+            man_obj = get_man_obj_by_any_id(
+                identifier=act_id,
+                item_key_dict=item_key_dict,
+            )
             if not man_obj:
                 continue
             _, rep_dict = item.make_representation_dict(
