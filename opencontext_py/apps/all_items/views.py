@@ -34,6 +34,8 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
 )
 
+from opencontext_py.apps.searcher.new_solrsearcher import db_entities
+
 from opencontext_py.apps.web_metadata.social import make_social_media_metadata
 
 from django.views.decorators.cache import never_cache
@@ -55,10 +57,19 @@ def evaluate_update_id(uuid):
     _, ok_uuid = update_old_id(uuid)
     if ok_uuid == uuid:
         return uuid, False
-    item_obj = get_man_obj_by_any_id(ok_uuid)
+    # reduce long query lookups by checking to see if
+    # we have a manifest object cached by item_key
+    item_key_dict = db_entities.get_cache_item_key_dict()
+    item_obj = get_man_obj_by_any_id(
+        identifier=ok_uuid,
+        item_key_dict=item_key_dict,
+    )
     if item_obj:
         return item_obj.uuid, True
-    item_obj = get_man_obj_by_any_id(uuid)
+    item_obj = get_man_obj_by_any_id(
+        identifier=uuid,
+        item_key_dict=item_key_dict,
+    )
     if item_obj:
         return item_obj.uuid, True
     return None, False
