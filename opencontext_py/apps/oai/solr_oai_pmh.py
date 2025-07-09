@@ -218,6 +218,8 @@ class SolrOAIpmh():
             GET or POST
         """
         output = None
+        if isinstance(request, dict):
+            return request.get(param)
         if request.method == 'GET':
             if param in request.GET:
                 output = request.GET[param]
@@ -405,8 +407,10 @@ class SolrOAIpmh():
 
 
     def check_validate_set(self, request):
-        self.requested_set = self.check_request_param('set',
-                                                      request)
+        self.requested_set = self.check_request_param(
+            'set',
+            request
+        )
         if self.requested_set is not None:
             if self.requested_set in self.BASE_SETS:
                 self.requested_set_valid = True
