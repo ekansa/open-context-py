@@ -54,3 +54,11 @@ def robots(request):
     context = {}
     return HttpResponse(template.render(context, request),
                         content_type="text/plain; charset=utf8")
+
+def bing_index_now(request):
+    """ view for the Bing index now file """
+    template = loader.get_template('index/4db754ce144f4ae0b8bbd0fac5e39b3c.txt')
+    context = {}
+    return HttpResponse(template.render(context, request),
+                        content_type="text/plain; charset=utf8")
+

@@ -96,7 +96,6 @@ def sting_number_splitter(string_to_split):
     if not string_to_split:
         # Return Nothing
         return [], False
-
     act_part = ''
     prior_part_type = None
     has_number_part = False
@@ -116,6 +115,26 @@ def sting_number_splitter(string_to_split):
         (part_type, act_part,)
     )
     return parts, has_number_part
+
+
+def make_sort_string_from_label(raw_label):
+    raw_label = unidecode(str(raw_label))
+    parts, _ = sting_number_splitter(raw_label)
+    first_number = None
+    lesser_parts = []
+    for is_num, part in parts:
+        if first_number is None and is_num:
+            first_number = part
+        lesser_parts.append(part)
+    if first_number is False:
+        return raw_label.ljust(100, '0')
+    sort_label = first_number.rjust(8, '0')
+    for less_part in lesser_parts:
+        for act_char in less_part:
+            char_val = str(ord(act_char))
+            sort_label += char_val.rjust(3, '0')
+    return sort_label[:100]
+
 
 
 def make_label_sort_val(raw_label):
