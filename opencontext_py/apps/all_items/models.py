@@ -72,7 +72,7 @@ class AllManifest(models.Model):
         default=configs.DEFAULT_CLASS_UUID,
     )
     source_id = models.TextField(db_index=True)
-    item_type = models.TextField()
+    item_type = models.TextField(db_index=True)
     data_type = models.TextField(default='id')
     slug = models.SlugField(max_length=200, unique=True)
     label = models.TextField()
@@ -1357,13 +1357,13 @@ class AllAssertion(models.Model):
         ordering = ["subject", "obs_sort", "event_sort", "attribute_group_sort", "sort"]
         default_related_name = 'assertions'
         # Custom additional indexes to make search faster
-        """
         indexes = [
             models.Index(fields=["subject", "visible"], name="subject_visible_idx"),
             models.Index(fields=["subject", "predicate", "visible"], name="subject_predicate_visible_idx"),
             models.Index(fields=["subject", "object", "visible"], name="subject_object_visible_idx"),
+            models.Index(fields=["predicate", "visible"], name="predicate_visible_idx"),
+            models.Index(fields=["object", "visible"], name="object_visible_idx"),
         ]
-        """
 
 
 
