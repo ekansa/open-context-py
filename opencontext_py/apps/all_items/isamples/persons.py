@@ -27,7 +27,7 @@ from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher import configs as search_configs
 
 
-from opencontext_py.apps.all_items.isamples import duckdb_con
+from opencontext_py.libs import duckdb_con
 from opencontext_py.apps.all_items.isamples import utilities as duck_utils
 from opencontext_py.apps.all_items.isamples import sample_sites
 
