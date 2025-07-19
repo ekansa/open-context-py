@@ -47,3 +47,4 @@ static/d3/d3.v3.min.js
 frontend/node_modules
 frontend/dist
 entrypoint.sh
+.vscode/settings.json
