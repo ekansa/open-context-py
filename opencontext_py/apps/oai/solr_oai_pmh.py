@@ -373,6 +373,7 @@ class SolrOAIpmh():
         request_dict = {
             'response': 'metadata,facet',
             'oai-pmh': True,
+            'cursorMark': '*',
         }
         request_dict = self.add_set_params_to_solr_request(request_dict)
         solr_json = None
@@ -485,7 +486,6 @@ class SolrOAIpmh():
             return None
         # Check required keys for the resumption tocken
         req_keys = [
-            'start',
             'rows',
             'sort',
             'published',
@@ -495,6 +495,14 @@ class SolrOAIpmh():
             if not resumption_token_dict.get(key):
                 valid_token = False
                 break
+        if valid_token:
+            # now check to see if we have either the start or the cursorMark parameters
+            if not resumption_token_dict.get('start') and not resumption_token_dict.get('cursorMark'):
+                # we need to have either a start index or a cursorMark
+                valid_token = False
+        if valid_token and resumption_token_dict.get('start') and resumption_token_dict.get('cursorMark'):
+            # remove the start index param, since we're favoring the cursor mark
+            resumption_token_dict.pop('start')
         if not valid_token:
             resumption_token_dict = None
             self.errors.append('badResumptionToken')
@@ -1175,7 +1183,7 @@ class SolrOAIpmh():
         for item in items:
             # make an item header XML
             self.make_item_identifier_xml(list_ids_xml, item)
-                        # now add the new sumption token
+        # now add the new resumption token
         self.make_resumption_token_xml(
             self.resumption_token_dict,
             list_ids_xml,
@@ -1196,7 +1204,9 @@ class SolrOAIpmh():
             consistent pagination,
             even if new material gets published
         """
-        if 'start' not in resumption_token_dict:
+        if 'cursorMark' not in resumption_token_dict:
+            resumption_token_dict['cursorMark'] = '*'
+        if False and 'start' not in resumption_token_dict:
             resumption_token_dict['start'] = 0
         if 'rows' not in resumption_token_dict:
             resumption_token_dict['rows'] = self.rows
@@ -1206,6 +1216,11 @@ class SolrOAIpmh():
             # this is the first request, without an existing
             # resumption token. So the next one will be for the
             # next page of results
+            if 'itemsPerPage' in api_json_obj and \
+                'nextCursorMark' in api_json_obj:
+                # we have a next cursor mark.
+                resumption_token_dict['rows'] = api_json_obj['itemsPerPage']
+                resumption_token_dict['cursorMark'] = api_json_obj['nextCursorMark']
             if 'itemsPerPage' in api_json_obj and \
                'startIndex' in api_json_obj:
                 # make the 'start' key at the next page
@@ -1272,6 +1287,7 @@ class SolrOAIpmh():
             )
         
         request_dict = copy.deepcopy(resumption_token_dict)
+        request_dict['oai-pmh'] = 1  # So we don't ask for facet counts, which is expensive
         request_dict['response'] = 'metadata,uri-meta'
         request_dict['attributes'] = 'dc-terms-creator,dc-terms-contributor'
         request_dict = self.add_set_params_to_solr_request(request_dict)

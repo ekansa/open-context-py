@@ -5,7 +5,7 @@ from duckdb.typing import *
 from django.conf import settings
 
 from opencontext_py.apps.all_items import configs
-from opencontext_py.apps.all_items.isamples import duckdb_con
+from opencontext_py.libs import duckdb_con
 from opencontext_py.apps.all_items.isamples import vocab_mappings
 from opencontext_py.apps.all_items.isamples import utilities as duck_utils
 

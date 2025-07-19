@@ -12,7 +12,7 @@ from duckdb.typing import *
 from django.conf import settings
 
 
-from opencontext_py.apps.all_items.isamples import duckdb_con
+from opencontext_py.libs import duckdb_con
 
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()

@@ -1,4 +1,6 @@
 import duckdb
+from duckdb.typing import *
+
 from django.conf import settings
 
 
@@ -25,4 +27,10 @@ def create_duck_db_postgres_connection(pg_connection_name=DUCKDB_PG_OC):
     con.execute("LOAD spatial;")
     con.execute(f"ATTACH '{pg_conn_str}' AS {DUCKDB_PG_OC} (TYPE POSTGRES);")
     return con
+
+
+
+def cast_duckdb_uuid(uuid):
+    """Convert a uuid to a DuckDB compatible UUID string"""
+    return f"CAST('{str(uuid)}' AS UUID)"
 
