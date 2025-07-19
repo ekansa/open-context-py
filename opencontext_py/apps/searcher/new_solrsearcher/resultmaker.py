@@ -484,6 +484,8 @@ class ResultMaker():
         urls = sl.make_urls_from_request_dict()
         self.result['next'] = urls['html']
         self.result['next-json'] = urls['json']
+        if solr_json.get('nextCursorMark'):
+            self.result['nextCursorMark'] = solr_json.get('nextCursorMark', '*')
 
 
     def add_paging_json(self, solr_json):
