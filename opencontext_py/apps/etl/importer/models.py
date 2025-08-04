@@ -116,6 +116,7 @@ class DataSourceField(models.Model):
     MAIN_USER_SELECT_ITEM_TYPES = [
         # NOTE: Tuples defined as follows:
         # (item_type, item_type_description, required_data_type,)
+        ('projects', 'Projects of Collections', 'id'),
         ('subjects', 'Locations or Objects', 'id'),
         ('media', 'Media Labels (image, pdf, video, etc.)', 'id'),
         ('resources', 'Media File URLs', 'id'),
