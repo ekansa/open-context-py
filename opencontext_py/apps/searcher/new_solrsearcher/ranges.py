@@ -114,6 +114,8 @@ def stats_ranges_query_dict_via_solr(
                 gap = gap * -1
             if gap == 0:
                 gap = 0.001
+            if ((stats['max'] - stats['min']) / gap) > 75:
+                gap =  ((stats['max'] - stats['min']) / group_size)
             min_val = stats['min']
             max_val = stats['max'] + (gap / 10)
             query_dict[fmin] = 0
