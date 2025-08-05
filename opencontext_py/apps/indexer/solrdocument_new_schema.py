@@ -504,10 +504,61 @@ class SolrDocumentNS:
         return projects
 
 
+    def _get_spatial_context_items_for_collections(self):
+        """Gets the spatial context items list for a collection item"""
+        if self.man_obj.item_type != 'projects':
+            return None
+        if self.man_obj.item_class.slug != 'oc-gen-cat-collection':
+            return None
+        proj_root_man_obj = None
+        proj_hierarchy = hierarchy.get_project_hierarchy(self.man_obj)
+        all_projs = [self.man_obj, self.man_obj.project] + proj_hierarchy
+        for proj in all_projs:
+            if not proj.meta_json.get('query_context_path'):
+                continue
+            proj_root_man_obj = AllManifest.objects.filter(
+                item_type='subjects',
+                path=proj.meta_json.get('query_context_path')
+            ).first()
+            if proj_root_man_obj:
+                break
+        if not proj_root_man_obj:
+            return None
+        # Sometimes the proj_root_man_obj will be overly specific. The check below will make sure
+        # we have a proj_root_man_obj that has an item_class that makes sense to use as a root item.
+        check_count = 0
+        while (
+            check_count < 10
+            and not proj_root_man_obj.item_class.slug in PROJECT_ROOT_SUBJECT_OK_ITEM_CLASS_SLUGS):
+            # Go up a level until we find an OK item class to use as a root item
+            # for the project
+            proj_root_man_obj = proj_root_man_obj.context
+            check_count += 1
+        if check_count > 8:
+            return None
+
+        # Add the context to the full text search field. This will make the spatial context
+        # searchable with fulltext search
+        self.fields['text'] += proj_root_man_obj.path.replace('/', ' ')
+
+        # Get the current root item and all of its parents.
+        context_items = item.add_to_parent_context_list(
+            manifest_obj=proj_root_man_obj,
+            for_solr_or_html=True,
+        )
+        # the most general (root) items go first.
+        context_items.reverse()
+        return context_items
+
+
     def _get_spatial_context_items_for_project(self):
         """Gets spatial context items list for projects items"""
         if self.man_obj.item_type != 'projects':
             return None
+        
+        if self.man_obj.item_class.slug == 'oc-gen-cat-collection':
+            return self._get_spatial_context_items_for_collections()
+        
         sub_projects_qs = AllManifest.objects.filter(
             project=self.man_obj,
             item_type='projects'

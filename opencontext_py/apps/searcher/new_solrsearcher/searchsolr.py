@@ -187,6 +187,13 @@ class SearchSolr():
                     param, raw_path
                 )
 
+    
+    def _exclude_collections_from_projects(self, query):
+        """Excludes collection items from project searches"""
+        query['fq'] = f'-obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_SOLR_SLUG}_*'
+        return query
+
+    
     def _add_project_index_query_terms(self, query):
         """Adds project index query terms"""
         # Get facets for all the object category (item_class) entities
@@ -719,12 +726,14 @@ class SearchSolr():
         # -------------------------------------------------------------
         if request_dict.get('proj-index'):
             # we're making a project index query
+            query = self._exclude_collections_from_projects(query)
             query = self._add_project_index_query_terms(query)
         if request_dict.get('proj-summary'):
             # we're making a project summary query.
             query = self._add_project_summary_query_terms(query)
         if request_dict.get('project-map'):
             # we're making a project summary query.
+            query = self._exclude_collections_from_projects(query)
             query = self._add_project_map_query_terms(query)
         if request_dict.get('keywords'):
             # we want to get common keyword facets for this query

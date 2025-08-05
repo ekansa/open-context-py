@@ -85,6 +85,9 @@ ITEM_TYPE_ROWS = {'projects': 100}
 # The minimum number of facets to display for different item types
 ITEM_TYPE_FACET_MIN = {'projects': 2}
 
+# We exclude collections from project specific summaries.
+PROJECT_COLLECTIONS_SOLR_SLUG = 'oc_gen_cat_collection'
+
 # Facet fields for different item_types
 ITEM_TYPE_FACETFIELDS = {
     'projects': [
@@ -92,6 +95,7 @@ ITEM_TYPE_FACETFIELDS = {
         # 'dc_terms_temporal___pred_id',
         'dc_terms_spatial___pred_id',
         'dc_terms_coverage___pred_id',
+
     ],
     """
     'subjects': [

@@ -6,6 +6,7 @@ from django.db.models import OuterRef, Subquery
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items import hierarchy
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
@@ -444,6 +445,27 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
     return context_list
 
 
+def find_collection_rel_subject_man_obj(item_man_obj):
+    """Fims a rel_subject_man_obj for a collections item"""
+    if item_man_obj.item_type != 'projects':
+        return None
+    if item_man_obj.item_class.slug != 'oc-gen-cat-collection':
+        return None
+    proj_hierarchy = hierarchy.get_project_hierarchy(item_man_obj)
+    all_projs = [item_man_obj, item_man_obj.project] + proj_hierarchy
+    for proj in all_projs:
+        if not proj.meta_json.get('query_context_path'):
+            continue
+        rel_subject_man_obj = AllManifest.objects.filter(
+            item_type='subjects',
+            path=proj.meta_json.get('query_context_path')
+        ).first()
+        if rel_subject_man_obj:
+            print(f'Collection {item_man_obj.label} has related subject {rel_subject_man_obj.path}')
+            return rel_subject_man_obj
+    return None
+
+
 def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
@@ -604,6 +626,8 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         item_man_obj,
         assert_qs
     )
+    # Get a related subjects manifest object for a collection object.
+    rel_subjects_man_obj = find_collection_rel_subject_man_obj(item_man_obj)
 
     # Adds geojson features. This will involve a database query to fetch
     # spacetime objects.

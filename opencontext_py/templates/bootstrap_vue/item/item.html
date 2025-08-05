@@ -17,7 +17,7 @@
 
 {%endif%}
 
-{% if man_obj.item_type == 'projects' %}
+{% if man_obj.item_type == 'projects' and man_obj.item_class.slug != 'oc-gen-cat-collection' %}
 
     {% include '../item/parts/projects_vc.html' %}
 
@@ -220,7 +220,7 @@
 
                 {% include '../item/parts/media_download.html' %}
 
-                {% if man_obj.item_type == 'projects' %}
+                {% if man_obj.item_type == 'projects' and man_obj.item_class.slug != 'oc-gen-cat-collection' %}
 
                     <vc-projects
                         :base_search_url="'/query'"
