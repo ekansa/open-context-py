@@ -870,6 +870,9 @@ var vc_meta_json_form_item = Vue.component(
     },
     methods: {
       set_original_meta_json: function (){
+        if(!this.add_new && !this.meta_json){
+          this.meta_json = {};
+        }
         if(!this.add_new && this.meta_json){
           // Hack to make a deep-copy.
           this.original_meta_json_str = JSON.stringify(this.meta_json);
@@ -978,6 +981,9 @@ var vc_meta_json_form_item = Vue.component(
             console.log('API vc_meta_json_form_item html validation response');
             console.log(data);
             this.is_valid_html = data.ok;
+            if(data.ok){
+              this.is_value_changed = true;
+            }
             this.errors = data.errors;
             // this.$emit('get_validation_errors', this.errors);
             let output = {
@@ -1054,7 +1060,14 @@ var vc_meta_json_form = Vue.component(
         console.log(change);
         let key = change.key;
         this.validations[key] = change.validation;
-        this.meta_json = change.meta_json;
+        if (!this.meta_json){
+          this.set_empty_keys();
+        }
+        if(change.hasOwnProperty('meta_json') && change.meta_json){
+          for (let k in change.meta_json){
+            this.meta_json[k] = change.meta_json[k];
+          }
+        }
         let meta_update = {
           validations: this.validations,
           meta_json: this.meta_json,
@@ -1148,6 +1161,7 @@ var vc_edit_manifest_obj = Vue.component(
         for(let val_key in this.validations){
 
           if(this.is_attribute_valid(val_key) != null && this.is_attribute_valid(val_key) === false){
+            console.log('problem with validation of ' + val_key);
             this.update_ok = false;
           }
         }
@@ -1304,6 +1318,33 @@ var vc_edit_manifest_obj = Vue.component(
           this.validations.uri = valid_result;
         }
       },
+      
+      check_meta_json_value_change(orig){
+        // Check to see if meta_json key/values changed.
+        console.log('Check meta_json changes');
+        if(!orig.hasOwnProperty('meta_json')){
+          orig['meta_json'] = {};
+        }
+        console.log('Original meta_json state:');
+        console.log(orig.meta_json);
+        console.log('current meta_json');
+        console.log(this.man_obj.meta_json);
+        if (this.man_obj.hasOwnProperty('meta_json')){
+          for (let key in this.man_obj.meta_json) {
+            if(!orig.meta_json.hasOwnProperty(key)){
+              // the original meta_json did not include this at all, so it's changed.
+              this.is_value_changed = true;
+              this.keyed_value_changes['meta_json'] = true;
+            }
+            if(orig.meta_json.hasOwnProperty(key) && this.man_obj.meta_json.hasOwnProperty(key)){
+              if (orig.meta_json[key] != this.man_obj.meta_json[key]){
+                this.is_value_changed = true;
+                this.keyed_value_changes['meta_json'] = true;
+              }
+            }
+          } 
+        }
+      },
       check_value_change: function() {
         if(this.man_obj.item_class_id == OC_LINKS_ID){
           // A predicate link class MUST have a data_type of 'id'
@@ -1316,7 +1357,11 @@ var vc_edit_manifest_obj = Vue.component(
         let orig = JSON.parse(this.original_man_obj_str);
         this.is_value_changed = false;
         this.keyed_value_changes.checked = true;
-        for (let key in orig) {
+        for (let key in this.man_obj) {
+          if(key == 'meta_json'){
+            this.check_meta_json_value_change(orig);
+            continue;
+          }
           if (orig.hasOwnProperty(key) && this.man_obj.hasOwnProperty(key)) {
             this.keyed_value_changes[key] = false;
             if(orig[key] != this.man_obj[key]){
@@ -1349,6 +1394,7 @@ var vc_edit_manifest_obj = Vue.component(
             }
           }
         }
+        console.log('Value change detected: ' + this.is_value_changed);
         this.check_add_ok();
         this.check_update_ok();
         return this.is_value_changed;
@@ -1369,8 +1415,14 @@ var vc_edit_manifest_obj = Vue.component(
         this.check_value_change();
       },
       update_metadata(meta_update){
+        console.log('Process update of meta_json');
         console.log(meta_update);
-        this.man_obj.meta_json = meta_update.meta_json;
+        if(!this.man_obj.hasOwnProperty('meta_json')){
+          this.man_obj.meta_json = {};
+        }
+        for (let key in meta_update.meta_json) {
+          this.man_obj.meta_json[key] = meta_update.meta_json[key];
+        }
         for (let key in meta_update.validations) {
           if(meta_update.validations.hasOwnProperty(key)){
             this.validations[key] = meta_update.validations[key];
@@ -1392,6 +1444,9 @@ var vc_edit_manifest_obj = Vue.component(
             if(orig[key] != this.man_obj[key]){
               update_obj[key] = this.man_obj[key];
             }
+          }
+          if (!orig.hasOwnProperty(key) && this.man_obj.hasOwnProperty(key)) {
+            update_obj[key] = this.man_obj[key];
           }
         }
         console.log(update_obj);
