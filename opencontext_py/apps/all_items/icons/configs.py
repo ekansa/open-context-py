@@ -501,6 +501,14 @@ ITEM_TYPE_CLASS_ICONS_DICT = {
             "icon": "../../static/oc/icons-v2/noun-camel-4109324.svg",
         },
         {
+            "item_class__uuid": "00000000-6e24-158f-2f6b-36a9f8b58b32",
+            "item_class__label": "Lithic",
+            "item_class__item_key": "oc-gen:cat-lithic",
+            "item_class__uri": "opencontext.org/vocabularies/oc-general/cat-lithic",
+            "item_class__slug": "oc-gen-cat-lithic",
+            "icon": "../../static/oc/icons-v2/noun-stone-age-knife-700620.svg",
+        },
+        {
             "item_class__uuid": "00000000-6e24-d192-dee7-bbbbf881612b",
             "item_class__label": "Arbitrary Grouping",
             "item_class__item_key": "oc-gen:cat-arbitrary-grouping",

@@ -902,6 +902,21 @@ DEFAULT_MANIFESTS = [
         'uri': 'opencontext.org/vocabularies/oc-general/cat-collection',
         'context_id': OC_GEN_VOCAB_UUID,
     },
+    # New for lithics, Umayri
+    {
+        'uuid': CLASS_OC_LITHIC_UUID,
+        'publisher_id': OPEN_CONTEXT_PUB_UUID,
+        'project_id': OPEN_CONTEXT_PROJ_UUID,
+        'item_class_id': DEFAULT_CLASS_UUID,
+        'source_id': DEFAULT_SOURCE_ID,
+        'item_type': 'class',
+        'data_type': 'id',
+        'slug': 'oc-gen-cat-lithic',
+        'label': 'Lithic',
+        'item_key': 'oc-gen:cat-lithic',
+        'uri': 'opencontext.org/vocabularies/oc-general/cat-lithic',
+        'context_id': OC_GEN_VOCAB_UUID,
+    },
     # Add the default (World) root subject item.
     # Below is a simple hierarchy of world regions as defined by
     # the United Nations, see: https://en.wikipedia.org/wiki/United_Nations_geoscheme

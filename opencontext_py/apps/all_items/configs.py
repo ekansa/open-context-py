@@ -549,6 +549,8 @@ CLASS_OC_REGION_UUID = '00000000-6e24-e55c-6c25-5d7204d9115c'
 CLASS_OC_DATA_PUB_UUID = '00000000-6e24-de9d-3040-a85d9f2cbc6d'
 # ID for a the oc-gen:cat-collection (collection) sub-class of projects
 CLASS_OC_COLLECTION_UUID = '00000000-6e24-956a-2395-8be4933d4d27'
+# ID for lithics, oc-gen:cat-lithic
+CLASS_OC_LITHIC_UUID = '00000000-6e24-158f-2f6b-36a9f8b58b32'
 
 # The root subject item (the World)
 DEFAULT_SUBJECTS_ROOT_UUID = 'fc8ff176-beb1-4aaa-896b-d5f49ede58c8'
