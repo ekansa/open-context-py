@@ -44,6 +44,10 @@
         <vc-projects-item-type
           v-if="documents_obj"
           v-bind:item_type_obj="documents_obj"></vc-projects-item-type>
+        
+        <vc-projects-item-type
+          v-if="projects_obj"
+          v-bind:item_type_obj="projects_obj"></vc-projects-item-type>
 
 
         <div id="proj_text_search">
@@ -133,6 +137,7 @@ var vc_projects_item_type = Vue.component(
           subjects_obj: null,
           media_obj: null,
           documents_obj: null,
+          projects_obj: null,
         };
       },
       computed: {
@@ -244,6 +249,9 @@ var vc_projects_item_type = Vue.component(
             }
             if(item_type_obj.slug == 'oc-gen-documents'){
               this.documents_obj = item_type_obj;
+            }
+            if(item_type_obj.slug == 'oc-gen-projects'){
+              this.projects_obj = item_type_obj;
             }
           }
           return summary_data;
