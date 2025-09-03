@@ -644,10 +644,11 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
         assert_qs
     )
     # Get a related subjects manifest object for a collection object.
-    rel_subjects_man_obj = find_collection_rel_subject_man_obj(
-        item_man_obj,
-        assert_qs
-    )
+    if item_man_obj.item_type == 'projects' and item_man_obj.item_class.slug == 'oc-gen-cat-collection':
+        rel_subjects_man_obj = find_collection_rel_subject_man_obj(
+            item_man_obj,
+            assert_qs
+        )
 
     # Adds geojson features. This will involve a database query to fetch
     # spacetime objects.
