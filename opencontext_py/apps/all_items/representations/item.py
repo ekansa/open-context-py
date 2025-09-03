@@ -6,6 +6,7 @@ from django.db.models import OuterRef, Subquery
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.all_items import configs
+from opencontext_py.apps.all_items import hierarchy
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
@@ -444,6 +445,44 @@ def add_to_parent_context_list(manifest_obj, context_list=None, for_solr_or_html
     return context_list
 
 
+def find_collection_rel_subject_man_obj(item_man_obj, assert_qs):
+    """Fims a rel_subject_man_obj for a collections item"""
+    if item_man_obj.item_type != 'projects':
+        return None
+    if item_man_obj.item_class.slug != 'oc-gen-cat-collection':
+        return None
+    # First check to see if we have exactly 1 related subject items.
+    rel_subject_man_objs = []
+    rel_subjects_contexts_man_objs = []
+    for assert_obj in assert_qs:
+        if assert_obj.object.item_type == 'subjects':
+            if assert_obj.object not in rel_subject_man_objs:
+                rel_subject_man_objs.append(assert_obj.object)
+            if assert_obj.object.context not in rel_subjects_contexts_man_objs:
+                # Check parent context
+                rel_subjects_contexts_man_objs.append(assert_obj.object.context)
+    if len(rel_subject_man_objs) == 1:
+        # We have exactly 1 related subject items, so we can return that.
+        return rel_subject_man_objs[0]
+    if len(rel_subjects_contexts_man_objs) == 1:
+        # We have exactly 1 related subject items, via parent context
+        return rel_subjects_contexts_man_objs[0]
+    # We don't have 1 related subjects items
+    proj_hierarchy = hierarchy.get_project_hierarchy(item_man_obj)
+    all_projs = [item_man_obj, item_man_obj.project] + proj_hierarchy
+    for proj in all_projs:
+        if not proj.meta_json.get('query_context_path'):
+            continue
+        rel_subject_man_obj = AllManifest.objects.filter(
+            item_type='subjects',
+            path=proj.meta_json.get('query_context_path')
+        ).first()
+        if rel_subject_man_obj:
+            print(f'Collection {item_man_obj.label} has related subject {rel_subject_man_obj.path}')
+            return rel_subject_man_obj
+    return None
+
+
 def start_item_representation_dict(item_man_obj, for_solr_or_html=False):
     """Start making an item representation dictionary object"""
     rep_dict = LastUpdatedOrderedDict()
@@ -601,6 +640,11 @@ def make_representation_dict(subject_id, for_solr_or_html=False, for_solr=False)
     # Get the related subjects item (for media and documents)
     # NOTE: rel_subjects_man_obj will be None for all other item types.
     rel_subjects_man_obj = get_related_subjects_item_assertion(
+        item_man_obj,
+        assert_qs
+    )
+    # Get a related subjects manifest object for a collection object.
+    rel_subjects_man_obj = find_collection_rel_subject_man_obj(
         item_man_obj,
         assert_qs
     )

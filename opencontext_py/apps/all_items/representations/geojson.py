@@ -379,7 +379,11 @@ def add_geojson_features(item_man_obj, rel_subjects_man_obj=None, act_dict=None,
         act_dict = LastUpdatedOrderedDict()
 
     act_spacetime_features = None
-    if item_man_obj.item_type in GEO_OK_ITEM_TYPES:
+    if rel_subjects_man_obj and item_man_obj.item_type == 'projects' and  item_man_obj.item_class.slug == 'oc-gen-cat-collection':
+        # We have a related subject item, and we're dealing with a project that is a collection. Get the
+        # spatial data from the related subject item.
+        act_spacetime_features = get_spacetime_geo_and_chronos(rel_subjects_man_obj)
+    elif item_man_obj.item_type in GEO_OK_ITEM_TYPES:
         # We're describing a subjects item, or another item that can
         # have it's own GeoJSON
         # so the rel_subjects_man_obj is the same manifest object.

@@ -218,7 +218,12 @@ def get_or_create_manifest_entity(
     )
     # If we're passing a UUID argument, use it!
     if record_uuid:
-        man_qs = man_qs.filter(uuid=record_uuid)
+        # resets, so we skip project id filters.
+        man_qs = AllManifest.objects.filter(
+            uuid=record_uuid,
+            item_type=item_type,
+            data_type=ds_field.data_type,
+        )
 
     if record_other_id:
         record_uri = AllManifest().clean_uri(record_other_id)

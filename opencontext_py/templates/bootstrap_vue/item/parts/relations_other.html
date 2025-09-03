@@ -12,6 +12,8 @@
           <a title="{{ val.label }}" href="{% url 'subjects_html' val.object_id %}">
           {%elif val.object__item_type == 'documents' %}
             <a title="{{ val.label }}" href="{% url 'documents_html' val.object_id %}">
+          {%elif val.object__item_type == 'projects' %}
+            <a title="{{ val.label }}" href="{% url 'projects_html' val.object_id %}">
           {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">
           {%endif%}
@@ -29,6 +31,8 @@
           <a title="{{ val.label }}" href="{% url 'subjects_html' val.object_id %}">{{ val.label }}</a>
           {%elif val.object__item_type == 'documents' %}
           <a title="{{ val.label }}" href="{% url 'documents_html' val.object_id %}">{{ val.label }}</a>
+          {%elif val.object__item_type == 'projects' %}
+          <a title="{{ val.label }}" href="{% url 'projects_html' val.object_id %}">{{ val.label }}</a>
           {%else%}
           <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
           {%endif%}
@@ -46,6 +50,8 @@
           <a title="{{ val.label }}" href="{% url 'subjects_html' val.object_id %}">{{ val.label }}</a>
         {%elif val.object__item_type == 'documents' %}
           <a title="{{ val.label }}" href="{% url 'documents_html' val.object_id %}">{{ val.label }}</a>
+        {%elif val.object__item_type == 'projects' %}
+          <a title="{{ val.label }}" href="{% url 'projects_html' val.object_id %}">{{ val.label }}</a>
         {%else%}
         <a title="{{ val.label }}" href="{% url 'all_items_html' val.object_id %}">{{ val.label }}</a>
         {%endif%}

@@ -41,6 +41,9 @@ class SearchSolr():
         # raw request paths provided by clients. This dictionary makes
         # it easier to generate links for different facet options.
         self.facet_fields_to_client_request = {}
+        # Limit number of project facets (because we don't want
+        # too many collections returned as facet counts)
+        self.limit_project_facets = False
 
     def solr_connect(self):
         """ Connects to solr """
@@ -83,10 +86,12 @@ class SearchSolr():
             request_dict
         )
         if add_projects_facet:
+            self.limit_project_facets = True
             self.init_facet_fields.append(
                 SolrDoc.ROOT_PROJECT_SOLR
             )
         if 'proj' in request_dict:
+            self.limit_project_facets = True
             self.init_facet_fields.append(
                 SolrDoc.ROOT_PREDICATE_SOLR
             )
@@ -187,6 +192,13 @@ class SearchSolr():
                     param, raw_path
                 )
 
+    
+    def _exclude_collections_from_projects(self, query):
+        """Excludes collection items from project searches"""
+        query['fq'] = f'-obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_SOLR_SLUG}_*'
+        return query
+
+    
     def _add_project_index_query_terms(self, query):
         """Adds project index query terms"""
         # Get facets for all the object category (item_class) entities
@@ -642,6 +654,13 @@ class SearchSolr():
                     # We don't have a response for this query, so continue
                     # for now until we come up with error handling.
                     continue
+                
+                # Make sure we limit the number of project facets that we return
+                if param == 'proj' and self.limit_project_facets:
+                    for ff in query_dict.get('facet.field', []):
+                        # Limit the number of project facets we display
+                        query[f'f.{ff}.facet.limit'] = 50
+
                 # Associate the facet fields with the client request param
                 # and param value.
                 self._associate_facet_field_with_client_request(
@@ -719,12 +738,14 @@ class SearchSolr():
         # -------------------------------------------------------------
         if request_dict.get('proj-index'):
             # we're making a project index query
+            query = self._exclude_collections_from_projects(query)
             query = self._add_project_index_query_terms(query)
         if request_dict.get('proj-summary'):
             # we're making a project summary query.
             query = self._add_project_summary_query_terms(query)
         if request_dict.get('project-map'):
             # we're making a project summary query.
+            query = self._exclude_collections_from_projects(query)
             query = self._add_project_map_query_terms(query)
         if request_dict.get('keywords'):
             # we want to get common keyword facets for this query

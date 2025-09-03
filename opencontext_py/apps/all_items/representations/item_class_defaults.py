@@ -336,6 +336,9 @@ ITEM_CLASS_ASSERTIONS = {
     'oc-gen-cat-groundstone': {
         'cidoc-crm-p45-consists-of': ROCK_MATERIAL,
     },
+    'oc-gen-cat-lithic': {
+        'cidoc-crm-p45-consists-of': ROCK_MATERIAL,
+    },
     'oc-gen-cat-bulk-lithic': {
         'cidoc-crm-p45-consists-of': ROCK_MATERIAL,
     },

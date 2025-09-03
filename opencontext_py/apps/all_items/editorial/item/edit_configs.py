@@ -92,6 +92,32 @@ GEO_ZOOM = {
     'options': None,
 }
 
+
+EARLY_DATE = {
+    'key': 'earliest_date',
+    'label': 'Earliest date',
+    'data_type': 'xsd:integer',
+    'note': (
+        'An integer value indicating this item should have a space-time '
+        'record for a date range. Use negative (-) values for calendar years BCE '
+        'and positive (+) values for calendar years CE. '
+    ),
+    'options': None,
+}
+
+
+LATE_DATE = {
+    'key': 'latest_date',
+    'label': 'Latest date',
+    'data_type': 'xsd:integer',
+    'note': (
+        'An integer value indicating this item should have a space-time '
+        'record for a date range. Use negative (-) values for calendar years BCE '
+        'and positive (+) values for calendar years CE. '
+    ),
+    'options': None,
+}
+
 def make_login_to_view_config():
     view_groups = Group.objects.filter(name__icontains='can view')
     output = {
@@ -564,6 +590,12 @@ ITEM_TYPE_META_JSON_CONFIGS = {
             ],
         },
         FLAG_HUMAN_REMAINS.copy(),
+        EARLY_DATE.copy(),
+        LATE_DATE.copy(),
+    ],
+    'types': [
+        EARLY_DATE.copy(),
+        LATE_DATE.copy(),
     ],
     'property': [
         {

@@ -9,6 +9,8 @@
 
 {% if GEO_JSON %}
 {% include '../common_geo.html' %}
+{% else %}
+    <!-- We lack geospatial data to display... -->
 {%endif%}
 
 {% if man_obj.item_type == 'predicates' %}
@@ -220,7 +222,7 @@
 
                 {% include '../item/parts/media_download.html' %}
 
-                {% if man_obj.item_type == 'projects' %}
+                {% if man_obj.item_type == 'projects' and man_obj.item_class.slug != 'oc-gen-cat-collection' %}
 
                     <vc-projects
                         :base_search_url="'/query'"
