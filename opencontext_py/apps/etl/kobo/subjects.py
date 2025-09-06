@@ -52,6 +52,14 @@ SUBJECTS_GENERAL_KOBO_COLS = [
     ('kobo_form', 'kobo_form'),
 ]
 
+SUBJECT_SHEET_NAME_UPDATES = {
+    'atmbiZ5FcsatazUPMnYJQ7': f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'aAgCq4FrQVE8GokvcwQrWH': f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'abLqjG2J8JgCTSKQXsC3WG': f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'awNWuRoffWTJkLeRn7igBg': f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+}
+
+
 SUBJECTS_SHEET_COLS = {
     f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
@@ -198,6 +206,9 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
         print(f'reading: {excel_filepath}')
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         for sheet_name, df in dfs.items():
+            for id_key, new_sheetname in SUBJECT_SHEET_NAME_UPDATES.items():
+                if id_key in sheet_name:
+                    sheet_name = new_sheetname
             sheet_config = SUBJECTS_SHEET_COLS.get(sheet_name)
             if not sheet_config:
                 continue
@@ -230,7 +241,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             print(f'Columns: {df.columns.tolist()}')
             df.reset_index(inplace=True, drop=True)
             subj_dfs.append(df)
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     # df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True, how='outer'), subj_dfs)
     df = pd.concat(subj_dfs, axis=0, ignore_index=True)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]

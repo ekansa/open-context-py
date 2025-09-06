@@ -10,7 +10,7 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 KOBO_API_URL = 'https://kform.opencontext.org'
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-DEFAULT_IMPORT_YEAR = 2024
+DEFAULT_IMPORT_YEAR = 2025
 IMPORT_SOURCE_ID_SUFFIX = '-v1'
 
 HOME = str(Path.home())
@@ -53,6 +53,17 @@ TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
 UNIT_GEO_QUALITY_REPORT = f'{ALL_IMPORTS_PATH}/geo-quality-{DEFAULT_IMPORT_YEAR}.csv'
 
 # API config
+API_FORM_ID_FORM_LABELS_2025 = [
+    ('atmbiZ5FcsatazUPMnYJQ7', 'locus', 2025,),
+    ('abLqjG2J8JgCTSKQXsC3WG', 'bulk-finds', 2025,),
+    ('aAgCq4FrQVE8GokvcwQrWH', 'small-finds', 2025,),
+    ('adcEaNGtnE3vzgckV3CM4S', 'trench', 2025,),
+    ('awNWuRoffWTJkLeRn7igBg', 'catalog', 2025,),
+    ('ao6bgn6vapsZ6e3PkgrqMC', 'media', 2025,),
+]
+
+
+
 API_FORM_ID_FORM_LABELS_2024 = [
     ('aRoYQKJ6M4SSewgJJ2GhAV', 'locus', 2024,),
     ('aTKQPZxVJzHfehk4XD6rL5', 'bulk-finds', 2024,),
@@ -78,8 +89,9 @@ API_FORM_ID_FORM_LABELS_2022 = [
 ]
 
 API_FORM_ID_FORM_LABELS_ALL = (
-    API_FORM_ID_FORM_LABELS_2023
-    + API_FORM_ID_FORM_LABELS_2022
+    API_FORM_ID_FORM_LABELS_2025
+    # API_FORM_ID_FORM_LABELS_2023
+    # + API_FORM_ID_FORM_LABELS_2022
 )
 
 
