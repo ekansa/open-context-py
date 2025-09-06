@@ -139,6 +139,9 @@ MAP_ITEM_CLASS_LABEL_MATERIAL_SAMPLE_OBJECT_TYPES = {
     'Bulk Lithic': {
         'pid': 'https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/artifact',
     },
+    'Lithic': {
+        'pid': 'https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/artifact',
+    },
     'Biological record': {
         'pid': 'https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biologicalmaterialsample',
     },
@@ -254,6 +257,9 @@ MAP_ITEM_CLASS_LABEL_MATERIAL_TYPES = {
             'native elements), mineraloid, or solid organic material.'
         ),
         'otype': 'IdentifiedConcept',
+    },
+    'Lithic': {
+        'pid': 'https://w3id.org/isample/vocabulary/material/1.0/rock',
     },
     'Biological record': {
         'pid': 'https://w3id.org/isample/vocabulary/material/1.0/material',
