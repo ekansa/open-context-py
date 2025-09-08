@@ -63,6 +63,7 @@ SUBJECT_SHEET_NAME_UPDATES = {
 SUBJECTS_SHEET_COLS = {
     f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -75,6 +76,7 @@ SUBJECTS_SHEET_COLS = {
     ],
     f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -89,6 +91,7 @@ SUBJECTS_SHEET_COLS = {
     ],
     f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -105,6 +108,7 @@ SUBJECTS_SHEET_COLS = {
     ],
     f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Year', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('Locus_ID', 'locus_number',),
@@ -241,7 +245,7 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
             print(f'Columns: {df.columns.tolist()}')
             df.reset_index(inplace=True, drop=True)
             subj_dfs.append(df)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     # df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True, how='outer'), subj_dfs)
     df = pd.concat(subj_dfs, axis=0, ignore_index=True)
     locus_cols = [c for c in df.columns.tolist() if c.startswith('locus_')]
@@ -461,6 +465,9 @@ def add_locus_zero_uuids(df):
     index = (df['locus_name'] == 'Locus 0') & df['locus_uuid'].isnull()
     if df[index].empty:
         return df
+    df['unit_uuid'] = df['unit_uuid'].astype(str)
+    unit_nan_index = df['unit_uuid'] == 'nan'
+    df.loc[unit_nan_index, 'unit_uuid'] = ''
     for _, row in df[index].iterrows():
         _, new_uuid = update_old_id(row['unit_uuid'] + 'Locus 0')
         act_index = index & (df['unit_uuid'] == row['unit_uuid'])

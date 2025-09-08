@@ -1995,6 +1995,26 @@ MAIN_TRENCH_BOOKS = {
         'T109_2024': ('Trench Book T109 2024', '5ce30dd6-7f1a-4aff-b701-100880b0615d',),
         'T110_2024': ('Trench Book T110 2024', '27b76eed-e05f-4deb-8597-95546b160cbf',),
     },
+    2025:{
+        'T104_2025': ('Trench Book T104 2025', 'fa3dcc46-01b2-446c-bf4e-dd29ded731c7',),
+        'T111_2025': ('Trench Book T111 2025', '08e598ca-2ca1-412f-afcb-b5b6b64b73c5',),
+        'T112_2025': ('Trench Book T112 2025', '4d5f1a31-8a51-4a53-b6b7-322cccb67cb4',),
+        'T113_2025': ('Trench Book T113 2025', '0770af35-8af0-401e-b567-f18801cbf44b',),
+        'T114_2025': ('Trench Book T114 2025', 'e9c847ee-6d7c-4904-982f-133195bfd443',),
+        'T115_2025': ('Trench Book T115 2025', '06060946-cab3-4676-9fb4-840e97c56ead',),
+        'T116_2025': ('Trench Book T116 2025', 'd522668e-5630-441e-bd11-f5f5ddd2a67e',),
+        'T117_2025': ('Trench Book T117 2025', 'eb228acc-39e9-4a47-ac69-e6b97511e849',),
+        'T118_2025': ('Trench Book T118 2025', 'ff0acd52-030f-4481-b179-4bccd617be23',),
+        'T119_2025': ('Trench Book T119 2025', 'e4e7be02-05fc-43c8-bb19-60b5da1adcc9',),
+        'T120_2025': ('Trench Book T120 2025', '6a26960e-d0c4-48a5-88b3-dd33f9250aff',),
+        'T121_2025': ('Trench Book T121 2025', '147c75e2-c8e3-48c6-af5e-f0726b8e083c',),
+        'T122_2025': ('Trench Book T122 2025', '164fa7ef-c11f-457e-886f-05cb58acfa0c',),
+        'T123_2025': ('Trench Book T123 2025', '99b13297-ce14-470d-a851-b9b6aa7f717f',),
+        'T124_2025': ('Trench Book T124 2025', 'b53501d9-53e5-4c2b-a613-0356a435613c',),
+        'T125_2025': ('Trench Book T125 2025', '77740e68-aead-49c4-9894-163883943613',),
+        'T126_2025': ('Trench Book T126 2025', 'ebd82b8a-8455-4954-96d9-0d39f1b20174',),
+        'T127_2025': ('Trench Book T127 2025', '661721e9-df52-4ad1-8b23-5ce3ea47119b',),
+    },
 }
 
 

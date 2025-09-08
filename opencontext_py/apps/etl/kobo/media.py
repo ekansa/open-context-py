@@ -218,6 +218,8 @@ def make_sheet_media_df(
                 # A total hack. We don't want to describe media
                 # with field used to describe catalog objects.
                 continue
+            if col in sheet_des_cols:
+                continue
             sheet_des_cols.append(col)
     if form_type == 'locus' and media_source_type == 'primary':
         # import pdb; pdb.set_trace()

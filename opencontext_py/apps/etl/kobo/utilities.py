@@ -125,10 +125,15 @@ def move_to_prefix(all_list, prefix_list):
 
 def drop_empty_cols(df):
     """Drops columns with empty or null values."""
-    for col in df.columns:
+    df.reset_index(drop=True, inplace=True)
+    empty_cols = []
+    print(f'Dropping empty values for {df.columns.tolist()}')
+    for col in df.columns.tolist():
         indx = ~df[col].isnull()
-        if len(df[indx].index) < 1:
-            df[col] = np.nan
+        if df[indx].empty:
+            empty_cols.append(col)
+    for col in empty_cols:
+        df[col] = np.nan
     df_output = df.dropna(axis=1,how='all').copy()
     df_output.reset_index(drop=True, inplace=True)
     return df_output
