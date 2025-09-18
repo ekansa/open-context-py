@@ -195,7 +195,8 @@ class SearchSolr():
     
     def _exclude_collections_from_projects(self, query):
         """Excludes collection items from project searches"""
-        query['fq'] = f'-obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_SOLR_SLUG}_*'
+        query['fq'] = f'obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_DATA_PUB_SOLR_SLUG}_*'
+        # query['fq'] = f'-obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_SOLR_SLUG}_*'
         return query
 
     
