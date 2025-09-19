@@ -38,6 +38,7 @@ PROJ_ITEM_REQUEST_DICT = {
     'start': 0,
     'type': 'projects',
     'proj-index': 1,
+    'cat': 'oc-gen-cat-data-publication',
     'attributes': ','.join(PROJ_ITEM_ATTRIBUTES),
 }
 
@@ -248,8 +249,6 @@ def get_cache_project_index_filtered_summary_and_items(request, spatial_context=
     sort_uuids = get_sort_uuids(request_dict, proj_opts)
     all_features = get_cache_all_projects_items_geojson(reset_cache)
     valid_features = validate_update_item_features_from_proj_opts(proj_opts, all_features)
-    # print(f'count valid features {len(valid_features)}')
-    # print(proj_opts)
     sorted_valid_features = []
     for sort_uuid in sort_uuids:
         for feature in valid_features:

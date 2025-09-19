@@ -195,8 +195,10 @@ class SearchSolr():
     
     def _exclude_collections_from_projects(self, query):
         """Excludes collection items from project searches"""
-        # query['fq'] = f'obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_DATA_PUB_SOLR_SLUG}_*'
-        query['fq'] = f'-obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_SOLR_SLUG}_*'
+        if not query.get('fq', []):
+            query['fq'] = []
+        # query['fq'].append(f'obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_DATA_PUB_SOLR_SLUG}_*')
+        query['fq'].append(f'-obj_all___oc_gen_category___pred_id:{configs.PROJECT_COLLECTIONS_SOLR_SLUG}_*')
         return query
 
     
@@ -739,7 +741,7 @@ class SearchSolr():
         # -------------------------------------------------------------
         if request_dict.get('proj-index'):
             # we're making a project index query
-            query = self._exclude_collections_from_projects(query)
+            # query = self._exclude_collections_from_projects(query)
             query = self._add_project_index_query_terms(query)
         if request_dict.get('proj-summary'):
             # we're making a project summary query.
