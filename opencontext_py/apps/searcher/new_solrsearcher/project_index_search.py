@@ -38,6 +38,7 @@ PROJ_ITEM_REQUEST_DICT = {
     'start': 0,
     'type': 'projects',
     'proj-index': 1,
+    'cat': 'oc-gen-cat-data-publication',
     'attributes': ','.join(PROJ_ITEM_ATTRIBUTES),
 }
 
@@ -87,6 +88,7 @@ def get_cache_all_projects_items_geojson(reset_cache=False):
     # projects get filtered.
     interest_scores = []
     features = []
+    # print(f"solr project index response with feature count: {len(response_dict.get('features', []))}")
     for feature in response_dict.get('features', []):
         if not feature.get('oc-api:descriptiveness'):
             print('no descriptivness')
@@ -95,6 +97,7 @@ def get_cache_all_projects_items_geojson(reset_cache=False):
         features.append(feature)
     interest_scores.sort()
     features_uri_dict = {}
+    # print(f'here we have {len(features)} project features')
     for feature in features:
         feature['oc-api:descriptiveness-percentile'] = stats.percentileofscore(
             interest_scores,
@@ -125,6 +128,7 @@ def validate_update_item_feature_from_proj_opts(proj_opts, feature):
         return None
     feature_uuid = get_uuid_from_proj_uri(feature.get('rdfs:isDefinedBy'))
     if not feature_uuid:
+        # print('No feature_uuid')
         return None
     for proj_opt in proj_opts:
         proj_opt_uuid = get_uuid_from_proj_uri(proj_opt.get('rdfs:isDefinedBy'))
@@ -239,7 +243,7 @@ def get_cache_project_index_filtered_summary_and_items(request, spatial_context=
     proj_opts = get_project_facet_options(response_dict)
     if not proj_opts:
         return response_dict
-    print(f'Project index search has {len(proj_opts)} proj facets for {cache_key}')
+    # print(f'Project index search has {len(proj_opts)} proj facets for {cache_key}')
     # Now get sort uuids, either with a new request or by sorting the project
     # facet options.
     sort_uuids = get_sort_uuids(request_dict, proj_opts)
