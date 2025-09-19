@@ -10,7 +10,7 @@ from opencontext_py.apps.etl.kobo import kobo_oc_configs
 
 KOBO_API_URL = 'https://kform.opencontext.org'
 PROJECT_UUID = 'df043419-f23b-41da-7e4d-ee52af22f92f'
-DEFAULT_IMPORT_YEAR = 2024
+DEFAULT_IMPORT_YEAR = 2025
 IMPORT_SOURCE_ID_SUFFIX = '-v1'
 
 HOME = str(Path.home())
@@ -53,6 +53,17 @@ TB_LINKS_CSV_PATH = f'{OC_IMPORT_FILES_PATH}/tb-links.csv'
 UNIT_GEO_QUALITY_REPORT = f'{ALL_IMPORTS_PATH}/geo-quality-{DEFAULT_IMPORT_YEAR}.csv'
 
 # API config
+API_FORM_ID_FORM_LABELS_2025 = [
+    ('atmbiZ5FcsatazUPMnYJQ7', 'locus', 2025,),
+    ('abLqjG2J8JgCTSKQXsC3WG', 'bulk-finds', 2025,),
+    ('aAgCq4FrQVE8GokvcwQrWH', 'small-finds', 2025,),
+    ('adcEaNGtnE3vzgckV3CM4S', 'trench', 2025,),
+    ('awNWuRoffWTJkLeRn7igBg', 'catalog', 2025,),
+    ('ao6bgn6vapsZ6e3PkgrqMC', 'media', 2025,),
+]
+
+
+
 API_FORM_ID_FORM_LABELS_2024 = [
     ('aRoYQKJ6M4SSewgJJ2GhAV', 'locus', 2024,),
     ('aTKQPZxVJzHfehk4XD6rL5', 'bulk-finds', 2024,),
@@ -78,8 +89,9 @@ API_FORM_ID_FORM_LABELS_2022 = [
 ]
 
 API_FORM_ID_FORM_LABELS_ALL = (
-    API_FORM_ID_FORM_LABELS_2023
-    + API_FORM_ID_FORM_LABELS_2022
+    API_FORM_ID_FORM_LABELS_2025
+    # API_FORM_ID_FORM_LABELS_2023
+    # + API_FORM_ID_FORM_LABELS_2022
 )
 
 
@@ -1982,6 +1994,26 @@ MAIN_TRENCH_BOOKS = {
         'T108_2024': ('Trench Book T108 2024', '0dad4b9f-034b-4ee8-8563-8581d06f9b05',),
         'T109_2024': ('Trench Book T109 2024', '5ce30dd6-7f1a-4aff-b701-100880b0615d',),
         'T110_2024': ('Trench Book T110 2024', '27b76eed-e05f-4deb-8597-95546b160cbf',),
+    },
+    2025:{
+        'T104_2025': ('Trench Book T104 2025', 'fa3dcc46-01b2-446c-bf4e-dd29ded731c7',),
+        'T111_2025': ('Trench Book T111 2025', '08e598ca-2ca1-412f-afcb-b5b6b64b73c5',),
+        'T112_2025': ('Trench Book T112 2025', '4d5f1a31-8a51-4a53-b6b7-322cccb67cb4',),
+        'T113_2025': ('Trench Book T113 2025', '0770af35-8af0-401e-b567-f18801cbf44b',),
+        'T114_2025': ('Trench Book T114 2025', 'e9c847ee-6d7c-4904-982f-133195bfd443',),
+        'T115_2025': ('Trench Book T115 2025', '06060946-cab3-4676-9fb4-840e97c56ead',),
+        'T116_2025': ('Trench Book T116 2025', 'd522668e-5630-441e-bd11-f5f5ddd2a67e',),
+        'T117_2025': ('Trench Book T117 2025', 'eb228acc-39e9-4a47-ac69-e6b97511e849',),
+        'T118_2025': ('Trench Book T118 2025', 'ff0acd52-030f-4481-b179-4bccd617be23',),
+        'T119_2025': ('Trench Book T119 2025', 'e4e7be02-05fc-43c8-bb19-60b5da1adcc9',),
+        'T120_2025': ('Trench Book T120 2025', '6a26960e-d0c4-48a5-88b3-dd33f9250aff',),
+        'T121_2025': ('Trench Book T121 2025', '147c75e2-c8e3-48c6-af5e-f0726b8e083c',),
+        'T122_2025': ('Trench Book T122 2025', '164fa7ef-c11f-457e-886f-05cb58acfa0c',),
+        'T123_2025': ('Trench Book T123 2025', '99b13297-ce14-470d-a851-b9b6aa7f717f',),
+        'T124_2025': ('Trench Book T124 2025', 'b53501d9-53e5-4c2b-a613-0356a435613c',),
+        'T125_2025': ('Trench Book T125 2025', '77740e68-aead-49c4-9894-163883943613',),
+        'T126_2025': ('Trench Book T126 2025', 'ebd82b8a-8455-4954-96d9-0d39f1b20174',),
+        'T127_2025': ('Trench Book T127 2025', '661721e9-df52-4ad1-8b23-5ce3ea47119b',),
     },
 }
 

@@ -47,8 +47,10 @@ def ensure_catalog_id(df):
     """Make sure we have a catalog ID in the dataframe"""
     if 'Catalog ID' in df.columns.tolist():
         return df
-    if 'PC ID' in df.columns.tolist():
-        df['Catalog ID'] = df['PC ID']
+    for pc_id_col in ['PC ID', 'PC_ID']:
+        if pc_id_col in df.columns.tolist():
+            df['Catalog ID'] = df[pc_id_col]
+            break
     if not 'Catalog ID' in df.columns.tolist():
         raise ValueError('We do not have a Catalog ID field in the small_finds data')
     return df
@@ -65,6 +67,15 @@ def get_links_from_rel_ids(dfs):
         return None
     df_subjects = pd.read_csv(pc_configs.SUBJECTS_CSV_PATH)
     link_indx = ~df_link['Catalog ID'].isnull()
+    # Fix columns underscores for required columns.
+    replace_cols = {
+        'Find_ID': 'Find ID',
+        'OC_Find_ID': 'OC Find ID', 
+        'Catalog_ID': 'Catalog ID',
+    }
+    fix_cols = {c:v for c, v in replace_cols.items() if c in df_link.columns}
+    df_link.rename(columns=fix_cols, inplace=True)
+    # Make a dataframe of small finds records that link to PC numbers
     df_link = df_link[link_indx][['Find ID', 'OC Find ID', 'Catalog ID', '_uuid']].copy()
     df_link['find_name'] = df_link['OC Find ID']
     df_link['find_uuid'] = df_link['_uuid']

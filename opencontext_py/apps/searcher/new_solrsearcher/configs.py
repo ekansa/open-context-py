@@ -86,6 +86,7 @@ ITEM_TYPE_ROWS = {'projects': 100}
 ITEM_TYPE_FACET_MIN = {'projects': 2}
 
 # We exclude collections from project specific summaries.
+PROJECT_COLLECTIONS_DATA_PUB_SOLR_SLUG = 'oc_gen_cat_data_publication'
 PROJECT_COLLECTIONS_SOLR_SLUG = 'oc_gen_cat_collection'
 
 # Facet fields for different item_types

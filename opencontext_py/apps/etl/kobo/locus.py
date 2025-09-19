@@ -283,6 +283,7 @@ def make_locus_tb_links_df(dfs, subjects_df):
     df_link['object_uuid'] = np.nan
     df_link['object_uuid_source'] = np.nan
     rename_cols = {
+        'Trench Book Date': 'Trench Book Entry Date',
         'Date_Trench_Book': 'Trench Book Entry Date',
         'TB_Start_Page': 'Trench Book Start Page',
         'TB_End_Page': 'Trench Book End Page',
@@ -605,7 +606,7 @@ def prepare_attributes_links(
     subjects_df = pd.read_csv(subjects_path)
     dfs = None
     for excel_filepath in xlsx_files:
-        if not 'Locus' in excel_filepath:
+        if not 'Locus' in excel_filepath and not 'locus' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         dfs = prep_attributes_df(

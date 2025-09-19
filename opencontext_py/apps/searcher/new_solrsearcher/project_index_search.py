@@ -89,6 +89,7 @@ def get_cache_all_projects_items_geojson(reset_cache=False):
     features = []
     for feature in response_dict.get('features', []):
         if not feature.get('oc-api:descriptiveness'):
+            print('no descriptivness')
             continue
         interest_scores.append(feature.get('oc-api:descriptiveness'))
         features.append(feature)

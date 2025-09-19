@@ -52,9 +52,18 @@ SUBJECTS_GENERAL_KOBO_COLS = [
     ('kobo_form', 'kobo_form'),
 ]
 
+SUBJECT_SHEET_NAME_UPDATES = {
+    'atmbiZ5FcsatazUPMnYJQ7': f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'aAgCq4FrQVE8GokvcwQrWH': f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'abLqjG2J8JgCTSKQXsC3WG': f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'awNWuRoffWTJkLeRn7igBg': f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+}
+
+
 SUBJECTS_SHEET_COLS = {
     f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -67,6 +76,7 @@ SUBJECTS_SHEET_COLS = {
     ],
     f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -81,6 +91,7 @@ SUBJECTS_SHEET_COLS = {
     ],
     f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Field Season', 'trench_year',),
         ('Season', 'trench_year',),
         ('Locus ID', 'locus_number',),
@@ -97,6 +108,7 @@ SUBJECTS_SHEET_COLS = {
     ],
     f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}': [
         (pc_configs.KOBO_TRENCH_COL, pc_configs.KOBO_TRENCH_COL,),
+        ('Trench_ID', pc_configs.KOBO_TRENCH_COL,),
         ('Year', 'trench_year',),
         ('Locus ID', 'locus_number',),
         ('Locus_ID', 'locus_number',),
@@ -198,6 +210,9 @@ def make_subjects_df(excel_dirpath, trench_csv_path=pc_configs.TRENCH_CSV_PATH):
         print(f'reading: {excel_filepath}')
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         for sheet_name, df in dfs.items():
+            for id_key, new_sheetname in SUBJECT_SHEET_NAME_UPDATES.items():
+                if id_key in sheet_name:
+                    sheet_name = new_sheetname
             sheet_config = SUBJECTS_SHEET_COLS.get(sheet_name)
             if not sheet_config:
                 continue
@@ -450,6 +465,9 @@ def add_locus_zero_uuids(df):
     index = (df['locus_name'] == 'Locus 0') & df['locus_uuid'].isnull()
     if df[index].empty:
         return df
+    df['unit_uuid'] = df['unit_uuid'].astype(str)
+    unit_nan_index = df['unit_uuid'] == 'nan'
+    df.loc[unit_nan_index, 'unit_uuid'] = ''
     for _, row in df[index].iterrows():
         _, new_uuid = update_old_id(row['unit_uuid'] + 'Locus 0')
         act_index = index & (df['unit_uuid'] == row['unit_uuid'])
