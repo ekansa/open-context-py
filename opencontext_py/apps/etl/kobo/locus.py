@@ -79,6 +79,14 @@ COL_VALUE_MAPS = {
 }
 
 
+def is_valid_uuid(val):
+    try:
+        GenUUID.UUID(str(val))
+        return True
+    except ValueError:
+        return False
+
+
 def make_locus_grid_df(dfs, subjects_df):
     df_grid, _ = utilities.get_df_by_sheet_name_part(
         dfs,
@@ -413,6 +421,7 @@ def make_strat_link_df(df, dfs, subjects_df):
             do_other_rel = True
     if do_other_rel:
         return make_strat_other_link_df(df)
+    print(f'stratigraphy act_col: {act_col}')
     if not act_col:
         return None
     df[pc_configs.LINK_RELATION_TYPE_COL] = act_col
@@ -428,21 +437,46 @@ def make_strat_link_df(df, dfs, subjects_df):
     df_f = utilities.fix_df_col_underscores(df_f)
     act_indx = ~df[act_col].isnull()
     for _, row in df[act_indx].iterrows():
+        rel_locus_uuid = None
+        trench_id = row['trench_id']
         try:
             locus_number = int(float(row[act_col]))
         except:
             locus_number = row[act_col]
         rel_locus_index = (
-            (df_f['Trench ID'] == row['trench_id'])
+            (df_f['Trench ID'] == trench_id)
             & (df_f['Locus ID'] == locus_number)
         )
-        if df_f[rel_locus_index].empty:
+        if not df_f[rel_locus_index].empty:
+            rel_locus_uuid = df_f[rel_locus_index]['_uuid'].iloc[0]
+        if not rel_locus_uuid:
+            # Look for the locus in the subjects_df
+            sub_rel_locus_index = (
+                (subjects_df['trench_id'] == trench_id)
+                & (
+                    (subjects_df['locus_number'] == locus_number)
+                )
+            )
+            if not subjects_df[sub_rel_locus_index].empty:
+                rel_locus_uuid = subjects_df[sub_rel_locus_index]['locus_uuid'].iloc[0]
+        if not rel_locus_uuid and '/' in str(locus_number):
+            # we likely have a URL to an item
+            check_uuid = locus_number.split('/')[-1].strip()
+            if is_valid_uuid(check_uuid):
+                rel_locus_uuid = check_uuid
+        if not rel_locus_uuid:
+            print(f'Cannot find locus_uuid for trench_id {trench_id}, locus_number {locus_number}')
             continue
         up_index = (
-            (df['trench_id'] == row['trench_id'])
+            (df['trench_id'] == trench_id)
             & (df[act_col] == str(locus_number))
         )
-        df.loc[up_index, 'object_orig_uuid'] = df_f[rel_locus_index]['_uuid'].iloc[0]
+        if df[up_index].empty:
+            up_index = (
+                (df['trench_id'] == trench_id)
+                & (df[act_col] == locus_number)
+            )
+        df.loc[up_index, 'object_orig_uuid'] = rel_locus_uuid
     # Now update the uuids of the related loci
     df = utilities.add_final_subjects_uuid_label_cols(
         df=df,
