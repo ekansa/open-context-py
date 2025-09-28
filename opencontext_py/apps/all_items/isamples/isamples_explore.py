@@ -75,6 +75,7 @@ def get_sample_data_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_M
     SELECT 
     samp_pqg.row_id,
     samp_pqg.pid AS sample_pid,
+    samp_pqg.alternate_identifiers AS sample_alternate_identifiers,
     samp_pqg.label AS sample_label,
     samp_pqg.description AS sample_description,
     samp_pqg.thumbnail_url AS sample_thumbnail_url,
