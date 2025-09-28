@@ -269,9 +269,8 @@ def get_samples_at_geo_cord_location_via_sample_event(geo_loc_pid, con=DB_CON, s
         AND
         samp_pqg.otype = 'MaterialSampleRecord'
     )
-    WHERE geo_pqg.pid = '{geo_loc_pid}'
+    WHERE geo_pqg.pid = '{geo_loc_pid}' AND geo_pqg.otype = 'GeospatialCoordLocation'
     ORDER BY has_thumbnail DESC
-    LIMIT 50
     """
 
     db_m = con.sql(sql)
