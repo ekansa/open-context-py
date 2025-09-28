@@ -29,8 +29,13 @@ con = isamples_explore.DB_CON
 isamples_explore.load_pqg_table_from_parquet_path(
     parquet_path='/home/ekansa/oc-data/parquet/oc_isamples_pqg.parquet'
 )
+# alias file on local filesystem
 isamples_explore.alias_pqg_table_from_parquet_path(
     parquet_path='/home/ekansa/oc-data/oc_isamples_pqg.parquet'
+)
+# alias remote file
+isamples_explore.alias_pqg_table_from_remote_parquet_url(
+    parquet_url='https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet'
 )
 
 geo_loc_pid = 'geoloc_4449bb33095fcb9ba95430d9f444b983f16db075'
@@ -65,6 +70,19 @@ def alias_pqg_table_from_parquet_path(parquet_path, con=DB_CON,):
     """
     db_m = con.sql(sql)
     isamples_pqg.summarize_pqg(con=con)
+    return db_m
+
+
+def alias_pqg_table_from_remote_parquet_url(parquet_url, con=DB_CON, show_summary=False):
+    """Sets up a pqg table as an alias 
+    parquet file into the pqg table, in memory"""
+    sql = f"""
+    CREATE VIEW pqg AS
+    SELECT * FROM PARQUET_SCAN('{parquet_url}');
+    """
+    db_m = con.sql(sql)
+    if show_summary:
+        isamples_pqg.summarize_pqg(con=con)
     return db_m
 
 
