@@ -38,8 +38,8 @@ db_m = isamples_explore.get_samples_at_geo_cord_location_via_sample_event(geo_lo
 
 sample_pid = 'ark:/28722/r2p24/pc_19970127'
 db_m = isamples_explore.get_sample_data_via_sample_pid(sample_pid)
-db_m = isamples_explore.get_sample_keywords_via_sample_pid(sample_pid)
-
+db_m = isamples_explore.get_sample_types_and_keywords_via_sample_pid(sample_pid)
+db_m = isamples_explore.get_sample_data_agents_sample_pid(sample_pid)
 """
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
@@ -95,6 +95,8 @@ def get_sample_data_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_M
     )
     JOIN pqg AS se_pqg ON (
         list_extract(samp_rel_se_pqg.o, 1) = se_pqg.row_id
+        AND
+        se_pqg.otype = 'SamplingEvent'
     )
     JOIN pqg AS geo_rel_se_pqg ON (
         geo_rel_se_pqg.s = se_pqg.row_id
@@ -103,6 +105,8 @@ def get_sample_data_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_M
     )
     JOIN pqg AS geo_pqg ON (
         list_extract(geo_rel_se_pqg.o, 1) = geo_pqg.row_id
+        AND
+        geo_pqg.otype = 'GeospatialCoordLocation'
     )
 
     JOIN pqg AS site_rel_se_pqg ON (
@@ -112,6 +116,8 @@ def get_sample_data_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_M
     )
     JOIN pqg AS site_pqg ON (
         list_extract(site_rel_se_pqg.o, 1) = site_pqg.row_id
+        AND
+        site_pqg.otype = 'SamplingSite'
     )
     
     WHERE samp_pqg.pid = '{sample_pid}' 
@@ -125,29 +131,47 @@ def get_sample_data_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_M
     return db_m
 
 
-def get_sample_keywords_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_MAX_WIDTH):
-    """Gets 1 row of iSamples data for a sample idendified by a PID"""
+
+def get_sample_data_agents_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_MAX_WIDTH):
+    """Gets the agent iSamples data for a sample idendified by a PID"""
 
     sql = f"""
     SELECT 
     samp_pqg.row_id,
     samp_pqg.pid AS sample_pid,
+    samp_pqg.alternate_identifiers AS sample_alternate_identifiers,
     samp_pqg.label AS sample_label,
-
-    kw_pqg.pid AS keyword_pid,
-    kw_pqg.label AS keyword
+    samp_pqg.description AS sample_description,
+    samp_pqg.thumbnail_url AS sample_thumbnail_url,
+    samp_pqg.thumbnail_url is NOT NULL as has_thumbnail,
+    agent_rel_se_pqg.p AS predicate,
+    agent_pqg.pid AS agent_pid,
+    agent_pqg.name AS agent_name,
+    agent_pqg.alternate_identifiers AS agent_alternate_identifiers
 
     FROM pqg AS samp_pqg
 
-    JOIN pqg AS kw_rel_se_pqg ON (
-        kw_rel_se_pqg.s = samp_pqg.row_id
+    JOIN pqg AS samp_rel_se_pqg ON (
+        samp_rel_se_pqg.s = samp_pqg.row_id
         AND
-        kw_rel_se_pqg.p = 'keywords'
+        samp_rel_se_pqg.p = 'produced_by'
     )
-    JOIN pqg AS kw_pqg ON (
-        kw_pqg.row_id = ANY(kw_rel_se_pqg.o)
+    JOIN pqg AS se_pqg ON (
+        list_extract(samp_rel_se_pqg.o, 1) = se_pqg.row_id
+        AND
+        se_pqg.otype = 'SamplingEvent'
     )
-      
+    JOIN pqg AS agent_rel_se_pqg ON (
+        agent_rel_se_pqg.s = se_pqg.row_id
+        AND
+        list_contains(['responsibility', 'registrant'], agent_rel_se_pqg.p)
+    )
+    JOIN pqg AS agent_pqg ON (
+        agent_pqg.row_id = ANY(agent_rel_se_pqg.o)
+        AND
+        agent_pqg.otype = 'Agent'
+    )
+    
     WHERE samp_pqg.pid = '{sample_pid}' 
     AND samp_pqg.otype = 'MaterialSampleRecord'
     
@@ -157,6 +181,8 @@ def get_sample_keywords_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SH
     db_m = con.sql(sql)
     db_m.show(max_width=show_max_width)
     return db_m
+
+
 
 
 def get_sample_types_and_keywords_via_sample_pid(sample_pid, con=DB_CON, show_max_width=SHOW_MAX_WIDTH):
@@ -166,6 +192,7 @@ def get_sample_types_and_keywords_via_sample_pid(sample_pid, con=DB_CON, show_ma
     SELECT 
     samp_pqg.row_id,
     samp_pqg.pid AS sample_pid,
+    samp_pqg.alternate_identifiers AS sample_alternate_identifiers,
     samp_pqg.label AS sample_label,
 
     kw_rel_se_pqg.p AS predicate,
@@ -181,6 +208,8 @@ def get_sample_types_and_keywords_via_sample_pid(sample_pid, con=DB_CON, show_ma
     )
     JOIN pqg AS kw_pqg ON (
         kw_pqg.row_id = ANY(kw_rel_se_pqg.o)
+        AND
+        kw_pqg.otype = 'IdentifiedConcept'
     )
       
     WHERE samp_pqg.pid = '{sample_pid}' 
@@ -203,6 +232,7 @@ def get_samples_at_geo_cord_location_via_sample_event(geo_loc_pid, con=DB_CON, s
     site_pqg.label AS sample_site_label,
     site_pqg.pid AS sample_site_pid,
     samp_pqg.pid AS sample_pid,
+    samp_pqg.alternate_identifiers AS sample_alternate_identifiers,
     samp_pqg.label AS sample_label,
     samp_pqg.description AS sample_description,
     samp_pqg.thumbnail_url AS sample_thumbnail_url,
@@ -216,6 +246,8 @@ def get_samples_at_geo_cord_location_via_sample_event(geo_loc_pid, con=DB_CON, s
     )
     JOIN pqg AS se_pqg ON (
         rel_se_pqg.s = se_pqg.row_id
+        AND
+        se_pqg.otype = 'SamplingEvent'
     )
     JOIN pqg AS rel_site_pqg ON (
         se_pqg.row_id = rel_site_pqg.s
@@ -224,6 +256,8 @@ def get_samples_at_geo_cord_location_via_sample_event(geo_loc_pid, con=DB_CON, s
     )
     JOIN pqg AS site_pqg ON (
         list_extract(rel_site_pqg.o, 1) = site_pqg.row_id
+        AND
+        site_pqg.otype = 'SamplingSite'
     )
     JOIN pqg AS rel_samp_pqg ON (
         rel_samp_pqg.p = 'produced_by'
@@ -232,6 +266,8 @@ def get_samples_at_geo_cord_location_via_sample_event(geo_loc_pid, con=DB_CON, s
     )
     JOIN pqg AS samp_pqg ON (
         rel_samp_pqg.s = samp_pqg.row_id
+        AND
+        samp_pqg.otype = 'MaterialSampleRecord'
     )
     WHERE geo_pqg.pid = '{geo_loc_pid}'
     ORDER BY has_thumbnail DESC
