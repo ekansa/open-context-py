@@ -1789,14 +1789,27 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
     },
 
     {
-        'source_col': 'Locus Period',
+        'source_col': 'Locus Periods',
         'form_type': ['locus',],
-        'match_type': 'startswith',
+        'match_type': 'exact',
         'field_args': {
             'label': 'Locus Period',
             'context_id': '13399317-94d9-49e7-ab3a-b2114c2e1972',
             'item_type': 'types',
             'data_type': 'id',
+            'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
+        },
+    },
+
+    {
+        'source_col': 'Locus Periods (Other)',
+        'form_type': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Locus Period (Notes)',
+            'context_id': '5ceee060-319b-4cf5-85ab-aae9231131ab',
+            'item_type': 'predicates',
+            'data_type': 'xsd:string',
             'item_class_id': configs.CLASS_OC_VARIABLES_UUID,
         },
     },
@@ -2026,6 +2039,7 @@ FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS = [
     ('catalog', 'Motif', ' '),
     ('catalog', 'Decorative Technique', ' '),
     ('catalog', 'Object General Type Alternatives', ' '),
+    ('catalog', 'Alternative Object Type (General)', ' '),
 ]
 
 

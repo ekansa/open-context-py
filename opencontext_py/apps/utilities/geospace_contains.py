@@ -154,6 +154,8 @@ def report_child_coordinate_outliers(item_id=None, path=None):
     if not parent_man_obj:
         return None
     space_time_qs = geo_agg.make_subjects_space_time_qs(parent_man_obj)
+    if space_time_qs is None:
+        return None
     df_geo = geo_agg.make_df_from_space_time_qs(space_time_qs, add_item_cols=True)
     df = geo_quality.flag_outlier_points_in_df(df_geo)
     if df is None or df.empty:

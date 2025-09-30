@@ -27,6 +27,7 @@ MULTI_VALUE_COL_PREFIXES = [
     'Object Type/',
     'Recovery Techniques/',
     'Locus Period/',
+    'Locus Periods/',
 ]
 
 UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox' # UUID minted by kobotoolbox

@@ -9,7 +9,7 @@ from opencontext_py.apps.all_items.models import (
 )
 
 from opencontext_py.apps.all_items.geospace import aggregate as geo_agg
-from opencontext_py.apps.all_items.geospace import geo_quality
+from opencontext_py.apps.utilities import geospace_contains
 
 from opencontext_py.apps.etl.kobo import bulk_finds
 from opencontext_py.apps.etl.kobo import catalog
@@ -39,6 +39,12 @@ all_etl.db_update_only()
 
 all_etl.import_reset()
 all_etl.extract_transform_load_kobo_data()
+
+configs = [('catalog',
+  'pc2025-v1-cat-attrib-2022-fix',
+  '/home/ekansa/pc-data-2025/oc-import/catalog-attribs.csv'),
+]
+db_updates.load_general_subjects_attributes(configs=configs)
 
 """
 
@@ -243,11 +249,14 @@ def check_aggregate_unit_geospatial_data():
     trench_df = pd.read_csv(pc_configs.TRENCH_CSV_PATH)
     dfs = []
     for parent_uuid in trench_df['uuid'].unique().tolist():
-        df = geo_quality.check_points_within_spatial_context(
-            parent_uuid=parent_uuid
+        report_dict = geospace_contains.report_child_coordinate_outliers(
+            item_id=parent_uuid
         )
-        if df is None:
+        if not report_dict:
             continue
+        if not report_dict.get('child_geo_outliers'):
+            continue
+        df = pd.DataFrame(data=report_dict.get('child_geo_outliers'))
         df.reset_index(inplace=True, drop=True)
         dfs.append(df)
     df_all = pd.concat(dfs, axis=0)
