@@ -301,7 +301,7 @@
           start: null,
           rows: null,
           totalResults: null,
-          show_id_search_box: false,
+          show_id_search_box: true,
           show_q_search_box: true,
           show_label_search_box: false,
           show_path_search_box: false,
@@ -409,6 +409,7 @@
           let has_query = false;
           if(this.q_id && this.q_id.length > 0){
             params.id = this.q_id;
+            delete params.item_type;
             has_query = true;
           }
           if(this.q && this.q.length > 0){
@@ -463,6 +464,7 @@
           let has_query = false;
           if(this.q_id && this.q_id.length > 0){
             params.id = this.q_id;
+            delete params.item_type;
             has_query = true;
           }
           if(this.q && this.q.length > 0){
