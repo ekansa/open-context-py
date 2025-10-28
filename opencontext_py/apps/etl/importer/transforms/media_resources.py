@@ -121,6 +121,9 @@ def reconcile_media_and_resource_files(media_ds_field, df, filter_index=None):
         for media_uuid in df[filter_index][media_uuid_col].unique():
             if not media_uuid:
                 continue
+            if not '-' in str(media_uuid):
+                # not a uuid
+                continue
             media_index = df[media_uuid_col] == media_uuid
             if len(df[media_index].index) < 1:
                 raise ValueError(f'Missing media uuid {media_uuid}')
