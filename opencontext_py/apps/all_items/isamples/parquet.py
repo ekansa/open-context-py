@@ -129,11 +129,58 @@ LITERAL_FIELDS = [
   "o",
   "n",
   "altids",
-  "geometry"
+  "geometry",
+  "thumbnail_url",
 ]
 
 
+WIDE_EDGE_FIELDS = [
+  "pid",
+  "otype",
+  "n",
+  "altids",
+  "geometry",
+]
 
+WIDE_LITERAL_FIELDS = [
+  "authorized_by",
+  "has_feature_of_interest",
+  "affiliation",
+  "sampling_purpose",
+  "complies_with",
+  "project",
+  "alternate_identifiers",
+  "relationship",
+  "elevation",
+  "sample_identifier",
+  "dc_rights",
+  "result_time",
+  "contact_information",
+  "latitude",
+  "target",
+  "role",
+  "scheme_uri",
+  "is_part_of",
+  "scheme_name",
+  "name",
+  "longitude",
+  "obfuscated",
+  "curation_location",
+  "last_modified_time",
+  "access_constraints",
+  "place_name",
+  "description",
+  "label",
+  "pid",
+  "otype",
+  "s",
+  "p",
+  "o",
+  "n",
+  "altids",
+  "geometry",
+  "thumbnail_url",
+]
 
 
 def dump_oc_raw_tables_to_parquet(output_dir_path, con=DB_CON, db_schema=duckdb_con.DUCKDB_SCHEMA):
@@ -179,6 +226,33 @@ def dump_oc_pqg_table_to_parquet(output_dir_path, con=DB_CON):
     sql += f"pqg_node_types: '{json.dumps(NODE_TYPES)}', "
     sql += f"pqg_edge_fields: '{json.dumps(EDGE_FIELDS)}', "
     sql += f"pqg_literal_fields: '{json.dumps(LITERAL_FIELDS)}' "
+    sql += '})'
+    con.execute(sql)
+
+
+
+def dump_oc_pqg_wide_table_to_parquet(output_dir_path, con=DB_CON):
+    """Dump Open Context PQG (Property Graph) table to parquet format with metadata.
+    
+    Args:
+        output_dir_path (str): Directory path where parquet file will be saved
+        con (duckdb.DuckDBPyConnection, optional): DuckDB connection object. Defaults to DB_CON
+    
+    The function creates a parquet file with the following metadata:
+    - pqg_version: Version of the PQG format
+    - pqg_primary_key: Primary key field name
+    - pqg_node_types: JSON string of node type definitions
+    - pqg_edge_fields: JSON string of edge field definitions
+    - pqg_literal_fields: JSON string of literal field definitions
+    """
+    outpath = os.path.join(output_dir_path, 'oc_isamples_pqg_wide.parquet')
+    sql = f"COPY (SELECT * FROM pqg_wide ) TO '{outpath}' "
+    sql += "(FORMAT PARQUET, KV_METADATA {"
+    sql += "pqg_version: '0.2.wide', "
+    sql += "pqg_primary_key: 'pid', "
+    sql += f"pqg_node_types: '{json.dumps(NODE_TYPES)}', "
+    sql += f"pqg_edge_fields: '{json.dumps(WIDE_EDGE_FIELDS)}', "
+    sql += f"pqg_literal_fields: '{json.dumps(WIDE_LITERAL_FIELDS)}' "
     sql += '})'
     con.execute(sql)
 

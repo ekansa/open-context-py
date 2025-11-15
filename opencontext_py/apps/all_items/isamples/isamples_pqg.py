@@ -898,3 +898,197 @@ def summarize_pqg(con=DB_CON):
     LIMIT 10
     """
     con.sql(sql).show(max_rows=10)
+
+
+def create_pqg_wide_table(con=DB_CON):
+    """Create the pqg_wide table by transforming edge rows into predicate columns.
+    
+    This function:
+    1. Creates a row_id mapping from old (pqg) to new (pqg_wide) row_ids
+    2. Creates the wide table schema with all entity columns plus predicate columns
+    3. Populates entity data with new row_ids
+    4. Populates predicate columns by joining edge rows and mapping object row_ids
+    """
+    
+    # Step 1: Create row_id mapping for non-edge rows
+    # This maps old row_id (from pqg) to new row_id (for pqg_wide)
+    # Note: row_id should already be unique in pqg, so no need for DISTINCT
+    sql = """
+    CREATE OR REPLACE TABLE row_id_mapping AS
+    SELECT 
+        row_id AS old_row_id,
+        ROW_NUMBER() OVER (ORDER BY row_id) AS new_row_id
+    FROM (
+        SELECT DISTINCT row_id
+        FROM pqg
+        WHERE p IS NULL OR otype != '_edge_'
+    ) AS distinct_rows
+    """
+    con.sql(sql)
+    
+    # Step 2: Get all unique predicates to create columns dynamically
+    sql = """
+    SELECT DISTINCT p AS predicate
+    FROM pqg
+    WHERE p IS NOT NULL
+    ORDER BY p
+    """
+    predicates_result = con.sql(sql).fetchall()
+    predicates = [row[0] for row in predicates_result]
+    
+    # Step 3: Build the CREATE TABLE statement with predicate columns
+    # Start with base schema columns (excluding s, p, o which are edge-specific)
+    base_columns = [
+        'row_id INTEGER PRIMARY KEY',
+        'pid VARCHAR UNIQUE NOT NULL',
+        'tcreated INTEGER',
+        'tmodified INTEGER',
+        'otype VARCHAR',
+        'n VARCHAR',
+        'altids VARCHAR[]',
+        'geometry GEOMETRY',
+        'authorized_by VARCHAR[]',
+        'has_feature_of_interest VARCHAR',
+        'affiliation VARCHAR',
+        'sampling_purpose VARCHAR',
+        'complies_with VARCHAR[]',
+        'project VARCHAR',
+        'alternate_identifiers VARCHAR[]',
+        'relationship VARCHAR',
+        'elevation VARCHAR',
+        'sample_identifier VARCHAR',
+        'dc_rights VARCHAR',
+        'result_time VARCHAR',
+        'contact_information VARCHAR',
+        'latitude DOUBLE',
+        'target VARCHAR',
+        'role VARCHAR',
+        'scheme_uri VARCHAR',
+        'is_part_of VARCHAR[]',
+        'scheme_name VARCHAR',
+        'name VARCHAR',
+        'longitude DOUBLE',
+        'obfuscated BOOLEAN',
+        'curation_location VARCHAR',
+        'last_modified_time VARCHAR',
+        'access_constraints VARCHAR[]',
+        'place_name VARCHAR[]',
+        'description VARCHAR',
+        'label VARCHAR',
+        'thumbnail_url VARCHAR',
+    ]
+    
+    # Add predicate columns
+    predicate_columns = [f'p__{predicate} INTEGER[]' for predicate in predicates]
+    
+    all_columns = base_columns + predicate_columns
+    create_table_sql = f"""
+    CREATE OR REPLACE TABLE pqg_wide (
+        {', '.join(all_columns)}
+    )
+    """
+    con.sql(create_table_sql)
+    
+    # Step 4: Insert entity rows with new row_ids
+    # First, get all columns except s, p, o
+    entity_columns = [
+        'pid', 'tcreated', 'tmodified', 'otype', 'n', 'altids', 'geometry',
+        'authorized_by', 'has_feature_of_interest', 'affiliation', 'sampling_purpose',
+        'complies_with', 'project', 'alternate_identifiers', 'relationship',
+        'elevation', 'sample_identifier', 'dc_rights', 'result_time',
+        'contact_information', 'latitude', 'target', 'role', 'scheme_uri',
+        'is_part_of', 'scheme_name', 'name', 'longitude', 'obfuscated',
+        'curation_location', 'last_modified_time', 'access_constraints',
+        'place_name', 'description', 'label', 'thumbnail_url'
+    ]
+    
+    entity_cols_str = ', '.join(entity_columns)
+    
+    # Step 4: Create predicate mapping tables first (before inserting into pqg_wide)
+    predicate_mapping_tables = {}
+    for predicate in predicates:
+        # Sanitize predicate name for use in table names (replace special chars)
+        safe_predicate_name = predicate.replace('__', '_').replace(' ', '_').replace('-', '_')
+        predicate_col = f'p__{predicate}'
+        temp_table_name = f'predicate_{safe_predicate_name}_mapping'
+        predicate_mapping_tables[predicate] = temp_table_name
+        
+        # Create a mapping of subject new_row_id to object new_row_ids (as array)
+        # We need to unnest the o array, map each element, then reaggregate
+        # Use unnest as a table function in a subquery
+        # GROUP BY should ensure uniqueness, but add extra safety with DISTINCT
+        sql = f"""
+        CREATE OR REPLACE TEMP TABLE {temp_table_name} AS
+        SELECT DISTINCT
+            subject_new_row_id,
+            object_new_row_ids
+        FROM (
+            SELECT 
+                subj_mapping.new_row_id AS subject_new_row_id,
+                array_agg(DISTINCT obj_mapping.new_row_id ORDER BY obj_mapping.new_row_id) AS object_new_row_ids
+            FROM (
+                SELECT DISTINCT
+                    edges.s,
+                    unnest_val.unnest AS obj_old_row_id
+                FROM pqg AS edges
+                CROSS JOIN unnest(edges.o) AS unnest_val
+                WHERE edges.p = '{predicate}'
+                AND edges.o IS NOT NULL
+                AND array_length(edges.o) > 0
+            ) AS unnested_edges
+            INNER JOIN row_id_mapping AS subj_mapping ON unnested_edges.s = subj_mapping.old_row_id
+            INNER JOIN row_id_mapping AS obj_mapping ON unnested_edges.obj_old_row_id = obj_mapping.old_row_id
+            GROUP BY subj_mapping.new_row_id
+        ) AS aggregated
+        """
+        con.sql(sql)
+    
+    # Step 5: Insert all data into pqg_wide with predicate columns populated via LEFT JOINs
+    # Build LEFT JOIN clauses for all predicates
+    predicate_joins = []
+    predicate_selects = []
+    for predicate in predicates:
+        temp_table_name = predicate_mapping_tables[predicate]
+        predicate_col = f'p__{predicate}'
+        predicate_joins.append(f"LEFT JOIN {temp_table_name} AS {temp_table_name}_join ON base.new_row_id = {temp_table_name}_join.subject_new_row_id")
+        predicate_selects.append(f"{temp_table_name}_join.object_new_row_ids AS {predicate_col}")
+    
+    joins_str = '\n        '.join(predicate_joins)
+    predicate_cols_str = ',\n        '.join(predicate_selects) if predicate_selects else ''
+    
+    sql = f"""
+    INSERT INTO pqg_wide (
+        row_id,
+        {entity_cols_str},
+        {', '.join([f'p__{p}' for p in predicates])}
+    )
+    SELECT 
+        base.new_row_id AS row_id,
+        {entity_cols_str},
+        {predicate_cols_str}
+    FROM (
+        SELECT 
+            mapping.new_row_id,
+            {entity_cols_str},
+            ROW_NUMBER() OVER (PARTITION BY mapping.new_row_id ORDER BY pqg.row_id) AS rn
+        FROM pqg
+        INNER JOIN row_id_mapping AS mapping ON pqg.row_id = mapping.old_row_id
+        WHERE pqg.p IS NULL OR pqg.otype != '_edge_'
+    ) AS base
+    {joins_str}
+    WHERE base.rn = 1
+    """
+    con.sql(sql)
+    
+    # Clean up temporary tables
+    for predicate in predicates:
+        safe_predicate_name = predicate.replace('__', '_').replace(' ', '_').replace('-', '_')
+        temp_table_name = f'predicate_{safe_predicate_name}_mapping'
+        sql = f"DROP TABLE IF EXISTS {temp_table_name}"
+        con.sql(sql)
+    
+    # Drop the mapping table
+    sql = "DROP TABLE IF EXISTS row_id_mapping"
+    con.sql(sql)
+    
+    print(f'Created pqg_wide table with {len(predicates)} predicate columns: {predicates}')
