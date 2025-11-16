@@ -43,10 +43,19 @@ isamples_explore.alias_pqg_table_from_parquet_path(
 isamples_explore.alias_pqg_table_from_remote_parquet_url(
     parquet_url='https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet'
 )
+isamples_explore.alias_pqg_table_from_remote_parquet_url(
+    parquet_url='https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg_wide.parquet',
+    table='pqg_wide',
+)
 
 geo_loc_pid = 'geoloc_4449bb33095fcb9ba95430d9f444b983f16db075'
+start_m = time.time()
 db_m = isamples_explore.get_samples_at_geo_cord_location_via_sample_event(geo_loc_pid)
+end_m = time.time()
+start_w = time.time()
 db_w = isamples_explore.get_samples_at_geo_cord_location_via_sample_event_wide(geo_loc_pid)
+end_w = time.time()
+print(f'Query with edges took {(end_m - start_m)}; query with wide schema took {(end_w - start_w)}')
 
 sample_pid = 'ark:/28722/r2p24/pc_19970127'
 db_m = isamples_explore.get_sample_data_via_sample_pid(sample_pid)
