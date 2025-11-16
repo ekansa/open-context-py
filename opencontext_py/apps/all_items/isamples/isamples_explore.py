@@ -478,6 +478,11 @@ def get_sample_data_agents_sample_pid_wide(sample_pid, con=DB_CON, show_max_widt
 def get_sample_types_and_keywords_via_sample_pid_wide(sample_pid, con=DB_CON, show_max_width=SHOW_MAX_WIDTH):
     """Gets types and keywords for a sample identified by a PID (using pqg_wide table)"""
 
+    # NOTE TODO: We should update this to avoid UNIONs. The wide schema hnas the predicates:
+    # 'keywords', 'has_sample_object_type', 'has_material_category' as additional columns
+    # so we can get the same data (but expressed in a different output schema) with just
+    # one query and not 3 queries stuck together with UNIONs.
+
     sql = f"""
     SELECT 
     samp_pqg.row_id,
