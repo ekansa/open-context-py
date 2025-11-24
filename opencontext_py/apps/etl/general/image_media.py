@@ -7,7 +7,7 @@ import rawpy
 from unidecode import unidecode
 
 from PIL import Image, ImageFile, ImageFilter
-
+import imagehash
 
 from django.template.defaultfilters import slugify
 
@@ -23,14 +23,16 @@ importlib.reload(imm)
 
 imm.OK_HUGE_IMAGES = True
 df = imm.inventory_make_oc_files(
-    orig_media_dir_path='/home/ekansa/oc-images/madaba-loci-raw',
-    media_inventory_csv_path='/home/ekansa/oc-images/madaba-loci.csv',
-    oc_media_root_dir='/home/ekansa/oc-images/madaba-loci',
+    orig_media_dir_path='/home/ekansa/oc-data/madaba/field-c-locus-photo-data-raw',
+    media_inventory_csv_path='/home/ekansa/oc-data/madaba/hashes-loci-field-c.csv',
+    oc_media_root_dir='/home/ekansa/oc-data/madaba/field-c-locus-photo-data',
     media_base_url='https://storage.googleapis.com/opencontext-media/umayri-madaba-plains-project',
+    skip_duplicate_hash=True,
 )
 
 """
 
+IMAGE_HASH_SIZE = 36
 OK_HUGE_IMAGES = False
 
 OPENCONTEXT_MEDIA_FULL_DIR = 'full'
@@ -102,10 +104,12 @@ def make_directory_files_df(orig_media_dir_path):
                 # Skip .DS_Store files probably from a MacOS
                 continue
             file_path = os.path.join(dirpath, filename)
+            image_hash = imagehash.phash(Image.open(file_path), hash_size=IMAGE_HASH_SIZE)
             rec = {
                 'path': file_path,
                 'filename': filename,
                 'new_filename': make_oc_filename(filename),
+                'image_hash': image_hash,
             }
             file_data.append(rec)
     df = pd.DataFrame(data=file_data)
@@ -354,6 +358,7 @@ def make_opencontext_file_versions(
     oc_media_root_dir,
     media_base_url='',
     oc_sub_dirs=None,
+    skip_duplicate_hash=False,
 ):
     """Makes different file versions expected by Open Context."""
     if not oc_sub_dirs:
@@ -367,7 +372,14 @@ def make_opencontext_file_versions(
     files_indx = (
         df_media['path'].notnull() & df_media['new_filename'].notnull()
     )
+    finished_image_hashes = []
     for i, row in df_media[files_indx].iterrows():
+        image_hash = row.get('image_hash')
+        if skip_duplicate_hash and image_hash:
+            if image_hash in finished_image_hashes:
+                # we've already copied this
+                continue
+            finished_image_hashes.append(image_hash)
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
             orig_media_dir_path,
             dirs,
@@ -399,6 +411,7 @@ def inventory_make_oc_files(
     media_inventory_csv_path,
     oc_media_root_dir,
     media_base_url='',
+    skip_duplicate_hash=False,
 ):
     """Generates a CSV inventory of media files from a contributor, and makes
     different file versions expected by Open Context.
@@ -421,5 +434,6 @@ def inventory_make_oc_files(
         media_inventory_csv_path=media_inventory_csv_path,
         oc_media_root_dir=oc_media_root_dir,
         media_base_url=media_base_url,
+        skip_duplicate_hash=skip_duplicate_hash,
     )
     return df_media

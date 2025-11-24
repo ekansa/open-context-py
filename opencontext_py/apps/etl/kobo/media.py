@@ -9,7 +9,7 @@ import rawpy
 from unidecode import unidecode
 
 from PIL import Image, ImageFile
-
+import imagehash
 
 from django.template.defaultfilters import slugify
 
