@@ -11,6 +11,7 @@ import uuid as GenUUID
 import numpy as np
 import pandas as pd
 
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Q, OuterRef, Subquery, Count
 
 from opencontext_py.apps.all_items import configs
@@ -20,6 +21,7 @@ from opencontext_py.apps.all_items.models import (
     AllResource,
     AllIdentifier,
     AllSpaceTime,
+    ManifestBestSpacetime,
 )
 from opencontext_py.apps.all_items import hierarchy
 
@@ -42,7 +44,10 @@ import time
 con = facets.DB_CON
 db_m = facets.get_assertion_facet_counts(con=con)
 
-
+start = time.time()
+db_m = facets.get_spacetime_facet_counts(con=con)
+end = time.time()
+print(f'Elapsed: {(end-start)}')
 
 """
 
@@ -127,6 +132,85 @@ def get_assertion_facet_counts(more_where_clauses=None, db_schema=duckdb_con.DUC
     return db_m
 
 
+def make_space_time_facets_query_sql(more_where_clauses=None, db_schema=duckdb_con.DUCKDB_SCHEMA):
+    """Create a Facets SQL query"""
+    
+    where_clauses = []
+    if isinstance(more_where_clauses, list):
+        where_clauses.extend(more_where_clauses)
+
+    # No results for items flagged as 'do not index'
+    no_index_subj_clause = "item_man.meta_json::text NOT LIKE '%\"flag_do_not_index\": true,%'"
+    no_index_proj_clause = "proj_m.meta_json::text NOT LIKE '%\"flag_do_not_index\": true,%'"
+    where_clauses.append(no_index_subj_clause)
+    where_clauses.append(no_index_proj_clause)
+
+    # Exclude results where there's neither a geo or a chrono source
+    no_spacetime_clause = "((spt.geo_source_uuid IS NOT NULL) OR (spt.chrono_source_uuid IS NOT NULL))"
+    where_clauses.append(no_spacetime_clause)
+
+    where_conditions = ' AND '.join(where_clauses)
+
+    sql = f"""
+    SELECT
+
+        spt.geo_spacetime_uuid,
+        geo_man.label AS geo_source_label,
+        spt.geometry_type,
+        spt.latitude,
+        spt.longitude,
+        spt.geo_specificity,
+
+        spt.chrono_spacetime_uuid,
+        chrono_man.label AS chrono_source_label,
+        spt.earliest,
+        spt.latest,
+
+        COUNT(*) AS facet_count
+
+    FROM {db_schema}.oc_all_manifest_cached_spacetime AS spt
+    JOIN {db_schema}.oc_all_manifest AS item_man ON (
+        spt.item_uuid = item_man.uuid
+    )
+    JOIN {db_schema}.oc_all_manifest AS proj_m ON (
+        item_man.project_uuid = proj_m.uuid
+    )
+    LEFT JOIN {db_schema}.oc_all_manifest AS geo_man ON (
+        spt.geo_source_uuid = geo_man.uuid
+    )
+    LEFT JOIN {db_schema}.oc_all_manifest AS chrono_man ON (
+        spt.chrono_source_uuid = chrono_man.uuid
+    )
+    WHERE {where_conditions}
+    GROUP BY
+
+        spt.geo_spacetime_uuid,
+        geo_man.label,
+        spt.geometry_type,
+        spt.latitude,
+        spt.longitude,
+        spt.geo_specificity,
+
+        spt.chrono_spacetime_uuid,
+        chrono_man.label,
+        spt.earliest,
+        spt.latest
+    ORDER BY facet_count DESC
+    """
+
+    return sql
+
+
+def get_spacetime_facet_counts(more_where_clauses=None, db_schema=duckdb_con.DUCKDB_SCHEMA, show_max_width=SHOW_MAX_WIDTH, con=DB_CON):
+    """Get the number of assertions for each unique object UUID. This number is used to
+    limit the insertion of IdentifiedConcepts to the iSamples PQG table so that only those with
+    some frequency are included. 
+    """
+    sql = make_space_time_facets_query_sql(more_where_clauses=more_where_clauses, db_schema=db_schema)
+    db_m = con.sql(sql)
+    db_m.show(max_width=show_max_width)
+    return db_m
+
 
 def get_assertion_facet_counts_via_orm(more_where_clauses=None):
 
@@ -150,7 +234,7 @@ def get_assertion_facet_counts_via_orm(more_where_clauses=None):
         'object__slug',
         'object__label',
     ).annotate(
-        facet_count=Count('uuid', distinct=True)
+        facet_count=Count('subject_id', distinct=True)
     ).order_by(
         'predicate__label',
         '-facet_count',
@@ -162,16 +246,61 @@ def get_assertion_facet_counts_via_orm(more_where_clauses=None):
 
 def get_space_time_facet_counts_via_orm(more_where_clauses=None):
     """Gets space time facet counts"""
-    qs = AllSpaceTime.objects.exclude(
-        item__meta_json__has_key='flag_do_not_index',
-    ).select_related(
+    
+    direct_spacetime_qs = ManifestBestSpacetime.objects.filter(
+        item=OuterRef('subject')
+    ).order_by().values(
         'item'
-    ).values(
-        'item__path',
-        'earliest',
-        'latest',
-        'latitude',
-        'longitude',
+    )[:1]
+
+    indirect_spacetime_qs = ManifestBestSpacetime.objects.filter(
+        item=OuterRef('object')
+    ).exclude(
+        item__meta_json__has_key='flag_do_not_index',
+    ).order_by().values(
+        'item'
+    )[:1]
+
+    qs = AllAssertion.objects.filter(
+        visible=True,
+        predicate__data_type='id',
+        predicate__item_class_id=configs.CLASS_OC_LINKS_UUID,
+        subject__item_type__in=[    
+            'projects',
+            'tables',
+            'subjects',
+            'media',
+            'documents',
+            'persons',
+        ],
+    ).exclude(
+        subject__meta_json__has_key='flag_do_not_index',
     ).annotate(
-        facet_count=Count('item_id', distinct=True)
+        direct_space_time=Subquery(direct_spacetime_qs)
+    ).annotate(
+        indirect_spacetime=Subquery(indirect_spacetime_qs)
+    ).values(
+        'subject_id',
+        'direct_space_time__geo_source_id',
+        'direct_space_time__geometry_type',
+        'direct_space_time__latitude',
+        'direct_space_time__longitude',
+        'direct_space_time__geo_specificity',
+        'direct_space_time__chrono_source_id',
+        'direct_space_time__earliest',
+        'direct_space_time__latest',
+        'indirect_space_time__geo_source_id',
+        'indirect_space_time__geometry_type',
+        'indirect_space_time__latitude',
+        'indirect_space_time__longitude',
+        'indirect_space_time__geo_specificity',
+        'indirect_space_time__chrono_source_id',
+        'indirect_space_time__earliest',
+        'indirect_space_time__latest',
+    ).annotate(
+        facet_count=Count('subject_id', distinct=True)
+    ).order_by(
+        '-facet_count',
     )
+    df =  pd.DataFrame.from_records(qs)
+    return df

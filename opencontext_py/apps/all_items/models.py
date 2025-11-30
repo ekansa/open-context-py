@@ -1836,3 +1836,82 @@ class AllIdentifier(models.Model):
         )
         ordering = ["item", "rank", "scheme",]
         default_related_name = 'identifiers'
+
+
+class ManifestBestSpacetime(models.Model):
+    """Model mapped to the oc_all_manifest_best_spacetime view.
+    
+    NOTE: This only works with items that have geospatial or
+    chronological information directly associated with a given item
+    or an item's context. This means "subjects" and "projects" item_types
+    are more likely to have geospatial data accessible in this way.
+
+    For other item types (esp. "media" and "documents"), one will first
+    need to look up a related "subject" item from the AllAssertion model,
+    and use that to look up the best space time objects.
+    
+    """
+
+    item = models.OneToOneField(
+        AllManifest,
+        db_column='item_uuid',
+        primary_key=True,
+        on_delete=models.DO_NOTHING,
+        related_name='best_spacetime',
+    )
+    # geo_source_uuid = models.UUIDField(null=True)
+    geo_source = models.ForeignKey(
+        AllManifest,
+        db_column='geo_source_uuid',
+        related_name='manifest_geo_source',
+        on_delete=models.DO_NOTHING,
+        null=True,
+    )
+    # geo_spacetime_uuid = models.UUIDField(null=True)
+    geo_spacetime = models.ForeignKey(
+        AllSpaceTime,
+        db_column='geo_spacetime_uuid',
+        related_name='spacetime_geo',
+        on_delete=models.DO_NOTHING,
+        null=True,
+    )
+    geo_depth = models.IntegerField(null=True)
+    geometry_type = models.TextField(null=True)
+    geometry = JSONField(null=True)
+    latitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
+    longitude = models.DecimalField(max_digits=24, decimal_places=21, null=True)
+    geo_specificity = models.IntegerField(null=True)
+
+    # chrono_source_uuid = models.UUIDField(null=True)
+    chrono_source = models.ForeignKey(
+        AllManifest,
+        db_column='chrono_source_uuid',
+        related_name='manifest_chrono_source',
+        on_delete=models.DO_NOTHING,
+        null=True,
+    )
+    # chrono_spacetime_uuid = models.UUIDField(null=True)
+    chrono_spacetime = models.ForeignKey(
+        AllSpaceTime,
+        db_column='chrono_spacetime_uuid',
+        related_name='spacetime_chrono',
+        on_delete=models.DO_NOTHING,
+        null=True,
+    )
+    chrono_depth = models.IntegerField(null=True)
+    earliest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    start = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    stop = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    latest = models.DecimalField(max_digits=19, decimal_places=5, null=True)
+    reference_type = models.TextField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'oc_all_manifest_cached_spacetime'
+
+    def __str__(self):
+        return (
+            f'Best spacetime for {self.item_id} '
+            f'(lat: {self.latitude}, lon: {self.longitude}); '
+            f'{self.earliest} to {self.latest}'
+        )
