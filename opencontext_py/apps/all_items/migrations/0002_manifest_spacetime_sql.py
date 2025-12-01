@@ -240,93 +240,92 @@ SQL_DROP_VIEW = "DROP VIEW IF EXISTS oc_all_manifest_best_spacetime;"
 
 
 SQL_CREATE_MATERIALIZED_VIEW = """
+
 CREATE MATERIALIZED VIEW oc_all_manifest_cached_spacetime AS
 
-SELECT DISTINCT ON (spt.item_uuid)
-    spt.item_uuid AS item_uuid,
-    spt.geo_source_uuid,
-    spt.geo_spacetime_uuid,
-    spt.geo_depth,
-    spt.geometry_type,
-    spt.geometry,
-    spt.latitude,
-    spt.longitude,
-    spt.geo_specificity,
-    spt.chrono_source_uuid,
-    spt.chrono_spacetime_uuid,
-    spt.chrono_depth,
-    spt.earliest,
-    spt.start,
-    spt.stop,
-    spt.latest,
-    'direct' AS reference_type
-FROM oc_all_manifest_best_spacetime AS spt
-WHERE (
-    spt.geo_source_uuid IS NOT NULL
-    OR
-    spt.chrono_source_uuid IS NOT NULL
-)
-ORDER BY 
-    spt.item_uuid, 
-    spt.geo_source_uuid DESC NULLS LAST, 
-    spt.chrono_source_uuid DESC NULLS LAST
+-- FIRST BRANCH
+SELECT *
+FROM (
+    SELECT DISTINCT ON (spt.item_uuid)
+        spt.item_uuid,
+        spt.geo_source_uuid,
+        spt.geo_spacetime_uuid,
+        spt.geo_depth,
+        spt.geometry_type,
+        spt.geometry,
+        spt.latitude,
+        spt.longitude,
+        spt.geo_specificity,
+        spt.chrono_source_uuid,
+        spt.chrono_spacetime_uuid,
+        spt.chrono_depth,
+        spt.earliest,
+        spt.start,
+        spt.stop,
+        spt.latest,
+        'direct' AS reference_type
+    FROM oc_all_manifest_best_spacetime AS spt
+    WHERE (
+        spt.geo_source_uuid IS NOT NULL
+        OR
+        spt.chrono_source_uuid IS NOT NULL
+    )
+    ORDER BY
+        spt.item_uuid,
+        spt.geo_source_uuid DESC NULLS LAST,
+        spt.chrono_source_uuid DESC NULLS LAST
+) direct
 
 UNION
 
-SELECT DISTINCT ON (spt.item_uuid)
-    spt.item_uuid AS item_uuid,
-    spt.geo_source_uuid,
-    spt.geo_spacetime_uuid,
-    spt.geo_depth,
-    spt.geometry_type,
-    spt.geometry,
-    spt.latitude,
-    spt.longitude,
-    spt.geo_specificity,
-    spt.chrono_source_uuid,
-    spt.chrono_spacetime_uuid,
-    spt.chrono_depth,
-    spt.earliest,
-    spt.start,
-    spt.stop,
-    spt.latest,
-    'indirect' AS reference_type
-FROM oc_all_manifest AS man
-JOIN oc_all_manifest_best_spacetime AS spt_null ON (
-    man.uuid = spt_null.item_uuid
-)
-JOIN LATERAL (
-    SELECT ass.object_uuid
-    FROM oc_all_assertions AS ass
-    JOIN oc_all_manifest AS obj_man ON (
-        ass.object_uuid = obj_man.uuid
-    )
-    WHERE man.uuid = ass.subject_uuid
-    AND
-    obj_man.item_type = 'subjects'
-    ORDER BY ass.obs_sort, ass.sort, obj_man.sort
-    LIMIT 1
-) ass ON TRUE
-JOIN oc_all_manifest_best_spacetime AS spt ON (
-    ass.object_uuid = spt.item_uuid
-)
-WHERE man.item_type IN ('media', 'documents', 'tables', 'projects')
-AND 
-(
-    spt_null.geo_source_uuid IS NULL
-    AND
-    spt_null.chrono_source_uuid IS NULL
-)
-AND 
-(
-    spt.geo_source_uuid IS NOT NULL
-    OR
-    spt.chrono_source_uuid IS NOT NULL
-)
-ORDER BY 
-    spt.item_uuid, 
-    spt.geo_source_uuid DESC NULLS LAST, 
-    spt.chrono_source_uuid DESC NULLS LAST
+-- SECOND BRANCH
+SELECT *
+FROM (
+    SELECT DISTINCT ON (spt.item_uuid)
+        spt.item_uuid,
+        spt.geo_source_uuid,
+        spt.geo_spacetime_uuid,
+        spt.geo_depth,
+        spt.geometry_type,
+        spt.geometry,
+        spt.latitude,
+        spt.longitude,
+        spt.geo_specificity,
+        spt.chrono_source_uuid,
+        spt.chrono_spacetime_uuid,
+        spt.chrono_depth,
+        spt.earliest,
+        spt.start,
+        spt.stop,
+        spt.latest,
+        'indirect' AS reference_type
+    FROM oc_all_manifest AS man
+    JOIN oc_all_manifest_best_spacetime AS spt_null 
+        ON man.uuid = spt_null.item_uuid
+    JOIN LATERAL (
+        SELECT ass.object_uuid
+        FROM oc_all_assertions AS ass
+        JOIN oc_all_manifest AS obj_man ON ass.object_uuid = obj_man.uuid
+        WHERE man.uuid = ass.subject_uuid
+          AND obj_man.item_type = 'subjects'
+        ORDER BY ass.obs_sort, ass.sort, obj_man.sort
+        LIMIT 1
+    ) ass ON TRUE
+    JOIN oc_all_manifest_best_spacetime AS spt 
+        ON ass.object_uuid = spt.item_uuid
+    WHERE man.item_type IN ('media', 'documents', 'tables', 'projects')
+      AND spt_null.geo_source_uuid IS NULL
+      AND spt_null.chrono_source_uuid IS NULL
+      AND (
+          spt.geo_source_uuid IS NOT NULL
+          OR
+          spt.chrono_source_uuid IS NOT NULL
+      )
+    ORDER BY
+        spt.item_uuid,
+        spt.geo_source_uuid DESC NULLS LAST,
+        spt.chrono_source_uuid DESC NULLS LAST
+) indirect
 ;
 
 
@@ -351,10 +350,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(SQL_CREATE_CONTEXT_FUNCTION, SQL_DROP_CONTEXT_FUNCTION),
+        # migrations.RunSQL(SQL_CREATE_CONTEXT_FUNCTION, SQL_DROP_CONTEXT_FUNCTION),
         # migrations.RunSQL(SQL_CREATE_BEST_GEO_FUNCTION, SQL_DROP_BEST_GEO_FUNCTION),
         # migrations.RunSQL(SQL_CREATE_BEST_CHRONO_FUNCTION, SQL_DROP_BEST_CHRONO_FUNCTION),
         # migrations.RunSQL(SQL_CREATE_VIEW, SQL_DROP_VIEW),
-        # migrations.RunSQL(SQL_CREATE_MATERIALIZED_VIEW, SQL_DROP_MATERIALIZED_VIEW ),
+        migrations.RunSQL(SQL_CREATE_MATERIALIZED_VIEW, SQL_DROP_MATERIALIZED_VIEW ),
     ]
 
