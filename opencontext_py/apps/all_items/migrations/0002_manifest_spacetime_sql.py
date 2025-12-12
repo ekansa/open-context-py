@@ -281,8 +281,8 @@ UNION
 -- SECOND BRANCH
 SELECT *
 FROM (
-    SELECT DISTINCT ON (spt.item_uuid)
-        spt.item_uuid,
+    SELECT DISTINCT ON (man.uuid)
+        man.uuid AS item_uuid,
         spt.geo_source_uuid,
         spt.geo_spacetime_uuid,
         spt.geo_depth,
@@ -322,14 +322,14 @@ FROM (
           spt.chrono_source_uuid IS NOT NULL
       )
     ORDER BY
-        spt.item_uuid,
+        man.uuid,
         spt.geo_source_uuid DESC NULLS LAST,
         spt.chrono_source_uuid DESC NULLS LAST
 ) indirect
 ;
 
 
-CREATE INDEX oc_all_manifest_cached_spacetime_item
+CREATE UNIQUE INDEX oc_all_manifest_cached_spacetime_item
   ON oc_all_manifest_cached_spacetime (item_uuid);
 
 CREATE INDEX oc_all_manifest_cached_spacetime_geo_source_spt

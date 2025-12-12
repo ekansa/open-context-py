@@ -21,7 +21,7 @@ from opencontext_py.apps.all_items.models import (
     AllResource,
     AllIdentifier,
     AllSpaceTime,
-    ManifestBestSpacetime,
+    ManifestCachedSpacetime,
 )
 from opencontext_py.apps.all_items import hierarchy
 
@@ -46,6 +46,16 @@ db_m = facets.get_assertion_facet_counts(con=con)
 
 start = time.time()
 db_m = facets.get_spacetime_facet_counts(con=con)
+end = time.time()
+print(f'Elapsed: {(end-start)}')
+
+start = time.time()
+df = facets.get_space_time_facet_counts_via_orm()
+end = time.time()
+print(f'Elapsed: {(end-start)}')
+
+start = time.time()
+df = facets.get_assertion_facet_counts_via_orm()
 end = time.time()
 print(f'Elapsed: {(end-start)}')
 
@@ -247,58 +257,28 @@ def get_assertion_facet_counts_via_orm(more_where_clauses=None):
 def get_space_time_facet_counts_via_orm(more_where_clauses=None):
     """Gets space time facet counts"""
     
-    direct_spacetime_qs = ManifestBestSpacetime.objects.filter(
-        item=OuterRef('subject')
-    ).order_by().values(
-        'item'
-    )[:1]
-
-    indirect_spacetime_qs = ManifestBestSpacetime.objects.filter(
-        item=OuterRef('object')
+    qs = ManifestCachedSpacetime.objects.filter(
     ).exclude(
         item__meta_json__has_key='flag_do_not_index',
-    ).order_by().values(
-        'item'
-    )[:1]
-
-    qs = AllAssertion.objects.filter(
-        visible=True,
-        predicate__data_type='id',
-        predicate__item_class_id=configs.CLASS_OC_LINKS_UUID,
-        subject__item_type__in=[    
-            'projects',
-            'tables',
-            'subjects',
-            'media',
-            'documents',
-            'persons',
-        ],
     ).exclude(
-        subject__meta_json__has_key='flag_do_not_index',
-    ).annotate(
-        direct_space_time=Subquery(direct_spacetime_qs)
-    ).annotate(
-        indirect_spacetime=Subquery(indirect_spacetime_qs)
+        item__project__meta_json__has_key='flag_do_not_index',
+    ).select_related(
+        'item'
+    ).select_related(
+        'item__project'
     ).values(
-        'subject_id',
-        'direct_space_time__geo_source_id',
-        'direct_space_time__geometry_type',
-        'direct_space_time__latitude',
-        'direct_space_time__longitude',
-        'direct_space_time__geo_specificity',
-        'direct_space_time__chrono_source_id',
-        'direct_space_time__earliest',
-        'direct_space_time__latest',
-        'indirect_space_time__geo_source_id',
-        'indirect_space_time__geometry_type',
-        'indirect_space_time__latitude',
-        'indirect_space_time__longitude',
-        'indirect_space_time__geo_specificity',
-        'indirect_space_time__chrono_source_id',
-        'indirect_space_time__earliest',
-        'indirect_space_time__latest',
+        # 'item_id',
+        'geo_spacetime_id',
+        'geometry_type',
+        'latitude',
+        'longitude',
+        'geo_specificity',
+        'chrono_spacetime_id',
+        'earliest',
+        'latest',
+        'reference_type',
     ).annotate(
-        facet_count=Count('subject_id', distinct=True)
+        facet_count=Count('item_id', distinct=True)
     ).order_by(
         '-facet_count',
     )

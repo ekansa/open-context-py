@@ -1838,7 +1838,7 @@ class AllIdentifier(models.Model):
         default_related_name = 'identifiers'
 
 
-class ManifestBestSpacetime(models.Model):
+class ManifestCachedSpacetime(models.Model):
     """Model mapped to the oc_all_manifest_best_spacetime view.
     
     NOTE: This only works with items that have geospatial or
@@ -1914,4 +1914,13 @@ class ManifestBestSpacetime(models.Model):
             f'Best spacetime for {self.item_id} '
             f'(lat: {self.latitude}, lon: {self.longitude}); '
             f'{self.earliest} to {self.latest}'
+        )
+
+
+def refresh_cached_spacetime_view():
+    """Refresh the materialized view for cached spacetime data"""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "REFRESH MATERIALIZED VIEW CONCURRENTLY oc_all_manifest_cached_spacetime;"
         )
