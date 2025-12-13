@@ -117,6 +117,7 @@ NOTE: Templates and view components to edit assertions made on an item
             :key="'lookup' + assert.uuid"
             v-bind:project_id="ITEM_PROJECT_UUIDS"
             v-bind:item_type="OC_PRED_LINK_OK_ITEM_TYPES"
+            v-bind:show_id_search_box="true"
             v-bind:show_label_search_box="true"
             @set_selected_item="set_selected_obj_item($event)"
           ></lookup-list>

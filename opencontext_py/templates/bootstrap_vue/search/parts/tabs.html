@@ -168,7 +168,18 @@
           :active="(result_count > 0) && (selected_tab == 3)"
           >
           <template #title>
-            <b-icon-table></b-icon-table> Item Records
+            <span ref="item-records-tab-title">
+              <b-icon-table></b-icon-table> Item Records
+            </span>
+            <b-tooltip
+              :target="getItemRecordsTabTarget"
+              :show="show_item_records_tooltip"
+              placement="bottom"
+              triggers="hover"
+              :fade="true"
+            >
+              Individual search results here
+            </b-tooltip>
           </template>
 
           <b-card-text v-if="(result_count > 0) && (selected_tab == 3)">
@@ -237,10 +248,27 @@ var vc_all_search_tabs = Vue.component(
           map_tab: 0,
           human_remains_ok: HUMAN_REMAINS_OK,
           geojson_record_layers: null,
+          show_item_records_tooltip: false,
+          tooltip_timeout: null,
         };
       },
       mounted(){
         this.activate_tab_from_frontend_state_obj();
+      },
+      beforeDestroy() {
+        // Clean up timeout when component is destroyed
+        if (this.tooltip_timeout) {
+          clearTimeout(this.tooltip_timeout);
+          this.tooltip_timeout = null;
+        }
+      },
+      watch: {
+        result_count: function(newVal, oldVal) {
+          // Show tooltip when results are updated and count > 1
+          if (newVal && newVal > 1 && newVal !== oldVal && oldVal !== undefined) {
+            this.show_item_records_tooltip_with_auto_hide();
+          }
+        },
       },
       computed: {
         map_time_id: function () {
@@ -465,6 +493,27 @@ var vc_all_search_tabs = Vue.component(
             // console.log(frontend_state_obj);
             this.$emit('set_frontend_state_obj', frontend_state_obj);
           }
+        },
+        getItemRecordsTabTarget: function() {
+          return this.$refs['item-records-tab-title'];
+        },
+        show_item_records_tooltip_with_auto_hide: function() {
+          // Clear any existing timeout
+          if (this.tooltip_timeout) {
+            clearTimeout(this.tooltip_timeout);
+          }
+          
+          // Use nextTick to ensure DOM is ready
+          this.$nextTick(() => {
+            // Show the tooltip
+            this.show_item_records_tooltip = true;
+            
+            // Auto-hide after 5 seconds with fade
+            this.tooltip_timeout = setTimeout(() => {
+              this.show_item_records_tooltip = false;
+              this.tooltip_timeout = null;
+            }, 5000);
+          });
         },
       },
       components: {

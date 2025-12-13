@@ -25,6 +25,8 @@ def create_duck_db_postgres_connection(pg_connection_name=DUCKDB_PG_OC):
     con.execute("LOAD postgres;")
     con.execute("INSTALL spatial;")
     con.execute("LOAD spatial;")
+    con.execute("INSTALL httpfs;")
+    con.execute("LOAD httpfs;")
     con.execute(f"ATTACH '{pg_conn_str}' AS {DUCKDB_PG_OC} (TYPE POSTGRES);")
     return con
 

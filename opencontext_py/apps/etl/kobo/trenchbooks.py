@@ -230,9 +230,12 @@ def make_tb_main_links_df(df_sub):
     )
     df_links.append(df_tb_m)
 
+    year_main_trenchbooks = pc_configs.MAIN_TRENCH_BOOKS.get(pc_configs.DEFAULT_IMPORT_YEAR, {})
     # Now link the various trench entries with their associate main trench books.
     for trench_id in trench_id_list:
-        tb_label, tb_uuid = pc_configs.MAIN_TRENCH_BOOKS.get(trench_id, (None, None))
+        tb_label, tb_uuid = year_main_trenchbooks.get(trench_id, (None, None))
+        if not tb_label:
+            tb_label, tb_uuid = year_main_trenchbooks.get(trench_id.replace('_', ' '), (None, None))
         if not tb_label:
             print(f'Cannot find main trenchbook entry related to {trench_id}')
             continue
