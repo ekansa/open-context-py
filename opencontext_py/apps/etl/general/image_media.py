@@ -23,9 +23,9 @@ importlib.reload(imm)
 
 imm.OK_HUGE_IMAGES = True
 df = imm.inventory_make_oc_files(
-    orig_media_dir_path='/home/ekansa/oc-data/madaba/field-c-locus-photo-data-raw',
-    media_inventory_csv_path='/home/ekansa/oc-data/madaba/hashes-loci-field-c.csv',
-    oc_media_root_dir='/home/ekansa/oc-data/madaba/field-c-locus-photo-data',
+    orig_media_dir_path='/home/ekansa/oc-data/madaba/field-d-e-f-locus-raw',
+    media_inventory_csv_path='/home/ekansa/oc-data/madaba/hashes-loci-field-d-e-f.csv',
+    oc_media_root_dir='/home/ekansa/oc-data/madaba/field-d-e-f-locus',
     media_base_url='https://storage.googleapis.com/opencontext-media/umayri-madaba-plains-project',
     skip_duplicate_hash=True,
 )

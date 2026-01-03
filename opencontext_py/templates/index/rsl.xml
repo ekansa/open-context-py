@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rsl xmlns="https://rslstandard.org/rsl">
+  <content url="/">
+    <license>
+      <permits type="usage">ai-all</permits>
+      <permits type="usage">search</permits>
+      <payment type="contribution">
+        <custom>https://alexandriaarchive.org/donate/</custom>
+      </payment>
+      <payment type="attribution">
+        <standard>https://creativecommons.org/licenses/by/4.0/</standard>
+      </payment>
+      <legal type="attestation">true</legal>
+      <legal type="disclaimer">as-is no-liability no-warranty no-indemnity</legal>
+      <legal type="contact">mailto:sarah@opencontext.org?subject=Open+Context+RSL</legal>
+      <copyright type="organization" contactUrl="https://opencontext.org/about/" contactEmail="sarah@opencontext.org">Open Context Contributors</copyright>
+      <terms>https://opencontext.org/about/terms</terms>
+    </license>
+  </content>
+</rsl>
+

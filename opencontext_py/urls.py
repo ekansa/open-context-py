@@ -464,6 +464,8 @@ urlpatterns = [
     re_path(r'^robots.txt', HomeViews.robots, name='home_robots'),
     # robots.text route
     re_path(r'^4db754ce144f4ae0b8bbd0fac5e39b3c.txt', HomeViews.bing_index_now, name='bing_index_now'),
+    # RSL (Really Simple Licensing) license document
+    re_path(r'^rsl\.xml$', HomeViews.rsl_license, name='rsl_license'),
 
     # Index, home-page route
     re_path(r'^$', HomeViews.index, name='home_index'),

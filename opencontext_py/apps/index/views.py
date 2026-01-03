@@ -62,3 +62,16 @@ def bing_index_now(request):
     return HttpResponse(template.render(context, request),
                         content_type="text/plain; charset=utf8")
 
+def rsl_license(request):
+    """ view for the RSL (Really Simple Licensing) XML document """
+    template = loader.get_template('index/rsl.xml')
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    context = {
+        'BASE_URL': base_url,
+    }
+    return HttpResponse(
+        template.render(context, request),
+        content_type="application/rsl+xml; charset=utf8"
+    )
+
