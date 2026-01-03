@@ -1,4 +1,5 @@
 ﻿Sitemap: https://opencontext.org/sitemap.xml
+License: https://opencontext.org/rsl.xml
 
 User-agent: Googlebot
 Disallow: /*?prop=*
