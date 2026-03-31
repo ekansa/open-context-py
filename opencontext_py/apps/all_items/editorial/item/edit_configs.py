@@ -705,8 +705,10 @@ MANIFEST_ADD_EDIT_CONFIGS = [
                 ],
                 'data_type': 'id',
                 'data_type_options': None,
-                'item_class_id': configs.DEFAULT_CLASS_UUID,
-                'item_class_lookup': None,
+                'item_class_id': configs.CLASS_OC_DATA_PUB_UUID,
+                'item_class_lookup': {
+                    'root_item_id': 'projects',
+                },
                 'context_id': None,
                 'context_lookup': None,
                 'pref_editing_project_id': False,

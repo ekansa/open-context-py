@@ -16,6 +16,7 @@ OC_RAW_TABLES = [
     ('oc_all_resources'),
     ('oc_all_identifiers'),
     ('oc_all_spacetime'),
+    ('oc_all_manifest_cached_spacetime'),
 ]
 
 DB_CON = duckdb_con.create_duck_db_postgres_connection()
@@ -210,6 +211,7 @@ def dump_oc_raw_tables_to_parquet(output_dir_path, con=DB_CON, db_schema=duckdb_
     - oc_all_resources
     - oc_all_identifiers
     - oc_all_spacetime
+    - oc_all_manifest_cached_spacetime
     """
     for table_name in OC_RAW_TABLES:
         filepath = os.path.join(output_dir_path, f"{table_name}.parquet")
