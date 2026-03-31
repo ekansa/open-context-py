@@ -15,7 +15,7 @@ from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllIdentifier,
 )
-from opencontext_py.apps.all_items.representations import item
+
 
 """
 Test:
