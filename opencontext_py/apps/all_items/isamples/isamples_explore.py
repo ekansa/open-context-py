@@ -66,6 +66,8 @@ db_w = isamples_explore.get_sample_data_via_sample_pid_wide(sample_pid)
 db_w = isamples_explore.get_sample_types_and_keywords_via_sample_pid_wide(sample_pid)
 db_w = isamples_explore.get_sample_data_agents_sample_pid_wide(sample_pid)
 
+keyword_pid = 'https://purl.obolibrary.org/obo/UBERON_0000979'
+db_w = isamples_explore.get_counts_by_keyword_uri_wide(keyword_pid)
 
 """
 
@@ -602,6 +604,37 @@ def get_samples_at_geo_cord_location_via_sample_event_wide(geo_loc_pid, con=DB_C
     ORDER BY has_thumbnail DESC
     """
 
+    db_m = con.sql(sql)
+    db_m.show(max_width=show_max_width)
+    return db_m
+
+
+def get_counts_by_keyword_uri_wide(
+    keyword_pid,
+    con=DB_CON, 
+    show_max_width=SHOW_MAX_WIDTH,
+):
+    sql = f"""
+
+    SELECT 
+    COUNT(samp_pqg.pid) AS sample_count,
+    kw_pqg.pid AS keyword_pid,
+    kw_pqg.label AS keyword
+
+    FROM pqg_wide AS samp_pqg
+    JOIN unnest(samp_pqg.p__keywords) AS unnest_val(row_id) ON TRUE
+    JOIN pqg_wide AS kw_pqg ON (
+        kw_pqg.row_id = unnest_val.row_id
+        AND
+        kw_pqg.otype = 'IdentifiedConcept'
+    )
+      
+    WHERE samp_pqg.otype = 'MaterialSampleRecord'
+    AND kw_pqg.pid = '{keyword_pid}'
+    GROUP BY kw_pqg.pid, kw_pqg.label
+    
+    ;
+    """
     db_m = con.sql(sql)
     db_m.show(max_width=show_max_width)
     return db_m
