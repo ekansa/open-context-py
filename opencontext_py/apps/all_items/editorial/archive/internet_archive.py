@@ -28,9 +28,10 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items.editorial.archive import internet_archive as ia
 importlib.reload(ia)
 
-uuid = 'ee1ad885-6e18-436b-bab0-8a0f91e722c3'
+uuid = 'cf7c2a35-97dd-44bb-9489-d161496cfbfc'
 meta = ia.make_ia_metadata_dict(uuid)
 
+cache_dir = '/home/ekansa/oc-data/oc-ia-cache'
 
 """
 
@@ -255,7 +256,7 @@ def get_or_create_ia_resource_objs(man_obj, file_uri, ia_metadata, item_id, ia_f
     media_file_dict = {
         'item': man_obj,
         'project': man_obj.project,
-        'resourcetype_id': configs.OC_RESOURCE_IA_FULLFILE_UUID,
+        'resourcetype_id': configs.OC_RESOURCE_IIIF_UUID,
         'source_id': SOURCE_ID,
         'uri': ia_iiif_uri,
         'filesize': 1,
@@ -265,7 +266,7 @@ def get_or_create_ia_resource_objs(man_obj, file_uri, ia_metadata, item_id, ia_f
     ia_iiif_res_obj, _ = AllResource.objects.get_or_create(
         uuid=AllResource().primary_key_create(
             item_id=man_obj.uuid,
-            resourcetype_id=configs.OC_RESOURCE_IA_FULLFILE_UUID,
+            resourcetype_id=configs.OC_RESOURCE_IIIF_UUID,
             rank=ia_iiif_rank,
         ),
         defaults=media_file_dict,
@@ -312,19 +313,31 @@ def ia_archive_media_obj(
     item_id = IA_ID_PREFIX + '-' + man_obj.slug
     ia_item = get_item(item_id, archive_session=ia_session, debug=True)
     upload_ok = None
-    try:
-        r = item.upload_file(
-            cache_file_path,
-            key=ia_filename,
-            metadata=ia_metadata
-        )
-        if r.status_code == requests.codes.ok:
-            upload_ok = True
-        else:
-            print(f'Bad status: {str(r.status_code)} for {cache_file_path}')
+    if False:
+        try:
+            r = ia_item.upload_file(
+                cache_file_path,
+                key=ia_filename,
+                metadata=ia_metadata
+            )
+            if r.status_code == requests.codes.ok:
+                upload_ok = True
+            else:
+                print(f'Bad status: {str(r.status_code)} for {cache_file_path}')
+                upload_ok = False
+        except:
+            print(f'Problem uploading: {cache_file_path}')
+            print(f'Status code: {r.status_code}')
             upload_ok = False
-    except:
-        print(f'Problem uploading: {cache_file_path}')
+    r = ia_item.upload_file(
+        cache_file_path,
+        key=ia_filename,
+        metadata=ia_metadata
+    )
+    if r.status_code == requests.codes.ok:
+        upload_ok = True
+    else:
+        print(f'Bad status: {str(r.status_code)} for {cache_file_path}')
         upload_ok = False
     if not upload_ok:
         return None, None

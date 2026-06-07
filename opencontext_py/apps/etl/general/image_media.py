@@ -1,4 +1,7 @@
 import copy
+import fitz
+import hashlib
+
 import os
 import shutil
 import numpy as np
@@ -23,9 +26,9 @@ importlib.reload(imm)
 
 imm.OK_HUGE_IMAGES = True
 df = imm.inventory_make_oc_files(
-    orig_media_dir_path='/home/ekansa/oc-data/madaba/field-d-e-f-locus-raw',
-    media_inventory_csv_path='/home/ekansa/oc-data/madaba/hashes-loci-field-d-e-f.csv',
-    oc_media_root_dir='/home/ekansa/oc-data/madaba/field-d-e-f-locus',
+    orig_media_dir_path='/home/ekansa/oc-data/madaba/field-k-photosheets-field-photos-raw',
+    media_inventory_csv_path='/home/ekansa/oc-data/madaba/hashes-field-k-files.csv',
+    oc_media_root_dir='/home/ekansa/oc-data/madaba/field-k-photosheets-field-photos',
     media_base_url='https://storage.googleapis.com/opencontext-media/umayri-madaba-plains-project',
     skip_duplicate_hash=True,
 )
@@ -72,6 +75,48 @@ MAX_THUMBNAIL_WIDTH = 150
 GAUSSIAN_BLUR_RADIUS = 2
 
 
+def check_source_file_pdf(src_file):
+    if src_file.endswith('.pdf'):
+        return True
+    if src_file.endswith('.PDF'):
+        return True
+    return False
+
+
+def hash_file(filepath, algorithm='sha256'):
+    """Hashes file contents, name agnostic"""
+    h = hashlib.new(algorithm)
+    with open(filepath, 'rb') as f:
+        for chunk in iter(lambda: f.read(8192), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def make_image_hash_from_pdf_file_or_file_hash(src_file):
+    """Make an image hash from a PRF file, if this doesn't work default to a file hash"""
+    output = None
+    if not check_source_file_pdf(src_file):
+        return hash_file(src_file)
+    doc = None
+    try:
+        doc = fitz.open(src_file)
+    except:
+        doc = None
+    if not doc:
+        return hash_file(src_file)
+    try:
+        page = doc.load_page(0)
+        pix = page.get_pixmap()
+        image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        hash = imagehash.phash(image, hash_size=IMAGE_HASH_SIZE)
+    except:
+        hash = None
+    if not hash:
+        hash = hash_file(src_file)
+    return hash
+
+
+
 def make_oc_filename(filename, replace_all_dots=False):
     """Makes an Open Context filename to be URL friendly."""
     filename = filename.lower()
@@ -104,7 +149,13 @@ def make_directory_files_df(orig_media_dir_path):
                 # Skip .DS_Store files probably from a MacOS
                 continue
             file_path = os.path.join(dirpath, filename)
-            image_hash = imagehash.phash(Image.open(file_path), hash_size=IMAGE_HASH_SIZE)
+            image_hash = None
+            try:
+                image_hash = imagehash.phash(Image.open(file_path), hash_size=IMAGE_HASH_SIZE)
+            except:
+                image_hash = None
+            if not image_hash:
+                image_hash = make_image_hash_from_pdf_file_or_file_hash(file_path)
             rec = {
                 'path': file_path,
                 'filename': filename,
@@ -281,6 +332,38 @@ def make_oc_media_path_in_sub_dirs(orig_media_dir_path, src_file, oc_dir, new_fi
     return os.path.join(oc_dir, new_file_name)
 
 
+def make_thumbnail_from_pdf_file(src_file, thumb_file, new_width=MAX_THUMBNAIL_WIDTH):
+    """Make a thumbnail from a PDF file"""
+    output = None
+    if not check_source_file_pdf(src_file):
+        return None
+    doc = None
+    try:
+        doc = fitz.open(src_file)
+    except:
+        doc = None
+    if not doc:
+        return None
+    page = doc.load_page(0)
+    pix = page.get_pixmap()
+    ratio = 1  # default to same size
+    if pix.width > new_width:
+        ratio = pix.width / new_width
+    else:
+        new_width = pix.width
+    new_height = int(round((pix.height * ratio), 0))
+    size = (new_width, new_height)
+    image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    image.thumbnail(size, Image.LANCZOS)
+    try:
+        image.save(thumb_file, "JPEG", quality=100)
+        output = thumb_file
+        ok = True
+    except:
+        ok = False
+    return output
+
+
 def make_image_versions_src_and_new_file(
     orig_media_dir_path,
     dirs,
@@ -332,6 +415,11 @@ def make_image_versions_src_and_new_file(
         )
         if act_file and not thumb_file:
             thumb_file = act_file
+        if (over_write or not os.path.exists(thumb_file)) and check_source_file_pdf(src_file):
+            thumb_file = replace_extension(thumb_file, new_extension='jpg')
+            thumb_file = make_thumbnail_from_pdf_file(src_file, thumb_file, new_width=thumbnail_width)
+            if thumb_file:
+                print(f'Made thumbnail from PDF: {thumb_file}')
         if over_write or not os.path.exists(thumb_file):
             thumb_file = make_new_size_file(src_file, thumb_file, new_width=thumbnail_width)
             print(f'Made thumbnail {thumb_file}')
