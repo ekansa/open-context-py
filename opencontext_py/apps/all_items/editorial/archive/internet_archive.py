@@ -313,31 +313,19 @@ def ia_archive_media_obj(
     item_id = IA_ID_PREFIX + '-' + man_obj.slug
     ia_item = get_item(item_id, archive_session=ia_session, debug=True)
     upload_ok = None
-    if False:
-        try:
-            r = ia_item.upload_file(
-                cache_file_path,
-                key=ia_filename,
-                metadata=ia_metadata
-            )
-            if r.status_code == requests.codes.ok:
-                upload_ok = True
-            else:
-                print(f'Bad status: {str(r.status_code)} for {cache_file_path}')
-                upload_ok = False
-        except:
-            print(f'Problem uploading: {cache_file_path}')
-            print(f'Status code: {r.status_code}')
+    try:
+        r = ia_item.upload_file(
+            cache_file_path,
+            key=ia_filename,
+            metadata=ia_metadata
+        )
+        if r.status_code == requests.codes.ok:
+            upload_ok = True
+        else:
+            print(f'Bad status: {str(r.status_code)} for {cache_file_path}')
             upload_ok = False
-    r = ia_item.upload_file(
-        cache_file_path,
-        key=ia_filename,
-        metadata=ia_metadata
-    )
-    if r.status_code == requests.codes.ok:
-        upload_ok = True
-    else:
-        print(f'Bad status: {str(r.status_code)} for {cache_file_path}')
+    except:
+        print(f'Problem uploading: {cache_file_path}')
         upload_ok = False
     if not upload_ok:
         return None, None
