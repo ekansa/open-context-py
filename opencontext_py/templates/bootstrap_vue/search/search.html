@@ -39,6 +39,7 @@
                         v-bind:human_remains_ok="human_remains_ok"
                         v-bind:geojson_record_layers="geojson_record_layers"
                         v-bind:loading="loading"
+                        v-bind:filtered_fulltext="filtered_fulltext"
                         @set_frontend_state_obj="set_frontend_state_obj($event)"
                     >
                     </all-search-tabs>
@@ -147,6 +148,7 @@
             geojson_record_layers: null,
             exporter_ok: null,
             record_sets: null,
+            filtered_fulltext: null,
         },
         created(){
             this.fetch_oc_api();
@@ -169,7 +171,7 @@
                 // iPad on iOS 13 detection
                 || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
             },
-            update_frontent_state_obj: function(){
+            update_frontend_state_obj: function(){
                 let current_path = this.$route.fullPath;
                 if(current_path.indexOf('#') >= 0){
                     let current_path_ex = current_path.split('#');
@@ -177,6 +179,10 @@
                     let new_frontend_state_obj = parse_search_frag_dict(current_path_ex[1]);
                     console.log('Updated frontend_state_obj from ' + current_path_ex[1]);
                     this.frontend_state_obj = new_frontend_state_obj;
+                }
+                let q_str = getURLParameter(current_path, 'q');
+                if(q_str != null){
+                    this.filtered_fulltext = true;
                 }
             },
             create_frontend_state_obj: function(){
@@ -225,7 +231,7 @@
                             this.exporter_ok = true;
                         }
                     }
-                    this.update_frontent_state_obj();
+                    this.update_frontend_state_obj();
                     if(this.emit_update_fetch_done){
                         this.emit_update_fetch_done = false;
                         this.$emit('update_fetch_done', true);

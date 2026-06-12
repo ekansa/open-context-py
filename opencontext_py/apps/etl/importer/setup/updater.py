@@ -70,6 +70,10 @@ def update_fields(request_json):
 
         orig_item_type = ds_field.item_type
 
+        do_reset = False
+        if item_update.get('reset'):
+            do_reset = True
+
         # Update if the item_update has attributes that we allow to update.
         update_dict = {
             k:item_update.get(k)
@@ -80,7 +84,7 @@ def update_fields(request_json):
             # Autofix the field name
             update_dict['label'] = field_label_auto_format(ds_field.label)
 
-        if not update_dict:
+        if not update_dict and not do_reset:
             errors.append(f'Field {uuid}: no attribute allowed for update specified.')
             continue
 
@@ -98,6 +102,13 @@ def update_fields(request_json):
             ds_field.data_type = None
             ds_field.item_class_id = configs.DEFAULT_CLASS_UUID
             ds_field.context = None
+        
+        if do_reset:
+            # We're resetting the field to remove annotations
+            ds_field.item_type = None
+            ds_field.data_type = None
+            ds_field.context = None
+            ds_field.item_class_id = configs.DEFAULT_CLASS_UUID
 
         try:
             ds_field.save()
