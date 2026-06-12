@@ -34,6 +34,12 @@ NOTE: Templates and Vue Components for general editing of data source fields.
   </b-button>
 </template>
 
+<template id="ds-field-reset-button">
+  <b-button size="sm" variant="warning" @click="updateResetField">
+    RESET Field(s)
+  </b-button>
+</template>
+
 <template id="ds-fields-general">
     <b-row v-if="ds_fields" >
       <b-col cols="9">
@@ -110,6 +116,10 @@ NOTE: Templates and Vue Components for general editing of data source fields.
           <p>
             <b-button size="sm" @click="selectAllRows">Select all</b-button>
             <b-button size="sm" @click="clearSelected">Clear selected</b-button>
+            <ds-field-reset-button
+              @updating_reset_fields="add_alert_update_uuid_list($event)"
+              @refresh_ds_fields="fetch_api_ds_fields($event)"
+              v-bind:selected="selected"></ds-field-reset-button>
           </p>
           <br/>
           <br/>
@@ -262,7 +272,7 @@ NOTE: Templates and Vue Components for general editing of data source fields.
         methods: {
           updateAutoFormatLabel() {
             if(typeof(this.selected.length) == 'undefined' || this.selected.length < 1){
-              console.log("None selected, don't update item_type");
+              console.log("None selected, don't update autoformat label");
               return null;
             }
             let update_list = [];
@@ -306,6 +316,68 @@ NOTE: Templates and Vue Components for general editing of data source fields.
         }
       },
     );
+
+
+    var vs_ds_field_reset_button =  Vue.component(
+      'ds-field-reset-button',
+      {
+        delimiters: ['[[', ']]'],
+        props: ['selected',],
+        data() {
+          return {
+            selected: [],
+          };
+        },
+        template: '#ds-field-reset-button',
+        methods: {
+          updateResetField() {
+            if(typeof(this.selected.length) == 'undefined' || this.selected.length < 1){
+              console.log("None selected, don't do a reset update");
+              return null;
+            }
+            let update_list = [];
+            let alert_uuids = [];
+            for (let item of this.selected){
+              let update_item = {
+                uuid: item.uuid,
+                reset: true,
+              }
+              update_list.push(update_item);
+              alert_uuids.push(item.uuid);
+            }
+
+            const requestOptions = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify(update_list)
+            };
+            // Make the update alerts light up.
+            this.$emit('updating_reset_fields', alert_uuids);
+            fetch('/etl-importer-setup/update-fields', requestOptions)
+              .then(async response => {
+                const data = await response.json();
+                // check for error response
+                if (!response.ok) {
+                  // get error message from body or default to response status
+                  const error = (data && data.message) || response.status;
+                  return Promise.reject(error);
+                }
+                // Reload the whole table. Kinda drastic.
+                this.$emit('refresh_ds_fields');
+              })
+              .catch(error => {
+                this.errorMessage = error;
+                console.error('There was an error!', error);
+              });
+          },
+        }
+      },
+    );
+
+
     // From the backend.
     const DS_FIELDS_ITEM_TYPES = JSON.parse('{{ DS_FIELDS_ITEM_TYPES|escapejs }}');
     const DS_FIELDS_DATA_TYPES = JSON.parse('{{ DS_FIELDS_DATA_TYPES|escapejs }}');
@@ -404,6 +476,7 @@ NOTE: Templates and Vue Components for general editing of data source fields.
               'ds-field-item-type-button': vs_ds_field_item_type_button,
               'ds-field-data-type-button': vs_ds_field_data_type_button,
               'ds-field-auto-format-button': vs_ds_field_auto_format_button,
+              'ds-field-reset-button': vs_ds_field_reset_button,
               'root-item-tree': vs_root_item_tree,
             },
         }
