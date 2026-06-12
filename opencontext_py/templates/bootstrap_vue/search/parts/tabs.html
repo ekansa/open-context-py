@@ -13,6 +13,14 @@
             <div class="container-fluid text-muted text-center">
               <h1 class="display-4">No records</h1>
               <p>Broaden or otherwise change search and filtering criteria.</p>
+              <b-alert show variant="info" v-if="filtered_fulltext">
+                <div class="container-fluid text-muted text-left">
+                <h4 class="alert-heading">Searching Tips</h4>
+                Open Context generally publishes detailed records of data described by specialized researchers. Open Context's search 
+                tools aim to retrieve those detailed data records. Because of the nature of this content, using very general search terms such as "daily life in ancient Egypt" will often return no results. 
+                If you want a general sense about information available in Open Context, please review the <a href="../../highlights">Highlights</a> or the list of <a href="../../projects-index/">Data Publications</a>.
+                </adiv>
+              </b-alert>
             </div>
           </b-card-text>
           <b-card-text v-else>
@@ -226,6 +234,7 @@ var vc_all_search_tabs = Vue.component(
         'geojson_record_layers',
         'loading',
         'first_selected_tab',
+        'filtered_fulltext',
       ],
       template: '#all-search-tabs-temp',
       data() {
@@ -250,6 +259,7 @@ var vc_all_search_tabs = Vue.component(
           geojson_record_layers: null,
           show_item_records_tooltip: false,
           tooltip_timeout: null,
+          filtered_fulltext: null,
         };
       },
       mounted(){
