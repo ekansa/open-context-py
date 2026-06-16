@@ -152,9 +152,11 @@ def clean_labeling_str_for_ark(label, id_type_key):
     for f, r in LABEL_CHAR_REPLACEMENTS.items():
         label = label.replace(f, r)
     if label.startswith(id_type_key) and len(label) > len_id_type_key:
-        label = label[len_id_type_key:]
+        label = label[len_id_type_key:] 
     # Use the django slugify library to make sure we're OK with characters
     label = slugify(unidecode(label))
+    if id_type_key == 'fa':
+       label = label.replace('pc', '')
     # ARKs ignore '-' characters, so replace with an underscore
     label = label.replace('-', '_')
     if label.startswith('_'):
