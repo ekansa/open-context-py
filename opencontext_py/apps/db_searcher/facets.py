@@ -22,6 +22,7 @@ from opencontext_py.apps.all_items.models import (
     AllIdentifier,
     AllSpaceTime,
     ManifestCachedSpacetime,
+    refresh_cached_spacetime_view,
 )
 from opencontext_py.apps.all_items import hierarchy
 
