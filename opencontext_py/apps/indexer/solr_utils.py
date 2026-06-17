@@ -176,6 +176,13 @@ def make_solr_entity_str(
     return solr_value_delim.join(values)
 
 
+def compress_default_event_attribute_slugs(slug):
+    """Compresses default event and attribute slugs"""
+    if False and slug in ['oc-default-event', 'oc-default-attrib-group']:
+        return 'd'
+    return slug
+
+
 def make_solr_event_attribute_predicate_entity_str(
     event_slug,
     attribute_slug,
@@ -190,6 +197,7 @@ def make_solr_event_attribute_predicate_entity_str(
     """Makes a solr entity strong for a event, attribute-group, predicate item"""
     slugs = []
     for slug in [event_slug, attribute_slug, predicate_slug]:
+        slug = compress_default_event_attribute_slugs(slug)
         slug = convert_slug_to_solr(slug)
         slug = string_clean_for_solr(slug)
         slugs.append(slug)

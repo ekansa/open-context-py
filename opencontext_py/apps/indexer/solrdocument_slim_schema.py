@@ -175,6 +175,8 @@ PROJECT_ROOT_SUBJECT_OK_ITEM_CLASS_SLUGS = [
     'oc-gen-cat-survey-unit',
 ]
 
+TEXT_KEY_PREFIX_DELIM = ': '
+
 
 def clear_caches():
     """Clears caches in case we're making DB updates on
@@ -418,18 +420,27 @@ class SolrDocumentSlim:
             self.fields['human_remains'] = True
 
 
-    def _add_string_content_to_text_field(self, text_content_pred_key):
+    def _add_string_content_to_text_field(self, text_content_pred_key, add_key_prefix=True, key_prefix=''):
         """Adds multiple language labels and titles to add to text field."""
         text_val_objs = self.rep_dict.get(text_content_pred_key)
         if not text_val_objs:
             return None
         if isinstance(text_val_objs, str):
             text_val_objs = [{'_': text_val_objs}]
+        key_prefix = ''
+        if add_key_prefix and not key_prefix:
+            key_prefix = text_content_pred_key.split(':')[-1]
+            key_prefix = solr_utils.ensure_text_solr_ok(key_prefix)
+        if not key_prefix.endswith(TEXT_KEY_PREFIX_DELIM):
+            key_prefix += f'{TEXT_KEY_PREFIX_DELIM}'
         for text_val_obj in text_val_objs:
             for _, text_val in text_val_obj.items():
                 text_val = solr_utils.ensure_text_solr_ok(
                     text_val
                 )
+                if not text_val:
+                    continue
+                text_val = key_prefix + text_val
                 if text_val in self.fields['text']:
                     # Don't bloat the index with duplicate text.
                     continue
@@ -455,7 +466,7 @@ class SolrDocumentSlim:
         proj_hierarchy = hierarchy.get_project_hierarchy(self.man_obj)
         for proj in proj_hierarchy:
             # Add the project label to all text field.
-            self.fields['text'] += ' ' + str(proj.label) + '\n'
+            self.fields['text'] += 'project: ' + str(proj.label) + '\n'
             # Compose the solr_value for this item in the context
             # hierarchy.
             act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
@@ -736,7 +747,7 @@ class SolrDocumentSlim:
         return hierarchy_paths
 
 
-    def _add_object_value_hierarchies(self, root_solr_field, hierarchy_paths):
+    def _add_object_value_hierarchies(self, all_obj_solr_field, hierarchy_paths, text_prefix=''):
         """Adds a hierarchy of predicates to the solr doc."""
 
         # The all_obj_solr_field is defined for the solr field
@@ -746,21 +757,20 @@ class SolrDocumentSlim:
         # hierarchy. Without the all_obj_solr_field, we would need
         # to know the full hierarchy path of parent items in order
         # to query for a given object value.
-        all_obj_solr_field = (
-            'obj_all'
-            + SOLR_VALUE_DELIM
-            + root_solr_field
-        )
-        all_obj_solr_field = root_solr_field
+
         all_obj_solr_field = self._prefix_solr_field(
             all_obj_solr_field
         )
 
+        if text_prefix:
+            text_prefix = solr_utils.ensure_text_solr_ok(text_prefix)
+            if not text_prefix.endswith(TEXT_KEY_PREFIX_DELIM):
+                text_prefix += TEXT_KEY_PREFIX_DELIM
         # Now iterate through the list of hierarchy items of
         # object values.
         for hierarchy_items in hierarchy_paths:
 
-            for index, item_obj in enumerate(hierarchy_items):
+            for _, item_obj in enumerate(hierarchy_items):
 
                 # Make sure the item is a dict.
                 item = solr_utils.solr_convert_man_obj_obj_dict(item_obj)
@@ -768,7 +778,8 @@ class SolrDocumentSlim:
                 # Add the label of this item in the hierarchy
                 # to the text field. This means key-word searches will
                 # be inclusive of all parent items in a hierarchy.
-                self.fields['text'] += ' ' + item.get('label', '') + ' '
+                if item.get('label'):
+                    self.fields['text'] += ' ' + item.get('label') + ' '
 
                 if self._check_meta_json_to_skip_index(item):
                     # item meta_json says don't index this.
@@ -835,7 +846,8 @@ class SolrDocumentSlim:
         # facet fields.
         self._add_object_value_hierarchies(
             solr_field_name,
-            hierarchy_paths
+            hierarchy_paths,
+            text_prefix='record category'
         )
 
 
@@ -861,7 +873,7 @@ class SolrDocumentSlim:
         return False
 
 
-    def _add_solr_id_field_values(self, solr_field_name, pred_value_objects):
+    def _add_solr_id_field_values(self, solr_field_name, pred_value_objects, text_prefix=''):
         """Adds non-literal predicate value objects,
            and their hierarchy parents, to the Solr doc
         """
@@ -914,7 +926,8 @@ class SolrDocumentSlim:
             # facet fields.
             self._add_object_value_hierarchies(
                 solr_field_name,
-                hierarchy_paths
+                hierarchy_paths,
+                text_prefix=text_prefix,
             )
             # A little stying for different value objects in the text field.
             self.fields['text'] += '\n'
@@ -958,6 +971,13 @@ class SolrDocumentSlim:
             solr_data_type = solr_utils.get_solr_data_type_from_data_type(
                 val_obj.get('predicate__data_type')
             )
+
+            text_prefix = val_obj.get('predicate__label', '')
+            if text_prefix:
+                text_prefix = solr_utils.ensure_text_solr_ok(text_prefix)
+                if not text_prefix.endswith(TEXT_KEY_PREFIX_DELIM):
+                    text_prefix += TEXT_KEY_PREFIX_DELIM
+
             if solr_data_type == 'id':
                 if (
                     enforce_ld_outside_objects
@@ -971,9 +991,13 @@ class SolrDocumentSlim:
                 # objects will be non-literals (entities with outside URIs or URI
                 # identified Open Context entities). So we need to add them, and
                 # any of their hierarchy parents, to the solr document.
+                if val_obj and text_prefix and not self.fields['text'].endswith(text_prefix):
+                    # add a text prefix ahead of the literal values.
+                    self.fields['text'] += text_prefix
                 self._add_solr_id_field_values(
                     solr_field_name,
-                    [val_obj]
+                    [val_obj],
+                    text_prefix='',
                 )
                 self._add_object_uri(val_obj)
 
@@ -984,6 +1008,10 @@ class SolrDocumentSlim:
 
             if not self.fields.get(solr_field_name):
                 self.fields[solr_field_name] = []
+            
+            if text_prefix and not self.fields['text'].endswith(text_prefix):
+                # add a text prefix ahead of the literal values.
+                self.fields['text'] += text_prefix
 
             if solr_data_type == 'string':
                 val_str = val_obj.get('obj_string')
@@ -1235,6 +1263,9 @@ class SolrDocumentSlim:
                         print(f"No solr indexing of pred { item.get('label') } (uuid: {item.get('uuid')}) ")
                     break
 
+                if item.get('label') == 'Creator':
+                    print('item is: ' + str(item))
+
                 if index < last_item_index:
                     # Force parents to be of an id data type.
                     item['data_type'] = 'id'
@@ -1265,8 +1296,12 @@ class SolrDocumentSlim:
                 event_attribute_predicate_slug = solr_utils.convert_slug_to_solr(
                     SOLR_VALUE_DELIM.join(
                         [
-                            assert_dict.get('event__slug', 'oc-default-event'),
-                            assert_dict.get('attribute_group__slug', 'oc-default-attrib-group'),
+                            solr_utils.compress_default_event_attribute_slugs(
+                                assert_dict.get('event__slug', 'oc-default-event')
+                            ),
+                            solr_utils.compress_default_event_attribute_slugs(
+                                assert_dict.get('attribute_group__slug', 'oc-default-attrib-group')
+                            ),
                             item.get('slug'),
                         ]
                     )
@@ -1411,7 +1446,7 @@ class SolrDocumentSlim:
                     continue
                 self._add_solr_field_values(
                     solr_field_name,
-                    [pred_value_object]
+                    [pred_value_object],
                 )
 
 
