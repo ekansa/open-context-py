@@ -26,6 +26,7 @@ from opencontext_py.apps.all_items.representations import citation
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
+from opencontext_py.apps.indexer.solrdocument_slim_schema import SolrDocumentSlim
 
 from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 
@@ -202,6 +203,25 @@ def all_items_json(request, uuid, man_obj=None):
             rep_dict
         )
         solrdoc = SolrDocumentNS(
+            uuid=man_obj.uuid,
+            man_obj=man_obj,
+            rep_dict=rep_dict,
+        )
+        solrdoc.make_solr_doc()
+        rep_dict = solrdoc.fields
+    elif request.GET.get('solr') == 'solr-slim':
+        # with added stuff for Solr
+        man_obj, rep_dict = item.make_representation_dict(
+            subject_id=ok_uuid,
+            for_solr=True,
+        )
+        if not man_obj or not rep_dict:
+            raise Http404
+        rep_dict = prepare_for_item_dict_solr_and_html_template(
+            man_obj,
+            rep_dict
+        )
+        solrdoc = SolrDocumentSlim(
             uuid=man_obj.uuid,
             man_obj=man_obj,
             rep_dict=rep_dict,

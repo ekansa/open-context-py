@@ -176,6 +176,40 @@ def make_solr_entity_str(
     return solr_value_delim.join(values)
 
 
+def make_solr_event_attribute_predicate_entity_str(
+    event_slug,
+    attribute_slug,
+    predicate_slug,
+    data_type,
+    uri,
+    label,
+    alt_label=None,
+    act_solr_doc_prefix='',
+    solr_value_delim=SOLR_VALUE_DELIM,
+):
+    """Makes a solr entity strong for a event, attribute-group, predicate item"""
+    slugs = []
+    for slug in [event_slug, attribute_slug, predicate_slug]:
+        slug = convert_slug_to_solr(slug)
+        slug = string_clean_for_solr(slug)
+        slugs.append(slug)
+    if act_solr_doc_prefix:
+        act_solr_doc_prefix = act_solr_doc_prefix.replace('-', '_')
+        if not slugs[0].startswith(act_solr_doc_prefix):
+            slugs[0] = act_solr_doc_prefix + slugs[0]
+    solr_data_type = get_solr_data_type_from_data_type(data_type)
+    solr_data_type = string_clean_for_solr(solr_data_type)
+    uri = string_clean_for_solr(AllManifest().clean_uri(uri))
+    label = string_clean_for_solr(label)
+    values = slugs + [solr_data_type, uri, label]
+    if alt_label:
+        alt_label = string_clean_for_solr(alt_label)
+    if alt_label and alt_label != label:
+        values.append(alt_label)
+    return solr_value_delim.join(values)
+
+
+
 def solr_convert_man_obj_obj_dict(obj_or_dict, dict_lookup_prefix='object'):
     """Convert a manifest or object dictionary into 
     a solr doc creation friendly item dict
