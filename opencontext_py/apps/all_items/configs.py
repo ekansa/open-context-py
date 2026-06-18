@@ -27,7 +27,7 @@ OC_ITEM_TYPES = [
 ]
 
 
-# Item type with full URIs as the main identifer. These are for
+# Item type with full URIs as the main identifier. These are for
 # supplemental metadata / linked data annotation and description of
 # the UUID_ITEM_TYPES above.
 URI_CONTEXT_PREFIX_ITEM_TYPES = [
