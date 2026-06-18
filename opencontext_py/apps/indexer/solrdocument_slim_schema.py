@@ -1,5 +1,8 @@
 import copy
 import datetime
+
+import re
+
 from django.core.cache import caches
 
 from django.db.models import Q
@@ -74,6 +77,12 @@ NO_INDEX_DESCRIPTION_PREDICATE_UUIDS = [
 ]
 
 
+# For referencing external related data sources
+EXTERNAL_REL_DATA_SOURCE_TYPES = ['projects', 'vocabularies',]
+SKIP_EXTERNAL_CONTEXT_UUIDS =[
+    configs.OPEN_CONTEXT_PROJ_UUID,
+    configs.OC_GEN_VOCAB_UUID,
+]
 
 # Default publication date, if the record does not exist.
 # This should ONLY be the case for the very first example
@@ -102,6 +111,8 @@ ALL_LINK_DATA_SOLR = 'obj_all_ld' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 # ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
 ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
 
+
+EXTERNAL_CONTEXT_SOLR = 'ext_context_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 
 # General (any event type) space and time solr prefix.
 ALL_EVENTS_SOLR = 'all_events'
@@ -959,6 +970,45 @@ class SolrDocumentSlim:
             self.fields['object_uri'].append(object_uri)
 
 
+
+    def _add_external_context_val(self, val_obj):
+        """Adds external context solr value objects so we can index according to relationships
+        to different vocabularies and databases
+        """
+        if val_obj.get('object__item_type') == 'persons':
+            if val_obj.get('object__item_class__slug') != 'foaf-organization':
+                # We're not interested in relationships to external individuals
+                return None
+        if not val_obj.get('object__context__item_type') in EXTERNAL_REL_DATA_SOURCE_TYPES:
+            return None
+        context_man_obj = solr_utils.get_manifest_obj_from_man_obj_dict(
+            val_obj.get('object__context_id'),
+            self.rel_man_objs
+        )
+        if not context_man_obj:
+            return None
+        hierarchy_paths = self._get_hierarchy_paths_w_alt_labels_by_item_type(
+            context_man_obj
+        )
+        if not hierarchy_paths:
+            return None
+        if not self.fields.get(EXTERNAL_CONTEXT_SOLR):
+            self.fields[EXTERNAL_CONTEXT_SOLR] = []
+        for _, hierarchy_items in enumerate(hierarchy_paths):
+            for _, item_obj in enumerate(hierarchy_items):
+                if str(item_obj.get('uuid')) in SKIP_EXTERNAL_CONTEXT_UUIDS:
+                    continue
+                if str(item_obj.get('uuid')) == (self.man_obj.project.uuid):
+                    continue
+                act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
+                    obj_or_dict=item_obj,
+                    act_solr_doc_prefix=self.solr_doc_prefix,
+                )
+                if act_solr_value in self.fields[EXTERNAL_CONTEXT_SOLR]:
+                    continue
+                self.fields[EXTERNAL_CONTEXT_SOLR].append(act_solr_value)
+
+
     def _add_object_uri(self, val_obj):
         """Adds a linked data URI of an object for indexing
 
@@ -1011,6 +1061,7 @@ class SolrDocumentSlim:
                     [val_obj],
                     text_prefix=text_prefix,
                 )
+                self._add_external_context_val(val_obj)
                 self._add_object_uri(val_obj)
 
             if self.do_related and not ADD_RELATED_LITERAL_FIELDS:
@@ -1030,7 +1081,8 @@ class SolrDocumentSlim:
                 if not val_str:
                     continue
                 val_str = str(solr_utils.ensure_text_solr_ok(val_str))
-                self.fields['text'] += val_str + ' \n'
+                no_html_val_str = re.sub(r"<.*?>", "", val_str )
+                self.fields['text'] += no_html_val_str + ' \n'
                 self.fields[solr_field_name].append(val_str)
             elif solr_data_type== 'bool':
                 val = val_obj.get('obj_boolean')
