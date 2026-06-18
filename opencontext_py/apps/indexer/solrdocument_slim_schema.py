@@ -90,6 +90,8 @@ FIELD_SUFFIX_PREDICATE = 'pred_id'
 FIELD_SUFFIX_PROJECT = 'project_id'
 
 ALL_CONTEXT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
+TOP_CONTEXT_SOLR = 'obj_top' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
+TOP_CONTEXT_DEPTH = 3
 # ROOT_CONTEXT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
 # ROOT_PREDICATE_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
 ALL_PREDICATE_SOLR = 'obj_all_predicates' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
@@ -716,6 +718,7 @@ class SolrDocumentSlim:
                 act_solr_doc_prefix='', # No prefixing for projects!
             )
             context_path_labels.append(context.get('label'))
+        self.fields[TOP_CONTEXT_SOLR] = self.fields[ALL_CONTEXT_SOLR][:TOP_CONTEXT_DEPTH]
         if len(context_path_labels) < 1:
             return None
         self.fields['context_path'] = '/'.join(context_path_labels)
@@ -762,12 +765,14 @@ class SolrDocumentSlim:
             all_obj_solr_field
         )
 
+
         if text_prefix:
             text_prefix = solr_utils.ensure_text_solr_ok(text_prefix)
             if not text_prefix.endswith(TEXT_KEY_PREFIX_DELIM):
                 text_prefix += TEXT_KEY_PREFIX_DELIM
         # Now iterate through the list of hierarchy items of
         # object values.
+        text_labels = []
         for hierarchy_items in hierarchy_paths:
 
             for _, item_obj in enumerate(hierarchy_items):
@@ -779,7 +784,7 @@ class SolrDocumentSlim:
                 # to the text field. This means key-word searches will
                 # be inclusive of all parent items in a hierarchy.
                 if item.get('label'):
-                    self.fields['text'] += ' ' + item.get('label') + ' '
+                    text_labels.append(item.get('label'))
 
                 if self._check_meta_json_to_skip_index(item):
                     # item meta_json says don't index this.
@@ -802,6 +807,14 @@ class SolrDocumentSlim:
                     act_solr_value,
                     act_solr_doc_prefix=self.solr_doc_prefix,
                 )
+        # Make the text part of this.
+        all_label_text = ' '.join(text_labels)
+        if len(all_label_text) < 2:
+            return None
+        if text_prefix and not self.fields['text'].endswith(text_prefix):
+            self.fields['text'] += text_prefix
+        self.fields['text'] += all_label_text
+        self.fields['text'] += ' \n'
 
 
     def _add_category_hierarchies(self):
@@ -921,7 +934,10 @@ class SolrDocumentSlim:
             hierarchy_paths = self._get_hierarchy_paths_w_alt_labels_by_item_type(
                 item_man_obj
             )
-
+            if 'Creator' in text_prefix:
+                print(hierarchy_paths)
+            if not hierarchy_paths:
+                continue
             # Now do the work of adding the hierarchies in solr
             # facet fields.
             self._add_object_value_hierarchies(
@@ -960,14 +976,13 @@ class SolrDocumentSlim:
             self,
             solr_field_name,
             pred_value_objects,
-            enforce_ld_outside_objects=False
+            enforce_ld_outside_objects=False,
         ):
         """Adds predicate value objects, and their hierarchy parents, to the Solr doc."""
         if not isinstance(pred_value_objects, list):
             return None
 
         for val_obj in pred_value_objects:
-
             solr_data_type = solr_utils.get_solr_data_type_from_data_type(
                 val_obj.get('predicate__data_type')
             )
@@ -985,19 +1000,16 @@ class SolrDocumentSlim:
                     and val_obj.get('object__item_type') == 'types'
                 ):
                     # This is a case of a linked data where the object is not
-                    # referencig a specific vocabulary, so we should skip it.
+                    # referencing a specific vocabulary, so we should skip it.
                     continue
                 # This is the most complicated case where the value
                 # objects will be non-literals (entities with outside URIs or URI
                 # identified Open Context entities). So we need to add them, and
                 # any of their hierarchy parents, to the solr document.
-                if val_obj and text_prefix and not self.fields['text'].endswith(text_prefix):
-                    # add a text prefix ahead of the literal values.
-                    self.fields['text'] += text_prefix
                 self._add_solr_id_field_values(
                     solr_field_name,
                     [val_obj],
-                    text_prefix='',
+                    text_prefix=text_prefix,
                 )
                 self._add_object_uri(val_obj)
 
@@ -1009,7 +1021,7 @@ class SolrDocumentSlim:
             if not self.fields.get(solr_field_name):
                 self.fields[solr_field_name] = []
             
-            if text_prefix and not self.fields['text'].endswith(text_prefix):
+            if solr_data_type != 'id' and text_prefix and not self.fields['text'].endswith(text_prefix):
                 # add a text prefix ahead of the literal values.
                 self.fields['text'] += text_prefix
 
@@ -1262,9 +1274,6 @@ class SolrDocumentSlim:
                     if False:
                         print(f"No solr indexing of pred { item.get('label') } (uuid: {item.get('uuid')}) ")
                     break
-
-                if item.get('label') == 'Creator':
-                    print('item is: ' + str(item))
 
                 if index < last_item_index:
                     # Force parents to be of an id data type.
