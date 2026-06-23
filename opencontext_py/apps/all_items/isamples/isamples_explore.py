@@ -656,7 +656,8 @@ def get_samples_by_keyword_uri_wide(
     samp_pqg.label AS sample_label,
     samp_pqg.description AS sample_description,
     kw_pqg.pid AS keyword_pid,
-    kw_pqg.label AS keyword
+    kw_pqg.label AS keyword,
+    kw_pqg.scheme_uri AS keyword_scheme_uri
 
     FROM pqg_wide AS samp_pqg
     JOIN unnest(samp_pqg.p__keywords) AS unnest_val(row_id) ON TRUE
