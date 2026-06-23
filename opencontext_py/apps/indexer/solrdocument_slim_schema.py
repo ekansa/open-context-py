@@ -3,6 +3,10 @@ import datetime
 
 import re
 
+import warnings
+
+from fastembed import TextEmbedding
+
 from django.core.cache import caches
 
 from django.db.models import Q
@@ -191,6 +195,13 @@ PROJECT_ROOT_SUBJECT_OK_ITEM_CLASS_SLUGS = [
 TEXT_KEY_PREFIX_DELIM = ': '
 
 
+EMBEDDING_MODEL = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
+EMBEDDING_MODEL_DIM = 768
+EMBEDDING_FIELD_SOLR = 'st_multilingual' + SOLR_VALUE_DELIM + f'vector_{EMBEDDING_MODEL_DIM}'
+SUPRESS_EMBEDDING_WARNINGS = True
+
+
+
 def clear_caches():
     """Clears caches in case we're making DB updates on
        manifest objects used as predicates.
@@ -209,11 +220,14 @@ class SolrDocumentSlim:
     fields are stored in a Solr Document's "fields" property.
     '''
 
-    def __init__(self, uuid, man_obj=None, rep_dict=None, do_related=False):
+    def __init__(self, uuid, man_obj=None, rep_dict=None, do_related=False, do_batch_embeddings=False):
         '''
         Using our expanded representation dict to make a solr
         document.
         '''
+
+        # Wait to do embeddings as a batch.
+        self.do_batch_embeddings = do_batch_embeddings
 
         # do_related means that we're making solr fields for
         # a related item (a subject linked to a media resource)
@@ -945,8 +959,6 @@ class SolrDocumentSlim:
             hierarchy_paths = self._get_hierarchy_paths_w_alt_labels_by_item_type(
                 item_man_obj
             )
-            if 'Creator' in text_prefix:
-                print(hierarchy_paths)
             if not hierarchy_paths:
                 continue
             # Now do the work of adding the hierarchies in solr
@@ -1921,7 +1933,7 @@ class SolrDocumentSlim:
                 continue
             if False:
                 print (f'Get related item_type subjects: {related_object_id}')
-            rel_sd_obj = SolrDocumentNS(uuid=related_object_id, do_related=True)
+            rel_sd_obj = SolrDocumentSlim(uuid=related_object_id, do_related=True)
             rel_sd_obj.make_related_solr_doc()
             self.fields[JOIN_SOLR].append(related_object_id)
             if rel_sd_obj.fields.get('human_remains'):
@@ -2056,6 +2068,23 @@ class SolrDocumentSlim:
         self.fields['interest_score'] = score
 
 
+    def _generate_vector_embedding(self):
+        """Generates a vector embedding using a language model for fuzzy searches"""
+        if SUPRESS_EMBEDDING_WARNINGS:
+            with warnings.catch_warnings(action="ignore"):
+                embedding_model = TextEmbedding(EMBEDDING_MODEL)
+        else:
+            embedding_model = TextEmbedding(EMBEDDING_MODEL)
+        documents: list[str] = [
+            re.sub(r"<.*?>", "", self.fields['text'])
+        ]
+        embeddings_generator = embedding_model.embed(documents)
+        embeddings_list = list(embeddings_generator)
+        embedding = embeddings_list[0].flatten().tolist()
+        # print(f'Embedding dim: {len(embedding)}')
+        self.fields[EMBEDDING_FIELD_SOLR] = embedding
+
+
     def make_solr_doc(self):
         """Make a solr document """
         if not self.man_obj or not self.rep_dict:
@@ -2095,6 +2124,9 @@ class SolrDocumentSlim:
         self._add_table_specifics()
         # Calculate the interest score for the item
         self._calculate_interest_score()
+        if not self.do_batch_embeddings:
+            # Generate vector embedding
+            self._generate_vector_embedding()
         return True
 
 

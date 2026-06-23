@@ -20,12 +20,16 @@ class SolrClient():
         timeout=30,
         auth=None,
         use_test_solr=False,
+        use_alt_collection=False,
     ):
+        if use_alt_collection:
+            solr_collection = f'{solr_collection}-slim'
         solr_connection_url = self.make_solr_url( 
             solr_host=solr_host,
             solr_port=solr_port,
             solr_collection=solr_collection,
             use_test_solr=use_test_solr,
+            use_alt_collection=use_alt_collection,
         )
         try:
             # print(solr_connection_string)
@@ -45,12 +49,15 @@ class SolrClient():
         solr_port=settings.SOLR_PORT,
         solr_collection=settings.SOLR_COLLECTION,
         use_test_solr=False,
+        use_alt_collection=False,
     ):
         if use_test_solr:
             # We're connecting to testing Solr instance
             solr_host = settings.SOLR_HOST_TEST
             solr_port = settings.SOLR_PORT_TEST
             solr_collection = settings.SOLR_COLLECTION_TEST
+        if use_alt_collection and not solr_collection.endswith('-slim'):
+            solr_collection = f'{solr_collection}-slim'
         if not solr_host.startswith('http://') and not solr_host.startswith('https://'):
             # forgiving of configurations
             solr_host = f'http://{solr_host}'
