@@ -644,6 +644,39 @@ def get_counts_by_keyword_uri_wide(
     return db_m
 
 
+def get_samples_by_keyword_uri_wide(
+    keyword_pid,
+    con=DB_CON, 
+    show_max_width=SHOW_MAX_WIDTH,
+):
+    sql = f"""
+
+    SELECT 
+    samp_pqg.pid AS sample_pid,
+    samp_pqg.label AS sample_label,
+    samp_pqg.description AS sample_description,
+    kw_pqg.pid AS keyword_pid,
+    kw_pqg.label AS keyword
+
+    FROM pqg_wide AS samp_pqg
+    JOIN unnest(samp_pqg.p__keywords) AS unnest_val(row_id) ON TRUE
+    JOIN pqg_wide AS kw_pqg ON (
+        kw_pqg.row_id = unnest_val.row_id
+        AND
+        kw_pqg.otype = 'IdentifiedConcept'
+    )
+      
+    WHERE samp_pqg.otype = 'MaterialSampleRecord'
+    AND kw_pqg.pid = '{keyword_pid}'
+    
+    ;
+    """
+    db_m = con.sql(sql)
+    db_m.show(max_width=show_max_width)
+    return db_m
+
+
+
 def get_counts_by_material_uri_wide(
     material_pid,
     con=DB_CON, 
