@@ -178,6 +178,11 @@ slim_ind.make_indexed_solr_documents_in_chunks(uuids)
 
 """
 
+# Activate an embedding model
+ACTIVE_EMBEDDING_MODEL = TextEmbedding(EMBEDDING_MODEL)
+
+
+
 def index_test_samples(item_type_sample_size=500):
     proj_qs = AllManifest.objects.filter(
         item_type='projects', 
@@ -264,14 +269,15 @@ def chunk_list(act_list, chunk_size):
 
 
 
-def generate_vector_embeddings_for_solr_docs(solr_docs):
+def generate_vector_embeddings_for_solr_docs(solr_docs, embedding_model=ACTIVE_EMBEDDING_MODEL):
     """Generates a vector embedding using a language model for fuzzy searches"""
     embeddings_start = time.time()
-    if SUPRESS_EMBEDDING_WARNINGS:
-        with warnings.catch_warnings(action="ignore"):
+    if not embedding_model:
+        if SUPRESS_EMBEDDING_WARNINGS:
+            with warnings.catch_warnings(action="ignore"):
+                embedding_model = TextEmbedding(EMBEDDING_MODEL)
+        else:
             embedding_model = TextEmbedding(EMBEDDING_MODEL)
-    else:
-        embedding_model = TextEmbedding(EMBEDDING_MODEL)
     documents = []
     for solr_doc in solr_docs:
         embedding_text = re.sub(r"<.*?>", "", solr_doc.get('text', ''))
