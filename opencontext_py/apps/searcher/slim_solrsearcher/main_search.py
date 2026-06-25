@@ -45,6 +45,35 @@ items = solr_response.get('response', {}).get('docs')
 
 solr_response = vibe_search('remains from feasting on pork')
 items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('artifact from Italy used in making clothing')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('artifact from Italy used as a spool')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('daily life in ancient Egypt')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('food in ancient Egypt')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('has the image of a greek god')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('evidence of office work')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('artifact from Italy used in making textiles. DOT include anything relating to involving pottery vessels')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('artifact from Tuscany used in making textiles.')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('spindle whorl object from Poggio Civitate used in making textiles.')
+items = solr_response.get('response', {}).get('docs')
+
+
 '''
 
 
@@ -81,7 +110,8 @@ def make_vectorized_embedding_str(str_to_vectorize, embedding_model=ACTIVE_EMBED
         else:
             embedding_model = TextEmbedding(EMBEDDING_MODEL)
     embedding_text = re.sub(r"<.*?>", "", str_to_vectorize)
-    embedding_text = 'query: ' + embedding_text
+    if not  embedding_text.startswith('query:'):
+        embedding_text = 'query:' + embedding_text
     documents = [embedding_text]
     embeddings_generator = embedding_model.embed(documents)
     embeddings_list = list(embeddings_generator)

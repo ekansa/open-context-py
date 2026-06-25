@@ -5,6 +5,7 @@ import re
 
 import warnings
 
+
 from fastembed import TextEmbedding
 
 from django.core.cache import caches
@@ -30,6 +31,11 @@ from opencontext_py.apps.all_items.representations.template_prep import (
 
 from opencontext_py.apps.indexer import solr_utils
 
+from opencontext_py.apps.indexer.embeddings import (
+    EMBEDDING_MODEL_DIM,
+    prepare_text_str_for_index_embedding,
+    embed_with_chunk_pooling,
+)
 
 # A dict for the category, property associated with an Open Context
 # category
@@ -194,13 +200,7 @@ PROJECT_ROOT_SUBJECT_OK_ITEM_CLASS_SLUGS = [
 
 TEXT_KEY_PREFIX_DELIM = ': '
 
-
-EMBEDDING_MODEL = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
-EMBEDDING_MODEL_DIM = 768
 EMBEDDING_FIELD_SOLR = 'st_multilingual' + SOLR_VALUE_DELIM + f'vector_{EMBEDDING_MODEL_DIM}'
-SUPRESS_EMBEDDING_WARNINGS = True
-
-
 
 def clear_caches():
     """Clears caches in case we're making DB updates on
@@ -2070,17 +2070,8 @@ class SolrDocumentSlim:
 
     def _generate_vector_embedding(self):
         """Generates a vector embedding using a language model for fuzzy searches"""
-        if SUPRESS_EMBEDDING_WARNINGS:
-            with warnings.catch_warnings(action="ignore"):
-                embedding_model = TextEmbedding(EMBEDDING_MODEL)
-        else:
-            embedding_model = TextEmbedding(EMBEDDING_MODEL)
-        documents: list[str] = [
-            re.sub(r"<.*?>", "", self.fields['text'])
-        ]
-        embeddings_generator = embedding_model.embed(documents)
-        embeddings_list = list(embeddings_generator)
-        embedding = embeddings_list[0].flatten().tolist()
+        embedding_str = prepare_text_str_for_index_embedding(self.fields['text'])
+        embedding = embed_with_chunk_pooling(embedding_str)
         # print(f'Embedding dim: {len(embedding)}')
         self.fields[EMBEDDING_FIELD_SOLR] = embedding
 

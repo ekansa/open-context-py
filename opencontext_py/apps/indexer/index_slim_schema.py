@@ -25,10 +25,14 @@ from opencontext_py.apps.all_items.project_contexts.context import (
 from opencontext_py.apps.all_items.representations import metadata as rep_metadata
 
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.apps.indexer.solrdocument_slim_schema import (
+from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL,
-    EMBEDDING_FIELD_SOLR,
     SUPRESS_EMBEDDING_WARNINGS,
+    prepare_text_str_for_index_embedding,
+    embed_with_chunk_pooling,
+)
+from opencontext_py.apps.indexer.solrdocument_slim_schema import (
+    EMBEDDING_FIELD_SOLR,
     SolrDocumentSlim
 )
 from opencontext_py.apps.indexer import index_site_pages as isp
@@ -272,22 +276,11 @@ def chunk_list(act_list, chunk_size):
 def generate_vector_embeddings_for_solr_docs(solr_docs, embedding_model=ACTIVE_EMBEDDING_MODEL):
     """Generates a vector embedding using a language model for fuzzy searches"""
     embeddings_start = time.time()
-    if not embedding_model:
-        if SUPRESS_EMBEDDING_WARNINGS:
-            with warnings.catch_warnings(action="ignore"):
-                embedding_model = TextEmbedding(EMBEDDING_MODEL)
-        else:
-            embedding_model = TextEmbedding(EMBEDDING_MODEL)
-    documents = []
     for solr_doc in solr_docs:
-        embedding_text = re.sub(r"<.*?>", "", solr_doc.get('text', ''))
-        documents.append(embedding_text)
-    embeddings_generator = embedding_model.embed(documents)
-    embeddings_list = list(embeddings_generator)
-    for i, embedding in enumerate(embeddings_list):
-        solr_docs[i][EMBEDDING_FIELD_SOLR] = embedding.flatten().tolist()
+        embedding_str = prepare_text_str_for_index_embedding(solr_doc.get('text', ''))
+        solr_doc[EMBEDDING_FIELD_SOLR] = embed_with_chunk_pooling(embedding_str)
     embeddings_end = time.time()
-    print(f'{len(embeddings_list )} embeddings finished in {(embeddings_end - embeddings_start)} seconds.')
+    print(f'{len(solr_docs)} embeddings finished in {(embeddings_end - embeddings_start)} seconds.')
     return solr_docs
 
 
