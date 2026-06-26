@@ -72,6 +72,7 @@ urlpatterns = [
     re_path(r'^about/people', AboutViews.people_view, name='about_people'),
     re_path(r'^about/sponsors', AboutViews.sponsors_view, name='about_sponsors'),
     re_path(r'^about/terms', AboutViews.terms_view, name='about_terms'),
+    re_path(r'^about/tutorials', AboutViews.tutorials_view, name='about_tutorials'),
     re_path(r'^about/', AboutViews.index_view, name='about_index'),
     # Highlights
     re_path(r'^highlights/', HighlightsViews.index_view, name='highlights_index'),
