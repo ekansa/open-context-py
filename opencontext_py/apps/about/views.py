@@ -45,6 +45,38 @@ def index_view(request):
 
 @cache_control(no_cache=True)
 @never_cache
+def tutorials_view(request):
+    """ Get help and tutorials page """
+    request = RequestNegotiation().anonymize_request(request)
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    req_neg = RequestNegotiation('text/html')
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    if req_neg.supported:
+        # requester wanted a mimetype we DO support
+        template = loader.get_template('bootstrap_vue/about/tutorials.html')
+        context = {
+            'BASE_URL': base_url,
+            'PAGE_TITLE': 'Open Context: About - Help, Tutorials',
+            'act_nav': 'about',
+            'NAV_ITEMS': settings.NAV_ITEMS,
+            'PAGE_MODIFIED': get_template_file_git_updated_datetime_str(
+                'bootstrap_vue/about/tutorials.html'
+            ),
+        }
+        return HttpResponse(template.render(context, request))
+    else:
+        # client wanted a mimetype we don't support
+        return HttpResponse(
+            req_neg.error_message,
+            status=415
+        )
+
+
+
+@cache_control(no_cache=True)
+@never_cache
 def uses_view(request):
     """ Get uses page """
     request = RequestNegotiation().anonymize_request(request)
