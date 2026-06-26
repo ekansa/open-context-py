@@ -747,6 +747,7 @@ class SolrDocumentSlim:
         if len(context_path_labels) < 1:
             return None
         self.fields['context_path'] = '/'.join(context_path_labels)
+        self.fields['text'] += f'geographic context or place of origin: {self.fields["context_path"].replace("/", ", ")} \n'
 
 
     def _get_hierarchy_paths_w_alt_labels_by_item_type(self, item_man_obj):

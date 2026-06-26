@@ -27,7 +27,6 @@ from opencontext_py.apps.all_items.representations import metadata as rep_metada
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL,
-    SUPRESS_EMBEDDING_WARNINGS,
     prepare_text_str_for_index_embedding,
     embed_with_chunk_pooling,
 )
@@ -39,6 +38,7 @@ from opencontext_py.apps.indexer import index_site_pages as isp
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs as solr_search_configs
 
+from opencontext_py.apps.all_items.sitemaps import db_site_data
 
 """
 # testing
@@ -188,6 +188,7 @@ ACTIVE_EMBEDDING_MODEL = TextEmbedding(EMBEDDING_MODEL)
 
 
 def index_test_samples(item_type_sample_size=500):
+    
     proj_qs = AllManifest.objects.filter(
         item_type='projects', 
         item_class_id=configs.CLASS_OC_DATA_PUB_UUID,
@@ -195,20 +196,10 @@ def index_test_samples(item_type_sample_size=500):
         uuid=configs.OPEN_CONTEXT_PROJ_UUID,
     )
     for proj_obj in proj_qs:
-        for item_type in ['projects', 'subjects', 'media', 'documents', 'tables']:
-            m_qs = AllManifest.objects.filter(project=proj_obj, item_type=item_type).order_by('?')[:item_type_sample_size]
-            if m_qs.count() < 1:
-                qs_uuids = []
-            else:
-                qs_uuids = [m.uuid for m in m_qs]
-            if item_type == 'projects':
-                uuids = [proj_obj.uuid] + qs_uuids
-            else:
-                uuids = qs_uuids
-            if item_type == 'projects':
-                make_indexed_solr_documents_in_chunks(uuids)
-            else:
-                make_indexed_solr_documents_in_chunks(uuids, start_clear_caches=False)
+        rep_man_objs = db_site_data.db_get_project_representative_sample(proj_obj)
+        make_indexed_solr_documents_in_chunks([proj_obj.uuid])
+        uuids = [m.uuid for m in rep_man_objs]
+        make_indexed_solr_documents_in_chunks(uuids, start_clear_caches=False)
     
 
 

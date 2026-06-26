@@ -13,12 +13,11 @@ from django.core.cache import caches
 
 from opencontext_py.libs.rootpath import RootPath
 
-
+from opencontext_py.apps.indexer.embeddings import (
+    make_vectorized_embedding_query_str
+)
 from opencontext_py.apps.indexer.solrdocument_slim_schema import (
-    EMBEDDING_MODEL,
     EMBEDDING_FIELD_SOLR,
-    SUPRESS_EMBEDDING_WARNINGS,
-    SolrDocumentSlim
 )
 
 from opencontext_py.libs.solrclient import SolrClient
@@ -73,6 +72,15 @@ items = solr_response.get('response', {}).get('docs')
 solr_response = vibe_search('spindle whorl object from Poggio Civitate used in making textiles.')
 items = solr_response.get('response', {}).get('docs')
 
+# Arabic for "lamb shank"
+solr_response = vibe_search('موزة لحم الضأن')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('leg of lamb')
+items = solr_response.get('response', {}).get('docs')
+
+solr_response = vibe_search('a medusa head')
+items = solr_response.get('response', {}).get('docs')
 
 '''
 
@@ -84,8 +92,7 @@ else:
 
 
 TOP_K_DOCUMENTS = 10
-# Activate an embedding model
-ACTIVE_EMBEDDING_MODEL = TextEmbedding(EMBEDDING_MODEL)
+
 
 
 # --------------------------------------------------------------------
@@ -99,29 +106,9 @@ def get_solr_connection():
     return solr
 
 
-def make_vectorized_embedding_str(str_to_vectorize, embedding_model=ACTIVE_EMBEDDING_MODEL):
-    if not str_to_vectorize:
-        return None
-    str_to_vectorize = str(str_to_vectorize)
-    if not embedding_model:
-        if SUPRESS_EMBEDDING_WARNINGS:
-            with warnings.catch_warnings(action="ignore"):
-                embedding_model = TextEmbedding(EMBEDDING_MODEL)
-        else:
-            embedding_model = TextEmbedding(EMBEDDING_MODEL)
-    embedding_text = re.sub(r"<.*?>", "", str_to_vectorize)
-    if not  embedding_text.startswith('query:'):
-        embedding_text = 'query:' + embedding_text
-    documents = [embedding_text]
-    embeddings_generator = embedding_model.embed(documents)
-    embeddings_list = list(embeddings_generator)
-    embedding = embeddings_list[0]
-    return json.dumps(embedding.flatten().tolist())
-
-
 def add_str_to_vector_to_solr_query(str_to_vectorize, solr_query={}):
     """adds a prompt term to a solr query"""
-    embedding_str =  make_vectorized_embedding_str(str_to_vectorize)
+    embedding_str =  make_vectorized_embedding_query_str(str_to_vectorize)
     if not embedding_str:
         return solr_query
     q_str = '{!knn f= ' + EMBEDDING_FIELD_SOLR + ' topK=' + str(TOP_K_DOCUMENTS) + '}' + embedding_str

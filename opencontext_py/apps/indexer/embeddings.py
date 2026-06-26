@@ -1,4 +1,5 @@
 
+import json
 import numpy as np
 import re
 
@@ -6,6 +7,10 @@ import warnings
 
 from fastembed import TextEmbedding
 
+
+
+# NOTE: this uses the cosine similarity function, which is also configured in the solr
+# schema configuration for the dense vector field.
 EMBEDDING_MODEL = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
 EMBEDDING_MODEL_DIM = 768
 SUPRESS_EMBEDDING_WARNINGS = True
@@ -17,13 +22,31 @@ ACTIVE_EMBEDDING_MODEL = TextEmbedding(EMBEDDING_MODEL)
 ACTIVE_TOKENIZER = ACTIVE_EMBEDDING_MODEL.model.tokenizer
 
 
+# Add some additional context information to the strings that get made into
+# embeddings. Hopefully this will help make "vibe-searches" more sensible!
+CLASS_EXPLAIN_DICT = {
+    "Animal Bone": """
+    When used with bones, the term "element" generally describes the anatomical name of a type of bone, not a chemical.
+    """,
+}
+
+
+
+END_PASSAGE_STR = """
+This is a database record, from a scientific research project or collection that described and cataloged physical remains of the human past.
+Creators and contributors are people that helped to author this database record.
+Subjects provide general descriptions of the database that contains this record. 
+"""
+
+
 def prepare_text_str_for_index_embedding(text_field_str):
     """Prepares the text field as a set of passages for an embedding"""
     text_field_str = re.sub(r"<.*?>", "", text_field_str)
+    test_field_str += f'\n{END_PASSAGE_STR}'
     orig_lines = text_field_str.split('\n')
     lines = [l for l in orig_lines if len(l) > 0]
     embedding_str = '\n'.join(lines)
-    return f'passage:{embedding_str}'
+    return f'passage: {embedding_str}'
 
 
 def embed_with_chunk_pooling(
@@ -31,6 +54,7 @@ def embed_with_chunk_pooling(
     max_tokens: int = 500,
     embedding_model=ACTIVE_EMBEDDING_MODEL,
     tokenizer=ACTIVE_TOKENIZER,
+    chunk_prefix='passage: '
 ) -> list:
     """Chunks a long text by its token representation, generates embeddings
 
@@ -53,6 +77,10 @@ def embed_with_chunk_pooling(
         chunk_ids = token_ids[i : i + max_tokens]
         # Decode token IDs back into string pieces
         chunk_str = tokenizer.decode(chunk_ids)
+        if not chunk_str.startswith(chunk_prefix):
+            # make sure the chuck has the chunk prefix
+            chunk_str = chunk_prefix + chunk_str
+            # print('Added prefix to long text for embedding') 
         chunks_text.append(chunk_str)
 
     # Generate embeddings for all chunks in a single batched pass
@@ -71,6 +99,16 @@ def embed_with_chunk_pooling(
         pooled_embedding = pooled_embedding / norm
 
     return pooled_embedding.flatten().tolist()
+
+
+def make_vectorized_embedding_query_str(str_to_vectorize, embedding_model=ACTIVE_EMBEDDING_MODEL):
+    if not str_to_vectorize:
+        return None
+    embedding_str = str(str_to_vectorize)
+    if not embedding_str.startswith('query:'):
+        embedding_str = 'query: ' + embedding_str
+    embedding = embed_with_chunk_pooling(embedding_str, chunk_prefix='query: ')  
+    return json.dumps(embedding)
 
 
 
