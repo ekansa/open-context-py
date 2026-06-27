@@ -102,6 +102,14 @@ SITE_KEY_WORDS = {
         'interfaces',
         'controlled vocabularies',
     ],
+    '/about/tutorials': [
+        'data literacy',
+        'data stories',
+        'L. Meghan Dennis',
+        'Paulina Przystupa',
+        'It\'s All in the Wrist',
+        'Of Mycenaean Men',
+    ],
     '/about/publishing': [
         'editorial team',
         'structured data',
