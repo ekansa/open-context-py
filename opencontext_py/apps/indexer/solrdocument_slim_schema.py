@@ -2071,7 +2071,10 @@ class SolrDocumentSlim:
 
     def _generate_vector_embedding(self):
         """Generates a vector embedding using a language model for fuzzy searches"""
-        embedding_str = prepare_text_str_for_index_embedding(self.fields['text'])
+        embedding_str = prepare_text_str_for_index_embedding(
+            text_field_str=self.fields['text'],
+            item_class_label=self.fields['item_class'],
+        )
         embedding = embed_with_chunk_pooling(embedding_str)
         # print(f'Embedding dim: {len(embedding)}')
         self.fields[EMBEDDING_FIELD_SOLR] = embedding

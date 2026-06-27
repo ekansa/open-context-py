@@ -268,7 +268,10 @@ def generate_vector_embeddings_for_solr_docs(solr_docs, embedding_model=ACTIVE_E
     """Generates a vector embedding using a language model for fuzzy searches"""
     embeddings_start = time.time()
     for solr_doc in solr_docs:
-        embedding_str = prepare_text_str_for_index_embedding(solr_doc.get('text', ''))
+        embedding_str = prepare_text_str_for_index_embedding(
+            text_field_str=solr_doc.get('text', ''),
+            item_class_label=solr_doc.get('item_class'),
+        )
         solr_doc[EMBEDDING_FIELD_SOLR] = embed_with_chunk_pooling(embedding_str)
     embeddings_end = time.time()
     print(f'{len(solr_docs)} embeddings finished in {(embeddings_end - embeddings_start)} seconds.')
