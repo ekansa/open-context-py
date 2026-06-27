@@ -373,7 +373,7 @@ def make_site_pages_solr_docs():
             try:
                 # For some reason, we need to do this on a deployed
                 # server.
-                r = requests.get(url)
+                r = requests.get(url, headers={'User-Agent': 'oc-api-client'})
                 root = html.document_fromstring(str(r.content))
             except:
                 root = None
