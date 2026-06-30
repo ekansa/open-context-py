@@ -228,6 +228,8 @@ def all_items_json(request, uuid, man_obj=None):
         )
         solrdoc.make_solr_doc()
         rep_dict = solrdoc.fields
+        rep_dict['text_for_embedding_dict'] = solrdoc.text_for_embedding_dict
+        rep_dict['text_for_embedding_list'] = solrdoc.text_for_embedding_list
     else:
         # default, simple JSON-LD
         man_obj, rep_dict = item.make_representation_dict(subject_id=ok_uuid)

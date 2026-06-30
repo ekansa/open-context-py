@@ -27,7 +27,6 @@ from opencontext_py.apps.all_items.representations import metadata as rep_metada
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL,
-    prepare_text_str_for_index_embedding,
     embed_with_chunk_pooling,
 )
 from opencontext_py.apps.indexer.solrdocument_slim_schema import (
@@ -198,7 +197,7 @@ def index_test_samples(item_type_sample_size=500):
     for proj_obj in proj_qs:
         rep_man_objs = db_site_data.db_get_project_representative_sample(proj_obj)
         make_indexed_solr_documents_in_chunks([proj_obj.uuid])
-        uuids = [m.uuid for m in rep_man_objs]
+        uuids = [m.uuid for m in rep_man_objs if m.item_type in ['projects', 'subjects', 'media', 'documents']]
         make_indexed_solr_documents_in_chunks(uuids, start_clear_caches=False)
     
 
@@ -264,36 +263,21 @@ def chunk_list(act_list, chunk_size):
 
 
 
-def generate_vector_embeddings_for_solr_docs(solr_docs, embedding_model=ACTIVE_EMBEDDING_MODEL):
-    """Generates a vector embedding using a language model for fuzzy searches"""
-    embeddings_start = time.time()
-    for solr_doc in solr_docs:
-        embedding_str = prepare_text_str_for_index_embedding(
-            text_field_str=solr_doc.get('text', ''),
-            item_class_label=solr_doc.get('item_class'),
-        )
-        solr_doc[EMBEDDING_FIELD_SOLR] = embed_with_chunk_pooling(embedding_str)
-    embeddings_end = time.time()
-    print(f'{len(solr_docs)} embeddings finished in {(embeddings_end - embeddings_start)} seconds.')
-    return solr_docs
-
-
-
 def make_solr_documents(uuids):
     """Makes a list of solr documents"""
     solr_docs = []
     for uuid in uuids:
-        solrdoc = SolrDocumentSlim(uuid, do_batch_embeddings=True)
-        if solrdoc.flag_do_not_index:
-            print(f'Flagged to NOT index: {solrdoc.man_obj.label} [{uuid}]')
+        solrdoc_obj = SolrDocumentSlim(uuid, do_batch_embeddings=True)
+        if solrdoc_obj.flag_do_not_index:
+            print(f'Flagged to NOT index: {solrdoc_obj.man_obj.label} [{uuid}]')
             continue
-        ok = solrdoc.make_solr_doc()
+        ok = solrdoc_obj.make_solr_doc()
         if not ok:
             logger.warn(f'Problem making solr doc for {str(uuid)}')
             print(f'Problem making solr doc for {str(uuid)}')
-        solr_docs.append(solrdoc.fields)
-    # Add the solr embeddings.
-    solr_docs = generate_vector_embeddings_for_solr_docs(solr_docs)
+        solrdoc_obj.generate_vector_embedding()
+        solr_doc = solrdoc_obj.fields
+        solr_docs.append(solr_doc)
     return solr_docs
 
 
@@ -447,6 +431,7 @@ def make_indexed_solr_documents_in_chunks(
                 done = True
             except:
                 print(f'Problem with solr on attempt {attempt}, wait a minute and try again.')
+                print(act_uuids)
                 done = False
                 sleep(60)
         if update_index_time:

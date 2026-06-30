@@ -39,48 +39,87 @@ from opencontext_py.apps.all_items.models import (
 from opencontext_py.apps.all_items import configs
 from opencontext_py.apps.searcher.slim_solrsearcher.main_search import vibe_search
 
+solr_response = vibe_search('remains of a cow')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+
+solr_response = vibe_search('remains of a giant bull')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+
+solr_response = vibe_search('a cute little bunny')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+print(items[1]['text'])
+
+solr_response = vibe_search('a hip bone')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+
+solr_response = vibe_search('an arm bone')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+
 solr_response = vibe_search('artifact used for spinning threads')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('remains from feasting on pork')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('artifact from Italy used in making clothing')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('artifact from Italy used as a spool')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('daily life in ancient Egypt')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('food in ancient Egypt')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('has the image of a greek god')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('evidence of office work')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('artifact from Italy used in making textiles. DOT include anything relating to involving pottery vessels')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('artifact from Tuscany used in making textiles.')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('spindle whorl object from Poggio Civitate used in making textiles.')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 # Arabic for "lamb shank"
 solr_response = vibe_search('موزة لحم الضأن')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('leg of lamb')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 solr_response = vibe_search('a medusa head')
 items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+
+solr_response = vibe_search('a bronze age house')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
 
 '''
 
@@ -91,8 +130,8 @@ else:
     SEARCH_CACHE_TIMEOUT = 60 * 60 * 24 * 7 # 1 week
 
 
-TOP_K_DOCUMENTS = 10
-
+TOP_K_DOCUMENTS = 20
+VECTOR_MIN_RETURN = 0.5
 
 
 # --------------------------------------------------------------------
@@ -111,7 +150,8 @@ def add_str_to_vector_to_solr_query(str_to_vectorize, solr_query={}):
     embedding_str =  make_vectorized_embedding_query_str(str_to_vectorize)
     if not embedding_str:
         return solr_query
-    q_str = '{!knn f= ' + EMBEDDING_FIELD_SOLR + ' topK=' + str(TOP_K_DOCUMENTS) + '}' + embedding_str
+    q_str = '{!knn f=' + EMBEDDING_FIELD_SOLR + ' topK=' + str(TOP_K_DOCUMENTS) + '}' + embedding_str
+    # q_str = '{!vectorSimilarity f=' + EMBEDDING_FIELD_SOLR + ' minReturn=' + str(VECTOR_MIN_RETURN) + '}' + embedding_str
     solr_query['q'] = q_str
     return solr_query
 

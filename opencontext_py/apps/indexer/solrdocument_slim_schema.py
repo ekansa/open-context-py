@@ -31,6 +31,9 @@ from opencontext_py.apps.all_items.representations.template_prep import (
 
 from opencontext_py.apps.indexer import solr_utils
 
+from opencontext_py.apps.indexer.embedding_configs import (
+    CLASS_EXPLAIN_DICT
+)
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL_DIM,
     prepare_text_str_for_index_embedding,
@@ -299,6 +302,20 @@ class SolrDocumentSlim:
         # The solr field for joins by uuid.
         self.join_solr_field = 'join' +  SOLR_VALUE_DELIM + 'pred_id'
 
+        # Make a list of text, with the most important characteristics
+        # first, followed by more general minutia later. The more general
+        # text positioned later in the list will have less influence 
+        # of the final embedding.
+        self.text_for_embedding_list = []
+        self.text_for_embedding_dict = {
+            'id': [],
+            'string': [],
+            'boolean': [],
+            'item_linked_data': [],
+            'project': [],
+            'metadata': [],
+        }
+
 
     # -----------------------------------------------------------------
     # NOTE: This section are for utilities used by multiple methods
@@ -490,10 +507,12 @@ class SolrDocumentSlim:
         """
         Creates a hierarchy of projects in the same way as a hierarchy of predicates
         """
+        project_labels = []
         proj_hierarchy = hierarchy.get_project_hierarchy(self.man_obj)
         for proj in proj_hierarchy:
             # Add the project label to all text field.
             self.fields['text'] += 'project: ' + str(proj.label) + '\n'
+            project_labels.append(proj.label)
             # Compose the solr_value for this item in the context
             # hierarchy.
             act_solr_value = solr_utils.make_obj_or_dict_solr_entity_str(
@@ -511,6 +530,11 @@ class SolrDocumentSlim:
                 act_solr_value,
                 act_solr_doc_prefix='', # No prefixing for projects!
             )
+
+        self.text_for_embedding_dict['project'] = [
+            f"project: {('; '.join(project_labels))}"
+        ]
+        
 
 
     def _get_parent_and_sibling_projects(self):
@@ -776,7 +800,13 @@ class SolrDocumentSlim:
         return hierarchy_paths
 
 
-    def _add_object_value_hierarchies(self, all_obj_solr_field, hierarchy_paths, text_prefix=''):
+    def _add_object_value_hierarchies(
+        self, 
+        all_obj_solr_field, 
+        hierarchy_paths, 
+        text_prefix='',
+        embedding_key=None
+    ):
         """Adds a hierarchy of predicates to the solr doc."""
 
         # The all_obj_solr_field is defined for the solr field
@@ -810,7 +840,10 @@ class SolrDocumentSlim:
                 # to the text field. This means key-word searches will
                 # be inclusive of all parent items in a hierarchy.
                 if item.get('label'):
-                    text_labels.append(item.get('label'))
+                    act_label = item.get('label')
+                    if item.get('alt_label'):
+                       act_label += ' (' + item.get('alt_label') + ')'
+                    text_labels.append(act_label)
 
                 if self._check_meta_json_to_skip_index(item):
                     # item meta_json says don't index this.
@@ -841,6 +874,19 @@ class SolrDocumentSlim:
             self.fields['text'] += text_prefix
         self.fields['text'] += all_label_text
         self.fields['text'] += ' \n'
+        if embedding_key == 'item_linked_data' and 'Creative Commons' in all_label_text:
+            # hack skip adding creative commons to an embedding, it drowns distinctions
+            return None
+        if embedding_key in self.text_for_embedding_dict:
+            if embedding_key == 'item_linked_data':
+                # Last two, most specific labels only so as to improve the signal
+                # in the vector
+                all_label_text = ' '.join(text_labels[-2:])
+            str_for_embedding = f'{text_prefix}{all_label_text}'
+            if not str_for_embedding in self.text_for_embedding_dict[embedding_key]:
+                self.text_for_embedding_dict[embedding_key].append(str_for_embedding)
+
+
 
 
     def _add_category_hierarchies(self):
@@ -912,7 +958,13 @@ class SolrDocumentSlim:
         return False
 
 
-    def _add_solr_id_field_values(self, solr_field_name, pred_value_objects, text_prefix=''):
+    def _add_solr_id_field_values(
+        self,
+        solr_field_name,
+        pred_value_objects, 
+        text_prefix='',
+        embedding_key=None,
+    ):
         """Adds non-literal predicate value objects,
            and their hierarchy parents, to the Solr doc
         """
@@ -968,6 +1020,7 @@ class SolrDocumentSlim:
                 solr_field_name,
                 hierarchy_paths,
                 text_prefix=text_prefix,
+                embedding_key=embedding_key,
             )
             # A little stying for different value objects in the text field.
             self.fields['text'] += '\n'
@@ -1065,6 +1118,14 @@ class SolrDocumentSlim:
                     # This is a case of a linked data where the object is not
                     # referencing a specific vocabulary, so we should skip it.
                     continue
+
+                embedding_key = 'metadata'
+                if val_obj.get('predicate__item_type') == 'predicates':
+                    embedding_key = 'id'
+                if (val_obj.get('predicate__item_type') == 'property' 
+                    and val_obj.get('predicate__context__uri') != 'purl.org/dc/terms'):
+                    embedding_key = 'item_linked_data'
+
                 # This is the most complicated case where the value
                 # objects will be non-literals (entities with outside URIs or URI
                 # identified Open Context entities). So we need to add them, and
@@ -1073,6 +1134,7 @@ class SolrDocumentSlim:
                     solr_field_name,
                     [val_obj],
                     text_prefix=text_prefix,
+                    embedding_key=embedding_key,
                 )
                 self._add_external_context_val(val_obj)
                 self._add_object_uri(val_obj)
@@ -1097,12 +1159,24 @@ class SolrDocumentSlim:
                 no_html_val_str = re.sub(r"<.*?>", "", val_str )
                 self.fields['text'] += no_html_val_str + ' \n'
                 self.fields[solr_field_name].append(val_str)
+
+                # Add the string to the embedding dict
+                str_for_embedding = f'{text_prefix}{no_html_val_str}'
+                if not str_for_embedding in self.text_for_embedding_dict['string']:
+                    self.text_for_embedding_dict['string'].append(str_for_embedding)
+
             elif solr_data_type== 'bool':
                 val = val_obj.get('obj_boolean')
                 if val is None:
                     continue
                 self.fields[solr_field_name].append(val)
                 self.fields['text'] += str(val) + ' \n'
+
+                # Add the string to the embedding dict
+                str_for_embedding = f'{text_prefix}{str(val)}'
+                if not str_for_embedding in self.text_for_embedding_dict['boolean']:
+                    self.text_for_embedding_dict['boolean'].append(str_for_embedding)
+
             elif solr_data_type == 'int':
                 val = val_obj.get('obj_integer')
                 if val is None:
@@ -1123,119 +1197,6 @@ class SolrDocumentSlim:
                 self.fields[solr_field_name].append((val + 'T00:00:00Z'))
             else:
                 pass
-
-
-    def _is_same_actual_versus_expected_meta_json(
-        self,
-        actual_meta_json,
-        expected_meta_json,
-        expect_key_only_check=True,
-    ):
-        """Checks if the actual meta_json object is the same as the expected.
-
-        :param dict actual_meta_json: An items actual meta_json dict.
-        :param dict expected_meta_json: Meta_json keys and values expected
-            to be present in the predicate item's AllManitest instance.
-        :param bool expect_key_only_check: Only check that the expected key
-            exists, don't update key values if it does.
-        """
-        for expected_key, expected_str in expected_meta_json.items():
-            if not isinstance(expected_str, str):
-                continue
-            if expect_key_only_check:
-                if not actual_meta_json.get(expected_key):
-                    return False
-                else:
-                    continue
-            if expected_str.startswith(RELATED_SOLR_DOC_PREFIX):
-                # Strip away any 'REL' prefix, to keep things consistent.
-                expected_str = expected_str[len(RELATED_SOLR_DOC_PREFIX):]
-            if actual_meta_json.get(expected_key) != expected_str:
-                return False
-        return True
-
-
-    def _update_pred_obj_meta_json(
-        self,
-        expected_meta_json,
-        item_obj,
-        expect_key_only_check=True,
-        clear_caches_on_update=True,
-        attrib_group_man_obj=None
-    ):
-        """Updates a Manifest object meta_json with a solr_field_name if
-        it does not already exist.
-
-        :param dict expected_meta_json: Meta_json keys and values expected
-            to be present in the predicate item's AllManifest instance.
-        :param (dict or AllManifest) item_obj: The AllManifest instance or
-            a dict of an AllManifest instance that's used as a predicate.
-        :param bool expect_key_only_check: Only check that the expected key
-            exists, don't update key values if it does.
-        :param bool clear_caches_on_update: Clear the caches on update.
-        :param (dict or AllManifest) attrib_group_man_obj: The AllManifest instance or
-            a dict of an AllManifest instance that's used as the root attribute group
-            object.
-        """
-        # Make sure we save the solr_field_name in the Manifest meta_json
-        # if this doesn't yet exist.
-        if not expected_meta_json:
-            return None
-        is_ok = None
-        item_man_obj_to_update = None
-        if isinstance(item_obj, dict):
-            is_ok = self._is_same_actual_versus_expected_meta_json(
-                actual_meta_json=item_obj.get('meta_json', {}),
-                expected_meta_json=expected_meta_json,
-                expect_key_only_check=expect_key_only_check,
-            )
-            if not is_ok:
-                item_man_obj_to_update = solr_utils.get_manifest_obj_from_man_obj_dict(
-                    uuid=item_obj.get('uuid'),
-                    man_obj_dict={}
-                )
-
-        elif isinstance(item_obj, AllManifest):
-            is_ok = self._is_same_actual_versus_expected_meta_json(
-                actual_meta_json=item_obj.meta_json,
-                expected_meta_json=expected_meta_json,
-                expect_key_only_check=expect_key_only_check,
-            )
-            # Make sure copy the object otherwise we'll run into weird
-            # mutation issues.
-            if not is_ok:
-                item_man_obj_to_update = copy.deepcopy(item_obj)
-
-        if is_ok or not item_man_obj_to_update:
-            # We don't need ot update the meta-json
-            return None
-
-        update_str = ''
-        for expected_key, expected_str in expected_meta_json.items():
-            if expected_str.startswith(RELATED_SOLR_DOC_PREFIX):
-                # Strip away any 'REL' prefix, to keep things consistent.
-                expected_str = expected_str[len(RELATED_SOLR_DOC_PREFIX):]
-            if attrib_group_man_obj:
-                # Convert the slug for a specific attribute group into the general
-                # attribute slug.
-                expected_str = solr_utils.replace_slug_in_solr_field(
-                    solr_field = expected_str,
-                    old_slug=attrib_group_man_obj.slug,
-                    new_slug=ALL_ATTRIBUTE_GROUPS_SLUG,
-                )
-                slugs_key = AllManifest.META_JSON_KEY_ATTRIBUTE_GROUP_SLUGS
-                if not item_man_obj_to_update.meta_json.get(slugs_key):
-                    item_man_obj_to_update.meta_json[slugs_key] = []
-                if not attrib_group_man_obj.slug in item_man_obj_to_update.meta_json[slugs_key]:
-                    item_man_obj_to_update.meta_json[slugs_key].append(attrib_group_man_obj.slug)
-            update_str += f'{expected_key}:{expected_str}, '
-            item_man_obj_to_update.meta_json[expected_key] = expected_str
-
-        print(f'Save {update_str} for {item_man_obj_to_update.label}')
-
-        item_man_obj_to_update.save()
-        if clear_caches_on_update:
-            solr_utils.clear_man_obj_from_cache(item_man_obj_to_update.uuid)
 
 
     def _get_predicate_solr_field_name_in_hierarchy(
@@ -1317,13 +1278,7 @@ class SolrDocumentSlim:
         # The default solr_field_name.
         solr_field_name = None
 
-        # The last_index_hierarchy_paths is the index number for the last of the
-        # hierarchy paths. If we're at the last path of heirarchies, we'll save
-        # the solr_field_name and the parent_solr_field_name on the predicate's
-        # AllManifest instances meta_json. This should simplify logic on composing
-        # facet queries and getting facet fields.
-        last_index_hierarchy_paths = len(hierarchy_paths) - 1
-        for index_hierarchy_paths, hierarchy_items in enumerate(hierarchy_paths):
+        for _, hierarchy_items in enumerate(hierarchy_paths):
             
             # Add the root solr field if it does not exist.
             last_item_index = len(hierarchy_items) - 1
@@ -2068,14 +2023,46 @@ class SolrDocumentSlim:
         score += self.fields.get(FILE_SIZE_SOLR, 0 ) / 50000
         self.fields['interest_score'] = score
 
+    
+    def _make_text_for_embedding_list(self):
+        """Prepares a list of text for an embedding. The most important
+        distinctive information is first in the list. The last list item
+        is less important, and will make a 'weaker signal' in computing
+        the embedding vector.
+        """
+        if not self.man_obj or not self.rep_dict:
+            return None
+        item_class = self.fields.get('item_class', '')
+        if 'default' in item_class.lower():
+            item_class = ''
+        context_path = self.fields.get('context_path')
+        context = ''
+        if context_path:
+            context_path =  context_path.replace('/', ', ')
+            context = f' from the place: {context_path}'
+        main_list = [
+            f'"{self.man_obj.label}" is a {item_class} record{context}.'
+        ]
+        main_list += self.text_for_embedding_dict['id']
+        main_list += self.text_for_embedding_dict['item_linked_data']
+        main_list += self.text_for_embedding_dict['boolean']
+        main_list += self.text_for_embedding_dict['string']
+        if CLASS_EXPLAIN_DICT.get(item_class):
+            main_list.append(CLASS_EXPLAIN_DICT.get(item_class))
+        main_text = '\n'.join(main_list)
+        proj_meta_text = '\n'.join((self.text_for_embedding_dict['project'] + self.text_for_embedding_dict['metadata']))
+        self.text_for_embedding_list = [
+            prepare_text_str_for_index_embedding(main_text),
+            prepare_text_str_for_index_embedding(proj_meta_text),
+        ]
 
-    def _generate_vector_embedding(self):
+
+    def generate_vector_embedding(self):
         """Generates a vector embedding using a language model for fuzzy searches"""
-        embedding_str = prepare_text_str_for_index_embedding(
-            text_field_str=self.fields['text'],
-            item_class_label=self.fields['item_class'],
+        embedding = embed_with_chunk_pooling(
+            embedding_str=None,
+            embedding_str_list=self.text_for_embedding_list,
         )
-        embedding = embed_with_chunk_pooling(embedding_str)
         # print(f'Embedding dim: {len(embedding)}')
         self.fields[EMBEDDING_FIELD_SOLR] = embedding
 
@@ -2119,9 +2106,11 @@ class SolrDocumentSlim:
         self._add_table_specifics()
         # Calculate the interest score for the item
         self._calculate_interest_score()
+        # prepare the list of text chunks for making embeddings:
+        self._make_text_for_embedding_list()
         if not self.do_batch_embeddings:
             # Generate vector embedding
-            self._generate_vector_embedding()
+            self.generate_vector_embedding()
         return True
 
 
@@ -2141,3 +2130,4 @@ class SolrDocumentSlim:
         # associated metadata in order to flag this item if needed.
         self._double_check_human_remains()
         return True
+    
