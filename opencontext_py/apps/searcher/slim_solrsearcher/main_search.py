@@ -64,6 +64,10 @@ solr_response = vibe_search('artifact used for spinning threads')
 items = solr_response.get('response', {}).get('docs')
 print(items[0]['text'])
 
+solr_response = vibe_search('artifact from Tuscany used for spinning threads')
+items = solr_response.get('response', {}).get('docs')
+print(items[0]['text'])
+
 solr_response = vibe_search('remains from feasting on pork')
 items = solr_response.get('response', {}).get('docs')
 print(items[0]['text'])
