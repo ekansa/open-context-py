@@ -25,10 +25,7 @@ from opencontext_py.apps.all_items.project_contexts.context import (
 from opencontext_py.apps.all_items.representations import metadata as rep_metadata
 
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.apps.indexer.embeddings import (
-    EMBEDDING_MODEL,
-    embed_with_chunk_pooling,
-)
+
 from opencontext_py.apps.indexer.solrdocument_slim_schema import (
     EMBEDDING_FIELD_SOLR,
     SolrDocumentSlim
@@ -55,7 +52,7 @@ from opencontext_py.apps.indexer import index_slim_schema as slim_ind
 importlib.reload(slim_ind)
 
 
-slim_ind.index_test_samples()
+slim_ind.index_test_samples(project_id='df043419-f23b-41da-7e4d-ee52af22f92f')
 slim_ind.make_indexed_solr_documents_in_chunks(uuids, start_clear_caches=False)
 suggest.get_rebuild_solr_suggest()
 
@@ -181,12 +178,8 @@ slim_ind.make_indexed_solr_documents_in_chunks(uuids)
 
 """
 
-# Activate an embedding model
-ACTIVE_EMBEDDING_MODEL = TextEmbedding(EMBEDDING_MODEL)
 
-
-
-def index_test_samples(item_type_sample_size=500):
+def index_test_samples(project_id=None):
     
     proj_qs = AllManifest.objects.filter(
         item_type='projects', 
@@ -194,6 +187,9 @@ def index_test_samples(item_type_sample_size=500):
     ).exclude(
         uuid=configs.OPEN_CONTEXT_PROJ_UUID,
     )
+    if project_id:
+        # Optionally filter on a project
+        proj_qs = proj_qs.filter(uuid=project_id)
     for proj_obj in proj_qs:
         rep_man_objs = db_site_data.db_get_project_representative_sample(proj_obj)
         make_indexed_solr_documents_in_chunks([proj_obj.uuid])
@@ -267,7 +263,7 @@ def make_solr_documents(uuids):
     """Makes a list of solr documents"""
     solr_docs = []
     for uuid in uuids:
-        solrdoc_obj = SolrDocumentSlim(uuid, do_batch_embeddings=True)
+        solrdoc_obj = SolrDocumentSlim(uuid, do_batch_embeddings=False)
         if solrdoc_obj.flag_do_not_index:
             print(f'Flagged to NOT index: {solrdoc_obj.man_obj.label} [{uuid}]')
             continue
@@ -275,7 +271,8 @@ def make_solr_documents(uuids):
         if not ok:
             logger.warn(f'Problem making solr doc for {str(uuid)}')
             print(f'Problem making solr doc for {str(uuid)}')
-        solrdoc_obj.generate_vector_embedding()
+        # We're making embeddings for each document
+        # solrdoc_obj.generate_vector_embedding()
         solr_doc = solrdoc_obj.fields
         solr_docs.append(solr_doc)
     return solr_docs
