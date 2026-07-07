@@ -1,5 +1,6 @@
 
 import json
+import os
 import numpy as np
 import re
 
@@ -7,6 +8,7 @@ import warnings
 
 from fastembed import TextEmbedding
 
+from django.conf import settings
 
 
 # NOTE: this uses the cosine similarity function, which is also configured in the solr
@@ -14,16 +16,31 @@ from fastembed import TextEmbedding
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 EMBEDDING_MODEL_DIM = 768
 
+MODEL_LOCAL_PATH = os.path.join(
+    settings.FILE_CACHE_PATH, 
+    EMBEDDING_MODEL.split('/')[-1]
+)
+EXISTING_MODEL_LOCAL_PATH = None
+if os.path.exists(MODEL_LOCAL_PATH):
+    EXISTING_MODEL_LOCAL_PATH = MODEL_LOCAL_PATH
+
 # This is very slow, takes more than a second to make an embedding.
 # EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
 # EMBEDDING_MODEL_DIM = 1024
 SUPRESS_EMBEDDING_WARNINGS = True
 
 
+if True:
+    ACTIVE_EMBEDDING_MODEL = TextEmbedding(
+        EMBEDDING_MODEL, 
+        specific_model_path=EXISTING_MODEL_LOCAL_PATH,
+    )
+    # Access the underlying HuggingFace tokenizer used by FastEmbed
+    ACTIVE_TOKENIZER = ACTIVE_EMBEDDING_MODEL.model.tokenizer
+else:
+    ACTIVE_EMBEDDING_MODEL = None
+    ACTIVE_TOKENIZER = None
 
-ACTIVE_EMBEDDING_MODEL = TextEmbedding(EMBEDDING_MODEL)
-# Access the underlying HuggingFace tokenizer used by FastEmbed
-ACTIVE_TOKENIZER = ACTIVE_EMBEDDING_MODEL.model.tokenizer
 
 # our model truncates at 384 tokens, so we will need to chunk in batches of
 # 380
