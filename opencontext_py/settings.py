@@ -336,6 +336,7 @@ if not ':' in REDIS_HOST_PORT:
 redis_split = REDIS_HOST_PORT.split(':')
 REDIS_HOST = redis_split[0]
 REDIS_PORT = redis_split[1]
+FILE_CACHE_PATH = get_secret('FILE_CACHE_PATH')
 
 if DEBUG:
     # Short caching for debugging
