@@ -249,6 +249,7 @@ def manifest_obj_to_json_safe_dict(
             }
         )
         manifest_obj.item_class = item_class_obj
+    
     output = {
         'uuid': str(manifest_obj.uuid),
         'slug': manifest_obj.slug,
@@ -269,8 +270,8 @@ def manifest_obj_to_json_safe_dict(
         'path': manifest_obj.path,
         'uri': manifest_obj.uri,
         'source_id': manifest_obj.source_id,
-        'alt_label': manifest_obj.meta_json.get('alt_label', getattr(manifest_obj, 'alt_label')),
-        'other_labels': manifest_obj.meta_json.get('other_labels', getattr(manifest_obj, 'other_labels')),
+        'alt_label': manifest_obj.meta_json.get('alt_label', getattr(manifest_obj, 'alt_label', None)),
+        'other_labels': manifest_obj.meta_json.get('other_labels', getattr(manifest_obj, 'other_labels', None)),
         'meta_json': manifest_obj.meta_json,
     }
     if for_edit:
