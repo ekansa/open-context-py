@@ -14,8 +14,14 @@ from opencontext_py.apps.entities.entity import views as EntityViews
 # New Open Context highlights page
 from opencontext_py.apps.highlights import views as HighlightsViews
 
-# For testing new search
+# For production search
 from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchViews
+
+# For testing new search, slimmer schema
+from opencontext_py.apps.searcher.slim_solrsearcher import views as SlimSearchViews
+
+# For testing additional APIs to facilitate search
+from opencontext_py.apps.searcher.searcher_apis import views as SearcherAPIsViews
 
 # Testing views for all items
 from opencontext_py.apps.all_items import views as AllItemsViews
@@ -97,6 +103,17 @@ urlpatterns = [
     re_path(r'^query.json?', NewSearchViews.query_json, name='new_search_json_d'),
     re_path(r'^query/(?P<spatial_context>\S+)?.json', NewSearchViews.query_json, name='new_search_json'),
     re_path(r'^query/(?P<spatial_context>\S+)?', NewSearchViews.query_html, name='new_search_html'),
+
+    re_path(
+        r'^search-item-children/(?P<identifier>\S+)',
+        SearcherAPIsViews.item_children_json,
+        name='searcher_apis_item_children_json'
+    ),
+    re_path(
+        r'^lm-query/(?P<spatial_context>\S+)?',
+        SlimSearchViews.query_json,
+        name='slim_search_vibe_search'
+    ),
 
     # Projects index searches
     re_path(r'^projects-index/(?P<spatial_context>\S+)?.json', NewSearchViews.projects_index_json, name='projects_index_json'),
