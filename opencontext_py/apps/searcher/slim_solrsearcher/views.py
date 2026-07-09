@@ -55,7 +55,9 @@ def query_json(request, spatial_context=None):
     request_dict = utilities.make_request_obj_dict(
         request, spatial_context=spatial_context
     )
-    response_dict = main_search.vibe_search(request_dict.get('gv', ''))
+    response_dict = main_search.process_solr_query_via_solr_and_db(
+        request_dict=request_dict
+    )
     req_neg = RequestNegotiation('application/json')
     req_neg.supported_types = ['application/ld+json']
 
