@@ -3,11 +3,11 @@ from datetime import datetime
 from django.conf import settings
 
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
+from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDocSlim
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
-from opencontext_py.apps.searcher.new_solrsearcher import querymaker
+from opencontext_py.apps.searcher.slim_solrsearcher import querymaker
 from opencontext_py.apps.searcher.new_solrsearcher import ranges
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
@@ -83,7 +83,7 @@ class SearchSolrSlim():
             add_projects_facet = True
         if len(request_dict) > 2:
             add_projects_facet = True
-        if SolrDoc.ROOT_PROJECT_SOLR in self.init_facet_fields:
+        if SolrDocSlim.ROOT_PROJECT_SOLR in self.init_facet_fields:
             # No need to add it again!
             add_projects_facet = False
         return add_projects_facet
@@ -97,12 +97,12 @@ class SearchSolrSlim():
         if add_projects_facet:
             self.limit_project_facets = True
             self.init_facet_fields.append(
-                SolrDoc.ROOT_PROJECT_SOLR
+                SolrDocSlim.ROOT_PROJECT_SOLR
             )
         if 'proj' in request_dict:
             self.limit_project_facets = True
             self.init_facet_fields.append(
-                SolrDoc.ROOT_PREDICATE_SOLR
+                SolrDocSlim.ROOT_PREDICATE_SOLR
             )
         requested_facets = utilities.get_request_param_value(
             request_dict,
@@ -639,7 +639,7 @@ class SearchSolrSlim():
                 )
                 # Remove the default Root Solr facet field if it is there.
                 query['facet.field'] = utilities.safe_remove_item_from_list(
-                    SolrDoc.ROOT_CONTEXT_SOLR,
+                    SolrDocSlim.ROOT_CONTEXT_SOLR,
                     query['facet.field'].copy()
                 )
                 query = utilities.combine_query_dict_lists(
@@ -746,7 +746,7 @@ class SearchSolrSlim():
             solr_escape=False,
             require_int=True,
         )
-        if not do_lr_geotile_facet or geodeep > SolrDoc.LOW_RESOLUTION_GEOTILE_LENGTH:
+        if not do_lr_geotile_facet or geodeep > SolrDocSlim.LOW_RESOLUTION_GEOTILE_LENGTH:
             geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___geo_tile'
         else:
             geo_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_geo_tile'
@@ -761,7 +761,7 @@ class SearchSolrSlim():
             solr_escape=False,
             require_int=True,
         )
-        if not do_lr_chronotile_facet or (chronodeep > SolrDoc.LOW_RESOLUTION_CHRONOTILE_DROP_LAST):
+        if not do_lr_chronotile_facet or (chronodeep > SolrDocSlim.LOW_RESOLUTION_CHRONOTILE_DROP_LAST):
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___chrono_tile'
         else:
             chrono_tile_facet_field = f'{configs.ROOT_EVENT_CLASS}___lr_chrono_tile'
