@@ -43,10 +43,17 @@ def geospace_outliers_within(request):
         path=path,
     )
     if not output:
-        return HttpResponse(
-            f'Cannot find item_id: "{item_id}" or path: "{path}"',
-            status=404,
-        )
+        man_obj = AllManifest.objects.filter(uuid=str(item_id)).first()
+        if man_obj:
+            return HttpResponse(
+                f'No specific geospatial data for: "{man_obj.label}" (https://{man_obj.uri})',
+                status=404,
+            )
+        else:
+            return HttpResponse(
+                f'Cannot find item_id: "{item_id}" or path: "{path}".',
+                status=404,
+            )
     json_str = json.dumps(
         output,
         ensure_ascii=False,
