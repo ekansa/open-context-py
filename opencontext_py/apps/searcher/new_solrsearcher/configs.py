@@ -17,7 +17,7 @@ REQUEST_OR_OPERATOR = '||'
 REQUEST_SORT_DIR_DELIM = '--'
 
 
-REQUEST_URL_FORMAT_EXTENTIONS = [
+REQUEST_URL_FORMAT_EXTENSIONS = [
     ('html', None),
     ('json', '.json'),
     # '.atom', skip for now

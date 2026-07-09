@@ -28,7 +28,7 @@ class SearchLinks():
         self.base_url = rp.get_baseurl()
         self.base_search_url = base_search_url
         self.request_dict = copy.deepcopy(request_dict)
-        self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
+        self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENSIONS
 
 
     def remove_non_query_params(
