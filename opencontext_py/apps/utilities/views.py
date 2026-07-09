@@ -36,8 +36,8 @@ API_MAX_ZOOM = 25
 @never_cache
 def geospace_outliers_within(request):
     """Checks if contain relationships for spatial geometries of manifest objects"""
-    item_id = request.GET.get('item_id')
-    path = request.GET.get('path')
+    item_id = request.GET.get('item_id', None)
+    path = request.GET.get('path', None)
     output = geospace_contains.report_child_coordinate_outliers(
         item_id=item_id,
         path=path,
