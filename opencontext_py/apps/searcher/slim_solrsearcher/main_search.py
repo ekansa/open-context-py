@@ -9,7 +9,7 @@ from opencontext_py.libs.rootpath import RootPath
 
 
 from opencontext_py.apps.searcher.slim_solrsearcher.searchsolr import SearchSolrSlim
-from opencontext_py.apps.searcher.new_solrsearcher.resultmaker import ResultMaker
+from opencontext_py.apps.searcher.slim_solrsearcher.resultmaker import ResultMaker
 
 from opencontext_py.apps.indexer.embeddings import (
     make_vectorized_embedding_query_str

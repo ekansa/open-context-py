@@ -19,7 +19,7 @@ from opencontext_py.apps.all_items.configs import (
 )
 from opencontext_py.apps.all_items.models import AllManifest
 
-from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.slim_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 

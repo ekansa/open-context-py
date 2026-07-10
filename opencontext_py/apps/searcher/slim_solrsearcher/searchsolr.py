@@ -5,7 +5,7 @@ from django.conf import settings
 from opencontext_py.libs.solrclient import SolrClient
 from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDocSlim
 
-from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.slim_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 from opencontext_py.apps.searcher.slim_solrsearcher import querymaker
 from opencontext_py.apps.searcher.new_solrsearcher import ranges
