@@ -3,7 +3,7 @@ from datetime import datetime
 from django.conf import settings
 
 from opencontext_py.libs.solrclient import SolrClient
-from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDocSlim
+from opencontext_py.apps.indexer import solrdocument_slim_schema as SolrDocSlim
 
 from opencontext_py.apps.searcher.slim_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
@@ -83,7 +83,7 @@ class SearchSolrSlim():
             add_projects_facet = True
         if len(request_dict) > 2:
             add_projects_facet = True
-        if SolrDocSlim.ROOT_PROJECT_SOLR in self.init_facet_fields:
+        if SolrDocSlim.ALL_PROJECT_SOLR in self.init_facet_fields:
             # No need to add it again!
             add_projects_facet = False
         return add_projects_facet
@@ -97,12 +97,15 @@ class SearchSolrSlim():
         if add_projects_facet:
             self.limit_project_facets = True
             self.init_facet_fields.append(
-                SolrDocSlim.ROOT_PROJECT_SOLR
+                SolrDocSlim.ALL_PROJECT_SOLR
             )
         if 'proj' in request_dict:
             self.limit_project_facets = True
             self.init_facet_fields.append(
-                SolrDocSlim.ROOT_PREDICATE_SOLR
+                SolrDocSlim.ALL_CONTEXT_SOLR
+            )
+            self.init_facet_fields.append(
+                SolrDocSlim.ALL_PREDICATE_SOLR
             )
         requested_facets = utilities.get_request_param_value(
             request_dict,
@@ -120,6 +123,13 @@ class SearchSolrSlim():
         """Removes unwanted (expensive, time consuming)
         facet queries
         """
+        if (SolrDocSlim.TOP_CONTEXT_SOLR in query['facet.field']
+            and SolrDocSlim.ALL_CONTEXT_SOLR in query['facet.field']
+        ):
+            # Remove the solr top context, since we want more
+            # specific context facts from the SolrDocSlim.ALL_CONTEXT_SOLR
+            query['facet.field'].remove(SolrDocSlim.TOP_CONTEXT_SOLR)
+
         add_projects_facet = self._check_add_projects_facet(
             request_dict
         )

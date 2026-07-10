@@ -8,14 +8,16 @@ from opencontext_py.libs.rootpath import RootPath
 
 from opencontext_py.apps.all_items.representations import rep_utils
 
-from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
+# from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
+from opencontext_py.apps.indexer import solrdocument_slim_schema as SolrDocSlim
+
 
 from opencontext_py.apps.searcher.slim_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import (
     SearchLinks,
 )
-from opencontext_py.apps.searcher.new_solrsearcher import utilities
+from opencontext_py.apps.searcher.slim_solrsearcher import utilities
 
 
 
@@ -68,14 +70,14 @@ class ResultFacetsStandard():
             )
 
         solr_slug_parts = solr_facet_field_key.split(
-            SolrDoc.SOLR_VALUE_DELIM
+            SolrDocSlim.SOLR_VALUE_DELIM
         )
 
         # Iterate through the parts, skipping the first item
         # which is the most general part (the field suffix).
         items = []
-        is_related = False
         for solr_slug in solr_slug_parts[1:]:
+            is_related = False
             slug = solr_slug.replace('_', '-')
             if slug.startswith(configs.RELATED_ENTITY_ID_PREFIX):
                 is_related = True
@@ -242,7 +244,10 @@ class ResultFacetsStandard():
         obj_all_facet=False,
     ):
         """Adds options lists for different data types to a facet"""
-        # Look up the client's request parameter and reqest
+        # Look up the client's request parameter and request
+
+        print(f'Working on solr facet: {solr_facet_field_key}')
+
         param_key, match_old_value = self.facet_fields_to_client_request.get(
             solr_facet_field_key,
             (param_key, None,) # default parameter key with no matching value.
@@ -458,10 +463,11 @@ class ResultFacetsStandard():
                     continue
 
                 obj_all_facet = False
-                if solr_facet_field_key.startswith(f'obj_all{SolrDoc.SOLR_VALUE_DELIM}'):
+                if solr_facet_field_key.startswith(f'obj_all{SolrDocSlim.SOLR_VALUE_DELIM}'):
                     # Remove the 'obj_all___' prefix. We're doing a special request
                     # facet for counts of everything within a facet attribute, regardless of hierarchy.
-                    solr_facet_field_key = solr_facet_field_key[len(f'obj_all{SolrDoc.SOLR_VALUE_DELIM}'):]
+                    if solr_facet_field_key != SolrDocSlim.ALL_CONTEXT_SOLR:
+                        solr_facet_field_key = solr_facet_field_key[len(f'obj_all{SolrDocSlim.SOLR_VALUE_DELIM}'):]
                     obj_all_facet = True
 
                 facet = self.make_facet_dict_from_solr_field(

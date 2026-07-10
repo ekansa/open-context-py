@@ -1,6 +1,5 @@
 from opencontext_py.libs.utilities.chronotiles import MAX_TILE_DEPTH
 from opencontext_py.apps.all_items import configs as gen_configs
-from opencontext_py.apps.indexer import solrdocument_new_schema as SolrDoc
 from opencontext_py.apps.indexer import solrdocument_slim_schema as SolrDocSlim
 
 # ---------------------------------------------------------------------
@@ -13,7 +12,7 @@ from opencontext_py.apps.indexer import solrdocument_slim_schema as SolrDocSlim
 USE_TEST_SOLR_CONNECTION = True
 
 REQUEST_CONTEXT_HIERARCHY_DELIM = '/'
-REQUEST_PROP_HIERARCHY_DELIM = SolrDoc.SOLR_VALUE_DELIM.replace('_', '-')
+REQUEST_PROP_HIERARCHY_DELIM = SolrDocSlim.SOLR_VALUE_DELIM.replace('_', '-')
 REQUEST_OR_OPERATOR = '||'
 REQUEST_SORT_DIR_DELIM = '--'
 
@@ -79,6 +78,7 @@ SITEMAP_FACET_FIELD = SolrDocSlim.ALL_PROJECT_SOLR
 PROJECT_FACET_FIELDS = [
     # SolrDocSlim.ROOT_LINK_DATA_SOLR
     SolrDocSlim.ALL_CONTEXT_SOLR,
+    SolrDocSlim.ALL_PREDICATE_SOLR,
     'dc_terms_subject___pred_id',
     'dc_terms_coverage___pred_id',
     'dc_terms_temporal___pred_id',
@@ -314,16 +314,16 @@ RECORD_SNIPPET_HIGHLIGHT_TAG_POST = '</mark>'
 # ---------------------------------------------------------------------
 HIERARCHY_PARAM_TO_SOLR = [
     (
-        'path', SolrDocSlim.TOP_CONTEXT_SOLR,
+        'path', SolrDocSlim.ALL_CONTEXT_SOLR,
         {
-            'root_field':SolrDocSlim.TOP_CONTEXT_SOLR,
+            'root_field':SolrDocSlim.ALL_CONTEXT_SOLR,
             'field_suffix': SolrDocSlim.FIELD_SUFFIX_CONTEXT,
         },
     ),
     (
-        'path', SolrDocSlim.ALL_CONTEXT_SOLR,
+        'path', SolrDocSlim.TOP_CONTEXT_SOLR,
         {
-            'root_field':SolrDocSlim.ALL_CONTEXT_SOLR,
+            'root_field':SolrDocSlim.TOP_CONTEXT_SOLR,
             'field_suffix': SolrDocSlim.FIELD_SUFFIX_CONTEXT,
         },
     ),
@@ -896,13 +896,13 @@ SITE_MAP_FACETS_DICT = {
 
 # Facet metadata for standard root fields.
 FACET_STANDARD_ROOT_FIELDS = {
-    SolrDocSlim.TOP_CONTEXT_SOLR: {
+    SolrDocSlim.ALL_CONTEXT_SOLR: {
         "id": "#facet-context",
         "rdfs:isDefinedBy": "oc-api:facet-context",
         "label": "Context",
         "type": "oc-api:facet-context",
     },
-    SolrDocSlim.ALL_CONTEXT_SOLR: {
+    SolrDocSlim.TOP_CONTEXT_SOLR: {
         "id": "#facet-context",
         "rdfs:isDefinedBy": "oc-api:facet-context",
         "label": "Context",
@@ -912,6 +912,12 @@ FACET_STANDARD_ROOT_FIELDS = {
         "id": "#facet-category",
         "rdfs:isDefinedBy": "oc-api:facet-category",
         "label": "Category",
+        "type": "oc-api:facet-category",
+    },
+    SolrDocSlim.EXTERNAL_CONTEXT_SOLR: {
+        "id": "#facet-external-data",
+        "rdfs:isDefinedBy": "oc-api:facet-external-data",
+        "label": "References External Data and Standards",
         "type": "oc-api:facet-category",
     },
     SolrDocSlim.ALL_PREDICATE_SOLR: {
@@ -967,6 +973,13 @@ FACETS_DATA_TYPE_OPTIONS_LISTS = {
     # here to assist in HTML templating.
     'media': 'oc-api:has-rel-media-options',
 }
+
+DATA_TYPE_FACET_ENITY_DELIMS = {
+    key:
+    f'{SolrDocSlim.SOLR_VALUE_DELIM}{key}{SolrDocSlim.SOLR_VALUE_DELIM}'
+    for key, _ in FACETS_DATA_TYPE_OPTIONS_LISTS.items() if key not in ['media']
+}
+
 
 
 # Slugs to identify facet options to ignore / skip
