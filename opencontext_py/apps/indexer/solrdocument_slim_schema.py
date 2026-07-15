@@ -223,11 +223,25 @@ class SolrDocumentSlim:
     fields are stored in a Solr Document's "fields" property.
     '''
 
-    def __init__(self, uuid, man_obj=None, rep_dict=None, do_related=False, do_batch_embeddings=False):
+    def __init__(
+        self, 
+        uuid, 
+        man_obj=None, 
+        rep_dict=None, 
+        do_related=False,
+        context_path_in_embedding=True,
+        proj_meta_in_embedding=True, 
+        do_batch_embeddings=False,
+    ):
         '''
         Using our expanded representation dict to make a solr
         document.
         '''
+
+        # Add the context path in the text for an embedding
+        self.context_path_in_embedding = context_path_in_embedding
+        # Add project metadata in embedding text
+        self.proj_meta_in_embedding = proj_meta_in_embedding
 
         # Wait to do embeddings as a batch.
         self.do_batch_embeddings = do_batch_embeddings
@@ -2037,7 +2051,7 @@ class SolrDocumentSlim:
             item_class = ''
         context_path = self.fields.get('context_path')
         context = ''
-        if context_path:
+        if self.context_path_in_embedding and context_path:
             context_path =  context_path.replace('/', ', ')
             context = f' from the place: {context_path}'
         main_list = [
@@ -2053,8 +2067,11 @@ class SolrDocumentSlim:
         proj_meta_text = '\n'.join((self.text_for_embedding_dict['project'] + self.text_for_embedding_dict['metadata']))
         self.text_for_embedding_list = [
             prepare_text_str_for_index_embedding(main_text),
-            prepare_text_str_for_index_embedding(proj_meta_text),
         ]
+        if self.proj_meta_in_embedding:
+            self.text_for_embedding_list.append(
+                prepare_text_str_for_index_embedding(proj_meta_text)
+            )
 
 
     def generate_vector_embedding(self):

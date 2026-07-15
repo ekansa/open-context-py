@@ -263,7 +263,7 @@ def make_solr_documents(uuids):
     """Makes a list of solr documents"""
     solr_docs = []
     for uuid in uuids:
-        solrdoc_obj = SolrDocumentSlim(uuid, do_batch_embeddings=False)
+        solrdoc_obj = SolrDocumentSlim(uuid)
         if solrdoc_obj.flag_do_not_index:
             print(f'Flagged to NOT index: {solrdoc_obj.man_obj.label} [{uuid}]')
             continue
