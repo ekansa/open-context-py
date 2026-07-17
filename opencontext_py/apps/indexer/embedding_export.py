@@ -30,6 +30,7 @@ GENERAL_ARTIFACT_OBJECT_ITEM_CLASS_SLUGS = [
     'oc-gen-cat-object',
     'oc-gen-cat-arch-element',
     'oc-gen-cat-coin',
+    'oc-gen-cat-glass',
     'oc-gen-cat-bio-subj-ecofact',
     'oc-gen-cat-pottery',
 ]
@@ -101,7 +102,7 @@ def get_artifacts_man_spacetime_qs(filter_args={}, exclude_args={}):
     if filter_args:
         mspt_qs = mspt_qs.filter(**filter_args)
     if exclude_args:
-        mspt_qs = mspt_qs.filter(**exclude_args)
+        mspt_qs = mspt_qs.exclude(**exclude_args)
     return mspt_qs
 
 
@@ -118,12 +119,16 @@ def file_cache_artifact_embeddings(
     filter_args={}, 
     exclude_args={},
     old_path=None,
+    exclude_uuids=[],
 ):
     df = get_or_make_embeddings_csv(path)
-    exclude_uuids = df['uuid'].unique().tolist()
+    if not exclude_uuids:
+        exclude_uuids = []
+    exclude_uuids += df['uuid'].unique().tolist()
     if old_path:
         df_old = pd.read_csv(old_path)
         exclude_uuids += df_old['uuid'].unique().tolist()
+    exclude_uuids = list(set(exclude_uuids))
     if exclude_uuids:
         print(f'Skipping {len(exclude_uuids)} already completed records.')
         exclude_args['item_id__in'] = exclude_uuids
@@ -150,6 +155,19 @@ def file_cache_artifact_embeddings(
             print(f'Problem making solr doc for {str(man_obj.uuid)}')
         str_for_embedding = '\n'.join(solrdoc_obj.text_for_embedding_list)
         embedding_json = json.dumps(solrdoc_obj.fields[EMBEDDING_FIELD_SOLR])
+        
+        geo_source_uuid = None
+        geo_source_path = None
+        if mspt_obj.geo_source:
+            geo_source_uuid = str(mspt_obj.geo_source.uuid)
+            geo_source_path = mspt_obj.geo_source.path
+
+        chrono_source_uuid = None
+        chrono_source_path = None
+        if mspt_obj.chrono_source:
+            chrono_source_uuid = str(mspt_obj.chrono_source.uuid)
+            chrono_source_path = mspt_obj.chrono_source.path
+
         row = {
             'uuid': str(man_obj.uuid),
             'label': man_obj.label,
@@ -157,10 +175,10 @@ def file_cache_artifact_embeddings(
             'item_class__slug': man_obj.item_class.slug,
             'project__label': man_obj.project.label,
             'project__uuid': str(man_obj.project.slug),
-            'geo_source__path': mspt_obj.geo_source.path,
-            'geo_source__uuid': str(mspt_obj.geo_source.uuid),
-            'chrono_source__path': mspt_obj.chrono_source.path,
-            'chrono_source__uuid': str(mspt_obj.chrono_source.uuid),
+            'geo_source__path': geo_source_path,
+            'geo_source__uuid': str(geo_source_uuid),
+            'chrono_source__path': chrono_source_path,
+            'chrono_source__uuid': str(chrono_source_uuid),
             'latitude': convert_decimal_to_float(mspt_obj.latitude),
             'longitude': convert_decimal_to_float(mspt_obj.longitude),
             'earliest': mspt_obj.earliest,
@@ -170,6 +188,6 @@ def file_cache_artifact_embeddings(
         }
         new_row = pd.DataFrame(data=[row])
         df = pd.concat([df, new_row], ignore_index=True)
-        df.to_csv(path)
+        df.to_csv(path, index=False)
         print(f'[{i} of {total_count}] Saved embedding for {solrdoc_obj.man_obj.label} [{str(man_obj.uuid)}]')
     return df

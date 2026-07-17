@@ -189,17 +189,38 @@ Subjects generally describe the database that contains this record.
 
 # Add some additional context information to the strings that get made into
 # embeddings. Hopefully this will help make "vibe-searches" more sensible!
+ITEM_TYPE_RAG_EXPLAIN_DICT = {
+    'subjects': """
+    This query finds location and object records. Locations can be geographic places or
+    regions. Locations can also be archaeological sites, parts of sites, excavated areas, 
+    or areas studied in surveys. This query can also retrieve evidence for features, 
+    structures and buildings or other archaeological contexts like excavation units, 
+    and stratigraphic layers. This query can also retrieve records of objects, artifacts,
+    samples, human remains, and plant and animal remains.
+    """,
+    'media': """
+    This query finds digital media, and may include downloadable images, videos, 3D models,
+    PDF documents, spreadsheets, GIS or (geopspatial) data.
+    """,
+    'documents': """
+    This query finds documents in the HTML format. These documents include field notes,
+    excavation diaries, descriptions of methods, and other explanatory text resources
+    and documentation.
+    """,
+}
+
+
 CLASS_RAG_EXPLAIN_DICT = {
     "Animal Bone": """
     This is about animal bones. The word "element" describes anatomy, not a chemical.
     Animal bones provide evidence of food and diet. Patterns in the age and sex of animal bones
     informs about economic practices in herding, hunting, milk production, cheese production,
     wool production, and draft animals and labor. Some animal bones can sometimes indicate 
-    pets for companionship guarding. Some animal bones can indicate ritual, religion, 
+    pets for companionship or guarding. Some animal bones can indicate feasting, ritual, religion, 
     and symbolism, and prestige.
     """,
     "Human Bone": """
-    This is about human bone. The word "element" describes anatomy, not a chemical.
+    This is about human bones. The word "element" describes anatomy, not a chemical.
     Human bones provide evidence of demographics, health, injury, food and diet. 
     Patterns in the age and sex of human bones informs about social status, economics,
     and gender. Burial practices can indicate ritual, religion, and symbolism, and prestige.
@@ -207,11 +228,11 @@ CLASS_RAG_EXPLAIN_DICT = {
     "Plant remains": """
     This is about plant remains. The words "family" and "order" describe biological taxonomy.
     Plant remains provide evidence of food and diet, agriculture, foraging, hunting and gathering. 
-    Some plant remains indicate textile production. Some plant remains indicate medicine, drug use,
-    herbs and spices, ritual and religion.
+    Some plant remains indicate textile production. Some plant remains indicate medicine, brewing,
+    fermentation, wine, beer, drug use, herbs and spices, feasting, ritual and religion.
     """,
     "Region": """
-    This is about a geographic region. Regions can include countries, states, provinces, cities, seas,
+    This is about geographic regions. Regions can include countries, states, provinces, cities, seas,
     valleys, or other geographic places.
     """,
     "Object": """
@@ -224,11 +245,11 @@ CLASS_RAG_EXPLAIN_DICT = {
     dating and chronology.   
     """,
     "Coin": """
-    This is about an archaeological artifact, usually made of metal, and likely used as currency. 
+    This is about artifacts, usually made of metal, and likely used as currency. 
     Coins can give precise information about trade, exchange, iconography, economics, and chronology.
     """,
     "Pottery": """
-    This is about an archaeological artifact made of ceramic material.
+    This is about archaeological artifacts made of ceramic material.
     Pottery is usually broken and fragmented as sherd (shard) and discarded as garbage.  
     Rarely, pottery can be a complete and intact vessel especially if intentionally buried.
     The words "fabric" and "ware" describe ceramic material. Pottery gives evidence about
@@ -239,20 +260,20 @@ CLASS_RAG_EXPLAIN_DICT = {
     be sophisticated and indicate great skill and expertise with clay, kilns, and pyro-technology. 
     """,
     "Glass": """
-    This is about an archaeological artifact made of glass. Glass often used for jewelry and small
+    This is about archaeological artifacts made of glass. Glass often used for jewelry and small
     containers of expensive perfumes, drugs, and other liquids. Glass indicates
-    great skill and expertise with clay and pyro-technology. Glass can indicate trade, exchange, economics,
+    great skill and expertise with pyro-technology. Glass can indicate trade, exchange, economics,
     social status and changes in culture.
     """,
     "Groundstone": """
-    This is about an archaeological artifact made of rock, that was shaped by grinding and polishing.
-    Groundstone can include: mortars, pestles, manos, metates. Groundstone is often used to prepare food,
-    especially to grind flour and mix herbs and spices. Sometimes groundstone can include: 
+    This is about archaeological artifacts made of rock, that was shaped by grinding and polishing.
+    Groundstone can include: mortars, pestles, manos, metates. Ground stone is often used to prepare food,
+    especially to grind flour and mix herbs and spices. Sometimes ground stone can include: 
     bowls, jars, and cooking skillets, and incense burners. People used ground stone pallets to make
     powders and pigments for makeup.
     """,
     "Architectural Element": """
-    This is about an component of a building, including decorative features. Architectural elements
+    This is about components of buildings, including decorative features. Architectural elements
     are studied to understand: construction, building techniques, style, use of raw materials, 
     technology, trade and exchange, economics, social status, ritual, religion, burial practices, 
     changes in culture, dating and chronology.
@@ -263,14 +284,14 @@ CLASS_RAG_EXPLAIN_DICT = {
     gnawing, breaking, and erosion of bone).
     """,
     "Survey Unit": """
-    This is about an area of the Earth"s surface studied for indications of human activity in the past.
+    This is about areas of the Earth's surface studied for indications of human activity in the past.
     A survey unit is usually studied by people walking to observe fragments of artifacts on the ground
     that indicate the presence of archaeological sites. Sometimes archaeologists dig test pits or take
     soil samples and core samples to find fragments of artifacts. Patterns observed in the spatial 
     distribution of artifacts can indicate patterns in human settlements and changing environments.
     """,
     "Site": """
-    This is about a place with indications of human activity in the past. An archaeological site may
+    This is about places with indications of human activity in the past. An archaeological site may
     be a large city, a town, a village, or a temporary camp. Some sites may have a special purpose
     like a mine, a quarry, a fortress, a trading post (or caravanserai), a shrine, or a cemetery.
     Archaeological sites are often found in archaeological surveys. Archaeological sites are often
@@ -279,14 +300,14 @@ CLASS_RAG_EXPLAIN_DICT = {
     manufacturing, chronology, and culture. 
     """,
     "Site Area": """
-    This is about a part of an archaeological site. 
+    This is about parts of an archaeological site. 
     A site is a place with indications of human activity in the past. Sites can provide evidence of monumental
     architecture, defense and warfare, social status, economics, demographics, households, architecture,
     manufacturing, chronology, and culture. 
     "Site Area", "Area", "Operation", and "Field Project" have similar meanings.
     """,
     "Context": """
-    This is about a place that contained or contains physical remains studied by archaeologists. 
+    This is about places that contained or contains physical remains studied by archaeologists. 
     Place, the type of soil, depth, coordinates, stratigraphic layer are often aspects of context.
     Archaeologists use context to study patterns in artifacts to understand culture, economics, and chronology.
     """,
@@ -297,12 +318,12 @@ CLASS_RAG_EXPLAIN_DICT = {
     defense and warfare, social status, economics, demographics, households, manufacturing, chronology, and culture. 
     """,
     "Structure": """
-    This is about a part of architecture or a building. It is an archaeological feature.
+    This is about architecture or buildings. These are also archaeological features.
     Structures provide evidence about buildings, architecture, 
     social status, economics, households, manufacturing, chronology, and culture. 
     """,
     "Space": """
-    This is about a zone or part of architecture or a building. It is an archaeological context.
+    This is zone or parts of architecture or buildings. These are archaeological contexts.
     Spaces provide evidence about buildings, architecture, 
     social status, economics, households, manufacturing, chronology, and culture. 
     """,
@@ -417,7 +438,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     hunting, farming, gathering, food preparation and butchery, carving), activity areas, and discard.
     """,
     "Radiocarbon Sample": """
-    This is about a specimen of organic material used for radiocarbon dating. Radiocarbon dating
+    This is about specimens of organic material used for radiocarbon dating. Radiocarbon dating
     provides evidence for the age of archaeological sites, deposits, features, burials, artifacts, 
     and ecofacts. 
     """,
