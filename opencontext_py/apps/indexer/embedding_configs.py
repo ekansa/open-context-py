@@ -227,8 +227,8 @@ CLASS_RAG_EXPLAIN_DICT = {
     human diet, subsistence strategies, and environmental contexts. Quantifiable patterns in the age and 
     sex distribution of these assemblages clarify past economic practices, including pastoral herding, 
     hunting, milk and cheese production, wool production, and the exploitation of draft animals 
-    for labor. Furthermore, faunal remains illuminate domestic partnerships, feasting events, ritual 
-    ceremonies, status differentiation, and ideological symbolism.
+    for labor. Furthermore, faunal remains illuminate household and community food distribution, 
+    feasting events, ritual ceremonies, status differentiation, and ideological symbolism.
     """,
     "Human Bone": """
     This query targets human osteological remains, using the term "element" to designate specific anatomical 
@@ -271,7 +271,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     This query targets specific metallic artifacts utilized primarily as standardized currency. Coins feature 
     distinctive mint marks, inscriptions, and political iconography that establish precise temporal and geographic 
     manufacturing contexts. Beyond providing critical chronological anchors for stratigraphic layers, coins 
-    offer detailed insights into state ideologies, art history, regional trade networks, macroeconomic policies, 
+    offer detailed insights into state ideologies, art history, regional trade networks, economic practices, 
     and commercial exchange. The presence of coinage typically signifies complex socio-political organizations 
     characterized by centralized state bureaucracies, standardized weights and measures, market economies, and 
     urban settlements.
@@ -280,21 +280,21 @@ CLASS_RAG_EXPLAIN_DICT = {
     This query targets ceramic artifacts, which represent highly durable components of past material culture. 
     Though occasionally recovered intact within deliberate burial contexts, pottery is routinely found as 
     fragmented sherds (shards) discarded as refuse. Specialized terms like "fabric" and "ware" describe 
-    the clay paste matrix and surface treatments. Ceramic analysis provides fundamental data regarding food 
+    the clay paste matrix and surface treatments. Ceramic analysis provides data regarding food 
     preparation, culinary practices, storage technologies, transport logistics, and trade networks. It also 
-    informs research into technical expertise, manufacturing styles, pyro-technology, household organization, 
+    informs research into technical practices, manufacturing styles, pyro-technology, household organization, 
     socio-economic status, and cultural chronology.
     """,
     "Glass": """
     This query focuses on archaeological artifacts manufactured from vitrified materials. Glass objects frequently 
     occur as personal adornments, beads, or specialized containers designed for high-value liquid commodities 
     such as perfumes, oils, and pharmaceuticals. The production of glass reflects complex specialized craftsmanship 
-    and sophisticated mastery of high-temperature pyro-technology. Researchers analyze these delicate artifacts 
-    to investigate long-distance trade patterns, inter-regional economic exchanges, technological distribution, 
-    elite socio-economic status, changing consumer preferences, and broad cultural shifts within past societies over time.
+    and sophisticated mastery of high-temperature pyro-technology. Researchers study these artifacts 
+    to investigate long-distance trade patterns, economic and manufacturing organization, exchange of technological knowledge, 
+    elite socio-economic status, and changing consumer preferences within past societies.
     """,
     "Groundstone": """
-    This query isolates lithic artifacts modified and shaped through deliberate abrasion, grinding, and polishing 
+    This query targets lithic artifacts modified and shaped through deliberate abrasion, grinding, and polishing 
     techniques. The category encompasses functional domestic tools such as mortars, pestles, manos, and metates, 
     which were vital for processing dietary staples, milling grain, and grinding herbs or spices. Groundstone 
     assemblages also include specialized forms like stone bowls, storage jars, cooking vessels, and ritual incense 
@@ -306,21 +306,21 @@ CLASS_RAG_EXPLAIN_DICT = {
     Examples include columns, capitals, lintels, roof tiles, and carved molding. Archaeologists analyze these 
     architectural elements to understand construction techniques, raw material procurement, engineering capabilities, 
     and artistic styles. These components provide substantial evidence regarding regional technology, trade networks, 
-    and economic systems. Furthermore, their scale and ornamentation clarify the socio-economic status of inhabitants, 
+    and economic systems. Furthermore, their scale and ornamentation inform about socio-economic status, 
     public or private ritual functions, ideological expressions, cultural changes, and architectural chronology.
     """,
     "Non Diagnostic Bone": """
     This query encompasses skeletal remains that lack the morphological landmarks required for precise taxonomic 
-    or anatomical identification. Despite their fragmented nature, non-diagnostic bones provide significant 
-    quantitative data regarding overall assemblage size, meat consumption ratios, and intensive bone processing 
-    activities. They serve as primary evidence for taphonomic studies, tracking post-depositional modifications 
+    or anatomical identification. Despite their fragmented nature, non-diagnostic bones provide quantitative data 
+    regarding overall assemblage size, meat consumption ratios, and intensive bone processing activities. 
+    They serve as primary evidence for taphonomic studies, tracking post-depositional modifications 
     such as carnivore gnawing, human trampling, thermal altering, and mechanical weathering. Analyzing these fragments 
     helps researchers evaluate site preservation, site formation processes, and disposal habits within archaeological
     contexts.
     """,
     "Survey Unit": """
-    This query identifies bounded spaces designated for surface reconnaissance to assess past human landscape use. 
-    Survey units are typically evaluated via systematic field walking, where researchers visually identify and collect 
+    This query identifies bounded regions designated for surface reconnaissance to assess past human landscape use. 
+    Survey units are typically documented via systematic field walking, where researchers visually identify and collect 
     surface artifact scatters to detect hidden archaeological sites. Archaeologists may supplement surface observations 
     by digging subsurface test pits or extracting core samples to assess soil stratigraphy and artifact presence. 
     Analyzing spatial distributions across these units reveals long-term regional settlement patterns, demographic shifts, 
@@ -330,33 +330,33 @@ CLASS_RAG_EXPLAIN_DICT = {
     This query targets localized spatial clusters containing physical evidence of past human occupation and activity. 
     Archaeological sites span a wide functional range, encompassing large urban centers, agricultural villages, 
     temporary hunter-gatherer camps, or specialized locales like mines, quarries, military fortresses, regional 
-    trading posts, and cemeteries. Discovered primarily through remote sensing or pedestrian surveys, sites undergo 
+    trading posts, and cemeteries. Discovered primarily through remote sensing or pedestrian surveys, sites can undergo 
     detailed excavation and mapping. They yield data regarding monumental architecture, defensive strategies, 
-    social stratification, household economics, demographic profiles, regional manufacturing, technological development, 
+    social stratification, household economics, demographicss, regional manufacturing, technological development, 
     and cultural chronology.
     """,
     "Site Area": """
     This query refers to spatial subdivisions within a larger archaeological site, operating synonymously with terms 
-    like "Area", "Operation", or "Field Project". Because archaeological sites represent multifaceted human settlements, 
-    dividing them into distinct spatial zones allows for targeted research. These areas isolate functional contexts such 
-    as domestic sectors, public plazas, industrial workshops, defensive perimeters, or elite residential zones. 
+    like "Area", "Operation", or "Field Project". Archaeologists sometimes arbitrarily divide sites into distinct 
+    spatial zones to help manage and organize data collection workflows. In other cases, site areas may represent different
+    functional contexts such as domestic sectors, public plazas, industrial workshops, defensive perimeters, or elite residential zones. 
     Documenting site areas helps researchers track intra-site socio-economic variations, distinct manufacturing zones, 
     localized depositional histories, architectural sequences, and changing spatial use over time.
     """,
     "Context": """
-    This query isolates the specific three-dimensional location and physical matrix containing archaeological remains. 
-    Attributes of a context include: spatial coordinates, soil composition, depth, matrix 
+    This query retrieves records describing specific three-dimensional locations and deposits containing archaeological remains. 
+    Attributes of a context often include: spatial coordinates, soil composition, depth, matrix 
     color and density, and exact stratigraphic positioning relative to other layers. Understanding context is fundamental to modern 
     archaeology, as it establishes the precise relational framework between individual artifacts, features, and ecofacts. 
-    By analyzing material patterns within secure contexts, researchers can accurately reconstruct chronological sequences, 
-    behavioral activities, site formation processes, and past cultural systems.
+    By analyzing material patterns within contexts, researchers can attempt to reconstruct chronological sequences, 
+    behavioral activities, site formation processes, and other patterns reflective of past human societies.
     """,
     "Feature": """
     This query identifies non-portable, human-modified components of an archaeological site. Unlike portable artifacts, 
     features represent fixed structural alterations of space, encompassing walls, prepared floors, storage pits, 
-    drainage ditches, hearths, kilns, and domestic refuse heaps. Features provide essential primary evidence regarding 
+    drainage ditches, hearths, kilns, and domestic refuse heaps. Features provide primary evidence regarding 
     spatial organization, architectural engineering, and localized human activities. By examining the distribution and 
-    construction of features, researchers can systematically evaluate domestic household behaviors, localized industrial 
+    construction of features, researchers can investigate domestic household behaviors, localized industrial 
     manufacturing, communal defense strategies, socio-economic differentiation, public ritual actions, and site-wide 
     chronological developments.
     """,
@@ -374,7 +374,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     Spaces represent localized archaeological contexts that reveal the spatial logic and functional organization of 
     past buildings. By examining the distinct artifact distributions, specialized features, and soil chemistry within a 
     designated space, researchers can distinguish private domestic quarters from public reception rooms, storage cells, 
-    or manufacturing and craft areas. Studying these spatial dynamics provides deep insight into daily household behaviors, gendered 
+    or manufacturing and craft areas. Studying these spatial dynamics provides information about daily household behaviors, gendered 
     activities, socio-economic status, and privacy conventions.
     """,
     "Excavation Unit": """
@@ -415,7 +415,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     "Area": """
     This query targets macro-spatial divisions within an active archaeological project, operating similarly to terms 
     like "Site Area", "Operation", or "Field Project". Dividing a complex archaeological site into separate areas allows 
-    field teams to manage logistics and compare distinct functional zones. These areas frequently separate specialized 
+    field teams to manage research logistics and compare distinct functional zones. These areas frequently separate specialized 
     sectors, such as domestic housing complexes, areas devoted to manufacturing or craft production, 
     ritual or monumental spaces, or agricultural terraces. Documenting these divisions enables researchers to 
     analyze spatial segregation, intra-site socioeconomic differences, and distinct activities across the landscape.
@@ -432,7 +432,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     spatial control. Typically arranged within a standardized site grid, squares enable field teams to map features, deposits, 
     artifacts, and ecofacts with greater precision. This geometric framework facilitates accurate recording of horizontal 
     relationships across different excavation areas. By standardizing the horizontal excavation layout into uniform squares, 
-    researchers can extrapolate spatial distributions, calculate artifact density metrics, and seamlessly correlate data 
+    researchers can extrapolate spatial distributions, calculate artifact density metrics, and more easily correlate data 
     across separate field seasons.
     """,
     "Unit": """
@@ -455,9 +455,10 @@ CLASS_RAG_EXPLAIN_DICT = {
     "Stratum": """
     This query emphasizes a distinct, homogeneous layer of sedimentary or cultural material isolated within an archaeological 
     sequence, closely related to "Sequence" and "Phase". A stratum represents a specific depositional event or occupational 
-    horizon. Archaeologists document each stratum by its unique soil color, composition, depth, and precise spatial boundaries. 
+    horizon. Archaeologists document each stratum by soil color, composition, depth, artifact and ecofact assemblages, and spatial boundaries. 
     Analyzing artifact assemblages within a secure stratum allows researchers to interpret discrete periods of human activity, 
-    evaluate environmental contexts, establish relative chronological baselines, and cross-date correlated strata across different site sectors.
+    evaluate environmental contexts, establish relative chronological frameworks, and compare assemblages of strata across different sites 
+    to establish regional chronologies.
     """,
     "Phase": """
     This query describes a high-level chronological period or distinct structural stage identified within an archaeological 
@@ -479,16 +480,16 @@ CLASS_RAG_EXPLAIN_DICT = {
     This query addresses physical specimens systematically collected from fieldwork contexts for specialized laboratory testing 
     and composition analysis. Samples typically comprise small portions of soil, organic material, water, botanical fragments, 
     faunal remains, or artifact residues. Researchers examine these specimens using scientific instruments to determine their 
-    elemental, mineralogical, chemical, biochemical, or mechanical properties. The resulting datasets provide high-resolution 
+    elemental, mineralogical, chemical, biochemical, or mechanical properties. The resulting datasets may provide high-resolution 
     information regarding ancient environmental conditions, raw material sourcing, craft manufacturing technologies, dietary habits, 
     and absolute dating evidence for the site.
     """,
     "Bulk Ceramic": """
     This query targets aggregations of pottery sherds that are documented and analyzed collectively as a unified group rather 
-    than as individual unique pieces. Bulk ceramic records generally quantify total counts, weights, broad vessel shapes, and major 
-    fabric types within a specific excavation context. This aggregate data provides essential baseline evidence for statistical 
-    modeling, tracking functional kitchen versus storage ratios, and identifying broad cultural trends. Additionally, bulk ceramic 
-    frequencies are used for mapping site-wide artifact densities and establishing relative chronological trends.
+    than as individual unique pieces. Bulk ceramic records generally quantify total counts, weights, frequency of vessel shapes and forms, 
+    frequency of fabric types within a specific excavation context. This aggregate data provides evidence for statistical modeling, 
+    tracking functional differences between contexts, and identifying spatial or chronological differences between pottery assemblages. 
+    Additionally, bulk ceramic frequencies are used for mapping site-wide artifact densities and establishing relative chronological trends.
     """,
     "Bulk Lithic": """
     This query encompasses groups of stone tools and manufacturing debris documented collectively as a single aggregate dataset 
@@ -500,18 +501,18 @@ CLASS_RAG_EXPLAIN_DICT = {
     "Sample, Collection, or Aggregation": """
     This query addresses grouped physical specimens and collected materials curated for analytical research, incorporating concepts 
     from samples, formal collections, and material aggregations. These groupings usually represent subsets of soil, environmental 
-    ecofacts, or related artifact types extracted from secure archaeological features. Researchers examine these assemblages using 
+    ecofacts, or sets of artifacts organized by context, typology, or other characteristics. Researchers examine these assemblages using 
     specialized instrumentation to isolate geochemical, biological, or technological signatures. Curation of these aggregated records 
-    ensures data integrity, providing essential datasets that subsequent researchers can re-examine for inter-site comparative 
-    analysis and multi-scalar regional synthesis.
+    better ensures data integrity, providing information resources that subsequent researchers can re-examine for inter-site comparative 
+    analysis and regional synthesis.
     """,
     "Reference Collection": """
     This query targets comparative assemblages of fully identified, well-documented specimens maintained to facilitate the 
     classification of newly excavated archaeological materials. Reference collections encompass modern or ancient biological 
-    specimens, specialized geological samples, and standardized ceramic typologies. Typically curated within museums, universities, 
-    or specialized research institutions, these collections serve as diagnostic benchmarks. Researchers use them to confirm 
-    taxonomic identifications for faunal and botanical remains, verify raw material sources, and standardize stylistic classifications 
-    across disparate field projects.
+    specimens, specialized geological samples, and collections of representative artifacts that illustrate typologies. 
+    Typically curated within museums, universities, or specialized research institutions, these collections serve as diagnostic benchmarks. 
+    Researchers use them to confirm taxonomic identifications for faunal and botanical remains, verify raw material sources, 
+    and standardize stylistic classifications across disparate field projects.
     """,
     "stela": """
     This query focuses on upright, carved, or inscribed stone slabs and pillars that served as public monuments or commemorative 
@@ -529,10 +530,11 @@ CLASS_RAG_EXPLAIN_DICT = {
     """,
     "Biological record": """
     This query addresses the documented presence of organic remains derived from living organisms, encompassing botanical, faunal, 
-    and human skeletal data. Also classified as ecofacts, biological records provide fundamental insights into past environmental 
-    contexts, ancient ecological conditions, and human-nature interactions. Researchers analyze these organic materials to reconstruct 
+    and human skeletal data. Also classified as ecofacts, biological records inform researchers about past environmental 
+    contexts, ancient ecological conditions, and human-environment interactions. Researchers analyze these organic materials to reconstruct 
     ancient paleoclimates, track regional deforestation, model animal domestication processes, and assess human dietary adaptations. 
-    The biological record serves as a primary source for understanding long-term ecological interactions and agricultural development.
+    The biological record serves as a primary source for understanding long-term ecological interactions, changing patterns in hunting,
+    foraging, herding and agricultural developments.
     """,
     "Lithic": """
     This query targets individual stone artifacts manufactured or modified through intentional knapping, chipping, and flaking 
@@ -545,16 +547,15 @@ CLASS_RAG_EXPLAIN_DICT = {
     "Radiocarbon Sample": """
     This query identifies specific specimens of preserved organic material, such as charcoal, wood, bone, or seeds, selected for 
     carbon-14 isotopic analysis. Radiocarbon samples provide the foundational data required to calculate absolute calendar dates for 
-    archaeological contexts. By securing absolute dates from these samples, researchers can establish precise chronological 
-    frameworks for occupational phases, structural developments, burial events, and artifact styles. This chronometric data allows 
-    archaeologists to cross-date regional sequences and anchor local cultural changes within a definitive historical timeline.
+    many archaeological contexts. By securing absolute dates from these samples, researchers can establish more precise chronological 
+    frameworks for occupational phases, structural developments, burial events, and trends in artifact styles. This chronometric 
+    data allows archaeologists to cross-date regional sequences and anchor local cultural changes within a definitive historical timeline.
     """,
     "Arbitrary Grouping": """
     This query refers to a non-stratigraphic, database-generated association of records compiled for analytical convenience or 
     procedural organization. Unlike secure archaeological contexts like loci or features, an arbitrary grouping does not reflect past 
-    human behavior or natural formation processes. Instead, it serves as a digital management tool within the repository framework, 
-    allowing researchers to batch process disparate data entries, manage specific administrative collections, or run targeted 
-    multi-criteria filtering operations across separate field projects and dataset categories.
+    human behavior or natural formation processes. Instead, it serves as a data management tool within this software framework, 
+    allowing for browsing and aggregation of large numbers of database records.
     """,
     "Sampling site": """
     This query identifies the explicit geographic location where physical specimens were extracted for scientific analysis. A sampling 
@@ -569,14 +570,14 @@ CLASS_RAG_EXPLAIN_DICT = {
     field projects, typically managed by research institutions such as museums or university repositories. By maintaining these structured 
     collections, institutions facilitate curation and access to primary physical evidence. This allows future researchers 
     to re-examine physical objects, apply new analytical technologies, and conduct comparative studies that build upon 
-    original field discoveries.
+    earlier fieldwork.
     """,
     "Data Publication": """
     This query targets integrated sets of related scientific datasets published digitally as primary scholarly contributions. Data 
     publications mirror traditional academic journal articles in peer-review rigor but focus on distributing structured research 
     data rather than narrative synthesis. These assets encompass diverse formats, including granular tabular data, geospatial models, 
     multimedia files, 3D artifact scans, raw outputs from scientific instruments, and digitized field notes. Publishing these datasets 
-    provides greater transparency, facilitates open-access research, and allows global scholars to independently query, verify, 
+    provides greater transparency, facilitates open-access research, and allows other researchers to independently query, verify, 
     and reuse primary archaeological data.
     """,
 }
