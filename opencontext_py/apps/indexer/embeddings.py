@@ -13,16 +13,7 @@ from django.conf import settings
 
 # NOTE: this uses the cosine similarity function, which is also configured in the solr
 # schema configuration for the dense vector field.
-EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
-EMBEDDING_MODEL_DIM = 768
 
-MODEL_LOCAL_PATH = os.path.join(
-    settings.FILE_CACHE_PATH, 
-    EMBEDDING_MODEL.split('/')[-1]
-)
-EXISTING_MODEL_LOCAL_PATH = None
-if os.path.exists(MODEL_LOCAL_PATH):
-    EXISTING_MODEL_LOCAL_PATH = MODEL_LOCAL_PATH
 
 # This is very slow, takes more than a second to make an embedding.
 # EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
@@ -30,21 +21,62 @@ if os.path.exists(MODEL_LOCAL_PATH):
 SUPRESS_EMBEDDING_WARNINGS = True
 
 
-if True:
-    ACTIVE_EMBEDDING_MODEL = TextEmbedding(
-        EMBEDDING_MODEL, 
-        specific_model_path=EXISTING_MODEL_LOCAL_PATH,
-    )
-    # Access the underlying HuggingFace tokenizer used by FastEmbed
-    ACTIVE_TOKENIZER = ACTIVE_EMBEDDING_MODEL.model.tokenizer
-else:
-    ACTIVE_EMBEDDING_MODEL = None
-    ACTIVE_TOKENIZER = None
+ALT_MODEL_CONFIGS = {
+    768: {
+        'dim': 768,
+        # very small token limit 
+        # for sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+        'max_tokens': 120,
+        'model_name': settings.LANGUAGE_MODEL_NAME_768,
+        'model_path': settings.LANGUAGE_MODEL_PATH_768,
+    },
+    1024: {
+        'dim': 1024,
+        # technically, 512, but let's buffer things a bit
+        'max_tokens': 504,
+        'model_name': settings.LANGUAGE_MODEL_NAME_1024,
+        'model_path': settings.LANGUAGE_MODEL_PATH_1024,
+    },
+}
 
+MODEL_CONFIGS = {
+    1024: {
+        'dim': 1024,
+        # technically, 512, but let's buffer things a bit
+        'max_tokens': 504,
+        'model_name': settings.LANGUAGE_MODEL_NAME_1024,
+        'model_path': settings.LANGUAGE_MODEL_PATH_1024,
+    },
+}
+
+
+def load_language_models(configs=MODEL_CONFIGS):
+    """Load language models based on configs"""
+    models = {}
+    for key, config in configs.items():
+        act_model = TextEmbedding(
+            config.get('model_name'), 
+            specific_model_path=config.get('model_path'),
+        )
+        act_tokenizer = act_model.model.tokenizer
+        new_config = {k:v for k,v in config.items()}
+        new_config['model'] = act_model
+        new_config['tokenizer'] = act_tokenizer
+        models[key] = new_config
+    return models
+
+
+LANGUAGE_MODELS = load_language_models(configs=MODEL_CONFIGS)
+
+EMBEDDING_MODEL_DIM = 1024
+
+ACTIVE_EMBEDDING_MODEL = LANGUAGE_MODELS[EMBEDDING_MODEL_DIM]['model']
+# Access the underlying HuggingFace tokenizer used by FastEmbed
+ACTIVE_TOKENIZER = LANGUAGE_MODELS[EMBEDDING_MODEL_DIM]['tokenizer']
 
 # our model truncates at 384 tokens, so we will need to chunk in batches of
 # 380
-MAX_TOKENS = 380
+MAX_TOKENS = LANGUAGE_MODELS[EMBEDDING_MODEL_DIM]['max_tokens']
 CHUCK_TOKEN_OVERLAP = 64
 CHUNK_POSITION_DECAY = 0.3
 
@@ -251,10 +283,6 @@ def chunk_tokens(token_ids, max_tokens, overlap):
         yield token_ids[start:end]
         if end >= len(token_ids):
             break
-
-
-
-
 
 
 def chunk_text_for_embedding(

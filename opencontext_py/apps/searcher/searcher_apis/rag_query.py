@@ -1,5 +1,5 @@
 import duckdb
-from duckdb.typing import *
+from duckdb.sqltypes import *
 
 import os
 import json
@@ -50,6 +50,12 @@ query_strs = [
     'origins of herding in the Near East',
     'evidence for making clothing in Etruscan times',
     'weaving in tuscany',
+    'wool production in Mesopotamia',
+    'ancient divination or magic',
+    'tel kedesh administration',
+    'a mythological monster',
+    'she turns you into stone',
+    'like medusa',
 ]
 for query_str in query_strs:
     db_m = vibes.make_vibe_query_sql(query_str)
@@ -87,7 +93,6 @@ def make_vibe_query_sql(query_str):
     sql = f"""
     SELECT 
         
-        item_type,
         item_class__slug,
         project__slug,
         object__slug,
@@ -99,7 +104,7 @@ def make_vibe_query_sql(query_str):
         ) AS similarity_metric
     FROM {EXPLAINED_SEARCHES_TABLE}
     WHERE item_type_class_asserts_rate > 3
-    ORDER BY similarity_metric DESC
+    ORDER BY round(similarity_metric, 3) DESC, item_type_class_asserts_rate  DESC
     LIMIT 15;
     """
     db_m = duckdb.sql(sql)

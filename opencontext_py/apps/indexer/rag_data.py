@@ -1,5 +1,5 @@
 import duckdb
-from duckdb.typing import *
+from duckdb.sqltypes import *
 
 import copy
 import os
@@ -9,7 +9,7 @@ import pandas as pd
 import re
 
 from django.db.models import Max, Min
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Q
 
 
 from django.conf import settings
@@ -183,118 +183,6 @@ def get_distinct_project_item_type_item_classes():
         'project__meta_json',
     )
     return m_qs
-
-
-def get_distinct_project_item_class_types(
-    project_slug, 
-    item_type, 
-    item_class_id=None,
-    item_class_slug=None,        
-):
-    equiv_pred_qs = AllAssertion.objects.filter(
-        subject=OuterRef('predicate'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        visible=1,
-        object__item_type='property',
-    ).select_related(
-        'object'
-    ).values(
-        'object__slug'
-    )[:1]
-    
-    equiv_type_qs = AllAssertion.objects.filter(
-        subject=OuterRef('object'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        visible=1,
-        object__item_type__in=['class', 'uri',],
-    ).exclude(
-        object__context_id__in=SKIP_VOCABULARY_UUIDS,
-    ).select_related(
-        'object'
-    ).values(
-        'object__slug'
-    )[:1]
-
-    equiv_type_label_qs = AllAssertion.objects.filter(
-        subject=OuterRef('object'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        object__item_type__in=['class', 'uri',],
-        visible=1,
-    ).exclude(
-        object__context_id__in=SKIP_VOCABULARY_UUIDS,
-    ).select_related(
-        'object'
-    ).values(
-        'object__label'
-    )[:1]
-
-    a_qs = AllAssertion.objects.filter(
-        subject__project__slug=project_slug,
-        subject__item_type=item_type,
-        object__item_type='types',
-        visible=1,
-    )
-    if item_class_id:
-        a_qs = a_qs.filter(
-            subject__item_class_id=item_class_id,
-        )
-    if item_class_slug:
-        a_qs = a_qs.filter(
-            subject__item_class__slug=item_class_slug,
-        )
-    
-    a_qs = a_qs.distinct(
-        'predicate',
-        'object',
-    ).order_by(
-        'predicate',
-        'object',
-    ).select_related(
-        'predicate',
-    ).select_related(
-        'object',
-    ).annotate(
-        equiv_predicate_slug=Subquery(equiv_pred_qs)
-    ).annotate(
-        equiv_object_slug=Subquery(equiv_type_qs)
-    ).annotate(
-        equiv_object_label=Subquery(equiv_type_label_qs)
-    ).filter(
-        equiv_predicate_slug__isnull=False,
-    ).filter(
-        equiv_object_slug__isnull=False,
-    ).values(
-        'predicate_id',
-        'predicate__label',
-        'predicate__slug',
-        'object_id',
-        'object__label',
-        'object__context_id',
-        'object__slug',
-        'equiv_predicate_slug',
-        'equiv_object_slug',
-        'equiv_object_label',
-    )
-    return a_qs
-
-
-def get_ld_equivs_by_uuid(uuid):
-    a_qs = AllAssertion.objects.filter(
-        subject_id=uuid,
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
-        visible=1,
-    ).select_related(
-        'object',
-    ).select_related(
-        'object__context',
-    ).values(
-        'object_id',
-        'object__label',
-        'object__context_id',
-        'object__slug',
-        'object__context__meta_json',
-    )
-
 
 
 def get_proj_short_description_db(project_slug):
@@ -479,80 +367,6 @@ def generate_bbox_from_m_dict(m_dict):
     return f'{sw_lon},{sw_lat},{ne_lon},{ne_lat}'
 
 
-def explain_text_clean(txt):
-    txt = txt.replace('\n', ' ')
-    txt = txt.replace('\t', ' ')
-    txt = txt.replace('  ', ' ')
-    txt = txt.strip()
-    if not txt.endswith('.'):
-        txt += '.'
-    return txt
-
-def make_explain_text(m_dict):
-    explain_item_class = CLASS_RAG_EXPLAIN_DICT.get(
-        m_dict.get('item_class__label'),
-        ITEM_TYPE_RAG_EXPLAIN_DICT.get(
-            m_dict.get('item_type')
-        )
-    )
-    explain_item_class = explain_item_class.replace('     ', ' ')
-    explain_item_class = explain_text_clean(explain_item_class)
-    places = ''
-    if m_dict.get('path') and not str(m_dict.get('path')) in ['nan', 'None']:
-        path = m_dict.get('path')
-        places = 'Relevant Places: in ' + path.replace('/', ', in ')
-        places = explain_text_clean(places)
-    specific_desc = ''
-    if False:
-        if (m_dict.get('predicate__label') 
-            and m_dict.get('object__label')
-            and m_dict.get('equiv_predicate_label')
-            and m_dict.get('equiv_object_label')
-            and not str(m_dict.get('predicate__label')) in ['nan', 'None']
-        ):
-            specific_desc = f"Specific Topics: {m_dict.get('predicate__label')} is {m_dict.get('object__label')}"
-            if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
-                specific_desc += f" and {m_dict.get('equiv_predicate_label')} is {m_dict.get('equiv_object_label')}"
-                specific_desc = explain_text_clean(specific_desc)
-    if True:
-        if (m_dict.get('predicate__label') 
-            and m_dict.get('object__label')
-            and m_dict.get('equiv_predicate_label')
-            and m_dict.get('equiv_object_label')
-            and not str(m_dict.get('predicate__label')) in ['nan', 'None']
-        ):
-            specific_desc = f"Specific Topics: {m_dict.get('equiv_predicate_label')} is {m_dict.get('object__label')}"
-            if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
-                specific_desc += f" and {m_dict.get('equiv_object_label')}"
-                if m_dict.get('equiv_object_alt_labels') and not str(m_dict.get('equiv_object_alt_labels')) in ['nan', 'None']:
-                    specific_desc += f", {m_dict.get('equiv_object_alt_labels')}"
-                specific_desc = explain_text_clean(specific_desc)
-    project_label = ''
-    if m_dict.get('project__label') and not str(m_dict.get('project__label')) in ['nan', 'None']:
-        project_label = 'Project Name: ' + str(m_dict.get('project__label'))
-        project_label = explain_text_clean(project_label)
-    project_desc = ''
-    if m_dict.get('proj_short_desc') and not str(m_dict.get('proj_short_desc')) in ['nan', 'None']:
-        project_desc = 'Description: ' + str(m_dict.get('proj_short_desc'))
-        project_desc = explain_text_clean(project_desc)
-    metadata = ''
-    if m_dict.get('metadata') and not str(m_dict.get('metadata')) in ['nan', 'None']:     
-       # only add metadata if we don't already have specific data
-        metadata = 'General Topics: ' +  str(m_dict.get('metadata'))
-        metadata = explain_text_clean(metadata)
-    all_text = [
-        explain_item_class,
-        places,
-        specific_desc,
-        project_desc,
-        metadata,
-    ]
-    make_explain_text = ' '.join(
-        [txt for txt in all_text if txt != '']
-    )
-    return make_explain_text
-
-
 def get_distinct_project_item_type_item_classes_with_geo_chrono():
     """Gets projects, their short descriptions, and
     unique item types and item classes
@@ -650,7 +464,7 @@ def get_distinct_project_item_class_types(
     
     equiv_type_qs = AllAssertion.objects.filter(
         subject=OuterRef('object'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+        predicate_id__in=(configs.PREDICATE_LIST_SBJ_EQUIV_OBJ + [configs.PREDICATE_DCTERMS_REFERENCES_UUID]),
         visible=1,
         object__item_type__in=['class', 'uri',],
     ).exclude(
@@ -663,7 +477,7 @@ def get_distinct_project_item_class_types(
 
     equiv_type_label_qs = AllAssertion.objects.filter(
         subject=OuterRef('object'),
-        predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+        predicate_id__in=(configs.PREDICATE_LIST_SBJ_EQUIV_OBJ + [configs.PREDICATE_DCTERMS_REFERENCES_UUID]),
         object__item_type__in=['class', 'uri',],
         visible=1,
     ).exclude(
@@ -677,7 +491,7 @@ def get_distinct_project_item_class_types(
     a_qs = AllAssertion.objects.filter(
         subject__project__slug=project_slug,
         subject__item_type=item_type,
-        object__item_type='types',
+        object__item_type__in=['types', 'class', 'uri',],
         visible=1,
     )
     if item_class_id:
@@ -708,14 +522,18 @@ def get_distinct_project_item_class_types(
     ).annotate(
         equiv_object_label=Subquery(equiv_type_label_qs)
     ).filter(
-        equiv_predicate_slug__isnull=False,
+        Q(equiv_predicate_slug__isnull=False)
+        |Q(predicate__item_type__in=['property']),
     ).filter(
-        equiv_object_slug__isnull=False,
+        Q(equiv_object_slug__isnull=False)
+        |Q(object__item_type__in=['class', 'uri',]),
     ).values(
         'predicate_id',
         'predicate__label',
         'predicate__slug',
+        'predicate__item_type',
         'object_id',
+        'object__item_type',
         'object__label',
         'object__context_id',
         'object__slug',
@@ -731,6 +549,7 @@ def get_entity_alt_labels(slug):
     a_qs = AllAssertion.objects.filter(
         subject__slug=slug,
         predicate_id=configs.PREDICATE_SKOS_ALTLABEL_UUID,
+        visible=1,
     ).select_related(
         'subject'
     )
@@ -763,8 +582,18 @@ def augment_explained_searches_vocabularies(df):
             continue
         new_rows = []
         for prop_dict in prop_qs:
+            # Do this to handle properties, classes, and uris directly linked to 
+            # items
+            if prop_dict.get('predicate__item_type') != 'predicates':
+                prop_dict['equiv_predicate_label'] = prop_dict.get('predicate__label')
+                prop_dict['equiv_predicate_slug'] = prop_dict.get('predicate__slug')
+            if prop_dict.get('object__item_type') != 'types':
+                prop_dict['equiv_object_label'] = prop_dict.get('object__label')
+                prop_dict['equiv_object_slug'] = prop_dict.get('object__slug')
             new_row = class_row.copy()
             for k, v in prop_dict.items():
+                if k in ['predicate__item_type', 'object__item_type']:
+                    continue
                 new_row[k] = v
             id_parts = [
                 new_row.get('project__slug'),
@@ -784,15 +613,89 @@ def augment_explained_searches_vocabularies(df):
     df = pd.concat(([old_df] + vocab_dfs), ignore_index=True)
     df.drop_duplicates(subset=['uuid'], inplace=True)
     df['equiv_object_alt_labels'] = ''
-    obj_slug_index = ~df['object__slug'].isnull()
-    for obj_slug in df[obj_slug_index]['object__slug'].unique().tolist():
+    equiv_obj_slug_index = ~df['equiv_object_slug'].isnull()
+    for obj_slug in df[equiv_obj_slug_index]['equiv_object_slug'].unique().tolist():
         alt_labels = get_entity_alt_labels(obj_slug)
         if not alt_labels:
             continue
-        act_index = df['object__slug'] == obj_slug
+        act_index = df['equiv_object_slug'] == obj_slug
         df.loc[act_index, 'equiv_object_alt_labels'] = ', '.join(alt_labels)
     print(f'After extending for vocabularies, df length: {len(df.index)}')
     return df
+
+
+def explain_text_clean(txt):
+    txt = txt.replace('\n', ' ')
+    txt = txt.replace('\t', ' ')
+    txt = txt.replace('  ', ' ')
+    txt = txt.strip()
+    if not txt.endswith('.'):
+        txt += '.'
+    return txt
+
+def make_explain_text(m_dict):
+    explain_item_class = CLASS_RAG_EXPLAIN_DICT.get(
+        m_dict.get('item_class__label'),
+        ITEM_TYPE_RAG_EXPLAIN_DICT.get(
+            m_dict.get('item_type')
+        )
+    )
+    explain_item_class = explain_item_class.replace('     ', ' ')
+    explain_item_class = explain_text_clean(explain_item_class)
+    places = ''
+    if m_dict.get('path') and not str(m_dict.get('path')) in ['nan', 'None']:
+        path = m_dict.get('path')
+        places = 'Relevant Places: in ' + path.replace('/', ', in ')
+        places = explain_text_clean(places)
+    specific_desc = ''
+    if False:
+        if (m_dict.get('predicate__label') 
+            and m_dict.get('object__label')
+            and m_dict.get('equiv_predicate_label')
+            and m_dict.get('equiv_object_label')
+            and not str(m_dict.get('predicate__label')) in ['nan', 'None']
+        ):
+            specific_desc = f"Specific Topics: {m_dict.get('predicate__label')} is {m_dict.get('object__label')}"
+            if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
+                specific_desc += f" and {m_dict.get('equiv_predicate_label')} is {m_dict.get('equiv_object_label')}"
+                specific_desc = explain_text_clean(specific_desc)
+    if True:
+        if (not str(m_dict.get('predicate__label')) in ['nan', 'None']
+            and not str(m_dict.get('object__label')) in ['nan', 'None']
+            and not str(m_dict.get('equiv_predicate_label')) in ['nan', 'None']
+            and not str(m_dict.get('equiv_object_label')) in ['nan', 'None']
+            and not str(m_dict.get('predicate__label')) in ['nan', 'None']
+        ):
+            specific_desc = f"Specific Topics: {m_dict.get('equiv_predicate_label')} is {m_dict.get('object__label')}"
+            if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
+                specific_desc += f" and {m_dict.get('equiv_object_label')}"
+            if m_dict.get('equiv_object_alt_labels') and not str(m_dict.get('equiv_object_alt_labels')) in ['nan', 'None']:
+                specific_desc += f", {m_dict.get('equiv_object_alt_labels')}"
+            specific_desc = explain_text_clean(specific_desc)
+    project_label = ''
+    if m_dict.get('project__label') and not str(m_dict.get('project__label')) in ['nan', 'None']:
+        project_label = 'Project Name: ' + str(m_dict.get('project__label'))
+        project_label = explain_text_clean(project_label)
+    project_desc = ''
+    if m_dict.get('proj_short_desc') and not str(m_dict.get('proj_short_desc')) in ['nan', 'None']:
+        project_desc = 'Description: ' + str(m_dict.get('proj_short_desc'))
+        project_desc = explain_text_clean(project_desc)
+    metadata = ''
+    if m_dict.get('metadata') and not str(m_dict.get('metadata')) in ['nan', 'None']:     
+       # only add metadata if we don't already have specific data
+        metadata = 'General Topics: ' +  str(m_dict.get('metadata'))
+        metadata = explain_text_clean(metadata)
+    all_text = [
+        explain_item_class,
+        places,
+        specific_desc,
+        project_desc,
+        metadata,
+    ]
+    make_explain_text = ' '.join(
+        [txt for txt in all_text if txt != '']
+    )
+    return make_explain_text
 
 
 def  add_explain_texts_and_embeddings_to_df(df):
