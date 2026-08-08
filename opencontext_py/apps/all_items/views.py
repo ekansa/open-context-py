@@ -315,7 +315,8 @@ def all_items_html(
         indent=4,
         ensure_ascii=False
     )
-    schema_org_meta = make_schema_org_json_ld(rep_dict)
+    citation_dict = citation.make_citation_dict(rep_dict)
+    schema_org_meta = make_schema_org_json_ld(rep_dict, citation_dict)
     geo_json = None
     if rep_dict.get('features'):
         geo_json = json.dumps(
@@ -349,6 +350,7 @@ def all_items_html(
             canonical_uri=canonical_uri,
             man_obj=man_obj,
             rep_dict=rep_dict,
+            citation_dict=citation_dict,
         ),
         'SCHEMA_ORG_JSON_LD': json.dumps(
             schema_org_meta,
@@ -367,7 +369,7 @@ def all_items_html(
             'persons',
             'subjects_children'
         ],
-        'citation':citation.make_citation_dict(rep_dict),
+        'citation':citation_dict,
         'man_obj': man_obj,
         'edit_status': edit_status,
         'query_context_path': query_context_path,
