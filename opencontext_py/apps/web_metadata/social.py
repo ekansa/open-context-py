@@ -46,6 +46,83 @@ DEFAULT_SOCIAL_META_DICT = {
 
 }
 
+PUBLICATION_META_DICT = {
+    'format': {
+        'property': 'DC.Format',
+        'content': 'text/html',
+    },
+    'language': {
+        'property': 'DC.Language',
+        'content': 'en',
+    },
+    'publisher': {
+        'property': 'DC.Publisher',
+        'content': 'Open Context',
+    },
+    'citation_journal_title': {
+        'property': 'citation_journal_title',
+        'content': 'Open Context',
+    },
+    'citation_journal_abbrev': {
+        'property': 'citation_journal_abbrev',
+        'content': 'OpenContext',
+    },
+    'citation_publisher': {
+        'property': 'citation_publisher',
+        'content': 'Open Context',
+    },
+    'creator': {
+        'property': 'DC.Creator',
+        'content': None,
+    },
+    'contributor': {
+        'property': 'DC.Contributor',
+        'content': None,
+    },
+    'citation_author': {
+        'property': 'citation_author',
+        'content': None,
+    },
+    'citation_title': {
+        'property': 'citation_title',
+        'content': None,
+    },
+    'title': {
+        'property': 'DC.Title',
+        'content': None,
+    },
+    'citation_abstract_html_url': {
+        'property': 'citation_abstract_html_url',
+        'content': None,
+    },
+    'citation_public_url': {
+        'property': 'citation_public_url',
+        'content': None,
+    },
+    'citation_doi': {
+        'property': 'citation_doi',
+        'content': None,
+    },
+    'identifier': {
+        'property': 'DC.Identifier',
+        'content': None,
+    },
+    'date': {
+        'property': 'DC.Date',
+        'content': None,
+    },
+    'pub_date': {
+        'property': 'citation_publication_date',
+        'content': None,
+    },
+    'online_date': {
+        'property': 'citation_online_date',
+        'content': None,
+    },
+}
+
+
+
 QUERY_CONFIG = {
     'title': {
         'property': 'og:title',
@@ -302,7 +379,74 @@ def get_item_thumbnail_url(rep_dict):
     return None
 
 
-def make_social_media_metadata(url_path=None, canonical_uri=None, man_obj=None, rep_dict=None):
+def make_publication_metadata(social_meta, man_obj, rep_dict, citation_dict):
+    """Makes additional publication metadata, hopefully for indexing in Google Scholar"""
+    if not man_obj.item_type == 'projects':
+        # Only do this for projects.
+        return social_meta
+    for key, meta_config in PUBLICATION_META_DICT.items():
+        if not meta_config.get('content'):
+            continue
+        # Copy default publication metadata
+        social_meta[key] = copy.deepcopy(meta_config)
+    for title_key in ['citation_title', 'citation_title']:
+        social_meta[title_key] = {
+            'property': PUBLICATION_META_DICT.get(title_key, {}).get('property'),
+            'content': rep_dict.get('dc-terms:title'),
+        }
+    date_str = citation_dict.get('date_published')
+    if date_str:
+        for date_key in ['date', 'pub_date', 'online_date']:
+            social_meta[date_key] = {
+                'property': PUBLICATION_META_DICT.get(date_key, {}).get('property'),
+                'content': date_str,
+            }
+    authors = citation_dict.get('authors', [])
+    if authors:
+        # Make the first author the creator
+        social_meta['creator'] = {
+            'property': PUBLICATION_META_DICT.get('creator', {}).get('property'),
+            'content': authors[0],
+        }
+        # List ALL authors as contributors and citation authors.
+        for contrib_key in ['contributor', 'citation_author']:
+            i = 0
+            for author in authors:
+                i += 1
+                # Make sure we have a key for each unique author.
+                social_meta[f'{contrib_key}_{i}'] = {
+                    'property': PUBLICATION_META_DICT.get(contrib_key, {}).get('property'),
+                    'content': author,
+                }
+    i = 0
+    for scheme_key, id in citation_dict.get('ids', {}).items():
+        i += 1
+        for id_key in ['identifier']:
+            social_meta[f'{id_key}_{i}'] = {
+                'property': PUBLICATION_META_DICT.get(id_key, {}).get('property'),
+                'content': id,
+            }
+        if scheme_key.lower() == 'doi':
+            social_meta['citation_doi'] = {
+                'property': PUBLICATION_META_DICT.get('citation_doi', {}).get('property'),
+                'content': id.split('doi.org/')[-1],
+            }
+    for url_key in ['citation_public_url', 'citation_abstract_html_url']:
+        social_meta[url_key] = {
+            'property': PUBLICATION_META_DICT.get(url_key, {}).get('property'),
+            'content': rep_dict.get('id'),
+        }
+    return social_meta
+
+
+
+def make_social_media_metadata(
+    url_path=None, 
+    canonical_uri=None, 
+    man_obj=None, 
+    rep_dict=None, 
+    citation_dict=None,
+):
     """Makes social media metadata attributes for a Web page
 
     :param str url_path: The relative path of the requested page
@@ -356,6 +500,9 @@ def make_social_media_metadata(url_path=None, canonical_uri=None, man_obj=None, 
             thumbnail_url = rep_dict.get('media_preview_image')
         elif man_obj.item_type != 'projects':
             thumbnail_url = get_item_thumbnail_url(rep_dict)
+        if citation_dict:
+            # Make publication metadata for projects
+            social_meta = make_publication_metadata(social_meta, man_obj, rep_dict, citation_dict)
     if man_obj and thumbnail_url:
         social_meta['image']['content'] = thumbnail_url
         social_meta['image_secure_url']['content'] = thumbnail_url
