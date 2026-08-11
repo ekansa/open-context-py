@@ -196,7 +196,7 @@ ITEM_TYPE_RAG_EXPLAIN_DICT = {
     sectors, excavation areas, and survey zones. It also identifies structural contexts like 
     features, buildings, excavation units, and stratigraphic layers. Furthermore, this category 
     encompasses individual objects, portable artifacts, analyzed samples, human skeletal remains, 
-    and environmental evidence including both faunal and botanical remains. This foundational query 
+    and environmental evidence including both faunal and botanical remains. This query 
     allows researchers to isolate specific material components and spatial units of archaeological projects.
     """,
     'media': """
