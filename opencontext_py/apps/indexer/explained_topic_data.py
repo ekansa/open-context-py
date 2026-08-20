@@ -39,7 +39,7 @@ from opencontext_py.apps.indexer.embeddings import (
 )
 
 """
-from opencontext_py.apps.indexer.rag_data import (
+from opencontext_py.apps.indexer.explained_topic_data import (
     make_explained_searches_df,
     make_explained_searches_parquet_from_df,
     start_explained_searches_df,

@@ -23,7 +23,7 @@ from opencontext_py.libs import duckdb_con
 from opencontext_py.apps.indexer.solrdocument_slim_schema import (
     EMBEDDING_FIELD_SOLR,
 )
-from opencontext_py.apps.indexer.rag_data import (
+from opencontext_py.apps.indexer.explained_topic_data import (
     EXPLAINED_SEARCHES_LOCAL_PATH 
 )
 from opencontext_py.apps.indexer.embeddings import (
@@ -35,7 +35,7 @@ from opencontext_py.apps.indexer.embeddings import (
 """
 from IPython.display import display
 import json
-from opencontext_py.apps.searcher.searcher_apis import rag_query as vibes
+from opencontext_py.apps.searcher.searcher_apis import explained_topic_query as vibes
 query_strs = [
     'Ancient Greek god of the sun',
     'Ancient Greek mythology',
