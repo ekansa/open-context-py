@@ -54,9 +54,9 @@
                 :series="data_series">
             </apexchart>
             <div id="chrono-slider-outer">
-                <div id="range-slider-outer" class="range-slider">
-                    <b-form-input @change="slider_time_range_change" v-model="input_min" :min="act_chart_min_year" :max="act_chart_max_year" type="range"></b-form-input>
-                    <b-form-input @change="slider_time_range_change" v-model="input_max" :min="act_chart_min_year" :max="act_chart_max_year" type="range"></b-form-input>
+                <div id="range-slider-outer" class="range-slider" :style="sliderStyle">
+                    <b-form-input id="range-min" @change="slider_time_range_change" v-model="input_min" :min="act_chart_min_year" :max="chart_max_year" type="range"></b-form-input>
+                    <b-form-input id="range-max" @change="slider_time_range_change" v-model="input_max" :min="act_chart_min_year" :max="chart_max_year" type="range"></b-form-input>
                 </div>
             </div>
             <b-row class="text-center" align-v="center">
@@ -152,8 +152,12 @@
     width: 100%;
     margin: auto;
     text-align: center;
-    padding-left: 20px;
+    /* 
+    padding-left: 20px; 
     padding-right: 22px;
+    */
+    padding-left: 0px;
+    padding-right: 0px;
     margin-top: 60px;
     margin-bottom: 24px;
     z-index: 1;
@@ -363,6 +367,7 @@ var vc_chronotiles = Vue.component(
                 default_sigma_factor: 0.25,
                 default_x_interval_count: 100,
                 default_y_no_value: 0,
+                sliderStyle: null,
                 default_options: {
                     height: '400px',
                     chart: {
@@ -388,8 +393,15 @@ var vc_chronotiles = Vue.component(
                                 console.log('Current zoom range:', {
                                     xaxis
                                 });
+                                this.sliderValues = [xaxis.min, xaxis.max];
                                 this.on_zoomed(xaxis);
-                            }
+                            },
+                            mounted: function(chartContext, config) {
+                                this.alignSlider(chartContext);
+                            }.bind(this),
+                            updated: function(chartContext, config) {
+                                this.alignSlider(chartContext);
+                            }.bind(this),
                         },
                         toolbar: {
                             show: true,
@@ -515,6 +527,8 @@ var vc_chronotiles = Vue.component(
                 // act_options.fill.opacity = this.data_series_fill_opacities;
                 // act_options.fill.gradient.opacityFrom = this.data_series_fill_opacities;
                 // act_options.fill.gradient.opacityTo = this.data_series_fill_opacities_to;
+                act_options.xaxis.min = this.chart_min_year;
+                act_options.xaxis.max = this.chart_max_year;
                 act_options.chart.animations.enabled = this.data_series.length <= this.max_animation_size;
                 return act_options;
             },
@@ -577,6 +591,20 @@ var vc_chronotiles = Vue.component(
             },
         },
         methods: {
+            alignSlider(chartContext) {
+                // Get the exact width of the drawing area
+                let gridWidth = chartContext.w.globals.gridWidth;
+                gridWidth = gridWidth + (gridWidth * 0.025);
+                // Get the exact X-offset (usually the space taken up by the Y-axis labels)
+                const translateX = chartContext.w.globals.translateX;
+
+                // Apply these to a reactive style object bound to your slider container
+                this.sliderStyle = {
+                    width: `${gridWidth}px`,
+                    // transform: `translateX(${translateX}px)`
+                };
+                console.log(this.sliderStyle);
+            },
             on_zoomed(xaxis) {
                 this.zoom_x_min = xaxis.min;
                 this.zoom_x_max= xaxis.max;
@@ -622,6 +650,7 @@ var vc_chronotiles = Vue.component(
                     this.input_min = tmp;
                     console.log('Fixed input range ' + this.input_min + ' to ' + this.input_max);
                 }
+                console.log('Chart min: ' + this.act_chart_min_year + ', chart max: ' + this.chart_max_year);
             },
             slider_time_range_change: function() {
                 this.input_time_range_change();
