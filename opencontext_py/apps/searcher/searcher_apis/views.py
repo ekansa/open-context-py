@@ -15,7 +15,7 @@ from opencontext_py.apps.all_items.editorial import api as editorial_api
 
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.all_items import hierarchy
-
+from opencontext_py.apps.searcher.searcher_apis import explained_topic_query as vibes
 
 from django.views.decorators.cache import cache_control
 from django.utils.cache import patch_vary_headers, get_cache_key
@@ -82,16 +82,19 @@ def item_children_json(request, identifier):
 
 
 
-def query_json(request, spatial_context=None):
-    """ API for searching Open Context """
-
-    request_dict = utilities.make_request_obj_dict(
-        request, spatial_context=spatial_context
-    )
-    response_dict = main_search.process_solr_query(request_dict.copy())
-
+def vibes_search_json(request):
+    """API for vector similarity search of explained topics in Open Context"""
     req_neg = RequestNegotiation('application/json')
-    req_neg.supported_types = ['application/ld+json']
+    if not 'vq' in request.GET:
+        response = HttpResponse(
+            {
+                'error': 'Need parameter (arguement) "vq" ',
+            },
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=400,
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
 
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
@@ -110,5 +113,21 @@ def query_json(request, spatial_context=None):
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
 
-    return make_json_response(request, req_neg, response_dict)
+    df, _ = vibes.make_df_from_vibe_query_sql(query_str=request.GET['vq'])
+    json_output = df[vibes.API_COLS].head(5).to_json(
+        orient='records',
+        indent=4,
+        force_ascii=False
+    )
+    if False:
+        output_dict = json.loads(json_str)
+        json_output = json.dumps(
+            output_dict,
+            indent=4,
+            ensure_ascii=False
+        )
+    return HttpResponse(
+        json_output,
+        content_type="application/json; charset=utf8"
+    )
 

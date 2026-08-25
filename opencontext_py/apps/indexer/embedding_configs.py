@@ -327,13 +327,14 @@ CLASS_RAG_EXPLAIN_DICT = {
     land-use intensity, and human adaptations to changing environments.
     """,
     "Site": """
-    This query targets localized spatial clusters containing physical evidence of past human occupation and activity. 
-    Archaeological sites span a wide functional range, encompassing large urban centers, agricultural villages, 
+    This query targets archaeological sites, meaning localized parts of the landscape with evidence for past human 
+    occupation and activity. Sites span a wide functional range, encompassing large urban centers, agricultural villages, 
     temporary hunter-gatherer camps, or specialized locales like mines, quarries, military fortresses, regional 
-    trading posts, and cemeteries. Discovered primarily through remote sensing or pedestrian surveys, sites can undergo 
-    detailed excavation and mapping. They yield data regarding monumental architecture, defensive strategies, 
-    social stratification, household economics, demographicss, regional manufacturing, technological development, 
-    and cultural chronology.
+    trading posts, ceremonial and social-gathering locations, and cemeteries. Sites may be identified through remote sensing or 
+    pedestrian surveys, known from historical documents and oral histories, or encountered by chance during construction or other
+    activities. Sites can undergo detailed documentation through excavation and mapping. They yield data regarding monumental 
+    architecture, defensive strategies, social stratification and identity, housing, demographics, spatial organization 
+    of economic activites, storage, infrastructure, urban planning, ritual and religious systems, and cultural chronology.
     """,
     "Site Area": """
     This query refers to spatial subdivisions within a larger archaeological site, operating synonymously with terms 
@@ -567,10 +568,11 @@ CLASS_RAG_EXPLAIN_DICT = {
     "Collection": """
     This query designates an organized assemblage of physical materials, including portable artifacts, environmental ecofacts, and 
     scientific samples, systematically curated for long-term research and preservation. Collections represent the material legacy of 
-    field projects, typically managed by research institutions such as museums or university repositories. By maintaining these structured 
+    field projects, typically managed by research institutions such as museums or university repositories. By maintaining and documenting 
     collections, institutions facilitate curation and access to primary physical evidence. This allows future researchers 
     to re-examine physical objects, apply new analytical technologies, and conduct comparative studies that build upon 
-    earlier fieldwork.
+    earlier fieldwork. Collections can also serve important educational and social purposes. They can be displayed in exhibitions, 
+    used for teaching, curated in collaboration with community members, and repatriated to facilitate reconciliation and restorative justice.
     """,
     "Data Publication": """
     This query targets integrated sets of related scientific datasets published digitally as primary scholarly contributions. Data 

@@ -122,6 +122,7 @@ DF_COLS_PROPERTY_DUCKDB_DATA_TYPES = {
 
 DF_EMBEDDING_COLS_TO_DUCKDB_DATA_TYPES = {
     'explain_text': 'VARCHAR',
+    'explain_text_html': 'VARCHAR',
     'chunck_count': 'INTEGER',
     EMBEDDING_FIELD_SOLR: f'FLOAT[{EMBEDDING_MODEL_DIM}]',
 }
@@ -627,11 +628,20 @@ def augment_explained_searches_vocabularies(df):
 def explain_text_clean(txt):
     txt = txt.replace('\n', ' ')
     txt = txt.replace('\t', ' ')
-    txt = txt.replace('  ', ' ')
+    txt = " ".join(txt.split())
     txt = txt.strip()
     if not txt.endswith('.'):
         txt += '.'
     return txt
+
+
+def has_key_str_value(m_dict, key):
+    if not m_dict.get(key):
+        return False
+    if str(m_dict.get(key)).lower() in ['nan', 'none']:
+        return False
+    return True
+
 
 def make_explain_text(m_dict):
     explain_item_class = CLASS_RAG_EXPLAIN_DICT.get(
@@ -640,50 +650,38 @@ def make_explain_text(m_dict):
             m_dict.get('item_type')
         )
     )
-    explain_item_class = explain_item_class.replace('     ', ' ')
     explain_item_class = explain_text_clean(explain_item_class)
+    explain_item_class = f'<p>{explain_item_class}</p>'
     places = ''
-    if m_dict.get('path') and not str(m_dict.get('path')) in ['nan', 'None']:
+    if has_key_str_value(m_dict, 'path'):
         path = m_dict.get('path')
-        places = 'Relevant Places: in ' + path.replace('/', ', in ')
+        places = '<br/><b>Relevant Places:</b> in ' + path.replace('/', ', in ')
         places = explain_text_clean(places)
     specific_desc = ''
-    if False:
-        if (m_dict.get('predicate__label') 
-            and m_dict.get('object__label')
-            and m_dict.get('equiv_predicate_label')
-            and m_dict.get('equiv_object_label')
-            and not str(m_dict.get('predicate__label')) in ['nan', 'None']
-        ):
-            specific_desc = f"Specific Topics: {m_dict.get('predicate__label')} is {m_dict.get('object__label')}"
-            if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
-                specific_desc += f" and {m_dict.get('equiv_predicate_label')} is {m_dict.get('equiv_object_label')}"
-                specific_desc = explain_text_clean(specific_desc)
-    if True:
-        if (not str(m_dict.get('predicate__label')) in ['nan', 'None']
-            and not str(m_dict.get('object__label')) in ['nan', 'None']
-            and not str(m_dict.get('equiv_predicate_label')) in ['nan', 'None']
-            and not str(m_dict.get('equiv_object_label')) in ['nan', 'None']
-            and not str(m_dict.get('predicate__label')) in ['nan', 'None']
-        ):
-            specific_desc = f"Specific Topics: {m_dict.get('equiv_predicate_label')} is {m_dict.get('object__label')}"
-            if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
-                specific_desc += f" and {m_dict.get('equiv_object_label')}"
-            if m_dict.get('equiv_object_alt_labels') and not str(m_dict.get('equiv_object_alt_labels')) in ['nan', 'None']:
-                specific_desc += f", {m_dict.get('equiv_object_alt_labels')}"
-            specific_desc = explain_text_clean(specific_desc)
+    if (has_key_str_value(m_dict, 'predicate__label')
+        and has_key_str_value(m_dict, 'object__label')
+        and has_key_str_value(m_dict, 'equiv_predicate_label')
+        and has_key_str_value(m_dict, 'equiv_object_label')
+        and has_key_str_value(m_dict, 'predicate__label')
+    ):
+        specific_desc = f"<br/><b>Specific Topics:</b> {m_dict.get('equiv_predicate_label')}; {m_dict.get('object__label')}"
+        if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
+            specific_desc += f" and {m_dict.get('equiv_object_label')}"
+        if m_dict.get('equiv_object_alt_labels') and not str(m_dict.get('equiv_object_alt_labels')) in ['nan', 'None']:
+            specific_desc += f", {m_dict.get('equiv_object_alt_labels')}"
+        specific_desc = explain_text_clean(specific_desc)
     project_label = ''
-    if m_dict.get('project__label') and not str(m_dict.get('project__label')) in ['nan', 'None']:
-        project_label = 'Project Name: ' + str(m_dict.get('project__label'))
+    if has_key_str_value(m_dict, 'project__label'):
+        project_label = '<br/><b>Project Name:</b> ' + str(m_dict.get('project__label'))
         project_label = explain_text_clean(project_label)
     project_desc = ''
-    if m_dict.get('proj_short_desc') and not str(m_dict.get('proj_short_desc')) in ['nan', 'None']:
-        project_desc = 'Description: ' + str(m_dict.get('proj_short_desc'))
+    if has_key_str_value(m_dict, 'proj_short_desc'):
+        project_desc = '<br/><b>Description:</b> ' + str(m_dict.get('proj_short_desc'))
         project_desc = explain_text_clean(project_desc)
     metadata = ''
-    if m_dict.get('metadata') and not str(m_dict.get('metadata')) in ['nan', 'None']:     
+    if has_key_str_value(m_dict, 'metadata'):     
        # only add metadata if we don't already have specific data
-        metadata = 'General Topics: ' +  str(m_dict.get('metadata'))
+        metadata = '<br/><b>General Topics:</b> ' +  str(m_dict.get('metadata'))
         metadata = explain_text_clean(metadata)
     all_text = [
         explain_item_class,
@@ -695,6 +693,7 @@ def make_explain_text(m_dict):
     make_explain_text = ' '.join(
         [txt for txt in all_text if txt != '']
     )
+    make_explain_text = f'<div>{make_explain_text}</div>'
     return make_explain_text
 
 
@@ -704,14 +703,18 @@ def  add_explain_texts_and_embeddings_to_df(df):
     df['chunck_count'] = 0
     df[EMBEDDING_FIELD_SOLR] = None
     print(f'Generate explanation text and embeddings for: {len(df.index)}')
+    clean = re.compile(r'<[^>]+>')
     for i, row in df.iterrows():
-        explain_text = make_explain_text(m_dict=row)
+        explain_text_html = make_explain_text(m_dict=row)
+        explain_text = re.sub(clean, '', explain_text_html)
+        # See documentation here: https://huggingface.co/intfloat/multilingual-e5-large
+        explain_text = 'passage: ' + explain_text
         chunks = chunk_text_for_embedding(explain_text)
         chunk_count = len(chunks)
         if chunk_count > 1:
             print(f'Long text for embedding: "{explain_text}"')
         embedding = embed_with_chunk_pooling(explain_text)
-        df.at[i, 'explain_text'] = explain_text
+        df.at[i, 'explain_text'] = explain_text_html
         df.at[i, 'chunck_count'] = chunk_count
         df.at[i, EMBEDDING_FIELD_SOLR] = embedding
     return df

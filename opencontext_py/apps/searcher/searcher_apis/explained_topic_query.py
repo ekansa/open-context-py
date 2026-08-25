@@ -97,6 +97,19 @@ DEMO_COLS = [
     'url',
 ]
 
+API_COLS = [
+    'similarity_metric',
+    'project__slug',
+    'project__label',
+    'path',
+    'item_class__slug',
+    'item_class__label',
+    'equiv_predicate_label',
+    'equiv_object_label',
+    'equiv_object_alt_labels',
+    'explain_text', 
+    'url',
+]
 
 
 def make_hash_id_from_query_str(query_str):
@@ -189,7 +202,7 @@ def make_df_from_vibe_query_sql(query_str):
         ) AS similarity_metric
     FROM {EXPLAINED_SEARCHES_TABLE}
     WHERE item_type_class_asserts_rate > 3
-    ORDER BY round(similarity_metric, 3) DESC, item_type_class_asserts_rate  DESC
+    ORDER BY round(similarity_metric, 4) DESC, item_type_class_asserts_rate  DESC
     LIMIT 50;
     """
     df = duckdb.sql(sql).df()

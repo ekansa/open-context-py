@@ -110,9 +110,9 @@ urlpatterns = [
         name='searcher_apis_item_children_json'
     ),
     re_path(
-        r'^lm-query/(?P<spatial_context>\S+)?',
-        SlimSearchViews.query_json,
-        name='slim_search_vibe_search'
+        r'^lm-vector-search',
+        SearcherAPIsViews.vibes_search_json,
+        name='searcher_apis_vibe_search'
     ),
 
     # Projects index searches
