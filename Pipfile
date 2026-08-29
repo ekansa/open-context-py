@@ -61,7 +61,7 @@ unidecode = ">=0.4.19"
 urllib3 = ">=2.7.0"
 user-agents = ">=2.0"
 internetarchive = ">=3.6.0"
-nltk = ">=3.4.5"
+nltk = ">=3.10.0"
 rawpy = ">=0.18.1"
 tiktoken = ">=0.5.1"
 
