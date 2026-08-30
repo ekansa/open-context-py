@@ -45,6 +45,7 @@ from opencontext_py.apps.indexer.explained_topic_data import (
     start_explained_searches_df,
     augment_explained_searches_vocabularies,
     EXPLAINED_SEARCHES_PREP_PATH,
+    add_equiv_object_project_rates,
     add_explain_texts_and_embeddings_to_df
 )
 
@@ -118,6 +119,7 @@ DF_COLS_PROPERTY_DUCKDB_DATA_TYPES = {
     'equiv_object_slug': 'VARCHAR',
     'equiv_object_label': 'VARCHAR',
     'equiv_object_alt_labels': 'VARCHAR',
+    'proj_equiv_object_rate': 'FLOAT',
 }
 
 DF_EMBEDDING_COLS_TO_DUCKDB_DATA_TYPES = {
@@ -623,6 +625,72 @@ def augment_explained_searches_vocabularies(df):
         df.loc[act_index, 'equiv_object_alt_labels'] = ', '.join(alt_labels)
     print(f'After extending for vocabularies, df length: {len(df.index)}')
     return df
+
+
+def add_equiv_object_project_rates(df):
+    df['proj_equiv_object_rate'] = 0.0
+    index = ~df['equiv_predicate_slug'].isnull() & ~df['equiv_object_slug'].isnull()
+    # dfg = df[index][equiv_cols].groupby(by=equiv_cols).first().reset_index()
+    proj_slugs = df[index]['project__slug'].unique().tolist()
+    for proj_slug in proj_slugs:
+        proj_index = index & (df['project__slug'] == proj_slug)
+        pred_slugs = df[proj_index]['equiv_predicate_slug'].unique().tolist()
+        for pred_slug in pred_slugs:
+            equiv_pred_index = proj_index & (df['equiv_predicate_slug'] == pred_slug)
+            rel_preds_qs = AllAssertion.objects.filter(
+                subject__item_type='predicates',
+                predicate_id__in=configs.PREDICATE_LIST_SBJ_EQUIV_OBJ,
+                visible=1,
+                object__slug=pred_slug,
+            ).select_related(
+                'subject'
+            ).distinct(
+                'subject'
+            ).order_by(
+                'subject'
+            )
+            rel_pred_ids = [aa.subject.uuid for aa in rel_preds_qs]
+            proj_pred_assert_count = AllAssertion.objects.filter(
+                subject__project__slug=proj_slug,
+                predicate_id__in=rel_pred_ids,
+            ).count()
+            if proj_pred_assert_count == 0:
+                # Project lacks equivalent predicates, skip
+                continue
+            act_equiv_obj_slugs = df[equiv_pred_index]['equiv_object_slug'].unique().tolist()
+            for equiv_obj_slug in act_equiv_obj_slugs:
+                equiv_obj_index = equiv_pred_index & (df['equiv_object_slug'] == equiv_obj_slug)
+                rel_types_qs = AllAssertion.objects.filter(
+                    subject__item_type='types',
+                    predicate_id__in=(configs.PREDICATE_LIST_SBJ_EQUIV_OBJ + [configs.PREDICATE_DCTERMS_REFERENCES_UUID]),
+                    visible=1,
+                    object__slug=equiv_obj_slug,
+                ).select_related(
+                    'subject'
+                ).distinct(
+                    'subject'
+                ).order_by(
+                    'subject'
+                )
+                rel_type_ids = [aa.subject.uuid for aa in rel_types_qs]
+                proj_pred_type_assert_count = AllAssertion.objects.filter(
+                    subject__project__slug=proj_slug,
+                    predicate_id__in=rel_pred_ids,
+                    object_id__in=rel_type_ids,
+                ).count()
+                df.loc[equiv_obj_index, 'proj_equiv_object_rate'] = (proj_pred_type_assert_count / proj_pred_assert_count)
+            dfp = df[equiv_pred_index].copy()
+            dfp.drop_duplicates(subset=['equiv_object_slug'], inplace=True)
+            dfp.sort_values(by='proj_equiv_object_rate', ascending=False, inplace=True)
+            disp_cols = [
+                'project__slug',
+                'equiv_object_slug',
+                'equiv_object_label',
+                'proj_equiv_object_rate',
+            ]
+            print(dfp[disp_cols].head(10))
+    return df
+
 
 
 def explain_text_clean(txt):
