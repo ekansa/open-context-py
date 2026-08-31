@@ -583,3 +583,82 @@ CLASS_RAG_EXPLAIN_DICT = {
     and reuse primary archaeological data.
     """,
 }
+
+
+EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
+
+    # See: https://en.wikipedia.org/wiki/List_of_domesticated_animals
+
+    # sheep-goat
+    "eol-p-32609438-gbif-sub": """
+    These small bovid bones reflect uncertain taxonomic identification, because zooarchaeologists 
+    have difficulty distinguishing between the bones of sheep and goat. People hunted, herded or kept 
+    sheep and goat for: meat, milk, fiber (wool), leather, hides, pelts, horns, vellum, manure, 
+    guarding, fighting, racing, weed control, show, pets.
+    """,
+
+    # sheep
+    "gbif-2441110": """
+    Sheep have some morphological differences between wild and domesticated varieties. People hunted, herded 
+    or kept sheep for: meat, milk, fiber (especially wool), leather, hides, pelts, horns, vellum, manure, 
+    guarding, fighting, racing, weed control, show, pets.
+    """,
+
+    # Ovis orientalis 
+    "gbif-2441112": """
+    Ovis orientalis is the wild ancestor of domestic sheep.
+    """,
+
+    # goat
+    "gbif-2441056": """
+    Goats have some morphological differences between wild and domesticated varieties. People hunted, herded 
+    or kept goats for: milk, meat, fiber, skin, horns, vellum, manure, guarding, fighting, racing, weed control, 
+    clearing land, show, pets.
+    """,
+
+    # Capra aegagrus
+    "gbif-4409366": """
+    The bezoar goat or wild goat is the wild ancestor domestic goat.
+    """,
+    
+    # pigs
+    "gbif-7705930": """
+    Pigs have some morphological differences between wild, feral and domesticated varieties. 
+    People hunted, herded or kept pigs for: meat, leather, tusks, manure, guarding, fighting, racing, 
+    truffle harvesting, weed control, show, pets.
+    """,
+
+    # cattle
+    "gbif-2441022": """
+    Cattle have some morphological differences between the extinct wild and domesticated varieties. 
+    People hunted, herded or kept cattle for: meat, milk, leather, hides, fiber, horns, vellum, blood, 
+    dung, working, plowing, traction, guarding, fighting, sport, soil fertilization, weed control, 
+    worship, show, pets. Cattle herds often had prestige and economic value.
+    """,
+
+    # domestic dogs
+    "gbif-6164210": """
+    Domestic dogs have some morphological and behavioral differences with their wild ancestors. People kept dogs for:
+    hunting, herding, guarding, fighting, pets, meat, leather, fiber, racing, working, draft, pack, sport, 
+    truffle harvesting, pest control, show.
+    """,
+
+    # domestic horse
+    "gbif-2440886": """
+    People herded or kept horses for: draft, pack, mount, milk, meat, leather, hair, manure, working, plowing, 
+    fighting, racing, show, pets. Horses often had prestige, military, and economic value.
+    """,
+
+    # domestic donkey
+    "gbif-2440891": """
+    People herded or kept donkeys for: draft, pack, mount, milk, meat, manure, working, plowing, 
+    weed control, show, pets.
+    """,
+
+    # Equus
+    "gbif-8652950": """
+    Equines include a variety of wild species and some economically important domestic species such as horses and 
+    donkeys. People herded or kept horses and donkeys for: draft, pack, mount, milk, meat, manure, plowing, pets.
+    """,
+
+}
