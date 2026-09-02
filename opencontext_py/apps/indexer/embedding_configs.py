@@ -606,7 +606,7 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
 
     # Ovis orientalis 
     "gbif-2441112": """
-    Ovis orientalis is the wild ancestor of domestic sheep.
+    Ovis orientalis is the wild ancestor of domestic sheep. People hunted wild sheep for: meat, skin, horns.
     """,
 
     # goat
@@ -618,7 +618,7 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
 
     # Capra aegagrus
     "gbif-4409366": """
-    The bezoar goat or wild goat is the wild ancestor domestic goat.
+    The bezoar goat or wild goat is the wild ancestor of domestic goat. People hunted wild goat for: meat, skin, horns.
     """,
     
     # pigs
