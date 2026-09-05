@@ -625,11 +625,26 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     "gbif-7705930": """
     Pigs have some morphological differences between wild, feral and domesticated varieties. 
     People hunted, herded or kept pigs for: meat, leather, tusks, manure, guarding, fighting, racing, 
-    truffle harvesting, weed control, show, pets.
+    truffle harvesting, weed control, show, pets. Boar were dangerous and boar hunting sometimes
+    related to prestige or elite status. 
     """,
 
     # cattle
     "gbif-2441022": """
+    Cattle have some morphological differences between the extinct wild and domesticated varieties. 
+    People hunted, herded or kept cattle for: meat, milk, leather, hides, fiber, horns, vellum, blood, 
+    dung, working, plowing, traction, guarding, fighting, sport, soil fertilization, weed control, 
+    worship, show, pets. Cattle herds often had prestige and economic value.
+    """,
+
+    # Bos primogeneous 
+    "gbif-2441024": """
+    Aurochs were large dangerous wild cattle that people hunted for: meat, milk, leather, hides, fiber, horns
+    Auroch hunting possibly related to prestige or elite status. 
+    """,
+
+    # Bos
+    "gbif-2441017": """
     Cattle have some morphological differences between the extinct wild and domesticated varieties. 
     People hunted, herded or kept cattle for: meat, milk, leather, hides, fiber, horns, vellum, blood, 
     dung, working, plowing, traction, guarding, fighting, sport, soil fertilization, weed control, 
@@ -641,6 +656,12 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     Domestic dogs have some morphological and behavioral differences with their wild ancestors. People kept dogs for:
     hunting, herding, guarding, fighting, pets, meat, leather, fiber, racing, working, draft, pack, sport, 
     truffle harvesting, pest control, show.
+    """,
+
+    # domestic cat
+    "gbif-2435035": """
+    Domestic cats have few morphological and behavior differences with their wild ancestors. People tamed or kept cats
+    for: meat, pelts, pest control, show, pets
     """,
 
     # domestic horse
@@ -660,5 +681,67 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     Equines include a variety of wild species and some economically important domestic species such as horses and 
     donkeys. People herded or kept horses and donkeys for: draft, pack, mount, milk, meat, manure, plowing, pets.
     """,
+
+    # Llama glama
+    "gbif-5220190": """
+    People herded or kept lama and guanaco for: meat, fiber (wool), manure, working, guarding, racing, draft, pack,
+    weed control, show, pets 
+    """,
+
+    # Lama
+    "gbif-2441239": """
+    Lama include wild and domestic species. People hunted, herded or kept lama for: meat, fiber (wool), manure, 
+    working, guarding, racing, draft, pack, weed control, show, pets 
+    """,
+
+    # Lama guanicoe
+    "gbif-5220188": """
+    People hunted, herded or kept guanaco for: meat, fiber (wool), manure, working, guarding, racing, draft, pack,
+    weed control, show, pets 
+    """,
+
+    # Bactrian camel
+    "gbif-2441238": """
+    People herded or kept domestic Asiatic or Bactrian camel for: meat, milk, hair, dung, pack, mount, show, pets
+    """,
+
+    "gbif-9055455": """
+    People herded or kept domestic Dromedary or Arabian camel for: meat, milk, urine, racing, hunting, pack, mount, 
+    show, pets
+    """,
+
+    # Cavia
+    "gbif-2437628": """
+    Cavia includes species of wild and domestic guinea pig that people trapped or kept for: meat, manure, 
+    weed control, show, pets
+    """,
+
+    # Anas 
+    "gbif-2498056": """
+    Anas includes species of wild and domestic duck that people hunted, trapped or kept for: meat, eggs, 
+    feathers, manure, guarding, pest control, weed control, show, pets
+    """,
+
+    # Gallus gallus
+    "gbif-9326020": """
+    People kept domestic chicken for: meat, eggs, feathers, leather, manure, guarding, fighting, pest control, 
+    weed control, show, pets 
+    """,
+
+    # Columba livia
+    "gbif-2495414": """
+    Columba livia includes wild and domestic pigeons that people hunted, trapped or kept for: meat, manure, 
+    racing, messenger, ornamental, show, pets
+    """,
+
+    "gbif-9606290": """
+    Turkey includes wild and domestic birds that people hunted, trapped or kept for: meat, eggs, feathers, 
+    manure, guarding, pest control, show, pets
+    """,
+
+    "gbif-5219173": """
+    People may have hunted or fought wild wolves for: defense, meat, hides, trophies, prestige, social status
+    """,
+
 
 }
