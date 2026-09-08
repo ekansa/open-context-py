@@ -104,9 +104,6 @@ API_COLS = [
     'path',
     'item_class__slug',
     'item_class__label',
-    'equiv_predicate_label',
-    'equiv_object_label',
-    'equiv_object_alt_labels',
     'explain_text', 
     'url',
 ]
@@ -142,12 +139,16 @@ def generate_query_url_from_row(row, root_url='https://opencontext.org/query/'):
         return url
     url = url + '?' + urllib.parse.urlencode(params)
     if not is_null_str(row['predicate__slug']) and not is_null_str(row['object__slug']):
+        new_prop_filter = f"{str(row['predicate__slug'])}---{str(row['object__slug'])}"
+        if new_prop_filter in url:
+            # we already have this, so skip out
+            return url
         if '?' in url:
             sep = '&'
         else:
             sep = '?'
         # We can have multiple 'prop' args in a URL
-        url += f"{sep}prop={str(row['predicate__slug'])}---{str(row['object__slug'])}"
+        url += f"{sep}prop={new_prop_filter}"
     return url
 
 
