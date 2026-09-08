@@ -16,6 +16,8 @@ from django.conf import settings
 
 from opencontext_py.libs import duckdb_con
 
+from opencontext_py.apps.all_items import hierarchy
+
 from opencontext_py.apps.all_items.models import (
     AllManifest,
     AllAssertion,
@@ -30,7 +32,9 @@ from opencontext_py.apps.indexer.solrdocument_slim_schema import (
 )
 from opencontext_py.apps.indexer.embedding_configs import (
     ITEM_TYPE_RAG_EXPLAIN_DICT,
-    CLASS_RAG_EXPLAIN_DICT,
+    CLASS_SLUG_EXPLAIN_DICT,
+    EQUIV_OBJ_SLUG_EXPLAIN_DICT,
+    EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT,
 )
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL_DIM,
@@ -45,12 +49,15 @@ from opencontext_py.apps.indexer.explained_topic_data import (
     start_explained_searches_df,
     augment_explained_searches_vocabularies,
     EXPLAINED_SEARCHES_PREP_PATH,
+    add_cross_project_rows,
     add_equiv_object_project_rates,
     add_explain_texts_and_embeddings_to_df
 )
 
 df = start_explained_searches_df()
 df = augment_explained_searches_vocabularies(df)
+df = add_cross_project_rows(df)
+df = add_equiv_object_project_rates(df)
 df.to_csv(EXPLAINED_SEARCHES_PREP_PATH, index=False)
 df = add_explain_texts_and_embeddings_to_df(df)
 df = make_explained_searches_parquet_from_df(df)
@@ -119,6 +126,7 @@ DF_COLS_PROPERTY_DUCKDB_DATA_TYPES = {
     'equiv_object_slug': 'VARCHAR',
     'equiv_object_label': 'VARCHAR',
     'equiv_object_alt_labels': 'VARCHAR',
+    'proj_class_pred_obj_count': 'BIGINT',
     'proj_equiv_object_rate': 'FLOAT',
 }
 
@@ -134,6 +142,27 @@ DF_COLS_ALL_TO_DUCKDB_DATA_TYPES = (
     | DF_COLS_PROPERTY_DUCKDB_DATA_TYPES
     | DF_EMBEDDING_COLS_TO_DUCKDB_DATA_TYPES
 )
+
+
+def get_all_location_context_item_class_slugs():
+    """Get all item-class manifest objects related to iSamples records"""
+    m_qs = AllManifest.objects.filter(
+        item_type='class',
+        slug__in=['oc-gen-cat-loc-or-context'],
+    )
+    location_context_classes = []
+    for man_obj in m_qs:
+        m_children = hierarchy.get_list_concept_children_recursive(man_obj)
+        if man_obj not in location_context_classes:
+            location_context_classes.append(man_obj)
+        for child_obj in m_children:
+            if child_obj not in location_context_classes:
+                location_context_classes.append(child_obj)
+    location_context_slugs = [m.slug for m in location_context_classes]
+    return location_context_slugs
+
+
+LOCATION_CONTEXT_SLUGS = get_all_location_context_item_class_slugs()
 
 
 def get_world_regions_two_levels_deep_qs():
@@ -350,11 +379,15 @@ def generate_bbox_from_m_dict(m_dict):
         if not m_dict.get(k):
             return None
     lat_diff_factor = abs(m_dict['latitude__max'] - m_dict['latitude__min']) * 0.075
+    if lat_diff_factor > 90:
+        return None
     if lat_diff_factor < 0.075:
         lat_diff_factor = 0.075
     lon_diff_factor = abs(m_dict['longitude__max'] - m_dict['longitude__min']) * 0.075
     if lon_diff_factor < 0.075:
         lon_diff_factor = 0.075
+    if lon_diff_factor > 90:
+        return None
     sw_lat = round(
         (m_dict['latitude__min'] - lat_diff_factor), 4
     )
@@ -496,16 +529,21 @@ def get_distinct_project_item_class_types(
         subject__item_type=item_type,
         object__item_type__in=['types', 'class', 'uri',],
         visible=1,
+    ).exclude(
+        object_id=configs.DEFAULT_NULL_OBJECT_UUID
     )
     if item_class_id:
         a_qs = a_qs.filter(
             subject__item_class_id=item_class_id,
         )
-    if item_class_slug:
+    elif item_class_slug:
         a_qs = a_qs.filter(
             subject__item_class__slug=item_class_slug,
         )
-    
+    else:
+        pass
+
+
     a_qs = a_qs.distinct(
         'predicate',
         'object',
@@ -524,13 +562,20 @@ def get_distinct_project_item_class_types(
         equiv_object_slug=Subquery(equiv_type_qs)
     ).annotate(
         equiv_object_label=Subquery(equiv_type_label_qs)
-    ).filter(
-        Q(equiv_predicate_slug__isnull=False)
-        |Q(predicate__item_type__in=['property']),
-    ).filter(
-        Q(equiv_object_slug__isnull=False)
-        |Q(object__item_type__in=['class', 'uri',]),
-    ).values(
+    )
+
+    if False and not item_class_slug in LOCATION_CONTEXT_SLUGS:
+        # Only require equibalent predicate and objects for records
+        # that are not contexts of objects. 
+        a_qs = a_qs.filter(
+            Q(equiv_predicate_slug__isnull=False)
+            |Q(predicate__item_type__in=['property']),
+        ).filter(
+            Q(equiv_object_slug__isnull=False)
+            |Q(object__item_type__in=['class', 'uri',]),
+        )
+
+    a_qs = a_qs.values(
         'predicate_id',
         'predicate__label',
         'predicate__slug',
@@ -579,14 +624,26 @@ def augment_explained_searches_vocabularies(df):
         prop_qs = get_distinct_project_item_class_types(
             project_slug=class_row['project__slug'], 
             item_type=class_row['item_type'], 
-            item_class_id=class_row['item_class_id'], 
+            item_class_id=class_row['item_class_id'],
+            item_class_slug=class_row['item_class__slug'], 
         )
         if prop_qs.count() == 0:
             continue
         new_rows = []
         for prop_dict in prop_qs:
-            # Do this to handle properties, classes, and uris directly linked to 
-            # items
+            # Get a count of the how many records have this predicate / object pair
+            proj_class_pred_obj_count = AllAssertion.objects.filter(
+                subject__project__slug=class_row['project__slug'],
+                subject__item_class_id=class_row['item_class_id'],
+                predicate_id=prop_dict['predicate_id'],
+                object_id=prop_dict['object_id'],
+                visible=1,
+            ).count()
+            if proj_class_pred_obj_count < 10 and not prop_dict['equiv_object_slug']:
+                # No need for low-frequency project specific things only. This will just
+                # slow things down.
+                continue
+            prop_dict['proj_class_pred_obj_count'] = proj_class_pred_obj_count
             if prop_dict.get('predicate__item_type') != 'predicates':
                 prop_dict['equiv_predicate_label'] = prop_dict.get('predicate__label')
                 prop_dict['equiv_predicate_slug'] = prop_dict.get('predicate__slug')
@@ -601,10 +658,11 @@ def augment_explained_searches_vocabularies(df):
             id_parts = [
                 new_row.get('project__slug'),
                 new_row.get('item_type'),
+                new_row.get('path'),
                 str(new_row.get('item_class_id')),
                 str(new_row.get('predicate_id')),
                 str(new_row.get('object_id')),
-                new_row.get('equiv_object_slug'),
+                str(new_row.get('equiv_object_slug')),
             ]    
             id_str = '-'.join(id_parts)
             _, uuid = update_old_id(id_str)
@@ -625,6 +683,143 @@ def augment_explained_searches_vocabularies(df):
         df.loc[act_index, 'equiv_object_alt_labels'] = ', '.join(alt_labels)
     print(f'After extending for vocabularies, df length: {len(df.index)}')
     return df
+
+
+def consolidate_path_list(path_list, deep=2):
+    new_paths = []
+    for path in path_list:
+        if not path:
+            continue
+        if str(path).lower() in ['nan', 'none']:
+            continue
+        act_path_list = path.split('/')
+        act_path_len = len(act_path_list)
+        if act_path_len < 1:
+            continue
+        for i in range(1, deep+1):
+            if i > act_path_len:
+                break
+            new_path = '/'.join(act_path_list[:i])
+            if not new_path in new_paths:
+                new_paths.append(new_path)
+    return new_paths
+
+
+def consolidate_metadata_list(metadata_list):
+    new_metadata_list = []
+    for metadata in metadata_list:
+        if not metadata:
+            continue
+        if str(metadata).lower() in ['nan', 'none']:
+            continue
+        m_list = str(metadata).split(';')
+        for m_topic in m_list:
+            m_topic = m_topic.strip()
+            if m_topic in new_metadata_list:
+                continue
+            new_metadata_list.append(m_topic)
+    return '; '.join(new_metadata_list)
+
+
+def add_cross_project_rows(df):
+    """Adds rows that span across multiple projects so that multi-project queries
+    are represented in the explained search data
+    """
+    new_null_cols = [
+        'project__slug',
+        'project__label',
+        'proj_short_desc',
+        'predicate_id',
+        'predicate__label',
+        'predicate__slug',
+        'object_id',
+        'object__label',
+        'object__context_id',
+        'object__slug',
+    ]
+    new_dfs = []
+    equiv_preds_index = ~df['equiv_predicate_slug'].isnull()
+    for equiv_pred_slug in df[equiv_preds_index]['equiv_predicate_slug'].unique().tolist():
+        act_pred_index = (
+            ~df['project__slug'].isnull()
+            & (df['equiv_predicate_slug'] == equiv_pred_slug)
+        )
+        path_list = df[act_pred_index]['path'].unique().tolist()
+        new_paths = consolidate_path_list(path_list)
+        new_paths.append('')
+        for path in new_paths:
+            if path:
+                path_index = df['path'].str.startswith(path) & act_pred_index
+            else:
+                path_index = act_pred_index
+            not_null_equiv_obj_index = ~df['equiv_object_slug'].isnull() & path_index
+            equiv_obj_slugs = df[not_null_equiv_obj_index]['equiv_object_slug'].unique().tolist()
+            for equiv_obj_slug in equiv_obj_slugs:
+                act_eqiv_obj_index = (
+                    (df['equiv_object_slug'] == equiv_obj_slug)
+                    & ~df['item_class__slug'].isnull()
+                    & not_null_equiv_obj_index
+                )
+                act_class_slugs = df[act_eqiv_obj_index]['item_class__slug'].unique().tolist()
+                for act_class_slug in act_class_slugs:
+                    act_index = (df['item_class__slug'] == act_class_slug) & act_eqiv_obj_index
+                    act_proj_slugs = df[act_index]['project__slug'].unique().tolist()
+                    if len(act_proj_slugs) < 2:
+                        # Don't make new rows, there's only one project using this predicate
+                        # and path
+                        continue
+                    metadata_list = df[act_index]['metadata'].unique().tolist()
+                    new_metadata = consolidate_metadata_list(metadata_list)
+                    if len(act_proj_slugs) > 3:
+                        new_metadata = None
+                    item_type_class_count = df[act_index]['item_type_class_count'].sum()
+                    item_type_class_asserts_count = df[act_index]['item_type_class_asserts_count'].sum()
+                    item_type_class_asserts_rate = 0
+                    if item_type_class_count > 0:
+                        item_type_class_asserts_rate = item_type_class_asserts_count / item_type_class_count
+                    lat_min = df[act_index]['latitude__min'].min()
+                    lon_min = df[act_index]['longitude__min'].min()
+                    lat_max = df[act_index]['latitude__max'].max()
+                    lon_max = df[act_index]['longitude__max'].max()
+                    box_dict = {
+                        'latitude__min': lat_min,
+                        'longitude__min': lon_min,
+                        'latitude__max': lat_max,
+                        'longitude__max': lon_max,
+                    }
+                    df_new = df[act_index].head(1).copy()
+                    for col in new_null_cols:
+                        df_new[col] = None
+                    df_new['path'] = path
+                    df_new['metadata'] = new_metadata
+                    df_new['item_type_class_count'] = item_type_class_count
+                    df_new['item_type_class_asserts_count'] = item_type_class_asserts_count
+                    df_new['item_type_class_asserts_rate'] = item_type_class_asserts_rate
+                    # Update geospatial and chronological bounds
+                    df_new['bbox'] = generate_bbox_from_m_dict(box_dict)
+                    df_new['latitude__min'] = lat_min
+                    df_new['longitude__min'] = lon_min
+                    df_new['latitude__max'] = lat_max
+                    df_new['longitude__max'] = lon_max
+                    df_new['earliest__min'] = df[act_index]['earliest__min'].min()
+                    df_new['latest__max'] = df[act_index]['latest__max'].max()
+                    id_parts = [
+                        str(df_new['project__slug'].iloc[0]),
+                        str(df_new['item_type'].iloc[0]),
+                        str(df_new['path'].iloc[0]),
+                        str(df_new['item_class_id'].iloc[0]),
+                        str(df_new['equiv_predicate_slug'].iloc[0]),
+                        str(df_new['equiv_object_slug'].iloc[0]),
+                    ]    
+                    id_str = '-'.join(id_parts)
+                    _, uuid = update_old_id(id_str)
+                    df_new['uuid'] = uuid
+                    new_dfs.append(df_new)
+    old_df = df.copy()
+    df = pd.concat(([old_df] + new_dfs), ignore_index=True)
+    df.drop_duplicates(subset=['uuid'], inplace=True)
+    return df
+
 
 
 def add_equiv_object_project_rates(df):
@@ -698,6 +893,7 @@ def explain_text_clean(txt):
     txt = txt.replace('\t', ' ')
     txt = " ".join(txt.split())
     txt = txt.strip()
+    txt = txt.replace('..', '.')
     if not txt.endswith('.'):
         txt += '.'
     return txt
@@ -711,9 +907,23 @@ def has_key_str_value(m_dict, key):
     return True
 
 
+def get_unique_non_null_values_from_keys(m_dict, keys):
+    non_nulls = []
+    for key in keys:
+        if not has_key_str_value(m_dict, key):
+            continue
+        value = m_dict.get(key)
+        if value in non_nulls:
+            continue
+        non_nulls.append(value)
+    return non_nulls
+    
+
+
 def make_explain_text(m_dict):
-    explain_item_class = CLASS_RAG_EXPLAIN_DICT.get(
-        m_dict.get('item_class__label'),
+    item_class_slug = m_dict.get('item_class__slug')
+    explain_item_class = CLASS_SLUG_EXPLAIN_DICT.get(
+        item_class_slug,
         ITEM_TYPE_RAG_EXPLAIN_DICT.get(
             m_dict.get('item_type')
         )
@@ -725,18 +935,39 @@ def make_explain_text(m_dict):
         path = m_dict.get('path')
         places = '<br/><b>Relevant Places:</b> in ' + path.replace('/', ', in ')
         places = explain_text_clean(places)
+    if False:
+        if item_class_slug in LOCATION_CONTEXT_SLUGS:
+            predicate_labels = get_unique_non_null_values_from_keys(
+                m_dict, 
+                keys=['predicate__label', 'equiv_predicate_label'],
+            )
+        else:
+            predicate_labels = get_unique_non_null_values_from_keys(m_dict, keys=['equiv_predicate_label'])
+    predicate_labels = get_unique_non_null_values_from_keys(
+        m_dict, 
+        keys=['equiv_predicate_label'],
+    )
+    if not predicate_labels:
+        # Only use the project specific predicate if there's no standard equivalent
+        predicate_labels = get_unique_non_null_values_from_keys(
+            m_dict, 
+            keys=['predicate__label',],
+        )
+    object_labels = get_unique_non_null_values_from_keys(
+        m_dict, 
+        keys=['object__label', 'equiv_object_label', 'equiv_object_alt_labels'],
+    )
     specific_desc = ''
-    if (has_key_str_value(m_dict, 'predicate__label')
-        and has_key_str_value(m_dict, 'object__label')
-        and has_key_str_value(m_dict, 'equiv_predicate_label')
-        and has_key_str_value(m_dict, 'equiv_object_label')
-        and has_key_str_value(m_dict, 'predicate__label')
-    ):
-        specific_desc = f"<br/><b>Specific Topics:</b> {m_dict.get('equiv_predicate_label')}; {m_dict.get('object__label')}"
-        if m_dict.get('object__label') != m_dict.get('equiv_object_label'):
-            specific_desc += f" and {m_dict.get('equiv_object_label')}"
-        if m_dict.get('equiv_object_alt_labels') and not str(m_dict.get('equiv_object_alt_labels')) in ['nan', 'None']:
-            specific_desc += f", {m_dict.get('equiv_object_alt_labels')}"
+    if len(predicate_labels) > 0 and len(object_labels) > 0:
+        equiv_pred_slug = m_dict.get('equiv_predicate_slug')
+        equiv_obj_slug =  m_dict.get('equiv_object_slug')
+        preds_label_str = ' or '.join(predicate_labels)
+        objs_label_str = ', '.join(object_labels)
+        specific_desc = f"<br/><b>Specific Topics:</b> {preds_label_str} - {objs_label_str}"
+        if EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT.get((equiv_pred_slug, item_class_slug)):
+            specific_desc += ". " + EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT.get((equiv_pred_slug, item_class_slug))
+        if EQUIV_OBJ_SLUG_EXPLAIN_DICT.get(equiv_obj_slug):
+            specific_desc += ". " + EQUIV_OBJ_SLUG_EXPLAIN_DICT.get(equiv_obj_slug)
         specific_desc = explain_text_clean(specific_desc)
     project_label = ''
     if has_key_str_value(m_dict, 'project__label'):

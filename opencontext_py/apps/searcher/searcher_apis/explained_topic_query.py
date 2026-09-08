@@ -138,9 +138,17 @@ def generate_query_url_from_row(row, root_url='https://opencontext.org/query/'):
         params['cat'] = str(row['item_class__slug'])
     if not is_null_str(row['equiv_predicate_slug']) and not is_null_str(row['equiv_object_slug']):
         params['prop'] = f"{str(row['equiv_predicate_slug'])}---{str(row['equiv_object_slug'])}"
-    if not params:
+    if not params and not is_null_str(row['predicate__slug']):
         return url
-    return url + '?' + urllib.parse.urlencode(params)
+    url = url + '?' + urllib.parse.urlencode(params)
+    if not is_null_str(row['predicate__slug']) and not is_null_str(row['object__slug']):
+        if '?' in url:
+            sep = '&'
+        else:
+            sep = '?'
+        # We can have multiple 'prop' args in a URL
+        url += f"{sep}prop={str(row['predicate__slug'])}---{str(row['object__slug'])}"
+    return url
 
 
 def load_explained_search_table_from_parquet_path(

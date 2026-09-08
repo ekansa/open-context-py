@@ -220,8 +220,8 @@ ITEM_TYPE_RAG_EXPLAIN_DICT = {
 }
 
 
-CLASS_RAG_EXPLAIN_DICT = {
-    "Animal Bone": """
+CLASS_SLUG_EXPLAIN_DICT = {
+    "oc-gen-cat-animal-bone": """
     This query targets faunal assemblages, where the term "element" specifically denotes anatomical 
     parts rather than chemical components. Animal bone analysis yields evidence regarding ancient 
     human diet, subsistence strategies, and environmental contexts. Quantifiable patterns in the age and 
@@ -230,7 +230,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     for labor. Furthermore, faunal remains illuminate household and community food distribution, 
     feasting events, ritual ceremonies, status differentiation, and ideological symbolism.
     """,
-    "Human Bone": """
+    "oc-gen-cat-human-bone": """
     This query targets human osteological remains, using the term "element" to designate specific anatomical 
     units. Analysis of human skeletal assemblages provides fundamental evidence concerning paleodemographics, 
     population health, physical trauma, pathologies, and dietary profiles. Documented patterns in the age, 
@@ -239,7 +239,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     serve as primary indicators of past religious beliefs, ritual systems, symbolic behaviors, and expressions 
     of social prestige.
     """,
-    "Plant remains": """
+    "oc-gen-cat-plant-remains": """
     This query targets archaeobotanical data, using the terms "family" and "order" to reflect standard biological 
     taxonomy. Plant macro-remains and micro-remains offer evidence regarding ancient human diet, 
     agricultural cultivation, gardening, foraging tactics, and hunter-gatherer subsistence strategies. Botanical assemblages 
@@ -248,7 +248,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     technologies for beer and wine, wild herb exploitation, ritual feasting events, and religious or symbolic 
     practices within past human societies.
     """,
-    "Region": """
+    "oc-gen-cat-region": """
     This query identifies large-scale spatial contexts and macro-geographic units within the database. 
     Regions encompass modern or historical geopolitical boundaries such as countries, states, and provinces, 
     alongside natural geographic features like seas, river valleys, mountain ranges, and distinct environmental 
@@ -257,7 +257,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     reconstruction, and the study of large-scale cultural and environmental adaptations across expansive 
     geographic landscapes.
     """,
-    "Object": """
+    "oc-gen-cat-object": """
     This query targets individual archaeological artifacts, which represent the portable material culture 
     manufactured, modified, and used by past human populations. While often recovered as broken refuse 
     or discarded garbage, these items encompass tools, weapons, decorative ornaments, architectural fixtures, 
@@ -267,7 +267,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     Artifacts also inform about trade networks, socio-economic status, households, status, 
     gender dynamics, ritual behaviors, and cultural chronology.
     """,
-    "Coin": """
+    "oc-gen-cat-coin": """
     This query targets specific metallic artifacts utilized primarily as standardized currency. Coins feature 
     distinctive mint marks, inscriptions, and political iconography that establish precise temporal and geographic 
     manufacturing contexts. Beyond providing critical chronological anchors for stratigraphic layers, coins 
@@ -276,7 +276,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     characterized by centralized state bureaucracies, standardized weights and measures, market economies, and 
     urban settlements.
     """,
-    "Pottery": """
+    "oc-gen-cat-pottery": """
     This query targets ceramic artifacts, which represent highly durable components of past material culture. 
     Though occasionally recovered intact within deliberate burial contexts, pottery is routinely found as 
     fragmented sherds (shards) discarded as refuse. Specialized terms like "fabric" and "ware" describe 
@@ -285,7 +285,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     informs research into technical practices, manufacturing styles, pyro-technology, household organization, 
     socio-economic status, and cultural chronology.
     """,
-    "Glass": """
+    "oc-gen-cat-glass": """
     This query focuses on archaeological artifacts manufactured from vitrified materials. Glass objects frequently 
     occur as personal adornments, beads, or specialized containers designed for high-value liquid commodities 
     such as perfumes, oils, and pharmaceuticals. The production of glass reflects complex specialized craftsmanship 
@@ -293,7 +293,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     to investigate long-distance trade patterns, economic and manufacturing organization, exchange of technological knowledge, 
     elite socio-economic status, and changing consumer preferences within past societies.
     """,
-    "Groundstone": """
+    "oc-gen-cat-groundstone": """
     This query targets lithic artifacts modified and shaped through deliberate abrasion, grinding, and polishing 
     techniques. The category encompasses functional domestic tools such as mortars, pestles, manos, and metates, 
     which were vital for processing dietary staples, milling grain, and grinding herbs or spices. Groundstone 
@@ -301,7 +301,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     burners. Additionally, researchers study flat groundstone palettes to document the processing of mineral pigments 
     and powders used in cosmetic applications and symbolic body ornamentation.
     """,
-    "Architectural Element": """
+    "oc-gen-cat-arch-element": """
     This query identifies structural and decorative components derived from ancient buildings and built environments. 
     Examples include columns, capitals, lintels, roof tiles, and carved molding. Archaeologists analyze these 
     architectural elements to understand construction techniques, raw material procurement, engineering capabilities, 
@@ -309,7 +309,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     and economic systems. Furthermore, their scale and ornamentation inform about socio-economic status, 
     public or private ritual functions, ideological expressions, cultural changes, and architectural chronology.
     """,
-    "Non Diagnostic Bone": """
+    "oc-gen-cat-non-diag-bone": """
     This query encompasses skeletal remains that lack the morphological landmarks required for precise taxonomic 
     or anatomical identification. Despite their fragmented nature, non-diagnostic bones provide quantitative data 
     regarding overall assemblage size, meat consumption ratios, and intensive bone processing activities. 
@@ -318,7 +318,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     helps researchers evaluate site preservation, site formation processes, and disposal habits within archaeological
     contexts.
     """,
-    "Survey Unit": """
+    "oc-gen-cat-survey-unit": """
     This query identifies bounded regions designated for surface reconnaissance to assess past human landscape use. 
     Survey units are typically documented via systematic field walking, where researchers visually identify and collect 
     surface artifact scatters to detect hidden archaeological sites. Archaeologists may supplement surface observations 
@@ -326,7 +326,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     Analyzing spatial distributions across these units reveals long-term regional settlement patterns, demographic shifts, 
     land-use intensity, and human adaptations to changing environments.
     """,
-    "Site": """
+    "oc-gen-cat-site": """
     This query targets archaeological sites, meaning localized parts of the landscape with evidence for past human 
     occupation and activity. Sites span a wide functional range, encompassing large urban centers, agricultural villages, 
     temporary hunter-gatherer camps, or specialized locales like mines, quarries, military fortresses, regional 
@@ -336,7 +336,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     architecture, defensive strategies, social stratification and identity, housing, demographics, spatial organization 
     of economic activites, storage, infrastructure, urban planning, ritual and religious systems, and cultural chronology.
     """,
-    "Site Area": """
+    "oc-gen-cat-site-area": """
     This query refers to spatial subdivisions within a larger archaeological site, operating synonymously with terms 
     like "Area", "Operation", or "Field Project". Archaeologists sometimes arbitrarily divide sites into distinct 
     spatial zones to help manage and organize data collection workflows. In other cases, site areas may represent different
@@ -344,7 +344,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     Documenting site areas helps researchers track intra-site socio-economic variations, distinct manufacturing zones, 
     localized depositional histories, architectural sequences, and changing spatial use over time.
     """,
-    "Context": """
+    "oc-gen-cat-context": """
     This query retrieves records describing specific three-dimensional locations and deposits containing archaeological remains. 
     Attributes of a context often include: spatial coordinates, soil composition, depth, matrix 
     color and density, and exact stratigraphic positioning relative to other layers. Understanding context is fundamental to modern 
@@ -352,7 +352,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     By analyzing material patterns within contexts, researchers can attempt to reconstruct chronological sequences, 
     behavioral activities, site formation processes, and other patterns reflective of past human societies.
     """,
-    "Feature": """
+    "oc-gen-cat-feature": """
     This query identifies non-portable, human-modified components of an archaeological site. Unlike portable artifacts, 
     features represent fixed structural alterations of space, encompassing walls, prepared floors, storage pits, 
     drainage ditches, hearths, kilns, and domestic refuse heaps. Features provide primary evidence regarding 
@@ -361,7 +361,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     manufacturing, communal defense strategies, socio-economic differentiation, public ritual actions, and site-wide 
     chronological developments.
     """,
-    "Structure": """
+    "oc-gen-cat-structure": """
     This query targets deliberate architectural configurations and complete buildings, which constitute a specific 
     subcategory of non-portable features. Structures provide essential material evidence regarding spatial layouts, 
     construction techniques, raw material selections, and building practices within past societies. Analyzing 
@@ -370,7 +370,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     changes over time document shifting economic conditions, changing domestic organization, political transformations, and 
     occupational sequences across a site.
     """,
-    "Space": """
+    "oc-gen-cat-space": """
     This query isolates internal divisions, distinct rooms, or specific zones defined within architectural structures. 
     Spaces represent localized archaeological contexts that reveal the spatial logic and functional organization of 
     past buildings. By examining the distinct artifact distributions, specialized features, and soil chemistry within a 
@@ -378,7 +378,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     or manufacturing and craft areas. Studying these spatial dynamics provides information about daily household behaviors, gendered 
     activities, socio-economic status, and privacy conventions.
     """,
-    "Excavation Unit": """
+    "oc-gen-cat-exc-unit": """
     This query identifies the distinct, controlled spatial blocks used to record fieldwork data, functioning 
     interchangeably with terms like "Locus", "Lot", or "Unit". An excavation unit
     defines a specific layer, feature, or soil deposit identified by archaeologists during excavation. Researchers document 
@@ -387,7 +387,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     Standardizing documentation at the excavation unit level ensures precise spatial control, 
     enabling researchers to reconstruct complex depositional sequences and intra-site contexual patterns.
     """,
-    "Locus": """
+    "oc-gen-cat-locus": """
     This query targets a distinct spatial or stratigraphic unit recorded during field excavations, used interchangeably 
     with terms like "Excavation Unit", "Lot", or "Unit". 
     A locus defines a specific layer, feature, or soil deposit identified by archaeologists during excavation. 
@@ -396,7 +396,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     like animal bones or carbonized seeds. Standardizing documentation at the excavation unit level ensures precise 
     spatial control, enabling researchers to reconstruct complex depositional sequences and intra-site contexual patterns.
     """,
-    "Lot": """
+    "oc-gen-cat-lot": """
     This query addresses a designated analytical or spatial unit utilized to aggregate materials during field excavation, 
     sharing its primary definition with "Locus", "Excavation Unit", and "Unit". 
     A "lot" defines a specific layer, feature, or soil deposit identified by archaeologists during excavation. 
@@ -405,7 +405,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     like animal bones or carbonized seeds. Standardizing documentation at the excavation unit level ensures precise 
     spatial control, enabling researchers to reconstruct complex depositional sequences and intra-site contexual patterns.
     """,
-    "Basket": """
+    "oc-gen-cat-basket": """
     This query focuses on specific retrieval batches or collection containers used to group material from a defined 
     field context, such as a locus, lot, or excavation unit. Baskets represent the immediate operational level of artifact 
     recovery during active digging. Archaeologists log the context, depth, soil matrix characteristics, and spatial 
@@ -413,7 +413,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     depositional pulses, evaluate artifact density variations, and preserve spatial and other contextual relationships 
     for specialized laboratory analyses.
     """,
-    "Area": """
+    "oc-gen-cat-area": """
     This query targets macro-spatial divisions within an active archaeological project, operating similarly to terms 
     like "Site Area", "Operation", or "Field Project". Dividing a complex archaeological site into separate areas allows 
     field teams to manage research logistics and compare distinct functional zones. These areas frequently separate specialized 
@@ -421,14 +421,14 @@ CLASS_RAG_EXPLAIN_DICT = {
     ritual or monumental spaces, or agricultural terraces. Documenting these divisions enables researchers to 
     analyze spatial segregation, intra-site socioeconomic differences, and distinct activities across the landscape.
     """,
-    "Trench": """
+    "oc-gen-cat-trench": """
     This query identifies linear excavation cuts designed to expose stratigraphic profiles across an archaeological site. 
     Trenches provide a long cross-sectional view of complex depositional histories, helping researchers visualize superimposition 
     and site formation processes over time. A single trench often intersects multiple features, structures, and individual 
     depositional layers. Within each trench, specific contexts are further divided into fine-grained units like loci or lots. 
     This spatial framework allows archaeologists to link vertical chronological sequences directly with horizontal spatial configurations.
     """,
-    "Square": """
+    "oc-gen-cat-square": """
     This query centers on grid-based, geometrically defined units established across an archaeological site to maintain 
     spatial control. Typically arranged within a standardized site grid, squares enable field teams to map features, deposits, 
     artifacts, and ecofacts with greater precision. This geometric framework facilitates accurate recording of horizontal 
@@ -436,7 +436,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     researchers can extrapolate spatial distributions, calculate artifact density metrics, and more easily correlate data 
     across separate field seasons.
     """,
-    "Unit": """
+    "oc-gen-cat-unit": """
     This query designates a fundamental spatial and stratigraphic recording block used during archaeological fieldwork, 
     sharing identical meanings with "Excavation Unit", "Locus", and "Lot". 
     A "unit" defines a specific layer, feature, or soil deposit identified by archaeologists during excavation. 
@@ -445,7 +445,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     like animal bones or carbonized seeds. Standardizing documentation at the excavation unit level ensures precise 
     spatial control, enabling researchers to reconstruct complex depositional sequences and intra-site contexual patterns.
     """,
-    "Sequence": """
+    "oc-gen-cat-sequence": """
     This query relates to the relative ordering of stratigraphic layers, sharing conceptual ground with terms like 
     "Stratum" and "Phase". Chronological sequences represent a dimension of archaeological context, documenting 
     how separate soil deposits superimpose over time. By analyzing these sequences alongside artifact distributions, researchers 
@@ -453,7 +453,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     across the sequence allows archaeologists to track cultural developments, shifting economic patterns, and environmental 
     transitions through consecutive depositional phases.
     """,
-    "Stratum": """
+    "oc-gen-cat-stratum": """
     This query emphasizes a distinct, homogeneous layer of sedimentary or cultural material isolated within an archaeological 
     sequence, closely related to "Sequence" and "Phase". A stratum represents a specific depositional event or occupational 
     horizon. Archaeologists document each stratum by soil color, composition, depth, artifact and ecofact assemblages, and spatial boundaries. 
@@ -461,7 +461,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     evaluate environmental contexts, establish relative chronological frameworks, and compare assemblages of strata across different sites 
     to establish regional chronologies.
     """,
-    "Phase": """
+    "oc-gen-cat-phase": """
     This query describes a high-level chronological period or distinct structural stage identified within an archaeological 
     sequence, operating alongside terms like "Stratum" and "Sequence". A phase aggregates multiple related depositional events 
     and structural styles into a coherent temporal bracket. Archaeologists assign contexts to specific phases based on stylistic 
@@ -469,7 +469,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     localized site data into broader regional histories, tracking long-term socio-economic changes, political transformations, 
     and cultural transitions.
     """,
-    "Mound": """
+    "oc-gen-cat-mound": """
     This query focuses on elevated, hill-like topographic features resulting from long-term human occupation, architectural 
     collapse, and deliberate landscape modifications. Often referred to as tells or tumuli, mounds represent dense accumulations 
     of stratified cultural debris, overlapping structures, and complex occupational histories. Archaeologists study mounds using 
@@ -477,7 +477,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     settlement choices, long-term demographic trends, monumental building projects, defensive systems, household architecture, 
     and cultural changes over centuries or millennia.
     """,
-    "Sample": """
+    "oc-gen-cat-sample": """
     This query addresses physical specimens systematically collected from fieldwork contexts for specialized laboratory testing 
     and composition analysis. Samples typically comprise small portions of soil, organic material, water, botanical fragments, 
     faunal remains, or artifact residues. Researchers examine these specimens using scientific instruments to determine their 
@@ -485,21 +485,21 @@ CLASS_RAG_EXPLAIN_DICT = {
     information regarding ancient environmental conditions, raw material sourcing, craft manufacturing technologies, dietary habits, 
     and absolute dating evidence for the site.
     """,
-    "Bulk Ceramic": """
+    "oc-gen-cat-bulk-ceramic": """
     This query targets aggregations of pottery sherds that are documented and analyzed collectively as a unified group rather 
     than as individual unique pieces. Bulk ceramic records generally quantify total counts, weights, frequency of vessel shapes and forms, 
     frequency of fabric types within a specific excavation context. This aggregate data provides evidence for statistical modeling, 
     tracking functional differences between contexts, and identifying spatial or chronological differences between pottery assemblages. 
     Additionally, bulk ceramic frequencies are used for mapping site-wide artifact densities and establishing relative chronological trends.
     """,
-    "Bulk Lithic": """
+    "oc-gen-cat-bulk-lithic": """
     This query encompasses groups of stone tools and manufacturing debris documented collectively as a single aggregate dataset 
     rather than individual specimens. Bulk lithic records typically quantify total counts, aggregate weights, raw material types, 
     and technological categories like flakes, debitage, or cores. Analyzing stone artifacts in bulk allows researchers to 
     reconstruct the full sequence of tool production, evaluate raw material acquisition strategies, identify specialized workshop 
     areas, and map generalized discard behaviors across different spatial contexts.
     """,
-    "Sample, Collection, or Aggregation": """
+    "oc-gen-cat-sample-col": """
     This query addresses grouped physical specimens and collected materials curated for analytical research, incorporating concepts 
     from samples, formal collections, and material aggregations. These groupings usually represent subsets of soil, environmental 
     ecofacts, or sets of artifacts organized by context, typology, or other characteristics. Researchers examine these assemblages using 
@@ -507,7 +507,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     better ensures data integrity, providing information resources that subsequent researchers can re-examine for inter-site comparative 
     analysis and regional synthesis.
     """,
-    "Reference Collection": """
+    "oc-gen-cat-ref-col": """
     This query targets comparative assemblages of fully identified, well-documented specimens maintained to facilitate the 
     classification of newly excavated archaeological materials. Reference collections encompass modern or ancient biological 
     specimens, specialized geological samples, and collections of representative artifacts that illustrate typologies. 
@@ -515,21 +515,21 @@ CLASS_RAG_EXPLAIN_DICT = {
     Researchers use them to confirm taxonomic identifications for faunal and botanical remains, verify raw material sources, 
     and standardize stylistic classifications across disparate field projects.
     """,
-    "stela": """
+    "oc-gen-cat-stela": """
     This query focuses on upright, carved, or inscribed stone slabs and pillars that served as public monuments or commemorative 
     markers in antiquity. Archaeologists study stelae to interpret epigraphic texts, learn about artistic styles, and analyze 
     iconographic messaging. These stone monuments provide direct evidence concerning political history, royal lineages, state ideologies, 
     and religious systems. Additionally, their raw material sources reveal ancient trade networks, while their context clarifies public 
     space utilization, social stratification, elite display, gender representation, and historical cultural chronology.
     """,
-    "Bone grouping": """
+    "oc-gen-cat-bulk-bone": """
     This query identifies localized concentrations or deliberate clusters of skeletal material found in close physical association 
     during excavation. Bone groupings often indicate specialized depositional processes distinct from generalized domestic refuse 
     disposal. Researchers analyze these spatial clusters to distinguish structured secondary burials, commingled remains, sacrificial 
     offerings, or specialized processing areas. Documenting the spatial configuration and taphonomic history of a bone grouping allows 
     archaeologists to interpret complex mortuary practices, ancient ritual behavior, symbolic expressions, and localized site formation processes.
     """,
-    "Biological record": """
+    "oc-gen-cat-bio-subj-ecofact": """
     This query addresses the documented presence of organic remains derived from living organisms, encompassing botanical, faunal, 
     and human skeletal data. Also classified as ecofacts, biological records inform researchers about past environmental 
     contexts, ancient ecological conditions, and human-environment interactions. Researchers analyze these organic materials to reconstruct 
@@ -537,7 +537,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     The biological record serves as a primary source for understanding long-term ecological interactions, changing patterns in hunting,
     foraging, herding and agricultural developments.
     """,
-    "Lithic": """
+    "oc-gen-cat-lithic": """
     This query targets individual stone artifacts manufactured or modified through intentional knapping, chipping, and flaking 
     processes. Lithic data provides primary evidence regarding ancient technological developments, manufacturing techniques, and 
     raw material procurement strategies. By analyzing tool types and production debris, researchers reconstruct diverse past 
@@ -545,27 +545,27 @@ CLASS_RAG_EXPLAIN_DICT = {
     distributions across a site highlights specialized activity zones, distinct household workshops, and localized tool discard 
     habits within past communities.
     """,
-    "Radiocarbon Sample": """
+    "oc-gen-cat-c14-sample": """
     This query identifies specific specimens of preserved organic material, such as charcoal, wood, bone, or seeds, selected for 
     carbon-14 isotopic analysis. Radiocarbon samples provide the foundational data required to calculate absolute calendar dates for 
     many archaeological contexts. By securing absolute dates from these samples, researchers can establish more precise chronological 
     frameworks for occupational phases, structural developments, burial events, and trends in artifact styles. This chronometric 
     data allows archaeologists to cross-date regional sequences and anchor local cultural changes within a definitive historical timeline.
     """,
-    "Arbitrary Grouping": """
+    "oc-gen-cat-arbitrary-grouping": """
     This query refers to a non-stratigraphic, database-generated association of records compiled for analytical convenience or 
     procedural organization. Unlike secure archaeological contexts like loci or features, an arbitrary grouping does not reflect past 
     human behavior or natural formation processes. Instead, it serves as a data management tool within this software framework, 
     allowing for browsing and aggregation of large numbers of database records.
     """,
-    "Sampling site": """
+    "oc-gen-cat-sampling-site": """
     This query identifies the explicit geographic location where physical specimens were extracted for scientific analysis. A sampling 
     site can represent a secure context within a recognized archaeological site, or it may encompass off-site environmental locales 
     like lake beds, bogs, and geological outcrops. Documenting the sampling site documents context for interpreting laboratory 
     results, such as palynological sequences or soil geochemistry. This spatial data allows researchers to correlate scientific proxy 
     data accurately with regional environmental histories and localized human activities.
     """,
-    "Collection": """
+    "oc-gen-cat-collection": """
     This query designates an organized assemblage of physical materials, including portable artifacts, environmental ecofacts, and 
     scientific samples, systematically curated for long-term research and preservation. Collections represent the material legacy of 
     field projects, typically managed by research institutions such as museums or university repositories. By maintaining and documenting 
@@ -574,7 +574,7 @@ CLASS_RAG_EXPLAIN_DICT = {
     earlier fieldwork. Collections can also serve important educational and social purposes. They can be displayed in exhibitions, 
     used for teaching, curated in collaboration with community members, and repatriated to facilitate reconciliation and restorative justice.
     """,
-    "Data Publication": """
+    "oc-gen-cat-data-publication": """
     This query targets integrated sets of related scientific datasets published digitally as primary scholarly contributions. Data 
     publications mirror traditional academic journal articles in peer-review rigor but focus on distributing structured research 
     data rather than narrative synthesis. These assets encompass diverse formats, including granular tabular data, geospatial models, 
@@ -743,5 +743,140 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     People may have hunted or fought wild wolves for: defense, meat, hides, trophies, prestige, social status
     """,
 
+    # Below are Getty AAT configs
+    # https://en.wikipedia.org/wiki/Spindle_whorl
+    "getty-aat-300263796": """
+    A spindle whorl is a weight fitted to a spindle to help maintain the spindle's speed of rotation while spinning yarn.
+    """,
 
+    # https://en.wikipedia.org/wiki/Quern-stone
+    "getty-aat-300200181": """
+    A quern is a tool for hand-grinding a wide variety of materials, especially for various types of grains.
+    """,
+
+    "getty-aat-300387149": """
+    Bucchero, a class of ceramics produced in central Italy by the region's pre-Roman Etruscan population, 
+    is distinguished by its black fabric as well as glossy, typically burnished, black surface.
+    """,
+
+    "getty-aat-300387395": """
+    Terra sigillata fine red pottery with glossy surface slips made in different parts of the Roman Empire.
+    Terra sigillata pottery produced in Gaul (modern France) is sometimes called "samian ware". This pottery
+    can often be closely dated, and their distribution can inform about ancient Roman economic systems.
+    """,
+
+    "getty-aat-300301393": """
+    Terra sigillata fine red pottery with glossy surface slips made in different parts of the Roman Empire.
+    African terra sigillata pottery was produced in North Africa. This pottery
+    can often be closely dated, and their distribution can inform about ancient Roman economic systems.
+    """,
+
+    "getty-aat-300301423": """
+    Terra sigillata fine red pottery with glossy surface slips made in different parts of the Roman Empire.
+    Eastern terra sigillata pottery was produced in eastern provinces of the Roman Empire. This pottery
+    can often be closely dated, and their distribution can inform about ancient Roman economic systems.
+    """,
+
+    "manto-8189150": """
+    Gorgons are ancient Greek mythological female monsters. They could turn anyone who looked upon them to stone.
+    Gorgoneia (depictions of gorgon faces) that decorated architectural elements and other artifacts may
+    have had a protective function.
+    """,
+
+    "manto-8182233": """
+    Apollo is an ancient Greek diety associated with light, healing, prophecy, and the arts.
+    """,
+
+    "manto-8182231": """
+    Aphrodite (Venus in Latin) is an ancient Greek goddess associated with sexuality, beauty and pleasure.
+    """,
+
+    "manto-8187829": """
+    Artemis (Diana in Latin) is an ancient Greek goddess associated with hunting, wilderness, and chastity.
+    """,
+
+    "manto-8187870": """
+    Athena (Minerva in Latin) is an ancient Greek goddess associated with wisdom, war, and handicrafts.
+    """,
+
+    "manto-8188175": """
+    Dionysos (Bacchus in Latin) is an ancient Greek god associated with wine, insanity, ritual madness.
+    """,
+
+    "manto-8188419": """
+    Zeus (Jupiter in Latin) is the supreme god in ancient Greek religion. Zeus was associated with the sky and thunder. 
+    """,
+
+    "manto-8188478": """
+    Heracles (Hercules in Latin) was a divine hero in Greek mythology.
+    """,
+
+    "manto-8188480": """
+    Hermes (Mercury in Latin) is an ancient Greek god associated with heralds, messengers, and trickery.
+    """,
+
+    "manto-8188611": """
+    Isis was a major goddess in ancient Egyptian religion whose worship spread throughout the Greco-Roman world.
+    Isis resurrects her slain brother and husband, the divine king Osiris, and produces and protects his heir, Horus.
+    """,
+
+    "manto-8189884": """
+    Nike (Victoria in Latin) is an ancient Greek goddess associated victory in battle, as well as in other kinds of contests. 
+    """,
+
+    "manto-8189902": """
+    Odysseus (Ulysses in Latin) was a legendary Greek king of Ithaca and the hero of Homer's epic poem, the Odyssey.
+    Odysseus was depicted as cunning and intelligent, with self-restraint and diplomatic skills.
+    """,
+
+    "manto-8194729": """
+    Helios (Helius in Latin) is an ancient Greek god associated with the sun.
+    """,
+
+    "manto-9878181": """
+    Eros (Cupid in Latin) is an ancient Greek goddess associated with love and sex.
+    """,
+
+    "manto-9878612": """
+    Tyche (Fortuna in Latin) is an ancient Greek goddess associated with fortune and prosperity.
+    """,
+
+    "manto-9878612": """
+    Cybele was an ancient Anatolian mother goddess. During the Roman Empire, Cybele became known as Magna Mater ("Great Mother").
+    """,
+
+    "manto-8182012": """
+    Achilles was an ancient Greek hero. He was the central character in Homer's Iliad and the greatest of all the Greek warriors
+    during the Trojan War. Achilles was known for his rage and his victory over Hector, Troy's greatest hero.
+    """,
+
+    "manto-8188173": """
+    Diomedes was an ancient Greek hero. In Homer's Iliad Diomedes is regarded as one of the best warriors during the Trojan War.
+    """,
+}
+
+
+EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT = {
+
+    ("oc-zoo-fusion-characterization", "oc-gen-cat-animal-bone",): """
+    Epiphyseal charateristics are used to compile age and demographic statistics about an assemblage of bones.
+    For animal bones, age profiles can inform about hunting and herding strategies, including keeping older 
+    animals for so-called secondary products: milk, wool, or labor.
+    """,
+
+    ("oc-zoo-fusion-characterization", "oc-gen-cat-human-bone",): """
+    Epiphyseal charateristics are used to compile age and demographic statistics about an assemblage of bones.
+    For human bones, age profiles can inform about demographics, health, and mortuary practices.
+    """,
+
+    ("oc-zoo-has-phys-sex-det", "oc-gen-cat-animal-bone",): """
+    Sex determinations are used to compile demographic statistics about an assemblage of bones. For animals bones, 
+    the rations of females to males inform about hunting and herding strategies.
+    """,
+
+    ("oc-zoo-has-phys-sex-det", "oc-gen-cat-human-bone",): """
+    Sex determinations are used to compile demographic statistics about an assemblage of bones. For human bones, 
+    patterns in sex determinations can inform about demographics, social status, and mortuary practices.
+    """,
+    
 }
