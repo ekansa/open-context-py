@@ -32,7 +32,7 @@ from opencontext_py.apps.all_items.representations.template_prep import (
 from opencontext_py.apps.indexer import solr_utils
 
 from opencontext_py.apps.indexer.embedding_configs import (
-    CLASS_EXPLAIN_DICT
+    RECORD_EXPLAIN_START_DICT
 )
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL_DIM,
@@ -2061,8 +2061,8 @@ class SolrDocumentSlim:
         main_list += self.text_for_embedding_dict['item_linked_data']
         main_list += self.text_for_embedding_dict['boolean']
         main_list += self.text_for_embedding_dict['string']
-        if CLASS_EXPLAIN_DICT.get(item_class):
-            main_list.append(CLASS_EXPLAIN_DICT.get(item_class))
+        if RECORD_EXPLAIN_START_DICT.get(self.man_obj.item_type):
+            main_list.append(RECORD_EXPLAIN_START_DICT.get(self.man_obj.item_type))
         main_text = '\n'.join(main_list)
         proj_meta_text = '\n'.join((self.text_for_embedding_dict['project'] + self.text_for_embedding_dict['metadata']))
         self.text_for_embedding_list = [

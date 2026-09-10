@@ -31,7 +31,7 @@ from opencontext_py.apps.indexer.solrdocument_slim_schema import (
     EMBEDDING_FIELD_SOLR,
 )
 from opencontext_py.apps.indexer.embedding_configs import (
-    ITEM_TYPE_RAG_EXPLAIN_DICT,
+    QUERY_ITEM_TYPE_EXPLAIN_DICT,
     CLASS_SLUG_EXPLAIN_DICT,
     EQUIV_OBJ_SLUG_EXPLAIN_DICT,
     EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT,
@@ -924,7 +924,7 @@ def make_explain_text(m_dict):
     item_class_slug = m_dict.get('item_class__slug')
     explain_item_class = CLASS_SLUG_EXPLAIN_DICT.get(
         item_class_slug,
-        ITEM_TYPE_RAG_EXPLAIN_DICT.get(
+        QUERY_ITEM_TYPE_EXPLAIN_DICT.get(
             m_dict.get('item_type')
         )
     )
