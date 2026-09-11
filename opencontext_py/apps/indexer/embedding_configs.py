@@ -61,8 +61,8 @@ CLASS_SLUG_EXPLAIN_DICT = {
     feasting events, ritual ceremonies, status differentiation, and ideological symbolism.
     """,
     "oc-gen-cat-human-bone": """
-    This query targets human osteological remains, using the term "element" to designate specific anatomical 
-    units. Analysis of human skeletal assemblages provides fundamental evidence concerning paleodemographics, 
+    This query targets human osteological remains. The term "element" typically designates specific anatomical 
+    units. Analysis of human skeletal assemblages provides evidence concerning paleodemographics, 
     population health, physical trauma, pathologies, and dietary profiles. Documented patterns in the age, 
     biological sex, and taphonomy of these bones offer insights into ancient social stratification, economic 
     organization, and gender roles. Additionally, accompanying mortuary treatments and burial practices 
@@ -70,11 +70,11 @@ CLASS_SLUG_EXPLAIN_DICT = {
     of social prestige.
     """,
     "oc-gen-cat-plant-remains": """
-    This query targets archaeobotanical data, using the terms "family" and "order" to reflect standard biological 
+    This query targets archaeobotanical data. Typically, the terms "family" and "order" describe standard biological 
     taxonomy. Plant macro-remains and micro-remains offer evidence regarding ancient human diet, 
     agricultural cultivation, gardening, foraging tactics, and hunter-gatherer subsistence strategies. Botanical assemblages 
     also document specialized domestic activities like textile manufacturing, charcoal production, and fuel 
-    selection. Furthermore, specific plant taxa indicate the development of medicine, brewing, fermentation 
+    selection. Furthermore, specific plant taxa indicate medicinal practices, brewing, fermentation 
     technologies for beer and wine, wild herb exploitation, ritual feasting events, and religious or symbolic 
     practices within past human societies.
     """,
@@ -84,35 +84,34 @@ CLASS_SLUG_EXPLAIN_DICT = {
     alongside natural geographic features like seas, river valleys, mountain ranges, and distinct environmental 
     zones. Defining regional parameters allows researchers to aggregate disparate archaeological sites and 
     survey data, facilitating broad spatial analyses, macro-demographic modeling, long-distance trade route 
-    reconstruction, and the study of large-scale cultural and environmental adaptations across expansive 
-    geographic landscapes.
+    reconstruction, and the study of large-scale cultural and environmental adaptations across landscapes.
     """,
     "oc-gen-cat-object": """
     This query targets individual archaeological artifacts, which represent the portable material culture 
     manufactured, modified, and used by past human populations. While often recovered as broken refuse 
     or discarded garbage, these items encompass tools, weapons, decorative ornaments, architectural fixtures, 
-    furniture components, toys, and household utensils. Archaeologists study these objects to 
+    furniture components, toys, household utensils and belongings. Archaeologists study these objects to 
     understand artistic style, manufacturing processes, raw material sourcing, craft production, 
     specialization, food preparation and consumption, and technological change. 
     Artifacts also inform about trade networks, socio-economic status, households, status, 
     gender dynamics, ritual behaviors, and cultural chronology.
     """,
     "oc-gen-cat-coin": """
-    This query targets specific metallic artifacts utilized primarily as standardized currency. Coins feature 
+    This query targets specific metallic artifacts utilized primarily as standardized currency. Coins may feature 
     distinctive mint marks, inscriptions, and political iconography that establish precise temporal and geographic 
-    manufacturing contexts. Beyond providing critical chronological anchors for stratigraphic layers, coins 
-    offer detailed insights into state ideologies, art history, regional trade networks, economic practices, 
+    manufacturing contexts. Beyond providing chronological anchors for stratigraphic layers, coins 
+    offer detailed evidence about state ideologies, art history, regional trade networks, economic practices, 
     and commercial exchange. The presence of coinage typically signifies complex socio-political organizations 
     characterized by centralized state bureaucracies, standardized weights and measures, market economies, and 
     urban settlements.
     """,
     "oc-gen-cat-pottery": """
     This query targets ceramic artifacts, which represent highly durable components of past material culture. 
-    Though occasionally recovered intact within deliberate burial contexts, pottery is routinely found as 
-    fragmented sherds (shards) discarded as refuse. Specialized terms like "fabric" and "ware" describe 
-    the clay paste matrix and surface treatments. Ceramic analysis provides data regarding food 
-    preparation, culinary practices, storage technologies, transport logistics, and trade networks. It also 
-    informs research into technical practices, manufacturing styles, pyro-technology, household organization, 
+    Though occasionally recovered intact within deliberate burial contexts or other special circumstances, 
+    pottery is routinely found as fragmented sherds (shards) discarded as refuse. Specialized terms like 
+    "fabric" and "ware" often describe the clay paste matrix and surface treatments. Ceramic analysis provides 
+    data regarding food preparation, culinary practices, storage technologies, transport logistics, and trade networks. 
+    It also informs research into technical practices, manufacturing styles, pyro-technology, household organization, 
     socio-economic status, and cultural chronology.
     """,
     "oc-gen-cat-glass": """
@@ -126,7 +125,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     "oc-gen-cat-groundstone": """
     This query targets lithic artifacts modified and shaped through deliberate abrasion, grinding, and polishing 
     techniques. The category encompasses functional domestic tools such as mortars, pestles, manos, and metates, 
-    which were vital for processing dietary staples, milling grain, and grinding herbs or spices. Groundstone 
+    which were often used for processing dietary staples, milling grain, and grinding herbs or spices. Groundstone 
     assemblages also include specialized forms like stone bowls, storage jars, cooking vessels, and ritual incense 
     burners. Additionally, researchers study flat groundstone palettes to document the processing of mineral pigments 
     and powders used in cosmetic applications and symbolic body ornamentation.
@@ -135,7 +134,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     This query identifies structural and decorative components derived from ancient buildings and built environments. 
     Examples include columns, capitals, lintels, roof tiles, and carved molding. Archaeologists analyze these 
     architectural elements to understand construction techniques, raw material procurement, engineering capabilities, 
-    and artistic styles. These components provide substantial evidence regarding regional technology, trade networks, 
+    and artistic styles. These components provide evidence regarding regional technology, trade networks, 
     and economic systems. Furthermore, their scale and ornamentation inform about socio-economic status, 
     public or private ritual functions, ideological expressions, cultural changes, and architectural chronology.
     """,
@@ -144,7 +143,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     or anatomical identification. Despite their fragmented nature, non-diagnostic bones provide quantitative data 
     regarding overall assemblage size, meat consumption ratios, and intensive bone processing activities. 
     They serve as primary evidence for taphonomic studies, tracking post-depositional modifications 
-    such as carnivore gnawing, human trampling, thermal altering, and mechanical weathering. Analyzing these fragments 
+    such as carnivore gnawing, trampling, thermal altering, and mechanical weathering. Analyzing these fragments 
     helps researchers evaluate site preservation, site formation processes, and disposal habits within archaeological
     contexts.
     """,
@@ -177,7 +176,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     "oc-gen-cat-context": """
     This query retrieves records describing specific three-dimensional locations and deposits containing archaeological remains. 
     Attributes of a context often include: spatial coordinates, soil composition, depth, matrix 
-    color and density, and exact stratigraphic positioning relative to other layers. Understanding context is fundamental to modern 
+    color and density, and stratigraphic positioning relative to other layers. Understanding context is fundamental to modern 
     archaeology, as it establishes the precise relational framework between individual artifacts, features, and ecofacts. 
     By analyzing material patterns within contexts, researchers can attempt to reconstruct chronological sequences, 
     behavioral activities, site formation processes, and other patterns reflective of past human societies.
@@ -188,7 +187,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     drainage ditches, hearths, kilns, and domestic refuse heaps. Features provide primary evidence regarding 
     spatial organization, architectural engineering, and localized human activities. By examining the distribution and 
     construction of features, researchers can investigate domestic household behaviors, localized industrial 
-    manufacturing, communal defense strategies, socio-economic differentiation, public ritual actions, and site-wide 
+    manufacturing, communal defense strategies, socio-economic differentiation, public ritual facilities, and 
     chronological developments.
     """,
     "oc-gen-cat-structure": """
@@ -284,8 +283,8 @@ CLASS_SLUG_EXPLAIN_DICT = {
     transitions through consecutive depositional phases.
     """,
     "oc-gen-cat-stratum": """
-    This query emphasizes a distinct, homogeneous layer of sedimentary or cultural material isolated within an archaeological 
-    sequence, closely related to "Sequence" and "Phase". A stratum represents a specific depositional event or occupational 
+    This query emphasizes a distinct layer of sedimentary or cultural material isolated within an archaeological 
+    sequence. The term "stratum" is closely related to "Sequence" and "Phase". A stratum represents a specific depositional event or occupational 
     horizon. Archaeologists document each stratum by soil color, composition, depth, artifact and ecofact assemblages, and spatial boundaries. 
     Analyzing artifact assemblages within a secure stratum allows researchers to interpret discrete periods of human activity, 
     evaluate environmental contexts, establish relative chronological frameworks, and compare assemblages of strata across different sites 
@@ -293,7 +292,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     """,
     "oc-gen-cat-phase": """
     This query describes a high-level chronological period or distinct structural stage identified within an archaeological 
-    sequence, operating alongside terms like "Stratum" and "Sequence". A phase aggregates multiple related depositional events 
+    sequence. The term "phase" is similar to terms like "Stratum" and "Sequence". A phase aggregates multiple related depositional events 
     and structural styles into a coherent temporal bracket. Archaeologists assign contexts to specific phases based on stylistic 
     shifts in artifacts, architectural modifications, and absolute dates. Documenting these phases enables researchers to synthesize 
     localized site data into broader regional histories, tracking long-term socio-economic changes, political transformations, 
@@ -303,9 +302,9 @@ CLASS_SLUG_EXPLAIN_DICT = {
     This query focuses on elevated, hill-like topographic features resulting from long-term human occupation, architectural 
     collapse, and deliberate landscape modifications. Often referred to as tells or tumuli, mounds represent dense accumulations 
     of stratified cultural debris, overlapping structures, and complex occupational histories. Archaeologists study mounds using 
-    surface surveys, remote sensing, and excavation. These landscape features provide extensive evidence regarding persistent 
-    settlement choices, long-term demographic trends, monumental building projects, defensive systems, household architecture, 
-    and cultural changes over centuries or millennia.
+    surface surveys, remote sensing, and excavation. These landscape features provide evidence regarding persistent 
+    settlement choices, long-term demographic trends, subsistence practices, monumental building projects, defensive systems, 
+    household architecture, and cultural changes over centuries or millennia.
     """,
     "oc-gen-cat-sample": """
     This query addresses physical specimens collected from fieldwork contexts for specialized laboratory testing 
@@ -318,9 +317,9 @@ CLASS_SLUG_EXPLAIN_DICT = {
     "oc-gen-cat-bulk-ceramic": """
     This query targets aggregations of pottery sherds that are documented and analyzed collectively as a unified group rather 
     than as individual unique pieces. Bulk ceramic records generally quantify total counts, weights, frequency of vessel shapes and forms, 
-    frequency of fabric types within a specific excavation context. This aggregate data provides evidence for statistical modeling, 
+    frequency of fabric types within a specific excavation context or survey unit. This aggregate data provides evidence for statistical modeling, 
     tracking functional differences between contexts, and identifying spatial or chronological differences between pottery assemblages. 
-    Additionally, bulk ceramic frequencies are used for mapping site-wide artifact densities and establishing relative chronological trends.
+    Additionally, bulk ceramic frequencies are used for mapping site-wide or regional artifact densities and establishing relative chronological trends.
     """,
     "oc-gen-cat-bulk-lithic": """
     This query encompasses groups of stone tools and manufacturing debris documented collectively as a single aggregate dataset 
@@ -350,7 +349,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     markers in antiquity. Archaeologists study stelae to interpret epigraphic texts, learn about artistic styles, and analyze 
     iconographic messaging. These stone monuments provide direct evidence concerning political history, royal lineages, state ideologies, 
     and religious systems. Additionally, their raw material sources reveal ancient trade networks, while their context clarifies public 
-    space utilization, social stratification, elite display, gender representation, and historical cultural chronology.
+    space utilization, social stratification, elite display, gender representation, and cultural chronology.
     """,
     "oc-gen-cat-bulk-bone": """
     This query identifies localized concentrations or deliberate clusters of skeletal material found in close physical association 
@@ -371,13 +370,13 @@ CLASS_SLUG_EXPLAIN_DICT = {
     This query targets individual stone artifacts manufactured or modified through intentional knapping, chipping, and flaking 
     processes. Lithic data provides primary evidence regarding ancient technological developments, manufacturing techniques, and 
     raw material procurement strategies. By analyzing tool types and production debris, researchers reconstruct diverse past 
-    activities, including hunting, agricultural harvesting, foraging, butchery, and detailed craft carving. Mapping lithic 
+    activities, including hunting, agricultural harvesting, foraging, butchery, and craft production. Mapping lithic 
     distributions across a site highlights specialized activity zones, distinct household workshops, and localized tool discard 
     habits within past communities.
     """,
     "oc-gen-cat-c14-sample": """
     This query identifies specific specimens of preserved organic material, such as charcoal, wood, bone, or seeds, selected for 
-    carbon-14 isotopic analysis. Radiocarbon samples provide the foundational data required to calculate absolute calendar dates for 
+    carbon-14 isotopic analysis. Radiocarbon samples often provide primary data required to calculate absolute calendar dates for 
     many archaeological contexts. By securing absolute dates from these samples, researchers can establish more precise chronological 
     frameworks for occupational phases, structural developments, burial events, and trends in artifact styles. This chronometric 
     data allows archaeologists to cross-date regional sequences and anchor local cultural changes within a definitive historical timeline.
@@ -385,7 +384,7 @@ CLASS_SLUG_EXPLAIN_DICT = {
     "oc-gen-cat-arbitrary-grouping": """
     This query refers to a non-stratigraphic, database-generated association of records compiled for analytical convenience or 
     procedural organization. Unlike secure archaeological contexts like loci or features, an arbitrary grouping does not reflect past 
-    human behavior or natural formation processes. Instead, it serves as a data management tool within this software framework, 
+    human behavior or natural formation processes. Instead, it serves data organization purposes within this software framework, 
     allowing for browsing and aggregation of large numbers of database records.
     """,
     "oc-gen-cat-sampling-site": """
