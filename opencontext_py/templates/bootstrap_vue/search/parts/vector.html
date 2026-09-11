@@ -21,8 +21,10 @@
                         <b-form-textarea
                             debounce="250"
                             @change="update_vector_search"
+                            @keyup.enter="update_vector_search_then_search"
                             :placeholder="prior_text_query"
                             :value="vq"
+                            v-model="vq"
                             id="vector-search-topic-textarea"
                             ></b-form-textarea>
                     </b-card>
@@ -206,6 +208,10 @@ var vc_vector = Vue.component(
                 }
                 this.vq = input_value;
                 console.log('Update vector search with:' + input_value);
+            },
+            update_vector_search_then_search() {
+                console.log('Update vector search with:' + this.vq);
+                this.fetch_api_vector_search();
             },
             fetch_api_vector_search: function (){
                 if(!this.result_id){
