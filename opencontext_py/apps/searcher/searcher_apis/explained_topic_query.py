@@ -20,14 +20,26 @@ from django.conf import settings
 
 from opencontext_py.libs import duckdb_con
 
+
+from opencontext_py.apps.all_items.icons import configs as icon_configs
+
 from opencontext_py.apps.indexer.solrdocument_slim_schema import (
     EMBEDDING_FIELD_SOLR,
 )
 from opencontext_py.apps.indexer.explained_topic_data import (
-    EXPLAINED_SEARCHES_LOCAL_PATH 
+    EXPLAINED_SEARCHES_LOCAL_PATH,
+    explain_text_clean,
+    get_unique_non_null_values_from_keys,
+)
+from opencontext_py.apps.indexer.embedding_configs import (
+    QUERY_ITEM_TYPE_EXPLAIN_DICT,
+    CLASS_SLUG_EXPLAIN_DICT,
+    EQUIV_OBJ_SLUG_EXPLAIN_DICT,
+    EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT,
 )
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL_DIM,
+    ACTIVE_EMBEDDING_MODEL_READY,
     embed_with_chunk_pooling
 )
 
@@ -74,7 +86,9 @@ for query_str in query_strs:
     print('')
 """
 
-
+# This is used to signal that the language model and explained searches data
+# are both available and can be used.
+EXPLAINED_SEARCH_READY = ACTIVE_EMBEDDING_MODEL_READY and os.path.exists(EXPLAINED_SEARCHES_LOCAL_PATH)
 
 EXPLAINED_SEARCHES_TABLE = 'explained_searches'
 
@@ -97,15 +111,37 @@ DEMO_COLS = [
     'url',
 ]
 
-API_COLS = [
+START_API_COLS = [
     'similarity_metric',
     'project__slug',
     'project__label',
+    'proj_short_desc',
+    'metadata',
     'path',
+    'item_type',
     'item_class__slug',
     'item_class__label',
+    'predicate__slug',
+    'predicate__label',
+    'object__label',
+    'object__slug',
+    'equiv_predicate_slug',
+    'equiv_predicate_label',
+    'equiv_object_slug',
+    'equiv_object_label',
+    'equiv_object_alt_labels',
     'explain_text', 
     'url',
+]
+
+API_COLS = START_API_COLS + [
+    # Added in make_api_output_from_vibe_query_df
+    'place',
+    'class_icon_url',
+    'class_explain',
+    'predicate_labels',
+    'object_labels',
+    'predicate_object_explain',
 ]
 
 
@@ -169,6 +205,8 @@ def load_explained_search_table_from_parquet_path(
 
 EXPLAINED_SEARCH_TABLE = load_explained_search_table_from_parquet_path()
 
+
+
 def make_df_from_vibe_query_sql(query_str):
     if not query_str:
         return None
@@ -220,91 +258,64 @@ def make_df_from_vibe_query_sql(query_str):
     return df, emb_query
 
 
-def make_group_by_col_combos():
-    combos = [c for c in COLS_MAIN_SEARCH_PARAMS]
-    for i in range(2, len(COLS_MAIN_SEARCH_PARAMS)):
-        new_combos_tups = combinations(COLS_MAIN_SEARCH_PARAMS, i)
-        combos += [list(n) for n in new_combos_tups]
-    return combos
+def get_item_type_item_class_icon(item_type, item_class_slug):
+    icon_url = None
+    for class_config_dict in icon_configs.ITEM_TYPE_CLASS_ICONS_DICT.get(item_type, []):
+        if not icon_url:
+            icon_url = class_config_dict.get('icon')
+        if item_class_slug == class_config_dict.get('item_class__slug'):
+            # we matched our the exact item_type, item_class__slug, skip out
+            return class_config_dict.get('icon')
+    return icon_url
 
 
-def get_difference_between_embeddings(e1, e2):
-    """Get a difference distance between two embeddings"""
-    v1 = np.array(e1)
-    v2 = np.array(e2)
-    return cosine(v1, v2)
-
-
-def reduce_top_query_params(df_gen):
-    metrics = df_gen['similarity_metric'].unique().tolist()
-    metrics.sort(reverse=True)
-    best_metrics = metrics[0:5]
-    final_index = False
-    for metric in best_metrics:
-        metric_index = df_gen['similarity_metric'] == metric
-        metric_top_null_count = df_gen[metric_index]['null_count'].max()
-        final_index |= (metric_index & (df_gen['null_count'] == metric_top_null_count ))
-    df_gen = df_gen[final_index].copy()
-    return df_gen
-
-
-def check_path_distances(df, emb_query):
-    df['path_similarity_metric'] = float(0.0)
-    df['all_similarity_metrics'] = df['similarity_metric']
-    paths = df['path'].unique().tolist()
-    for path in paths:
-        places = 'Relevant Places: in ' + path.replace('/', ', in ')
-        place_embedding = embed_with_chunk_pooling(
-            embedding_str=places
+def make_api_output_from_vibe_query_df(df, top_result_count=5):
+    cols = [c for c in START_API_COLS if c in df.columns.tolist()]
+    df = df[cols].head(top_result_count).copy()
+    df['place'] = ''
+    df['class_icon_url'] = ''
+    df['class_explain'] = ''
+    df['predicate_labels'] = ''
+    df['object_labels'] = ''
+    df['predicate_object_explain'] = ''
+    for i, row in df.iterrows():
+        
+        if row['path']: 
+            df.at[i, 'place'] = str(row['path']).replace('/', ', ')
+                    
+        df.at[i, 'class_icon_url'] = get_item_type_item_class_icon(
+            item_type=row['item_type'], 
+            item_class_slug=row['item_class__slug'], 
         )
-        place_distance = get_difference_between_embeddings(emb_query, place_embedding)
-        place_similarity = 1 - place_distance
-        act_index = df['path'] == path
-        df.loc[act_index, 'path_similarity_metric'] = place_similarity
-    relevant_path_index = df['path_similarity_metric'] > 0.75
-    for i, row in df[relevant_path_index].iterrows():
-        df.at[i, 'all_similarity_metrics'] = (
-        row['similarity_metric'] * 0.8 
-        + row['path_similarity_metric'] * 0.20
-    )
-    df.sort_values(by=[ 'all_similarity_metrics'], ascending=False, inplace=True)
+        explain_item_class = CLASS_SLUG_EXPLAIN_DICT.get(
+            row['item_class__slug'],
+            QUERY_ITEM_TYPE_EXPLAIN_DICT.get(
+                row['item_type']
+            )
+        )
+        df.at[i, 'class_explain'] = explain_text_clean(explain_item_class)
+        predicate_labels = get_unique_non_null_values_from_keys(
+            row, 
+            keys=['equiv_predicate_label'],
+        )
+        if not predicate_labels:
+            # Only use the project specific predicate if there's no standard equivalent
+            predicate_labels = get_unique_non_null_values_from_keys(
+                row, 
+                keys=['predicate__label',],
+            )
+        df.at[i, 'predicate_labels'] = ' or '.join(predicate_labels)
+        object_labels = get_unique_non_null_values_from_keys(
+            row, 
+            keys=['object__label', 'equiv_object_label', 'equiv_object_alt_labels'],
+        )
+        df.at[i, 'object_labels'] = ', '.join(object_labels)
+        po_explains = []
+        if EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT.get((row['equiv_predicate_slug'], row['item_class__slug'])):
+            p_explain = explain_text_clean(EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT.get((row['equiv_predicate_slug'], row['item_class__slug'])))
+            po_explains.append(p_explain)
+        if EQUIV_OBJ_SLUG_EXPLAIN_DICT.get(row['equiv_object_slug']):
+            o_explain = explain_text_clean(EQUIV_OBJ_SLUG_EXPLAIN_DICT.get(row['equiv_object_slug']))
+            po_explains.append(o_explain)
+        df.at[i, 'predicate_object_explain'] = ' '.join(po_explains)
     return df
-
-
-
-def get_top_general_queries(df):
-    combos = make_group_by_col_combos()
-    all_group_by_cols = []
-    for act_col_combo in combos:
-        for act_cols in act_col_combo:
-            if isinstance(act_cols, str):
-                all_group_by_cols.append(act_cols)
-            else:
-                all_group_by_cols += act_cols
-    all_group_by_cols = list(set(all_group_by_cols))
-    df.drop(columns=['uuid'], inplace=True)
-    group_include_cols = [c for c in df.columns.tolist() if c not in all_group_by_cols]
-    df_gs = [df[group_include_cols].head(5)]
-    cols = df.columns.tolist()
-    combos = make_group_by_col_combos()
-    for act_col_combo in combos:
-        grp_by_cols = []
-        for act_cols in act_col_combo:
-            if isinstance(act_cols, str):
-                grp_by_cols.append(act_cols)
-            else:
-                grp_by_cols += act_cols
-        g_cols = group_include_cols + grp_by_cols
-        agg_dict = {c:'first' for c in group_include_cols}
-        agg_dict['similarity_metric'] = 'mean'
-        df_g = df[g_cols].groupby(grp_by_cols).agg(
-            agg_dict
-        ).reset_index()
-        df_g.sort_values(by='similarity_metric', ascending=False, inplace=True)
-        df_gs.append(df_g)
-    df_gen = pd.concat(df_gs, ignore_index=True, sort=False)
-    df_gen['null_count'] = df_gen.isnull().sum(axis=1)
-    df_gen = reduce_top_query_params(df_gen)
-    df_gen.sort_values(by=['similarity_metric', 'null_count'], ascending=False, inplace=True)
-    return df_gen
-

@@ -54,11 +54,17 @@ def load_language_models(configs=MODEL_CONFIGS):
     """Load language models based on configs"""
     models = {}
     for key, config in configs.items():
-        act_model = TextEmbedding(
-            config.get('model_name'), 
-            specific_model_path=config.get('model_path'),
-        )
-        act_tokenizer = act_model.model.tokenizer
+        act_tokenizer = None
+        try:
+            act_model = TextEmbedding(
+                config.get('model_name'), 
+                specific_model_path=config.get('model_path'),
+            )
+        except:
+            act_model = None
+
+        if act_model:
+            act_tokenizer = act_model.model.tokenizer
         new_config = {k:v for k,v in config.items()}
         new_config['model'] = act_model
         new_config['tokenizer'] = act_tokenizer
@@ -70,9 +76,12 @@ LANGUAGE_MODELS = load_language_models(configs=MODEL_CONFIGS)
 
 EMBEDDING_MODEL_DIM = 1024
 
+ACTIVE_EMBEDDING_MODEL_NAME = LANGUAGE_MODELS[EMBEDDING_MODEL_DIM]['model_name']
 ACTIVE_EMBEDDING_MODEL = LANGUAGE_MODELS[EMBEDDING_MODEL_DIM]['model']
 # Access the underlying HuggingFace tokenizer used by FastEmbed
 ACTIVE_TOKENIZER = LANGUAGE_MODELS[EMBEDDING_MODEL_DIM]['tokenizer']
+
+ACTIVE_EMBEDDING_MODEL_READY = ACTIVE_EMBEDDING_MODEL is not None
 
 # our model truncates at 384 tokens, so we will need to chunk in batches of
 # 380

@@ -85,6 +85,16 @@ def item_children_json(request, identifier):
 def vibes_search_json(request):
     """API for vector similarity search of explained topics in Open Context"""
     req_neg = RequestNegotiation('application/json')
+    if not vibes.EXPLAINED_SEARCH_READY:
+        response = HttpResponse(
+            {
+                'error': 'Language model and/or explained search data not available',
+            },
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=500,
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response 
     if not 'vq' in request.GET:
         response = HttpResponse(
             {
@@ -114,6 +124,7 @@ def vibes_search_json(request):
         return response
 
     df, _ = vibes.make_df_from_vibe_query_sql(query_str=request.GET['vq'])
+    df = vibes.make_api_output_from_vibe_query_df(df)
     json_output = df[vibes.API_COLS].head(5).to_json(
         orient='records',
         indent=4,

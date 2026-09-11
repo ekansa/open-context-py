@@ -1,0 +1,245 @@
+{% load humanize %}
+
+
+
+<script type="text/x-template" id="vector-template">
+
+<div class="card bg-light text-left" id="all-vector-card">
+    <div class="card-header">
+        <h5 class="filter_heading_labels">
+            Language Model Approximated Search Suggestions (Experimental)
+        </h5>
+    </div>
+
+
+    <div class="card-body small">
+        <b-container fluid>
+            <b-row style="margin-bottom: 12px;" align-v="center">
+                <b-col cols="8">
+                    <b-card border-variant="primary" >
+                        <label for="vector-search-topic-textarea">Search Topic (type to change)</label>
+                        <b-form-textarea
+                            debounce="250"
+                            @change="update_vector_search"
+                            :placeholder="prior_text_query"
+                            :value="vq"
+                            id="vector-search-topic-textarea"
+                            ></b-form-textarea>
+                    </b-card>
+                </b-col>
+                <b-col cols="4">
+                    <b-button block variant="info"
+                    @click="fetch_api_vector_search"
+                    ><b-avatar><span class="material-icons-two-tone">refresh</span></b-avatar> Update Suggestions</b-button>
+                </b-col>
+            </b-row>
+            
+            <b-row fluid v-if="vector_options.length && !loading">
+                <b-col cols="12">
+                    <h5>Click Any Selection Below to Get Query Results<h5>
+                </b-col>
+            </b-row>
+            <b-row v-if="vector_options.length && !loading" id="all-vector-options">
+                <b-col cols="12">
+                    
+                    <b-list-group>
+                        <b-list-group-item
+                            v-for="(v_option, index) in vector_options"
+                            v-bind:url="v_option.url"
+                            v-bind:explain_text="v_option.explain_text"
+                            v-bind:index="index"
+                            :href="v_option.url"
+                            target="_blank"
+                            :title="'Click to use Suggestion ' + (index + 1)"
+                        >
+                            <b-row align-v="center">
+                                <b-col sm="2" class="text-center">
+                                    
+                                    <b-avatar variant="info"><span class="material-icons-two-tone">search</span></b-avatar>
+                                    
+                                </b-col>
+                                <b-col sm="10">
+                                    <h5>Suggestion [[ index + 1 ]]</h5>
+                                </b-col>
+                            </b-row>
+                            <b-row>
+                                <b-col sm="2" class="text-center">
+                                    <b-img-lazy
+                                        v-if="v_option.class_icon_url"
+                                        :src="v_option.class_icon_url"
+                                        thumbnail
+                                        fluid
+                                        rounded
+                                        center
+                                        class="vector_option_icon"
+                                        :alt="'Icon related to ' + v_option.item_class__label">
+                                    </b-img-lazy>
+                                </b-col>
+                                <b-col lg="6" md="5" sm="10">
+                                    <dl class="row" v-if="v_option.predicate_labels ||  v_option.object_labels">
+                                        <dt class="col-sm-3">Specific Topics</dt>
+                                        <dd class="col-sm-9">
+                                            <span v-if="v_option.predicate_labels">[[ v_option.predicate_labels ]]</span>
+                                            <span v-if="v_option.object_labels"> - [[ v_option.object_labels ]]</span>
+                                            <small v-if="v_option.predicate_object_explain"><br/><em>[[ v_option.predicate_object_explain ]]</em></small>
+                                        </dt>
+                                    </dl>
+                                    <dl class="row" v-if="v_option.place">
+                                        <dt class="col-sm-3">Relevant Places</dt>
+                                        <dd class="col-sm-9">
+                                            <span>[[ v_option.place ]]</span>
+                                        </dt>
+                                    </dl>
+                                    <dl class="row" v-if="v_option.project__label">
+                                        <dt class="col-sm-3">Project</dt>
+                                        <dd class="col-sm-9">
+                                            <span><u>[[ v_option.project__label ]]</u></span>
+                                            <small v-if="v_option.proj_short_desc"><br/>[[ v_option.proj_short_desc ]]</small>
+                                        </dt>
+                                    </dl>
+                                    <dl class="row" v-if="v_option.metadata">
+                                        <dt class="col-sm-3">General Topics</dt>
+                                        <dd class="col-sm-9">
+                                            <span>[[ v_option.metadata ]]</span>
+                                        </dt>
+                                    </dl>
+                                </b-col>
+                                <b-col lg="4" md="3" sm="12">
+                                    <h6>About this Suggestion</h6>
+                                    <small v-if="v_option.class_explain">[[ v_option.class_explain ]]</small>
+                                </b-col>
+                            </b-row>
+                        </b-list-group-item>
+                    </b-list-group>
+                    <b-row class="range-explain">
+                        <b-col class="text-left">
+                            <p>
+                                <small>
+                                    <strong>Note:</strong> These search options may approximate the meaning of your request.
+                                    These results are <strong>NOT an output of generative AI</strong>. Instead, Open Context used a 
+                                    <a href="{{ LANGUAGE_MODEL_URL }}" title="Link to model documentation" target="_blank">small language model</a>
+                                    to compare patterns of words in your query with patterns of explanatory text (written by the human editors at Open Context) and 
+                                    author-contributed metadata. The explanatory text and metadata that most closely (according to
+                                    the small model) approximates your query are presented here.
+                                </small>
+                            <p>
+                                <small>
+                                    Open Context hosts the small language model locally. While less capable than large commercial "AI" models, 
+                                    the small model used here better protects user-privacy and is more financially, 
+                                    environmentally, and socially sustainable. Unfortunately, this small model
+                                    lacks specific training in archaeological and related topics, so some search options presented here
+                                    may be mistaken and not relevant to your interests. 
+                                </small>
+                            </p>
+                        </b-col>
+                    </b-row>
+                    
+                </b-col>
+            </b-row>
+            <b-row v-if="loading">
+                <b-col cols="12">
+                    <b-spinner class="m-5" label="Busy"></b-spinner>
+                        <p>Getting search topics that (may) approximate your search...</p>
+                    </div>
+                </b-col>
+            </b-row>
+        </b-container>
+    </div>
+
+</div>
+
+</script>
+
+
+<style type="text/css">
+.vector_option_icon {
+  max-width: 80px;
+}
+</style>
+
+
+<script type="text/javascript">
+
+
+var vc_vector = Vue.component(
+    'vector',
+    {
+        delimiters: ['[[', ']]'],
+        props: ['result_id'],
+        data() {
+            return {
+                result_id: null,
+                vector_options: [],
+                vq: null,
+                prior_vq: null,
+                loading: null,
+            };
+        },
+        template: '#vector-template',
+        mounted() {
+           this.fetch_api_vector_search();
+        },
+        computed: {
+            prior_text_query: function(){
+                if(!this.result_id){
+                    return null;
+                }
+                let prior_q = getURLParameter(this.result_id, 'q');
+                return clean_display_input_value(prior_q);
+            },
+        },
+        methods: {
+            update_vector_search(input_value) {
+                if(input_value == this.prior_vq){
+                    return null;
+                }
+                this.vq = input_value;
+                console.log('Update vector search with:' + input_value);
+            },
+            fetch_api_vector_search: function (){
+                if(!this.result_id){
+                    return null;
+                }
+                this.error = null;
+                let new_vq = this.vq;
+                if(new_vq){
+                    console.log('Do vector search of :' + new_vq);
+                }
+                let prior_q = getURLParameter(this.result_id, 'q');
+                if(!new_vq){
+                    new_vq = getURLParameter(this.result_id, 'vq');
+                }
+                if(!new_vq){
+                    new_vq = prior_q;
+                    this.vq = clean_display_input_value(prior_q);
+                }
+                this.prior_vq = new_vq;
+                this.loading = true;
+                this.vector_options = [];
+                let params = {vq: new_vq};
+                const requestOptions = {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                fetch(
+                    ('/lm-vector-search?' + new URLSearchParams(params)), 
+                    requestOptions,
+                )
+                .then(this.loading = false)
+                .then(response => response.json())
+                .then(json => {
+                    this.vector_options = json;
+                });
+            },
+
+        },
+        components: {
+           
+        }
+    }
+);
+
+
+</script>

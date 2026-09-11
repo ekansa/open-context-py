@@ -19,7 +19,8 @@
                 Open Context generally publishes detailed records of data described by specialized researchers. Open Context's search 
                 tools aim to retrieve those detailed data records. Because of the nature of this content, using very general search terms such as "daily life in ancient Egypt" will often return no results. 
                 If you want a general sense about information available in Open Context, please review the <a href="../../highlights">Highlights</a> or the list of <a href="../../projects-index/">Data Publications</a>.
-                </adiv>
+                <span v-if="enable_vector_search">You may also try search options (below) that a language model indicates as possibly relevant.</span>
+                </div>
               </b-alert>
             </div>
           </b-card-text>
@@ -34,6 +35,13 @@
               </div>
             </div>
           </b-card-text>
+
+          <div class="container-fluid text-muted text-center" v-if="enable_vector_search">
+            <vector
+              :key="'vector-component-' + route_key_index"
+              v-bind:result_id="result.id"></vector>
+          </div>
+
         </b-tab>
 
         <b-tab
@@ -235,6 +243,7 @@ var vc_all_search_tabs = Vue.component(
         'loading',
         'first_selected_tab',
         'filtered_fulltext',
+        'enable_vector_search',
       ],
       template: '#all-search-tabs-temp',
       data() {
@@ -527,6 +536,7 @@ var vc_all_search_tabs = Vue.component(
         },
       },
       components: {
+        'vector': vc_vector,
         'common_map': vc_common_map,
         'chronotiles': vc_chronotiles,
         'all-numeric-facets': vc_all_numeric_facets,
