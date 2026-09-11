@@ -119,8 +119,9 @@ def get_make_note_predicate_for_invalid_literal_db(
     if not man_obj:
         return None
     pred_note_label = f'{man_obj.label} [Note]'
+    old_pred_note_label = f'{man_obj.label} (Note)'  # Old style, before newer ETL code
     pred_note_obj = AllManifest.objects.filter(
-        label=pred_note_label,
+        label__in=[pred_note_label, old_pred_note_label],
         item_type='predicates',
         project=ds_source.project,
         data_type='xsd:string',

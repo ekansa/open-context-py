@@ -1,0 +1,128 @@
+{% extends '../page.html' %}
+
+{% block content %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Tutorials and Help for Using Open Context</h1>
+                </div>
+            </div>
+
+            <div class="row align-items-center">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+							<img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ BASE_URL}}/static/oc/images/about/noun-help-7773481.svg" alt="Help and guide icon"/>
+                        </div>
+                        <div class="media-body">
+                            <div style="margin-top: 2%; padding-left: 4%;">
+                                <p>Ever wondered how to better search Open Context?</p>
+                                <p>
+                                    These guides includes links to tutorials that explain how to search and explore the data published by Open Context. We are also preparing a few short videos that will guide you through the process.
+                                
+                                    These tutorials are some outcomes of our <a href="https://alexandriaarchive.org/data-literacy-program/" target="_blank">Data Literacy Program</a>, developed by a team of postdoctoral researchers, Dr. L. Meghan Dennis and Dr. Paulina Przystupa. <a href="https://orcid.org/0000-0002-9457-1239" title="ORCID identifier and academic profile" target="_blank">Paulina Przystupa</a> provided the guides, in the form of "<a href="https://alexandriaarchive.org/digital-data-stories/" tatget="_blank">Data Stories</a>", referenced here.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+
+		<style type="text/css">
+			img.uses-icon {
+				height: 100px;
+				text-align: center;
+				margin-left: auto;
+				margin-right: auto;
+				margin-top: 20px;
+			}
+			div.uses-rows {
+				margin-top: 40px;
+			}
+		</style>
+
+
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ BASE_URL}}/static/oc/images/about/noun-written-document-4568221.svg" alt="Written document icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Text Tutorials</h3>
+                <p>Open Context offers a variety of search options ranging from simple fulltext queries to more sophisticated faceted browse tools.</p>
+                
+                <p>If text-based explanations work best for you, there are two written tutorials that explain how to search Open Context associated with other Digital Data Stories. While they both incorporate text-based keyword search, the kind of search where you type in a word or phrase in a designated search-box and see what Open Context returns. The tutorials also describe how to apply additional filters to get more specific results. These guides also describe how search results are organized in different tabs. Each tab presents different aspects of the search result, and can lead to more exploratory analyses and ways to find patterns that you can investigate in more detail.</p>
+
+                <p>In the <a href="https://codeberg.org/OpenContext/DigitalDataStories/src/branch/main/DataStory3-AllintheWrist%28Bones%29/ProjectSearchTutorial.md" title="It's All in the Wrist (Hosted by Codeberg)" target="_blank">Digital Data Story It's All in the Wrist (Bones)</a>, we focus on project-based keyword search. This is useful when you have a specific project in mind and want to find or get data from within that project. For example, if you want to see all the data that includes the word "bones" in a data set or to look at only the entry with pictures from a specific project. This is great for people who want to look at something specific within a particular data publication.
+                </p>
+
+                <p>The second way is to do a direct keyword search of all of Open Context. In this kind of search, you enter a word like "bone" or "bones" into the search box on the site and get data from every data publication on Open Context that includes "bone" somewhere in its metadata. This is a great way to compare observations between data publication to begin building a sense of how something occurs across space and through time as recorded by different archaeologists working on different projects. The search tutorial for this is associated with the <a href="https://codeberg.org/OpenContext/DigitalDataStories/src/branch/main/DataStory11-OfMycenaeanMen/OpenContextKeywordSearch.md" title="Of Mycenaean Men (Hosted by Codeberg)" target="_blank">Digital Data Story Of Mycenaean Men</a>, which is interested in exploring archaeological vocabulary from popular science texts. The general keyword searches illustrate a wide breadth of materials to explore.</p>
+
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+
+
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ BASE_URL}}/static/oc/images/about/noun-video-2011138.svg" alt="video icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Video Tutorials</h3>
+                <p>The following videos illustrate both general keyword search and project-based search on Open Context. These videos also explain how tabs organize and present different aspects of search results.
+                </p>
+
+                <div class="row uses-rows">
+                    <div class="col-sm-12">
+
+                        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6FO0GR0EjVI?si=5QsPsjpuL6O_yrFs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        <p>
+                            <small>Video describing Open Context's <strong>sitewide</strong> keyword search tools.</small>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row uses-rows">
+                    <div class="col-sm-12">
+
+                        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/dvXhw_9M9Y4?si=eBKQf5Z5neMm5x3a" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        <p>
+                            <small>Video describing Open Context's <strong>project specific</strong> keyword search tools.</small>
+                        </p>
+                    </div>
+                </div>
+
+
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+
+        <br/>
+        <br/>
+        <br/>
+
+    </div>
+
+{% endblock %}

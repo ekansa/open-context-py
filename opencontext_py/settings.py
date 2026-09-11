@@ -698,6 +698,10 @@ NAV_ITEMS = [
                 'link': '/about/',
             },
             {
+                'display': 'Help and Tutorials',
+                'link': '/about/tutorials',
+            },
+            {
                 'display': 'Uses',
                 'link': '/about/uses',
             },

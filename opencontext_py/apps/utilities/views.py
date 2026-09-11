@@ -36,17 +36,24 @@ API_MAX_ZOOM = 25
 @never_cache
 def geospace_outliers_within(request):
     """Checks if contain relationships for spatial geometries of manifest objects"""
-    item_id = request.GET.get('item_id')
-    path = request.GET.get('path')
+    item_id = request.GET.get('item_id', None)
+    path = request.GET.get('path', None)
     output = geospace_contains.report_child_coordinate_outliers(
         item_id=item_id,
         path=path,
     )
     if not output:
-        return HttpResponse(
-            f'Cannot find item_id: "{item_id}" or path: "{path}"',
-            status=404,
-        )
+        man_obj = AllManifest.objects.filter(uuid=str(item_id)).first()
+        if man_obj:
+            return HttpResponse(
+                f'No specific geospatial data for: "{man_obj.label}" (https://{man_obj.uri})',
+                status=404,
+            )
+        else:
+            return HttpResponse(
+                f'Cannot find item_id: "{item_id}" or path: "{path}".',
+                status=404,
+            )
     json_str = json.dumps(
         output,
         ensure_ascii=False,

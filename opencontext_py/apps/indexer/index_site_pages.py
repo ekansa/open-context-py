@@ -102,6 +102,14 @@ SITE_KEY_WORDS = {
         'interfaces',
         'controlled vocabularies',
     ],
+    '/about/tutorials': [
+        'data literacy',
+        'data stories',
+        'L. Meghan Dennis',
+        'Paulina Przystupa',
+        'It\'s All in the Wrist',
+        'Of Mycenaean Men',
+    ],
     '/about/publishing': [
         'editorial team',
         'structured data',
@@ -365,7 +373,7 @@ def make_site_pages_solr_docs():
             try:
                 # For some reason, we need to do this on a deployed
                 # server.
-                r = requests.get(url)
+                r = requests.get(url, headers={'User-Agent': 'oc-api-client'})
                 root = html.document_fromstring(str(r.content))
             except:
                 root = None
