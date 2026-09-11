@@ -8,6 +8,7 @@
     var api_url = abs_to_rel_url('{{ api_url|safe }}', BASE_URL);
 </script>
 
+{% include '../search/parts/vector.html' %}
 {% include '../color_gradients.html' %}
 {% include '../common_geo.html' %}
 {% include '../search/parts/chrono.html' %}
@@ -40,6 +41,7 @@
                         v-bind:geojson_record_layers="geojson_record_layers"
                         v-bind:loading="loading"
                         v-bind:filtered_fulltext="filtered_fulltext"
+                        v-bind:enable_vector_search="enable_vector_search"
                         @set_frontend_state_obj="set_frontend_state_obj($event)"
                     >
                     </all-search-tabs>
@@ -119,6 +121,8 @@
     const MIN_GEOTILE_ZOOM = {{ configs.MIN_GEOTILE_ZOOM }} ;
     const MAX_GEOTILE_ZOOM = {{ configs.MAX_GEOTILE_ZOOM }} ;
     const CACHE_KEY = '{{ CACHE_KEY }}' ;
+    const EXPLAINED_SEARCH_READY = {{ EXPLAINED_SEARCH_READY }} ;
+    const LANGUAGE_MODEL_URL = '{{ LANGUAGE_MODEL_URL}}';
 
     // If true, we'll link to the testing 'all-items' new templates for
     // links to specific item records.
@@ -339,7 +343,33 @@
                 else{
                     return this.geojson_record_layers.length;
                 }
-            }
+            },
+            enable_vector_search: function(){
+                if(!this.result){
+                    return false;
+                }
+                if(!EXPLAINED_SEARCH_READY){
+                    return false;
+                }
+                if(!this.result.hasOwnProperty('id')){
+                    return false;
+                }
+                let prior_vq = getURLParameter(this.result.id, 'vq');
+                if(prior_vq){
+                    // enable vector search if the vq parameter is already in use
+                    // and the explained search service is ready
+                    return true;
+                }
+                if(!this.result.hasOwnProperty('totalResults')){
+                    return false;
+                }
+                let result_count = this.result.totalResults;
+                let prior_q = getURLParameter(this.result.id, 'q');
+                if(prior_q && result_count == 0){
+                    return true;
+                }
+                return false;
+            },
         },
         components: {
             'human-remains-results-alert': vc_human_remains_results_alert,

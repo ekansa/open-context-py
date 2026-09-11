@@ -1,5 +1,8 @@
+
+from math import atan2
 import numpy as np
 import pandas as pd
+
 
 
 # Needed to re-project the site grid
@@ -8,12 +11,42 @@ from opencontext_py.libs.reprojection import ReprojectUtilities
 from opencontext_py.apps.etl.kobo import pc_configs
 
 
+def argsort(seq):
+    #http://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python/3382369#3382369
+    #by unutbu
+    #https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python 
+    # from Boris Gorelik
+    return sorted(range(len(seq)), key=seq.__getitem__)
+
+
+def rotational_sort(list_of_xy_coords, clockwise=False):
+    x_l = [x for x,_ in list_of_xy_coords]
+    y_l = [y for _,y in list_of_xy_coords]
+    cx = (sum(x_l)/len(x_l))
+    cy = (sum(y_l)/len(y_l))
+    angles = [atan2(x-cx, y-cy) for x,y in list_of_xy_coords]
+    indices = argsort(angles)
+    if clockwise:
+        return [list_of_xy_coords[i] for i in indices]
+    else:
+        return [list_of_xy_coords[i] for i in indices[::-1]]
+
 
 def grid_x_y_to_lat_lon(grid_x, grid_y, site_proj='poggio-civitate'):
     if not isinstance(grid_x, list):
         grid_x = [grid_x]
     if not isinstance(grid_y, list):
         grid_y = [grid_y]
+    list_of_xy_coords = []
+    for i, x in enumerate(grid_x):
+        tup = (x, y[i])
+        list_of_xy_coords.append(tup)
+    if len(list_of_xy_coords) > 2:
+        # Make sure the coordinates are sorted for geojson
+        xy_sort = rotational_sort(list_of_xy_coords)
+        grid_x = [x for x,_ in xy_sort]
+        grid_y = [y for _,y in xy_sort]
+
     reproj = ReprojectUtilities()
     if site_proj in ReprojectUtilities.MURLO_PRE_TRANSFORMS:
         proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(

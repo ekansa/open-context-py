@@ -460,7 +460,10 @@ def prep_string_search_term_list(raw_fulltext_search, operator='&&'):
             # skip a naked AND operator, since that's the default
             # anyway. Also, we don't reset back to AND if we had an OR
             continue
-        terms.append(escape_solr_arg(term))
+        term = escape_solr_arg(term)
+        if term.startswith('\\"') and term.endswith('\\"'):
+            term = term[1:-2] + '"'
+        terms.append(term)
     return terms, operator
 
 

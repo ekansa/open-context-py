@@ -336,6 +336,7 @@ if not ':' in REDIS_HOST_PORT:
 redis_split = REDIS_HOST_PORT.split(':')
 REDIS_HOST = redis_split[0]
 REDIS_PORT = redis_split[1]
+FILE_CACHE_PATH = get_secret('FILE_CACHE_PATH')
 
 if DEBUG:
     # Short caching for debugging
@@ -813,3 +814,26 @@ CACHE_PREFIX_VIEW = 'view_'
 CACHE_PREFIX_PROJ_CONTEXT = 'pcntx_' # For project context dataframe caching
 CACHE_PREFIX_PROJ_META = 'prj_meta_' # For project image overlay and other metadata
 CACHE_PREFIX_MANIFEST_OBJ = 'man_obj_'
+
+# Language model names and paths
+if 'LANGUAGE_MODEL_NAME_1024' in secrets:
+    # 1024 dimension language model
+    LANGUAGE_MODEL_NAME_1024 = get_secret('LANGUAGE_MODEL_NAME_1024')
+else:
+    LANGUAGE_MODEL_NAME_1024 = None
+if 'LANGUAGE_MODEL_PATH_1024' in secrets:
+    # 1024 dimension language model
+    LANGUAGE_MODEL_PATH_1024 = get_secret('LANGUAGE_MODEL_PATH_1024')
+else:
+    LANGUAGE_MODEL_PATH_1024 = None
+
+if 'LANGUAGE_MODEL_NAME_768' in secrets:
+    # 768 dimension language model
+    LANGUAGE_MODEL_NAME_768 = get_secret('LANGUAGE_MODEL_NAME_768')
+else:
+    LANGUAGE_MODEL_NAME_768 = None
+if 'LANGUAGE_MODEL_PATH_768' in secrets:
+    # 768 dimension language model
+    LANGUAGE_MODEL_PATH_768 = get_secret('LANGUAGE_MODEL_PATH_768')
+else:
+    LANGUAGE_MODEL_PATH_768 = None

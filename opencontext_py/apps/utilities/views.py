@@ -47,12 +47,13 @@ def geospace_outliers_within(request):
             f'Cannot find item_id: "{item_id}" or path: "{path}"',
             status=404,
         )
+    json_str = json.dumps(
+        output,
+        ensure_ascii=False,
+        indent=4,
+    )
     return HttpResponse(
-        json.dumps(
-            output,
-            ensure_ascii=False,
-            indent=4,
-        ),
+        json_str,
         content_type='application/json; charset=utf8',
     )
 

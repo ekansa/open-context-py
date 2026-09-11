@@ -95,7 +95,7 @@ class SearchFilters():
         self.base_search_url = base_search_url
         self.request_dict = copy.deepcopy(request_dict)
         self.current_filters_url = current_filters_url
-        self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
+        self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENSIONS
 
 
     def add_links_to_act_filter(

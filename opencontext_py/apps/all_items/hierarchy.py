@@ -197,3 +197,120 @@ def get_hierarchy_paths_w_alt_labels_by_item_type(item_man_obj, add_alt_label=Tr
             hierarchy_path.append(item_obj)
         hierarchy_paths.append(hierarchy_path)
     return hierarchy_paths
+
+
+def get_vocabulary_children_objs_db(vocab_man_obj):
+    """Get top children items for a given manifest object of a vocabulary"""
+
+    from opencontext_py.apps.all_items.models import (AllManifest, AllAssertion)
+
+    if vocab_man_obj.item_type != 'vocabularies':
+        return None
+    act_children_qs = AllManifest.objects.filter(
+        context=vocab_man_obj,
+        item_type='vocabularies',
+    )
+    if act_children_qs.count() > 0:
+        # This is a vocabulary with a child vocabulary. This can happen with Period-O
+        act_children = [m_obj for m_obj in act_children_qs]
+        return act_children
+    # Check for the root concepts of the vocabulary
+    subj_super_qs = AllAssertion.objects.filter(
+        object__context=vocab_man_obj,
+        predicate_id__in=(
+            configs.PREDICATE_LIST_SBJ_IS_SUPER_OF_OBJ
+            + configs.PREDICTATE_LIST_CONTEXT_SBJ_IS_SUPER_OF_OBJ
+        ),
+    )
+    subj_subord_qs = AllAssertion.objects.filter(
+        subject__context=vocab_man_obj,
+        predicate_id__in=configs.PREDICATE_LIST_SBJ_IS_SUBORD_OF_OBJ,
+    )
+    uuids_q_parents = [ass_obj.object.uuid for ass_obj in subj_super_qs]
+    uuids_q_parents += [ass_obj.subject.uuid for ass_obj in subj_subord_qs]
+    uuids_q_parents = set(uuids_q_parents)
+    # Get "root" concepts in a vocabulary, as defined by those items that
+    # lack a parent concept in their hierarchy
+    act_children_qs = AllManifest.objects.filter(
+        context=vocab_man_obj,
+    ).exclude(
+        uuid__in=uuids_q_parents,
+    )
+    act_children = [m_obj for m_obj in act_children_qs]
+    return act_children
+
+
+def get_next_children_w_alt_labels_by_item_type_db(item_man_obj, add_alt_label=True, use_cache=False):
+
+    # Import here to avoid circular imports.
+    from opencontext_py.apps.all_items.models import (AllManifest, AllAssertion)
+
+    if item_man_obj.item_type in (ITEM_TYPES_FOR_CONCEPT_HIERARCHIES + ITEM_TYPES_FOR_VOCAB_PARENTS):
+        # Use database lookups to get concept hierarchies if
+        # the item type is relevant to this kind of lookup.
+        act_children = models_utils.get_immediate_concept_children_objs(
+            item_man_obj, 
+            use_cache=use_cache,
+        )
+    elif item_man_obj.item_type == 'projects' and str(item_man_obj.item_class.uuid) == configs.CLASS_OC_DATA_PUB_UUID:
+        act_children_qs = AllManifest.objects.filter(
+            item_type='projects', 
+            item_class_id=configs.CLASS_OC_DATA_PUB_UUID,
+            context=item_man_obj,
+        )
+        act_children = [m_obj for m_obj in act_children_qs]
+    elif item_man_obj.item_type == 'subjects':
+        a_qs = AllAssertion.objects.filter(
+            subject=item_man_obj,
+            predicate_id=configs.PREDICATE_CONTAINS_UUID,
+        ).select_related('object')
+        act_children = [ass_obj.object for ass_obj in a_qs]
+    elif item_man_obj.item_type == 'vocabularies':
+        act_children = get_vocabulary_children_objs_db(vocab_man_obj=item_man_obj)
+    else:
+        return []
+
+    if not add_alt_label:
+        return act_children
+    labeled_children = []
+    for item_obj in act_children:
+        other_labels = labels.get_other_labels(item_obj, use_cache=use_cache)
+        if other_labels:
+            item_obj.alt_label = other_labels[0]
+            item_obj.other_labels = other_labels
+        else:
+            item_obj.alt_label = None
+            item_obj.other_labels = None
+        labeled_children.append(item_obj)
+    return labeled_children
+    
+
+def get_next_children_w_alt_labels_by_item_type(item_man_obj, add_alt_label=True, use_cache=True):
+    if not use_cache:
+        # Return the results with no caching
+        return get_next_children_w_alt_labels_by_item_type_db(
+            item_man_obj, 
+            add_alt_label=add_alt_label, 
+            use_cache=False
+        )
+    cache_key = f'item-children-{str(add_alt_label)}-{str(item_man_obj.uuid)}'
+    cache = caches['redis']
+    act_children = cache.get(cache_key)
+    if isinstance(act_children, list):
+        # We have cached results.
+        return act_children
+    act_children = get_next_children_w_alt_labels_by_item_type_db(
+        item_man_obj, 
+        add_alt_label=True, 
+        use_cache=use_cache,
+    )
+    if isinstance(act_children, list):
+        # set the cache with a good result
+        try:
+            cache.set(cache_key, act_children)
+        except:
+            pass
+    if not act_children:
+        return []
+    return act_children
+    

@@ -249,5 +249,6 @@ def db_get_project_representative_sample(proj_obj):
         wordy_items
     )
     rep_len = len(rep_man_objs)
-    print(f'{print_prefix}; all representative items: {rep_len}, or {round(((rep_len/proj_count) * 100), 2)} %')
+    if proj_count > 0:
+        print(f'{print_prefix}; all representative items: {rep_len}, or {round(((rep_len/proj_count) * 100), 2)} %')
     return rep_man_objs

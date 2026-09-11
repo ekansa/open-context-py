@@ -88,11 +88,19 @@ class ResultFacetsChronologyFromDF():
         value_col='facet_value',
     ):
         """Makes columns of earliest and latest dates bce from a chronotile column"""
+        if df.empty:
+            df['earliest_bce_ce'] = None
+            df['latest_bce_ce'] = None
+            return df
         df['chrono_dict'] = df[value_col].apply(
             chronotiles.decode_path_dates
         )
         df['earliest_bce_ce'] = df['chrono_dict'].str.get('earliest_bce_ce')
         df['latest_bce_ce'] = df['chrono_dict'].str.get('latest_bce_ce')
+        # Make sure we have numeric values
+        for c in ['earliest_bce_ce', 'latest_bce_ce']:
+            act_index = ~df[c].isnull()
+            df.loc[act_index, c] = df[act_index][c].astype('float32')
         df.drop(
             columns=['chrono_dict'],
             inplace=True,

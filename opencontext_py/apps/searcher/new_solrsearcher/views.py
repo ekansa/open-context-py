@@ -19,6 +19,14 @@ from opencontext_py.apps.searcher.new_solrsearcher import project_index_search
 from opencontext_py.apps.searcher.new_solrsearcher import suggest
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
+from opencontext_py.apps.indexer.embeddings import (
+    ACTIVE_EMBEDDING_MODEL_NAME
+)
+from opencontext_py.apps.searcher.searcher_apis.explained_topic_query import (
+    EXPLAINED_SEARCH_READY
+)
+
+
 from opencontext_py.libs.queue_utilities import make_hash_id_from_args
 
 
@@ -139,6 +147,8 @@ def query_html(request, spatial_context=None):
         # Consent to view human remains defaults to False if not actually set.
         'human_remains_ok': request.session.get('human_remains_ok', False),
         'CACHE_KEY': cache_key,
+        'EXPLAINED_SEARCH_READY': str(EXPLAINED_SEARCH_READY).lower(),
+        'LANGUAGE_MODEL_URL': f'https://huggingface.co/{ACTIVE_EMBEDDING_MODEL_NAME}',
     }
     template = loader.get_template('bootstrap_vue/search/search.html')
     response = HttpResponse(template.render(context, request))

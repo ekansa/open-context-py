@@ -133,7 +133,7 @@ def make_image_schema_org_json_ld(
     return schema
 
 
-def make_schema_org_json_ld(rep_dict):
+def make_schema_org_json_ld(rep_dict, citation_dict=None):
     """Makes Schema.org JSON-LD from an Open Context rep_dict
     
     :param dict rep_dict: An Open Context representation dict
@@ -153,7 +153,8 @@ def make_schema_org_json_ld(rep_dict):
     if not len(creators):
         creators = MAINTAINER_PUBLISHER_DICT.copy()
 
-    citation_dict = citation.make_citation_dict(rep_dict)
+    if not citation_dict:
+        citation_dict = citation.make_citation_dict(rep_dict)
 
     citation_txt = (
         f"{', '.join(citation_dict.get('authors', []))} "

@@ -10,6 +10,7 @@ testing.txt
 db-logs/
 assets/
 # static/admin/
+file_cache/
 static/exports/
 static/bootstrap/
 static/jquery/

@@ -26,6 +26,7 @@ from opencontext_py.apps.all_items.representations import citation
 from opencontext_py.apps.all_items.legacy_all import update_old_id
 
 from opencontext_py.apps.indexer.solrdocument_new_schema import SolrDocumentNS
+from opencontext_py.apps.indexer.solrdocument_slim_schema import SolrDocumentSlim
 
 from opencontext_py.apps.all_items.editorial.api import get_man_obj_by_any_id
 
@@ -208,6 +209,27 @@ def all_items_json(request, uuid, man_obj=None):
         )
         solrdoc.make_solr_doc()
         rep_dict = solrdoc.fields
+    elif request.GET.get('solr') == 'solr-slim':
+        # with added stuff for Solr
+        man_obj, rep_dict = item.make_representation_dict(
+            subject_id=ok_uuid,
+            for_solr=True,
+        )
+        if not man_obj or not rep_dict:
+            raise Http404
+        rep_dict = prepare_for_item_dict_solr_and_html_template(
+            man_obj,
+            rep_dict
+        )
+        solrdoc = SolrDocumentSlim(
+            uuid=man_obj.uuid,
+            man_obj=man_obj,
+            rep_dict=rep_dict,
+        )
+        solrdoc.make_solr_doc()
+        rep_dict = solrdoc.fields
+        rep_dict['text_for_embedding_dict'] = solrdoc.text_for_embedding_dict
+        rep_dict['text_for_embedding_list'] = solrdoc.text_for_embedding_list
     else:
         # default, simple JSON-LD
         man_obj, rep_dict = item.make_representation_dict(subject_id=ok_uuid)
@@ -315,7 +337,8 @@ def all_items_html(
         indent=4,
         ensure_ascii=False
     )
-    schema_org_meta = make_schema_org_json_ld(rep_dict)
+    citation_dict = citation.make_citation_dict(rep_dict)
+    schema_org_meta = make_schema_org_json_ld(rep_dict, citation_dict)
     geo_json = None
     if rep_dict.get('features'):
         geo_json = json.dumps(
@@ -349,6 +372,7 @@ def all_items_html(
             canonical_uri=canonical_uri,
             man_obj=man_obj,
             rep_dict=rep_dict,
+            citation_dict=citation_dict,
         ),
         'SCHEMA_ORG_JSON_LD': json.dumps(
             schema_org_meta,
@@ -367,7 +391,7 @@ def all_items_html(
             'persons',
             'subjects_children'
         ],
-        'citation':citation.make_citation_dict(rep_dict),
+        'citation':citation_dict,
         'man_obj': man_obj,
         'edit_status': edit_status,
         'query_context_path': query_context_path,

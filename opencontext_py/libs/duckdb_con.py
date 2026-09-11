@@ -1,5 +1,5 @@
 import duckdb
-from duckdb.typing import *
+from duckdb.sqltypes import *
 
 from django.conf import settings
 
