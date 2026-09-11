@@ -44,3 +44,12 @@ function safe_get_nested_object_by_str_key(some_obj, key_path_str){
 	}
 	return output;
 }
+
+function clean_display_input_value(input_value){
+	if (!input_value){
+		return input_value;
+	}
+	input_value = decodeURIComponent(input_value);
+	input_value = input_value.replaceAll("+", " ");
+	return input_value;
+}
