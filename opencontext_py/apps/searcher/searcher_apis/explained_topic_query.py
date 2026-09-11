@@ -130,7 +130,7 @@ START_API_COLS = [
     'equiv_object_slug',
     'equiv_object_label',
     'equiv_object_alt_labels',
-    'explain_text', 
+    # 'explain_text', 
     'url',
 ]
 
@@ -163,6 +163,8 @@ def generate_query_url_from_row(row, root_url='https://opencontext.org/query/'):
     if not is_null_str(row['path']):
         url += str(row['path']).replace(' ', '+')
     params = {}
+    if 'row_num' in row:
+        params['vector-rec'] = row['row_num']
     if not is_null_str(row['bbox']):
         params['bbox'] = str(row['bbox'])
     if not is_null_str(row['item_type']):
@@ -253,6 +255,7 @@ def make_df_from_vibe_query_sql(query_str):
     LIMIT 50;
     """
     df = duckdb.sql(sql).df()
+    df['row_num'] = df.index + 1
     df['url'] = ''
     df['url'] =  df.apply(lambda row: generate_query_url_from_row(row), axis=1)
     return df, emb_query

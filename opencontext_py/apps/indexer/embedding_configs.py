@@ -308,12 +308,12 @@ CLASS_SLUG_EXPLAIN_DICT = {
     and cultural changes over centuries or millennia.
     """,
     "oc-gen-cat-sample": """
-    This query addresses physical specimens systematically collected from fieldwork contexts for specialized laboratory testing 
+    This query addresses physical specimens collected from fieldwork contexts for specialized laboratory testing 
     and composition analysis. Samples typically comprise small portions of soil, organic material, water, botanical fragments, 
     faunal remains, or artifact residues. Researchers examine these specimens using scientific instruments to determine their 
     elemental, mineralogical, chemical, biochemical, or mechanical properties. The resulting datasets may provide high-resolution 
     information regarding ancient environmental conditions, raw material sourcing, craft manufacturing technologies, dietary habits, 
-    and absolute dating evidence for the site.
+    and absolute dating evidence.
     """,
     "oc-gen-cat-bulk-ceramic": """
     This query targets aggregations of pottery sherds that are documented and analyzed collectively as a unified group rather 
