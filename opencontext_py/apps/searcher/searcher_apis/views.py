@@ -1,6 +1,8 @@
 import copy
 import json
 
+from urllib.parse import quote_plus
+
 from django.conf import settings
 from django.core.cache import caches
 from django.http import HttpResponse, HttpResponseRedirect
@@ -15,6 +17,10 @@ from opencontext_py.apps.all_items.editorial import api as editorial_api
 
 from opencontext_py.apps.searcher.new_solrsearcher import db_entities
 from opencontext_py.apps.all_items import hierarchy
+
+from opencontext_py.apps.indexer.embeddings import (
+    ACTIVE_EMBEDDING_MODEL_NAME
+)
 from opencontext_py.apps.searcher.searcher_apis import explained_topic_query as vibes
 
 from django.views.decorators.cache import cache_control
@@ -130,15 +136,43 @@ def vibes_search_json(request):
         indent=4,
         force_ascii=False
     )
-    if False:
-        output_dict = json.loads(json_str)
-        json_output = json.dumps(
-            output_dict,
-            indent=4,
-            ensure_ascii=False
-        )
     return HttpResponse(
         json_output,
         content_type="application/json; charset=utf8"
     )
 
+
+def vibes_search_html(request):
+    req_neg = RequestNegotiation('text/html')
+    request.content_type = req_neg.use_response_type
+    if not req_neg.supported:
+        # Client wanted a mimetype we don't support
+        response = HttpResponse(
+            req_neg.error_message,
+            content_type=req_neg.use_response_type + "; charset=utf8",
+            status=415
+        )
+        patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+        return response
+    rp = RootPath()
+    start_url = rp.get_baseurl() + '/lm-search-suggest'
+    if not 'vq' in request.GET:
+        vq_text = ''
+    else:
+        vq_text = request.GET['vq']
+        start_url += '?vq=' + quote_plus(vq_text)
+
+    rp = RootPath()
+    context = {
+        'NAV_ITEMS': settings.NAV_ITEMS,
+        'MAPBOX_PUBLIC_ACCESS_TOKEN': settings.MAPBOX_PUBLIC_ACCESS_TOKEN,
+        'BASE_URL': rp.get_baseurl(),
+        'EXPLAINED_SEARCH_READY': str(vibes.EXPLAINED_SEARCH_READY).lower(),
+        'LANGUAGE_MODEL_URL': f'https://huggingface.co/{ACTIVE_EMBEDDING_MODEL_NAME}',
+        'START_URL': start_url,
+        'START_VQ': quote_plus(vq_text),
+    }
+    template = loader.get_template('bootstrap_vue/search/vector-search.html')
+    response = HttpResponse(template.render(context, request))
+    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+    return response
