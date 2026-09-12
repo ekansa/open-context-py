@@ -115,6 +115,11 @@ urlpatterns = [
         SearcherAPIsViews.vibes_search_json,
         name='searcher_apis_vibe_search'
     ),
+    re_path(
+        r'^lm-search-suggest',
+        SearcherAPIsViews.vibes_search_html,
+        name='searcher_apis_search_suggest'
+    ),
 
     # Projects index searches
     re_path(r'^projects-index/(?P<spatial_context>\S+)?.json', NewSearchViews.projects_index_json, name='projects_index_json'),

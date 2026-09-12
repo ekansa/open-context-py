@@ -1,0 +1,127 @@
+{% extends '../page.html' %}
+
+{% block content %}
+
+<script type="text/javascript">
+    // Populated by Django.
+    // const BASE_URL = '{{ BASE_URL|safe }}';
+    var api_url = abs_to_rel_url('{{ api_url|safe }}', BASE_URL);
+</script>
+
+{% include '../search/parts/vector.html' %}
+
+
+<!-- General template for views of Open Context search results -->
+<div id="main">
+
+    <div class="container-fluid">
+
+        <div id="app">
+            <div class="row">
+                <div class="col-lg-12 col-md-12">
+
+                    <b-alert show variant="info" >
+                        <div class="container-fluid text-muted text-left">
+                            <h4 class="alert-heading">Searching Tips</h4>
+                            Open Context generally publishes detailed records of data described by specialized researchers. Open Context's search 
+                            tools aim to retrieve those detailed data records. Because of the nature of this content, using very general search terms such as "daily life in ancient Egypt" will often return no results. 
+                            If you want a general sense about information available in Open Context, please review the <a href="../../highlights">Highlights</a> or the list of <a href="../../projects-index/">Data Publications</a>.
+                            <span v-if="enable_vector_search">You may also try search options (below) that a language model indicates as possibly relevant.</span>
+                        </div>
+                    </b-alert>
+
+                    <div class="container-fluid text-muted text-center" v-if="enable_vector_search">
+                        <vector
+                        :key="'vector-component-' + route_key_index"
+                        v-bind:do_update_vq_routes="true"
+                        v-bind:start_vq="start_vq"
+                        v-bind:result_id="result_id"></vector>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    const EXPLAINED_SEARCH_READY = {{ EXPLAINED_SEARCH_READY }} ;
+    const LANGUAGE_MODEL_URL = '{{ LANGUAGE_MODEL_URL}}';
+    const START_URL = '{{ START_URL }}';
+    const START_VQ = '{{ START_VQ }}';
+
+
+    // Set up the vue router in 'history' mode to manage
+    // API requests to the backend. The history mode pushes
+    // changes to the client's browser URL, which should let
+    // the client bookmark state.
+    const routes = [ {path: START_URL} ];
+    const router = new VueRouter({
+         mode: 'history',
+         routes: routes
+    });
+
+    var vm = new Vue({
+        router: router,
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        data: {
+            message: 'Open Context Search Result',
+            route_key_index: 0,
+            result_id: START_URL,
+            vq: START_VQ,
+            new_vq: START_VQ,
+            respondToRouteChanges: true,
+            start_vq: null,
+        },
+        created(){
+
+        },
+        watch: {
+            // call again the method if the route changes
+            'new_vq': 'set_new_vq',
+        },
+        methods: {
+            set_new_vq() {
+                if (!this.respondToRouteChanges){
+                    // console.log('ignoring since route changes ignored')
+                    return;
+                }
+                if (this.vq !== this.new_vq){
+                    this.vq = this.new_vq;
+                }
+            },
+            make_start_vq: function(){
+                if(!START_VQ){
+                    return null;
+                }
+                if(START_VQ === 'null'){
+                    return null;
+                }
+                this.start_vq = clean_display_input_value(START_VQ);
+            }
+        },
+        computed: {
+            enable_vector_search: function(){
+                if(!EXPLAINED_SEARCH_READY){
+                    return false;
+                }
+                return true;
+            },
+        },
+        components: {
+            'vector': vc_vector,
+        },
+    }).$mount('#app');
+</script>
+
+
+
+
+
+{% endblock %}

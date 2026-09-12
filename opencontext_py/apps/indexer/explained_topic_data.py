@@ -536,12 +536,10 @@ def get_distinct_project_item_class_types(
         a_qs = a_qs.filter(
             subject__item_class_id=item_class_id,
         )
-    elif item_class_slug:
+    if item_class_slug:
         a_qs = a_qs.filter(
             subject__item_class__slug=item_class_slug,
         )
-    else:
-        pass
 
 
     a_qs = a_qs.distinct(

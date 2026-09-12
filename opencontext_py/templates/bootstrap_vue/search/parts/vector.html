@@ -178,24 +178,30 @@ var vc_vector = Vue.component(
     'vector',
     {
         delimiters: ['[[', ']]'],
-        props: ['result_id'],
+        props: ['result_id', 'do_update_vq_routes', 'start_vq'],
         data() {
             return {
                 result_id: null,
                 vector_options: [],
+                start_vq: null,
                 vq: null,
                 prior_vq: null,
                 loading: null,
+                do_update_vq_routes: null,
             };
         },
         template: '#vector-template',
         mounted() {
-           this.fetch_api_vector_search();
+            this.use_start_vq_if_set();
+            this.fetch_api_vector_search();
         },
         computed: {
             prior_text_query: function(){
                 if(!this.result_id){
                     return null;
+                }
+                if(this.start_vq){
+                    return this.start_vq;
                 }
                 let prior_q = getURLParameter(this.result_id, 'q');
                 return clean_display_input_value(prior_q);
@@ -209,9 +215,38 @@ var vc_vector = Vue.component(
                 this.vq = input_value;
                 console.log('Update vector search with:' + input_value);
             },
+            use_start_vq_if_set(){
+                if(!this.start_vq){
+                    return null;
+                }
+                this.update_vector_search(this.start_vq);
+            },
             update_vector_search_then_search() {
                 console.log('Update vector search with:' + this.vq);
                 this.fetch_api_vector_search();
+            },
+            update_router: function(url){
+                let hash = '';
+                if(window.location.hash) {
+                    hash = '#' + window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+                }
+                if(url.indexOf(hash) < 0){
+                    url += hash;
+                }
+                url = abs_to_rel_url(url, BASE_URL);
+                router.push(url);
+            },
+            update_vq_route: function(vq){
+                if (!vq){
+                    this.vq = this.start_vq;
+                    return null;
+                }
+                if (!this.do_update_vq_routes){
+                    return null;
+                }
+                let current_url = this.result_id;
+                let url = replaceURLparameter(current_url, 'vq', vq);
+                this.update_router(url);
             },
             fetch_api_vector_search: function (){
                 if(!this.result_id){
@@ -229,6 +264,9 @@ var vc_vector = Vue.component(
                 if(!new_vq){
                     new_vq = prior_q;
                     this.vq = clean_display_input_value(prior_q);
+                }
+                if((new_vq === 'null') || (!new_vq)){
+                    return null;
                 }
                 this.prior_vq = new_vq;
                 this.loading = true;
@@ -248,6 +286,8 @@ var vc_vector = Vue.component(
                 .then(response => response.json())
                 .then(json => {
                     this.vector_options = json;
+                    console.log('vq is ' + this.vq);
+                    this.update_vq_route(this.vq);
                 });
             },
 
