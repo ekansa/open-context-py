@@ -272,6 +272,7 @@ var vc_vector = Vue.component(
                 if((new_vq === 'null') || (!new_vq)){
                     return null;
                 }
+                new_vq =  new_vq.trim();
                 this.prior_vq = new_vq;
                 this.loading = true;
                 this.vector_options = [];
