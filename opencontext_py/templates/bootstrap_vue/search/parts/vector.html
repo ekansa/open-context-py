@@ -236,16 +236,20 @@ var vc_vector = Vue.component(
                 url = abs_to_rel_url(url, BASE_URL);
                 router.push(url);
             },
-            update_vq_route: function(vq){
-                if (!vq){
-                    this.vq = this.start_vq;
-                    return null;
-                }
+            update_vq_route: function(new_vq){
                 if (!this.do_update_vq_routes){
                     return null;
                 }
+                if (!new_vq){
+                    this.vq = this.start_vq;
+                    return null;
+                }
+                else{
+                    this.vq = clean_display_input_value(new_vq);
+                }
                 let current_url = this.result_id;
-                let url = replaceURLparameter(current_url, 'vq', vq);
+                let url = replaceURLparameter(current_url, 'vq', new_vq);
+                console.log('router update ' + url);
                 this.update_router(url);
             },
             fetch_api_vector_search: function (){
@@ -272,6 +276,8 @@ var vc_vector = Vue.component(
                 this.loading = true;
                 this.vector_options = [];
                 let params = {vq: new_vq};
+                console.log('vq is ' + new_vq);
+                this.update_vq_route(new_vq);
                 const requestOptions = {
                     method: 'GET',
                     headers: {
@@ -286,8 +292,6 @@ var vc_vector = Vue.component(
                 .then(response => response.json())
                 .then(json => {
                     this.vector_options = json;
-                    console.log('vq is ' + this.vq);
-                    this.update_vq_route(this.vq);
                 });
             },
 
