@@ -199,7 +199,7 @@ def load_explained_search_table_from_parquet_path(
         return None
     sql = f"""
     CREATE VIEW {table} AS
-    SELECT * FROM '{parquet_path}';
+    SELECT * FROM read_parquet('{parquet_path}');
     """
     db_m = duckdb.sql(sql)
     return db_m
