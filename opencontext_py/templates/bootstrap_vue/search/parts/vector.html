@@ -40,7 +40,7 @@
                 </b-col>
             </b-row>
 
-            <b-row v-if="loading || (!error && vector_options.length < 1)">
+            <b-row v-if="loading || (prior_vq && !error && vector_options.length < 1)">
                 <b-col cols="12">
                     <b-spinner class="m-5" label="Busy"></b-spinner>
                         <p>Getting search topics that (may) approximate your search...</p>
@@ -56,7 +56,7 @@
             
             <b-row fluid v-if="vector_options.length && !loading">
                 <b-col cols="12">
-                    <h5>Click any Suggestion Below to Get Query Results<h5>
+                    <h5 class="suggestions">Click any Suggestion Below to Get Query Results<h5>
                 </b-col>
             </b-row>
             <b-row v-if="vector_options.length && !loading" id="all-vector-options">
@@ -176,6 +176,9 @@
 <style type="text/css">
 .vector_option_icon {
   max-width: 80px;
+}
+h5.suggestions {
+    margin-left: .85em;
 }
 </style>
 
