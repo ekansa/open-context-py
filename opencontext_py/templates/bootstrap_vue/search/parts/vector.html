@@ -40,7 +40,7 @@
                 </b-col>
             </b-row>
 
-            <b-row v-if="loading || (!error && vector_options.length < 1)">
+            <b-row v-if="loading || (prior_vq && !error && vector_options.length < 1)">
                 <b-col cols="12">
                     <b-spinner class="m-5" label="Busy"></b-spinner>
                         <p>Getting search topics that (may) approximate your search...</p>
