@@ -15,13 +15,6 @@
     <div class="card-body small">
         <b-container fluid>
 
-            <b-row v-if="loading">
-                <b-col cols="12">
-                    <b-spinner class="m-5" label="Busy"></b-spinner>
-                        <p>Getting search topics that (may) approximate your search...</p>
-                    </div>
-                </b-col>
-            </b-row>
 
             <b-row style="margin-bottom: 12px;" align-v="center">
                 <b-col cols="8">
@@ -47,7 +40,15 @@
                 </b-col>
             </b-row>
 
-            <b-row v-if="vector_options.length < 1 && !loading">
+            <b-row v-if="loading || (!error && vector_options.length < 1)">
+                <b-col cols="12">
+                    <b-spinner class="m-5" label="Busy"></b-spinner>
+                        <p>Getting search topics that (may) approximate your search...</p>
+                    </div>
+                </b-col>
+            </b-row>
+
+            <b-row v-if="error && !loading">
                 <b-col cols="12">
                     <b-alert show variant="warning">Search suggestions are currently not available</b-alert>
                 </b-col>
@@ -196,6 +197,7 @@ var vc_vector = Vue.component(
                 prior_vq: null,
                 loading: null,
                 do_update_vq_routes: null,
+                error: null,
             };
         },
         template: '#vector-template',
@@ -302,6 +304,9 @@ var vc_vector = Vue.component(
                 .then(json => {
                     this.vector_options = json;
                     this.loading = false;
+                    if(json.hasOwnProperty('error')){
+                        this.error = json.error;
+                    }
                 });
             },
 
