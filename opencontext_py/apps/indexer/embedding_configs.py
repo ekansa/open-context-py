@@ -90,11 +90,11 @@ CLASS_SLUG_EXPLAIN_DICT = {
     This query targets individual archaeological artifacts, which represent the portable material culture 
     manufactured, modified, and used by past human populations. While often recovered as broken refuse 
     or discarded garbage, these items encompass tools, weapons, decorative ornaments, architectural fixtures, 
-    furniture components, toys, household utensils and belongings. Archaeologists study these objects to 
+    furniture components, toys, and other belongings. Archaeologists study these objects to 
     understand artistic style, manufacturing processes, raw material sourcing, craft production, 
     specialization, food preparation and consumption, and technological change. 
-    Artifacts also inform about trade networks, socio-economic status, households, status, 
-    gender dynamics, ritual behaviors, and cultural chronology.
+    Artifacts also inform about trade networks, socio-economic status, social groups and institutions, 
+    ritual behaviors, and cultural chronology.
     """,
     "oc-gen-cat-coin": """
     This query targets specific metallic artifacts utilized primarily as standardized currency. Coins may feature 
@@ -578,6 +578,12 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     A spindle whorl is a weight fitted to a spindle to help maintain the spindle's speed of rotation while spinning yarn.
     """,
 
+    # https://en.wikipedia.org/wiki/Bobbin
+    "getty-aat-300023528": """
+    Bobbins or spools are used in spinning, weaving, knitting, sewing, and lacemaking. They are cylinders used to 
+    manage either yarn or thread.
+    """,
+
     # https://en.wikipedia.org/wiki/Quern-stone
     "getty-aat-300200181": """
     A quern is a tool for hand-grinding a wide variety of materials, especially for various types of grains.
@@ -709,3 +715,832 @@ EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT = {
     """,
     
 }
+
+ANIMAL_BONE_CLASS_SLUGS = [
+    "oc-gen-cat-animal-bone",
+    "oc-gen-cat-non-diag-bone",
+    "oc-gen-cat-bulk-bone",
+]
+
+ARTIFACT_CLASS_SLUGS = [
+    "oc-gen-cat-object",
+    "oc-gen-cat-coin",
+    "oc-gen-cat-pottery",
+    "oc-gen-cat-glass",
+    "oc-gen-cat-groundstone",
+    "oc-gen-cat-arch-element",
+    "oc-gen-cat-bulk-ceramic",
+    "oc-gen-cat-bulk-lithic",
+    "oc-gen-cat-lithic",
+]
+
+FEATURE_CLASS_SLUGS = [
+    "oc-gen-cat-feature",
+    "oc-gen-cat-structure",
+    "oc-gen-cat-space",
+    "oc-gen-cat-stela",
+]
+
+CONTEXT_CLASS_SLUGS = [
+    "oc-gen-cat-context",
+    "oc-gen-cat-exc-unit",
+    "oc-gen-cat-locus",
+    "oc-gen-cat-lot",
+    "oc-gen-cat-basket",
+    "oc-gen-cat-unit",
+]
+
+SITE_AREA_CLASS_SLUGS = [
+    "oc-gen-cat-area",
+    "oc-gen-cat-trench",
+    "oc-gen-cat-square",
+    "oc-gen-cat-mound",
+]
+
+PHASE_CLASS_SLUGS = [
+    "oc-gen-cat-sequence",
+    "oc-gen-cat-stratum",
+    "oc-gen-cat-phase",
+]
+
+SITE_CLASS_SLUGS = [
+    "oc-gen-cat-sampling-site",
+    "oc-gen-cat-site",
+    "oc-gen-cat-survey-unit",
+]
+
+SPATIAL_ANALYSIS_COUNT_MIN = 25
+DEFAULT_REGION_KM = 30
+
+SPATIAL_TOPICS_CONFIGS = [
+
+    {
+        'max_km': 1.0, 
+        'spatial_threshold': SPATIAL_ANALYSIS_COUNT_MIN, 
+        'spatial_type': 'Locality or site',
+        'class_configs': [
+            {
+                'class_slugs': [
+                    "oc-gen-cat-c14-sample",
+                ],
+                'topics': [
+                    'absolute dating',
+                    'sampling',
+                    'deposition',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-bio-subj-ecofact",
+                ],
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'cultivation',
+                    'storage',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-human-bone",
+                ],
+                'topics': [
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-plant-remains",
+                ],
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'cultivation',
+                    'storage',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': ANIMAL_BONE_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'human-animal relationships',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': ARTIFACT_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'specialization',
+                    'craft production',
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': CONTEXT_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'craft production',
+                    'site formation',
+                ],
+            },
+            {
+                'class_slugs': FEATURE_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'production',
+                    'households',
+                    'architecture',
+                    'specialization',
+                ],
+            },
+            {
+                'class_slugs': SITE_AREA_CLASS_SLUGS,
+                'topics': [
+                    'site organization',
+                ],
+            },
+            {
+                'class_slugs': PHASE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site formation',
+                ],
+            },
+        ],
+    },
+
+    {
+        'max_km': 4, 
+        'spatial_threshold': SPATIAL_ANALYSIS_COUNT_MIN, 
+        'spatial_type': 'Very local region',
+        'class_configs': [
+            {
+                'class_slugs': [
+                    "oc-gen-cat-c14-sample",
+                ],
+                'topics': [
+                    'absolute dating',
+                    'sampling',
+                    'deposition',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-bio-subj-ecofact",
+                ],
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'cultivation',
+                    'storage',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-human-bone",
+                ],
+                'topics': [
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-plant-remains",
+                ],
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'cultivation',
+                    'storage',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': ANIMAL_BONE_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'human-animal relationships',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': ARTIFACT_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'specialization',
+                    'craft production',
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'households',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': CONTEXT_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'craft production',
+                    'site formation',
+                ],
+            },
+            {
+                'class_slugs': FEATURE_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'production',
+                    'households',
+                    'architecture',
+                    'specialization',
+                ],
+            },
+            {
+                'class_slugs': SITE_AREA_CLASS_SLUGS,
+                'topics': [
+                    'site organization',
+                ],
+            },
+            {
+                'class_slugs': PHASE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site formation',
+                ],
+            },
+        ],
+    },
+
+
+    {
+        'max_km': 12, 
+        'spatial_threshold': SPATIAL_ANALYSIS_COUNT_MIN, 
+        'spatial_type': 'Local region',
+        'class_configs': [
+            {
+                'class_slugs': [
+                    "oc-gen-cat-c14-sample",
+                ],
+                'topics': [
+                    'disturbance',
+                    'chronology',
+                    'deposition',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-bio-subj-ecofact",
+                ],
+                'topics': [
+                    'environment',
+                    'cultivation',
+                    'storage',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-human-bone",
+                ],
+                'topics': [
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'identity',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-plant-remains",
+                ],
+                'topics': [
+                    'human-plant relationships',
+                    'cultivation',
+                    'storage',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                    'households',
+                ],
+            },
+            {
+                'class_slugs': ANIMAL_BONE_CLASS_SLUGS,
+                'topics': [
+                    'human-animal relationships',
+                    'food provisioning',
+                    'food processing',
+                    'food consumption',
+                    'craft production',
+                    'households',
+                ],
+            },
+            {
+                'class_slugs': ARTIFACT_CLASS_SLUGS,
+                'topics': [
+                    'specialization',
+                    'craft production',
+                    'social status',
+                    'households',
+                    'land use',
+                    'trade and exchange',
+                ],
+            },
+            {
+                'class_slugs': CONTEXT_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'craft production',
+                    'site formation',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': FEATURE_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'storage',
+                    'production',
+                    'households',
+                    'architecture',
+                    'specialization',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': SITE_AREA_CLASS_SLUGS,
+                'topics': [
+                    'site organization',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': PHASE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site formation',
+                ],
+            },
+        ],
+    },
+
+
+    {
+        'max_km': DEFAULT_REGION_KM, 
+        'spatial_threshold': SPATIAL_ANALYSIS_COUNT_MIN, 
+        'spatial_type': 'Region',
+        'class_configs': [
+            {
+                'class_slugs': [
+                    "oc-gen-cat-c14-sample",
+                ],
+                'topics': [
+                    'chronology',
+                    'deposition',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-bio-subj-ecofact",
+                ],
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'cultivation',
+                    'food provisioning',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-human-bone",
+                ],
+                'topics': [
+                    'social status',
+                    'gender',
+                    'ritual',
+                    'identity',
+                    'symbolism',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-plant-remains",
+                ],
+                'topics': [
+                    'human-plant relationships',
+                    'food provisioning',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': ANIMAL_BONE_CLASS_SLUGS,
+                'topics': [
+                    'human-animal relationships',
+                    'food provisioning',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': ARTIFACT_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'specialization',
+                    'trade and exchange',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': CONTEXT_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'specialization',
+                    'land use',
+                    'habitation',
+                ],
+            },
+            {
+                'class_slugs': FEATURE_CLASS_SLUGS,
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'specialization',
+                    'land use',
+                    'habitation',
+                ],
+            },
+            {
+                'class_slugs': SITE_AREA_CLASS_SLUGS,
+                'topics': [
+                    'site organization',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': PHASE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site formation',
+                ],
+            },
+            {
+                'class_slugs': SITE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site organization',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-region",
+                ],
+                'topics': [
+                    'disturbance',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                ],
+            },
+        ],
+    },
+
+
+    {
+        'max_km': 100, 
+        'spatial_threshold': SPATIAL_ANALYSIS_COUNT_MIN, 
+        'spatial_type': 'Large region',
+        'class_configs': [
+            {
+                'class_slugs': [
+                    "oc-gen-cat-c14-sample",
+                ],
+                'topics': [
+                    'chronology',
+                    'deposition',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-bio-subj-ecofact",
+                ],
+                'topics': [
+                    'disposal',
+                    'disturbance',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-human-bone",
+                ],
+                'topics': [
+                    'social-cultural groups',
+                    'ritual',
+                    'populations',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-plant-remains",
+                ],
+                'topics': [
+                    'disturbance',
+                    'cultivation',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': ANIMAL_BONE_CLASS_SLUGS,
+                'topics': [
+                    'human-animal relationships',
+                    'food provisioning',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': ARTIFACT_CLASS_SLUGS,
+                'topics': [
+                    'trade and exchange',
+                    'social-cultural groups',
+                ],
+            },
+            {
+                'class_slugs': CONTEXT_CLASS_SLUGS,
+                'topics': [
+                    'social-cultural groups',
+                    'land use',
+                    'habitation',
+                ],
+            },
+            {
+                'class_slugs': FEATURE_CLASS_SLUGS,
+                'topics': [
+                    'social-cultural groups',
+                    'specialization',
+                    'land use',
+                    'habitation',
+                ],
+            },
+            {
+                'class_slugs': SITE_AREA_CLASS_SLUGS,
+                'topics': [
+                    'site organization',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': PHASE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site formation',
+                ],
+            },
+            {
+                'class_slugs': SITE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site organization',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                    'social-cultural groups',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-region",
+                ],
+                'topics': [
+                    'disturbance',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                ],
+            },
+        ],
+    },
+
+    {
+        'max_km': None, 
+        'spatial_threshold': SPATIAL_ANALYSIS_COUNT_MIN, 
+        'spatial_type': 'Very large region',
+        'class_configs': [
+            {
+                'class_slugs': [
+                    "oc-gen-cat-c14-sample",
+                ],
+                'topics': [
+                    'chronology',
+                    'deposition',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-bio-subj-ecofact",
+                ],
+                'topics': [
+                    'disturbance',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-human-bone",
+                ],
+                'topics': [
+                    'social-cultural groups',
+                    'populations',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-plant-remains",
+                ],
+                'topics': [
+                    'cultivation',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': ANIMAL_BONE_CLASS_SLUGS,
+                'topics': [
+                    'human-animal relationships',
+                    'land use',
+                    'environment',
+                ],
+            },
+            {
+                'class_slugs': ARTIFACT_CLASS_SLUGS,
+                'topics': [
+                    'trade and exchange',
+                    'social-cultural groups',
+                ],
+            },
+            {
+                'class_slugs': CONTEXT_CLASS_SLUGS,
+                'topics': [
+                    'social-cultural groups',
+                    'land use',
+                    'habitation',
+                ],
+            },
+            {
+                'class_slugs': FEATURE_CLASS_SLUGS,
+                'topics': [
+                    'social-cultural groups',
+                    'specialization',
+                    'land use',
+                    'habitation',
+                ],
+            },
+            {
+                'class_slugs': SITE_AREA_CLASS_SLUGS,
+                'topics': [
+                    'site organization',
+                    'land use',
+                ],
+            },
+            {
+                'class_slugs': PHASE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'site formation',
+                ],
+            },
+            {
+                'class_slugs': SITE_CLASS_SLUGS,
+                'topics': [
+                    'disturbance',
+                    'land use',
+                    'habitation',
+                    'sampling',
+                    'social-cultural groups',
+                ],
+            },
+            {
+                'class_slugs': [
+                    "oc-gen-cat-region",
+                ],
+                'topics': [
+                    'land use',
+                    'sampling',
+                ],
+            },
+        ],
+    },
+
+]
+
+PATH_ITEM_CLASS_SLUG_TOPICS_CONFIGS = [
+
+    {
+        'path': 'Americas/United States',
+        'class_slugs': [
+            'oc-gen-cat-collection',
+        ],
+        'topics': [
+            'cultural resource management',
+            'cultural affiliation',
+            'inventory and documentation',
+            'Native American Graves Protection and Repatriation Act (NAGPRA)',
+            'Tribal sovereignty',
+            'ethics',
+        ],
+    },
+
+]
