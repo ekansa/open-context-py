@@ -623,6 +623,14 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     "getty-aat-300042991": """
     A wide open vessel often used for serving, presenting, and consuming food.
     """,
+
+    "getty-aat-300259446": """
+    A type of hardware that is a long, pointed object, often in metal, used for fastening or anchoring.
+    """,
+
+    "getty-aat-300036363": """
+    A general type of hardware that used for fastening components togather or for anchoring.
+    """,
     
     "manto-8189150": """
     Gorgons are ancient Greek mythological female monsters. They could turn anyone who looked upon them to stone.
