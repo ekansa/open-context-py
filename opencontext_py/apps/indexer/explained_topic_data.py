@@ -15,6 +15,8 @@ from django.db.models import OuterRef, Subquery, Q
 from django.conf import settings
 
 from opencontext_py.libs import duckdb_con
+from opencontext_py.libs.globalmaptiles import GlobalMercator
+
 
 from opencontext_py.apps.all_items import hierarchy
 
@@ -35,6 +37,9 @@ from opencontext_py.apps.indexer.embedding_configs import (
     CLASS_SLUG_EXPLAIN_DICT,
     EQUIV_OBJ_SLUG_EXPLAIN_DICT,
     EQUIV_PRED_CLASS_SLUG_EXPLAIN_DICT,
+    DEFAULT_REGION_KM,
+    SPATIAL_TOPICS_CONFIGS,
+    PATH_ITEM_CLASS_SLUG_TOPICS_CONFIGS,
 )
 from opencontext_py.apps.indexer.embeddings import (
     EMBEDDING_MODEL_DIM,
@@ -111,6 +116,8 @@ DF_GENERAL_COLS_TO_DUCKDB_DATA_TYPES = {
     'longitude__max': 'FLOAT',
     'earliest__min': 'FLOAT',
     'latest__max': 'FLOAT',
+    'count_unique_geo': 'BIGINT',
+    'count_unique_chrono': 'BIGINT',
 }
 
 DF_COLS_PROPERTY_DUCKDB_DATA_TYPES = {
@@ -187,7 +194,7 @@ def get_distinct_project_item_type_item_classes():
     unique item types and item classes
     """
     m_qs = AllManifest.objects.filter(
-        item_type__in=['subjects', 'media', 'documents',],
+        item_type__in=['subjects', 'media', 'documents', 'projects'],
         # meta_json__flag_do_not_index__isnull=True,
         # project__meta_json__flag_do_not_index__isnull=True,
     ).distinct(
@@ -339,6 +346,8 @@ def get_project_space_time(
         except:
             value = None
         output[k] = value
+    output['count_unique_geo'] = proj_qs.values('geo_source').distinct().count()
+    output['count_unique_chrono'] = proj_qs.values('chrono_source').distinct().count()
     return output
 
 
@@ -772,6 +781,8 @@ def add_cross_project_rows(df):
                         new_metadata = None
                     item_type_class_count = df[act_index]['item_type_class_count'].sum()
                     item_type_class_asserts_count = df[act_index]['item_type_class_asserts_count'].sum()
+                    item_type_class_asserts_geo_sum = df[act_index]['count_unique_geo'].sum()
+                    item_type_class_asserts_chrono_sum = df[act_index]['count_unique_chrono'].sum()
                     item_type_class_asserts_rate = 0
                     if item_type_class_count > 0:
                         item_type_class_asserts_rate = item_type_class_asserts_count / item_type_class_count
@@ -801,6 +812,8 @@ def add_cross_project_rows(df):
                     df_new['longitude__max'] = lon_max
                     df_new['earliest__min'] = df[act_index]['earliest__min'].min()
                     df_new['latest__max'] = df[act_index]['latest__max'].max()
+                    df_new['count_unique_geo'] = item_type_class_asserts_geo_sum
+                    df_new['count_unique_chrono'] = item_type_class_asserts_chrono_sum
                     id_parts = [
                         str(df_new['project__slug'].iloc[0]),
                         str(df_new['item_type'].iloc[0]),
@@ -915,7 +928,101 @@ def get_unique_non_null_values_from_keys(m_dict, keys):
             continue
         non_nulls.append(value)
     return non_nulls
+
+
+def spatial_chrono_distribution_topics(m_dict):
+    keys = [
+        'latitude__min',
+        'longitude__min',
+        'latitude__max',
+        'longitude__max',
+        'count_unique_geo',
+        'count_unique_chrono',
+    ]
+    for k in keys:
+        if m_dict.get(k) is None:
+            # Lack the required data to get topics
+            return ''
+
+    lat_diff = abs(m_dict.get('latitude__min') - m_dict.get('latitude__max'))
+    lon_diff = abs(m_dict.get('longitude__min') - m_dict.get('longitude__max'))
+    if lat_diff == 0 and lon_diff == 0:
+        km = DEFAULT_REGION_KM - 1
+    else:
+        gm = GlobalMercator()
+        km = gm.distance_on_unit_sphere(
+            m_dict.get('latitude__min'), 
+            m_dict.get('longitude__min'),
+            m_dict.get('latitude__max'),
+            m_dict.get('longitude__max'),
+        )
+
+    found_config = None
+    for space_config in SPATIAL_TOPICS_CONFIGS:
+        if space_config.get('max_km') is None:
+            if not found_config:
+                # maximum scale region reached! Stop here
+                found_config = copy.deepcopy(space_config)
+                break
+            pass
+        if km < space_config.get('max_km'):
+            found_config = copy.deepcopy(space_config)
+            break
+
+    if not found_config:
+        # We don't have a configuration at this regional scale, skip out
+        return ''
+
+    item_class_slug = m_dict.get('item_class__slug')
+    count_unique_geo = m_dict.get('count_unique_geo')
+    count_unique_chrono = m_dict.get('count_unique_chrono')
+    path = m_dict.get('path')
     
+    topics = []
+    for class_config in found_config.get('class_configs', []):
+        if not item_class_slug in class_config.get('class_slugs', []):
+            continue
+        topics += class_config.get('topics', [])
+
+    if path:
+        path = str(path)
+        for path_config in PATH_ITEM_CLASS_SLUG_TOPICS_CONFIGS:
+            check_path = path_config.get('path')
+            if not check_path:
+                continue
+            check_path = str(check_path)
+            if not path.startswith(check_path):
+                continue
+            if not item_class_slug in path_config.get('class_slugs', []):
+                continue
+            topics += path_config.get('topics', [])
+
+    if not topics:
+        return ''
+
+    topics_str = '; '.join(topics)
+    
+    dimension_types = []
+    if count_unique_geo >= found_config.get('spatial_threshold'):
+        dimension_types.append('locations')
+    if count_unique_chrono > 1:
+        dimension_types.append('time-ranges')
+    
+    spatial_type = found_config.get('spatial_type', '').lower()
+    if lat_diff == 0 and lon_diff == 0:
+        spatial_type = 'query result'
+    if not dimension_types:
+        return (
+            f'This {spatial_type} aggregates location and time information. '
+            + f'Comparison with other queries can inform about: {topics_str}.'
+        )
+    dimension_str = ' and '.join(dimension_types)
+    return (
+        f'Comparison of records across different {dimension_str} in '
+        f'this {spatial_type} can inform about: {topics_str}.'
+    )
+
+
 
 
 def make_explain_text(m_dict):
@@ -927,6 +1034,10 @@ def make_explain_text(m_dict):
         )
     )
     explain_item_class = explain_text_clean(explain_item_class)
+    space_time_str = spatial_chrono_distribution_topics(m_dict)
+    if space_time_str:
+        space_time_str = explain_text_clean(space_time_str)
+        explain_item_class += ' ' + space_time_str
     explain_item_class = f'<p>{explain_item_class}</p>'
     places = ''
     if has_key_str_value(m_dict, 'path'):

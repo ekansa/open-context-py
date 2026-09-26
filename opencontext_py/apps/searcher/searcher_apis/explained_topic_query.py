@@ -30,6 +30,7 @@ from opencontext_py.apps.indexer.explained_topic_data import (
     EXPLAINED_SEARCHES_LOCAL_PATH,
     explain_text_clean,
     get_unique_non_null_values_from_keys,
+    spatial_chrono_distribution_topics,
 )
 from opencontext_py.apps.indexer.embedding_configs import (
     QUERY_ITEM_TYPE_EXPLAIN_DICT,
@@ -134,6 +135,15 @@ START_API_COLS = [
     'url',
 ]
 
+SPACE_TIME_EXPLAIN_COLS = [
+    'latitude__min',
+    'longitude__min',
+    'latitude__max',
+    'longitude__max',
+    'count_unique_geo',
+    'count_unique_chrono',
+]
+
 API_COLS = START_API_COLS + [
     # Added in make_api_output_from_vibe_query_df
     'place',
@@ -142,6 +152,7 @@ API_COLS = START_API_COLS + [
     'predicate_labels',
     'object_labels',
     'predicate_object_explain',
+    'space_time_explain',
 ]
 
 
@@ -243,6 +254,8 @@ def make_df_from_vibe_query_sql(query_str):
         longitude__max,
         earliest__min,
         latest__max,
+        count_unique_geo,
+        count_unique_chrono,
         explain_text,
         item_type_class_asserts_rate,
         array_cosine_similarity(
@@ -273,7 +286,8 @@ def get_item_type_item_class_icon(item_type, item_class_slug):
 
 
 def make_api_output_from_vibe_query_df(df, top_result_count=5):
-    cols = [c for c in START_API_COLS if c in df.columns.tolist()]
+    start_cols = START_API_COLS + SPACE_TIME_EXPLAIN_COLS
+    cols = [c for c in start_cols if c in df.columns.tolist()]
     df = df[cols].head(top_result_count).copy()
     df['place'] = ''
     df['class_icon_url'] = ''
@@ -281,9 +295,10 @@ def make_api_output_from_vibe_query_df(df, top_result_count=5):
     df['predicate_labels'] = ''
     df['object_labels'] = ''
     df['predicate_object_explain'] = ''
+    df['space_time_explain'] = ''
     for i, row in df.iterrows():
         
-        if row['path']: 
+        if row['path'] and str(row['path']) != 'nan': 
             df.at[i, 'place'] = str(row['path']).replace('/', ', ')
                     
         df.at[i, 'class_icon_url'] = get_item_type_item_class_icon(
@@ -297,6 +312,9 @@ def make_api_output_from_vibe_query_df(df, top_result_count=5):
             )
         )
         df.at[i, 'class_explain'] = explain_text_clean(explain_item_class)
+        space_time_str = spatial_chrono_distribution_topics(row)
+        if space_time_str:
+            df.at[i, 'space_time_explain'] = explain_text_clean(space_time_str)
         predicate_labels = get_unique_non_null_values_from_keys(
             row, 
             keys=['equiv_predicate_label'],
