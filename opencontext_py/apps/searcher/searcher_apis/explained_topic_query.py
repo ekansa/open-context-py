@@ -223,8 +223,10 @@ EXPLAINED_SEARCH_TABLE = load_explained_search_table_from_parquet_path()
 def make_df_from_vibe_query_sql(query_str):
     if not query_str:
         return None
+    query_str = query_str.strip()
+    query_str = query_str.replace('"', '')
     if not query_str.startswith('query: '):
-        query_str = 'query: ' + query_str
+        query_str = f'query: "{query_str}"'
     print(query_str)
     emb_query = embed_with_chunk_pooling(query_str)
     sql = f"""
