@@ -612,6 +612,18 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     can often be closely dated, and their distribution can inform about ancient Roman economic systems.
     """,
 
+    "getty-aat-300042973": """
+    An open vessel form often used for serving food.
+    """,
+
+    "getty-aat-300203596": """
+    A deep open vessel form often used for serving food or drinks.
+    """,
+
+    "getty-aat-300042991": """
+    A wide open vessel often used for serving, presenting, and consuming food.
+    """,
+    
     "manto-8189150": """
     Gorgons are ancient Greek mythological female monsters. They could turn anyone who looked upon them to stone.
     Gorgoneia (depictions of gorgon faces) that decorated architectural elements and other artifacts may
