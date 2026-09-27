@@ -640,6 +640,11 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     Metal that has been drawn out into a strand.
     """,
 
+    "getty-aat-300024809": """
+    A file is a tool with abrasive surfaces used to remove fine amounts of material from a workpiece. 
+    It is common in woodworking, metalworking, and other similar trades or hobbies.
+    """,
+
     "getty-aat-300011790": """
     Slag is a by-product or waste product of smelting ores and recycled metals. Slag is mainly a mixture of metal oxides and silicon dioxide.
     """,
