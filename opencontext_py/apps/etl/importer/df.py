@@ -303,7 +303,9 @@ def save_data_source_records_for_df(df, ds_source, chuck_size=50):
     df.fillna('', inplace=True)
 
     cols = df.columns.tolist()
-    for df_chunk in np.array_split(df, chuck_size):
+    for start in range(0, len(df), chuck_size):
+        # Slice the DataFrame to get a chunk
+        df_chunk = df.iloc[start:start + chuck_size]
         data_source_records = []
         for i, row in df_chunk.iterrows():
             for field_num, col in enumerate(cols, start=1):

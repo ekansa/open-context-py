@@ -631,6 +631,23 @@ EQUIV_OBJ_SLUG_EXPLAIN_DICT = {
     "getty-aat-300036363": """
     A general type of hardware that used for fastening components togather or for anchoring.
     """,
+
+    "getty-aat-300011151": """
+    Jasper is an opaque type of silica stone, made mostly of very fine-grained quartz or chalcedony.
+    """,
+
+    "getty-aat-300011063": """
+    Metal that has been drawn out into a strand.
+    """,
+
+    "getty-aat-300024809": """
+    A file is a tool with abrasive surfaces used to remove fine amounts of material from a workpiece. 
+    It is common in woodworking, metalworking, and other similar trades or hobbies.
+    """,
+
+    "getty-aat-300011790": """
+    Slag is a by-product or waste product of smelting ores and recycled metals. Slag is mainly a mixture of metal oxides and silicon dioxide.
+    """,
     
     "manto-8189150": """
     Gorgons are ancient Greek mythological female monsters. They could turn anyone who looked upon them to stone.
