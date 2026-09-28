@@ -72,6 +72,7 @@ query_strs = [
     'representation of the ancient greek goddess of wisdom',
     'depiction of ulysses',
     'evidence for ovens or fireplaces in Anatolia',
+    'Artifact evidence for Etruscan weaving',
 ]
 for query_str in query_strs:
     print('')
@@ -219,15 +220,30 @@ def load_explained_search_table_from_parquet_path(
 EXPLAINED_SEARCH_TABLE = load_explained_search_table_from_parquet_path()
 
 
+def make_df_from_entire_explain_search_table():
+    """Makes a dataframe from the explained search table"""
+    sql = f"SELECT * FROM {EXPLAINED_SEARCHES_TABLE} WHERE 1=1;"
+    df = duckdb.sql(sql).df()
+    return df
 
-def make_df_from_vibe_query_sql(query_str):
+
+def prepare_query_str(query_str):
     if not query_str:
         return None
+    if '+' in query_str or '%' in query_str:
+        query_str = urllib.parse.unquote_plus(query_str)
     query_str = query_str.strip()
     query_str = query_str.replace('"', '')
     if not query_str.startswith('query: '):
         query_str = f'query: "{query_str}"'
-    print(query_str)
+    return query_str
+
+
+def make_df_from_vibe_query_sql(query_str):
+    query_str = prepare_query_str(query_str)
+    if not query_str:
+        return None
+    print(f'query_str: {query_str}')
     emb_query = embed_with_chunk_pooling(query_str)
     sql = f"""
     SELECT

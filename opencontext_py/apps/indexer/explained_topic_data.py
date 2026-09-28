@@ -1180,3 +1180,29 @@ def make_explained_searches_parquet_from_df(df):
     con.execute(f"COPY (SELECT * FROM explained_searches) TO '{EXPLAINED_SEARCHES_LOCAL_PATH}' ")
     print(f'Saved explained searches to: {EXPLAINED_SEARCHES_LOCAL_PATH}')
     return df
+
+
+def update_explain_text_and_embeddings_by_equiv_obj_slugs(equiv_obj_slugs):
+    """Updates the parquet file explain text and embeddings to account for 
+    newly updated explanation text for a list of equiv_obj_slugs
+    """
+    from opencontext_py.apps.searcher.searcher_apis import explained_topic_query as vibes
+    df = vibes.make_df_from_entire_explain_search_table()
+    act_index = df['equiv_object_slug'].isin(equiv_obj_slugs)
+    print(f'Update explanation text and embeddings for: {len(df[act_index].index)} rows matching: {equiv_obj_slugs}')
+    clean = re.compile(r'<[^>]+>')
+    for i, row in df[act_index].iterrows():
+        explain_text_html = make_explain_text(m_dict=row)
+        explain_text = re.sub(clean, '', explain_text_html)
+        # See documentation here: https://huggingface.co/intfloat/multilingual-e5-large
+        explain_text = 'passage: ' + explain_text
+        chunks = chunk_text_for_embedding(explain_text)
+        chunk_count = len(chunks)
+        if chunk_count > 1:
+            print(f'Long text for embedding: "{explain_text}"')
+        embedding = embed_with_chunk_pooling(explain_text)
+        df.at[i, 'explain_text'] = explain_text_html
+        df.at[i, 'chunck_count'] = chunk_count
+        df.at[i, EMBEDDING_FIELD_SOLR] = embedding
+    make_explained_searches_parquet_from_df(df)
+    return df
