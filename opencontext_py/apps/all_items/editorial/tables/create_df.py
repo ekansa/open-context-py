@@ -1302,7 +1302,11 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
 
     # Now combine the contributors and the creators into a single author column
     df['authors'] = ''
-
+    df['authors'] = df['authors'].astype(object)
+    for col in ['dc_contributor_label', 'dc_creator_label',]:
+        if col in df.columns.tolist():
+            continue
+        df[col] = ''
     # Make authors for where either the contributor or the creator columns
     # are not null, but not both.
     null_tups = [
@@ -1311,6 +1315,8 @@ def add_authors_to_df(df, assert_df, drop_roles=True, pred_roles_tups=DC_AUTHOR_
     ]
     for not_null, is_null in null_tups:
         act_index = ~df[not_null].isnull() & df[is_null].isnull()
+        # print(f'author values for {not_null}')
+        # print(df[act_index][not_null].head(10))
         df.loc[act_index, 'authors'] = df[act_index][not_null]
 
     if False:
