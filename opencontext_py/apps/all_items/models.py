@@ -1924,3 +1924,11 @@ def refresh_cached_spacetime_view():
         cursor.execute(
             "REFRESH MATERIALIZED VIEW CONCURRENTLY oc_all_manifest_cached_spacetime;"
         )
+
+def make_cached_spacetime_view():
+    """Make the materialized view for cached spacetime data"""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "REFRESH MATERIALIZED VIEW oc_all_manifest_cached_spacetime;"
+        )
