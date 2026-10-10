@@ -313,6 +313,24 @@ def reproject(request):
 http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-proj=poggio-civitate&output-proj=EPSG:4326&x=103.08&y=-60.79
 
 http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-proj=EPSG:3003&output-proj=EPSG:4326&x=169613.07889640043&y=-477999.93973334756
+
+
+'http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Polygon&input-proj=poggio-civitate&output-proj=EPSG:4326&x=' 
++ cells['min_x'].value 
++ ','
++ cells['min_x'].value 
++ ',' 
++ cells['max_x'].value
++ ',' 
++ cells['max_x'].value 
++ '&y=' 
++ cells['min_y'].value 
++ ',' 
++ cells['max_y'].value
++ ',' 
++ cells['max_y'].value
++ ',' 
++ cells['min_y'].value
     """
 
 
@@ -335,32 +353,40 @@ http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-pr
         proj_x_vals = [(lambda x: float(x.strip()))(x) for x in raw_proj_x_vals]
         proj_y_vals = [(lambda y: float(y.strip()))(y) for y in raw_proj_y_vals]
     except:
-        return HttpResponse('All x (Longitude) and y (Latitude) values must be numbers.',
-                            content_type='text/plain; charset=utf8',
-                            status=406)
+        return HttpResponse(
+            'All x (Longitude) and y (Latitude) values must be numbers.',
+            content_type='text/plain; charset=utf8',
+            status=406,
+        )
     reproj = ReprojectUtilities()
     input_proj = request.GET.get('input-proj')
     if input_proj in ReprojectUtilities.MURLO_PRE_TRANSFORMS:
         # the request uses a Murlo Project local coordinate system
         # we can transform it to global, by first changing the values
         # of the x and y coordinates.
-        proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(proj_x_vals,
-                                                              proj_y_vals,
-                                                              input_proj)
+        proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(
+            proj_x_vals,
+            proj_y_vals,
+            input_proj
+        )
         # now set the input projection to the correct
         input_proj = ReprojectUtilities.MURLO_PRE_TRANSFORMS[input_proj]
     try:
         reproj.set_in_out_crs(input_proj, request.GET.get('output-proj'))
     except:
-        return HttpResponse('Could not recognize input and/or output CRS.',
-                            content_type='text/plain; charset=utf8',
-                            status=406)
+        return HttpResponse(
+            'Could not recognize input and/or output CRS.',
+            content_type='text/plain; charset=utf8',
+            status=406,
+        )
     try:
         out_x, out_y = reproj.reproject_coordinates(proj_x_vals, proj_y_vals)
     except:
-        return HttpResponse('Transformation failure.',
-                            content_type='text/plain; charset=utf8',
-                            status=406)
+        return HttpResponse(
+            'Transformation failure.',
+            content_type='text/plain; charset=utf8',
+            status=406,
+        )
     coords = reproj.package_coordinates(out_x, out_y, request.GET.get('geometry'))
     if (request.GET.get('format') == 'geojson' and
         request.GET.get('geometry')):
