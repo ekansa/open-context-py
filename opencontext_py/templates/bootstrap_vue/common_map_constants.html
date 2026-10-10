@@ -130,6 +130,104 @@
 
   const DEFAULT_TILELAYER_NAME = 'Google Aerial'; // or 'MapBox Satellite';
 
+  // Session cookie so maps (and paid/quota tile APIs) are not loaded until
+  // a person or agent consents to Open Context terms, IP, ethics, and rate limits.
+  const MAP_TOS_CONSENT_COOKIE = 'oc_map_tos_ok';
+  const MAP_TOS_CONSENT_COOKIE_VALUE = '1';
+
+  function get_map_tos_consent(){
+      const prefix = MAP_TOS_CONSENT_COOKIE + '=';
+      const parts = String(document.cookie || '').split(';');
+      for(let i = 0; i < parts.length; i++){
+          const c = parts[i].trim();
+          if(c.indexOf(prefix) === 0){
+              return c.substring(prefix.length) === MAP_TOS_CONSENT_COOKIE_VALUE;
+          }
+      }
+      return false;
+  }
+
+  function set_map_tos_consent(){
+      // No Max-Age / Expires: browser session cookie only.
+      document.cookie = (
+          MAP_TOS_CONSENT_COOKIE + '=' + MAP_TOS_CONSENT_COOKIE_VALUE
+          + '; path=/; SameSite=Lax'
+      );
+  }
+
+</script>
+
+
+<script type="text/x-template" id="map_tos_consent">
+    <div
+        class="map-tos-consent d-flex align-items-center justify-content-center"
+        :style="'min-height: ' + min_height + 'px;'"
+    >
+        <b-card
+            border-variant="secondary"
+            header-border-variant="secondary"
+            class="shadow-sm"
+            style="max-width: 42rem;"
+        >
+            <template #header>
+                <strong>Map use requires consent</strong>
+            </template>
+            <p>
+                Open Context maps load tiles from third-party providers. Unattended
+                bots and high-volume automated use can exhaust those providers' API
+                quotas and degrade the service for others.
+            </p>
+            <p>
+                Before enabling maps, you (a person or an AI / software agent) must
+                agree to Open Context's
+                <a :href="terms_url" target="_blank" rel="noopener">terms of service</a>,
+                <a :href="ip_url" target="_blank" rel="noopener">intellectual property policies</a>,
+                archaeological and ethical requirements, and rate limits
+                (no more than 3 requests per second, including API calls, unless you
+                <a href="mailto:sarah@opencontext.org">arrange otherwise</a>).
+            </p>
+            <p class="mb-3">
+                <small class="text-muted">
+                    Clicking the button stores a session cookie (<code>[[ cookie_name ]]</code>)
+                    so maps stay enabled until you close the browser. It is not used for tracking.
+                </small>
+            </p>
+            <b-button
+                variant="primary"
+                size="lg"
+                block
+                @click="give_consent"
+            >
+                I agree — enable maps
+            </b-button>
+        </b-card>
+    </div>
+</script>
+
+
+<script type="text/javascript">
+var vc_map_tos_consent = Vue.component(
+    'map-tos-consent',
+    {
+        delimiters: ['[[', ']]'],
+        template: '#map_tos_consent',
+        props: ['min_height'],
+        data() {
+            return {
+                min_height: 300,
+                cookie_name: MAP_TOS_CONSENT_COOKIE,
+                terms_url: (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/about/terms',
+                ip_url: (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/about/intellectual-property',
+            };
+        },
+        methods: {
+            give_consent: function(){
+                set_map_tos_consent();
+                this.$emit('consent_map_tos', true);
+            },
+        },
+    }
+);
 </script>
 
 
