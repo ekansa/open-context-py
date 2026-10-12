@@ -156,8 +156,13 @@
 
 <script type="text/x-template" id='common_map'>
     <div>
+        <map-tos-consent
+            v-if="!map_tos_ok"
+            v-bind:min_height="min_height"
+            @consent_map_tos="consent_map_tos"
+        ></map-tos-consent>
         <l-map
-            v-if="geo_json"
+            v-else-if="geo_json"
             @ready="ready_map_setup"
             :class="map_class"
             :style="'min-height: ' + min_height + 'px;'"
@@ -202,12 +207,12 @@
             <l-popup></l-popup>
             </l-geo-json>
         </l-map>
-        <div v-else class="text-center mb-3 d-flex justify-content-between">
+        <div v-else-if="map_tos_ok" class="text-center mb-3 d-flex justify-content-between">
             <b-spinner
                 variant="primary"
                 style="width: 3rem; height: 3rem;" label="Large Spinner"></b-spinner>
         </div>
-        <div v-if="location_precision_note">
+        <div v-if="map_tos_ok && location_precision_note">
             <b-alert v-if="location_precision_factor" show variant="warning">
               <small>[[location_precision_note]]</small>
             </b-alert>
@@ -215,7 +220,7 @@
               <small>[[location_precision_note]]</small>
             </b-alert>
         </div>
-        <div v-if="map_type == 'search'">
+        <div v-if="map_tos_ok && map_type == 'search'">
             <map-color-ui
                 v-bind:selected_gradient_key="selected_gradient_key"
                 @set_selected_gradient_key="set_selected_gradient_key"
@@ -679,15 +684,20 @@ var vc_common_map = Vue.component(
             },
             route_map_legends: {},
             map_legends: null,
+            map_tos_ok: get_map_tos_consent(),
         };
     },
     template: '#common_map',
     delimiters: ['[[', ']]'],
     created(){
-        this.fetch_geojson();
+        if(this.map_tos_ok){
+            this.fetch_geojson();
+        }
     },
     mounted(){
-        this.fetch_geojson();
+        if(this.map_tos_ok){
+            this.fetch_geojson();
+        }
     },
     updated(){
         this.update_map_setup();
@@ -2584,8 +2594,19 @@ var vc_common_map = Vue.component(
                 }
             }
         },
+        consent_map_tos: function(){
+            set_map_tos_consent();
+            this.map_tos_ok = true;
+            this.fetch_geojson();
+        },
         update_map_setup: function(){
+            if(!this.map_tos_ok){
+                return null;
+            }
             if(!this.map){
+                if(this.$refs[this.map_ref] == null){
+                    return null;
+                }
                 this.map = this.$refs[this.map_ref].mapObject;
                 // this.ready_map_setup();
             }
@@ -2702,6 +2723,7 @@ var vc_common_map = Vue.component(
       'l-map': l_map,
       'map-legends': vc_map_legends,
       'map-color-ui': vc_map_color_ui,
+      'map-tos-consent': vc_map_tos_consent,
     },
 });
 

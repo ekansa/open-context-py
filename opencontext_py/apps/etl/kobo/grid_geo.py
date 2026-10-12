@@ -39,7 +39,7 @@ def grid_x_y_to_lat_lon(grid_x, grid_y, site_proj='poggio-civitate'):
         grid_y = [grid_y]
     list_of_xy_coords = []
     for i, x in enumerate(grid_x):
-        tup = (x, y[i])
+        tup = (x, grid_y[i])
         list_of_xy_coords.append(tup)
     if len(list_of_xy_coords) > 2:
         # Make sure the coordinates are sorted for geojson

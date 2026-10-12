@@ -62,6 +62,11 @@ MEDIAFILE_COLS_ENDSWITH = [
     ('Image URL', 'primary', '_uuid', 'subject_uuid', None,),
     ('Image_Sup_URL', 'link-supplemental', '_submission__uuid', 'subject_uuid', None,),
     ('Image Sup URL', 'link-supplemental', '_submission__uuid', 'subject_uuid', None,),
+
+    # 2026
+    ('Image', 'primary', '_uuid', 'media_uuid', 'media',),
+    ('Image Sup', 'link-primary', '_uuid', 'subject_uuid', None,),
+    ('Image Sup', 'link-supplemental', '_submission__uuid', 'subject_uuid', None,),
 ]
 
 MEDIA_DESCRIPTION_COLS_ENDSWITH = [
@@ -158,8 +163,10 @@ def get_path_uuid_from_url(url):
 
 def get_filename_from_url(url):
     """Gets the filename from the file URL"""
-    if not '%2F' in url:
+    if str(url) in ['nan', 'NaN', 'None', '',]:
         return None
+    if not '%2F' in url:
+        return url
     url_ex = url.split('%2F')
     return url_ex[-1]
 
@@ -196,7 +203,10 @@ def make_sheet_media_df(
     new_uuid,
 ):
     media_col = None
+    if act_uuid == '_submission__uuid' and '_uuid' in df.columns:
+        df['_submission__uuid'] = df['_uuid']
     if not act_uuid in df.columns:
+        print(f'No {act_uuid} in {df.columns.tolist()}')
         return None
     for col in df.columns:
         if not col.endswith(media_col_end):
@@ -204,6 +214,7 @@ def make_sheet_media_df(
         media_col = col
         break
     if media_col is None:
+        print(f'No media_col {media_col } in {df.columns.tolist()}')
         return None
     # We have found some columns for media files,
     # now gather the descriptive fields used with
@@ -218,12 +229,15 @@ def make_sheet_media_df(
                 # A total hack. We don't want to describe media
                 # with field used to describe catalog objects.
                 continue
+            if col in [media_col, act_uuid]:
+                continue
             if col in sheet_des_cols:
                 continue
             sheet_des_cols.append(col)
     if form_type == 'locus' and media_source_type == 'primary':
         # import pdb; pdb.set_trace()
         pass
+    print(f'media_col is {media_col}, act_uuid col is: {act_uuid}, sheet_des_cols: {sheet_des_cols}')
     # Make a df_sheet_media dataframe that has the
     # media file name column, uuid column, and the
     # descriptive fields for the media.
@@ -234,6 +248,9 @@ def make_sheet_media_df(
     null_index = df_sheet_media[media_col].isnull()
     df_sheet_media.loc[null_index, media_col] = np.nan
     df_sheet_media.dropna(subset=[media_col], inplace=True)
+    if df_sheet_media.empty:
+        print(f'Empty df_sheet_media: {df_sheet_media.columns.tolist()}')
+        return None
     df_sheet_media['filename'] = df_sheet_media[media_col].apply(get_filename_from_url)
     df_sheet_media['path_uuid'] = df_sheet_media[media_col].apply(get_path_uuid_from_url)
     df_sheet_media['media_source_type'] = media_source_type
@@ -321,6 +338,7 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
                     sheet_name
                 )
             # Fix underscores in column names
+            df = utilities.last_of_slash_delim_cols(df)
             df = utilities.fix_df_col_underscores(df)
             df_sheet_media = make_sheet_media_df(
                 df,
@@ -372,6 +390,7 @@ def make_all_export_media_df(
             subjects_df=subjects_df,
         )
         if df_media is None:
+            print(f'No media found in: {excel_file}')
             continue
         df_media['new_filename'] = df_media['filename'].apply(make_oc_filename)
         for file_start, prefix in MEDIA_SOURCE_FILE_PREFIXS.items():
@@ -776,10 +795,12 @@ def prepare_media(
     """Prepares a dataframe consolidating media from all export excels."""
     df_media = make_all_export_media_df(excels_filepath)
     df_files = utilities.make_directory_files_df(files_path)
+    all_key_cols = ['path_uuid', 'filename']
+    key_cols = [c for c in all_key_cols if c in df_media.columns]
     df_media = pd.merge(
         df_media,
         df_files,
-        on=['path_uuid', 'filename'],
+        on=key_cols,
         how='left'
     )
     if all_media_kobo_files_path:
@@ -1003,7 +1024,7 @@ def prepare_media_links_df(
     """Prepares a media link dataframe."""
     df_links = []
     for excel_filepath in utilities.list_excel_files(excel_dirpath):
-        if not 'Media' in excel_filepath:
+        if not 'Media' in excel_filepath and not 'media' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         df_link = prep_links_df(

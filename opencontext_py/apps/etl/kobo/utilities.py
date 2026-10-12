@@ -55,19 +55,28 @@ SKIP_UNDERSCORE_FIX_COLS = [
     '_submission__uuid',
     '_orig_uuid',
     '_orig_submission__uuid',
+    '_parent_index',
 ]
 
+
+def last_of_slash_delim_cols(df):
+    """Fixes column names to use the last part of a slash delimiter"""
+    un_cols = [c for c in df.columns.tolist() if '/' in c]
+    if not un_cols:
+        return df
+    update_cols = {c: c.split('/')[-1] for c in un_cols}
+    df.rename(columns=update_cols, inplace=True)
+    return df
 
 
 def fix_df_col_underscores(df):
     """Fixes underscores introduced in the 2024 data export, because of course"""
-    if pc_configs.DEFAULT_IMPORT_YEAR != 2024:
+    if not pc_configs.DEFAULT_IMPORT_YEAR in [2024, 2026]:
         return df
     r_cols = {c:c.replace('_', ' ') for c in df.columns.tolist() if c not in SKIP_UNDERSCORE_FIX_COLS}
     df.rename(columns=r_cols, inplace=True)
     # print(f'Removed underscores from {len(r_cols)} columns')
     return df
-
 
 
 def make_directory_files_df(attachments_path):
@@ -88,6 +97,7 @@ def make_directory_files_df(attachments_path):
             file_data.append(rec)
     df = pd.DataFrame(data=file_data)
     return df
+
 
 def list_excel_files(excel_dirpath):
     """Makes a list of Excel files in a directory path."""
@@ -111,6 +121,14 @@ def read_excel_to_dataframes(excel_filepath):
         # This probably needs an upgraded pandas
         # dfs[sheet_name] = pd.read_excel(xls, sheet_name=sheet_name, engine='xlrd')
         dfs[sheet_name] = pd.read_excel(wb, sheet_name, engine='openpyxl')
+    for form_id, form_type, form_year in pc_configs.API_FORM_ID_FORM_LABELS_ALL:
+        if form_year != pc_configs.DEFAULT_IMPORT_YEAR:
+            continue
+        if form_id not in excel_filepath:
+            continue
+        if form_id in dfs:
+            form_type_key = form_type.title() + ' main'
+            dfs[form_type_key] = dfs[form_id].copy()
     return dfs
 
 def reorder_first_columns(df, first_columns):
@@ -395,6 +413,9 @@ def get_df_by_sheet_name_part(dfs, sheet_name_part):
     if dfs is None:
         return None, None
     for sheet_name, df in dfs.items():
+        for mapped_sheet in pc_configs.SHEET_MAPPINGS.get(sheet_name, []):
+            if sheet_name_part in mapped_sheet:
+                return df, mapped_sheet
         if not sheet_name_part in sheet_name:
             continue
         return df, sheet_name
@@ -604,7 +625,7 @@ def add_person_object_rels(
     for c in add_cols:
         if c in df.columns:
             continue
-        df[c] = np.nan
+        df[c] = ''
     df_persons = pd.read_csv(pc_configs.PEOPLE_CSV_PATH)
     act_index = ~df[person_col].isnull()
     for lookup_name in df[act_index][person_col].unique().tolist():
@@ -734,6 +755,8 @@ def get_trenchbook_item_from_trench_books_json(
         return object_label, object_uuid, object_uuid_source
     tb_req_cols = ['Trench_ID', 'Date_Documented', 'Start_Page', 'End_Page', 'OC_Label', '_uuid',]
     if not set(tb_req_cols).issubset(set(df_tb.columns.tolist())):
+        print(f'Trench Book JSON missing keys {tb_req_cols}')
+        print(df_tb.columns.tolist())
         return object_label, object_uuid, object_uuid_source
     trench_ids = [
         trench_id,
@@ -1001,3 +1024,34 @@ def remove_col_value_underscores(df, col='Trench'):
     index = ~df[col].isnull()
     df.loc[index, col] = df[index][col].str.replace('_', ' ')
     return df
+
+
+def add_df_link_submission_uuid_if_absent(df_link, df_main):
+    if  '_submission__uuid' in df_link.columns.tolist():
+        # We already have it.
+        return df_link
+    if not '_parent_index' in df_link.columns.tolist():
+        # A the foreign key column is missing, leading to
+        # later problems but fail loudly later.
+        print('Warning! df_link missing _parent_index')
+        return df_link
+    if not '_index' in df_main.columns.tolist():
+        # A the foreign key column is missing, leading to
+        # later problems but fail loudly later.
+        print('Warning! df_main (main entity, attributes) missing _index')
+        return df_link
+    if not '_uuid' in df_main.columns.tolist():
+        # A the foreign key column is missing, leading to
+        # later problems but fail loudly later.
+        print('Warning! df_main (main entity, attributes) missing _uuid')
+        return df_link
+    df_link['_submission__uuid'] = ''
+    for p_index in df_link['_parent_index'].unique().tolist():
+        source_index = df_main['_index'] == p_index
+        source_uuids = df_main[source_index]['_uuid'].unique().tolist()
+        if not source_uuids:
+            print(f'Warning! Cannot find uuid for index {p_index }')
+            continue
+        update_index = df_link['_parent_index'] == p_index
+        df_link.loc[update_index, '_submission__uuid'] = source_uuids[0]
+    return df_link

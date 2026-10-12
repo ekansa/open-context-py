@@ -253,7 +253,7 @@ def prepare_attributes_links(
     subjects_df = pd.read_csv(subjects_path)
     dfs = None
     for excel_filepath in xlsx_files:
-        if not 'Small_Find' in excel_filepath:
+        if not 'Small_Find' in excel_filepath and 'small-find' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         dfs = prep_attributes_df(

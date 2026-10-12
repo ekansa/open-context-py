@@ -94,7 +94,21 @@ def make_locus_grid_df(dfs, subjects_df):
     )
     if df_grid is None:
         return None
+    df_main, _ = utilities.get_df_by_sheet_name_part(
+        dfs,
+        sheet_name_part='Locus'
+    )
+    if df_main is not None:
+       df_grid = utilities.add_df_link_submission_uuid_if_absent(
+            df_link=df_grid, 
+            df_main=df_main,
+        )
+    df_grid = utilities.last_of_slash_delim_cols(df_grid)
     df_grid = utilities.fix_df_col_underscores(df_grid)
+    print('--------------------------------')
+    print('df_grid')
+    print(df_grid.columns.tolist())
+    print('--------------------------------')
     cols = [c for c,_ in pc_configs.LOCUS_GRID_COLS if c in df_grid.columns]
     df_grid = df_grid[cols].copy()
     renames = {c:r for c, r in pc_configs.LOCUS_GRID_COLS if c in df_grid.columns}
@@ -128,13 +142,14 @@ def clean_df_grid_cols(df_grid):
         ('Elevation_Uncertainty', 'Elevation Uncertainty',),
         ('Grid_X_Uncertainty', 'Grid X Uncertainty',),
         ('Grid_Y_Uncertainty', 'Grid Y Uncertainty',),
-
     ]
-
-    print(df_grid.columns.tolist())
     for f, r in missing_cols:
         if not r in df_grid.columns and f in df_grid.columns:
             df_grid[r] = df_grid[f]
+            continue
+        for col in df_grid.columns.tolist():
+            if col.endswith(f):
+                df_grid[r] = df_grid[col]
     return df_grid
 
 
@@ -246,6 +261,10 @@ def add_trench_cols_to_df_link(df_link, dfs):
     )
     if df is None:
         return df_link
+    df_link = utilities.add_df_link_submission_uuid_if_absent(
+        df_link=df_link, 
+        df_main=df,
+    )
     missing_cols = [
         ('Trench_ID', 'Trench ID',),
         ('Season', 'Field Season',),
@@ -272,6 +291,15 @@ def make_locus_tb_links_df(dfs, subjects_df):
     )
     if df_link is None:
         return None
+    df_main, _ = utilities.get_df_by_sheet_name_part(
+        dfs,
+        sheet_name_part='Locus'
+    )
+    if df_main is not None:
+        df_link = utilities.add_df_link_submission_uuid_if_absent(
+            df_link=df_link, 
+            df_main=df_main,
+        )
     # get the current trench books.
     df_tb = pd.read_json(pc_configs.KOBO_TB_JSON_PATH)
     df_link.rename(columns=TRENCH_COL_RENAMES, inplace=True)
@@ -287,18 +315,23 @@ def make_locus_tb_links_df(dfs, subjects_df):
     # Add the trench_id column to the df_link.
     df_link = add_trench_cols_to_df_link(df_link, dfs)
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
-    df_link['object_label'] = np.nan
-    df_link['object_uuid'] = np.nan
-    df_link['object_uuid_source'] = np.nan
+    df_link['object_label'] = ''
+    df_link['object_uuid'] = ''
+    df_link['object_uuid_source'] = ''
     rename_cols = {
         'Trench Book Date': 'Trench Book Entry Date',
         'Date_Trench_Book': 'Trench Book Entry Date',
         'TB_Start_Page': 'Trench Book Start Page',
         'TB_End_Page': 'Trench Book End Page',
+        'group_trench_book/Date_Trench_Book': 'Trench Book Entry Date',
+        'group_trench_book/TB_Start_Page': 'Trench Book Start Page',
+        'group_trench_book/TB_End_Page': 'Trench Book End Page',
     }
     r_c = {c:r for c, r in rename_cols.items() if c in df_link.columns.tolist()}
     if r_c:
         df_link.rename(columns=r_c, inplace=True)
+    # print('df_link columns:')
+    # print(df_link.columns.tolist())
     for i, row in df_link.iterrows():
         object_label = None
         object_uuid = None
@@ -397,6 +430,15 @@ def make_strat_other_link_df(df):
 
 def make_strat_link_df(df, dfs, subjects_df):
     """Makes a single dataframe for locus stratigraphy relations"""
+    df_main, _ = utilities.get_df_by_sheet_name_part(
+        dfs,
+        sheet_name_part='Locus'
+    )
+    if df_main is not None:
+        df = utilities.add_df_link_submission_uuid_if_absent(
+            df_link=df, 
+            df_main=df_main,
+        )
     df = utilities.add_final_subjects_uuid_label_cols(
         df=df,
         subjects_df=subjects_df,
@@ -406,6 +448,7 @@ def make_strat_link_df(df, dfs, subjects_df):
         final_uuid_source_col='subject_uuid_source',
         orig_uuid_col='_submission__uuid',
     )
+    df = utilities.last_of_slash_delim_cols(df)
     # Fixes underscore columns in df
     df_f = utilities.fix_df_col_underscores(df)
     # Add the trench_id column to the df_link.

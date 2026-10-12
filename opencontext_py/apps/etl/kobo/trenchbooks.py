@@ -540,7 +540,7 @@ def prepare_attributes_links(
     subjects_df = pd.read_csv(subjects_path)
     dfs = None
     for excel_filepath in xlsx_files:
-        if not 'Trench_Book' in excel_filepath:
+        if not 'Trench_Book' in excel_filepath and not 'trench_' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         dfs = prep_attributes_df(

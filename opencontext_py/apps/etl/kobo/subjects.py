@@ -52,7 +52,17 @@ SUBJECTS_GENERAL_KOBO_COLS = [
     ('kobo_form', 'kobo_form'),
 ]
 
+
 SUBJECT_SHEET_NAME_UPDATES = {
+    'at4QQb5JuLgbyNWWWty9y8': f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'aR3FRsm7PZLpj8V8bKQ2QU': f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'a24K2xAWXZzGmF9aXLniXK': f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+    'a2AHGxLq5zzUctHDJ6PPgf': f'Catalog Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
+}
+
+
+
+SUBJECT_SHEET_NAME_UPDATES_OLD = {
     'atmbiZ5FcsatazUPMnYJQ7': f'Locus Summary Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
     'aAgCq4FrQVE8GokvcwQrWH': f'Field Small Find Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
     'abLqjG2J8JgCTSKQXsC3WG': f'Field Bulk Finds Entry {pc_configs.DEFAULT_IMPORT_YEAR}',
