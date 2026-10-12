@@ -159,9 +159,15 @@
 
 
 <script type="text/x-template" id="map_tos_consent">
+  <!--
     <div
         class="map-tos-consent d-flex align-items-center justify-content-center"
         :style="'min-height: ' + min_height + 'px;'"
+    >
+   -->
+    <div
+        class="d-flex align-items-center justify-content-center"
+        
     >
         <b-card
             border-variant="secondary"
@@ -170,25 +176,26 @@
             style="max-width: 42rem;"
         >
             <template #header>
-                <strong>Help Open Context Serve Human Communities</strong>
+                <strong>Your consent is required to see maps</strong>
             </template>
-            <h5>Why is consent required to see maps?</h5>
+            <h5>Help us combat bot interference!</h5>
             <p>
                 Open Context supports human curation and understanding
-                of cultural heritage data. Too much bot and so-called "AI-agent" traffic can 
+                of cultural heritage data. Too much traffic from bots (including "AI-agents") can 
                 interfere with these goals. High-volume automated use can exhaust 
-                Open Context's quotas to third-party map imagery providers. 
-                This can degrade Open Context's ability to display spatial information.
+                Open Context's quotas to map providers. This can degrade Open Context's 
+                ability to display spatial information.
             </p>
+
             <p>
-                Before enabling maps, you (a person or an AI / software agent) must
-                agree to Open Context's
+                Before enabling maps, you must agree to Open Context's
                 <a :href="terms_url" target="_blank" rel="noopener">terms of service</a>,
-                <a :href="fair_care_url" target="_blank" rel="noopener">FAIR and CARE</a>, and
+                <a :href="fair_care_url" target="_blank" rel="noopener">FAIR and CARE</a> practices, and
                 <a :href="ip_url" target="_blank" rel="noopener">intellectual property</a>
                 policies. These policies require ethical citation and use of Open Context
-                published data.</p>
-            
+                published data.
+            </p>
+      
             <b-button
                 variant="primary"
                 size="lg"
