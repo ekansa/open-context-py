@@ -1,5 +1,6 @@
 import copy
 import uuid as GenUUID
+import json
 import os
 import re
 import shutil
@@ -7,6 +8,9 @@ import numpy as np
 import pandas as pd
 import rawpy
 from unidecode import unidecode
+import unicodedata
+
+from django.core.files.storage import storages
 
 from PIL import Image, ImageFile
 import imagehash
@@ -39,7 +43,7 @@ df = media.make_all_export_media_df()
 """
 
 
-MEDIAFILE_COLS_ENDSWITH = [
+MEDIAFILE_COLS_ENDSWITH_OLD = [
     ('Primary Image_URL', 'link-primary', '_uuid', 'subject_uuid', None,),
     ('Supplemental Image_URL', 'link-supplemental', '_submission__uuid', 'subject_uuid', None,),
     ('Image File_URL', 'primary', '_uuid', 'media_uuid', None,),
@@ -66,6 +70,12 @@ MEDIAFILE_COLS_ENDSWITH = [
     # 2026
     ('Image', 'primary', '_uuid', 'media_uuid', 'media',),
     ('Image Sup', 'link-primary', '_uuid', 'subject_uuid', None,),
+    ('Image Sup', 'link-supplemental', '_submission__uuid', 'subject_uuid', None,),
+]
+
+MEDIAFILE_COLS_ENDSWITH = [
+    ('Image', 'primary', '_uuid', 'media_uuid', 'media',),
+    ('Image', 'link-primary', '_uuid', 'subject_uuid', None,),
     ('Image Sup', 'link-supplemental', '_submission__uuid', 'subject_uuid', None,),
 ]
 
@@ -143,6 +153,15 @@ REL_COLS = [
 ]
 
 
+OBJECT_RELATED_ID_CONFIGS = {
+    2026: {
+        'VdM20155088': ('VdM20155088', 'e637e8a2-d43e-43b4-922a-e85c6125d7dc',),
+
+    },
+}
+
+
+
 def make_deterministic_media_uuid(row):
     """Makes a deterministic media item uuid based on inputs"""
     # import pdb; pdb.set_trace()
@@ -193,6 +212,14 @@ def make_oc_filename(filename):
     return filename + ext
 
 
+
+def get_kobo_filesystem_filename_from_filename(filename):
+    contains_combining = any(unicodedata.category(c) == 'Mn' for c in filename)
+    if not contains_combining:
+        filename = unicodedata.normalize('NFC', filename)
+    return storages['default'].get_valid_name(filename)
+
+
 def make_sheet_media_df(
     df,
     subjects_df,
@@ -206,7 +233,9 @@ def make_sheet_media_df(
     if act_uuid == '_submission__uuid' and '_uuid' in df.columns:
         df['_submission__uuid'] = df['_uuid']
     if not act_uuid in df.columns:
+        print('-'*50)
         print(f'No {act_uuid} in {df.columns.tolist()}')
+        print('-'*50)
         return None
     for col in df.columns:
         if not col.endswith(media_col_end):
@@ -214,7 +243,9 @@ def make_sheet_media_df(
         media_col = col
         break
     if media_col is None:
-        print(f'No media_col {media_col } in {df.columns.tolist()}')
+        print('-'*50)
+        print(f'For media_source_type {media_source_type}, no media_col, tried to endwith {media_col_end} in {df.columns.tolist()}')
+        print('-'*50)
         return None
     # We have found some columns for media files,
     # now gather the descriptive fields used with
@@ -237,7 +268,9 @@ def make_sheet_media_df(
     if form_type == 'locus' and media_source_type == 'primary':
         # import pdb; pdb.set_trace()
         pass
+    print('='*50)
     print(f'media_col is {media_col}, act_uuid col is: {act_uuid}, sheet_des_cols: {sheet_des_cols}')
+    print('='*50)
     # Make a df_sheet_media dataframe that has the
     # media file name column, uuid column, and the
     # descriptive fields for the media.
@@ -249,7 +282,9 @@ def make_sheet_media_df(
     df_sheet_media.loc[null_index, media_col] = np.nan
     df_sheet_media.dropna(subset=[media_col], inplace=True)
     if df_sheet_media.empty:
+        print('-'*50)
         print(f'Empty df_sheet_media: {df_sheet_media.columns.tolist()}')
+        print('-'*50)
         return None
     df_sheet_media['filename'] = df_sheet_media[media_col].apply(get_filename_from_url)
     df_sheet_media['path_uuid'] = df_sheet_media[media_col].apply(get_path_uuid_from_url)
@@ -337,6 +372,8 @@ def make_dfs_media_df(dfs, file_form_type, subjects_df):
                 form_type = utilities.get_general_form_type_from_sheet_name(
                     sheet_name
                 )
+            print('\n\n\n\n')
+            print(f'Extract media from sheet_name: {sheet_name} form_type {form_type}')
             # Fix underscores in column names
             df = utilities.last_of_slash_delim_cols(df)
             df = utilities.fix_df_col_underscores(df)
@@ -598,7 +635,8 @@ def make_image_versions_src_and_new_file(
 ):
     """Make different file versions in different directories."""
     if not isinstance(src_file, str):
-        return None
+        print(f'missing source file is {src_file}')
+        return None, None, None
     if not os.path.exists(src_file):
         raise RuntimeError('Cannot find {}'.format(src_file))
     # full_file = os.path.join(dirs['full'], new_file_name)
@@ -667,25 +705,24 @@ def make_opencontext_file_versions(
     files_indx = (
         df_media['path'].notnull() & df_media['new_filename'].notnull()
     )
-    for _, row in df_media[files_indx].iterrows():
+    for i, row in df_media[files_indx].iterrows():
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
-            dirs,
-            row['path'],
-            row['new_filename'],
+            dirs=dirs,
+            src_file=row['path'],
+            new_file_name=row['new_filename'],
             make_sub_dirs_within=make_sub_dirs_within,
         )
-        act_index = (df_media['path'] == row['path'])
-        df_media.loc[act_index, 'MEDIA_URL_full'] = make_media_url(
+        df_media.at[i, 'MEDIA_URL_full'] = make_media_url(
             file_path=full_file,
             file_type='full'
         )
         if prev_file:
-            df_media.loc[act_index, 'MEDIA_URL_preview'] = make_media_url(
+            df_media.at[i, 'MEDIA_URL_preview'] = make_media_url(
                 file_path=prev_file,
                 file_type='preview'
             )
         if thumb_file:
-            df_media.loc[act_index, 'MEDIA_URL_thumbs'] = make_media_url(
+            df_media.at[i, 'MEDIA_URL_thumbs'] = make_media_url(
                 file_path=thumb_file,
                 file_type='thumbs'
             )
@@ -695,14 +732,11 @@ def make_opencontext_file_versions(
 
 def check_prepare_media_uuid(df_all):
     """Checks on the media-uuid, adding uuids that are needing."""
-    df_all['media_created'] = np.nan
-    df_all['media_uuid_source'] = np.nan
+    df_all['media_created'] = ''
+    df_all['media_uuid_source'] = ''
     df_working = df_all.copy()
-    for _, row in df_working.iterrows():
+    for i, row in df_working.iterrows():
         man_obj = None
-        update_indx = (
-            df_all['filename']==row['filename']
-        )
         if isinstance(row['media_uuid'], str):
             man_obj = AllManifest.objects.filter(
                 uuid=row['media_uuid'],
@@ -721,16 +755,16 @@ def check_prepare_media_uuid(df_all):
             ).first()
 
         if man_obj is not None:
-            df_all.loc[update_indx, 'media_uuid_source'] = man_obj.source_id
-            df_all.loc[update_indx, 'media_created'] = man_obj.revised
+            df_all.at[i, 'media_uuid_source'] = man_obj.source_id
+            df_all.at[i, 'media_created'] = man_obj.revised
             if not isinstance(row['media_uuid'], str):
-                df_all.loc[update_indx, 'media_uuid'] = man_obj.uuid
+                df_all.at[i, 'media_uuid'] = man_obj.uuid
         else:
             if not isinstance(row['media_uuid'], str):
-                df_all.loc[update_indx, 'media_uuid'] = str(GenUUID.uuid4())
-                df_all.loc[update_indx, 'media_uuid_source'] = UUID_SOURCE_OC_KOBO_ETL
+                df_all.at[i, 'media_uuid'] = str(GenUUID.uuid4())
+                df_all.at[i, 'media_uuid_source'] = UUID_SOURCE_OC_KOBO_ETL
             else:
-                df_all.loc[update_indx, 'media_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
+                df_all.at[i, 'media_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
     return df_all
 
 
@@ -803,6 +837,18 @@ def prepare_media(
         on=key_cols,
         how='left'
     )
+    bad_index = (
+        df_media['path_uuid'].isnull()
+        & ~df_media['filename'].isnull()
+    )
+    for i, row in df_media[bad_index].iterrows():
+        filename = row['filename']
+        filename = get_kobo_filesystem_filename_from_filename(filename)
+        act_index = df_files['filename'] == filename
+        if len(df_files[act_index].index) != 1:
+            print(f'cannot match {filename}, possible matching row count: {len(df_files[act_index].index)}')
+            continue
+        df_media.at[i, 'path'] = df_files[act_index]['path'].iloc[0]
     if all_media_kobo_files_path:
         df_media.to_csv(all_media_kobo_files_path, index=False)
     return df_media
@@ -883,11 +929,18 @@ def prep_links_df(dfs):
     )
     if df_link is None:
         return None
-    df_link = utilities.prep_df_link_cols(df_link)
+    df_link = utilities.last_of_slash_delim_cols(df_link)
     df_sub, _ = utilities.get_df_by_sheet_name_part(
         dfs,
         sheet_name_part='Media'
     )
+    df_link = utilities.prep_df_link_cols(df_link)
+    if df_sub is not None:
+        df_link = utilities.add_df_link_submission_uuid_if_absent(
+            df_link=df_link, 
+            df_main=df_sub,
+        )
+        df_link['subject_uuid'] = df_link['_submission__uuid']
     # Fixes underscore columns in df
     df_sub = utilities.fix_df_col_underscores(df_sub)
     missing_cols = [
@@ -898,6 +951,9 @@ def prep_links_df(dfs):
             df_sub[r] = df_sub[f]
 
     df_sub['subject_label'] = df_sub['File Title']
+    if pc_configs.DEFAULT_IMPORT_YEAR:
+        print(df_sub.columns.tolist())
+        df_sub['subject_label'] = df_sub['Upload yes/Image']
     df_sub['subject_uuid'] = df_sub['_uuid']
     df_sub['subject_uuid_source'] = pc_configs.UUID_SOURCE_KOBOTOOLBOX
     df_sub = df_sub[['subject_label', 'subject_uuid', 'subject_uuid_source']].copy()
@@ -906,6 +962,7 @@ def prep_links_df(dfs):
     bad_cols = [c for c in ['subject_label', 'subject_uuid_source'] if c in df_link.columns]
     df_link.drop(columns=bad_cols, inplace=True)
     # Now do the merge
+    df_link['subject_uuid'] = df_link['subject_uuid'].astype(str)
     df_link = pd.merge(
         df_link,
         df_sub,
@@ -914,16 +971,20 @@ def prep_links_df(dfs):
     )
     # Now look up the UUIDs for the objects.
     df_link['object_related_id'] = df_link['object_related_id'].astype(str)
+    df_link['object_related_type'] = df_link['object_related_type'].astype(str)
     df_link['object_label'] = ''
     df_link['object_uuid'] = ''
     df_link['object_uuid_source'] = ''
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'link'
-    for _, row in df_link.iterrows():
+    for i, row in df_link.iterrows():
+        man_obj = None
+        if '-' in str(row['object_uuid']):
+            # already updated the data.
+            continue
         act_labels = None
-        object_uuid = None
-        object_uuid_source = None
         raw_object_id = row['object_related_id']
-        object_type = row['object_related_type']
+        object_type = str(row['object_related_type'])
+        object_type = object_type.replace('_', ' ')
         act_labels = [str(raw_object_id)]
         if '2023' in str(raw_object_id):
             act_labels.append(str(raw_object_id).lower())
@@ -931,38 +992,81 @@ def prep_links_df(dfs):
         if len(act_classes) == 0:
             # Didn't find any classes in our object type lookup, so continue
             continue
-        act_labels += [p + str(raw_object_id) for p in act_prefixes]        
+        act_labels += [p + str(raw_object_id) for p in act_prefixes if not str(raw_object_id).lower().startswith(p.lower())]
         act_labels.append(utilities.normalize_catalog_label(raw_object_id))
+        act_labels.append(utilities.normalize_bone_label(raw_object_id))
+        if 'animal' in object_type.lower():
+            num_part = ''
+            for c in str(raw_object_id):
+                if c.isnumeric():
+                    num_part += c
+            act_labels += [p + str(num_part) for p in act_prefixes]
+        act_labels = list(set(act_labels))
         man_obj = db_lookups.db_reconcile_by_labels_item_class_slugs(
             label_list=act_labels,
             item_class_slug_list=act_classes,
         )
         if not man_obj:
-            print(f'Cannot find raw_object_id: {raw_object_id}')
+            print(f'Cannot find raw_object_id: "{raw_object_id}" object_type: {object_type}, classes: {act_classes}')
+            print(act_labels)
             # try to extract the related ID from the label of the media resource
             man_obj = db_lookups.get_related_object_from_item_label(
                 item_label=row['subject_label']
             )
         if not man_obj:
-            object_label = np.nan
-            object_uuid = np.nan
-            object_uuid_source = np.nan
-        else:
-            # Only accept a single result from the
-            # lookup.
-            object_label = man_obj.label
-            object_uuid = str(man_obj.uuid)
-            object_uuid_source = pc_configs.UUID_SOURCE_OC_LOOKUP
-        up_indx = (
-            (df_link['object_related_id'] == raw_object_id)
-            & (df_link['object_related_type'] == object_type)
-        )
-        df_link.loc[up_indx, 'object_label'] = object_label
-        df_link.loc[up_indx, 'object_uuid'] = object_uuid
-        df_link.loc[up_indx, 'object_uuid_source'] = object_uuid_source
+            continue
+        # Update the data
+        df_link.at[i, 'object_label'] = man_obj.label
+        df_link.at[i, 'object_uuid'] = str(man_obj.uuid)
+        df_link.at[i, 'object_uuid_source'] = pc_configs.UUID_SOURCE_OC_LOOKUP
     cols = [c for c in REL_COLS if c in df_link.columns]
     df_link = df_link[cols].copy()
     return df_link
+
+
+def fill_in_object_uuids_that_match(df_all_links):
+    if df_all_links is None:
+        return df_all_links
+    if df_all_links.empty:
+        return df_all_links
+    link_rels = df_all_links['link_rel'].unique().tolist()
+    for link_rel in link_rels:
+        act_missing_index = index_missing_objs = (
+            ~df_all_links['object_uuid'].str.contains('-')
+            & ~df_all_links['subject_label'].isnull()
+            & ~df_all_links['subject_uuid'].isnull()
+            & ~df_all_links['object_related_id'].isnull()
+            & ~df_all_links['object_related_type'].isnull()
+            & (
+                df_all_links['link_rel'] == link_rel
+            )
+        )
+        if df_all_links[act_missing_index].empty:
+            continue
+        for i, row in df_all_links[act_missing_index].iterrows():
+            raw_object_id = row['object_related_id']
+            object_type = str(row['object_related_type'])
+            act_not_missing_index = (
+                df_all_links['object_uuid'].str.contains('-')
+                & ~df_all_links['subject_label'].isnull()
+                & ~df_all_links['subject_uuid'].isnull()
+                & (
+                    df_all_links['object_related_id'] == raw_object_id
+                )
+                & (
+                    df_all_links['object_related_type'] == object_type
+                )
+                & (
+                    df_all_links['link_rel'] == link_rel
+                )
+            )
+            if df_all_links[act_not_missing_index].empty:
+                # we couldn't find a match with an object_uuid, so continue
+                continue
+            df_all_links.at[i, 'object_uuid'] = df_all_links[act_not_missing_index]['object_uuid'].iloc[0]
+            df_all_links.at[i, 'object_label'] = df_all_links[act_not_missing_index]['object_label'].iloc[0]
+            df_all_links.at[i, 'object_uuid_source'] = df_all_links[act_not_missing_index]['object_uuid_source'].iloc[0]
+    return df_all_links
 
 
 def fill_in_missing_catalog_links(df_all_links):
@@ -973,14 +1077,19 @@ def fill_in_missing_catalog_links(df_all_links):
         return df_all_links
     req_cols = ['subject_label', 'subject_uuid', 'object_label', 'object_uuid', 'object_uuid_source', 'object_related_id']
     if not set(req_cols).issubset(set(df_all_links.columns.tolist())):
-        return df_all_links
+        # return df_all_links
+        pass
     df_subjects = pd.read_csv(pc_configs.SUBJECTS_CSV_PATH)
     index_missing_objs = (
-        df_all_links['object_uuid'].isnull()
+        ~df_all_links['object_uuid'].str.contains('-')
         & ~df_all_links['subject_label'].isnull()
         & ~df_all_links['subject_uuid'].isnull()
+        & ~df_all_links['link_rel'].isin(['Photographed by',])
     )
-    for _, row in df_all_links[index_missing_objs].iterrows():
+    print('-'*75)
+    print(f'Fill in missing media catalog links for {len(df_all_links[index_missing_objs].index)} rows')
+    print('-'*75)
+    for i, row in df_all_links[index_missing_objs].iterrows():
         object_label = None
         object_uuid = None
         object_uuid_source = None
@@ -1007,13 +1116,12 @@ def fill_in_missing_catalog_links(df_all_links):
         if not object_uuid:
             print(f'Cannot find object related to media: {subject_label} [{subject_uuid}]')
             continue
-        up_indx = (
-            (df_all_links['subject_uuid'] == subject_uuid)
-        )
-        df_all_links.loc[up_indx, 'object_label'] = object_label
-        df_all_links.loc[up_indx, 'object_uuid'] = object_uuid
-        df_all_links.loc[up_indx, 'object_uuid_source'] = object_uuid_source
+        df_all_links.at[i, 'object_label'] = object_label
+        df_all_links.at[i, 'object_uuid'] = object_uuid
+        df_all_links.at[i, 'object_uuid_source'] = object_uuid_source
         # print(f'Media item {subject_label} [{subject_uuid}] links with {object_label} [{object_uuid}] based on media label')
+    # Now do one last fill in.
+    df_all_links = fill_in_object_uuids_that_match(df_all_links)
     return df_all_links
 
 

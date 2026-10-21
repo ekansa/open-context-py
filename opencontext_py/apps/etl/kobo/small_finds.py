@@ -85,8 +85,8 @@ def get_links_from_rel_ids(dfs):
         lambda x: utilities.normalize_catalog_label(x),
     )
     df_link[pc_configs.LINK_RELATION_TYPE_COL] = 'Cataloged as'
-    df_link['object_uuid'] = np.nan
-    df_link['object_uuid_source'] = np.nan
+    df_link['object_uuid'] = ''
+    df_link['object_uuid_source'] = ''
     # Now look up the UUIDs for the objects.
     for i, row in df_link.iterrows():
         object_label = None
@@ -253,7 +253,7 @@ def prepare_attributes_links(
     subjects_df = pd.read_csv(subjects_path)
     dfs = None
     for excel_filepath in xlsx_files:
-        if not 'Small_Find' in excel_filepath and 'small-find' in excel_filepath:
+        if not 'Small_Find' in excel_filepath and not 'small-find' in excel_filepath:
             continue
         dfs = utilities.read_excel_to_dataframes(excel_filepath)
         dfs = prep_attributes_df(

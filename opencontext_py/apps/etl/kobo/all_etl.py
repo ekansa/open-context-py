@@ -28,6 +28,9 @@ from opencontext_py.apps.etl.kobo import db_lookups
 transform data from Kobo Excel files.
 
 import importlib
+from opencontext_py.apps.etl.kobo import media
+importlib.reload(media)
+_ = media.prepare_media_links_df()
 
 from opencontext_py.apps.etl.kobo import all_etl
 

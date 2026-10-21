@@ -360,6 +360,9 @@ def get_trench_unit_mapping_dict(trench_id):
 
 def normalize_catalog_label(raw_label):
     """Makes a catalog label fit Poggio Civitate conventions"""
+    bad_chars = ['-', '_', '.', ':', ]
+    for bad_char in bad_chars:
+        raw_label = raw_label.replace(bad_char, '')
     prefix = ''
     num_part = ''
     for c in str(raw_label):
@@ -368,7 +371,27 @@ def normalize_catalog_label(raw_label):
         else:
             prefix += c
     prefix = prefix.strip()
+    if prefix.lower() == 'pc':
+        prefix = 'PC'
+    if prefix.lower() == 'vdm':
+        prefix = 'VdM'
     return f'{prefix} {num_part}'
+
+
+def normalize_bone_label(raw_label):
+    """Makes a bone label fit Poggio Civitate conventions"""
+    bad_chars = ['-', '_', '.', ':', ' ',]
+    for bad_char in bad_chars:
+        raw_label = raw_label.replace(bad_char, '')
+    prefix = ''
+    num_part = ''
+    for c in str(raw_label):
+        if c.isnumeric():
+            num_part += c
+        else:
+            prefix += c
+    prefix = prefix.strip()
+    return f'{prefix}{num_part}'
 
 
 def df_fill_in_by_shared_id_cols(df, col_to_fill, id_cols):
@@ -414,9 +437,9 @@ def get_df_by_sheet_name_part(dfs, sheet_name_part):
         return None, None
     for sheet_name, df in dfs.items():
         for mapped_sheet in pc_configs.SHEET_MAPPINGS.get(sheet_name, []):
-            if sheet_name_part in mapped_sheet:
+            if sheet_name_part.lower() in mapped_sheet.lower():
                 return df, mapped_sheet
-        if not sheet_name_part in sheet_name:
+        if not sheet_name_part.lower() in sheet_name.lower():
             continue
         return df, sheet_name
     return None, None
@@ -688,8 +711,9 @@ def get_related_object_labels_from_item_label(item_label):
     if not item_label:
         return None
     item_label = str(item_label)
-    label_ex = re.split('-|\_|\s', item_label)
-    clean_object_labels = []
+    item_label = item_label.strip()
+    label_ex = re.split(r'[-_\s]', item_label)
+    clean_object_labels = [normalize_catalog_label(item_label)]
     has_vdm = False
     has_pc = False
     for label_part in label_ex:
@@ -715,6 +739,7 @@ def get_related_object_labels_from_item_label(item_label):
             clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.VDM_LABEL_PREFIXES]
         else:
             clean_object_labels += [f'{prefix}{num_part}' for prefix in pc_configs.ALL_CATALOG_PREFIXES]
+    clean_object_labels = list(set(clean_object_labels))
     return clean_object_labels
 
 
@@ -1055,3 +1080,32 @@ def add_df_link_submission_uuid_if_absent(df_link, df_main):
         update_index = df_link['_parent_index'] == p_index
         df_link.loc[update_index, '_submission__uuid'] = source_uuids[0]
     return df_link
+
+
+
+def list_json_files(json_dirpath):
+    """Makes a list of Excel files in a directory path."""
+    json_files = []
+    for item in os.listdir(json_dirpath):
+        item_path = os.path.join(json_dirpath, item)
+        if not os.path.isfile(item_path):
+            continue
+        if not (item.endswith('.geojson') or
+           item.endswith('.json')):
+            continue
+        json_files.append(item_path)
+    return json_files
+
+
+def get_all_json_results(json_dirpath=pc_configs.KOBO_JSON_DATA_PATH):
+    json_files = list_json_files(json_dirpath)
+    all_results = []
+    for json_file in json_files:
+        if not os.path.exists(json_file):
+            continue
+        with open(json_file, 'r') as openfile:
+            # Reading from json file
+            json_data = json.load(openfile)
+        print(f'Read json_data from: {json_file}')
+        all_results += json_data.get('results', [])
+    return all_results

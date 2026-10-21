@@ -92,11 +92,15 @@ def prep_df_link_from_attrib_sheet(dfs):
                 # this act_raw_col doesn't exist, so skip
                 continue
             df_link[tb_col] = df_link[act_raw_col]
+    for cat_id_col in ['Catalog_ID_PC', 'Catalog ID PC',]:
+        if not cat_id_col in df_link.columns:
+            continue
+        df_link['catalog_name'] = df_link[cat_id_col]
     df_link['subject_uuid'] = df_link['_uuid']
     df_link['subject_label'] = df_link['catalog_name']
-    df_link['object_label'] = np.nan
-    df_link['object_uuid'] = np.nan
-    df_link['object_uuid_source'] = np.nan
+    df_link['object_label'] = ''
+    df_link['object_uuid'] = ''
+    df_link['object_uuid_source'] = ''
     return df_link
 
 
@@ -430,6 +434,7 @@ def prep_attributes_df(
     )
     if df_f is None:
         return dfs
+
     # Fixes underscore columns in df
     df_f = utilities.fix_df_col_underscores(df_f)
     df_f = utilities.drop_empty_cols(df_f)

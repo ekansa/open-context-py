@@ -218,8 +218,10 @@ def make_tb_main_links_df(df_sub):
     trench_id_list = df_sub[act_index]['trench_id'].unique().tolist()
 
     # First make the trench book main entries, and link them to their trenches (unit_uuids)
+    print(f'trench_id_list: {trench_id_list}')
     df_tb_m = make_main_trench_books_df(trench_id_list)
     tb_m_cols = ['subject_label', 'subject_uuid', 'subject_uuid_source', 'trench_id', 'trench_year',]
+    # print(df_tb_m.columns.tolist())
     df_tb_m = df_tb_m[tb_m_cols]
     df_tb_m[pc_configs.LINK_RELATION_TYPE_COL] = 'Has Related Trench'
     df_tb_m = add_trench_unit_uuids(
@@ -317,6 +319,15 @@ def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, relat
             # skip out, we can't find a matching column.
             return None
         related_orig_col = partial_match_col
+    df_main, _ = utilities.get_df_by_sheet_name_part(
+        dfs,
+        sheet_name_part='Trench Book'
+    )
+    if df_main is not None:
+        df = utilities.add_df_link_submission_uuid_if_absent(
+            df_link=df, 
+            df_main=df_main,
+        )
     df['subject_uuid'] = df['_submission__uuid']
     df[related_new_col] = df[related_orig_col]
     df = df[['subject_uuid', related_new_col]].copy()
@@ -336,7 +347,7 @@ def make_df_rel_with_units(dfs, df_sub, sheet_name_part, related_orig_col, relat
     ].copy()
     df = pd.merge(df, df_sub, on='subject_uuid', how='left')
     for col in [pc_configs.LINK_RELATION_TYPE_COL, 'object_label', 'object_uuid', 'object_uuid_source']:
-        df[col] = np.nan
+        df[col] = ''
     return df
 
 

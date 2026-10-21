@@ -125,7 +125,6 @@ SHEET_MAPPINGS = {
 }
 
 
-
 # The column in the Kobo exports with the trench identifier
 KOBO_TRENCH_COL = 'Trench ID'
 
@@ -321,6 +320,14 @@ REL_SUBJECTS_PREFIXES = {
     'Trench': (
         [''],
         ['oc-gen-cat-exc-unit',],
+    ),
+    'Animal_Bone': (
+        ['PC ', 'PC', 'PC-', 'fa ', 'fa',],
+        ['oc-gen-cat-animal-bone',],
+    ),
+    'Animal Bone': (
+        ['PC ', 'PC', 'PC-', 'fa ', 'fa', '',],
+        ['oc-gen-cat-animal-bone',],
     ),
 }
 
@@ -1074,7 +1081,7 @@ DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS 
 
     {
         'source_col': 'Elevation',
-        'form_type': ['catalog', 'small find',],
+        'form_type': ['catalog', 'smallMAIN_TRENCH_BOOKS find',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Elevation',
@@ -2058,6 +2065,16 @@ MAIN_TRENCH_BOOKS = {
         'T126_2025': ('Trench Book T126 2025', 'ebd82b8a-8455-4954-96d9-0d39f1b20174',),
         'T127_2025': ('Trench Book T127 2025', '661721e9-df52-4ad1-8b23-5ce3ea47119b',),
     },
+    2026: {
+        'T116_2026': ('Trench Book T116 2026', 'ea58397c-fd22-418a-b98b-46579682cc5a',),
+        'T128_2026': ('Trench Book T128 2026', '9bf1c593-ab1b-4f74-8d7f-9026c3fd5e86',),
+        'T129_2026': ('Trench Book T129 2026', '4a2874de-b352-46f3-b746-a6e4dd85e522',),
+        'T130_2026': ('Trench Book T130 2026', '794eec71-d0fa-4ebb-8469-c847d05b2826',),
+        'T131_2026': ('Trench Book T131 2026', '04524c14-83e8-4da4-9af1-03cc4e23dcbb',),
+        'T132_2026': ('Trench Book T132 2026', '265177bd-d2e5-4939-8d04-7aa454132ff3',),
+        'T133_2026': ('Trench Book T133 2026', '5010997c-bfa6-4903-b4fa-5756e65258a6',),
+        'T134_2026': ('Trench Book T134 2026', '8b841b06-0244-41e7-88a3-a2b4b565a0b3',),
+    },
 }
 
 
@@ -2066,6 +2083,7 @@ FORM_COLS_DELIM_SPLIT_TO_MULTIPLE_COLS = [
     ('catalog', 'Alternative Object General Type', ' '),
     ('catalog', 'Modification', ' '),
     ('catalog', 'Vessel Part Present', ' '),
+    ('catalog', 'Vessel Part', ' '),
     ('catalog', 'Motif', ' '),
     ('catalog', 'Decorative Technique', ' '),
     ('catalog', 'Object General Type Alternatives', ' '),
